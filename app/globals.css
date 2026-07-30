@@ -1,0 +1,385 @@
+/* ============================================================
+   V2G Webapp — design system
+   Tokens portados de `assets/v2g.css` do repositório v2gapp (referência
+   de design, só leitura). Mesmos nomes de variável, mesmos valores hex —
+   não renomeados, não "melhorados" (ver docs/arquitetura.md, Decisão 7).
+
+   Esta é uma versão ENXUTA: só os componentes usados pelas rotas deste
+   PR (/entrar e /inicio). O restante do design system (stepper, chat de
+   onboarding, cards de campanha, alertas, etc.) será portado quando essas
+   telas forem construídas — não faz sentido carregar CSS morto agora.
+   ============================================================ */
+
+:root {
+  --offwhite: #F0F2EF;
+  --navy: #0B1B2B;
+  --cobalt: #2B4CCE;
+  --cobalt-dark: #2340B0;
+  --lime: #E3FC66;
+  --ice: #ABEAFD;
+  --ice-soft: #DDF4FC;
+  --ink: #0B1B2B;
+  --ink-soft: #4A5C6E;
+  --ink-mute: #7A8B9B;
+  --line: #D7DDD9;
+  --white: #FFFFFF;
+  --good: #2E9E5B;
+  --good-soft: #E2F3E8;
+  --warn: #B97F1D;
+  --warn-soft: #FAEFD8;
+  --crit: #C24A44;
+  --crit-soft: #F9E4E2;
+
+  /* Bahnschrift (só Windows, não embutida no protótipo original) trocada
+     por Archivo via next/font — ver docs/arquitetura.md, Decisão 6.
+     As variáveis são as mesmas; next/font injeta a font-family real. */
+  --display: var(--font-archivo), system-ui, sans-serif;
+  --body: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+
+  --sidebar-w: 252px;
+  --shell-max: 1240px;
+  --auth-max: 1040px;
+  --auth-card: 480px;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--offwhite);
+  color: var(--ink);
+  font-family: var(--body);
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--lime); color: var(--navy); }
+
+a { color: var(--cobalt); }
+button { font-family: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+/* ---------- wordmark ---------- */
+.wordmark { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
+.wordmark .glyph {
+  width: 30px; height: 30px; flex: none;
+  background: var(--navy);
+  color: var(--lime);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 13px;
+}
+.wordmark .wm { font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1; color: var(--navy); }
+.wordmark .wm small {
+  display: block;
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-top: 3px;
+}
+
+/* ---------- formulários ---------- */
+.field { margin-bottom: 14px; }
+.field label {
+  display: block;
+  font-family: var(--display);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.field input {
+  width: 100%;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  padding: 12px 13px;
+  font-size: 15px;
+  font-family: var(--body);
+  color: var(--ink);
+  border-radius: 4px;
+}
+.field input::placeholder { color: var(--ink-mute); }
+.field input:focus { border-color: var(--cobalt); outline: none; }
+.field .note { font-size: 11.5px; line-height: 1.45; color: var(--ink-soft); margin-top: 5px; }
+.field .error { font-size: 11.5px; line-height: 1.45; color: var(--crit); margin-top: 5px; }
+
+.form-error {
+  background: var(--crit-soft);
+  color: var(--crit);
+  border-radius: 6px;
+  padding: 11px 13px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin-bottom: 14px;
+}
+.form-notice {
+  background: var(--ice-soft);
+  border: 1.5px solid var(--ice);
+  color: var(--ink);
+  border-radius: 6px;
+  padding: 13px 14px;
+  font-size: 13px;
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+
+/* ---------- botão (components/ui/Button.tsx) ---------- */
+.cta {
+  display: block;
+  width: 100%;
+  background: var(--cobalt);
+  color: var(--white);
+  border: none;
+  border-radius: 4px;
+  padding: 14px 16px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  transition: background 0.15s ease;
+  text-align: center;
+  text-decoration: none;
+}
+.cta:hover { background: var(--cobalt-dark); }
+.cta:disabled { background: var(--ink-mute); cursor: not-allowed; }
+.cta.ghost {
+  background: transparent;
+  color: var(--cobalt);
+  border: 1.5px solid var(--cobalt);
+}
+.cta.quiet {
+  background: transparent;
+  color: var(--ink-soft);
+  border: none;
+  font-weight: 600;
+  width: auto;
+  padding: 8px 0;
+}
+
+/* ---------- pill (components/ui/Pill.tsx) — pronto p/ telas futuras ---------- */
+.pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.pill.ok { background: var(--good-soft); color: var(--good); }
+.pill.warn { background: var(--warn-soft); color: var(--warn); }
+.pill.crit { background: var(--crit-soft); color: var(--crit); }
+.pill.info { background: var(--ice-soft); color: var(--cobalt); }
+.pill.off { background: rgba(11, 27, 43, 0.07); color: var(--ink-mute); }
+
+/* ---------- card de prova (components/ui/ProofCard.tsx) ---------- */
+.proof-card {
+  background: var(--ice-soft);
+  border: 1.5px solid var(--ice);
+  border-radius: 12px;
+  padding: 20px;
+}
+.proof-card b.title {
+  display: block;
+  font-family: var(--display);
+  font-size: 14px;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.proof-card p { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin: 0; }
+
+/* ============================================================
+   SHELL DE ENTRADA (público) — claro do começo ao fim, sem sidebar.
+   Ver docs/arquitetura.md, Decisão 1.
+   ============================================================ */
+.auth-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+.auth-top {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: var(--auth-max);
+  margin: 0 auto;
+  padding: 24px 34px 6px;
+}
+.auth-wrap {
+  flex: 1;
+  width: 100%;
+  max-width: var(--auth-max);
+  margin: 0 auto;
+  padding: 18px 34px 56px;
+  display: flex;
+  align-items: flex-start;
+}
+.auth-grid {
+  display: grid;
+  grid-template-columns: minmax(0, var(--auth-card)) minmax(0, 1fr);
+  gap: 32px;
+  align-items: start;
+  width: 100%;
+}
+.auth-card {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 30px;
+}
+.auth-h {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 1.13;
+  letter-spacing: -0.005em;
+  color: var(--navy);
+  margin: 0 0 10px;
+}
+.auth-sub {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0 0 22px;
+}
+.auth-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 24px;
+}
+.auth-foot {
+  border-top: 1px solid var(--line);
+  margin-top: 20px;
+  padding-top: 15px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-mute);
+  text-align: center;
+}
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cobalt);
+}
+.link-btn:hover { text-decoration: underline; }
+
+@media (max-width: 900px) {
+  .auth-grid { grid-template-columns: minmax(0, 1fr); }
+  .auth-aside { position: static; }
+}
+@media (max-width: 620px) {
+  .auth-top, .auth-wrap { padding-left: 18px; padding-right: 18px; }
+  .auth-card { padding: 22px 20px; border-radius: 12px; }
+  .auth-h { font-size: 22px; }
+}
+
+/* ============================================================
+   SHELL DE APP (protegido) — sidebar + topbar.
+   Ver docs/arquitetura.md, Decisão 1.
+   ============================================================ */
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+}
+.sidebar {
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--white);
+  border-right: 1.5px solid var(--line);
+  padding: 22px 16px 18px;
+}
+.side-brand { padding: 4px 8px 22px; }
+.side-nav { display: flex; flex-direction: column; gap: 3px; }
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 12px;
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--ink-soft);
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 700;
+  position: relative;
+}
+.nav-item:hover { background: rgba(11, 27, 43, 0.05); color: var(--navy); }
+.nav-item.active { background: rgba(43, 76, 206, 0.09); color: var(--cobalt); }
+.nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: -16px; top: 50%; transform: translateY(-50%);
+  width: 3px; height: 22px;
+  background: var(--cobalt);
+  border-radius: 0 3px 3px 0;
+}
+.side-spacer { flex: 1; }
+.side-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1.5px solid var(--line);
+}
+.side-account .avatar {
+  width: 34px; height: 34px; flex: none;
+  border-radius: 50%;
+  background: var(--navy); color: var(--offwhite);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 700; font-size: 14px;
+}
+.side-account .who b { display: block; font-family: var(--display); font-size: 12.5px; color: var(--navy); }
+.side-account .who span { font-size: 10.5px; color: var(--ink-mute); }
+
+.main { min-width: 0; display: flex; flex-direction: column; }
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 18px 34px;
+  border-bottom: 1.5px solid var(--line);
+}
+.topbar .hi { font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--navy); }
+.canvas { flex: 1; padding: 30px 34px 56px; max-width: var(--shell-max); width: 100%; }
+
+@media (max-width: 900px) {
+  :root { --sidebar-w: 76px; }
+  .side-brand .wm, .nav-item span, .side-account .who { display: none; }
+  .side-brand { display: flex; justify-content: center; padding: 4px 0 20px; }
+  .nav-item { justify-content: center; }
+  .side-account { justify-content: center; border: none; }
+  .canvas, .topbar { padding-left: 22px; padding-right: 22px; }
+}
+@media (max-width: 620px) {
+  .app-shell { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .canvas { padding: 20px 18px 40px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { transition: none !important; }
+}
