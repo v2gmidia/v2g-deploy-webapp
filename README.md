@@ -1,9 +1,17 @@
 # V2G Webapp
 
-Next.js (App Router) + TypeScript + Supabase. Escopo deste PR: cadastro,
-login e uma tela protegida (`/inicio`) mostrando o nome do usuário vindo do
-banco. Nada de onboarding, campanhas, criativos ou Meta Ads ainda — ver
-`docs/arquitetura.md` para o porquê de cada decisão.
+Next.js (App Router) + TypeScript + Supabase.
+
+**O que existe hoje:** cadastro e login, recuperação de senha, onboarding
+que grava a cada resposta, conta editável, e as telas de dashboard,
+campanhas, criativos e avisos — todas com estado vazio como caminho
+principal, porque é o que um cliente novo vê primeiro. A conexão OAuth com
+o Meta vai até conectar e listar contas.
+
+**O que ainda não existe:** publicar campanha, gerar criativo, upload de
+arquivo e pagamento. Ver `docs/arquitetura.md` para o porquê de cada
+decisão, e os outros documentos em `docs/` para os desenhos que ainda não
+viraram código.
 
 ## Stack
 
