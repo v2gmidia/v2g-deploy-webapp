@@ -33,6 +33,16 @@ export default async function AlertasPage() {
     .order("created_at", { ascending: false })
     .limit(10);
 
+  // "Nada pendente" tem dois significados muito diferentes: ninguém
+  // começou ainda, ou tudo está rodando e em ordem. A copy do estado
+  // vazio muda conforme o caso — dizer "seus anúncios ainda não estão
+  // no ar" para quem tem campanha rodando seria simplesmente falso.
+  const { count: campanhasNoAr } = await supabase
+    .from("campaigns")
+    .select("id", { count: "exact", head: true })
+    .not("published_at", "is", null);
+
+  const temCampanha = (campanhasNoAr ?? 0) > 0;
   const temPendencia = (pendentes?.length ?? 0) > 0;
   const temRegistro = (registradas?.length ?? 0) > 0;
 
@@ -74,8 +84,9 @@ export default async function AlertasPage() {
                   seu WhatsApp.
                 </p>
                 <p className="eh-note">
-                  Seus anúncios ainda não estão no ar, então não há o que avisar. Assim que a
-                  primeira campanha começar a rodar, é aqui que você acompanha.
+                  {temCampanha
+                    ? "Sua campanha está rodando e nada travou. Se algo precisar de você, aparece aqui antes de virar problema."
+                    : "Seus anúncios ainda não estão no ar, então não há o que avisar. Assim que a primeira campanha começar a rodar, é aqui que você acompanha."}
                 </p>
               </div>
             )}
@@ -98,10 +109,9 @@ export default async function AlertasPage() {
             ) : (
               <div className="card">
                 <p className="hint" style={{ marginBottom: 0 }}>
-                  A IA ainda não tomou nenhuma decisão porque não há campanha rodando. Quando
-                  houver, cada ajuste que ela fizer sozinha — mudar o investimento de um anúncio
-                  para outro, pausar o que não está rendendo — vira uma linha aqui, com o motivo
-                  em português.
+                  {temCampanha
+                    ? "A IA ainda não fez nenhum ajuste nesta campanha. Quando fizer — mudar o investimento de um anúncio para outro, pausar o que não está rendendo — vira uma linha aqui, com o motivo em português."
+                    : "A IA ainda não tomou nenhuma decisão porque não há campanha rodando. Quando houver, cada ajuste que ela fizer sozinha vira uma linha aqui, com o motivo em português."}
                 </p>
               </div>
             )}
@@ -114,13 +124,12 @@ export default async function AlertasPage() {
               Também no seu WhatsApp
             </b>
             <p className="hint">
-              Quando os avisos começarem, você escolhe quais deles saem do app e chegam no seu
-              WhatsApp. Um deles é fixo e não dá para desligar: campanha parada por pagamento —
-              é dinheiro parado.
+              Você escolhe quais avisos saem do app e chegam no seu WhatsApp. Um deles é fixo e
+              não dá para desligar: campanha parada por pagamento — é dinheiro parado.
             </p>
             <p className="foot-line">
-              Essa escolha ainda não existe porque não há nada para notificar. Ela aparece aqui
-              junto com a primeira campanha.
+              A escolha em si ainda não está no app: falta onde guardar essa preferência. Por
+              enquanto, todos os avisos importantes vão para o WhatsApp que você cadastrou.
             </p>
           </section>
 

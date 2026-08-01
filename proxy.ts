@@ -16,12 +16,14 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PROTECTED_PREFIXES = [
   "/inicio",
+  "/campanhas",
   "/conta",
   "/alertas",
   "/criativos",
   // telas de fluxo — grupo `(fluxo)`, sem sidebar, mas igualmente com sessão
   "/onboarding",
   "/expectativas",
+  "/processando",
 ];
 
 export async function proxy(request: NextRequest) {

@@ -10,6 +10,12 @@ const IcoInicio = () => (
     <path d="M5 8.5V16h10V8.5" />
   </svg>
 );
+const IcoCampanhas = () => (
+  <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+    <path d="M3 8v4h3l8 4V4L6 8H3z" />
+    <path d="M16 8a3 3 0 0 1 0 4" />
+  </svg>
+);
 const IcoCriativos = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
     <rect x="3" y="4" width="14" height="12" rx="1.5" />
@@ -89,6 +95,9 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           <span className="nav-eyebrow">Seu negócio</span>
           <NavItem href="/inicio" icone={<IcoInicio />}>
             Início
+          </NavItem>
+          <NavItem href="/campanhas" icone={<IcoCampanhas />}>
+            Campanhas
           </NavItem>
           <NavItem href="/criativos" icone={<IcoCriativos />}>
             Criativos
