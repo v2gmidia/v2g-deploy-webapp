@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { listarContasDeAnuncio, listarPerfisDeInstagram } from "@/lib/meta/graph";
+import { listarContasDeAnuncio } from "@/lib/meta/graph";
 import { diagnosticar, registrarErroMeta } from "@/lib/meta/erros";
 import { FormularioEscolha } from "./Formulario";
 
 /**
- * Escolha da conta de anúncio e do perfil de Instagram.
+ * Escolha da conta de anúncio.
  *
  * O token é lido do Vault pela `obter_token_meta` (só `service_role`) e
  * NUNCA sai desta função: as chamadas ao Meta acontecem aqui no
@@ -56,12 +56,8 @@ export default async function EscolherPage() {
   }
 
   let contas;
-  let perfis;
   try {
-    [contas, perfis] = await Promise.all([
-      listarContasDeAnuncio(token),
-      listarPerfisDeInstagram(token),
-    ]);
+    contas = await listarContasDeAnuncio(token);
   } catch (erro) {
     registrarErroMeta("escolher:listagem", erro);
     const diagnostico = diagnosticar(erro);
@@ -118,8 +114,11 @@ export default async function EscolherPage() {
     );
   }
 
-  const temInstagram = perfis.some((p) => p.instagramId);
-
+  // Existia aqui um aviso de "não achamos um Instagram profissional". Ele
+  // saiu junto com o escopo `instagram_basic`: sem o dado, a tela não tem
+  // como afirmar que não achou — e apareceria para quem TEM Instagram,
+  // mandando a pessoa ao WhatsApp resolver um problema inexistente.
+  // Ver a nota em `lib/meta/graph.ts`.
   return (
     <div className="auth-grid">
       <main className="auth-card">
@@ -131,24 +130,7 @@ export default async function EscolherPage() {
           rodar.
         </p>
 
-        {!temInstagram && (
-          <div className="trust">
-            <b>Não achamos um Instagram profissional</b>
-            Dá para seguir só com a conta de anúncio, mas os anúncios ficam melhores quando saem
-            do seu perfil.{" "}
-            <a
-              className="wa"
-              href="https://wa.me/5521980351531?text=Oi!%20Conectei%20minha%20conta%20na%20V2G%20mas%20n%C3%A3o%20achou%20meu%20Instagram%20profissional."
-              target="_blank"
-              rel="noopener"
-            >
-              Fala com a gente
-            </a>{" "}
-            que a gente resolve isso junto.
-          </div>
-        )}
-
-        <FormularioEscolha contas={contas} perfis={perfis} />
+        <FormularioEscolha contas={contas} />
       </main>
 
       <aside className="auth-aside">

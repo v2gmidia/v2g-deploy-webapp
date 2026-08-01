@@ -25,13 +25,20 @@ const GRAPH = `https://graph.facebook.com/${META_API_VERSION}`;
  * pedir separado significa enfrentar a fila do Meta duas vezes, com risco
  * de o segundo pedido ser negado com cliente já rodando.
  * Ver docs/oauth-meta.md §2.
+ *
+ * `instagram_basic` FOI REMOVIDO. O Facebook recusava a autorização inteira
+ * com "Invalid Scopes: instagram_basic", porque o escopo exige o produto
+ * Instagram Graph API adicionado no painel do app. Ele servia só para
+ * listar o perfil de Instagram na tela de escolha — um dado que o v1 não
+ * usa para nada: quem recebe o anúncio é a conta de anúncio, e a
+ * identidade vem pela página. Ver a nota em `lib/meta/graph.ts` sobre o
+ * que seria preciso para trazer de volta.
  */
 export const ESCOPOS = [
   "ads_read",
   "ads_management",
   "business_management",
   "pages_show_list",
-  "instagram_basic",
 ] as const;
 
 export function credenciaisMeta(): { appId: string; appSecret: string } {

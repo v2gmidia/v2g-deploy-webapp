@@ -83,33 +83,39 @@ export async function listarContasDeAnuncio(token: string): Promise<ContaDeAnunc
   });
 }
 
-export interface PerfilDeInstagram {
-  paginaId: string;
-  paginaNome: string;
-  instagramId: string | null;
-  instagramUsuario: string | null;
-}
+/* ============================================================
+   POR QUE `meta_connections.instagram_account_id` EXISTE VAZIA
 
-/**
- * As páginas do Facebook e o Instagram profissional ligado a cada uma.
- *
- * Instagram sem página vinculada não aparece aqui — é uma limitação da
- * API, não nossa. Na prática significa conta pessoal, que é justamente o
- * caso que a tela precisa tratar com um caminho humano.
- */
-export async function listarPerfisDeInstagram(token: string): Promise<PerfilDeInstagram[]> {
-  const dados = await chamar<{
-    data?: Array<{
-      id: string;
-      name?: string;
-      instagram_business_account?: { id: string; username?: string };
-    }>;
-  }>("/me/accounts?fields=id,name,instagram_business_account{id,username}&limit=100", token);
+   A coluna está no schema desde a migration 0005 e NUNCA é preenchida.
+   Não é resíduo esquecido — é uma decisão, e esta é a nota para quem
+   encontrar isso daqui a alguns meses.
 
-  return (dados.data ?? []).map((p) => ({
-    paginaId: p.id,
-    paginaNome: p.name?.trim() || p.id,
-    instagramId: p.instagram_business_account?.id ?? null,
-    instagramUsuario: p.instagram_business_account?.username ?? null,
-  }));
-}
+   Existia aqui uma `listarPerfisDeInstagram()` que lia
+   `/me/accounts?fields=...,instagram_business_account{id,username}` e
+   alimentava um seletor de perfil na tela de escolha. Foi removida
+   porque o Facebook rejeita a autorização inteira com
+   "Invalid Scopes: instagram_basic" — o escopo não vem com o produto
+   "Login do Facebook" sozinho.
+
+   O detalhe que decidiu a remoção: sem o escopo, o Facebook NÃO devolve
+   erro. Ele só omite o subcampo. A tela então concluiria "não achamos um
+   Instagram profissional" para todo mundo, inclusive para quem tem um, e
+   mandaria essa pessoa ao WhatsApp resolver um problema inexistente.
+   Interface afirmando o que não verificou.
+
+   PARA VOLTAR A PREENCHER A COLUNA seria preciso, nesta ordem:
+     1. Painel do Meta → Adicionar produto → Instagram →
+        **Instagram Graph API** (não o "Instagram Basic Display", que é
+        para conteúdo pessoal e não serve para anúncios);
+     2. `instagram_basic` de volta em `ESCOPOS` (lib/meta/oauth.ts);
+     3. App Review + verificação de empresa para o escopo funcionar fora
+        do modo desenvolvimento;
+     4. restaurar esta função e o seletor no formulário de escolha.
+
+   A conta de Instagram do cliente também precisa ser Profissional
+   (Comercial ou Criador) E estar vinculada a uma Página — sem esse
+   vínculo a API não devolve nada, mesmo com o escopo concedido.
+
+   Nada disso é necessário para o v1: quem recebe o anúncio é a conta de
+   anúncio, e a identidade vem pela página.
+   ============================================================ */

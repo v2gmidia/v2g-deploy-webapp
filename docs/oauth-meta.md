@@ -21,7 +21,7 @@ Três colunas que o desenho pede e o schema não tem:
 |---|---|---|
 | `ad_accounts` | `ownership text not null default 'cliente'` | Distinguir conta do próprio cliente de conta da V2G. Com `check (ownership in ('cliente','v2g'))` — hoje só existe o primeiro caso, mas a coluna nasce sabendo do segundo. |
 | `ad_accounts` | `status text not null default 'ok'` | Os modos de falha precisam marcar a conta, não só a conexão. Valores: `ok`, `expired`, `revoked`, `no_permission`. |
-| `meta_connections` | `instagram_account_id text` | O cliente conecta "o Instagram do negócio". Sem guardar qual, a escolha se perde. |
+| `meta_connections` | `instagram_account_id text` | **Criada e nunca preenchida** — ver §2. Mantida porque o schema já a aceita nula e ela volta a ser usada quando o Instagram Graph API entrar. |
 | `meta_connections` | `meta_user_id text` | Quem autorizou. Necessário para diagnóstico quando o token morre. |
 | `meta_connections` | `scopes text[]` | O que o usuário de fato concedeu — nem sempre é tudo que pedimos. |
 | `meta_connections` | `last_error text` | O subcódigo do último erro 190, para a tela dizer o motivo certo. |
@@ -41,7 +41,6 @@ segredo.
 | `ads_management` | criar e gerenciar campanhas | **não — pedido agora, usado depois** |
 | `business_management` | alcançar contas dentro de um Business Manager | sim |
 | `pages_show_list` | listar as páginas do Facebook | sim |
-| `instagram_basic` | achar a conta de Instagram ligada a cada página | sim |
 
 **`ads_management` é pedido agora, mesmo sem uso neste lote.** A primeira
 versão deste documento propunha o contrário — pedir só o necessário para
@@ -64,6 +63,31 @@ aplicação faz, não no que ela poderia fazer.
 pesada, com "gerenciar suas contas de anúncios" em vez de só "ler". A tela
 `/conectar` (§6) prepara o cliente para exatamente esse texto.
 
+### `instagram_basic` foi removido
+
+A primeira versão pedia também `instagram_basic`, para listar o perfil de
+Instagram na tela de escolha. O Facebook recusava a autorização inteira:
+
+```
+Invalid Scopes: instagram_basic
+```
+
+O escopo não vem com o produto "Login do Facebook" — exige o **Instagram
+Graph API** adicionado no painel do app, mais App Review e verificação de
+empresa para sair do modo desenvolvimento.
+
+**O que decidiu a remoção não foi o custo, foi o modo de falha.** Sem o
+escopo, o Facebook não devolve erro: ele apenas omite o subcampo
+`instagram_business_account`. A tela então concluiria "não achamos um
+Instagram profissional" para **todo mundo**, inclusive para quem tem um, e
+mandaria essa pessoa ao WhatsApp resolver um problema que não existe.
+Interface afirmando o que não verificou — o mesmo defeito que a migração do
+onboarding eliminou.
+
+O v1 não precisa do dado: quem recebe o anúncio é a conta de anúncio, e a
+identidade vem pela página. A coluna `meta_connections.instagram_account_id`
+fica no schema, vazia, com a nota de retorno em `lib/meta/graph.ts`.
+
 ---
 
 ## 3. Rotas
@@ -74,7 +98,7 @@ app/(fluxo)/conectar/escolher/page.tsx  escolha de conta, depois do callback
 app/auth/meta/iniciar/route.ts       GET  → monta o state, redireciona ao Meta
 app/auth/meta/callback/route.ts      GET  ← o Meta redireciona para cá
 lib/meta/oauth.ts                    troca de code, long-lived, debug_token
-lib/meta/graph.ts                    listagem de contas, páginas, instagram
+lib/meta/graph.ts                    listagem das contas de anúncio
 lib/meta/erros.ts                    tradução de erro do Meta para português
 ```
 
@@ -112,7 +136,7 @@ Ficam fora dos grupos de rota, e o `proxy.ts` precisa continuar deixando
      ?client_id=<META_APP_ID>
      &redirect_uri=<NEXT_PUBLIC_SITE_URL>/auth/meta/callback
      &state=<nonce>
-     &scope=ads_read,ads_management,business_management,pages_show_list,instagram_basic
+     &scope=ads_read,ads_management,business_management,pages_show_list
      &response_type=code
    ```
 
@@ -249,7 +273,6 @@ Depois do callback, `/conectar/escolher` mostra o que o token alcança:
 
 ```
 GET /v25.0/me/adaccounts?fields=id,name,account_status,currency,business
-GET /v25.0/me/accounts?fields=id,name,instagram_business_account{id,username}
 ```
 
 Uma conta é **elegível** quando `account_status = 1` (ativa). As demais
@@ -263,7 +286,6 @@ business_id, meta_connection_id, external_id (act_...), name, currency,
 ownership = 'cliente', status = 'ok'
 ```
 
-E o `instagram_account_id` escolhido vai para `meta_connections`.
 
 ### Nenhuma conta elegível
 
@@ -274,7 +296,6 @@ vazia. Três causas, três textos diferentes:
 |---|---|
 | Nenhuma conta de anúncio | "Não achamos nenhuma conta de anúncio ligada a este perfil." + caminho para falar com uma pessoa |
 | Todas desativadas | "A conta que achamos está desativada no Facebook." + o que fazer |
-| Nenhum Instagram profissional | "Seu Instagram ainda é uma conta pessoal." + caminho humano |
 
 Nenhum desses termina em beco: todos têm botão de WhatsApp. É a instrução
 que você deu e é onde o funil mais perde gente.
