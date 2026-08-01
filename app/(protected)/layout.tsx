@@ -71,9 +71,13 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     .limit(1)
     .maybeSingle();
 
-  const nome = profile?.full_name?.trim() || (user.email ?? "");
+  // Sem cair no e-mail. Se o nome não vier, a saudação fica sem nome —
+  // "Boa tarde" sozinho é melhor que "Boa tarde, fulano@provedor.com",
+  // que além de feio joga o e-mail da pessoa na tela para quem estiver
+  // olhando por cima do ombro dela.
+  const nome = profile?.full_name?.trim() ?? "";
   const nomeNegocio = business?.name?.trim();
-  const inicial = (nomeNegocio || nome || "?").charAt(0).toUpperCase();
+  const inicial = (nomeNegocio || nome || user.email || "?").charAt(0).toUpperCase();
 
   return (
     <div className="app-shell">

@@ -24,10 +24,13 @@ export function Saudacao({ nome }: SaudacaoProps) {
     setAgora(new Date());
   }, []);
 
-  const primeiroNome = nome.trim().split(/\s+/)[0] ?? nome;
+  // Só o primeiro nome, e só se for mesmo um nome. String vazia (perfil
+  // sem `full_name`) vira saudação sem vocativo — nunca o e-mail.
+  const primeiroNome = nome.trim().split(/\s+/)[0] ?? "";
+  const vocativo = primeiroNome ? `, ${primeiroNome}` : "";
 
   if (!agora) {
-    return <div className="hi">Olá, {primeiroNome}</div>;
+    return <div className="hi">Olá{vocativo}</div>;
   }
 
   const hora = agora.getHours();
@@ -37,7 +40,8 @@ export function Saudacao({ nome }: SaudacaoProps) {
   // baixo. Repetir num `sr-only` faria o leitor de tela ler duas vezes.
   return (
     <div className="hi">
-      {saudacao}, {primeiroNome}
+      {saudacao}
+      {vocativo}
     </div>
   );
 }

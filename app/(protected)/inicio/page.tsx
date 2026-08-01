@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
+import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { dinheiro, numero, retornoPorReal } from "@/lib/formato";
 
 /**
@@ -100,9 +101,39 @@ export default async function InicioPage() {
 
         <div className="dash-grid">
           <div className="dash-main">
+            {/* O destaque aqui é o PRÓXIMO passo, não a lista inteira.
+                Antes os três tinham o mesmo peso e a pessoa escolhia no
+                escuro. */}
+            <section className="hero-dark">
+              <span className="eyebrow">Seu próximo passo</span>
+              <p className="hero-frase">
+                {onboardingCompleto ? (
+                  <>
+                    Falta <span className="destaque">separar suas fotos</span>.
+                  </>
+                ) : (
+                  <>
+                    Comece <span className="destaque">contando do seu negócio</span>.
+                  </>
+                )}
+              </p>
+              <p className="hero-note">
+                {onboardingCompleto
+                  ? "A IA já sabe o essencial. O que falta é material visual: o produto pronto, a fachada, um vídeo curto de celular."
+                  : "São quatro perguntas rápidas. É delas que a IA parte para montar sua primeira campanha — dá para parar no meio e voltar depois."}
+              </p>
+              <a
+                className="cta"
+                href={onboardingCompleto ? "/criativos" : "/onboarding"}
+                style={{ width: "max-content", marginTop: 22 }}
+              >
+                {onboardingCompleto ? "Separar minhas fotos" : "Começar agora"}
+              </a>
+            </section>
+
             <section>
               <div className="section-title">
-                <h2>Por onde começar</h2>
+                <h2>O resto do caminho</h2>
               </div>
               <div className="card acct-list">
                 <a className="acct-row" href="/expectativas">
@@ -112,25 +143,25 @@ export default async function InicioPage() {
                   </span>
                   <Seta />
                 </a>
-                <a className="acct-row" href="/onboarding">
+                <a className="acct-row" href={onboardingCompleto ? "/onboarding" : "/criativos"}>
                   <span className="ar-text">
                     <b>
                       {onboardingCompleto
                         ? "Rever o que você contou sobre o negócio"
-                        : "Contar sobre o seu negócio"}
+                        : "Separar suas fotos"}
                     </b>
                     <span>
                       {onboardingCompleto
                         ? "As quatro perguntas já estão respondidas — dá para mudar quando quiser."
-                        : "Quatro perguntas rápidas. É delas que a IA parte."}
+                        : "Pode ir juntando desde já; a IA usa depois."}
                     </span>
                   </span>
                   <Seta />
                 </a>
-                <a className="acct-row" href="/criativos">
+                <a className="acct-row" href="/conta">
                   <span className="ar-text">
-                    <b>Separar suas fotos</b>
-                    <span>O produto pronto, a fachada, um vídeo curto de celular.</span>
+                    <b>Conferir seus dados</b>
+                    <span>Nome do negócio, cidade e ticket médio.</span>
                   </span>
                   <Seta />
                 </a>
@@ -161,17 +192,19 @@ export default async function InicioPage() {
 
         <div className="dash-grid">
           <div className="dash-main">
-            <section className="hero-card">
+            {/* O que grita nesta tela é o MOTIVO do vazio. Sem ele, a
+                pessoa lê a ausência de número como fracasso e vai mexer
+                na campanha — que é o que não pode acontecer. */}
+            <section className="hero-dark">
               <span className="eyebrow">Por que ainda não há número</span>
-              <p className="hero-phrase">
-                O Facebook está <span className="num-cobalt">aprendendo</span> quem é o seu
-                cliente.
+              <p className="hero-frase">
+                O Facebook está <span className="destaque">aprendendo</span> quem é o seu cliente.
               </p>
               <p className="hero-note">
                 Nos primeiros dias ele mostra seu anúncio para perfis diferentes de pessoas só
-                para descobrir quem responde. Enquanto esse teste roda, o custo fica mais alto e
-                a venda demora — não porque a campanha está ruim, mas porque ela ainda não sabe
-                para quem falar. Isso costuma levar de 2 a 3 dias.
+                para descobrir quem responde. Enquanto esse teste roda, o custo fica mais alto e a
+                venda demora — não porque a campanha está ruim, mas porque ela ainda não sabe para
+                quem falar. Costuma levar de 2 a 3 dias.
               </p>
             </section>
 
@@ -216,7 +249,7 @@ export default async function InicioPage() {
           </div>
 
           <aside className="dash-aside">
-            <section className="navy-card">
+            <section className="card noturno">
               <div className="nc-head">
                 <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                   <path d="M9 1a5 5 0 1 0 2 8.5A5.5 5.5 0 0 1 9 1z" />
@@ -278,20 +311,27 @@ export default async function InicioPage() {
 
       <div className="dash-grid">
         <div className="dash-main">
-          <section className="hero-card">
+          {/* A resposta que importa — "valeu a pena?" — é o maior
+              elemento da tela, e o único lugar onde o lima aparece. */}
+          <section className="hero-dark">
             <span className="eyebrow">Em uma frase</span>
             {retorno !== null ? (
-              <p className="hero-phrase">
-                Pra cada R$1 que você colocou, voltaram{" "}
-                <span className="num-cobalt">{dinheiro(retorno)}</span>
-              </p>
+              <>
+                <NumeroQueConta
+                  valor={retorno}
+                  prefixo="R$ "
+                  casas={2}
+                  className="hero-num"
+                />
+                <p className="hero-legenda">voltaram pra cada R$ 1 que você colocou</p>
+              </>
             ) : (
-              <p className="hero-phrase">Ainda não dá para dizer se valeu a pena.</p>
+              <p className="hero-frase">Ainda não dá para dizer se valeu a pena.</p>
             )}
             <p className="hero-note">
               Estimado a partir das vendas que as plataformas conseguiram atribuir aos seus
-              anúncios. Pode faltar venda nessa conta, nunca sobrar — na dúvida, arredondamos
-              para baixo.
+              anúncios. Pode faltar venda nessa conta, nunca sobrar — na dúvida, arredondamos para
+              baixo.
             </p>
           </section>
 
@@ -336,7 +376,7 @@ export default async function InicioPage() {
         </div>
 
         <aside className="dash-aside">
-          <section className="navy-card">
+          <section className="card noturno">
             <div className="nc-head">
               <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                 <path d="M9 1a5 5 0 1 0 2 8.5A5.5 5.5 0 0 1 9 1z" />

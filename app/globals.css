@@ -11,17 +11,30 @@
    ============================================================ */
 
 :root {
-  --offwhite: #F0F2EF;
-  --navy: #0B1B2B;
-  --cobalt: #2B4CCE;
-  --cobalt-dark: #2340B0;
-  --lime: #E3FC66;
-  --ice: #ABEAFD;
-  --ice-soft: #DDF4FC;
-  --ink: #0B1B2B;
-  --ink-soft: #4A5C6E;
-  --ink-mute: #7A8B9B;
-  --line: #D7DDD9;
+  /* ============================================================
+     Paleta da identidade visual (apresentação do designer).
+     Mesmos nomes de variável de antes — só os valores mudaram, para
+     nenhum componente precisar ser reescrito.
+
+     Os seis valores abaixo vieram da identidade tal como estão. Os
+     derivados (--cobalt-dark, --ice-soft, --ink*, --line) foram
+     recalculados a partir deles, porque um tom de hover ou uma linha
+     de 1px que não acompanha o pai vira sujeira visível.
+     ============================================================ */
+  --offwhite: #ECF5F2;   /* identidade — ganhou um toque de menta */
+  --navy: #111E2F;       /* identidade */
+  --black: #000C08;      /* identidade — NOVO, superfície de destaque */
+  --cobalt: #0B40DA;     /* identidade — mais elétrico e saturado */
+  --lime: #E8FC65;       /* identidade */
+  --ice: #B0E9FD;        /* identidade */
+
+  /* derivados */
+  --cobalt-dark: #0833AE;  /* hover do cobalto novo */
+  --ice-soft: #E3F6FE;     /* gelo a 25%, para blocos de confiança */
+  --ink: #111E2F;          /* texto = navy, como antes */
+  --ink-soft: #485A6B;     /* acompanhou o navy para o frio */
+  --ink-mute: #78899A;
+  --line: #D5E0DC;         /* linha esfriou junto com o off-white */
   --white: #FFFFFF;
   --good: #2E9E5B;
   --good-soft: #E2F3E8;
@@ -57,10 +70,31 @@ body {
 ::selection { background: var(--lime); color: var(--navy); }
 
 a { color: var(--cobalt); }
+
+/* Link que é um bloco inteiro (linha de lista, card, item de menu) não
+   leva sublinhado — o alvo de clique já é evidente pela superfície. Só
+   link dentro de texto corrido sublinha, que é onde o sublinhado
+   trabalha.
+
+   Isto não veio do design system original: lá esses elementos eram
+   `<button>` com `data-modal`, e botão não sublinha. Na migração eles
+   viraram `<a>`, porque de fato navegam — e herdaram o sublinhado
+   padrão do navegador junto. */
+.acct-row,
+.nav-item,
+.list-row,
+.escolha-item { text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-visible {
   outline: 2px solid var(--cobalt);
   outline-offset: 2px;
+}
+/* Sobre superfície escura o cobalto some — #0B40DA contra #000C08 é
+   quase invisível. O anel de foco vira gelo, que é o tom claro da mesma
+   identidade. Sem isto, navegar de teclado no card escuro seria às
+   cegas. */
+.hero-dark :is(a, button, input, [tabindex]):focus-visible {
+  outline-color: var(--ice);
 }
 
 /* ---------- wordmark ---------- */
@@ -819,6 +853,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--navy);
   margin: 0;
 }
+.section-title a {
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
 .st-note, .side-note { font-size: 12.5px; color: var(--ink-mute); }
 
 .card {
@@ -973,6 +1013,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 3px;
 }
 
+/* Uma linha da lista pode ser o próximo passo óbvio. `.acct-row.destaque`
+   dá a ela a cor do cobalto sem transformá-la num segundo herói — a
+   diferença é de cor e de seta, não de superfície. */
+.acct-row.destaque .ar-text b { color: var(--cobalt); }
+.acct-row.destaque svg { color: var(--cobalt); }
+.acct-list .acct-row.destaque { background: rgba(11, 64, 218, 0.04); border-radius: 8px; padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
+
 /* ---------- lista da assinatura: todas as linhas com o mesmo peso ---------- */
 .acct-list { padding: 4px 16px; }
 .acct-list .acct-row {
@@ -1026,6 +1073,64 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* ============================================================
    DASHBOARD E CAMPANHAS — herói, métricas, lista e cartão navy
    ============================================================ */
+/* ============================================================
+   HIERARQUIA: uma coisa grita por tela, o resto sussurra.
+
+   O problema que isto resolve: antes, o card do resultado e o card de
+   "conferir dados do negócio" tinham exatamente a mesma borda de 1,5px
+   sobre o mesmo branco. Com todo elemento no mesmo peso, nada se
+   destaca — a pessoa varre a tela sem saber onde olhar.
+
+   A regra aqui: superfície ESCURA é o destaque, e só uma por tela. O
+   lima aparece dentro dela e em nenhum outro lugar da mesma tela.
+   ============================================================ */
+.hero-dark {
+  background: var(--black);
+  border-radius: 16px;
+  padding: 34px 32px 30px;
+  color: var(--offwhite);
+}
+.hero-dark .eyebrow { color: var(--ice); margin: 0 0 14px; }
+.hero-dark .hero-note { color: rgba(236, 245, 242, 0.62); margin-top: 16px; max-width: 46ch; }
+.hero-dark .hero-note a,
+.hero-dark .hero-note .est-link { color: var(--ice); }
+
+/* O número que domina. `clamp` porque em 360px de largura ele não pode
+   estourar a linha, e em desktop precisa ser inequivocamente o maior
+   elemento da página. */
+.hero-num {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(56px, 11vw, 104px);
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: var(--lime);
+  font-variant-numeric: tabular-nums;
+  margin: 0;
+  display: block;
+}
+.hero-dark .hero-legenda {
+  font-family: var(--display);
+  font-size: clamp(15px, 1.8vw, 19px);
+  line-height: 1.3;
+  color: var(--offwhite);
+  margin: 12px 0 0;
+  max-width: 26ch;
+}
+/* Frase-título quando o destaque não é numérico (dia zero). */
+.hero-dark .hero-frase {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(26px, 3.4vw, 40px);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  color: var(--offwhite);
+  margin: 0;
+  max-width: 20ch;
+  text-wrap: balance;
+}
+.hero-dark .hero-frase .destaque { color: var(--lime); }
+
 .hero-card {
   background: var(--white);
   border: 1.5px solid var(--line);
@@ -1046,14 +1151,22 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-phrase .num-cobalt { color: var(--cobalt); }
 .hero-note { font-size: 13px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
 
-.metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 0; }
+/* As métricas de apoio PERDERAM a borda e o fundo branco. Antes cada uma
+   era um card com o mesmo peso do herói; agora são texto sobre o fundo
+   da página, separadas só por uma linha fina. São números de contexto,
+   não a resposta — e a tela precisa dizer isso sem palavras. */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
 .metric {
-  background: var(--white);
-  border: 1.5px solid var(--line);
-  border-radius: 10px;
-  padding: 16px 16px 14px;
+  padding: 18px 20px 16px 0;
   min-width: 0;
 }
+.metric + .metric { border-left: 1px solid var(--line); padding-left: 20px; }
 .metric .m-label {
   font-family: var(--display);
   font-size: 10px;
@@ -1067,8 +1180,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-family: var(--display);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  font-size: 24px;
-  color: var(--navy);
+  font-size: 21px;
+  color: var(--ink-soft);
   line-height: 1.1;
 }
 .metric .m-delta { font-size: 11px; margin-top: 4px; color: var(--ink-soft); display: block; }
@@ -1130,6 +1243,33 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .navy-card .nc-foot a { color: var(--ice); font-weight: 600; text-decoration: none; }
 .navy-card .chip-lime { margin-top: 12px; }
 
+/* "Enquanto você dormia" era um card navy. Virou claro: com o herói
+   escuro, dois pretos na mesma tela dividem a atenção e nenhum vence.
+   O que ele conta é prestação de contas, não manchete. */
+.card.noturno { background: var(--white); border: 1.5px solid var(--line); }
+.card.noturno .nc-head {
+  display: flex; align-items: center; gap: 9px;
+  font-family: var(--display); font-weight: 700; font-size: 13px;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.card.noturno .nc-head svg { color: var(--cobalt); flex: none; }
+.card.noturno p { font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+.card.noturno .nc-foot {
+  font-size: 11.5px;
+  color: var(--ink-mute);
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line);
+}
+.card.noturno .nc-foot a { color: var(--cobalt); font-weight: 600; text-decoration: none; }
+.card.noturno .chip-lime {
+  margin-top: 12px;
+  background: transparent;
+  border: 1.5px solid var(--line);
+  color: var(--ink-soft);
+}
+
 .command-card {
   background: var(--white);
   border: 1.5px solid var(--line);
@@ -1138,6 +1278,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .command-card b.title { font-family: var(--display); font-size: 14px; color: var(--navy); display: block; margin-bottom: 6px; }
 .command-card .limit { font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 14px; }
+.command-card .limit a { font-weight: 600; text-decoration: none; }
 
 .btn-sm {
   font-family: var(--display);
