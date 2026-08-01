@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { dinheiro, numero, retornoPorReal } from "@/lib/formato";
 
 /**
@@ -164,7 +165,16 @@ export default async function CampanhasPage() {
   );
 }
 
-function Cabecalho() {
+async function Cabecalho() {
+  return (
+    <>
+      <FaixaReconectar />
+      <CabecalhoTexto />
+    </>
+  );
+}
+
+function CabecalhoTexto() {
   return (
     <div className="page-head">
       <h1>Suas campanhas</h1>

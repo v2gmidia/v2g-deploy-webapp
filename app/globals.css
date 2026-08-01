@@ -1178,6 +1178,40 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .mission-slot p { font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 0; max-width: 58ch; }
 
 /* ============================================================
+   ESCOLHA DE CONTA (conexão com o Instagram)
+   ============================================================ */
+.escolha-lista { display: flex; flex-direction: column; gap: 9px; margin-bottom: 18px; }
+.escolha-item {
+  display: flex; align-items: flex-start; gap: 11px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 13px 15px;
+  cursor: pointer;
+  background: var(--white);
+}
+.escolha-item:hover { border-color: var(--cobalt); }
+.escolha-item.picked { border-color: var(--cobalt); background: rgba(43, 76, 206, 0.05); }
+.escolha-item.off { opacity: 0.55; cursor: not-allowed; background: rgba(11, 27, 43, 0.03); }
+.escolha-item.off:hover { border-color: var(--line); }
+.escolha-item input { margin-top: 3px; flex: none; accent-color: var(--cobalt); }
+.esc-texto { min-width: 0; }
+.esc-texto b { display: block; font-family: var(--display); font-size: 14px; color: var(--navy); }
+.esc-texto span { display: block; font-size: 12px; line-height: 1.45; color: var(--ink-soft); margin-top: 2px; }
+
+/* ---------- faixa de reconexão ---------- */
+.faixa-reconectar {
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+  background: var(--crit-soft);
+  border: 1.5px solid var(--crit);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 22px;
+}
+.faixa-reconectar b { font-family: var(--display); font-size: 15px; color: var(--crit); display: block; }
+.faixa-reconectar span { font-size: 13px; line-height: 1.5; color: var(--ink); display: block; margin-top: 2px; }
+.faixa-reconectar .cta { margin-left: auto; width: auto; flex: none; padding: 11px 18px; font-size: 13px; }
+
+/* ============================================================
    PROCESSAMENTO — passos verticais
    ============================================================ */
 .stepper { margin: 0 0 22px; padding: 0; list-style: none; }

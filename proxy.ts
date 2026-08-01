@@ -24,6 +24,7 @@ const PROTECTED_PREFIXES = [
   "/onboarding",
   "/expectativas",
   "/processando",
+  "/conectar",
 ];
 
 export async function proxy(request: NextRequest) {

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { dinheiro, numero, retornoPorReal } from "@/lib/formato";
 
 /**
@@ -86,6 +87,10 @@ export default async function InicioPage() {
   if (noAr.length === 0) {
     return (
       <>
+        {/* A faixa vale mesmo sem campanha: se a pessoa conectou e a
+            conexão caiu, ela precisa saber agora — e não descobrir
+            quando a primeira campanha não subir. */}
+        <FaixaReconectar />
         <div className="page-head">
           <h1>Sua primeira campanha ainda não está no ar.</h1>
           <p>
@@ -145,6 +150,7 @@ export default async function InicioPage() {
   if (!temNumero) {
     return (
       <>
+        <FaixaReconectar />
         <div className="page-head">
           <h1>Seus anúncios estão no ar. Os números ainda não.</h1>
           <p>
@@ -261,6 +267,7 @@ export default async function InicioPage() {
 
   return (
     <>
+      <FaixaReconectar />
       <div className="page-head">
         <h1>Seu resultado essa semana</h1>
         <p>
