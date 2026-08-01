@@ -17,11 +17,11 @@ export default async function InicioPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("nome")
+    .select("full_name")
     .eq("id", user.id)
     .single();
 
-  const nome = profile?.nome?.trim();
+  const nome = profile?.full_name?.trim();
 
   return (
     <div className="auth-card" style={{ maxWidth: 480 }}>

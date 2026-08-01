@@ -24,9 +24,13 @@ function safeNextPath(formData: FormData): string {
 }
 
 /**
- * Cadastro. `nome`/`whatsapp` vão em `options.data` — o trigger
- * `handle_new_user()` (supabase/migrations/0001_init.sql) lê daí pra
- * criar a linha em `profiles` automaticamente. Este código nunca insere
+ * Cadastro. Os campos do formulário continuam em português (`nome`,
+ * `whatsapp`) porque são rótulos de UI; a tradução para o vocabulário
+ * do schema acontece aqui, ao montar `options.data`. O trigger
+ * `handle_new_user()` (supabase/migrations/0001_init.sql) lê
+ * `full_name`/`whatsapp` daí para criar a linha em `profiles`
+ * automaticamente — e, no mesmo passo, reivindica negócios órfãos
+ * cujo `claim_email` bate com este e-mail. Este código nunca insere
  * em `profiles` diretamente.
  */
 export async function signUpAction(
@@ -49,7 +53,7 @@ export async function signUpAction(
   const { data, error } = await supabase.auth.signUp({
     email,
     password: senha,
-    options: { data: { nome, whatsapp } },
+    options: { data: { full_name: nome, whatsapp } },
   });
 
   if (error) {
