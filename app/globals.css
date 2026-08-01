@@ -233,6 +233,29 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: start;
   width: 100%;
 }
+/* .solo = telas que não devem ter nada ao lado. O card fica mais largo
+   porque cada passo precisa caber inteiro, sem rolagem interna. */
+.auth-grid.solo {
+  --auth-card: 580px;
+  grid-template-columns: minmax(0, var(--auth-card));
+  justify-content: center;
+}
+.auth-top .auth-help {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--cobalt);
+  text-decoration: none;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  border-radius: 999px;
+  padding: 9px 15px;
+}
+.auth-top .auth-help:hover { border-color: var(--cobalt); }
 .auth-card {
   background: var(--white);
   border: 1.5px solid var(--line);
@@ -749,26 +772,266 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .toast .pip { width: 8px; height: 8px; background: var(--lime); flex: none; }
 .toast.show { opacity: 1; transform: none; }
 
-/* ---------- grade de fluxo dentro do canvas do app ---------- */
-.flow-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 580px) minmax(0, 1fr);
-  gap: 32px;
-  align-items: start;
-}
-.flow-grid.solo { grid-template-columns: minmax(0, 580px); justify-content: center; }
-.flow-aside { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 24px; }
-
-@media (max-width: 1100px) {
-  .flow-grid { grid-template-columns: minmax(0, 1fr); }
-  .flow-aside { position: static; }
-}
 @media (max-width: 620px) {
   .ec-h { font-size: 22px; }
   .ec-steps { min-height: 0; }
   .ec-nav { flex-wrap: wrap; }
   .ec-nav .ec-prev { flex: 1 0 100%; order: 2; }
   .toast { left: 18px; right: 18px; max-width: none; }
+}
+
+/* ============================================================
+   TELAS DE APP — cabeçalho de página, grade de duas colunas e
+   componentes compartilhados por /conta, /alertas e /criativos.
+
+   `.cz-grid`/`.cz-main`/`.cz-aside` do protótipo (tela 07) tinham
+   definição idêntica a `.dash-grid`/`.dash-main`/`.dash-aside`
+   (tela 05, 08, 09). Aqui existe só uma: era duplicação, não variação.
+   ============================================================ */
+.page-head { margin-bottom: 22px; }
+.page-head h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 26px;
+  color: var(--navy);
+  margin: 0 0 6px;
+  letter-spacing: -0.005em;
+}
+.page-head p { font-size: 13.5px; color: var(--ink-soft); margin: 0; max-width: 70ch; line-height: 1.55; }
+
+.dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 22px;
+  align-items: start;
+}
+.dash-main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.dash-aside { display: flex; flex-direction: column; gap: 18px; position: sticky; top: 96px; }
+
+.section-title {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  margin: 2px 0;
+}
+.section-title h2 {
+  font-family: var(--display);
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  color: var(--navy);
+  margin: 0;
+}
+.st-note, .side-note { font-size: 12.5px; color: var(--ink-mute); }
+
+.card {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.hint { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 14px; }
+.foot-line { font-size: 12px; color: var(--ink-mute); margin: 12px 2px 0; line-height: 1.6; }
+
+.form-card { padding: 20px; }
+.form-card .field-row { margin-bottom: 14px; }
+.form-card .cta { margin-top: 4px; }
+.field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.field-row .field { margin-bottom: 0; }
+.field select {
+  width: 100%;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  padding: 12px 13px;
+  font-size: 15px;
+  font-family: var(--body);
+  color: var(--ink);
+  border-radius: 4px;
+}
+.field select:focus { border-color: var(--cobalt); outline: none; }
+.field input:disabled, .field select:disabled { background: rgba(11, 27, 43, 0.04); color: var(--ink-mute); }
+
+/* ---------- avisos ---------- */
+.alert-card {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-left: 4px solid var(--cobalt);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.alert-card.warn { border-left-color: var(--warn); }
+.alert-card.crit { border-left-color: var(--crit); }
+.alert-card.good { border-left-color: var(--good); }
+.alert-card b { font-family: var(--display); font-size: 15px; color: var(--navy); display: block; margin-bottom: 3px; }
+.alert-card p { font-size: 13px; line-height: 1.5; color: var(--ink-soft); margin: 0; max-width: 66ch; }
+.alert-card time { font-size: 10.5px; color: var(--ink-mute); display: block; }
+
+.time-label {
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin: 16px 0 7px;
+}
+.list-footnote { font-size: 11.5px; line-height: 1.5; color: var(--ink-mute); margin: 14px 0 0; }
+.log-row { font-size: 12px; color: var(--ink-soft); line-height: 1.5; padding: 9px 0; border-top: 1px dashed var(--line); }
+.chip-lime {
+  display: inline-block;
+  background: var(--lime); color: var(--navy);
+  font-family: var(--display); font-weight: 700; font-size: 11.5px;
+  letter-spacing: 0.03em;
+  padding: 6px 11px; border-radius: 6px;
+}
+
+.badge {
+  font-family: var(--display);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--navy);
+  background: var(--lime);
+  padding: 6px 12px;
+  width: max-content;
+}
+
+/* ---------- estado vazio "tudo em dia" (alertas) ---------- */
+.empty-hero {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  padding: 38px 30px 32px;
+  text-align: center;
+}
+.empty-hero .mark { margin: 0 auto 20px; justify-content: center; }
+.empty-hero .badge { margin: 0 auto 14px; display: inline-block; }
+.empty-hero h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--navy);
+  margin: 0 0 10px;
+}
+.empty-hero p { font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); margin: 0 auto; max-width: 44ch; }
+.empty-hero .eh-note {
+  font-size: 12px;
+  color: var(--ink-mute);
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--line);
+  max-width: 52ch;
+}
+
+/* ---------- estado vazio de galeria (criativos) ---------- */
+.empty-card {
+  background: var(--ice-soft);
+  border: 1.5px solid var(--ice);
+  border-radius: 14px;
+  padding: 34px 32px;
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 300px;
+  gap: 24px;
+  align-items: start;
+}
+.empty-ico {
+  width: 72px; height: 72px;
+  border-radius: 50%;
+  background: var(--white);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--cobalt);
+}
+.empty-head {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--navy);
+  margin: 4px 0 10px;
+  text-wrap: balance;
+}
+.empty-body { font-size: 13.5px; line-height: 1.6; color: var(--ink); margin: 0 0 18px; max-width: 52ch; }
+.empty-copy .cta { width: auto; padding: 14px 20px; }
+.empty-note { font-size: 12px; color: var(--ink-soft); margin: 10px 0 0; }
+.empty-list {
+  list-style: none;
+  margin: 0;
+  padding: 18px;
+  background: var(--white);
+  border: 1.5px solid var(--ice);
+  border-radius: 10px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.empty-list li, .tips-list li {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 12.5px; line-height: 1.5; color: var(--ink-soft);
+}
+.empty-list li b { color: var(--ink); font-weight: 600; }
+
+.tips-card { background: var(--white); border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.tips-title { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--navy); margin: 0 0 10px; }
+.tips-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.tick {
+  width: 17px; height: 17px; flex: none; margin-top: 1px;
+  background: var(--lime); color: var(--navy);
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 3px;
+}
+
+/* ---------- lista da assinatura: todas as linhas com o mesmo peso ---------- */
+.acct-list { padding: 4px 16px; }
+.acct-list .acct-row {
+  width: 100%;
+  display: flex; align-items: center; gap: 12px;
+  padding: 15px 0;
+  border: none;
+  border-bottom: 1px dashed var(--line);
+  background: none;
+  text-align: left;
+}
+.acct-list .acct-row:last-child { border-bottom: none; }
+.acct-list .acct-row svg { width: 14px; height: 14px; flex: none; color: var(--ink-mute); }
+.acct-list .acct-row:hover:not(:disabled) .ar-text b { color: var(--cobalt-dark); }
+.acct-list .acct-row:disabled { cursor: not-allowed; }
+.acct-list .acct-row:disabled .ar-text b { color: var(--ink-mute); }
+.ar-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.ar-text b { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--cobalt); }
+.ar-text span { font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+
+.support-block { border-radius: 10px; padding: 18px; margin: 0; font-size: 13px; }
+.support-block b { font-size: 14px; margin-bottom: 5px; }
+.support-block .wa { display: inline-block; margin-top: 8px; font-weight: 600; color: var(--cobalt); text-decoration: none; }
+
+/* ---------- sidebar: complementos das telas de app ---------- */
+.nav-eyebrow {
+  font-family: var(--display);
+  font-size: 9.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  padding: 0 12px 8px;
+}
+.nav-item .ico { width: 20px; height: 20px; flex: none; }
+.side-support {
+  background: var(--ice-soft);
+  border: 1.5px solid var(--ice);
+  border-radius: 10px;
+  padding: 13px;
+  margin-bottom: 12px;
+}
+.side-support b { display: block; font-family: var(--display); font-size: 12.5px; color: var(--navy); margin-bottom: 3px; }
+.side-support p { font-size: 11px; line-height: 1.5; color: var(--ink-soft); margin: 0 0 9px; }
+.side-support .cta { padding: 9px 12px; font-size: 12.5px; }
+
+/* ---------- topbar com saudação ---------- */
+.greet .sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; }
+.greet .sub b { color: var(--navy); font-weight: 600; }
+.topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+@media (max-width: 1080px) {
+  .dash-grid { grid-template-columns: 1fr; }
+  .dash-aside { position: static; }
+  .empty-card { grid-template-columns: 72px minmax(0, 1fr); }
+  .empty-list { grid-column: 1 / -1; }
+}
+@media (max-width: 760px) {
+  .field-row { grid-template-columns: 1fr; }
+  .empty-card { grid-template-columns: 1fr; padding: 24px 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

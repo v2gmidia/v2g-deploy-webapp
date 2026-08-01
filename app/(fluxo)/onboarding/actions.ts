@@ -2,12 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import {
-  perguntaPorId,
-  numeroDoTexto,
-  RAIO_KM,
-  TICKET_ESTIMADO,
-} from "./perguntas";
+import { perguntaPorId, numeroDoTexto, RAIO_KM, TICKET_FAIXA } from "./perguntas";
 
 /**
  * Uma resposta como fica gravada em `businesses.onboarding`.
@@ -175,9 +170,20 @@ export async function salvarRespostaAction(entrada: {
     atualizacao.niche = texto;
   }
   if (entrada.qid === "2") {
-    const estimado =
-      entrada.origem === "chip" ? TICKET_ESTIMADO[texto] : numeroDoTexto(texto);
-    if (estimado != null) atualizacao.avg_ticket = estimado;
+    if (entrada.origem === "chip") {
+      const faixa = TICKET_FAIXA[texto];
+      if (faixa) {
+        atualizacao.avg_ticket_min = faixa.min;
+        atualizacao.avg_ticket_max = faixa.max;
+      }
+    } else {
+      // Número escrito à mão é um valor exato, não uma faixa: min = max.
+      const exato = numeroDoTexto(texto);
+      if (exato != null) {
+        atualizacao.avg_ticket_min = exato;
+        atualizacao.avg_ticket_max = exato;
+      }
+    }
   }
   if (entrada.qid === "3") {
     // Cidade só existe quando veio do campo dedicado. Na resposta

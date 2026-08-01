@@ -8,10 +8,9 @@
  * (`setRail`, `setMarkStage`, `V2G.buildMark`).
  */
 
-const LABELS = ["1 · Seu negócio", "2 · Sua marca", "3 · Aprovar e decolar"];
+import { MARK, MARK_COLUNAS } from "@/components/ui/PixelMark";
 
-/** O mesmo desenho de `MARK` em `assets/v2g.js`: 6 colunas × 5 linhas. */
-const MARK = ["011010", "110110", "011011", "110110", "011010"];
+const LABELS = ["1 · Seu negócio", "2 · Sua marca", "3 · Aprovar e decolar"];
 
 const Cadeado = () => (
   <svg className="lock" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
@@ -91,7 +90,13 @@ export function Trilha({ passo, blocos, minutos, pecas }: TrilhaProps) {
 
         <div className="assemble">
           <div className="mark-plate">
-            <div className="mark" style={{ gridTemplateColumns: `repeat(6, var(--px))`, ["--px" as string]: "9px" }}>
+            <div
+              className="mark"
+              style={{
+                gridTemplateColumns: `repeat(${MARK_COLUNAS}, var(--px))`,
+                ["--px" as string]: "9px",
+              }}
+            >
               {pixels.map((c, i) => {
                 if (c !== "1") return <i key={i} className="off" />;
                 const grupo = Math.min(2, Math.floor(contadorAceso / porGrupo));

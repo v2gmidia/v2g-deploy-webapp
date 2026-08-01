@@ -27,7 +27,7 @@ export default async function OnboardingPage() {
 
   if ("erro" in estado) {
     return (
-      <div className="flow-grid solo">
+      <div className="auth-grid solo">
         <section className="auth-card">
           <h1 className="auth-h">Não consegui abrir seu onboarding.</h1>
           <p className="auth-sub">{estado.erro}</p>
@@ -43,12 +43,12 @@ export default async function OnboardingPage() {
   const blocos = blocosDoPasso1(respostas);
 
   return (
-    <div className="flow-grid">
+    <div className="auth-grid">
       <section className="auth-card">
         <Chat inicial={respostas} />
       </section>
 
-      <aside className="flow-aside">
+      <aside className="auth-aside">
         <Trilha
           passo={1}
           blocos={blocos}

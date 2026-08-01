@@ -114,17 +114,19 @@ export const BLOCOS_ACESOS: Record<string, number> = {
 };
 
 /**
- * Ticket médio: os chips são faixas, a coluna `businesses.avg_ticket` é
- * numérica. Guardamos o ponto médio da faixa para dar o que consultar, e
- * o texto exato escolhido continua em `businesses.onboarding` — a coluna
- * é uma estimativa derivada, a resposta crua é a fonte da verdade.
- * "Acima de R$ 800" vira 800 por ser piso, não média.
+ * Ticket médio: os chips são faixas, e a coluna antiga `avg_ticket` era
+ * numérica. Cada chip é uma FAIXA, e é como faixa que ela é gravada
+ * (`avg_ticket_min` / `avg_ticket_max`). Guardar o ponto médio, como se
+ * fazia antes, jogava fora a largura da faixa — que é justamente o sinal
+ * de quanta incerteza existe na resposta. Ver a migration 0004.
+ *
+ * `max: null` = faixa aberta para cima.
  */
-export const TICKET_ESTIMADO: Record<string, number> = {
-  "Até R$ 100": 50,
-  "R$ 100 a R$ 300": 200,
-  "R$ 300 a R$ 800": 550,
-  "Acima de R$ 800": 800,
+export const TICKET_FAIXA: Record<string, { min: number; max: number | null }> = {
+  "Até R$ 100": { min: 0, max: 100 },
+  "R$ 100 a R$ 300": { min: 100, max: 300 },
+  "R$ 300 a R$ 800": { min: 300, max: 800 },
+  "Acima de R$ 800": { min: 800, max: null },
 };
 
 /**
