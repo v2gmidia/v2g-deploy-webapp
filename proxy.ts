@@ -14,7 +14,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * direto na v16, usamos a convenção atual em vez de começar já com
  * o nome depreciado. Ver https://nextjs.org/docs/messages/middleware-to-proxy
  */
-const PROTECTED_PREFIXES = ["/inicio"];
+const PROTECTED_PREFIXES = ["/inicio", "/onboarding", "/expectativas"];
 
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

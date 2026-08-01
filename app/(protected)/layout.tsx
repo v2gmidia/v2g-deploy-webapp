@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { NavItem } from "@/components/ui/NavItem";
 import { signOutAction } from "./actions";
 
 /**
@@ -32,12 +33,11 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         </div>
 
         <nav className="side-nav">
-          {/* Só "Início" existe de verdade neste PR — ver
-              docs/arquitetura.md ("O que NÃO existe aqui e por quê").
-              Novos itens entram aqui só quando a rota existir. */}
-          <a className="nav-item active" href="/inicio" aria-current="page">
-            Início
-          </a>
+          {/* Novos itens entram aqui só quando a rota existir de verdade.
+              As três abaixo existem; o resto do protótipo ainda não. */}
+          <NavItem href="/inicio">Início</NavItem>
+          <NavItem href="/expectativas">Combinados</NavItem>
+          <NavItem href="/onboarding">Onboarding</NavItem>
         </nav>
 
         <div className="side-spacer" />
