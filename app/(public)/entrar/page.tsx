@@ -136,6 +136,10 @@ function EntrarContent() {
             </form>
 
             <div className="auth-foot">
+              <a href="/recuperar">Esqueci minha senha</a>
+            </div>
+
+            <div className="auth-foot">
               Novo por aqui?{" "}
               <button type="button" className="link-btn" onClick={() => setMode("cadastro")}>
                 &rarr; Criar conta
