@@ -50,6 +50,21 @@ export async function signUpAction(
   if (!nome || !email || !senha) {
     return { error: "Preencha nome, e-mail e senha." };
   }
+
+  // WhatsApp é obrigatório: é o canal por onde o produto avisa o cliente
+  // quando algo precisa dele (campanha parada, criativo esperando
+  // aprovação). Sem ele, esses avisos não têm para onde ir.
+  //
+  // A validação vive aqui, e não só no `required` do formulário, porque
+  // `required` do HTML é sugestão — a Server Action recebe qualquer
+  // corpo que alguém queira mandar.
+  if (!whatsapp) {
+    return { error: "Informe seu WhatsApp — é por ele que a gente te avisa." };
+  }
+  if (whatsapp.replace(/\D/g, "").length < 10) {
+    return { error: "Esse WhatsApp parece incompleto. Inclua o DDD." };
+  }
+
   if (senha.length < 6) {
     return { error: "A senha precisa ter pelo menos 6 caracteres." };
   }
@@ -67,7 +82,7 @@ export async function signUpAction(
     if (ehContaJaExistente(error)) {
       return { message: MENSAGEM_CADASTRO_NEUTRA };
     }
-    return { error: mensagemDeErroAuth(error, "cadastro") };
+    return { error: mensagemDeErroAuth(error, "cadastro", "/entrar") };
   }
 
   // Se o projeto Supabase exigir confirmação de e-mail, `data.session`
@@ -94,7 +109,7 @@ export async function signInAction(
   const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
   if (error) {
-    return { error: mensagemDeErroAuth(error, "login") };
+    return { error: mensagemDeErroAuth(error, "login", "/entrar") };
   }
 
   redirect(safeNextPath(formData));

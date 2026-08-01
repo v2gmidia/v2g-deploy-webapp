@@ -112,17 +112,47 @@ function normalizar(erro: unknown): ErroNormalizado {
 }
 
 /**
+ * Identificador curto de ocorrência.
+ *
+ * Existe para resolver um problema concreto: em produção, o cadastro
+ * falhava com a mensagem genérica e descobrir o motivo exigia alguém
+ * abrir o log da Vercel e adivinhar QUAL linha correspondia à queixa do
+ * cliente. Com o código na tela, a pessoa informa `ABC123` e a busca no
+ * log é exata.
+ *
+ * Alfabeto sem `0`, `O`, `1`, `I` — o código vai ser lido em voz alta ou
+ * digitado no WhatsApp por alguém que não é técnico.
+ */
+const ALFABETO = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+
+export function novaOcorrencia(): string {
+  const bytes = new Uint8Array(6);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => ALFABETO[b % ALFABETO.length]).join("");
+}
+
+/**
  * O log do servidor é o único lugar onde o texto original aparece.
  * Sem e-mail, senha ou token junto — só o suficiente para diagnosticar.
  *
- * Exportada para os pontos que precisam registrar sem mostrar mensagem
- * nenhuma (o route handler de confirmação, que responde com redirect).
+ * Formato fixo, para ser encontrável por busca simples:
+ *   [auth:<contexto>] ocorrencia=<ID> rota=<rota> code=<...> status=<...> :: <mensagem>
+ *
+ * Buscar por `ocorrencia=ABC123` no log da Vercel devolve exatamente uma
+ * linha. Buscar por `[auth:` devolve todas as falhas de autenticação.
  */
-export function registrarErroAuth(erro: unknown, contexto: ContextoAuth): void {
+export function registrarErroAuth(
+  erro: unknown,
+  contexto: ContextoAuth,
+  rota = "-",
+): string {
   const e = normalizar(erro);
+  const ocorrencia = novaOcorrencia();
   console.error(
-    `[auth:${contexto}] code=${e.code ?? "(sem code)"} status=${e.status ?? "-"} :: ${e.message}`,
+    `[auth:${contexto}] ocorrencia=${ocorrencia} rota=${rota} ` +
+      `code=${e.code ?? "(sem code)"} status=${e.status ?? "-"} :: ${e.message}`,
   );
+  return ocorrencia;
 }
 
 /**
@@ -151,9 +181,13 @@ export function ehContaJaExistente(erro: unknown): boolean {
  * cadastro e a recuperação de senha continuam sem vazar nada, que é onde
  * a enumeração de contas é barata para um atacante.
  */
-export function mensagemDeErroAuth(erro: unknown, contexto: ContextoAuth): string {
+export function mensagemDeErroAuth(
+  erro: unknown,
+  contexto: ContextoAuth,
+  rota = "-",
+): string {
   const normalizado = normalizar(erro);
-  registrarErroAuth(erro, contexto);
+  const ocorrencia = registrarErroAuth(erro, contexto, rota);
 
   if (normalizado.code) {
     const porCodigo = POR_CODIGO[normalizado.code];
@@ -164,5 +198,9 @@ export function mensagemDeErroAuth(erro: unknown, contexto: ContextoAuth): strin
     if (padrao.test(normalizado.message)) return mensagem;
   }
 
-  return MENSAGEM_GENERICA;
+  // Só o caso genérico ganha o código na tela. Nos erros conhecidos ele
+  // seria ruído: "E-mail ou senha incorretos. Código ABC123" não ajuda
+  // ninguém, porque a pessoa já sabe o que fazer. O código serve para o
+  // caso em que NEM NÓS sabemos o que houve sem olhar o log.
+  return `${MENSAGEM_GENERICA} Se continuar, informe o código ${ocorrencia}.`;
 }

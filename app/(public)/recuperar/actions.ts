@@ -37,7 +37,7 @@ export async function recuperarAction(
   // passa por este ponto revela quem está cadastrado; o rate limit de
   // envio, por exemplo, é informação útil e inofensiva.
   if (error) {
-    return { error: mensagemDeErroAuth(error, "recuperacao") };
+    return { error: mensagemDeErroAuth(error, "recuperacao", "/recuperar") };
   }
 
   return { enviado: true };

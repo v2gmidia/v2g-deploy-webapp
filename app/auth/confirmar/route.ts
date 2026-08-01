@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
     // A tela de destino já explica o que fazer; aqui só registramos o
     // motivo real (expirado, já usado, hash adulterado) para diagnóstico.
-    registrarErroAuth(error, "confirmacao");
+    registrarErroAuth(error, "confirmacao", "/auth/confirmar");
   }
 
   const invalidUrl = new URL("/redefinir", origin);

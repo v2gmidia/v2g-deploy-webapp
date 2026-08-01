@@ -39,7 +39,7 @@ export async function redefinirAction(
   const { error } = await supabase.auth.updateUser({ password: senha });
 
   if (error) {
-    return { error: mensagemDeErroAuth(error, "redefinicao") };
+    return { error: mensagemDeErroAuth(error, "redefinicao", "/redefinir") };
   }
 
   await supabase.auth.signOut();

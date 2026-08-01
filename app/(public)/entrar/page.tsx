@@ -55,14 +55,20 @@ function EntrarContent() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="whatsapp">Seu WhatsApp (opcional)</label>
+                <label htmlFor="whatsapp">Seu WhatsApp</label>
                 <input
                   id="whatsapp"
                   name="whatsapp"
                   type="tel"
+                  inputMode="tel"
                   placeholder="(11) 91234-5678"
                   autoComplete="tel"
+                  required
                 />
+                <p className="note">
+                  É por aqui que a gente avisa quando algo precisa de você. Usamos só para
+                  isso — nada de spam, nada de vender sua lista.
+                </p>
               </div>
               <div className="field">
                 <label htmlFor="email-cadastro">Seu melhor e-mail</label>
