@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { mensagemDeErroAuth } from "@/lib/auth-errors";
 
 export interface RecuperarActionState {
   error?: string;
@@ -32,8 +33,11 @@ export async function recuperarAction(
 
   // Erros de rede/config do provedor de e-mail são reais e merecem
   // aparecer — só a existência (ou não) da conta é que fica escondida.
+  // O Supabase não erra para e-mail inexistente aqui, então nada do que
+  // passa por este ponto revela quem está cadastrado; o rate limit de
+  // envio, por exemplo, é informação útil e inofensiva.
   if (error) {
-    return { error: "Não foi possível enviar o e-mail agora. Tente novamente em instantes." };
+    return { error: mensagemDeErroAuth(error, "recuperacao") };
   }
 
   return { enviado: true };

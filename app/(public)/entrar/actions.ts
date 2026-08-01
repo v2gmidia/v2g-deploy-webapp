@@ -2,6 +2,11 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import {
+  ehContaJaExistente,
+  mensagemDeErroAuth,
+  MENSAGEM_CADASTRO_NEUTRA,
+} from "@/lib/auth-errors";
 
 export interface AuthActionState {
   error?: string;
@@ -57,15 +62,18 @@ export async function signUpAction(
   });
 
   if (error) {
-    return { error: error.message };
+    // Conta já existente responde igual ao cadastro novo — ver
+    // MENSAGEM_CADASTRO_NEUTRA. Nunca dizemos que o e-mail já está na base.
+    if (ehContaJaExistente(error)) {
+      return { message: MENSAGEM_CADASTRO_NEUTRA };
+    }
+    return { error: mensagemDeErroAuth(error, "cadastro") };
   }
 
   // Se o projeto Supabase exigir confirmação de e-mail, `data.session`
   // vem nulo mesmo com o cadastro tendo funcionado — não é um erro.
   if (!data.session) {
-    return {
-      message: "Conta criada! Confira seu e-mail para confirmar antes de entrar.",
-    };
+    return { message: MENSAGEM_CADASTRO_NEUTRA };
   }
 
   redirect(safeNextPath(formData));
@@ -86,7 +94,7 @@ export async function signInAction(
   const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
   if (error) {
-    return { error: "E-mail ou senha incorretos." };
+    return { error: mensagemDeErroAuth(error, "login") };
   }
 
   redirect(safeNextPath(formData));

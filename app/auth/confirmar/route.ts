@@ -1,6 +1,7 @@
 import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { registrarErroAuth } from "@/lib/auth-errors";
 
 /**
  * Alvo do link enviado por e-mail (cadastro e recuperação de senha).
@@ -22,6 +23,10 @@ export async function GET(request: NextRequest) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+
+    // A tela de destino já explica o que fazer; aqui só registramos o
+    // motivo real (expirado, já usado, hash adulterado) para diagnóstico.
+    registrarErroAuth(error, "confirmacao");
   }
 
   const invalidUrl = new URL("/redefinir", origin);

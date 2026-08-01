@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { mensagemDeErroAuth } from "@/lib/auth-errors";
 
 export interface RedefinirActionState {
   error?: string;
@@ -38,9 +39,7 @@ export async function redefinirAction(
   const { error } = await supabase.auth.updateUser({ password: senha });
 
   if (error) {
-    return {
-      error: "Não foi possível redefinir sua senha. O link pode ter expirado — peça um novo.",
-    };
+    return { error: mensagemDeErroAuth(error, "redefinicao") };
   }
 
   await supabase.auth.signOut();
