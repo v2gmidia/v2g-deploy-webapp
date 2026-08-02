@@ -1,5 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { listarPaginas, type PaginaDoFacebook } from "@/lib/meta/graph";
+import { registrarErroMeta } from "@/lib/meta/erros";
 import { FormNegocio, FormPerfil } from "./Formularios";
+import { TrocarPagina } from "./TrocarPagina";
 
 /**
  * Sua conta — porte de `tela-09-conta-desktop.html`.
@@ -36,11 +40,39 @@ export default async function ContaPage() {
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("name, niche, city, radius_km, avg_ticket_min, avg_ticket_max, monthly_budget")
+    .select("id, name, niche, city, radius_km, avg_ticket_min, avg_ticket_max, monthly_budget")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
+
+  // As páginas alcançadas pela conexão. Precisa do token, que só o
+  // `service_role` lê do Vault — daí o cliente admin. Falha aqui não
+  // derruba a tela: o resto de /conta não depende do Facebook.
+  let paginas: PaginaDoFacebook[] = [];
+  let paginaAtual: string | null = null;
+
+  if (business?.id) {
+    const admin = createAdminClient();
+    const { data: conexao } = await admin
+      .from("meta_connections")
+      .select("meta_page_id, status")
+      .eq("business_id", business.id)
+      .maybeSingle();
+
+    paginaAtual = conexao?.meta_page_id ?? null;
+
+    if (conexao?.status === "active") {
+      try {
+        const { data: token } = await admin.rpc("obter_token_meta", {
+          p_business_id: business.id,
+        });
+        if (token && typeof token === "string") paginas = await listarPaginas(token);
+      } catch (erro) {
+        registrarErroMeta("conta:listar-paginas", erro);
+      }
+    }
+  }
 
   // O onboarding grava faixa (min/max). Como campo único, o mais
   // informativo é o piso — e a legenda do campo explica a origem.
@@ -108,6 +140,52 @@ export default async function ContaPage() {
               </div>
             </section>
           )}
+
+          {/* Trocar a página sem refazer o OAuth. Antes, o único caminho
+              era reconectar tudo — desproporcional para mudar um campo, e
+              cada passagem pelo Facebook é uma chance de o cliente
+              recusar ou cair num erro. */}
+          {paginas.length > 0 && (
+            <section>
+              <div className="section-title">
+                <h2>De qual página seus anúncios saem</h2>
+              </div>
+              <TrocarPagina paginas={paginas} atual={paginaAtual} />
+            </section>
+          )}
+
+          {/* As telas de destravar. Ficam aqui, e não escondidas atrás de
+              um erro, porque o cliente que trava geralmente trava ANTES
+              de publicar — e nesse momento ele não tem erro nenhum para
+              clicar, só a sensação de que não está andando. */}
+          <section>
+            <div className="section-title">
+              <h2>Verba, cobrança e requisitos</h2>
+            </div>
+            <div className="card acct-list">
+              <a className="acct-row" href="/verba">
+                <span className="ar-text">
+                  <b>Sua verba e o cartão</b>
+                  <span>Quanto você investe por mês, e por que são duas cobranças.</span>
+                </span>
+                <Seta />
+              </a>
+              <a className="acct-row" href="/whatsapp-business">
+                <span className="ar-text">
+                  <b>Seu WhatsApp precisa ser o Business</b>
+                  <span>Sem ele o anúncio não tem para onde mandar quem clica.</span>
+                </span>
+                <Seta />
+              </a>
+              <a className="acct-row" href="/sem-instagram">
+                <span className="ar-text">
+                  <b>Deixar seu Instagram profissional</b>
+                  <span>É uma chavinha dentro do aplicativo, de graça.</span>
+                </span>
+                <Seta />
+              </a>
+            </div>
+          </section>
 
           <section>
             <div className="section-title">

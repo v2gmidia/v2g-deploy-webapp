@@ -125,7 +125,7 @@ export default async function InicioPage() {
           </p>
           <a
             className="cta"
-            href={onboardingCompleto ? "/criativos" : "/onboarding"}
+            href={onboardingCompleto ? "/anuncios" : "/onboarding"}
             style={{ width: "max-content", marginTop: 22 }}
           >
             {onboardingCompleto ? "Separar minhas fotos" : "Começar agora"}
@@ -146,7 +146,7 @@ export default async function InicioPage() {
                   </span>
                   <Seta />
                 </a>
-                <a className="acct-row" href={onboardingCompleto ? "/onboarding" : "/criativos"}>
+                <a className="acct-row" href={onboardingCompleto ? "/onboarding" : "/anuncios"}>
                   <span className="ar-text">
                     <b>
                       {onboardingCompleto
@@ -234,7 +234,7 @@ export default async function InicioPage() {
             </section>
 
             <div className="card acct-list">
-              <a className="acct-row" href="/criativos">
+              <a className="acct-row" href="/anuncios">
                 <span className="ar-text">
                   <b>Separar mais fotos</b>
                   <span>Quanto mais material, mais a IA tem de onde escolher.</span>
@@ -373,7 +373,7 @@ export default async function InicioPage() {
           <section>
             <div className="section-title">
               <h2>Suas campanhas</h2>
-              <a href="/campanhas">Ver todas &rarr;</a>
+              <a href="/anuncios">Ver todas &rarr;</a>
             </div>
             <div className="campaign-list">
               {noAr.map((c) => (

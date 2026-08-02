@@ -1435,6 +1435,87 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .escolha-item input { margin-top: 3px; flex: none; accent-color: var(--cobalt); }
 .esc-texto { min-width: 0; flex: 1; }
 
+/* Escolha única: mostra o que foi escolhido sem fingir que é pergunta.
+   Sem radio, sem borda de item clicável — o que ele NÃO parece é tão
+   importante quanto o que ele mostra. */
+.escolhido {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 14px 16px;
+  background: var(--surface);
+}
+.escolhido b { display: block; font-family: var(--display); font-size: 15px; color: var(--navy); }
+.escolhido > span { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.escolhido .hint { margin-top: 8px; }
+
+/* Passo a passo numerado das telas de destravamento (WhatsApp Business,
+   Instagram profissional). Números grandes porque quem lê está com o
+   celular na outra mão, seguindo passo a passo de verdade. */
+.passos-card { margin-top: 22px; }
+.passos { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.passos > li { display: flex; gap: 14px; align-items: flex-start; }
+.passo-num {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--cobalt);
+  color: var(--white);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14px;
+  display: grid;
+  place-items: center;
+}
+.passos > li > div > b {
+  display: block;
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.passos p { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 0; }
+.passos p + p { margin-top: 8px; }
+/* O aviso dentro do passo: é o "isso vai acontecer e é normal". Sem ele
+   a pessoa acha que quebrou alguma coisa e para no meio. */
+.passo-aviso {
+  border-left: 2px solid var(--line);
+  padding-left: 10px;
+  color: var(--ink-soft) !important;
+  font-size: 13px !important;
+}
+
+/* Peça em aprovação. */
+.peca-card { margin-top: 22px; }
+.peca-bloco { padding: 14px 0; border-top: 1px solid var(--line); }
+.peca-bloco:first-of-type { border-top: 0; }
+.peca-oferta { font-family: var(--display); font-size: 17px; color: var(--navy); margin: 6px 0 0; }
+.peca-titulo { font-family: var(--display); font-size: 16px; color: var(--navy); margin: 6px 0 0; }
+.peca-corpo { font-size: 14px; line-height: 1.65; color: var(--ink); margin: 8px 0 0; white-space: pre-wrap; }
+
+/* As duas cobranças, lado a lado no desktop e empilhadas no celular —
+   ver as duas juntas é o que faz entender que são separadas. */
+.duas-cobrancas { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .duas-cobrancas { grid-template-columns: 1fr 1fr; } }
+.cobranca { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface); }
+.cobranca b { display: block; font-family: var(--display); font-size: 15px; color: var(--navy); margin: 6px 0 6px; }
+.cobranca p { font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 0; }
+
+.acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+
+/* Erro de publicação na linha do anúncio. Vermelho contido: é
+   informação, não alarme — nada foi gasto. */
+.lr-erro {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--crit);
+  background: var(--crit-soft);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 8px 0 0;
+}
+.lr-pecas { font-size: 12px; color: var(--ink-mute); margin: 8px 0 0; }
+
 .esc-texto b { display: block; font-family: var(--display); font-size: 14px; color: var(--navy); }
 .esc-texto span { display: block; font-size: 12px; line-height: 1.45; color: var(--ink-soft); margin-top: 2px; }
 

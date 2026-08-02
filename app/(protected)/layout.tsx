@@ -10,17 +10,16 @@ const IcoInicio = () => (
     <path d="M5 8.5V16h10V8.5" />
   </svg>
 );
-const IcoCampanhas = () => (
+/** Vendas: uma conversa. É por onde o cliente chega. */
+const IcoVendas = () => (
+  <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+    <path d="M17 9.5c0 3-3.1 5.5-7 5.5-.8 0-1.6-.1-2.3-.3L3 16l1.1-2.7C3.4 12.4 3 11 3 9.5 3 6.5 6.1 4 10 4s7 2.5 7 5.5z" />
+  </svg>
+);
+const IcoAnuncios = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
     <path d="M3 8v4h3l8 4V4L6 8H3z" />
     <path d="M16 8a3 3 0 0 1 0 4" />
-  </svg>
-);
-const IcoCriativos = () => (
-  <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-    <rect x="3" y="4" width="14" height="12" rx="1.5" />
-    <circle cx="7.5" cy="8.5" r="1.4" />
-    <path d="M4.5 14.5 8 11l3.5 3.5L14 12l2 2.5" />
   </svg>
 );
 const IcoAlertas = () => (
@@ -91,20 +90,29 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         </div>
 
         <nav className="side-nav">
-          {/* Só rotas que existem de verdade. Campanhas e Dashboard
-              entram quando forem migradas. As telas de FLUXO
-              (/expectativas, /onboarding) não entram aqui de propósito:
-              elas vivem no grupo `(fluxo)`, sem sidebar, porque pedem
-              foco numa tarefa só. */}
+          {/* CINCO ITENS, E CINCO É TETO — não meta. É o que cabe numa
+              barra inferior de celular, e o produto é para ser usado no
+              celular.
+
+              Campanhas e Criativos viraram ANÚNCIOS. O cliente não separa
+              a campanha do criativo: para ele, "meu anúncio" é a foto e o
+              dinheiro por trás dela, junto. Dois itens para isso era
+              raciocínio de gestor de tráfego vazando na interface.
+
+              Onboarding e Combinados NÃO entram: são passos únicos, não
+              lugares. Quando pendentes, aparecem como tarefa no Início —
+              que é o que aquela tela já faz. Item de menu para passo
+              único vira um lugar que, depois de cumprido, só serve para
+              o cliente se perguntar por que ainda está ali. */}
           <span className="nav-eyebrow">Seu negócio</span>
           <NavItem href="/inicio" icone={<IcoInicio />}>
             Início
           </NavItem>
-          <NavItem href="/campanhas" icone={<IcoCampanhas />}>
-            Campanhas
+          <NavItem href="/vendas" icone={<IcoVendas />}>
+            Vendas
           </NavItem>
-          <NavItem href="/criativos" icone={<IcoCriativos />}>
-            Criativos
+          <NavItem href="/anuncios" icone={<IcoAnuncios />}>
+            Anúncios
           </NavItem>
           <NavItem href="/alertas" icone={<IcoAlertas />}>
             Avisos

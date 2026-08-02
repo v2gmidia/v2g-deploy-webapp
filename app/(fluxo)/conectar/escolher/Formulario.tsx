@@ -34,6 +34,20 @@ export function FormularioEscolha({ contas, paginas }: Props) {
   const [paginaEscolhida, setPaginaEscolhida] = useState(paginas[0]?.id ?? "");
 
   const conta = contas.find((c) => c.externalId === contaEscolhida);
+  const pagina = paginas.find((p) => p.id === paginaEscolhida);
+
+  // PERGUNTA SÓ QUANDO HÁ AMBIGUIDADE DE VERDADE.
+  //
+  // O cliente típico tem uma conta de anúncio e uma página. Perguntar
+  // "qual das uma?" duas vezes seguidas é atrito de caso de agência
+  // aplicado a quem não é agência — e uma pergunta com uma resposta só
+  // ensina a pessoa a clicar sem ler, o que é o oposto do que a gente
+  // quer quando a próxima pergunta for sobre dinheiro.
+  //
+  // Escolha única continua VISÍVEL, só não é interativa: some com a
+  // informação e o cliente não sabe de qual conta a gente está falando.
+  const contaUnica = elegiveis.length === 1;
+  const paginaUnica = paginas.length === 1;
 
   return (
     <form action={action}>
@@ -44,9 +58,21 @@ export function FormularioEscolha({ contas, paginas }: Props) {
       <input type="hidden" name="moeda" value={conta?.moeda ?? ""} />
       <input type="hidden" name="pagina" value={paginaEscolhida} />
 
-      <p className="eyebrow">Conta de anúncio</p>
-      <div className="escolha-lista">
-        {contas.map((c) => (
+      {contaUnica ? (
+        <div className="escolhido">
+          <span className="eyebrow">Conta de anúncio</span>
+          <b>{conta?.nome}</b>
+          <span>
+            {conta?.externalId}
+            {conta?.moeda ? ` · ${conta.moeda}` : ""}
+          </span>
+          <p className="hint">É a única que encontramos na sua conta do Facebook.</p>
+        </div>
+      ) : (
+        <>
+          <p className="eyebrow">Conta de anúncio</p>
+          <div className="escolha-lista">
+            {contas.map((c) => (
           <label
             key={c.externalId}
             className={`escolha-item${!c.elegivel ? " off" : ""}${
@@ -70,10 +96,21 @@ export function FormularioEscolha({ contas, paginas }: Props) {
               </span>
             </span>
           </label>
-        ))}
-      </div>
+            ))}
+          </div>
+        </>
+      )}
 
-      {paginas.length > 0 && (
+      {paginaUnica ? (
+        <div className="escolhido" style={{ marginTop: 18 }}>
+          <span className="eyebrow">Página do seu negócio</span>
+          <b>{pagina?.nome}</b>
+          <span>{pagina?.categoria ?? pagina?.id}</span>
+          <p className="hint">
+            É a única página que encontramos. É dela que seus anúncios vão sair.
+          </p>
+        </div>
+      ) : paginas.length > 0 ? (
         <>
           <p className="eyebrow" style={{ marginTop: 22 }}>
             Página do seu negócio
@@ -101,13 +138,17 @@ export function FormularioEscolha({ contas, paginas }: Props) {
               </label>
             ))}
           </div>
-
-          <PrecisaDeWhatsApp />
         </>
-      )}
+      ) : null}
+
+      <PrecisaDeWhatsApp />
 
       <Button type="submit" disabled={pendente || !contaEscolhida || !paginaEscolhida}>
-        {pendente ? "Salvando…" : "Usar esta conta"}
+        {pendente
+          ? "Salvando…"
+          : contaUnica && paginaUnica
+            ? "Confirmar e seguir"
+            : "Usar esta conta"}
       </Button>
     </form>
   );

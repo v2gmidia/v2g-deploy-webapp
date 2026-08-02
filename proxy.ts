@@ -16,15 +16,25 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const PROTECTED_PREFIXES = [
   "/inicio",
-  "/campanhas",
+  "/vendas",
+  "/anuncios",
   "/conta",
   "/alertas",
+  // `/campanhas` e `/criativos` viraram `/anuncios` no lote 8. Ficam aqui
+  // porque continuam existindo como redirecionamento — e redirecionar
+  // quem não tem sessão para o destino protegido seria vazar a rota.
+  "/campanhas",
   "/criativos",
   // telas de fluxo — grupo `(fluxo)`, sem sidebar, mas igualmente com sessão
   "/onboarding",
   "/expectativas",
   "/processando",
   "/conectar",
+  "/verba",
+  "/aprovar",
+  "/reprovado",
+  "/sem-instagram",
+  "/whatsapp-business",
 ];
 
 export async function proxy(request: NextRequest) {

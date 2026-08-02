@@ -263,7 +263,7 @@ function Concluido() {
         ]}
       />
 
-      <a className="cta" href="/campanhas">
+      <a className="cta" href="/anuncios">
         Ver o que a IA preparou
       </a>
     </>
