@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
-import { dinheiro, numero, retornoPorReal } from "@/lib/formato";
+import { dinheiro, numero } from "@/lib/formato";
 
 /**
  * Início / dashboard — porte de `tela-05-dashboard-desktop.html`.
@@ -62,11 +62,14 @@ export default async function InicioPage() {
   const total = (metricas ?? []).reduce(
     (acc, m) => ({
       investido: acc.investido + Number(m.spend ?? 0),
-      vendas: acc.vendas + Number(m.conversions ?? 0),
+      // `conversions` guarda o evento otimizado da campanha, que é
+      // `onsite_conversion.messaging_conversation_started_7d` — conversa
+      // iniciada. O nome da coluna é genérico; o significado, não.
+      conversas: acc.conversas + Number(m.conversions ?? 0),
       receita: acc.receita + Number(m.revenue ?? 0),
       alcance: acc.alcance + Number(m.impressions ?? 0),
     }),
-    { investido: 0, vendas: 0, receita: 0, alcance: 0 },
+    { investido: 0, conversas: 0, receita: 0, alcance: 0 },
   );
 
   const temNumero = total.investido > 0;
@@ -296,7 +299,13 @@ export default async function InicioPage() {
   }
 
   // ---------- ESTADO 3: com número ----------
-  const retorno = retornoPorReal(total.receita, total.investido);
+  // O herói mede CONVERSA, não venda. A campanha é click-to-WhatsApp
+  // otimizada para CONVERSATIONS: o evento que o Meta conta e otimiza é
+  // "alguém abriu conversa", e é só isso que a plataforma sabe. Se a
+  // pessoa comprou depois, quem sabe é o dono do negócio, não o Meta.
+  // Herdar "vendas" de `conversions` era afirmar o que ninguém mediu.
+  const conversas = total.conversas;
+  const custoPorConversa = conversas > 0 ? total.investido / conversas : null;
 
   return (
     <>
@@ -314,17 +323,24 @@ export default async function InicioPage() {
           lima. É o único lugar onde o lima aparece. */}
       <section className="hero-destaque">
         <span className="eyebrow">Em uma frase</span>
-        {retorno !== null ? (
+        {conversas > 0 ? (
           <>
-            <NumeroQueConta valor={retorno} prefixo="R$ " casas={2} className="hero-num" />
-            <p className="hero-legenda">voltaram pra cada R$ 1 que você colocou</p>
+            <NumeroQueConta valor={conversas} casas={0} className="hero-num" />
+            <p className="hero-legenda">
+              {conversas === 1 ? "pessoa começou" : "pessoas começaram"} uma conversa no seu
+              WhatsApp pelo anúncio
+            </p>
+            <p className="hero-sub">
+              a {dinheiro(custoPorConversa ?? 0)} cada
+            </p>
           </>
         ) : (
-          <p className="hero-frase">Ainda não dá para dizer se valeu a pena.</p>
+          <p className="hero-frase">Ninguém começou conversa pelo anúncio ainda.</p>
         )}
         <p className="hero-note">
-          Estimado a partir das vendas que as plataformas conseguiram atribuir aos seus anúncios.
-          Pode faltar venda nessa conta, nunca sobrar — na dúvida, arredondamos para baixo.
+          Esse é o número de pessoas que clicaram no anúncio e abriram uma conversa com você no
+          WhatsApp. É o que o Facebook consegue medir. Quantas dessas viraram venda, quem sabe é
+          você — e é isso que a gente te pergunta todo dia.
         </p>
       </section>
 
@@ -332,8 +348,10 @@ export default async function InicioPage() {
         <div className="dash-main">
           <div className="metrics">
             <div className="metric">
-              <span className="m-label">Vendas geradas</span>
-              <span className="m-value">{numero(total.vendas)}</span>
+              {/* Era "Vendas geradas" lendo `conversions`. O dado sempre
+                  foi conversa; só o rótulo é que dizia venda. */}
+              <span className="m-label">Conversas iniciadas</span>
+              <span className="m-value">{numero(conversas)}</span>
               <span className="m-delta">nos últimos 7 dias</span>
             </div>
             <div className="metric">

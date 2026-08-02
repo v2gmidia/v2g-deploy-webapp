@@ -101,9 +101,18 @@ export function FormNegocio(props: NegocioProps) {
             defaultValue={props.limite ?? ""}
             placeholder="Ex.: 2400"
           />
+          {/* A copy antiga prometia "nunca passa disso, nem num dia bom".
+              O Facebook gasta até 25% a mais num dia e desconta nos
+              outros. A promessa era falsa e o cliente descobriria sozinho
+              olhando o extrato — pior lugar para descobrir. */}
           <p className="note">
-            Teto absoluto. A IA nunca passa disso, nem num dia bom — e você mexe nele quando
-            quiser.
+            É esse valor que você vai gastar no mês. Você mexe nele quando quiser.
+          </p>
+          <p className="note" style={{ marginTop: 6 }}>
+            Um detalhe para não te assustar quando acontecer: o Facebook pode gastar um pouco
+            mais num dia em que estiver aparecendo gente boa, e gasta menos nos dias seguintes
+            para compensar. No fim do mês fecha no seu limite. É assim que ele funciona para
+            todo mundo, e é o que faz o anúncio render mais.
           </p>
         </div>
       </div>

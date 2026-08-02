@@ -1204,6 +1204,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   margin: 12px 0 0;
   max-width: 26ch;
 }
+/* Linha de apoio do herói: o custo por conversa. Fica abaixo do rótulo
+   em lima, em branco esmaecido — presente, mas sem competir com o
+   número. Uma coisa por tela continua valendo. */
+.hero-destaque .hero-sub {
+  font-family: var(--display);
+  font-size: clamp(14px, 1.5vw, 16px);
+  font-weight: 500;
+  color: rgb(var(--surface-rgb) / 0.85);
+  margin: 4px 0 0;
+}
+
 /* Frase-título quando o destaque não é numérico (dia zero). */
 .hero-destaque .hero-frase {
   font-family: var(--display);
