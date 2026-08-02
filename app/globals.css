@@ -21,21 +21,53 @@
      recalculados a partir deles, porque um tom de hover ou uma linha
      de 1px que não acompanha o pai vira sujeira visível.
      ============================================================ */
-  --offwhite: #F1F6F7;   /* fundo da página — puxa para o azul, não o verde */
-  --navy: #111E2F;       /* identidade */
-  --black: #000C08;      /* identidade — no sistema, mas reservado (ver nota) */
-  --cobalt: #0B40DA;     /* identidade — superfície de destaque */
-  --lime: #E8FC65;       /* identidade */
-  --ice: #B0E9FD;        /* identidade */
+  --offwhite: #F1F6F7;   /* fundo da página */
+  --navy: #111E2F;
+  --black: #000C08;      /* no sistema, mas reservado (ver nota do tema escuro) */
+  --cobalt: #0743DC;     /* dos mockups aprovados — substitui o #0B40DA da apresentação */
+  --lime: #E8FC65;
+  --ice: #B0E9FD;
+
+  /* ------------------------------------------------------------
+     Canais RGB dos mesmos tons.
+
+     Existem porque transparência precisa do canal separado: escrever
+     `rgba(7, 67, 220, 0.09)` numa regra congela o valor ali, e trocar o
+     token deixa aquele tingimento para trás — foi exatamente o que
+     aconteceu quando a paleta mudou: 21 tons continuaram no azul e no
+     navy antigos, invisíveis até alguém comparar lado a lado.
+
+     Uso: `background: rgb(var(--cobalt-rgb) / 0.09)`.
+     ------------------------------------------------------------ */
+  --cobalt-rgb: 7 67 220;
+  --navy-rgb: 17 30 47;
+  --offwhite-rgb: 241 246 247;
+  --ice-rgb: 176 233 253;
+  --lime-rgb: 232 252 101;
+  --surface-rgb: 254 254 254;
+
+  /* ------------------------------------------------------------
+     SUPERFÍCIE ≠ BRANCO.
+
+     `--surface` é o fundo de card sobre a página. `--white` é branco
+     literal — texto sobre cobalto, sobre vermelho crítico. Eram a mesma
+     variável, e isso mentiria no tema escuro: lá a superfície vira um
+     cinza-azulado e o branco continua branco.
+     ------------------------------------------------------------ */
+  --surface: #FEFEFE;
+  --white: #FFFFFF;
 
   /* derivados */
-  --cobalt-dark: #0833AE;  /* hover do cobalto */
-  --ice-soft: #E3F6FE;     /* gelo a 25%, para blocos de confiança */
+  --cobalt-dark: #0532A5;  /* hover do cobalto */
   --ink: #111E2F;          /* texto = navy */
   --ink-soft: #485A6B;
   --ink-mute: #78899A;
-  --line: #D9E3E6;         /* linha acompanhou o off-white para o azul */
-  --white: #FEFEFE;        /* card sobre a página — não é #FFF puro */
+  --line: #D9E3E6;
+
+  /* Os quatro `-soft` abaixo são tons CLAROS pensados para fundo claro.
+     No tema escuro eles não podem ser derivados dos pais — vão precisar
+     de valores próprios, calibrados contra a superfície escura. */
+  --ice-soft: #E3F6FE;
   --good: #2E9E5B;
   --good-soft: #E2F3E8;
   --warn: #B97F1D;
@@ -67,7 +99,7 @@
    NÃO são os mesmos valores. Eles viram:
 
        --lime   #D5EF25   (hoje claro: #E8FC65)
-       --cobalt #0239C7   (hoje claro: #0B40DA)
+       --cobalt #0239C7   (hoje claro: #0743DC)
 
    Ou seja, modo escuro é uma PALETA CALIBRADA, não inversão de fundo.
    Trocar só `--offwhite` por um tom escuro e manter o resto produz uma
@@ -75,10 +107,14 @@
    claro sobre superfície escura satura demais, e o cobalto claro perde
    contra o fundo.
 
-   O que ainda impede a troca ser só de tokens está auditado no relatório
-   do lote: 26 valores de cor escritos direto nas regras, fora do
-   `:root`. Enquanto eles existirem, o tema escuro precisa de remendo
-   regra a regra.
+   O CAMINHO ESTÁ LIVRE: não sobrou nenhum valor de cor escrito fora
+   deste `:root`. Todo tingimento passa por `rgb(var(--x-rgb) / alfa)` e
+   toda superfície de card por `--surface`. Redefinir o bloco de tokens
+   dentro de `[data-tema="escuro"]` alcança a folha inteira.
+
+   O que ainda vai precisar de valor próprio, porque não sai de
+   derivação: os quatro `-soft` (`--ice-soft`, `--good-soft`,
+   `--warn-soft`, `--crit-soft`).
    ============================================================ */
 
 * { box-sizing: border-box; }
@@ -163,7 +199,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .field input {
   width: 100%;
   border: 1.5px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
   padding: 12px 13px;
   font-size: 15px;
   font-family: var(--body);
@@ -245,7 +281,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.crit { background: var(--crit-soft); color: var(--crit); }
 .pill.info { background: var(--ice-soft); color: var(--cobalt); }
-.pill.off { background: rgba(11, 27, 43, 0.07); color: var(--ink-mute); }
+.pill.off { background: rgb(var(--navy-rgb) / 0.07); color: var(--ink-mute); }
 
 /* ---------- card de prova (components/ui/ProofCard.tsx) ---------- */
 .proof-card {
@@ -314,13 +350,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--cobalt);
   text-decoration: none;
   border: 1.5px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
   border-radius: 999px;
   padding: 9px 15px;
 }
 .auth-top .auth-help:hover { border-color: var(--cobalt); }
 .auth-card {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 30px;
@@ -393,7 +429,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--white);
+  background: var(--surface);
   border-right: 1.5px solid var(--line);
   padding: 22px 16px 18px;
 }
@@ -412,8 +448,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-weight: 700;
   position: relative;
 }
-.nav-item:hover { background: rgba(11, 27, 43, 0.05); color: var(--navy); }
-.nav-item.active { background: rgba(43, 76, 206, 0.09); color: var(--cobalt); }
+.nav-item:hover { background: rgb(var(--navy-rgb) / 0.05); color: var(--navy); }
+.nav-item.active { background: rgb(var(--cobalt-rgb) / 0.09); color: var(--cobalt); }
 .nav-item.active::before {
   content: '';
   position: absolute;
@@ -481,7 +517,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   line-height: 1.5;
 }
 .bubble.ai {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-bottom-left-radius: 3px;
   align-self: flex-start;
@@ -501,10 +537,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 9px 15px;
   border: 1.5px solid var(--cobalt);
   color: var(--cobalt);
-  background: var(--white);
+  background: var(--surface);
   border-radius: 999px;
 }
-.chip-opt:hover:not([disabled]) { background: rgba(43, 76, 206, 0.07); }
+.chip-opt:hover:not([disabled]) { background: rgb(var(--cobalt-rgb) / 0.07); }
 .chip-opt[disabled] { opacity: 0.4; cursor: default; }
 .chip-opt.picked { background: var(--cobalt); color: var(--white); }
 
@@ -543,7 +579,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: 13.5px;
   font-family: var(--body);
   color: var(--ink);
-  background: var(--white);
+  background: var(--surface);
 }
 .fallback-field input:focus,
 .city-row input:focus { border-color: var(--cobalt); outline: none; }
@@ -613,8 +649,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .rail-track { display: flex; gap: 5px; }
 .rail-step { flex: 1; }
 .rail-blocks { display: flex; gap: 2px; }
-.rail-blocks i { flex: 1; height: 7px; background: rgba(43, 76, 206, 0.16); display: block; }
-.rail-blocks i.lit { background: var(--lime); box-shadow: 0 0 0 1px rgba(11, 27, 43, 0.12) inset; }
+.rail-blocks i { flex: 1; height: 7px; background: rgb(var(--cobalt-rgb) / 0.16); display: block; }
+.rail-blocks i.lit { background: var(--lime); box-shadow: 0 0 0 1px rgb(var(--navy-rgb) / 0.12) inset; }
 .rail-blocks i.on { background: var(--cobalt); }
 .rail-labels { display: flex; gap: 5px; margin-top: 6px; }
 .rail-labels span {
@@ -653,7 +689,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .assemble .mark i { transition: opacity 0.3s ease; }
 .assemble .mark i.pxon { background: var(--lime); }
 .assemble .mark i.pxbuild { background: var(--ice); animation: buildpulse 1.5s ease infinite; }
-.assemble .mark i.pxoff { background: rgba(240, 242, 239, 0.16); }
+.assemble .mark i.pxoff { background: rgb(var(--offwhite-rgb) / 0.16); }
 @keyframes buildpulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 .assemble .hint { font-size: 11.5px; line-height: 1.5; color: var(--ink-soft); margin: 0; }
 .assemble .hint b { color: var(--ink); font-weight: 600; display: block; margin-top: 2px; }
@@ -670,7 +706,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .proof-list li b { color: var(--ink); font-weight: 600; }
 .proof-actions { display: flex; flex-direction: column; gap: 8px; }
-.proof-actions .cta { background: var(--white); padding: 11px 12px; font-size: 13px; }
+.proof-actions .cta { background: var(--surface); padding: 11px 12px; font-size: 13px; }
 .proof-actions .cta:hover { border-color: var(--cobalt); color: var(--cobalt); }
 
 /* ============================================================
@@ -690,13 +726,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-back {
   width: 30px; height: 30px; flex: none;
   border-radius: 50%;
-  background: rgba(11, 27, 43, 0.06);
+  background: rgb(var(--navy-rgb) / 0.06);
   color: var(--navy);
   display: flex; align-items: center; justify-content: center;
   text-decoration: none;
   border: none;
 }
-.ec-back:hover { background: rgba(11, 27, 43, 0.11); }
+.ec-back:hover { background: rgb(var(--navy-rgb) / 0.11); }
 .ec-label {
   font-family: var(--display);
   font-size: 11px;
@@ -712,8 +748,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: 1.4px solid var(--cobalt);
   background: transparent;
 }
-.ec-dots i.done { background: rgba(43, 76, 206, 0.3); }
-.ec-dots i.now { background: var(--cobalt); box-shadow: 0 0 0 3px rgba(43, 76, 206, 0.14); }
+.ec-dots i.done { background: rgb(var(--cobalt-rgb) / 0.3); }
+.ec-dots i.now { background: var(--cobalt); box-shadow: 0 0 0 3px rgb(var(--cobalt-rgb) / 0.14); }
 .ec-count {
   font-family: var(--display);
   font-size: 12px;
@@ -807,7 +843,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--navy);
   padding: 14px 26px;
   border-radius: 8px;
-  box-shadow: 0 18px 36px -14px rgba(11, 27, 43, 0.55);
+  box-shadow: 0 18px 36px -14px rgb(var(--navy-rgb) / 0.55);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -826,7 +862,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   line-height: 1.45;
   padding: 13px 17px;
   border-radius: 8px;
-  box-shadow: 0 18px 36px -16px rgba(11, 27, 43, 0.6);
+  box-shadow: 0 18px 36px -16px rgb(var(--navy-rgb) / 0.6);
   max-width: 320px;
   opacity: 0;
   transform: translateY(8px);
@@ -891,7 +927,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .st-note, .side-note { font-size: 12.5px; color: var(--ink-mute); }
 
 .card {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 16px 18px;
@@ -907,7 +943,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .field select {
   width: 100%;
   border: 1.5px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
   padding: 12px 13px;
   font-size: 15px;
   font-family: var(--body);
@@ -915,11 +951,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 4px;
 }
 .field select:focus { border-color: var(--cobalt); outline: none; }
-.field input:disabled, .field select:disabled { background: rgba(11, 27, 43, 0.04); color: var(--ink-mute); }
+.field input:disabled, .field select:disabled { background: rgb(var(--navy-rgb) / 0.04); color: var(--ink-mute); }
 
 /* ---------- avisos ---------- */
 .alert-card {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-left: 4px solid var(--cobalt);
   border-radius: 10px;
@@ -963,7 +999,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 /* ---------- estado vazio "tudo em dia" (alertas) ---------- */
 .empty-hero {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 12px;
   padding: 38px 30px 32px;
@@ -1002,7 +1038,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .empty-ico {
   width: 72px; height: 72px;
   border-radius: 50%;
-  background: var(--white);
+  background: var(--surface);
   display: flex; align-items: center; justify-content: center;
   color: var(--cobalt);
 }
@@ -1021,7 +1057,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   list-style: none;
   margin: 0;
   padding: 18px;
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--ice);
   border-radius: 10px;
   display: flex; flex-direction: column; gap: 12px;
@@ -1032,7 +1068,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .empty-list li b { color: var(--ink); font-weight: 600; }
 
-.tips-card { background: var(--white); border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.tips-card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; }
 .tips-title { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--navy); margin: 0 0 10px; }
 .tips-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .tick {
@@ -1047,7 +1083,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    diferença é de cor e de seta, não de superfície. */
 .acct-row.destaque .ar-text b { color: var(--cobalt); }
 .acct-row.destaque svg { color: var(--cobalt); }
-.acct-list .acct-row.destaque { background: rgba(11, 64, 218, 0.04); border-radius: 8px; padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
+.acct-list .acct-row.destaque { background: rgb(var(--cobalt-rgb) / 0.04); border-radius: 8px; padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
 
 /* ---------- lista da assinatura: todas as linhas com o mesmo peso ---------- */
 .acct-list { padding: 4px 16px; }
@@ -1131,16 +1167,16 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    carrega o significado (o rótulo do número, ou a palavra em destaque
    da frase) — se ele aparecer também no rótulo de seção e no botão,
    deixa de destacar qualquer coisa. */
-.hero-destaque .eyebrow { color: rgba(254, 254, 254, 0.72); margin: 0 0 14px; }
+.hero-destaque .eyebrow { color: rgb(var(--surface-rgb) / 0.72); margin: 0 0 14px; }
 
 /* O botão padrão é cobalto sobre branco; aqui seria cobalto sobre
    cobalto. Inverte: superfície branca, texto cobalto. */
 .hero-destaque .cta {
-  background: var(--white);
+  background: var(--surface);
   color: var(--cobalt);
 }
 .hero-destaque .cta:hover { background: var(--ice); }
-.hero-destaque .hero-note { color: rgba(254, 254, 254, 0.72); margin-top: 16px; max-width: 46ch; }
+.hero-destaque .hero-note { color: rgb(var(--surface-rgb) / 0.72); margin-top: 16px; max-width: 46ch; }
 .hero-destaque .hero-note a,
 .hero-destaque .hero-note .est-link { color: var(--lime); }
 
@@ -1183,7 +1219,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-destaque .hero-frase .destaque { color: var(--lime); }
 
 .hero-card {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 12px;
   padding: 26px 26px 22px;
@@ -1239,7 +1275,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .campaign-list { display: flex; flex-direction: column; gap: 12px; }
 .list-row {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 15px 17px;
@@ -1270,13 +1306,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .navy-card {
   background: var(--navy);
-  background-image: radial-gradient(rgba(171, 234, 253, 0.12) 1px, transparent 1px);
+  background-image: radial-gradient(rgb(var(--ice-rgb) / 0.12) 1px, transparent 1px);
   background-size: 16px 16px;
   color: var(--offwhite);
   border-radius: 12px;
   padding: 20px;
 }
-.navy-card p { font-size: 12.5px; line-height: 1.55; color: rgba(240, 242, 239, 0.82); margin: 8px 0 0; }
+.navy-card p { font-size: 12.5px; line-height: 1.55; color: rgb(var(--offwhite-rgb) / 0.82); margin: 8px 0 0; }
 .navy-card .nc-head {
   display: flex; align-items: center; gap: 9px;
   font-family: var(--display); font-weight: 700; font-size: 13px;
@@ -1286,10 +1322,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .navy-card .nc-head svg { color: var(--ice); flex: none; }
 .navy-card .nc-foot {
   font-size: 11.5px;
-  color: rgba(240, 242, 239, 0.65);
+  color: rgb(var(--offwhite-rgb) / 0.65);
   margin-top: 14px;
   padding-top: 12px;
-  border-top: 1px dashed rgba(171, 234, 253, 0.25);
+  border-top: 1px dashed rgb(var(--ice-rgb) / 0.25);
 }
 .navy-card .nc-foot a { color: var(--ice); font-weight: 600; text-decoration: none; }
 .navy-card .chip-lime { margin-top: 12px; }
@@ -1297,7 +1333,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* "Enquanto você dormia" era um card navy. Virou claro: com o herói
    escuro, dois pretos na mesma tela dividem a atenção e nenhum vence.
    O que ele conta é prestação de contas, não manchete. */
-.card.noturno { background: var(--white); border: 1.5px solid var(--line); }
+.card.noturno { background: var(--surface); border: 1.5px solid var(--line); }
 .card.noturno .nc-head {
   display: flex; align-items: center; gap: 9px;
   font-family: var(--display); font-weight: 700; font-size: 13px;
@@ -1322,7 +1358,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 
 .command-card {
-  background: var(--white);
+  background: var(--surface);
   border: 1.5px solid var(--line);
   border-radius: 12px;
   padding: 20px;
@@ -1338,7 +1374,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 9px 15px;
   border-radius: 4px;
   border: 1.5px solid var(--line);
-  background: var(--white);
+  background: var(--surface);
   color: var(--ink-soft);
 }
 .btn-sm.primary { border-color: var(--cobalt); color: var(--cobalt); font-weight: 700; }
@@ -1379,11 +1415,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 10px;
   padding: 13px 15px;
   cursor: pointer;
-  background: var(--white);
+  background: var(--surface);
 }
 .escolha-item:hover { border-color: var(--cobalt); }
-.escolha-item.picked { border-color: var(--cobalt); background: rgba(43, 76, 206, 0.05); }
-.escolha-item.off { opacity: 0.55; cursor: not-allowed; background: rgba(11, 27, 43, 0.03); }
+.escolha-item.picked { border-color: var(--cobalt); background: rgb(var(--cobalt-rgb) / 0.05); }
+.escolha-item.off { opacity: 0.55; cursor: not-allowed; background: rgb(var(--navy-rgb) / 0.03); }
 .escolha-item.off:hover { border-color: var(--line); }
 .escolha-item input { margin-top: 3px; flex: none; accent-color: var(--cobalt); }
 .esc-texto { min-width: 0; }
@@ -1421,7 +1457,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .stepper .node {
   width: 22px; height: 22px; flex: none;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(11, 27, 43, 0.07);
+  background: rgb(var(--navy-rgb) / 0.07);
   color: var(--ink-mute);
   z-index: 1;
 }
@@ -1429,8 +1465,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .stepper li.active .node { background: var(--cobalt); color: var(--white); animation: pulse-node 1.8s ease infinite; }
 .stepper li.fail .node { background: var(--crit); color: var(--white); }
 @keyframes pulse-node {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(43, 76, 206, 0.35); }
-  50% { box-shadow: 0 0 0 6px rgba(43, 76, 206, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--cobalt-rgb) / 0.35); }
+  50% { box-shadow: 0 0 0 6px rgb(var(--cobalt-rgb) / 0); }
 }
 .stepper .s-copy b { font-family: var(--display); font-size: 15.5px; color: var(--navy); display: block; }
 .stepper .s-copy span { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; display: block; margin-top: 2px; }
