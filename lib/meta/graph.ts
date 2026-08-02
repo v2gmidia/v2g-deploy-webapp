@@ -118,4 +118,85 @@ export async function listarContasDeAnuncio(token: string): Promise<ContaDeAnunc
 
    Nada disso é necessário para o v1: quem recebe o anúncio é a conta de
    anúncio, e a identidade vem pela página.
+
+   ERRO QUE ISSO CAUSOU, para não se repetir: ao remover aquela função eu
+   conferi que nada no código existente quebrava — e não quebrava mesmo.
+   Só que ela era também a ÚNICA chamada a `/me/accounts`, ou seja, a
+   única fonte possível do `meta_page_id`. O buraco só apareceu no lote
+   seguinte, quando publicar exigiu `object_story_spec.page_id`.
+   Ao remover algo, a pergunta não é só "quem chama isto hoje" — é
+   "o que dependeria disto depois".
    ============================================================ */
+
+export interface PaginaDoFacebook {
+  id: string;
+  nome: string;
+  categoria: string | null;
+}
+
+/**
+ * As Páginas que o token alcança. Usa `pages_show_list`, que está no
+ * consentimento desde o início.
+ *
+ * Só os campos seguros: `id`, `name`, `category`. Campo inválido na
+ * lista de `fields` derruba a resposta INTEIRA, e a listagem de páginas
+ * é obrigatória para publicar — não pode falhar por causa de um campo
+ * acessório. A verificação de WhatsApp é uma chamada separada, de
+ * propósito (ver `verificarWhatsAppDaPagina`).
+ */
+export async function listarPaginas(token: string): Promise<PaginaDoFacebook[]> {
+  const dados = await chamar<{
+    data?: Array<{ id: string; name?: string; category?: string }>;
+  }>("/me/accounts?fields=id,name,category&limit=100", token);
+
+  return (dados.data ?? []).map((p) => ({
+    id: p.id,
+    nome: p.name?.trim() || p.id,
+    categoria: p.category ?? null,
+  }));
+}
+
+/**
+ * `true` = tem WhatsApp ligado, `false` = não tem, `null` = não deu para
+ * verificar.
+ *
+ * Os três estados são intencionais. O campo que reporta o número mudou
+ * de nome entre versões da API, e um `false` errado mandaria o cliente
+ * resolver um problema que ele não tem — o mesmo defeito que derrubou o
+ * seletor de Instagram. Quando a chamada falha, a resposta honesta é
+ * "não sei", e a tela diz isso em vez de inventar.
+ */
+export async function verificarWhatsAppDaPagina(
+  token: string,
+  pageId: string,
+): Promise<boolean | null> {
+  try {
+    const dados = await chamar<{
+      whatsapp_number?: string;
+      connected_whatsapp_business_account?: { id?: string };
+    }>(`/${pageId}?fields=whatsapp_number,connected_whatsapp_business_account`, token);
+
+    const numero = dados.whatsapp_number?.trim();
+    const waba = dados.connected_whatsapp_business_account?.id;
+    return Boolean(numero || waba);
+  } catch {
+    // Não propaga: a escolha da página não pode ficar refém desta
+    // checagem. Quem chama trata `null` como "não verificado".
+    return null;
+  }
+}
+
+export interface PaginaComWhatsApp extends PaginaDoFacebook {
+  /** true = pronta, false = falta ligar, null = não deu para verificar */
+  whatsapp: boolean | null;
+}
+
+/** Lista as páginas e verifica o WhatsApp de cada uma, em paralelo. */
+export async function listarPaginasComWhatsApp(
+  token: string,
+): Promise<PaginaComWhatsApp[]> {
+  const paginas = await listarPaginas(token);
+  return Promise.all(
+    paginas.map(async (p) => ({ ...p, whatsapp: await verificarWhatsAppDaPagina(token, p.id) })),
+  );
+}

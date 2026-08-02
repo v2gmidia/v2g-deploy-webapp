@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { listarContasDeAnuncio } from "@/lib/meta/graph";
+import { listarContasDeAnuncio, listarPaginasComWhatsApp } from "@/lib/meta/graph";
 import { diagnosticar, registrarErroMeta } from "@/lib/meta/erros";
 import { FormularioEscolha } from "./Formulario";
 
@@ -56,8 +56,12 @@ export default async function EscolherPage() {
   }
 
   let contas;
+  let paginas;
   try {
-    contas = await listarContasDeAnuncio(token);
+    [contas, paginas] = await Promise.all([
+      listarContasDeAnuncio(token),
+      listarPaginasComWhatsApp(token),
+    ]);
   } catch (erro) {
     registrarErroMeta("escolher:listagem", erro);
     const diagnostico = diagnosticar(erro);
@@ -114,6 +118,18 @@ export default async function EscolherPage() {
     );
   }
 
+  // Sem NENHUMA página não há como publicar: `object_story_spec.page_id`
+  // é obrigatório. É beco, e com texto próprio — mandar a pessoa para a
+  // tela de escolha sem opção seria um erro genérico disfarçado.
+  if (paginas.length === 0) {
+    return (
+      <BecoSemSaida
+        titulo="Não achamos nenhuma página do seu negócio."
+        texto="Os anúncios saem de uma página do Facebook — é ela que aparece como remetente e é o WhatsApp dela que recebe as conversas. Este perfil não tem nenhuma página ligada a ele. Criar leva poucos minutos e a gente faz junto."
+      />
+    );
+  }
+
   // Existia aqui um aviso de "não achamos um Instagram profissional". Ele
   // saiu junto com o escopo `instagram_basic`: sem o dado, a tela não tem
   // como afirmar que não achou — e apareceria para quem TEM Instagram,
@@ -127,10 +143,10 @@ export default async function EscolherPage() {
         <p className="auth-sub">
           Achamos {elegiveis.length === 1 ? "uma conta" : `${elegiveis.length} contas`} ligada
           {elegiveis.length === 1 ? "" : "s"} ao seu perfil. Escolha em qual os anúncios vão
-          rodar.
+          rodar e de qual página eles saem.
         </p>
 
-        <FormularioEscolha contas={contas} />
+        <FormularioEscolha contas={contas} paginas={paginas} />
       </main>
 
       <aside className="auth-aside">
