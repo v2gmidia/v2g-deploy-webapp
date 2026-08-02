@@ -4,6 +4,7 @@ import { listarPaginas, type PaginaDoFacebook } from "@/lib/meta/graph";
 import { registrarErroMeta } from "@/lib/meta/erros";
 import { FormNegocio, FormPerfil } from "./Formularios";
 import { TrocarPagina } from "./TrocarPagina";
+import { SeletorDeTema } from "./SeletorDeTema";
 
 /**
  * Sua conta — porte de `tela-09-conta-desktop.html`.
@@ -153,6 +154,13 @@ export default async function ContaPage() {
               <TrocarPagina paginas={paginas} atual={paginaAtual} />
             </section>
           )}
+
+          <section>
+            <div className="section-title">
+              <h2>Aparência</h2>
+            </div>
+            <SeletorDeTema />
+          </section>
 
           {/* As telas de destravar. Ficam aqui, e não escondidas atrás de
               um erro, porque o cliente que trava geralmente trava ANTES

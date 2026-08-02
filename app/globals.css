@@ -85,51 +85,179 @@
   --shell-max: 1240px;
   --auth-max: 1040px;
   --auth-card: 480px;
+
+  /* ------------------------------------------------------------
+     CAMADA SEMÂNTICA — o que sustenta os dois temas.
+
+     Regra: componente NUNCA usa `--cobalt` ou `--navy` para pintar
+     superfície. Usa `--canvas`, `--surface`, `--sidebar-bg`. Os tons da
+     identidade continuam existindo para ACENTO (número, ícone, borda),
+     e é por isso que o tema escuro consegue recalibrá-los sem reescrever
+     regra nenhuma.
+     ------------------------------------------------------------ */
+  --canvas: var(--offwhite);
+  --surface-2: #FFFFFF;        /* card sobre card, campo dentro de card */
+
+  /* A sidebar é COBALTO, não branca — dos mockups aprovados. Ela tem
+     tokens próprios porque é a única região do app com fundo escuro no
+     tema claro: herdar `--ink` ali daria texto navy sobre azul. */
+  --sidebar-bg: var(--cobalt);
+  --sidebar-ink: rgb(255 255 255 / 0.78);
+  --sidebar-ink-strong: #FFFFFF;
+  --sidebar-active-bg: rgb(255 255 255 / 0.15);
+  --sidebar-line: rgb(255 255 255 / 0.16);
+
+  /* Os três cartões de métrica do painel. Cada um é um par fundo/tinta,
+     porque no escuro o fundo deixa de ser pastel e a tinta deixa de ser
+     escura — inverter só o fundo produziria texto ilegível. */
+  --card-ice-bg: #DCEEFB;
+  --card-ice-ink: var(--navy);
+  --card-cobalt-bg: var(--cobalt);
+  --card-cobalt-ink: #FFFFFF;
+  --card-lime-bg: var(--lime);
+  --card-lime-ink: var(--black);
+
+  /* Placa escura: o glifo da marca, o toast, o `.navy-card`. Continua
+     ESCURA nos dois temas — é identidade, não superfície de leitura.
+     Existe separada de `--navy` porque aquele token faz o papel duplo de
+     "tom escuro da marca" e "cor de texto", e no tema escuro o texto
+     precisa clarear enquanto a placa não. */
+  --plate: #111E2F;
+  --plate-ink: #F1F6F7;
 }
 
 /* ============================================================
-   MODO ESCURO — NÃO IMPLEMENTADO. Nota para quem for fazer.
+   MODO ESCURO
 
-   Existe uma versão escura aprovada da identidade. Quando ela for
-   construída, o caminho é uma SEGUNDA CAMADA de tokens — um bloco
-   `[data-tema="escuro"] { ... }` redefinindo as mesmas variáveis — e
-   nenhuma regra de componente reescrita.
+   Uma segunda camada de tokens. Nenhuma regra de componente é
+   reescrita abaixo — se alguma precisar ser, é sinal de que ela está
+   pintando superfície com token de acento, e o certo é corrigir a regra,
+   não adicionar exceção aqui.
 
-   O ponto que mais engana: no referencial escuro o lima e o cobalto
-   NÃO são os mesmos valores. Eles viram:
-
-       --lime   #D5EF25   (hoje claro: #E8FC65)
-       --cobalt #0239C7   (hoje claro: #0743DC)
-
-   Ou seja, modo escuro é uma PALETA CALIBRADA, não inversão de fundo.
-   Trocar só `--offwhite` por um tom escuro e manter o resto produz uma
-   tela que parece certa em miniatura e vibra no tamanho real — o lima
-   claro sobre superfície escura satura demais, e o cobalto claro perde
-   contra o fundo.
-
-   O CAMINHO ESTÁ LIVRE: não sobrou nenhum valor de cor escrito fora
-   deste `:root`. Todo tingimento passa por `rgb(var(--x-rgb) / alfa)` e
-   toda superfície de card por `--surface`. Redefinir o bloco de tokens
-   dentro de `[data-tema="escuro"]` alcança a folha inteira.
-
-   O que ainda vai precisar de valor próprio, porque não sai de
-   derivação: os quatro `-soft` (`--ice-soft`, `--good-soft`,
-   `--warn-soft`, `--crit-soft`).
+   O QUE MAIS ENGANA, e por isso está escrito: o lima e o cobalto NÃO são
+   os mesmos valores nos dois temas. Modo escuro é PALETA CALIBRADA, não
+   inversão de fundo. O lima claro (#E8FC65) sobre superfície escura
+   satura e vibra; o cobalto claro perde contra o fundo. Os valores
+   abaixo vieram da versão escura aprovada da identidade.
    ============================================================ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) {
+    --offwhite: #050A13;
+    --canvas: #050A13;
+    --surface: #0C1523;
+    --surface-2: #111C2E;
+    --white: #FFFFFF;
+
+    --cobalt: #0239C7;
+    --cobalt-dark: #1B4BE8;
+    --lime: #D5EF25;
+    --ice: #8FD9F5;
+
+    --cobalt-rgb: 2 57 199;
+    --navy-rgb: 210 224 240;
+    --offwhite-rgb: 5 10 19;
+    --ice-rgb: 143 217 245;
+    --lime-rgb: 213 239 37;
+    --surface-rgb: 12 21 35;
+
+    --navy: #E9EFF8;
+    --ink: #E9EFF8;
+    --ink-soft: #9FB0C6;
+    --ink-mute: #6C7D95;
+    --line: #1C2840;
+
+    --ice-soft: #0E2231;
+    --good: #4FC57E;
+    --good-soft: #0E2418;
+    --warn: #E0A63C;
+    --warn-soft: #2A1F0A;
+    --crit: #E8756D;
+    --crit-soft: #2C1210;
+
+    --sidebar-bg: #080E1A;
+    --sidebar-ink: rgb(233 239 248 / 0.66);
+    --sidebar-ink-strong: #FFFFFF;
+    --sidebar-active-bg: #1B44E5;
+    --sidebar-line: rgb(233 239 248 / 0.10);
+
+    --card-ice-bg: #0B1E2C;
+    --card-ice-ink: #E9EFF8;
+    --card-cobalt-bg: #0B1A38;
+    --card-cobalt-ink: #E9EFF8;
+    --card-lime-bg: #1B2110;
+    --card-lime-ink: var(--lime);
+  }
+}
+
+/* Escolha explícita do usuário. Repete o bloco acima porque CSS não tem
+   herança entre seletores — e repetir aqui é preferível a uma classe
+   compartilhada, que obrigaria JavaScript a estar certo para o tema
+   aparecer. Um erro de script deixaria a pessoa sem tema nenhum. */
+:root[data-tema="escuro"] {
+  --offwhite: #050A13;
+  --canvas: #050A13;
+  --surface: #0C1523;
+  --surface-2: #111C2E;
+  --white: #FFFFFF;
+
+  --cobalt: #0239C7;
+  --cobalt-dark: #1B4BE8;
+  --lime: #D5EF25;
+  --ice: #8FD9F5;
+
+  --cobalt-rgb: 2 57 199;
+  --navy-rgb: 210 224 240;
+  --offwhite-rgb: 5 10 19;
+  --ice-rgb: 143 217 245;
+  --lime-rgb: 213 239 37;
+  --surface-rgb: 12 21 35;
+
+  --navy: #E9EFF8;
+  --ink: #E9EFF8;
+  --ink-soft: #9FB0C6;
+  --ink-mute: #6C7D95;
+  --line: #1C2840;
+
+  --ice-soft: #0E2231;
+  --good: #4FC57E;
+  --good-soft: #0E2418;
+  --warn: #E0A63C;
+  --warn-soft: #2A1F0A;
+  --crit: #E8756D;
+  --crit-soft: #2C1210;
+
+  --sidebar-bg: #080E1A;
+  --sidebar-ink: rgb(233 239 248 / 0.66);
+  --sidebar-ink-strong: #FFFFFF;
+  --sidebar-active-bg: #1B44E5;
+  --sidebar-line: rgb(233 239 248 / 0.10);
+
+  --card-ice-bg: #0B1E2C;
+  --card-ice-ink: #E9EFF8;
+  --card-cobalt-bg: #0B1A38;
+  --card-cobalt-ink: #E9EFF8;
+  --card-lime-bg: #1B2110;
+  --card-lime-ink: var(--lime);
+}
+
+/* Diz ao navegador em qual tema pintar barra de rolagem, campos nativos
+   e menus de `select`. Sem isto, um `select` no tema escuro abre branco. */
+:root[data-tema="escuro"] { color-scheme: dark; }
+:root[data-tema="claro"] { color-scheme: light; }
 
 * { box-sizing: border-box; }
 
 html { scroll-behavior: smooth; }
 
 body {
-  background: var(--offwhite);
+  background: var(--canvas);
   color: var(--ink);
   font-family: var(--body);
   margin: 0;
   -webkit-font-smoothing: antialiased;
 }
 
-::selection { background: var(--lime); color: var(--navy); }
+::selection { background: var(--lime); color: var(--black); }
 
 a { color: var(--cobalt); }
 
@@ -166,7 +294,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .wordmark { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
 .wordmark .glyph {
   width: 30px; height: 30px; flex: none;
-  background: var(--navy);
+  background: var(--plate);
   color: var(--lime);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--display);
@@ -422,6 +550,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   grid-template-columns: var(--sidebar-w) 1fr;
   min-height: 100vh;
 }
+/* Sidebar COBALTO, dos mockups aprovados. Sem borda: a mudança de cor já
+   separa da tela, e uma linha ali marcaria a emenda. */
 .sidebar {
   position: sticky;
   top: 0;
@@ -429,8 +559,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--surface);
-  border-right: 1.5px solid var(--line);
+  background: var(--sidebar-bg);
   padding: 22px 16px 18px;
 }
 .side-brand { padding: 4px 8px 22px; }
@@ -442,21 +571,19 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 11px 12px;
   border-radius: 8px;
   text-decoration: none;
-  color: var(--ink-soft);
+  color: var(--sidebar-ink);
   font-family: var(--display);
   font-size: 14px;
   font-weight: 700;
   position: relative;
+  border-radius: 10px;
 }
-.nav-item:hover { background: rgb(var(--navy-rgb) / 0.05); color: var(--navy); }
-.nav-item.active { background: rgb(var(--cobalt-rgb) / 0.09); color: var(--cobalt); }
-.nav-item.active::before {
-  content: '';
-  position: absolute;
-  left: -16px; top: 50%; transform: translateY(-50%);
-  width: 3px; height: 22px;
-  background: var(--cobalt);
-  border-radius: 0 3px 3px 0;
+.nav-item:hover { background: rgb(255 255 255 / 0.08); color: var(--sidebar-ink-strong); }
+/* Item ativo é uma PÍLULA cheia, não uma barrinha na borda — é o que o
+   mockup faz, e sobre fundo cobalto uma barrinha lateral sumiria. */
+.nav-item.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-ink-strong);
 }
 .side-spacer { flex: 1; }
 .side-account {
@@ -470,12 +597,48 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .side-account .avatar {
   width: 34px; height: 34px; flex: none;
   border-radius: 50%;
-  background: var(--navy); color: var(--offwhite);
+  background: rgb(255 255 255 / 0.16); color: var(--sidebar-ink-strong);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--display); font-weight: 700; font-size: 14px;
 }
-.side-account .who b { display: block; font-family: var(--display); font-size: 12.5px; color: var(--navy); }
-.side-account .who span { font-size: 10.5px; color: var(--ink-mute); }
+.side-account .who b { display: block; font-family: var(--display); font-size: 12.5px; color: var(--sidebar-ink-strong); }
+.side-account .who span,
+.side-account .who .link-btn { font-size: 10.5px; color: var(--sidebar-ink); }
+
+/* ---------- tudo que vive DENTRO da sidebar cobalto ----------
+   Estas regras existem porque a sidebar é a única região com fundo
+   escuro no tema claro. Sem elas, cada elemento herdaria o texto navy
+   pensado para fundo claro — e ficaria ilegível sobre o azul. */
+.sidebar { border-right: 0; }
+.side-account { border-color: var(--sidebar-line); }
+.nav-eyebrow { color: rgb(255 255 255 / 0.5); }
+.side-brand .wm { color: var(--sidebar-ink-strong); }
+.side-brand .wm small { color: var(--sidebar-ink); }
+.sidebar .link-btn { color: var(--sidebar-ink); }
+.sidebar .link-btn:hover { color: var(--sidebar-ink-strong); }
+.sidebar :focus-visible { outline-color: var(--sidebar-ink-strong); }
+
+/* O bloco de suporte deixa de ser um card gelo e vira vidro sobre o
+   cobalto — o card claro ali dentro brigaria com a faixa do herói pela
+   atenção, e a regra da tela é uma coisa gritando por vez. */
+.side-support {
+  background: rgb(255 255 255 / 0.10);
+  border-color: var(--sidebar-line);
+}
+.side-support b { color: var(--sidebar-ink-strong); }
+.side-support p { color: var(--sidebar-ink); }
+/* O botão de ajuda é LIMA, como o "Upgrade" do mockup: é a única ação
+   permanente da sidebar, e o lima só aparece uma vez por região. */
+.side-support .cta.ghost {
+  background: var(--lime);
+  /* `--black`, não `--navy`: no tema escuro o navy VIRA CLARO (ele é o
+     token de texto), e texto claro sobre lima some. O `--black` é o
+     único tom que continua escuro nos dois temas — é exatamente para
+     isto que ele foi reservado no sistema. */
+  color: var(--black);
+  border-color: transparent;
+}
+.side-support .cta.ghost:hover { background: var(--ice); }
 
 .main { min-width: 0; display: flex; flex-direction: column; }
 .topbar {
@@ -680,7 +843,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding-top: 16px;
 }
 .mark-plate {
-  background: var(--navy);
+  background: var(--plate);
   border-radius: 8px;
   padding: 12px 13px;
   flex: none;
@@ -700,7 +863,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .proof-list li .tick {
   width: 17px; height: 17px; flex: none;
   background: var(--lime);
-  color: var(--navy);
+  color: var(--black);
   display: inline-flex; align-items: center; justify-content: center;
   margin-top: 1px;
 }
@@ -839,8 +1002,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-weight: 700;
   font-size: 18px;
   letter-spacing: 0.04em;
-  color: var(--offwhite);
-  background: var(--navy);
+  color: var(--plate-ink);
+  background: var(--plate);
   padding: 14px 26px;
   border-radius: 8px;
   box-shadow: 0 18px 36px -14px rgb(var(--navy-rgb) / 0.55);
@@ -856,8 +1019,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   right: 24px; bottom: 24px;
   z-index: 60;
   display: flex; align-items: center; gap: 10px;
-  background: var(--navy);
-  color: var(--offwhite);
+  background: var(--plate);
+  color: var(--plate-ink);
   font-size: 13px;
   line-height: 1.45;
   padding: 13px 17px;
@@ -980,7 +1143,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .log-row { font-size: 12px; color: var(--ink-soft); line-height: 1.5; padding: 9px 0; border-top: 1px dashed var(--line); }
 .chip-lime {
   display: inline-block;
-  background: var(--lime); color: var(--navy);
+  background: var(--lime); color: var(--black);
   font-family: var(--display); font-weight: 700; font-size: 11.5px;
   letter-spacing: 0.03em;
   padding: 6px 11px; border-radius: 6px;
@@ -1073,7 +1236,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .tips-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .tick {
   width: 17px; height: 17px; flex: none; margin-top: 1px;
-  background: var(--lime); color: var(--navy);
+  background: var(--lime); color: var(--black);
   display: inline-flex; align-items: center; justify-content: center;
   border-radius: 3px;
 }
@@ -1316,10 +1479,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .grp-count { font-size: 12px; color: var(--ink-mute); }
 
 .navy-card {
-  background: var(--navy);
+  background: var(--plate);
   background-image: radial-gradient(rgb(var(--ice-rgb) / 0.12) 1px, transparent 1px);
   background-size: 16px 16px;
-  color: var(--offwhite);
+  color: var(--plate-ink);
   border-radius: 12px;
   padding: 20px;
 }
@@ -1503,6 +1666,30 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 
+/* ---------- seletor de tema ---------- */
+.tema-opcoes { display: grid; gap: 12px; grid-template-columns: 1fr; }
+@media (min-width: 640px) { .tema-opcoes { grid-template-columns: repeat(3, 1fr); } }
+.tema-opcao {
+  text-align: left;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tema-opcao:hover { border-color: var(--cobalt); }
+.tema-opcao.picked { border-color: var(--cobalt); box-shadow: 0 0 0 3px rgb(var(--cobalt-rgb) / 0.16); }
+.tema-opcao b { font-family: var(--display); font-size: 14px; color: var(--ink); margin-top: 6px; }
+.tema-opcao span { font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
+/* A miniatura: duas faixas — fundo e superfície — com um ponto de acento
+   em cada. Suficiente para reconhecer o tema sem desenhar uma tela
+   inteira em 60 pixels. */
+.tema-amostra { display: flex; height: 44px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.tema-amostra > span { flex: 1; display: grid; place-items: center; }
+.tema-amostra i { width: 14px; height: 14px; border-radius: 4px; display: block; }
+
 /* Erro de publicação na linha do anúncio. Vermelho contido: é
    informação, não alarme — nada foi gasto. */
 .lr-erro {
@@ -1554,7 +1741,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--ink-mute);
   z-index: 1;
 }
-.stepper li.done .node { background: var(--lime); color: var(--navy); }
+.stepper li.done .node { background: var(--lime); color: var(--black); }
 .stepper li.active .node { background: var(--cobalt); color: var(--white); animation: pulse-node 1.8s ease infinite; }
 .stepper li.fail .node { background: var(--crit); color: var(--white); }
 @keyframes pulse-node {
