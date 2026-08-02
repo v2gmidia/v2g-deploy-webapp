@@ -99,38 +99,38 @@ export default async function InicioPage() {
           </p>
         </div>
 
+        {/* O destaque aqui é o PRÓXIMO passo, não a lista inteira. Antes
+            os três tinham o mesmo peso e a pessoa escolhia no escuro.
+            Fica FORA da grade para sangrar até as bordas do canvas. */}
+        <section className="hero-destaque">
+          <span className="eyebrow">Seu próximo passo</span>
+          <p className="hero-frase">
+            {onboardingCompleto ? (
+              <>
+                Falta <span className="destaque">separar suas fotos</span>.
+              </>
+            ) : (
+              <>
+                Comece <span className="destaque">contando do seu negócio</span>.
+              </>
+            )}
+          </p>
+          <p className="hero-note">
+            {onboardingCompleto
+              ? "A IA já sabe o essencial. O que falta é material visual: o produto pronto, a fachada, um vídeo curto de celular."
+              : "São quatro perguntas rápidas. É delas que a IA parte para montar sua primeira campanha — dá para parar no meio e voltar depois."}
+          </p>
+          <a
+            className="cta"
+            href={onboardingCompleto ? "/criativos" : "/onboarding"}
+            style={{ width: "max-content", marginTop: 22 }}
+          >
+            {onboardingCompleto ? "Separar minhas fotos" : "Começar agora"}
+          </a>
+        </section>
+
         <div className="dash-grid">
           <div className="dash-main">
-            {/* O destaque aqui é o PRÓXIMO passo, não a lista inteira.
-                Antes os três tinham o mesmo peso e a pessoa escolhia no
-                escuro. */}
-            <section className="hero-dark">
-              <span className="eyebrow">Seu próximo passo</span>
-              <p className="hero-frase">
-                {onboardingCompleto ? (
-                  <>
-                    Falta <span className="destaque">separar suas fotos</span>.
-                  </>
-                ) : (
-                  <>
-                    Comece <span className="destaque">contando do seu negócio</span>.
-                  </>
-                )}
-              </p>
-              <p className="hero-note">
-                {onboardingCompleto
-                  ? "A IA já sabe o essencial. O que falta é material visual: o produto pronto, a fachada, um vídeo curto de celular."
-                  : "São quatro perguntas rápidas. É delas que a IA parte para montar sua primeira campanha — dá para parar no meio e voltar depois."}
-              </p>
-              <a
-                className="cta"
-                href={onboardingCompleto ? "/criativos" : "/onboarding"}
-                style={{ width: "max-content", marginTop: 22 }}
-              >
-                {onboardingCompleto ? "Separar minhas fotos" : "Começar agora"}
-              </a>
-            </section>
-
             <section>
               <div className="section-title">
                 <h2>O resto do caminho</h2>
@@ -190,24 +190,24 @@ export default async function InicioPage() {
           </p>
         </div>
 
+        {/* O que grita nesta tela é o MOTIVO do vazio. Sem ele, a pessoa
+            lê a ausência de número como fracasso e vai mexer na campanha —
+            que é o que não pode acontecer. */}
+        <section className="hero-destaque">
+          <span className="eyebrow">Por que ainda não há número</span>
+          <p className="hero-frase">
+            O Facebook está <span className="destaque">aprendendo</span> quem é o seu cliente.
+          </p>
+          <p className="hero-note">
+            Nos primeiros dias ele mostra seu anúncio para perfis diferentes de pessoas só para
+            descobrir quem responde. Enquanto esse teste roda, o custo fica mais alto e a venda
+            demora — não porque a campanha está ruim, mas porque ela ainda não sabe para quem
+            falar. Costuma levar de 2 a 3 dias.
+          </p>
+        </section>
+
         <div className="dash-grid">
           <div className="dash-main">
-            {/* O que grita nesta tela é o MOTIVO do vazio. Sem ele, a
-                pessoa lê a ausência de número como fracasso e vai mexer
-                na campanha — que é o que não pode acontecer. */}
-            <section className="hero-dark">
-              <span className="eyebrow">Por que ainda não há número</span>
-              <p className="hero-frase">
-                O Facebook está <span className="destaque">aprendendo</span> quem é o seu cliente.
-              </p>
-              <p className="hero-note">
-                Nos primeiros dias ele mostra seu anúncio para perfis diferentes de pessoas só
-                para descobrir quem responde. Enquanto esse teste roda, o custo fica mais alto e a
-                venda demora — não porque a campanha está ruim, mas porque ela ainda não sabe para
-                quem falar. Costuma levar de 2 a 3 dias.
-              </p>
-            </section>
-
             <div className="fail-block" style={{ background: "var(--warn-soft)", borderColor: "var(--warn)" }}>
               <b>O que não fazer agora</b>
               <p>
@@ -309,32 +309,27 @@ export default async function InicioPage() {
         </p>
       </div>
 
+      {/* A resposta que importa — "valeu a pena?" — é o maior elemento da
+          tela: faixa cobalto de ponta a ponta, valor em branco, rótulo em
+          lima. É o único lugar onde o lima aparece. */}
+      <section className="hero-destaque">
+        <span className="eyebrow">Em uma frase</span>
+        {retorno !== null ? (
+          <>
+            <NumeroQueConta valor={retorno} prefixo="R$ " casas={2} className="hero-num" />
+            <p className="hero-legenda">voltaram pra cada R$ 1 que você colocou</p>
+          </>
+        ) : (
+          <p className="hero-frase">Ainda não dá para dizer se valeu a pena.</p>
+        )}
+        <p className="hero-note">
+          Estimado a partir das vendas que as plataformas conseguiram atribuir aos seus anúncios.
+          Pode faltar venda nessa conta, nunca sobrar — na dúvida, arredondamos para baixo.
+        </p>
+      </section>
+
       <div className="dash-grid">
         <div className="dash-main">
-          {/* A resposta que importa — "valeu a pena?" — é o maior
-              elemento da tela, e o único lugar onde o lima aparece. */}
-          <section className="hero-dark">
-            <span className="eyebrow">Em uma frase</span>
-            {retorno !== null ? (
-              <>
-                <NumeroQueConta
-                  valor={retorno}
-                  prefixo="R$ "
-                  casas={2}
-                  className="hero-num"
-                />
-                <p className="hero-legenda">voltaram pra cada R$ 1 que você colocou</p>
-              </>
-            ) : (
-              <p className="hero-frase">Ainda não dá para dizer se valeu a pena.</p>
-            )}
-            <p className="hero-note">
-              Estimado a partir das vendas que as plataformas conseguiram atribuir aos seus
-              anúncios. Pode faltar venda nessa conta, nunca sobrar — na dúvida, arredondamos para
-              baixo.
-            </p>
-          </section>
-
           <div className="metrics">
             <div className="metric">
               <span className="m-label">Vendas geradas</span>
