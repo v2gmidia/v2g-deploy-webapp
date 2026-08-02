@@ -40,7 +40,8 @@ segredo.
 | `ads_read` | listar as contas de anúncio e ler o que elas têm | sim |
 | `ads_management` | criar e gerenciar campanhas | **não — pedido agora, usado depois** |
 | `business_management` | alcançar contas dentro de um Business Manager | sim |
-| `pages_show_list` | listar as páginas do Facebook | sim |
+| `pages_show_list` | **listar** as páginas do Facebook | sim |
+| `pages_read_engagement` | **ler os campos** de cada página — é o que revela o WhatsApp ligado | sim |
 
 **`ads_management` é pedido agora, mesmo sem uso neste lote.** A primeira
 versão deste documento propunha o contrário — pedir só o necessário para
@@ -62,6 +63,45 @@ aplicação faz, não no que ela poderia fazer.
 **A consequência que sobra:** a tela de permissões do Facebook fica mais
 pesada, com "gerenciar suas contas de anúncios" em vez de só "ler". A tela
 `/conectar` (§6) prepara o cliente para exatamente esse texto.
+
+### `pages_read_engagement` — por que ele NÃO é acessório
+
+**`pages_show_list` lista as páginas. `pages_read_engagement` deixa ler os
+campos delas.** São permissões diferentes, e a segunda é a única forma de
+descobrir se uma página tem WhatsApp ligado:
+
+```
+GET /{page_id}?fields=whatsapp_number,connected_whatsapp_business_account
+```
+
+**Verificado em produção, com a conta real, antes de o escopo ser
+pedido:** a listagem funcionou (3 páginas, com nome e categoria) e a
+leitura dos campos falhou nas 3, com
+
+```
+(#100) This endpoint requires the 'pages_read_engagement' permission
+```
+
+O resultado era `null` para toda página — inclusive para as que têm
+WhatsApp. Não "não tem número": "não consigo saber".
+
+**Por que isso derruba o produto e não só um detalhe:** o v1 inteiro é
+click-to-WhatsApp. Página sem número ligado não tem para onde mandar quem
+clica no anúncio. Sem este escopo, o cliente escolheria a página no
+escuro e só descobriria o problema quando a publicação falhasse — o pior
+momento possível, e exatamente o que a verificação na tela de conexão
+existe para evitar.
+
+> **Aviso para quem for enxugar escopos depois.** O `pages_show_list` já
+> foi removido por engano uma vez, junto com a função que o usava, e o
+> buraco só apareceu um lote adiante, quando publicar exigiu `page_id`.
+> Antes de tirar qualquer escopo desta lista, a pergunta não é "quem usa
+> isto hoje" — é "o que dependeria disto depois". O mesmo aviso está em
+> `lib/meta/oauth.ts`, junto do código.
+
+Custo: entra no **mesmo App Review** de `ads_read` e `ads_management`.
+Como nada foi submetido ainda, o custo marginal é uma linha no pedido.
+Depois de submetido, seria uma segunda fila.
 
 ### `instagram_basic` foi removido
 
@@ -136,7 +176,7 @@ Ficam fora dos grupos de rota, e o `proxy.ts` precisa continuar deixando
      ?client_id=<META_APP_ID>
      &redirect_uri=<NEXT_PUBLIC_SITE_URL>/auth/meta/callback
      &state=<nonce>
-     &scope=ads_read,ads_management,business_management,pages_show_list
+     &scope=ads_read,ads_management,business_management,pages_show_list,pages_read_engagement
      &response_type=code
    ```
 

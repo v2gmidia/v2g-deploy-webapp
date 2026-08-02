@@ -33,12 +33,36 @@ const GRAPH = `https://graph.facebook.com/${META_API_VERSION}`;
  * usa para nada: quem recebe o anúncio é a conta de anúncio, e a
  * identidade vem pela página. Ver a nota em `lib/meta/graph.ts` sobre o
  * que seria preciso para trazer de volta.
+ *
+ * ------------------------------------------------------------------
+ * NÃO REMOVA `pages_read_engagement` ACHANDO QUE É ACESSÓRIO.
+ *
+ * `pages_show_list` LISTA as páginas; `pages_read_engagement` deixa LER
+ * OS CAMPOS de cada uma. São coisas diferentes, e a segunda é o que
+ * permite descobrir se a página tem WhatsApp ligado —
+ * `/{page_id}?fields=whatsapp_number,connected_whatsapp_business_account`.
+ *
+ * Sem ele a chamada devolve erro 100 ("This endpoint requires the
+ * 'pages_read_engagement' permission") e a verificação retorna `null`
+ * para TODA página, inclusive as que têm WhatsApp. Verificado em
+ * produção, nas 3 páginas da conta real, antes de o escopo ser pedido.
+ *
+ * Isso importa porque o produto inteiro é click-to-WhatsApp: página sem
+ * número ligado não tem para onde mandar quem clica no anúncio. Sem este
+ * escopo, o cliente só descobriria isso quando a publicação falhasse.
+ *
+ * O `pages_show_list` já foi removido por engano uma vez — junto com a
+ * função que o usava — e o buraco só apareceu um lote depois, quando
+ * publicar exigiu `page_id`. Este comentário existe para o mesmo não
+ * acontecer com este aqui.
+ * ------------------------------------------------------------------
  */
 export const ESCOPOS = [
   "ads_read",
   "ads_management",
   "business_management",
   "pages_show_list",
+  "pages_read_engagement",
 ] as const;
 
 export function credenciaisMeta(): { appId: string; appSecret: string } {

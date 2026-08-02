@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ERROS_DE_CALLBACK } from "@/lib/meta/erros";
+import { ESCOPOS } from "@/lib/meta/oauth";
 
 /**
  * Preparação para o consentimento do Meta.
@@ -24,10 +25,18 @@ export default async function ConectarPage({ searchParams }: Props) {
   const supabase = await createClient();
   const { data: conexao } = await supabase
     .from("meta_connections")
-    .select("status, connected_at")
+    .select("status, connected_at, scopes, meta_page_id")
     .maybeSingle();
 
   const jaConectado = conexao?.status === "connected";
+
+  // Uma conexão feita ANTES de um escopo novo entrar continua válida, mas
+  // sem a permissão — e o Meta não avisa. Comparar o que foi concedido
+  // com o que o código pede hoje é o que transforma isso num aviso em vez
+  // de um comportamento estranho que ninguém explica.
+  const concedidos = new Set(conexao?.scopes ?? []);
+  const faltando = jaConectado ? ESCOPOS.filter((e) => !concedidos.has(e)) : [];
+  const precisaReconectar = faltando.length > 0 || (jaConectado && !conexao?.meta_page_id);
 
   return (
     <div className="auth-grid">
@@ -40,17 +49,32 @@ export default async function ConectarPage({ searchParams }: Props) {
 
         {mensagemDeErro && <p className="form-error">{mensagemDeErro}</p>}
 
-        {jaConectado && (
+        {jaConectado && !precisaReconectar && (
           <p className="form-notice">
             Seu Instagram já está conectado. Se quiser trocar de conta, é só conectar de novo.
           </p>
         )}
 
+        {precisaReconectar && (
+          <div
+            className="fail-block"
+            style={{ background: "var(--warn-soft)", borderColor: "var(--warn)" }}
+          >
+            <b>Sua conexão precisa ser refeita uma vez</b>
+            <p>
+              A gente melhorou a conexão desde a última vez que você conectou — agora ela também
+              confere se o WhatsApp está ligado na sua página, para avisar antes de qualquer
+              anúncio subir. Refazer leva dois cliques e nada do que você já configurou se perde.
+            </p>
+          </div>
+        )}
+
         <div className="trust">
           <b>A próxima tela é do Facebook, não nossa</b>
-          Ela vai falar em &quot;Meta&quot;, &quot;Business Manager&quot; e &quot;gerenciar suas
-          contas de anúncios&quot;. É o nome técnico das coisas, e é assim para qualquer empresa
-          que anuncia no Instagram. Pode seguir: é a tela oficial deles.
+          Ela vai falar em &quot;Meta&quot;, &quot;Business Manager&quot;, &quot;gerenciar suas
+          contas de anúncios&quot; e &quot;acessar suas Páginas&quot;. É o nome técnico das
+          coisas, e é assim para qualquer empresa que anuncia no Instagram. Pode seguir: é a tela
+          oficial deles.
         </div>
 
         <div className="trust">
@@ -58,6 +82,14 @@ export default async function ConectarPage({ searchParams }: Props) {
           É essa permissão que deixa a gente criar e ajustar seus anúncios por você — que é o
           serviço que você contratou. Sem ela, a gente só conseguiria olhar. Ela não dá acesso ao
           seu perfil pessoal, às suas mensagens nem ao seu feed.
+        </div>
+
+        <div className="trust">
+          <b>Por que ele pede acesso às suas Páginas</b>
+          Seus anúncios saem de uma página, e é o WhatsApp dela que recebe as conversas. A gente
+          precisa ver quais páginas você tem e se o WhatsApp já está ligado em cada uma — para
+          avisar antes, e não na hora em que o anúncio deveria subir. A gente não publica nada na
+          página nem lê as conversas dela.
         </div>
 
         <a className="cta" href="/auth/meta/iniciar">
