@@ -171,14 +171,30 @@ export async function verificarWhatsAppDaPagina(
   pageId: string,
 ): Promise<boolean | null> {
   try {
+    // Estes três campos foram verificados um a um contra a v25.0, numa
+    // Página real. `connected_whatsapp_business_account` e
+    // `whatsapp_business_account` NÃO existem — pedir qualquer um deles
+    // derruba a resposta inteira com
+    // "(#100) Tried accessing nonexisting field", e a verificação volta
+    // `null` para toda página, mesmo as que têm número.
+    //
+    // Quando o número não está ligado, o Meta OMITE os três campos em vez
+    // de devolvê-los vazios. Por isso a leitura é por ausência.
+    //
+    // Não confundir com `phone`: aquele é o telefone de contato exibido
+    // na Página, existe mesmo sem WhatsApp nenhum, e não serve para
+    // anúncio de conversa.
     const dados = await chamar<{
       whatsapp_number?: string;
-      connected_whatsapp_business_account?: { id?: string };
-    }>(`/${pageId}?fields=whatsapp_number,connected_whatsapp_business_account`, token);
+      has_whatsapp_number?: boolean;
+      has_whatsapp_business_number?: boolean;
+    }>(
+      `/${pageId}?fields=whatsapp_number,has_whatsapp_number,has_whatsapp_business_number`,
+      token,
+    );
 
     const numero = dados.whatsapp_number?.trim();
-    const waba = dados.connected_whatsapp_business_account?.id;
-    return Boolean(numero || waba);
+    return Boolean(numero || dados.has_whatsapp_number || dados.has_whatsapp_business_number);
   } catch {
     // Não propaga: a escolha da página não pode ficar refém desta
     // checagem. Quem chama trata `null` como "não verificado".
