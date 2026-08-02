@@ -79,6 +79,106 @@ o app for público.
 
 ---
 
+## 0.c O que a execução real mudou no desenho
+
+Tudo abaixo foi medido com `validate_only` contra `act_2818009911919726`,
+não lido na documentação. Quatro coisas que o desenho errava.
+
+### 1. A atribuição aprovada não existe
+
+A decisão fechada era **7 dias clique / 1 dia visualização**. O Meta
+recusa:
+
+```
+(#100 / 1885501) "Com base nos objetivos e metas de otimização
+selecionados, as combinações aceitas de valores da janela de atribuição
+de visualização e cliques são: (1, 0)"
+```
+
+Não é uma faixa — é um par único. `optimization_goal = CONVERSATIONS`
+impõe **1 dia de clique, 0 de visualização**. Faz sentido: conversa
+iniciada acontece no clique, e atribuir conversa a quem só viu o anúncio
+seria inventar causa. A janela curta também é a mais honesta: janela longa
+infla o número e faz o resultado parecer melhor do que é.
+
+**O desenho fica com (1, 0). Não é escolha nossa.**
+
+### 2. `cities` não faz raio pequeno — o piso é 16 km
+
+| raio | `geo_locations.cities` | `geo_locations.custom_locations` |
+|---|---|---|
+| 1, 5, 10, 15 km | recusa (#1487110) | **aceita** |
+| 16 – 80 km | aceita | aceita |
+| 100 km | recusa | — |
+
+Os 5 km que a interface oferece **só existem com `custom_locations`**, que
+exige latitude e longitude. E `/search?type=adgeolocation` devolve `key`,
+`name` e `region` — **não devolve coordenada**.
+
+### 3. A coordenada vem da Página, e isso resolve o `pages_read_engagement`
+
+```
+GET /{page_id}?fields=location
+→ { latitude: -22.96037, longitude: -43.17866,
+    street: "Ladeira do leme 156", city: "Rio de Janeiro" }
+```
+
+O escopo tinha sido mantido "na dúvida" depois que a verificação de
+WhatsApp caiu (`docs/oauth-meta.md` §2.1). **A dúvida acabou: é
+dependência dura.** Sem ele não há coordenada, e sem coordenada não há
+raio de 5 km.
+
+E o dado é melhor que o centro da cidade: 5 km em volta da loja não é o
+mesmo círculo que 5 km em volta do centro do município.
+
+Quando a Página não tem endereço, o fallback é **cidade inteira, sem
+raio** — nunca esticar 5 km para 16 km em silêncio. O cliente pagaria por
+três vezes a área que escolheu sem ninguém dizer nada.
+
+Armadilha: `location_types:["city"]` **não** garante que só venha cidade.
+Buscar "Rio de Janeiro" devolve os bairros Centro e Copacabana junto, com
+`type:"neighborhood"`. Filtrar por `type === "city"` é obrigatório.
+
+### 4. `POST` com `_method=DELETE` mente
+
+```
+POST /{id}  body: _method=DELETE   → {"success": true}   e NÃO apaga
+DELETE /{id}                       → {"success": true}   e apaga
+```
+
+Verificado listando antes e depois: com `_method`, a campanha continua na
+listagem, `PAUSED`. Falso positivo silencioso — numa rotina de limpeza,
+significaria achar que a conta está limpa enquanto o lixo se acumula.
+
+---
+
+## 0.d BLOQUEIO DO CLIENTE: o WhatsApp da Página é conta pessoal
+
+A cadeia não passa do conjunto, e o motivo não é código:
+
+```
+(#100 / 2446885) "O número do WhatsApp vinculado à sua Página é uma conta
+pessoal. Você deve conectar uma conta do WhatsApp Business para
+direcionar o tráfego para o WhatsApp."
+```
+
+Duas consequências.
+
+**A pré-checagem de WhatsApp existe, e mora no CONJUNTO.** Depois de
+`docs/oauth-meta.md` §2.1 concluir que não dá para saber pela Página, a
+resposta era "validar o criativo". Está melhor que isso: o `validate_only`
+do **AdSet** já reprova, com mensagem em português pronta para a tela, e
+acontece **antes** do criativo — ou seja, antes do bloqueio de modo de
+desenvolvimento (§0.b). É a checagem que faltava, e ela funciona hoje.
+
+**Nenhum cliente com WhatsApp pessoal consegue anunciar.** Isso não é
+detalhe de configuração: é um pré-requisito do produto inteiro, e provavelmente
+o maior ponto de perda do funil depois do Instagram profissional. Precisa
+virar tela, com o passo a passo de migrar para WhatsApp Business — não uma
+mensagem de erro no fim da publicação.
+
+---
+
 ## 0. As cinco invariantes, e o que garante cada uma
 
 | Invariante | Mecanismo |

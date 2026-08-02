@@ -59,10 +59,17 @@ const GRAPH = `https://graph.facebook.com/${META_API_VERSION}`;
  * ainda é alcançável, mostrar de qual página o anúncio sai — passa por
  * `pages_read_engagement`.
  *
- * Ou seja: a resposta a "o que dependeria disto depois" é *provavelmente
- * a pré-checagem de publicação*, e na dúvida o lado barato é manter.
- * Se o App Review negar este escopo especificamente, remova sem medo:
- * nada quebra hoje.
+ * ATUALIZAÇÃO — A DÚVIDA ACABOU, E ERA DEPENDÊNCIA DURA.
+ *
+ * A publicação precisa de `GET /{page_id}?fields=location` para tirar a
+ * latitude e a longitude do negócio. Sem coordenada não existe raio de
+ * 5 km: `geo_locations.cities` tem piso medido de 16 km, e
+ * `/search?type=adgeolocation` não devolve coordenada nenhuma.
+ * Ver `docs/publicar-campanha.md` §0.c e `lib/meta/geo.ts`.
+ *
+ * Ou seja: manter foi certo, e não por sorte — a pergunta "o que
+ * dependeria disto depois" tinha resposta, ela só não era visível ainda.
+ * **Remover este escopo hoje quebra a publicação.**
  * ------------------------------------------------------------------
  */
 export const ESCOPOS = [
@@ -107,6 +114,16 @@ export interface ErroMeta {
   subcode?: number;
   type?: string;
   fbtrace_id?: string;
+  /**
+   * `error_user_msg`: quando o Meta o preenche, ele já vem traduzido e
+   * escrito para o usuário final — é melhor que qualquer coisa que a
+   * gente inventasse. Só é seguro exibir porque, diferente de `message`,
+   * este campo nunca carrega eco de parâmetro (e portanto de token).
+   * Ver `mensagemDoMeta()` em `lib/meta/erros.ts`, que decide quando usar.
+   */
+  mensagemUsuario?: string;
+  /** `error_user_title`, o cabeçalho curto que acompanha o anterior. */
+  tituloUsuario?: string;
 }
 
 export class FalhaMeta extends Error {
