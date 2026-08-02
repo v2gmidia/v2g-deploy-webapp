@@ -3,13 +3,13 @@
 import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { salvarEscolhaAction, type EscolhaState } from "./actions";
-import type { ContaDeAnuncio, PaginaComWhatsApp } from "@/lib/meta/graph";
+import type { ContaDeAnuncio, PaginaDoFacebook } from "@/lib/meta/graph";
 
 const inicial: EscolhaState = {};
 
 interface Props {
   contas: ContaDeAnuncio[];
-  paginas: PaginaComWhatsApp[];
+  paginas: PaginaDoFacebook[];
 }
 
 /**
@@ -19,25 +19,21 @@ interface Props {
  * criar o anúncio, e é dela que sai o WhatsApp que recebe as conversas.
  * Sem essa escolha não existe publicação.
  *
- * Página sem WhatsApp NÃO é bloqueada. A escolha é totalmente
- * recuperável — no momento em que ela acontece nada foi criado no Meta,
- * e trocar depois é um UPDATE. Bloquear seria pior: a página certa pode
- * ser justamente essa, e ligar o WhatsApp nela leva minutos no painel do
- * Meta. O que a tela faz é avisar antes, não decidir pela pessoa.
+ * A tela NÃO diz se cada página tem WhatsApp ligado, porque a API não
+ * permite saber (ver `docs/oauth-meta.md`, seção 2.1). Ela explica o
+ * requisito uma vez, de forma geral, e deixa a checagem para o momento em
+ * que ela é possível e importa: a validação do criativo antes de publicar.
+ * Rótulo por página seria afirmação sem verificação — o mesmo defeito que
+ * derrubou o seletor de Instagram.
  */
 export function FormularioEscolha({ contas, paginas }: Props) {
   const [estado, action, pendente] = useActionState(salvarEscolhaAction, inicial);
 
   const elegiveis = contas.filter((c) => c.elegivel);
   const [contaEscolhida, setContaEscolhida] = useState(elegiveis[0]?.externalId ?? "");
-
-  // Começa pré-selecionando uma página COM WhatsApp, se houver — é a que
-  // deixa o cliente pronto para anunciar sem passo extra.
-  const preferida = paginas.find((p) => p.whatsapp === true) ?? paginas[0];
-  const [paginaEscolhida, setPaginaEscolhida] = useState(preferida?.id ?? "");
+  const [paginaEscolhida, setPaginaEscolhida] = useState(paginas[0]?.id ?? "");
 
   const conta = contas.find((c) => c.externalId === contaEscolhida);
-  const pagina = paginas.find((p) => p.id === paginaEscolhida);
 
   return (
     <form action={action}>
@@ -100,27 +96,13 @@ export function FormularioEscolha({ contas, paginas }: Props) {
                 />
                 <span className="esc-texto">
                   <b>{p.nome}</b>
-                  <span>
-                    {p.whatsapp === true && "WhatsApp ligado — pronta para anunciar"}
-                    {p.whatsapp === false && "Sem WhatsApp ligado ainda"}
-                    {p.whatsapp === null && "Não conseguimos conferir o WhatsApp desta página"}
-                  </span>
-                </span>
-                <span className={`selo-wa${p.whatsapp === true ? " ok" : ""}`}>
-                  {p.whatsapp === true ? "pronta" : p.whatsapp === false ? "falta WhatsApp" : "?"}
+                  <span>{p.categoria ?? p.id}</span>
                 </span>
               </label>
             ))}
           </div>
 
-          {pagina?.whatsapp === false && <AvisoSemWhatsApp nome={pagina.nome} />}
-          {pagina?.whatsapp === null && (
-            <div className="trust">
-              <b>Não conseguimos conferir o WhatsApp desta página</b>
-              Dá para seguir normalmente. Se na hora de publicar faltar o WhatsApp, a gente
-              avisa antes de qualquer anúncio ir ao ar.
-            </div>
-          )}
+          <PrecisaDeWhatsApp />
         </>
       )}
 
@@ -132,32 +114,30 @@ export function FormularioEscolha({ contas, paginas }: Props) {
 }
 
 /**
- * O estado que o cliente precisa entender, não um erro genérico: o que
- * falta, por que importa, e um caminho humano.
+ * O requisito, dito uma vez e sem afirmar nada sobre a página escolhida.
+ *
+ * Antes isto só aparecia quando a verificação dizia "não tem WhatsApp".
+ * Aquela verificação era um falso negativo para todo mundo (a API não
+ * expõe o vínculo — `docs/oauth-meta.md`, seção 2.1), então o aviso ou
+ * não aparecia, ou aparecia errado. Fixo e neutro informa sem mentir.
  */
-function AvisoSemWhatsApp({ nome }: { nome: string }) {
+function PrecisaDeWhatsApp() {
   return (
-    <div className="fail-block" style={{ background: "var(--warn-soft)", borderColor: "var(--warn)" }}>
-      <b>Falta ligar um WhatsApp na página {nome}</b>
-      <p>
-        Seus anúncios funcionam levando a pessoa direto para uma conversa no WhatsApp. Sem um
-        número ligado a esta página, o anúncio não tem para onde mandar quem clicar.
-      </p>
-      <p style={{ marginTop: 10 }}>
-        Você pode seguir e resolver isso depois — nada aqui trava. Para ligar agora: no Facebook,
-        abra a sua página, vá em <b>Configurações → WhatsApp</b> e conecte o número do seu
-        negócio. Leva uns 5 minutos.
-      </p>
-      <p style={{ marginTop: 10 }}>
-        <a
-          className="wa"
-          href="https://wa.me/5521980351531?text=Oi!%20Preciso%20ligar%20o%20WhatsApp%20na%20minha%20p%C3%A1gina%20do%20Facebook%20para%20anunciar%20pela%20V2G."
-          target="_blank"
-          rel="noopener"
-        >
-          Prefere que a gente faça junto? Chama aqui →
-        </a>
-      </p>
+    <div className="trust">
+      <b>A página precisa ter um WhatsApp ligado</b>
+      Seus anúncios levam a pessoa direto para uma conversa no WhatsApp. Sem um número
+      ligado à página, o anúncio não tem para onde mandar quem clica. Para conferir: no
+      Facebook, abra a página e vá em <b>Configurações → WhatsApp</b>. A gente confirma
+      isso com você antes de qualquer anúncio ir ao ar.
+      <br />
+      <a
+        className="wa"
+        href="https://wa.me/5521980351531?text=Oi!%20Preciso%20ligar%20o%20WhatsApp%20na%20minha%20p%C3%A1gina%20do%20Facebook%20para%20anunciar%20pela%20V2G."
+        target="_blank"
+        rel="noopener"
+      >
+        Prefere que a gente faça junto? Chama aqui →
+      </a>
     </div>
   );
 }

@@ -141,8 +141,11 @@ export interface PaginaDoFacebook {
  * Só os campos seguros: `id`, `name`, `category`. Campo inválido na
  * lista de `fields` derruba a resposta INTEIRA, e a listagem de páginas
  * é obrigatória para publicar — não pode falhar por causa de um campo
- * acessório. A verificação de WhatsApp é uma chamada separada, de
- * propósito (ver `verificarWhatsAppDaPagina`).
+ * acessório.
+ *
+ * Note que `/me/accounts` lista as Páginas onde o USUÁRIO tem papel, não
+ * todas as do portfólio. `/{business_id}/owned_pages` devolve mais. Se um
+ * cliente disser que falta uma página aqui, é por isso.
  */
 export async function listarPaginas(token: string): Promise<PaginaDoFacebook[]> {
   const dados = await chamar<{
@@ -156,63 +159,26 @@ export async function listarPaginas(token: string): Promise<PaginaDoFacebook[]> 
   }));
 }
 
-/**
- * `true` = tem WhatsApp ligado, `false` = não tem, `null` = não deu para
- * verificar.
- *
- * Os três estados são intencionais. O campo que reporta o número mudou
- * de nome entre versões da API, e um `false` errado mandaria o cliente
- * resolver um problema que ele não tem — o mesmo defeito que derrubou o
- * seletor de Instagram. Quando a chamada falha, a resposta honesta é
- * "não sei", e a tela diz isso em vez de inventar.
- */
-export async function verificarWhatsAppDaPagina(
-  token: string,
-  pageId: string,
-): Promise<boolean | null> {
-  try {
-    // Estes três campos foram verificados um a um contra a v25.0, numa
-    // Página real. `connected_whatsapp_business_account` e
-    // `whatsapp_business_account` NÃO existem — pedir qualquer um deles
-    // derruba a resposta inteira com
-    // "(#100) Tried accessing nonexisting field", e a verificação volta
-    // `null` para toda página, mesmo as que têm número.
-    //
-    // Quando o número não está ligado, o Meta OMITE os três campos em vez
-    // de devolvê-los vazios. Por isso a leitura é por ausência.
-    //
-    // Não confundir com `phone`: aquele é o telefone de contato exibido
-    // na Página, existe mesmo sem WhatsApp nenhum, e não serve para
-    // anúncio de conversa.
-    const dados = await chamar<{
-      whatsapp_number?: string;
-      has_whatsapp_number?: boolean;
-      has_whatsapp_business_number?: boolean;
-    }>(
-      `/${pageId}?fields=whatsapp_number,has_whatsapp_number,has_whatsapp_business_number`,
-      token,
-    );
+/* ============================================================
+   NÃO EXISTE FUNÇÃO PARA "ESTA PÁGINA TEM WHATSAPP LIGADO?"
 
-    const numero = dados.whatsapp_number?.trim();
-    return Boolean(numero || dados.has_whatsapp_number || dados.has_whatsapp_business_number);
-  } catch {
-    // Não propaga: a escolha da página não pode ficar refém desta
-    // checagem. Quem chama trata `null` como "não verificado".
-    return null;
-  }
-}
+   Existiu, e foi removida. Não tente reescrevê-la sem ler antes
+   `docs/oauth-meta.md`, seção 2.1 — o registro completo do teste está
+   lá, com os dados.
 
-export interface PaginaComWhatsApp extends PaginaDoFacebook {
-  /** true = pronta, false = falta ligar, null = não deu para verificar */
-  whatsapp: boolean | null;
-}
+   Resumo: `whatsapp_number`, `has_whatsapp_number` e
+   `has_whatsapp_business_number` são superfície legada. Uma Página real
+   com DOIS números ligados devolve os três campos ausentes, mesmo lida
+   com o token dela própria. A função retornava `false` para todas as
+   páginas do mundo, e a tela dizia ao cliente para resolver um problema
+   que ele não tinha — exatamente o defeito que derrubou o seletor de
+   Instagram, repetido.
 
-/** Lista as páginas e verifica o WhatsApp de cada uma, em paralelo. */
-export async function listarPaginasComWhatsApp(
-  token: string,
-): Promise<PaginaComWhatsApp[]> {
-  const paginas = await listarPaginas(token);
-  return Promise.all(
-    paginas.map(async (p) => ({ ...p, whatsapp: await verificarWhatsAppDaPagina(token, p.id) })),
-  );
-}
+   Não é escopo (`pages_read_engagement` está concedido) e não é
+   portfólio (o token alcança os três, com as seis tarefas em cada).
+   `phone` NÃO substitui: existe sem WhatsApp nenhum.
+
+   A verificação certa é `execution_options=["validate_only"]` na criação
+   do criativo — testada e confirmada: o Meta responde `{"success":true}`
+   e não cria nada. Ver `docs/publicar-campanha.md`.
+   ============================================================ */

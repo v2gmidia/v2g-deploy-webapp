@@ -63,8 +63,8 @@ export default async function ConectarPage({ searchParams }: Props) {
             <b>Sua conexão precisa ser refeita uma vez</b>
             <p>
               A gente melhorou a conexão desde a última vez que você conectou — agora ela também
-              confere se o WhatsApp está ligado na sua página, para avisar antes de qualquer
-              anúncio subir. Refazer leva dois cliques e nada do que você já configurou se perde.
+              guarda de qual página seus anúncios vão sair, que é o que faltava para publicar.
+              Refazer leva dois cliques e nada do que você já configurou se perde.
             </p>
           </div>
         )}
@@ -87,9 +87,8 @@ export default async function ConectarPage({ searchParams }: Props) {
         <div className="trust">
           <b>Por que ele pede acesso às suas Páginas</b>
           Seus anúncios saem de uma página, e é o WhatsApp dela que recebe as conversas. A gente
-          precisa ver quais páginas você tem e se o WhatsApp já está ligado em cada uma — para
-          avisar antes, e não na hora em que o anúncio deveria subir. A gente não publica nada na
-          página nem lê as conversas dela.
+          precisa ver quais páginas você tem para você escolher de qual eles vão sair. A gente não
+          publica nada na página nem lê as conversas dela.
         </div>
 
         <a className="cta" href="/auth/meta/iniciar">

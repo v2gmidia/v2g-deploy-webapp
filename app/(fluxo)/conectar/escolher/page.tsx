@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { listarContasDeAnuncio, listarPaginasComWhatsApp } from "@/lib/meta/graph";
+import { listarContasDeAnuncio, listarPaginas } from "@/lib/meta/graph";
 import { diagnosticar, registrarErroMeta } from "@/lib/meta/erros";
 import { FormularioEscolha } from "./Formulario";
 
@@ -60,7 +60,7 @@ export default async function EscolherPage() {
   try {
     [contas, paginas] = await Promise.all([
       listarContasDeAnuncio(token),
-      listarPaginasComWhatsApp(token),
+      listarPaginas(token),
     ]);
   } catch (erro) {
     registrarErroMeta("escolher:listagem", erro);

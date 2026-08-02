@@ -103,6 +103,103 @@ Custo: entra no **mesmo App Review** de `ads_read` e `ads_management`.
 Como nada foi submetido ainda, o custo marginal é uma linha no pedido.
 Depois de submetido, seria uma segunda fila.
 
+---
+
+## 2.1 NÃO DÁ PARA SABER, PELA API, SE UMA PÁGINA TEM WHATSAPP LIGADO
+
+**Este é o registro mais útil deste documento. Leia antes de tentar.**
+
+A tentativa foi: ler os campos de WhatsApp da Página para avisar o cliente,
+na hora de conectar, que aquela página ainda não recebe conversa. Isso
+**não funciona**, e não é por falta de escopo.
+
+### O que foi testado, e contra o quê
+
+Conta real, três Páginas, Graph API v25.0, com estado conhecido por
+auditoria manual nas interfaces do Meta:
+
+| Página | Portfólio | WhatsApp segundo a interface do Meta |
+|---|---|---|
+| V2G | V2G Midia | **nenhum** — vínculo pendente |
+| Piligrin Build | BM - Piligrin | **+55 21 93618-2928** |
+| Piligrin | BM - Piligrin | **dois números**: 21 98035-1531 e 21 93618-2928 |
+
+### O resultado
+
+```
+GET /{page_id}?fields=whatsapp_number,has_whatsapp_number,has_whatsapp_business_number
+
+Piligrin  (token de usuário)  →  {"id": "847147288492237"}
+Piligrin  (token da PÁGINA)   →  {"id": "847147288492237"}
+```
+
+**A Página com DOIS números devolve os três campos omitidos, mesmo lida
+com o token dela própria** — o nível mais alto de acesso disponível. Os
+campos existem no schema (pedi-los não dá erro), mas nunca são
+preenchidos.
+
+Conclusão: `whatsapp_number`, `has_whatsapp_number` e
+`has_whatsapp_business_number` são **superfície legada**, do tempo em que
+existia um botão de WhatsApp na Página. Elas não refletem o vínculo
+WABA–portfólio que a interface do Meta mostra hoje.
+
+### O que foi descartado no caminho
+
+**Não é escopo.** Antes de `pages_read_engagement` o erro era
+`(#100) requires the 'pages_read_engagement' permission`; depois virou
+`(#100) Tried accessing nonexisting field`, e com os nomes corretos passou
+a devolver 200 com os campos ausentes. O escopo resolveu o acesso — o
+dado é que não existe.
+
+**Não é portfólio.** A hipótese natural (as Páginas com número estão em
+`BM - Piligrin`, e o app foi criado em `V2G Midia`) foi testada e caiu:
+
+```
+/me/businesses  →  V2G Midia, Victor Cabral, BM - Piligrin
+```
+
+O token alcança os três, lê `/{page_id}?fields=business` de todas, e tem
+as seis tarefas (ADVERTISE, ANALYZE, CREATE_CONTENT, MESSAGING, MODERATE,
+MANAGE) em cada uma. Nada estava fora de alcance.
+
+**Não adianta subir de escopo.** As arestas onde o vínculo moderno vive
+respondem `(#200) You do not have permission to access this field`:
+
+```
+/{business_id}/owned_whatsapp_business_accounts
+/{business_id}/client_whatsapp_business_accounts
+/{page_id}/whatsapp_business_accounts          → nem existe
+```
+
+As duas primeiras exigem `whatsapp_business_management` — outro App
+Review. E mesmo obtido, ele responde "existe WABA no portfólio", que
+**não é a mesma pergunta** que "esta Página está ligada a um número para
+anúncio de conversa".
+
+### Armadilha: `phone` não serve
+
+```
+/{page_id}?fields=phone   →  {"phone": "+5521980351531"}
+```
+
+As duas Páginas devolvem número aqui — inclusive a V2G, que não tem
+WhatsApp nenhum. `phone` é o telefone de contato exibido na Página, existe
+sem WhatsApp e **não habilita anúncio de conversa**. Quem olhar rápido vai
+achar que resolveu.
+
+### Detalhe adicional
+
+`/me/accounts` lista as Páginas onde o **usuário** tem papel, não todas as
+do portfólio: `/{business_id}/owned_pages` revelou uma quarta Página
+(`Piligrin Build 1`) que a primeira não retorna.
+
+### O que fazer em vez disso
+
+Verificar no momento que importa, contra o que importa: **a própria
+criação do criativo**. Ver `docs/publicar-campanha.md` — a checagem correta
+é perguntar ao Meta se aquele criativo seria aceito, não inferir por campo
+de Página.
+
 ### `instagram_basic` foi removido
 
 A primeira versão pedia também `instagram_basic`, para listar o perfil de

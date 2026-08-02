@@ -10,6 +10,75 @@ Marketing API **v25.0**, a mesma versão já fixada em `lib/meta/oauth.ts`.
 
 ---
 
+## 0.a Ensaio a seco: `validate_only` — TESTADO, FUNCIONA
+
+Toda criação da cadeia aceita `execution_options=["validate_only"]`. O
+Meta valida o pedido inteiro e **não cria nada**.
+
+Testado contra a conta real `act_2818009911919726`, contando os objetos
+antes e depois:
+
+```
+POST /act_<id>/campaigns   { ..., execution_options: ["validate_only"] }
+  →  {"success": true}
+  campanhas antes: 5   depois: 5
+```
+
+O mesmo pedido sem `is_adset_budget_sharing_enabled` devolveu, também sem
+criar nada:
+
+```
+(#100 / subcode 4834011) "É necessário especificar True ou False no campo
+is_adset_budget_sharing_enabled se você não estiver usando o orçamento da
+campanha."
+```
+
+Ou seja: valida de verdade, com a mensagem específica, em português, no
+campo `error_user_msg`. **Este é o mecanismo de pré-checagem do lote.**
+Roda a cadeia inteira em seco antes de criar o primeiro objeto — o que
+torna a invariante "nada meio-criado" muito mais barata de garantir do
+que a limpeza descrita na seção 7.
+
+Use `error_user_msg` quando existir: já vem traduzido e escrito para o
+usuário final. `message` é para log.
+
+### Por que a checagem de WhatsApp mora aqui, e não na conexão
+
+Não existe forma de perguntar à API se uma Página tem WhatsApp ligado —
+está documentado com os dados em `docs/oauth-meta.md`, seção 2.1. A
+pergunta certa não é "esta página tem número?", é "este criativo seria
+aceito?", e `validate_only` no `POST /adcreatives` responde exatamente
+isso, no momento em que importa.
+
+**Ainda não foi possível ver a mensagem do caso "página sem WhatsApp"**,
+porque uma condição anterior barra o pedido — ver 0.b.
+
+---
+
+## 0.b BLOQUEIO: o app precisa sair do modo de desenvolvimento
+
+A validação do criativo falha antes de chegar ao WhatsApp:
+
+```
+POST /act_<id>/adcreatives  (CTWA, validate_only)
+  →  (#100 / subcode 1885183)
+     "O post do criativo dos anúncios foi criado por um app que está em
+      modo de desenvolvimento. Ele deve estar em modo público para criar
+      este anúncio."
+```
+
+Isto **não é um detalhe do teste** — é um pré-requisito de lançamento.
+Nenhum anúncio pode ser criado por este app, para ninguém, enquanto ele
+estiver em desenvolvimento. Vai junto com o App Review de `ads_read`,
+`ads_management`, `business_management`, `pages_show_list` e
+`pages_read_engagement`.
+
+Consequência para o planejamento: dá para escrever e testar toda a cadeia
+até `adsets` agora; `adcreatives` e `ads` só ganham teste real depois que
+o app for público.
+
+---
+
 ## 0. As cinco invariantes, e o que garante cada uma
 
 | Invariante | Mecanismo |

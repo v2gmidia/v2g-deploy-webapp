@@ -35,26 +35,34 @@ const GRAPH = `https://graph.facebook.com/${META_API_VERSION}`;
  * que seria preciso para trazer de volta.
  *
  * ------------------------------------------------------------------
- * NÃO REMOVA `pages_read_engagement` ACHANDO QUE É ACESSÓRIO.
+ * `pages_read_engagement`: MANTIDO, e a razão original CAIU.
  *
- * `pages_show_list` LISTA as páginas; `pages_read_engagement` deixa LER
- * OS CAMPOS de cada uma. São coisas diferentes, e a segunda é o que
- * permite descobrir se a página tem WhatsApp ligado —
- * `/{page_id}?fields=whatsapp_number,connected_whatsapp_business_account`.
+ * Ele foi pedido para ler `/{page_id}?fields=whatsapp_number,...` e
+ * descobrir se a página tinha WhatsApp ligado. Aquilo não funciona — os
+ * campos são superfície legada e vêm ausentes até numa página com dois
+ * números. O escopo resolveu o ACESSO; o dado é que não existe. Registro
+ * completo em `docs/oauth-meta.md`, seção 2.1. A função que o usava foi
+ * removida, e hoje NENHUMA linha deste projeto depende deste escopo.
  *
- * Sem ele a chamada devolve erro 100 ("This endpoint requires the
- * 'pages_read_engagement' permission") e a verificação retorna `null`
- * para TODA página, inclusive as que têm WhatsApp. Verificado em
- * produção, nas 3 páginas da conta real, antes de o escopo ser pedido.
+ * Foi mantido mesmo assim, por assimetria de custo:
  *
- * Isso importa porque o produto inteiro é click-to-WhatsApp: página sem
- * número ligado não tem para onde mandar quem clica no anúncio. Sem este
- * escopo, o cliente só descobriria isso quando a publicação falhasse.
+ *   - manter e não precisar  = uma linha a mais no App Review, que ainda
+ *     não foi submetido. Custo marginal ≈ zero.
+ *   - remover e precisar     = segunda fila de App Review E todo cliente
+ *     já conectado tendo que reautorizar, porque escopo novo exige novo
+ *     consentimento. Custo alto e com cliente rodando.
  *
- * O `pages_show_list` já foi removido por engano uma vez — junto com a
- * função que o usava — e o buraco só apareceu um lote depois, quando
- * publicar exigiu `page_id`. Este comentário existe para o mesmo não
- * acontecer com este aqui.
+ * E há dependência plausível à frente: `pages_show_list` só LISTA as
+ * páginas onde o usuário tem papel (e nem todas do portfólio —
+ * `/{business_id}/owned_pages` devolve mais). Qualquer leitura do nó da
+ * Página depois da conexão — confirmar que o `meta_page_id` guardado
+ * ainda é alcançável, mostrar de qual página o anúncio sai — passa por
+ * `pages_read_engagement`.
+ *
+ * Ou seja: a resposta a "o que dependeria disto depois" é *provavelmente
+ * a pré-checagem de publicação*, e na dúvida o lado barato é manter.
+ * Se o App Review negar este escopo especificamente, remova sem medo:
+ * nada quebra hoje.
  * ------------------------------------------------------------------
  */
 export const ESCOPOS = [

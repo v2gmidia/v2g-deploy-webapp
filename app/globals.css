@@ -1424,24 +1424,6 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .escolha-item input { margin-top: 3px; flex: none; accent-color: var(--cobalt); }
 .esc-texto { min-width: 0; flex: 1; }
 
-/* Selo de prontidão da página. Neutro por padrão e verde só quando está
-   pronta — "falta WhatsApp" não é erro, é passo pendente, e pintar de
-   vermelho faria parecer que a escolha está bloqueada. */
-.selo-wa {
-  flex: none;
-  align-self: center;
-  font-family: var(--display);
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  font-weight: 700;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: rgb(var(--navy-rgb) / 0.07);
-  color: var(--ink-mute);
-  white-space: nowrap;
-}
-.selo-wa.ok { background: var(--good-soft); color: var(--good); }
 .esc-texto b { display: block; font-family: var(--display); font-size: 14px; color: var(--navy); }
 .esc-texto span { display: block; font-size: 12px; line-height: 1.45; color: var(--ink-soft); margin-top: 2px; }
 
