@@ -64,6 +64,55 @@ export default async function AnunciosPage() {
   const esperando = lista.filter((c) => c.published_at === null);
   const noAr = lista.filter((c) => c.published_at !== null);
 
+  // FAIXA CONDICIONAL. O conteúdo normal desta tela é uma lista, e lista
+  // não grita — faixa permanente aqui viraria moldura decorativa. Ela só
+  // aparece quando alguma coisa espera o cliente AGORA.
+  // Ver docs/padrao-visual.md §5.
+  const falhou = lista.filter((c) => c.publish_state === "failed");
+  const reprovadas = pecas.filter((p) => p.status === "rejected");
+  const aprovar = pecas.filter((p) => p.status === "draft");
+
+  const pendencia =
+    falhou.length > 0
+      ? {
+          eyebrow: "Precisa de você",
+          frase: (
+            <>
+              Uma publicação <span className="destaque">não deu certo</span>.
+            </>
+          ),
+          nota: "Nada foi ativado e nenhuma verba foi gasta. O motivo está na linha do anúncio, logo abaixo.",
+          href: null,
+          rotulo: null,
+        }
+      : reprovadas.length > 0
+        ? {
+            eyebrow: "Precisa de você",
+            frase: (
+              <>
+                {reprovadas.length === 1 ? "Uma peça" : `${reprovadas.length} peças`} não{" "}
+                {reprovadas.length === 1 ? "passou" : "passaram"} na{" "}
+                <span className="destaque">revisão do Facebook</span>.
+              </>
+            ),
+            nota: "Acontece com frequência e seus outros anúncios não são afetados. A IA já está refazendo.",
+            href: "/reprovado",
+            rotulo: "Ver o que aconteceu",
+          }
+        : aprovar.length > 0
+          ? {
+              eyebrow: "Esperando você",
+              frase: (
+                <>
+                  Tem peça <span className="destaque">esperando sua aprovação</span>.
+                </>
+              ),
+              nota: "Nada vai ao ar sem você dizer que sim — texto e foto, um de cada vez.",
+              href: "/aprovar",
+              rotulo: "Ver a peça",
+            }
+          : null;
+
   return (
     <>
       <FaixaReconectar />
@@ -74,6 +123,19 @@ export default async function AnunciosPage() {
           esperam alguma coisa de você.
         </p>
       </div>
+
+      {pendencia && (
+        <section className="hero-destaque">
+          <span className="eyebrow">{pendencia.eyebrow}</span>
+          <p className="hero-frase">{pendencia.frase}</p>
+          <p className="hero-note">{pendencia.nota}</p>
+          {pendencia.href && (
+            <a className="cta" href={pendencia.href} style={{ marginTop: 22, width: "max-content" }}>
+              {pendencia.rotulo}
+            </a>
+          )}
+        </section>
+      )}
 
       <div className="dash-grid">
         <div className="dash-main">
@@ -125,20 +187,11 @@ export default async function AnunciosPage() {
             </section>
           )}
 
-          {/* Só aparece quando existe peça reprovada. Sem isso, a tela de
-              "anúncio reprovado" seria inalcançável — e o cliente ficaria
-              com uma peça parada e nenhuma explicação de por quê. */}
-          {pecas.some((p) => p.status === "rejected") && (
-            <section className="trust" style={{ borderColor: "var(--warn)", background: "var(--warn-soft)" }}>
-              <b>Uma peça não passou na revisão do Facebook</b>
-              Acontece com frequência e seus outros anúncios não são afetados. Dá para ver o que
-              foi e o que acontece agora.
-              <br />
-              <a className="cta" href="/reprovado" style={{ marginTop: 12, width: "max-content" }}>
-                Ver o que aconteceu
-              </a>
-            </section>
-          )}
+          {/* O aviso de peça reprovada subiu para a faixa condicional lá
+              em cima. Ele era um segundo bloco de destaque no meio da
+              lista, competindo com ela — e a regra é uma coisa gritando
+              por tela. A rota /reprovado continua alcançável pelo botão
+              da faixa. */}
 
           <SemCampanhaAssociada
             pecas={pecas.filter((p) => !p.campaign_id || !lista.some((c) => c.id === p.campaign_id))}

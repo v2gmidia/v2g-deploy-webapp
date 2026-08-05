@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
+import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { numero } from "@/lib/formato";
 
 /**
@@ -46,6 +47,40 @@ export default async function VendasPage() {
         </p>
       </div>
 
+      {/* A FAIXA. O que grita nesta tela é quantas pessoas chegaram — é a
+          razão de ela existir. Quando ninguém chegou, grita o motivo, que
+          é a única coisa útil a dizer. Ver docs/padrao-visual.md §5. */}
+      <section className="hero-destaque">
+        <span className="eyebrow">Chegaram até você</span>
+        {conversas > 0 ? (
+          <>
+            <NumeroQueConta valor={conversas} casas={0} className="hero-num" />
+            <p className="hero-legenda">
+              {conversas === 1 ? "pessoa começou" : "pessoas começaram"} uma conversa no seu
+              WhatsApp
+            </p>
+          </>
+        ) : (
+          <p className="hero-frase">
+            {publicadas.length === 0 ? (
+              <>
+                Ninguém chegou ainda porque{" "}
+                <span className="destaque">nenhum anúncio foi ao ar</span>.
+              </>
+            ) : (
+              <>
+                Seu anúncio está no ar. A <span className="destaque">primeira conversa</span> ainda
+                não veio.
+              </>
+            )}
+          </p>
+        )}
+        <p className="hero-note">
+          O Facebook consegue contar quantas conversas começaram, mas não sabe quais viraram
+          venda. Essa parte só você sabe — e é a que diz se valeu a pena.
+        </p>
+      </section>
+
       <div className="dash-grid">
         <div className="dash-main">
           {publicadas.length === 0 ? (
@@ -58,13 +93,9 @@ export default async function VendasPage() {
         </div>
 
         <aside className="dash-aside">
-          <section className="trust support-block">
-            <b>Por que a gente pergunta</b>
-            O Facebook consegue contar quantas conversas começaram, mas não sabe quais viraram
-            venda. Sem você contar, qualquer número de retorno seria chute — e a gente prefere
-            não ter número a ter um número inventado.
-          </section>
-
+          {/* O bloco "por que a gente pergunta" saiu: a nota da faixa já
+              diz isso, e dizer duas vezes na mesma tela enfraquece as
+              duas. */}
           <section className="trust support-block">
             <b>Ficou com dúvida?</b>
             Gente de verdade responde, sem robô, em até 2 horas úteis.
@@ -88,17 +119,16 @@ function NinguemChegouAinda() {
         </svg>
       </div>
       <div className="empty-copy">
-        <p className="empty-head">Ninguém chegou ainda, e o motivo é simples.</p>
+        {/* O título saiu daqui: a faixa acima já diz que ninguém chegou e
+            por quê. Repetir a manchete logo abaixo dela é ruído. */}
+        <p className="empty-head">Como vai funcionar quando o primeiro subir</p>
         <p className="empty-body">
-          Nenhum anúncio seu foi ao ar até agora. Quando o primeiro subir, quem clicar nele cai
-          direto numa conversa no seu WhatsApp — e é essa pessoa que aparece aqui.
+          Quem clicar no seu anúncio cai direto numa conversa no seu WhatsApp — e é essa pessoa
+          que aparece aqui. Nada é automático depois: quem responde é você, do seu jeito.
         </p>
         <a className="cta" href="/anuncios" style={{ width: "max-content" }}>
           Ver meus anúncios
         </a>
-        <p className="empty-note">
-          Nada aqui é automático depois: quem responde a conversa é você, do seu jeito.
-        </p>
       </div>
       <ul className="empty-list">
         <li>
