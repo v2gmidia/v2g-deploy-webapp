@@ -11,14 +11,22 @@ import Image from "next/image";
  * escrito à mão. Trocar a arte significava lembrar dos três, e o terceiro
  * é o que alguém esquece.
  *
- * Para trocar o símbolo: substitua `public/marca.svg`. Nada mais.
+ * Para trocar o símbolo: substitua `public/marca.png`. Nada mais —
+ * exceto as dimensões abaixo, se a arte nova não for 612×612.
  * ============================================================
  *
- * O ARQUIVO: `public/marca.png`, 240×242, fundo transparente. É o
- * original recortado — a arte vinha numa tela de 500×500 com margem
- * transparente em volta, e essa margem faria o símbolo aparecer pequeno
- * e fora de eixo dentro de qualquer caixa. O recorte é pela caixa real
- * do conteúdo, não por olho.
+ * O ARQUIVO: `public/marca.png`, 612×612, fundo transparente.
+ *
+ * Veio da arte em alta — o símbolo preto sobre cobalto, 1254×1254. A
+ * transparência foi obtida projetando cada pixel no eixo traço→fundo, e
+ * não por limiar seco: limiar serrilharia os cantos arredondados, que
+ * são a assinatura do desenho. O fundo do arquivo original tem ruído de
+ * compressão, então abaixo de 12% de opacidade vira vazio e acima de 92%
+ * vira sólido; a faixa do meio sobrevive e é ela que mantém a borda
+ * suave.
+ *
+ * Recortado pela caixa real do conteúdo e centralizado num quadrado —
+ * assim qualquer caixa quadrada no CSS nunca desloca o desenho.
  *
  * A tinta do traço é `#0A0C00` — preto. Em fundo claro ele vai como
  * está; sobre a sidebar cobalto, o CSS o inverte para branco com
@@ -41,8 +49,8 @@ function Simbolo() {
       className="glyph-img"
       src="/marca.png"
       alt=""
-      width={240}
-      height={242}
+      width={612}
+      height={612}
       priority
     />
   );

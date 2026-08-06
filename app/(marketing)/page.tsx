@@ -51,7 +51,7 @@ export default async function LandingPage() {
       <nav className="lp-nav">
         <div className="lp-container">
           <a className="brand" href="/">
-            <Image className="mark-img" src="/marca.png" alt="" width={240} height={242} />
+            <Image className="mark-img" src="/marca.png" alt="" width={612} height={612} />
             <div className="wm">V2G<small>Tráfego no piloto</small></div>
           </a>
           <div className="nav-links">
@@ -71,7 +71,7 @@ export default async function LandingPage() {
         <div className="lp-container hero-inner">
           <div className="hero-copy">
             <div className="hero-mark">
-              <Image className="mark-img" src="/marca.png" alt="" width={240} height={242} />
+              <Image className="mark-img" src="/marca.png" alt="" width={612} height={612} />
             </div>
             <span className="hero-eyebrow"><span className="pip"></span>A Contabilizei do marketing</span>
             <h1>Sua agência de tráfego cabe no <em>bolso</em>. E custa um terço.</h1>
@@ -359,7 +359,7 @@ export default async function LandingPage() {
       <footer className="lp-footer">
         <div className="lp-container">
           <div className="f-brand">
-            <Image className="mark-img" src="/marca.png" alt="" width={240} height={242} />
+            <Image className="mark-img" src="/marca.png" alt="" width={612} height={612} />
             <span className="wm">V2G</span>
           </div>
           <div className="f-links">

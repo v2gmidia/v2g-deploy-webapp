@@ -293,10 +293,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* ---------- wordmark ---------- */
 .wordmark { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
 /* O SÍMBOLO DA MARCA.
-   `height: auto` com `width` fixa: a arte é 240×242 (quase, mas não
-   exatamente, quadrada). Travar os dois a 30px achataria o traço em
-   ~1%, que é pouco para notar de relance e o bastante para o símbolo
-   nunca bater com a versão oficial em nenhum outro material. */
+   A arte é quadrada (612×612) e o `height: auto` fica assim mesmo: se
+   um dia ela deixar de ser, o desenho encolhe em proporção em vez de
+   achatar. Achatamento de 1% ninguém nota de relance — e é justamente
+   por isso que ele passa. */
 .wordmark .glyph-img {
   width: 30px;
   height: auto;
