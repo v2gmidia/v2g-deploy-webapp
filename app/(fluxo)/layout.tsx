@@ -1,3 +1,4 @@
+import { Marca } from "@/components/ui/Marca";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -33,13 +34,7 @@ export default async function FluxoLayout({ children }: { children: React.ReactN
   return (
     <div className="auth-shell">
       <header className="auth-top">
-        <a className="wordmark" href="/inicio">
-          <span className="glyph">V2G</span>
-          <span className="wm">
-            V2G
-            <small>Tráfego no piloto</small>
-          </span>
-        </a>
+        <Marca href="/inicio" />
         {/* Única saída da tela, como no original: falar com gente. */}
         <a className="auth-help" href="https://wa.me/5521980351531" target="_blank" rel="noopener">
           <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">

@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
 import { DataDeHoje, Saudacao } from "@/components/ui/Saudacao";
 import { signOutAction } from "./actions";
@@ -81,13 +82,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="side-brand wordmark">
-          <span className="glyph">V2G</span>
-          <span className="wm">
-            V2G
-            <small>Tráfego no piloto</small>
-          </span>
-        </div>
+        <Marca href="/inicio" className="side-brand" />
 
         <nav className="side-nav">
           {/* CINCO ITENS, E CINCO É TETO — não meta. É o que cabe numa
