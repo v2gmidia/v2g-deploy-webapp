@@ -1,0 +1,598 @@
+/* ============================================================
+   LANDING PAGE — estilos exclusivos da rota "/".
+   Portado de `design/assets/v2g-landing.css` do repositório de design.
+
+   O QUE MUDOU NA MIGRAÇÃO: as 28 cores literais do original eram da
+   PALETA ANTIGA — o gelo `#ABEAFD`, o cobalto `#2B4CCE`, o navy
+   `#0B1B2B`. Elas foram convertidas para `rgb(var(--x-rgb) / alfa)`
+   contra os tokens atuais. Sem isso a LP ficaria num azul e num gelo
+   levemente diferentes do app, e ninguém notaria até ver as duas telas
+   lado a lado.
+
+   Regra que vale aqui como no resto: nenhum valor de cor fora do
+   `:root` de `globals.css`.
+   ============================================================ */
+
+/* ============================================================
+   V2G — Landing page de vendas (leva o visitante frio à compra)
+   Depende de v2g.css: usa as variáveis e o ::selection de lá.
+
+   Decisão de superfície: a LP é MARKETING, não produto. Os anúncios
+   reais da marca (billboards do rebrand) são navy com lima — então
+   aqui o navy é a cor de campanha, ousada, e o claro é onde o produto
+   se explica com transparência. É o oposto do fluxo de cadastro (claro
+   do começo ao fim), e de propósito: propaganda e produto têm vozes
+   visuais diferentes.
+
+   Regras herdadas (não se quebram):
+   - lima só celebração/ganho e prova de resultado, nunca no botão;
+   - a ação é sempre cobalto (no claro) ou branco (no navy) — uma cor
+     de ação só, para o olho nunca hesitar sobre onde clicar;
+   - sem a palavra "grátis"; zero jargão de tráfego.
+   ============================================================ */
+
+/* Era `body.lp` no protótipo, onde a LP era um documento inteiro. Aqui
+   ela é uma rota entre outras, então a classe desce para um `<div>` — o
+   `<body>` é compartilhado com o app e não pode ser repintado por uma
+   folha que só uma rota carrega. */
+.lp {
+  background: var(--offwhite);
+  background-image: none;
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.lp-container { max-width: 1120px; margin: 0 auto; padding: 0 28px; }
+.lp-narrow { max-width: 760px; margin: 0 auto; padding: 0 28px; }
+
+/* ============================================================
+   NAV superior — enxuta, CTA sempre à mão
+   ============================================================ */
+.lp-nav {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: rgb(var(--navy-rgb) / 0.92);
+  backdrop-filter: saturate(1.4) blur(8px);
+  border-bottom: 1px solid rgb(var(--ice-rgb) / 0.14);
+}
+.lp-nav .lp-container {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 15px;
+  padding-bottom: 15px;
+}
+.lp-nav .brand { display: flex; align-items: center; gap: 11px; text-decoration: none; }
+.lp-nav .brand .wm {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 19px;
+  letter-spacing: 0.04em;
+  color: var(--offwhite);
+  line-height: 1;
+}
+.lp-nav .brand .wm small {
+  display: block;
+  font-family: var(--body);
+  font-weight: 400;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ice);
+  margin-top: 3px;
+}
+.lp-nav .nav-links { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+.lp-nav .nav-links a.txt {
+  font-family: var(--display);
+  font-size: 13.5px;
+  color: rgb(var(--offwhite-rgb) / 0.82);
+  text-decoration: none;
+}
+.lp-nav .nav-links a.txt:hover { color: var(--offwhite); }
+@media (max-width: 720px) { .lp-nav .nav-links a.txt { display: none; } }
+
+/* ============================================================
+   BOTÕES — uma ação, dois contrastes
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 22px;
+  cursor: pointer;
+  transition: transform 0.14s ease, background 0.14s ease, box-shadow 0.14s ease;
+}
+.btn .arrow { transition: transform 0.14s ease; }
+.btn:hover .arrow { transform: translateX(3px); }
+/* ação no claro */
+.btn-primary { background: var(--cobalt); color: var(--white); }
+.btn-primary:hover { background: var(--cobalt-dark); transform: translateY(-1px); }
+/* ação no navy */
+.btn-light { background: var(--offwhite); color: var(--navy); }
+.btn-light:hover { background: var(--white); transform: translateY(-1px); box-shadow: 0 10px 30px -12px rgb(var(--ice-rgb) / 0.6); }
+/* secundária */
+.btn-ghost-light {
+  background: transparent; color: var(--offwhite);
+  border: 1.5px solid rgb(var(--ice-rgb) / 0.4);
+}
+.btn-ghost-light:hover { border-color: var(--ice); background: rgb(var(--ice-rgb) / 0.08); }
+.btn-lg { font-size: 16.5px; padding: 17px 30px; }
+.btn-nav { padding: 10px 18px; font-size: 14px; }
+
+/* ============================================================
+   HERO — o navy é o palco; a tese entra em 3 segundos
+   ============================================================ */
+.hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--navy);
+  color: var(--offwhite);
+  padding: 66px 0 76px;
+}
+.hero .dotgrid {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgb(var(--ice-rgb) / 0.16) 1.3px, transparent 1.3px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, var(--black) 40%, transparent 78%);
+  mask-image: radial-gradient(ellipse 80% 70% at 70% 30%, var(--black) 40%, transparent 78%);
+  pointer-events: none;
+}
+.hero-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(0, 0.88fr);
+  gap: 52px;
+  align-items: center;
+}
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 9px;
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ice);
+  border: 1px solid rgb(var(--ice-rgb) / 0.3);
+  border-radius: 999px;
+  padding: 7px 14px;
+  margin-bottom: 22px;
+}
+.hero-eyebrow .pip { width: 7px; height: 7px; background: var(--lime); flex: none; }
+.hero h1 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(34px, 5.2vw, 60px);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  margin: 0 0 20px;
+  text-wrap: balance;
+  max-width: 15ch;
+}
+.hero h1 em { font-style: normal; color: var(--lime); }
+.hero-sub {
+  font-size: 17.5px;
+  line-height: 1.6;
+  color: rgb(var(--offwhite-rgb) / 0.86);
+  margin: 0 0 30px;
+  max-width: 48ch;
+}
+.hero-cta-row { display: flex; flex-wrap: wrap; gap: 13px; align-items: center; }
+.hero-trust {
+  display: flex; flex-wrap: wrap; gap: 8px 20px;
+  margin-top: 24px;
+  font-size: 13px;
+  color: rgb(var(--offwhite-rgb) / 0.7);
+}
+.hero-trust span { display: inline-flex; align-items: center; gap: 7px; }
+.hero-trust .tk { width: 15px; height: 15px; background: var(--lime); color: var(--navy); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+
+/* logomark que se monta */
+.hero-mark { margin-bottom: 26px; }
+.hero-mark .mark i { background: var(--lime); transition: opacity 0.5s ease, transform 0.5s ease; }
+.hero-mark .mark i.off { background: rgb(var(--ice-rgb) / 0.14); }
+
+/* card de prova flutuante — mostra a transparência, não só promete */
+.proof-float {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 40px 80px -30px rgb(var(--navy-rgb) / 0.6);
+  transform: rotate(1.4deg);
+}
+.proof-float .pf-top {
+  display: flex; align-items: center; gap: 9px;
+  padding-bottom: 13px; margin-bottom: 14px;
+  border-bottom: 1.5px solid var(--line);
+}
+.proof-float .pf-avatar {
+  width: 34px; height: 34px; flex: none; border-radius: 50%;
+  background: var(--navy); color: var(--offwhite);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display); font-weight: 700; font-size: 14px;
+}
+.proof-float .pf-who b { font-family: var(--display); font-size: 13.5px; color: var(--navy); display: block; line-height: 1.1; }
+.proof-float .pf-who span { font-size: 11px; color: var(--ink-mute); }
+.proof-float .pf-phrase {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.25;
+  color: var(--navy);
+  margin: 0 0 15px;
+}
+.proof-float .pf-phrase b { color: var(--cobalt); }
+.proof-float .pf-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.proof-float .pf-m {
+  background: var(--offwhite);
+  border-radius: 9px;
+  padding: 11px 12px;
+}
+.proof-float .pf-m .l { font-family: var(--display); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-mute); display: block; }
+.proof-float .pf-m .v { font-family: var(--display); font-weight: 700; font-size: 19px; color: var(--navy); font-variant-numeric: tabular-nums; }
+.proof-float .pf-m .v.win { color: var(--cobalt); }
+.proof-float .pf-tag {
+  display: inline-flex; align-items: center; gap: 7px;
+  margin-top: 14px;
+  background: var(--lime); color: var(--navy);
+  font-family: var(--display); font-weight: 700; font-size: 11.5px;
+  padding: 7px 11px; border-radius: 7px;
+}
+
+/* ============================================================
+   SEÇÕES genéricas
+   ============================================================ */
+.section { padding: 76px 0; }
+.section.tight { padding: 60px 0; }
+.section.ice { background: var(--ice-soft); }
+.section.navy { background: var(--navy); color: var(--offwhite); }
+
+.sec-head { max-width: 62ch; margin: 0 0 42px; }
+.sec-head.center { margin-left: auto; margin-right: auto; text-align: center; }
+.sec-eyebrow {
+  font-family: var(--display);
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--cobalt);
+  display: block;
+  margin-bottom: 14px;
+}
+.section.navy .sec-eyebrow { color: var(--ice); }
+.sec-head h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(27px, 3.6vw, 42px);
+  line-height: 1.08;
+  letter-spacing: -0.01em;
+  color: var(--navy);
+  margin: 0 0 14px;
+  text-wrap: balance;
+}
+.section.navy .sec-head h2 { color: var(--offwhite); }
+.sec-head h2 em { font-style: normal; color: var(--cobalt); }
+.section.navy .sec-head h2 em { color: var(--lime); }
+.sec-lead { font-size: 17px; line-height: 1.6; color: var(--ink-soft); margin: 0; }
+.section.navy .sec-lead { color: rgb(var(--offwhite-rgb) / 0.82); }
+
+/* ============================================================
+   DOR — o filme que o dono já viveu
+   ============================================================ */
+.pains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.pain {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 26px 24px;
+}
+.pain .p-ic {
+  width: 42px; height: 42px;
+  border-radius: 10px;
+  background: var(--crit-soft); color: var(--crit);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+.pain h3 { font-family: var(--display); font-size: 17px; color: var(--navy); margin: 0 0 8px; }
+.pain p { font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+
+/* ============================================================
+   VIRADA — o contrário disso
+   ============================================================ */
+.shift-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.shift {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 26px 24px;
+}
+.shift .s-ic {
+  width: 42px; height: 42px; border-radius: 10px;
+  background: rgb(var(--cobalt-rgb) / 0.1); color: var(--cobalt);
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px;
+}
+.shift h3 { font-family: var(--display); font-size: 17px; color: var(--navy); margin: 0 0 8px; }
+.shift p { font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+
+/* ============================================================
+   COMO FUNCIONA — 3 passos (espelha o produto real)
+   ============================================================ */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; counter-reset: step; }
+.step { position: relative; }
+.step .s-n {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 15px;
+  width: 40px; height: 40px;
+  background: var(--navy); color: var(--lime);
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 18px;
+}
+.step h3 { font-family: var(--display); font-size: 19px; color: var(--navy); margin: 0 0 10px; }
+.step p { font-size: 14.5px; line-height: 1.58; color: var(--ink-soft); margin: 0; }
+.step .s-note { font-size: 12.5px; color: var(--cobalt); font-weight: 600; margin-top: 10px; display: inline-block; }
+.steps-cta { margin-top: 40px; text-align: center; }
+
+/* ============================================================
+   PREÇO — a âncora
+   ============================================================ */
+.price-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: stretch; }
+.price-card {
+  position: relative;
+  overflow: hidden;
+  background: var(--navy);
+  color: var(--offwhite);
+  border-radius: 18px;
+  padding: 34px 32px;
+}
+.price-card .pc-dots {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgb(var(--ice-rgb) / 0.12) 1.1px, transparent 1.1px);
+  background-size: 18px 18px; pointer-events: none;
+}
+.price-card .pc-body { position: relative; }
+.price-card .pc-label { font-family: var(--display); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ice); }
+.price-card .pc-amount {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 62px;
+  line-height: 1;
+  color: var(--lime);
+  letter-spacing: -0.02em;
+  margin: 10px 0 4px;
+  font-variant-numeric: tabular-nums;
+}
+.price-card .pc-amount small { font-size: 22px; font-weight: 400; color: var(--offwhite); letter-spacing: 0; }
+.price-card .pc-sub { font-size: 14px; color: rgb(var(--offwhite-rgb) / 0.82); line-height: 1.55; margin: 0 0 22px; }
+.price-card ul { list-style: none; margin: 0 0 26px; padding: 0; display: flex; flex-direction: column; gap: 11px; }
+.price-card ul li { display: flex; gap: 11px; font-size: 14.5px; line-height: 1.45; }
+.price-card ul li .tk { width: 19px; height: 19px; flex: none; background: var(--lime); color: var(--navy); display: inline-flex; align-items: center; justify-content: center; margin-top: 1px; }
+.price-card .btn { width: 100%; }
+.price-card .pc-fine { font-size: 12px; color: rgb(var(--offwhite-rgb) / 0.6); text-align: center; margin: 12px 0 0; }
+
+.price-side { display: flex; flex-direction: column; gap: 18px; }
+.compare {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 26px;
+}
+.compare h3 { font-family: var(--display); font-size: 16px; color: var(--navy); margin: 0 0 18px; }
+.compare-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 12px 0; border-bottom: 1px dashed var(--line); }
+.compare-row:last-child { border-bottom: none; }
+.compare-row .who { font-size: 14px; color: var(--ink-soft); }
+.compare-row .who b { color: var(--ink); font-family: var(--display); }
+.compare-row .val { font-family: var(--display); font-weight: 700; font-variant-numeric: tabular-nums; font-size: 16px; white-space: nowrap; }
+.compare-row .val.them { color: var(--crit); }
+.compare-row .val.us { color: var(--cobalt); }
+.compare-bar { height: 10px; border-radius: 999px; background: var(--offwhite); overflow: hidden; margin-top: 4px; }
+.compare-bar i { display: block; height: 100%; border-radius: 999px; }
+.compare-bar i.them { background: var(--crit); width: 100%; }
+.compare-bar i.us { background: var(--cobalt); }
+
+.pix-note {
+  background: var(--ice-soft);
+  border: 1.5px solid var(--ice);
+  border-radius: 16px;
+  padding: 20px 22px;
+}
+.pix-note b { font-family: var(--display); font-size: 14.5px; color: var(--navy); display: block; margin-bottom: 8px; }
+.pix-note p { font-size: 13px; line-height: 1.55; color: var(--ink-soft); margin: 0; font-variant-numeric: tabular-nums; }
+.pix-note p mark { background: var(--lime); color: var(--navy); padding: 1px 5px; font-weight: 600; }
+
+/* ============================================================
+   PROMESSA HONESTA — os 3 "nãos" (converte quem já foi queimado)
+   ============================================================ */
+.promise { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.promise-item {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 14px;
+  padding: 24px;
+}
+.promise-item .no {
+  font-family: var(--display);
+  font-size: 15px;
+  color: var(--navy);
+  font-weight: 700;
+  display: flex; gap: 10px; align-items: flex-start;
+  margin-bottom: 14px;
+}
+.promise-item .no .x { width: 22px; height: 22px; flex: none; border-radius: 6px; background: rgb(var(--navy-rgb) / 0.06); color: var(--ink-soft); display: inline-flex; align-items: center; justify-content: center; }
+.promise-item .yes {
+  background: var(--ice-soft);
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+.promise-item .yes b { color: var(--navy); }
+
+/* ============================================================
+   GARANTIA
+   ============================================================ */
+.guarantee {
+  display: flex; align-items: center; gap: 22px;
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 16px;
+  padding: 26px 28px;
+}
+.guarantee .g-seal {
+  width: 66px; height: 66px; flex: none;
+  border-radius: 14px;
+  background: var(--ice-soft); color: var(--cobalt);
+  display: flex; align-items: center; justify-content: center;
+}
+.guarantee h3 { font-family: var(--display); font-size: 19px; color: var(--navy); margin: 0 0 6px; }
+.guarantee p { font-size: 14px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+
+/* ============================================================
+   FAQ — acordeão nativo
+   ============================================================ */
+.faq { display: flex; flex-direction: column; gap: 12px; }
+.faq details {
+  background: var(--white);
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.faq details[open] { border-color: var(--cobalt); }
+.faq summary {
+  list-style: none;
+  cursor: pointer;
+  padding: 19px 22px;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--navy);
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary .chev { width: 18px; height: 18px; flex: none; color: var(--cobalt); transition: transform 0.2s ease; }
+.faq details[open] summary .chev { transform: rotate(45deg); }
+.faq .faq-body { padding: 0 22px 20px; font-size: 14.5px; line-height: 1.62; color: var(--ink-soft); }
+.faq .faq-body b { color: var(--ink); }
+
+/* ============================================================
+   CTA FINAL — o fecho
+   ============================================================ */
+.final-cta {
+  position: relative;
+  overflow: hidden;
+  background: var(--navy);
+  color: var(--offwhite);
+  border-radius: 22px;
+  padding: 56px 40px;
+  text-align: center;
+}
+.final-cta .fc-dots {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(rgb(var(--ice-rgb) / 0.14) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, var(--black) 30%, transparent 75%);
+  mask-image: radial-gradient(ellipse 70% 90% at 50% 0%, var(--black) 30%, transparent 75%);
+}
+.final-cta .fc-body { position: relative; }
+.final-cta h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(28px, 4vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  margin: 0 auto 16px;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+.final-cta h2 em { font-style: normal; color: var(--lime); }
+.final-cta p { font-size: 16.5px; line-height: 1.55; color: rgb(var(--offwhite-rgb) / 0.82); margin: 0 auto 30px; max-width: 46ch; }
+.final-cta .fc-fine { font-size: 13px; color: rgb(var(--offwhite-rgb) / 0.6); margin: 20px 0 0; }
+
+/* ============================================================
+   RODAPÉ
+   ============================================================ */
+.lp-footer { background: var(--navy); color: rgb(var(--offwhite-rgb) / 0.66); padding: 40px 0 44px; }
+.lp-footer .lp-container { display: flex; flex-wrap: wrap; gap: 20px; align-items: center; }
+.lp-footer .f-brand { display: flex; align-items: center; gap: 11px; }
+.lp-footer .f-brand .wm { font-family: var(--display); font-weight: 700; font-size: 17px; color: var(--offwhite); letter-spacing: 0.04em; }
+.lp-footer .f-links { margin-left: auto; display: flex; flex-wrap: wrap; gap: 18px; }
+.lp-footer .f-links a { color: rgb(var(--offwhite-rgb) / 0.66); text-decoration: none; font-size: 13px; }
+.lp-footer .f-links a:hover { color: var(--ice); }
+.lp-footer .f-legal { flex-basis: 100%; font-size: 12px; color: rgb(var(--offwhite-rgb) / 0.44); border-top: 1px solid rgb(var(--ice-rgb) / 0.12); padding-top: 18px; margin-top: 4px; line-height: 1.6; }
+
+/* ============================================================
+   MOTION — revelação suave ao rolar
+   ============================================================ */
+/* aprimoramento progressivo: sem JS, o conteúdo aparece normalmente.
+   o esconde-e-revela só entra quando o <html> ganha a classe .js. */
+.js .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.js .reveal.in { opacity: 1; transform: none; }
+
+/* ============================================================
+   RESPONSIVO
+   ============================================================ */
+@media (max-width: 900px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 40px; }
+  .proof-float { max-width: 400px; }
+  .pains, .shift-grid, .steps, .promise { grid-template-columns: 1fr; }
+  .price-wrap { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .section { padding: 54px 0; }
+  .hero { padding: 46px 0 54px; }
+  .guarantee { flex-direction: column; text-align: center; }
+  .final-cta { padding: 44px 24px; border-radius: 18px; }
+  .lp-footer .f-links { margin-left: 0; flex-basis: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .hero-mark .mark i { transition: none; }
+  .btn, .btn .arrow { transition: none; }
+  .lp-nav { backdrop-filter: none; }
+  .proof-float { transform: none; }
+}
+
+/* ============================================================
+   A MARCA NA LP
+
+   O protótipo desenhava o símbolo com JavaScript: um `<div className="mark"
+   data-mark>` que o `v2g.js` preenchia de quadradinhos, dimensionado por
+   uma variável `--px`. Isso saiu — agora o símbolo é a arte real, em
+   `public/marca.png`, a mesma dos três layouts do app.
+
+   Consequência que só aparece no navegador: sem `--px` para dimensionar,
+   a imagem vinha no tamanho natural (240px) dentro da barra de navegação.
+   Estas regras devolvem a escala de cada contexto.
+
+   Os TRÊS lugares ficam sobre navy — barra, herói e rodapé. Por isso os
+   três invertem: `brightness(0) invert(1)` sobre um traço 100% preto dá
+   branco exato. Mesma técnica da sidebar do app, mesma razão.
+   ============================================================ */
+.lp-nav .brand .mark-img,
+.hero-mark .mark-img,
+.lp-footer .f-brand .mark-img {
+  height: auto;
+  display: block;
+  flex: none;
+  filter: brightness(0) invert(1);
+}
+.lp-nav .brand .mark-img { width: 30px; }
+.hero-mark .mark-img { width: 56px; }
+.lp-footer .f-brand .mark-img { width: 26px; }
+
+/* O herói tinha um respiro entre o símbolo e o texto que vinha do
+   tamanho do bloco desenhado por JS. Como a imagem tem outra caixa, o
+   espaço volta explícito. */
+.hero-mark { margin-bottom: 18px; }

@@ -14,11 +14,17 @@ import Image from "next/image";
  * Para trocar o símbolo: substitua `public/marca.svg`. Nada mais.
  * ============================================================
  *
- * O SÍMBOLO AINDA É O PROVISÓRIO. Enquanto `public/marca.svg` não
- * existir, o componente cai no bloco cobalto com as letras — que é o que
- * está no ar hoje. Não inventei um traçado a partir da imagem: logo é
- * arte exata, e um símbolo "quase certo" é pior que o provisório honesto,
- * porque ninguém percebe que está errado.
+ * O ARQUIVO: `public/marca.png`, 240×242, fundo transparente. É o
+ * original recortado — a arte vinha numa tela de 500×500 com margem
+ * transparente em volta, e essa margem faria o símbolo aparecer pequeno
+ * e fora de eixo dentro de qualquer caixa. O recorte é pela caixa real
+ * do conteúdo, não por olho.
+ *
+ * A tinta do traço é `#0A0C00` — preto. Em fundo claro ele vai como
+ * está; sobre a sidebar cobalto, o CSS o inverte para branco com
+ * `filter: brightness(0) invert(1)`. Inverter um traço 100% preto dá
+ * branco exato, sem chute de tom, e é por isso que funciona aqui e não
+ * funcionaria com uma arte de duas cores.
  */
 
 interface Props {
@@ -29,23 +35,14 @@ interface Props {
   className?: string;
 }
 
-/**
- * Troque para `true` quando `public/marca.svg` existir. Uma linha, um
- * lugar — e a marca nova aparece nos três layouts de uma vez.
- */
-const TEM_ARQUIVO = false;
-
 function Simbolo() {
-  if (!TEM_ARQUIVO) {
-    return <span className="glyph">V2G</span>;
-  }
   return (
     <Image
       className="glyph-img"
-      src="/marca.svg"
+      src="/marca.png"
       alt=""
-      width={30}
-      height={30}
+      width={240}
+      height={242}
       priority
     />
   );

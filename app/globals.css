@@ -292,15 +292,23 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 /* ---------- wordmark ---------- */
 .wordmark { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
-.wordmark .glyph {
-  width: 30px; height: 30px; flex: none;
-  background: var(--plate);
-  color: var(--lime);
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 13px;
+/* O SÍMBOLO DA MARCA.
+   `height: auto` com `width` fixa: a arte é 240×242 (quase, mas não
+   exatamente, quadrada). Travar os dois a 30px achataria o traço em
+   ~1%, que é pouco para notar de relance e o bastante para o símbolo
+   nunca bater com a versão oficial em nenhum outro material. */
+.wordmark .glyph-img {
+  width: 30px;
+  height: auto;
+  flex: none;
+  display: block;
 }
+
+/* Sobre a sidebar cobalto o traço preto sumiria. A arte é monocromática
+   e 100% preta, então `brightness(0) invert(1)` devolve branco EXATO —
+   não é um tom aproximado escolhido a olho. Numa arte de duas cores este
+   truque não serviria, e aí o caminho seria um segundo arquivo. */
+.sidebar .glyph-img { filter: brightness(0) invert(1); }
 .wordmark .wm { font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1; color: var(--navy); }
 .wordmark .wm small {
   display: block;
