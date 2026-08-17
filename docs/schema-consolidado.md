@@ -20,7 +20,7 @@ as mesmas entidades:
 
 | Projeto | Ref | Estado |
 |---|---|---|
-| `v2gmidia's Project` | `cvwxfalweuplrlchzzeo` | 4 tabelas do N8N, 3 linhas em `execucoes`, resto vazio |
+| `v2gmidia's Project` | `cvwxfalweuplrlchzzeo` | 4 tabelas do backend: 47 execuções, 89 criativos, bucket `v2g-midia` com 88 objetos. `clientes` e `campanhas_meta` vazias. **A ser unificado no V2G-SITE — ver `migracao-banco.md`.** |
 | `V2G-SITE` | `ushccxpoxjikzqnwhgfd` | vazio |
 
 O alvo é o **`V2G-SITE`**. O projeto antigo **não é tocado** — fica intacto
