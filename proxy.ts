@@ -20,6 +20,11 @@ const PROTECTED_PREFIXES = [
   "/anuncios",
   "/conta",
   "/alertas",
+  // Tela de OPERADOR, fora do menu. Protegida por sessão como as outras,
+  // mas isso é o piso, não o suficiente: qualquer cliente logado que
+  // descubra a URL vê linguagem interna. A marcação de conta interna está
+  // proposta no fim de app/(protected)/saude-meta/page.tsx.
+  "/saude-meta",
   // `/campanhas` e `/criativos` viraram `/anuncios` no lote 8. Ficam aqui
   // porque continuam existindo como redirecionamento — e redirecionar
   // quem não tem sessão para o destino protegido seria vazar a rota.

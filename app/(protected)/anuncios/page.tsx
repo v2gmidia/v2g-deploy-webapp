@@ -235,7 +235,7 @@ function Linha({ campanha, numeros, pecas }: LinhaProps) {
     <div className="list-row">
       <div className="lr-head">
         <span className="lr-title">{campanha.name ?? "Anúncio sem nome"}</span>
-        <span className={`pill ${campanha.published_at ? "ok" : "neutral"}`}>
+        <span className={`pill ${campanha.published_at ? "ok" : "off"}`}>
           {rotuloDoStatus(campanha)}
         </span>
       </div>

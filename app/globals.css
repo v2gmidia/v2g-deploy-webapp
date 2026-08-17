@@ -1816,3 +1816,54 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   .qblock, .ec-step { animation: none; }
   .assemble .mark i.pxbuild { animation: none; opacity: 0.85; }
 }
+
+/* ============================================================
+   TELA DE DIAGNÓSTICO (/saude-meta)
+
+   É tela de operador, então aqui o texto monoespaçado é a regra e não a
+   exceção: o valor que o backend devolveu tem que ser lido como veio,
+   sem a tipografia do produto sugerindo que foi reescrito.
+   ============================================================ */
+code {
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 0.92em;
+  background: rgb(var(--navy-rgb) / 0.06);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+.diag-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.diag-lista li {
+  border: 1.5px solid var(--line);
+  border-left-width: 3px;
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--surface);
+}
+.diag-lista li code { background: none; padding: 0; font-size: 13px; line-height: 1.5; }
+/* Bloqueio impede publicar; aviso não. A borda esquerda carrega essa
+   diferença sem precisar de rótulo repetido em cada linha. */
+.diag-lista.critica li { border-left-color: var(--crit); }
+
+.diag-meta { font-size: 12px; color: var(--ink-mute); margin: 10px 0 0; }
+
+/* O corpo cru do /saude. `overflow-x: auto` porque JSON não quebra
+   linha em lugar bonito, e forçar quebra num diagnóstico atrapalha a
+   leitura mais do que a rolagem. */
+.diag-json {
+  font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+  font-size: 11.5px;
+  line-height: 1.5;
+  background: rgb(var(--navy-rgb) / 0.06);
+  border-radius: 6px;
+  padding: 10px;
+  margin: 8px 0 0;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* Linha de "ainda sem endpoint": parece linha de lista, mas não é
+   clicável. Sem isto ela herdaria o cursor e o hover de `.acct-row`
+   e prometeria uma navegação que não existe. */
+.acct-row[aria-disabled="true"] { cursor: default; opacity: 0.72; }
+.acct-row[aria-disabled="true"]:hover { background: none; }
