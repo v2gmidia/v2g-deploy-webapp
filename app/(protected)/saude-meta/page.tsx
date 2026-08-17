@@ -237,7 +237,7 @@ const FALHAS: Record<CategoriaErro, { titulo: string; texto: string; recarregar:
   nao_encontrado: {
     titulo: "Endpoint não encontrado (404)",
     texto:
-      "A rota /campanhas/pre-requisitos não existe nesta versão do backend. Provável divergência de versão entre front e API.",
+      "A rota /campanhas/pre-requisitos não existe na versão do backend que está no ar — e hoje é esse o estado. O token autentica (senão viria 401, que a checagem de header devolve antes do roteamento), mas a rota não está publicada. Confira a lista real em GET /openapi.json: se ela não aparecer ali, não é problema de configuração deste lado.",
     recarregar: false,
   },
   conflito: {

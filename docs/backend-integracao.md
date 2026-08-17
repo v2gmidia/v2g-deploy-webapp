@@ -143,7 +143,12 @@ Não implementado ainda — este lote só tem leitura.
 
 ---
 
-## 5. O que já existe
+## 5. O cliente de `pre-requisitos`
+
+**LEIA A §6.0 ANTES DE USAR: esta rota não existe no backend publicado.**
+O código abaixo está escrito, testado e correto — e devolve
+`nao_encontrado` contra a API de hoje. Ele fica porque o endpoint é
+previsto no contrato e porque a espera é do outro lado, não daqui.
 
 `GET /campanhas/pre-requisitos` — read-only, não escreve nada.
 
@@ -176,15 +181,78 @@ quebra num `.map`, longe daqui, com um erro que não menciona o backend.
 
 ## 6. O que NÃO está resolvido
 
-### 6.1 O certificado HTTPS não é válido — bloqueia tudo, hoje
+### 6.0 `GET /campanhas/pre-requisitos` NÃO EXISTE no backend publicado
 
-Medido de dentro deste ambiente:
+Medido contra `https://api.v2gmidia.com.br` com o token válido:
 
 ```
-DNS   api.v2gmidia.com.br → 76.13.166.171          resolve
+GET /campanhas/pre-requisitos            → 404  {"detail":"Not Found"}
+GET /campanhas/pre-requisitos?<4 params> → 404  {"detail":"Not Found"}
+```
+
+Não é o token: com token inválido a resposta é **401**, porque a checagem
+do header roda como middleware, **antes** do roteamento. O 401 virou 404
+exatamente quando o token passou a ser válido — ou seja, autentica e a
+rota não está lá.
+
+O `GET /openapi.json` é a fonte da verdade e responde 200. As **21 rotas
+publicadas** hoje:
+
+```
+POST  /cadastro
+POST  /execucoes/{id}/iniciar-pipeline-texto
+POST  /execucoes/{id}/aguardar-fotos
+GET   /execucoes/{id}
+GET   /execucoes-em-revisao
+POST  /execucoes/{id}/fotos
+POST  /execucoes/{id}/criativos-enviados
+GET   /execucoes/{id}/criativos
+POST  /execucoes/{id}/aprovar
+POST  /execucoes/{id}/gerando-criativo
+POST  /execucoes/{id}/estrutura-pronta
+POST  /campanhas
+GET   /saude
+POST  /agentes/classificar-nicho
+POST  /agentes/diagnosticar-orcamento
+POST  /agentes/varrer-site
+POST  /agentes/construir-oferta
+POST  /agentes/gerar-copy
+POST  /agentes/gerar-criativo-visual
+POST  /agentes/checar-compliance-visual
+POST  /agentes/estruturar-campanha
+```
+
+**Só três são de leitura:** `/saude`, `/execucoes-em-revisao` e
+`/execucoes/{id}` (mais `/execucoes/{id}/criativos`). Todo o resto
+escreve.
+
+O que existe no lugar: `POST /campanhas` devolve `avisos: string[]` dentro
+de `RespostaSubidaCampanha` — mas **é endpoint de escrita**, cria campanha
+de verdade, e por isso não serve para uma tela de diagnóstico.
+
+**Consequência:** o validador de `pre-requisitos.ts` NÃO foi ajustado, e
+não deve ser. Não há divergência de formato a acomodar — a rota está
+ausente. Ajustar o validador para aceitar `{"detail":"Not Found"}` seria
+transformar "não existe" em "existe e está vazio", que é a mentira mais
+caniveteada possível numa tela de diagnóstico.
+
+`GET /openapi.json` responde sem exigir token, e não declara
+`securitySchemes` — o token é validado por middleware e não aparece no
+contrato. Vale saber ao ler a especificação: ela não menciona
+autenticação, mas ela existe.
+
+### 6.1 O certificado HTTPS — RESOLVIDO
+
+**Consertado.** A cadeia valida normalmente agora: `GET /saude` responde
+200 e `GET /openapi.json` responde 200, os dois com `fetch` do Node sem
+nenhuma flag para ignorar verificação.
+
+O que era, e fica registrado porque a categoria `certificado` no cliente
+existe por causa disto:
+
+```
 TLS   Subject: CN=Easypanel                        autoassinado
       Issuer:  CN=Easypanel                        (emissor = sujeito)
-      Válido:  26/01/2026 → 24/01/2036
 Node  fetch → TypeError, cause.code =
       DEPTH_ZERO_SELF_SIGNED_CERT
 ```
