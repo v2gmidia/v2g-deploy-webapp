@@ -20,6 +20,19 @@ export {
   type Resultado,
 } from "./erros";
 export {
+  formatarConfianca,
+  listarEmRevisao,
+  type ConfiancaDeAgente,
+  type ExecucaoEmRevisao,
+} from "./execucoes";
+
+/**
+ * ATENÇÃO: `consultarPreRequisitos` está correto e testado, mas a rota
+ * `GET /campanhas/pre-requisitos` NÃO EXISTE no backend publicado —
+ * devolve 404. Fica guardado para quando a rota subir. Ver
+ * `docs/backend-integracao.md` §6.0.
+ */
+export {
   consultarPreRequisitos,
   type FiltrosPreRequisitos,
   type PreRequisitos,

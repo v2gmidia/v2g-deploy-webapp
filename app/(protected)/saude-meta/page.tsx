@@ -1,81 +1,76 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { consultarPreRequisitos, saude, type CategoriaErro } from "@/lib/backend";
+import {
+  formatarConfianca,
+  listarEmRevisao,
+  saude,
+  type CategoriaErro,
+  type ExecucaoEmRevisao,
+} from "@/lib/backend";
 
 /**
- * Saúde da conta Meta — TELA DE OPERADOR, não de cliente.
+ * Fila de revisão — TELA DE OPERADOR, não de cliente.
  *
- * Linguagem técnica é aceitável aqui: quem lê sabe o que é conta de
- * anúncio, Página e pré-requisito. É o oposto da regra do resto do app.
+ * Linguagem técnica é aceitável aqui: quem lê sabe o que é gate de
+ * confiança e nome de agente. É o oposto da regra do resto do app.
+ *
+ * A TELA MUDOU DE FONTE. Nasceu apontando para
+ * `GET /campanhas/pre-requisitos`, que **não existe** no backend
+ * publicado — 404. Agora lê `GET /execucoes-em-revisao`, que existe, é
+ * read-only e mostra o que está travado no gate de confiança. O cliente
+ * de pré-requisitos fica guardado em `lib/backend/pre-requisitos.ts`.
+ * Ver `docs/backend-integracao.md` §6.0 e §7.
  *
  * ACESSO: exige `app_metadata.papel === "operador"`. Barrado no
- * `proxy.ts` e de novo aqui (Decisão 3). Fora do menu também — mas isso
- * é conveniência, não controle: quem controla é o papel.
+ * `proxy.ts` e de novo aqui (Decisão 3).
  *
- * NENHUM ENDPOINT DE ESCRITA. `GET /campanhas/pre-requisitos` é read-only
- * e não toca na Meta nem no banco; `GET /saude` não exige token. Dá para
- * recarregar esta tela quantas vezes quiser sem consequência.
+ * NENHUM ENDPOINT DE ESCRITA. As duas chamadas são GET e não tocam na
+ * Meta nem no banco. Dá para recarregar quantas vezes quiser.
  */
 
-export const metadata = { title: "Saúde da conta Meta — V2G" };
+export const metadata = { title: "Fila de revisão — V2G" };
 
 // Sem cache: uma tela de diagnóstico que mostra estado velho é pior que
-// nenhuma tela, porque o operador toma decisão sobre o passado.
+// nenhuma tela, porque o operador decide sobre o passado.
 export const dynamic = "force-dynamic";
 
 export default async function SaudeMetaPage() {
   // 2ª camada de proteção (docs/arquitetura.md, Decisão 3). O `proxy.ts`
-  // já barrou quem não é operador antes de chegar aqui, mas esta página
-  // verifica de novo, independentemente — o proxy pode ter o matcher
-  // alterado, ou a rota pode ser alcançada por um caminho que ele não
-  // cubra.
+  // já barrou antes, mas esta página verifica de novo — o matcher do
+  // proxy pode mudar, e a rota pode ser alcançada por caminho que ele
+  // não cubra.
   //
-  // `notFound()` e não redirect: para quem não é operador, esta rota não
-  // existe. Um redirecionamento confirmaria que existe algo aqui, e a
-  // primeira coisa que se faz com uma rota que "existe mas nega" é
-  // tentar descobrir o que ela mostra.
+  // `notFound()` e não redirect: para quem não é operador esta rota não
+  // existe. Redirecionar confirmaria que há algo aqui, e a primeira coisa
+  // que se faz com uma rota que nega é descobrir o que ela mostra.
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (user?.app_metadata?.papel !== "operador") notFound();
 
-  // As duas em paralelo: são independentes, e o `/saude` responde em
-  // milissegundos enquanto o outro pode levar segundos.
-  const [preReq, backend] = await Promise.all([consultarPreRequisitos(), saude()]);
+  const [fila, backend] = await Promise.all([listarEmRevisao(), saude()]);
 
   return (
     <>
       <div className="page-head">
-        <h1>Saúde da conta Meta</h1>
+        <h1>Fila de revisão</h1>
         <p>
-          Diagnóstico de operador. Lê <code>GET /campanhas/pre-requisitos</code> do backend, que é
-          read-only — recarregar não escreve nada, nem aqui nem na Meta.
+          Execuções presas no gate de confiança. Lê <code>GET /execucoes-em-revisao</code>, que é
+          read-only — recarregar não escreve nada.
         </p>
       </div>
 
-      {preReq.ok ? <Veredicto dados={preReq.dados} /> : <Falha categoria={preReq.categoria} http={preReq.http} />}
+      {fila.ok ? (
+        <Veredicto quantas={fila.dados.length} />
+      ) : (
+        <Falha categoria={fila.categoria} http={fila.http} />
+      )}
 
       <div className="dash-grid">
         <div className="dash-main">
-          {preReq.ok && (
-            <>
-              <Listagem
-                titulo="Bloqueios"
-                itens={preReq.dados.bloqueios}
-                vazio="Nenhum bloqueio. A conta passa na conferência de pré-requisitos."
-                critico
-              />
-              <Listagem
-                titulo="Avisos"
-                itens={preReq.dados.avisos}
-                vazio="Nenhum aviso."
-              />
-              <WhatsApp estado={preReq.dados.temWhatsapp} />
-            </>
-          )}
-
-          <AindaNaoExiste />
+          {fila.ok && <Fila execucoes={fila.dados} />}
+          <NaoVemNaResposta />
         </div>
 
         <aside className="dash-aside">
@@ -86,122 +81,233 @@ export default async function SaudeMetaPage() {
   );
 }
 
-/** A faixa: apta ou não. É a única coisa que grita nesta tela. */
-function Veredicto({ dados }: { dados: { ok: boolean; bloqueios: string[] } }) {
-  const apta = dados.ok;
+/** A faixa: quantas estão paradas. É a única coisa que grita. */
+function Veredicto({ quantas }: { quantas: number }) {
   return (
     <section className="hero-destaque">
-      <span className="eyebrow">Pré-requisitos de publicação</span>
-      <p className="hero-frase">
-        {apta ? (
-          <>
-            A conta está <span className="destaque">apta a publicar</span>.
-          </>
-        ) : (
-          <>
-            A conta <span className="destaque">não está apta</span> a publicar.
-          </>
-        )}
-      </p>
+      <span className="eyebrow">Gate de confiança</span>
+      {quantas === 0 ? (
+        <p className="hero-frase">
+          Nada <span className="destaque">travado</span> na fila.
+        </p>
+      ) : (
+        <>
+          <p className="hero-num">{quantas}</p>
+          <p className="hero-legenda">
+            {quantas === 1 ? "execução esperando revisão" : "execuções esperando revisão"}
+          </p>
+        </>
+      )}
       <p className="hero-note">
-        {apta
-          ? "O backend não encontrou nenhum bloqueio. Isso não garante que a criação vá passar — o validate_only do conjunto ainda pode recusar por motivo que este endpoint não checa."
-          : `${dados.bloqueios.length} ${dados.bloqueios.length === 1 ? "bloqueio" : "bloqueios"} abaixo, com o texto exato que o backend devolveu.`}
+        {quantas === 0
+          ? "Nenhuma execução com requer_revisao verdadeiro."
+          : "A resposta não traz data de nenhum tipo, então não há como ordenar por tempo de espera nem dizer há quanto tempo cada uma está parada. A ordem abaixo é a que o backend devolveu."}
       </p>
     </section>
   );
 }
 
-/**
- * Bloqueios e avisos, um por linha, COM O TEXTO DO BACKEND.
- *
- * Sem reescrever, sem "melhorar", sem mapear para mensagem nossa. Numa
- * tela de operador o texto original é o dado — reescrever esconderia
- * justamente a informação que faz alguém entender o que o backend
- * verificou.
- */
-function Listagem({
-  titulo,
-  itens,
-  vazio,
-  critico = false,
-}: {
-  titulo: string;
-  itens: string[];
-  vazio: string;
-  critico?: boolean;
-}) {
+function Fila({ execucoes }: { execucoes: ExecucaoEmRevisao[] }) {
+  if (execucoes.length === 0) return null;
   return (
     <section>
       <div className="section-title">
-        <h2>{titulo}</h2>
-        <span className="grp-count">{itens.length}</span>
+        <h2>Execuções</h2>
+        <span className="grp-count">{execucoes.length}</span>
       </div>
-      {itens.length === 0 ? (
-        <p className="hint">{vazio}</p>
+      <div className="campaign-list">
+        {execucoes.map((e) => (
+          <Execucao key={e.id} e={e} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Execucao({ e }: { e: ExecucaoEmRevisao }) {
+  return (
+    <div className="list-row">
+      <div className="lr-head">
+        {/* O identificador é o `id_execucao`. Encurtado para caber, com o
+            completo no `title` — operador precisa copiar o valor inteiro
+            para consultar /execucoes/{id}. */}
+        <span className="lr-title">
+          <code title={e.id}>{e.id.slice(0, 8)}</code>
+          {e.nomeCampanha && <span className="lr-nome"> {e.nomeCampanha}</span>}
+        </span>
+        <span className="pill off">{e.status}</span>
+      </div>
+
+      {/* NOME DA CAMPANHA, NÃO DO NEGÓCIO. A resposta não tem nome de
+          negócio em campo nenhum — só o nome que o agente de estrutura
+          gerou. Apresentar um como o outro seria inventar o dado. */}
+      {e.nomeCampanha ? (
+        <p className="diag-meta">nome gerado pelo agente de estrutura — não é o nome do negócio</p>
       ) : (
-        <ul className={`diag-lista${critico ? " critica" : ""}`}>
-          {itens.map((texto, i) => (
-            // Índice como chave: a lista vem do backend, é imutável dentro
-            // desta renderização e não tem id. Não há reordenação possível.
-            <li key={i}>
-              <code>{texto}</code>
+        <p className="diag-meta">sem nome: o agente de estrutura não rodou nesta execução</p>
+      )}
+
+      <div className="diag-campos">
+        <Campo rotulo="Nicho" valor={e.nichoLegivel ?? "não classificado"} />
+        <Campo
+          rotulo="Confiança mínima"
+          valor={
+            e.confiancaMinima !== null ? formatarConfianca(e.confiancaMinima) : "não calculada"
+          }
+        />
+        <Campo rotulo="Aprovações" valor={String(e.quantasAprovacoes)} />
+        <Campo rotulo="Agentes que rodaram" valor={String(e.agentesQueRodaram.length)} />
+      </div>
+
+      <OQueTravou e={e} />
+
+      {/* As confianças por agente só aparecem quando `confianca_minima`
+          veio nula — aí elas são a única informação de confiança que
+          existe. Com o campo preenchido, repetir isso é ruído. */}
+      {e.confiancaMinima === null && e.confiancas.length > 0 && (
+        <p className="diag-meta">
+          confiança por agente:{" "}
+          {e.confiancas.map((c) => `${c.agente} ${formatarConfianca(c.valor)}`).join(" · ")}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * O QUE TRAVOU.
+ *
+ * `motivos_revisao` é a fonte preferida e vem preenchida em 28 das 29
+ * execuções da fila real, no formato `"<agente>: confianca 0.52"` — ela
+ * traz o agente E o número que reprovou.
+ *
+ * `agentesQueTravaram` é o plano B, derivado do `requer_revisao` que cada
+ * agente carrega em si. Ele cobre a execução legada, onde `motivos` vem
+ * vazio.
+ *
+ * OS DOIS NUNCA APARECEM JUNTOS: em 28 dos 29 casos diriam a mesma coisa,
+ * e a segunda lista leria como se fossem problemas diferentes.
+ */
+function OQueTravou({ e }: { e: ExecucaoEmRevisao }) {
+  if (e.motivosRevisao.length > 0) {
+    return (
+      <ul className="diag-lista critica" style={{ marginTop: 10 }}>
+        {e.motivosRevisao.map((m, i) => (
+          <li key={i}>
+            <code>{m}</code>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  if (e.agentesQueTravaram.length > 0) {
+    return (
+      <>
+        <ul className="diag-lista critica" style={{ marginTop: 10 }}>
+          {e.agentesQueTravaram.map((agente) => (
+            <li key={agente}>
+              <code>{agente}</code> pediu revisão
             </li>
           ))}
         </ul>
-      )}
-    </section>
+        <p className="diag-meta">
+          motivos_revisao veio vazio — isto é derivado do requer_revisao de cada agente
+        </p>
+      </>
+    );
+  }
+
+  return (
+    <p className="lr-erro">
+      requer_revisao é verdadeiro, mas motivos_revisao veio vazio e nenhum agente marcou
+      requer_revisao em si mesmo. O backend não informa o que travou.
+    </p>
+  );
+}
+
+function Campo({ rotulo, valor }: { rotulo: string; valor: string }) {
+  return (
+    <span className="diag-campo">
+      <span className="dc-rotulo">{rotulo}</span>
+      <span className="dc-valor">{valor}</span>
+    </span>
   );
 }
 
 /**
- * WhatsApp da Página — TRÊS ESTADOS, e o terceiro é o que importa.
+ * O que a resposta NÃO traz.
  *
- * `null` significa "o backend não informou". NÃO significa "não tem".
- * Esta distinção não é preciosismo: os campos de WhatsApp da Página do
- * Facebook vêm ausentes mesmo quando o número existe, e foi exatamente
- * por tratar ausência como negativa que a interface passou a acusar todo
- * cliente de não ter WhatsApp (`docs/oauth-meta.md` §2.1).
+ * Fica na tela, e não só no comentário do código, porque a primeira coisa
+ * que um operador faz ao não ver o tempo de espera é procurar o filtro.
+ * Dizer que o dado não existe economiza essa busca — e impede que alguém
+ * "conserte" a tela adicionando um campo inventado.
  */
-function WhatsApp({ estado }: { estado: boolean | null }) {
-  const conteudo =
-    estado === true
-      ? {
-          pill: "ok",
-          rotulo: "Tem WhatsApp",
-          texto: "O backend confirmou número de WhatsApp vinculado à Página.",
-        }
-      : estado === false
-        ? {
-            pill: "crit",
-            rotulo: "Sem WhatsApp",
-            texto:
-              "O backend afirma que não há WhatsApp vinculado. Campanha de conversa não sobe assim — ver /whatsapp-business.",
-          }
-        : {
-            pill: "off",
-            rotulo: "Não informado",
-            texto:
-              "O campo tem_whatsapp veio ausente ou não-booleano. Isso NÃO é 'não tem': é falta de informação. Não conclua nada a partir daqui — quem dá o veredicto confiável é o validate_only do conjunto, que reprova com subcode 2446885 quando o número é conta pessoal.",
-          };
-
+function NaoVemNaResposta() {
   return (
     <section>
       <div className="section-title">
-        <h2>WhatsApp da Página</h2>
-        <span className={`pill ${conteudo.pill}`}>{conteudo.rotulo}</span>
+        <h2>O que a resposta não traz</h2>
       </div>
-      <p className="hint">{conteudo.texto}</p>
+      <div className="card acct-list">
+        <div className="acct-row" aria-disabled="true">
+          <span className="ar-text">
+            <b>Há quanto tempo está parado</b>
+            <span>
+              <code>RespostaExecucao</code> não tem <code>criado_em</code> nem{" "}
+              <code>atualizado_em</code> — conferido no <code>/openapi.json</code>, e{" "}
+              <code>GET /execucoes/{"{id}"}</code> devolve o mesmo schema. Não há como calcular nem
+              estimar.
+            </span>
+          </span>
+        </div>
+        <div className="acct-row" aria-disabled="true">
+          <span className="ar-text">
+            <b>Nome do negócio</b>
+            <span>
+              Não existe em campo nenhum. O que aparece acima é o nome da campanha gerada, de{" "}
+              <code>resultados[&quot;estruturar-campanha&quot;]</code>, e só nas execuções em que
+              esse agente rodou.
+            </span>
+          </span>
+        </div>
+        <div className="acct-row" aria-disabled="true">
+          <span className="ar-text">
+            <b>Qual cliente é</b>
+            <span>
+              <code>cliente_id</code> existe no schema mas veio nulo em toda a fila. Sem ele não dá
+              para ligar a execução a um cliente do nosso banco.
+            </span>
+          </span>
+        </div>
+        <div className="acct-row" aria-disabled="true">
+          <span className="ar-text">
+            <b>Escala única de confiança</b>
+            <span>
+              <code>confianca_minima</code> vem sempre em 0–1. As confianças por agente também —
+              exceto na execução legada de status <code>gerado</code>, onde vêm em 0–100. A tela
+              detecta a escala por valor e mostra em porcentagem; onde não dá para desambiguar, o
+              número cru aparece do lado.
+            </span>
+          </span>
+        </div>
+        <div className="acct-row" aria-disabled="true">
+          <span className="ar-text">
+            <b>Pré-requisitos da conta Meta</b>
+            <span>
+              <code>GET /campanhas/pre-requisitos</code> não está publicado — devolve 404. O cliente
+              está escrito e testado, esperando a rota subir.
+            </span>
+          </span>
+        </div>
+      </div>
     </section>
   );
 }
 
 /**
- * Os textos de falha, um por categoria.
- *
- * Cada um diz O QUE FAZER, porque numa tela de operador "erro" sem
- * próximo passo é só um beco. E `certificado` recebe atenção especial:
- * ela não é instabilidade, e sem dizer isso alguém fica recarregando.
+ * Os textos de falha, um por categoria. Cada um diz O QUE FAZER, porque
+ * numa tela de operador "erro" sem próximo passo é só um beco.
  */
 const FALHAS: Record<CategoriaErro, { titulo: string; texto: string; recarregar: boolean }> = {
   indisponivel: {
@@ -213,13 +319,13 @@ const FALHAS: Record<CategoriaErro, { titulo: string; texto: string; recarregar:
   certificado: {
     titulo: "Certificado HTTPS do backend não é confiável",
     texto:
-      "O TLS do backend não validou. NÃO É INSTABILIDADE E RECARREGAR NÃO VAI RESOLVER — é configuração do outro lado. Confira no log do servidor o codigo= da linha [backend:…]: DEPTH_ZERO_SELF_SIGNED_CERT significa certificado autoassinado, e o conserto é emitir o certificado do domínio no Easypanel. Desabilitar a verificação não é opção: aceitaria qualquer certificado no caminho e abriria interceptação do X-V2G-Token.",
+      "O TLS não validou. NÃO É INSTABILIDADE E RECARREGAR NÃO VAI RESOLVER — é configuração do outro lado. Veja o codigo= na linha [backend:…] do log: DEPTH_ZERO_SELF_SIGNED_CERT é certificado autoassinado, e o conserto é emitir o do domínio. Desabilitar a verificação não é opção: aceitaria qualquer certificado no caminho e abriria interceptação do X-V2G-Token.",
     recarregar: false,
   },
   nao_autorizado: {
     titulo: "Backend recusou o token (401 ou 403)",
     texto:
-      "O X-V2G-Token está errado, ausente ou foi revogado. Isso é configuração nossa, não sessão do usuário. Confira se o valor no deploy é o mesmo que o backend espera.",
+      "O X-V2G-Token está errado, ausente ou foi revogado. É configuração nossa, não sessão do usuário. A checagem do header roda antes do roteamento, então 401 aqui significa token — não rota.",
     recarregar: false,
   },
   rede: {
@@ -231,25 +337,25 @@ const FALHAS: Record<CategoriaErro, { titulo: string; texto: string; recarregar:
   tempo_esgotado: {
     titulo: "O backend não respondeu no tempo",
     texto:
-      "A chamada passou do timeout. Este endpoint é read-only e rápido — se está estourando, o backend está sob carga ou travado. Vale recarregar uma vez.",
+      "A chamada passou do timeout. Este endpoint é read-only e rápido — se está estourando, o backend está sob carga ou travado.",
     recarregar: true,
   },
   nao_encontrado: {
     titulo: "Endpoint não encontrado (404)",
     texto:
-      "A rota /campanhas/pre-requisitos não existe na versão do backend que está no ar — e hoje é esse o estado. O token autentica (senão viria 401, que a checagem de header devolve antes do roteamento), mas a rota não está publicada. Confira a lista real em GET /openapi.json: se ela não aparecer ali, não é problema de configuração deste lado.",
+      "A rota /execucoes-em-revisao não respondeu. Como o token autentica antes do roteamento, 404 aqui é rota ausente, não credencial. Confira a lista real em GET /openapi.json — é a fonte de verdade, e o handoff do backend já divergiu dela antes.",
     recarregar: false,
   },
   conflito: {
     titulo: "Conflito de estado (409)",
     texto:
-      "Inesperado num endpoint read-only. Se aparecer, o endpoint deixou de ser read-only e este código precisa ser revisto.",
+      "Inesperado num endpoint read-only. Se aparecer, ele deixou de ser read-only e este código precisa ser revisto.",
     recarregar: false,
   },
   dados_invalidos: {
-    titulo: "O backend recusou os parâmetros",
+    titulo: "O backend recusou a requisição",
     texto:
-      "Algum query param foi rejeitado. Esta tela chama sem filtros, então isso indica mudança de contrato no backend.",
+      "Esta chamada não manda parâmetro nenhum, então isso indica mudança de contrato no backend.",
     recarregar: false,
   },
   servidor: {
@@ -260,7 +366,7 @@ const FALHAS: Record<CategoriaErro, { titulo: string; texto: string; recarregar:
   resposta_ilegivel: {
     titulo: "Resposta 200 com corpo fora do formato",
     texto:
-      "O backend respondeu com sucesso, mas o corpo não passou na validação — ok não é booleano, ou bloqueios/avisos não são listas de texto. Isso é mudança de contrato, e o validador em lib/backend/pre-requisitos.ts precisa ser ajustado ao formato novo. Não ajuste a tela para 'aceitar': ela deixaria de saber o que está mostrando.",
+      "O backend respondeu com sucesso, mas o corpo não passou na validação — não era array, ou os itens não têm id_execucao e requer_revisao. Isso é mudança de contrato, e o validador em lib/backend/execucoes.ts precisa ser ajustado ao formato novo. Não ajuste a tela para 'aceitar': ela deixaria de saber o que mostra.",
     recarregar: false,
   },
 };
@@ -290,8 +396,8 @@ function Falha({ categoria, http }: { categoria: CategoriaErro; http?: number })
  * token está errado — e é isso que a torna útil aqui: separa "backend
  * fora do ar" de "backend de pé recusando o nosso token".
  *
- * O corpo é exibido como veio. É diagnóstico, e o operador precisa do
- * dado cru, não da nossa interpretação dele.
+ * O corpo é exibido como veio. É diagnóstico: o operador precisa do dado
+ * cru, não da nossa interpretação dele.
  */
 function SaudeDoBackend({ resultado }: { resultado: Awaited<ReturnType<typeof saude>> }) {
   return (
@@ -313,77 +419,3 @@ function SaudeDoBackend({ resultado }: { resultado: Awaited<ReturnType<typeof sa
     </section>
   );
 }
-
-/**
- * O espaço do que ainda não existe.
- *
- * Sem número nenhum, nem de exemplo. Diz o que falta acontecer para o
- * dado existir — que é a informação útil enquanto ele não existe.
- */
-function AindaNaoExiste() {
-  return (
-    <section>
-      <div className="section-title">
-        <h2>Ainda sem endpoint</h2>
-      </div>
-      <div className="card acct-list">
-        <div className="acct-row" aria-disabled="true">
-          <span className="ar-text">
-            <b>Saldo e forma de pagamento da conta de anúncio</b>
-            <span>
-              Depende de leitura de <code>funding_source</code> na Marketing API. Não existe rota no
-              backend, e o front não consulta a Meta direto para isso.
-            </span>
-          </span>
-        </div>
-        <div className="acct-row" aria-disabled="true">
-          <span className="ar-text">
-            <b>Campanhas no ar</b>
-            <span>
-              Hoje toda campanha nasce PAUSED e nada é ativado por código. Este bloco só passa a ter
-              conteúdo quando existir ativação — e ela é feita pelo gestor, na Meta.
-            </span>
-          </span>
-        </div>
-        <div className="acct-row" aria-disabled="true">
-          <span className="ar-text">
-            <b>Resultados: gasto, conversas, custo por conversa</b>
-            <span>
-              Depende de <code>/insights</code>, que não está implementado em nenhum dos dois lados.
-              Enquanto não estiver, não há número para mostrar aqui.
-            </span>
-          </span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ============================================================
-   VISIBILIDADE — como eu marcaria conta interna
-
-   Hoje esta rota está protegida apenas por SESSÃO: qualquer cliente
-   logado que descubra a URL vê o diagnóstico. Não vaza dado de outro
-   cliente (o backend responde sobre a conta configurada), mas expõe
-   linguagem interna e nomes de endpoint. Fora do menu, como pedido.
-
-   COMO EU MARCARIA, em ordem de preferência:
-
-   1. `app_metadata.papel = "operador"` no usuário do Supabase Auth.
-      É o certo: `app_metadata` NÃO é gravável pelo próprio usuário (só
-      pela service_role), vem dentro do JWT, e o `proxy.ts` pode barrar
-      sem consultar o banco. Custo: um script de administração para
-      marcar quem é operador.
-
-   2. `profiles.papel text` com check constraint.
-      Mais simples de mexer, e a RLS consegue usar. Custo: uma consulta
-      por request no proxy, e o proxy hoje não consulta tabela nenhuma.
-
-   3. Lista de e-mails numa variável de ambiente.
-      Interino de dez minutos. Serve para hoje, mas exige deploy para
-      mudar e não sobrevive ao primeiro operador novo.
-
-   RECOMENDAÇÃO: (1), e enquanto ele não existir, manter fora do menu como
-   está. O que eu NÃO faria é esconder por obscuridade e chamar de
-   controle de acesso — por isso está escrito aqui, em vez de implícito.
-   ============================================================ */

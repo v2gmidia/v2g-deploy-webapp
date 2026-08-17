@@ -1867,3 +1867,28 @@ code {
    e prometeria uma navegação que não existe. */
 .acct-row[aria-disabled="true"] { cursor: default; opacity: 0.72; }
 .acct-row[aria-disabled="true"]:hover { background: none; }
+
+/* Campos curtos em linha, na fila de revisão. Grid e não flex: com flex,
+   rótulos de larguras diferentes desalinham os valores entre as linhas, e
+   a leitura vertical — que é como se compara execução com execução —
+   deixa de funcionar. */
+.diag-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 10px 0 0;
+}
+.diag-campo { display: flex; flex-direction: column; gap: 2px; }
+.dc-rotulo {
+  font-family: var(--display);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
+.dc-valor { font-size: 13px; color: var(--ink); }
+
+/* O nome gerado, ao lado do id. Peso normal de propósito: o identificador
+   é o id, e o nome é contexto — invertir isso faria o operador procurar
+   pelo nome, que não é único nem sempre existe. */
+.lr-nome { font-weight: 500; color: var(--ink-soft); }

@@ -9,6 +9,44 @@ nunca dos arquivos internos.
 
 ---
 
+## 0. REGRA DE OURO: `/openapi.json` é a fonte de verdade
+
+**O handoff do backend lista rotas e campos que não estão no deploy
+publicado.** Isso já aconteceu duas vezes e vai acontecer de novo — não
+por má-fé, mas porque o documento é escrito a partir do código em
+desenvolvimento e o deploy fica atrás.
+
+Casos medidos até agora:
+
+| O handoff dizia | O deploy tem |
+|---|---|
+| `GET /campanhas/pre-requisitos` | **não existe** — 404 (§6.0) |
+| `execucoes.criado_em`, `atualizado_em` | **não expostos** em nenhum endpoint (§6.5) |
+| `execucoes.cliente_id` preenchido | nulo nas 29 execuções da fila |
+
+**Antes de escrever cliente para qualquer rota nova:**
+
+```bash
+curl -s https://api.v2gmidia.com.br/openapi.json | python -m json.tool
+```
+
+`/openapi.json` responde **sem token** e traz as rotas e os schemas de
+verdade. Duas armadilhas ao ler:
+
+1. Ele **não declara `securitySchemes`** — a especificação não menciona
+   autenticação nenhuma, mas ela existe, num middleware que roda antes do
+   roteamento. Por isso token inválido dá **401 até em rota inexistente**,
+   e o 404 só aparece depois que o token passa a valer. Um 404 é sinal de
+   rota ausente **só se o token estiver certo**.
+2. O schema declara o campo, não o dado. `cliente_id` está lá e vem nulo
+   em 100% da fila real. Ler a especificação não substitui chamar.
+
+**A ordem que funciona:** ler o `/openapi.json` → chamar de verdade →
+olhar o corpo cru → só então escrever o tipo. Nessa ordem, e não na do
+handoff.
+
+---
+
 ## 1. O `X-V2G-Token` é segredo entre máquinas
 
 Esta é a coisa mais importante do documento, e ela tem três consequências
@@ -296,3 +334,33 @@ O backend grava em `execucoes`; o webapp lê `businesses`, `campaigns` e
 `creatives`. Os dois descrevem o mesmo domínio com nomes diferentes. A
 decisão está pendente em `docs/contrato-front.md` (D2), e **nenhuma tela
 deve ser construída sobre os dois ao mesmo tempo** antes dela.
+
+### 6.5 `GET /execucoes-em-revisao`: o que ele NÃO traz
+
+Fonte da tela `/saude-meta`. Existe, é read-only, e devolveu 200 com 29
+execuções na medição. O schema é `RespostaExecucao`, nove campos:
+
+```
+id_execucao, cliente_id, status, nicho, requer_revisao,
+motivos_revisao, confianca_minima, resultados, aprovacoes
+```
+
+O que **não** está lá, e por isso a tela diz na cara do operador:
+
+| Faltando | Consequência |
+|---|---|
+| qualquer campo de tempo | não dá para dizer há quanto tempo está parado, nem ordenar por espera. `GET /execucoes/{id}` devolve o MESMO schema — não é limitação da listagem. |
+| nome do negócio | só existe o nome da CAMPANHA gerada, em `resultados["estruturar-campanha"]`, e em 7 das 29. |
+| `cliente_id` com valor | nulo em 29/29. Sem ele não dá para ligar a execução a um cliente do nosso banco. |
+
+**DUAS ESCALAS DE CONFIANÇA CONVIVEM.** `confianca_minima` é sempre 0–1
+(27 valores, de 0 a 0,8). As confianças por agente também — **exceto na
+execução legada de status `gerado`**, onde vêm 75, 65 e 45, ou seja 0–100.
+
+Mostrar "0,52" e "75" na mesma coluna faria o primeiro parecer catástrofe
+e o segundo ótimo, quando **0,52 é melhor que 0,45**. `formatarConfianca`
+detecta a escala por valor. O caso patológico — `1` na escala 0–100, que
+significa 1% — não dá para desambiguar, e não aparece na fila real.
+
+`motivos_revisao` vem preenchido em 28/29, no formato
+`"<agente>: confianca 0.52"`. A exceção é a mesma execução legada.
