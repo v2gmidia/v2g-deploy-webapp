@@ -42,6 +42,20 @@ const PROTECTED_PREFIXES = [
   "/whatsapp-business",
 ];
 
+/**
+ * Rotas que exigem `app_metadata.papel === "operador"`.
+ *
+ * Precisam estar TAMBÉM em `PROTECTED_PREFIXES` — a checagem de sessão
+ * vem primeiro, e esta é um segundo filtro sobre ela, não um substituto.
+ */
+const OPERADOR_PREFIXES = ["/saude-meta"];
+
+/** O papel declarado no JWT, ou `null`. */
+function obterPapel(user: { app_metadata?: Record<string, unknown> } | null): string | null {
+  const papel = user?.app_metadata?.papel;
+  return typeof papel === "string" ? papel : null;
+}
+
 export async function proxy(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -81,6 +95,27 @@ export async function proxy(request: NextRequest) {
     redirectUrl.pathname = "/entrar";
     redirectUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // ---------- rotas de OPERADOR ----------
+  //
+  // `app_metadata` e NÃO `user_metadata`: a diferença é a razão de a
+  // marcação ficar ali. `user_metadata` é gravável pelo próprio usuário
+  // (`auth.updateUser`), então qualquer cliente poderia se promover a
+  // operador. `app_metadata` só a `service_role` escreve, e vem assinada
+  // dentro do JWT — o `getUser()` acima já validou a assinatura contra o
+  // servidor da Supabase.
+  //
+  // Quem está logado e não é operador vai para /inicio, não para /entrar:
+  // mandar para o login alguém que já tem sessão é dizer "você não está
+  // logado" quando ele está, e ele tentaria logar de novo para sempre.
+  if (OPERADOR_PREFIXES.some((p) => pathname.startsWith(p))) {
+    if (obterPapel(user) !== "operador") {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = user ? "/inicio" : "/entrar";
+      redirectUrl.search = "";
+      return NextResponse.redirect(redirectUrl);
+    }
   }
 
   if (pathname === "/entrar" && user) {

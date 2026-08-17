@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
 import { consultarPreRequisitos, saude, type CategoriaErro } from "@/lib/backend";
 
 /**
@@ -6,8 +8,9 @@ import { consultarPreRequisitos, saude, type CategoriaErro } from "@/lib/backend
  * Linguagem técnica é aceitável aqui: quem lê sabe o que é conta de
  * anúncio, Página e pré-requisito. É o oposto da regra do resto do app.
  *
- * FORA DO MENU, de propósito. Só por URL direta, até existir marcação de
- * conta interna — ver a seção "Visibilidade" no fim deste arquivo.
+ * ACESSO: exige `app_metadata.papel === "operador"`. Barrado no
+ * `proxy.ts` e de novo aqui (Decisão 3). Fora do menu também — mas isso
+ * é conveniência, não controle: quem controla é o papel.
  *
  * NENHUM ENDPOINT DE ESCRITA. `GET /campanhas/pre-requisitos` é read-only
  * e não toca na Meta nem no banco; `GET /saude` não exige token. Dá para
@@ -21,6 +24,22 @@ export const metadata = { title: "Saúde da conta Meta — V2G" };
 export const dynamic = "force-dynamic";
 
 export default async function SaudeMetaPage() {
+  // 2ª camada de proteção (docs/arquitetura.md, Decisão 3). O `proxy.ts`
+  // já barrou quem não é operador antes de chegar aqui, mas esta página
+  // verifica de novo, independentemente — o proxy pode ter o matcher
+  // alterado, ou a rota pode ser alcançada por um caminho que ele não
+  // cubra.
+  //
+  // `notFound()` e não redirect: para quem não é operador, esta rota não
+  // existe. Um redirecionamento confirmaria que existe algo aqui, e a
+  // primeira coisa que se faz com uma rota que "existe mas nega" é
+  // tentar descobrir o que ela mostra.
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user?.app_metadata?.papel !== "operador") notFound();
+
   // As duas em paralelo: são independentes, e o `/saude` responde em
   // milissegundos enquanto o outro pode levar segundos.
   const [preReq, backend] = await Promise.all([consultarPreRequisitos(), saude()]);
