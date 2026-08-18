@@ -1,0 +1,13 @@
+-- 0009 — Tabelas do backend V2G, unificadas neste projeto.
+--
+-- Aplicada em 17/08/2026 durante a unificação dos bancos. O DDL foi
+-- extraído do SCHEMA VIVO do projeto do Oregon, não dos arquivos de
+-- migration do backend — eles não estão neste repositório, e o schema
+-- vivo é o que o backend realmente usava.
+--
+-- `clientes` NÃO foi migrada: zero linhas e uma coluna `meta_access_token`
+-- em texto puro. Trazê-la criaria um segundo lugar para guardar token do
+-- Meta justamente no projeto onde ele foi posto no Vault (0007).
+--
+-- Registro completo em docs/migracao-banco.md. Este arquivo existe para o
+-- histórico bater com o banco; a aplicação já aconteceu.
