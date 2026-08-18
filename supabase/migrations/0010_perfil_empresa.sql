@@ -32,6 +32,26 @@ create table if not exists public.pessoas_do_negocio (
   business_id uuid not null references public.businesses (id) on delete cascade,
   nome        text not null,
   papel       text,
+  -- ============================================================
+  -- ESTES TRES CAMPOS ESTAO SEM USO HOJE, E NAO SAO COLUNA MORTA.
+  --
+  -- Em 18/08/2026 o redline de LGPD (lp/docs/redline-lgpd.md) apertou a
+  -- regra: a politica passou a aceitar foto com pessoa identificavel
+  -- SOMENTE quando a pessoa for o proprio titular da conta. Foto de
+  -- funcionario, cliente ou familiar e recusada. Ver privacidade.html
+  -- secao 2-A.
+  --
+  -- Enquanto essa regra valer, `aparece_em_criativo` fica sempre false
+  -- para terceiro e os dois campos de consentimento ficam nulos — nao
+  -- porque ninguem os implementou, mas porque a politica proibe o caso
+  -- que eles descrevem.
+  --
+  -- NAO APAGUE. A propria secao 2-A promete o recurso de autorizacao de
+  -- imagem: a pessoa fotografada recebe um link, ve a imagem, e registra
+  -- a autorizacao. Quando ele for construido, e aqui que o registro mora,
+  -- e a exigencia da LGPD de consentimento DEMONSTRAVEL e o motivo de
+  -- guardar a redacao vigente junto com a data.
+  -- ============================================================
   aparece_em_criativo        boolean not null default false,
   -- Consentimento sob a LGPD precisa ser DEMONSTRÁVEL, e "clicou sim" não
   -- demonstra a quê. Guardar a redação vigente no momento do aceite é o
