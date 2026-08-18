@@ -43,8 +43,8 @@ resultado. O caminho:
 2. Rodar o install.
 3. **Ler o diff.** São arquivos de terceiro que vão instruir um agente que
    escreve no nosso código — o diff é a revisão de código deles.
-4. Reconferir os dois testes do §3 (escopo do hook), porque a lista de
-   extensões e o nome da chave de configuração podem mudar entre versões.
+4. Reconferir o teste de ida-e-volta do §3, porque a lista de extensões e
+   o nome da chave de configuração já mudaram de leitura uma vez.
 5. Só então commitar, com a versão nova no título.
 
 Se um dia o projeto passar a fixar hash, o lugar é aqui.
@@ -114,47 +114,70 @@ adicional e não escreve em arquivo de código. Quem escreve é a família
 Então `.sql` e `.md` já não chegam nele: migration e documento estão
 cobertos sem configuração nenhuma.
 
-**(b) `ignoreFiles` em `.impeccable/config.json`, que é o que resolve o
-resto.** `.ts` e `.js` ESTÃO na lista branca — ou seja, `lib/meta/`,
-`lib/agentes/`, `proxy.ts` e as server actions dispararam o hook sem esta
-configuração. Detector de design opinando sobre a função de procedência é
-ruído no contexto, e ruído no contexto sai caro: ele ocupa espaço que
-devia estar sendo usado pelo problema real.
+**(b) `detector.ignoreFiles` em `.impeccable/config.json`, que é o que
+resolve o resto.** `.ts` e `.js` ESTÃO na lista branca — ou seja, `lib/meta/`,
+`lib/agentes/`, `proxy.ts` e as server actions passam pelo filtro de extensão.
+
+**A chave é aninhada sob `detector`.** A primeira versão deste documento
+dizia `ignoreFiles` no topo do objeto, e estava errada: a chave no topo é
+silenciosamente ignorada. O `--help` do detector é a fonte
+(`detector.ignoreRules`, `detector.ignoreFiles`, `detector.ignoreValues`,
+`detector.designSystem.enabled`).
 
 ```json
 {
-  "ignoreFiles": [
-    "lib/**", "scripts/**", "supabase/**", "prompts/**",
-    "proxy.ts", "**/actions.ts"
-  ]
+  "detector": {
+    "ignoreFiles": [
+      "lib/**", "scripts/**", "supabase/**", "prompts/**",
+      "proxy.ts", "**/actions.ts"
+    ]
+  }
 }
 ```
 
 Glob com `**`, `*`, `?` e `{a,b}`. `app/globals.css`, `components/**` e as
 `page.tsx` ficam **fora** da lista de propósito: ali é onde ele deve falar.
 
-### Conferido, não presumido
+Vale saber quanto isso realmente compra, para ninguém confiar demais nele:
+`lib/**` produz **zero** achados mesmo sem configuração nenhuma, porque as
+regras são de CSS e de marcação e não têm o que dizer sobre a função de
+procedência. Além disso `.ts` não está em `ACK_EXTS`, então nem o "escaneei
+e está limpo" aparece. O `ignoreFiles` aqui é defesa em profundidade para o
+dia em que uma regra passe a valer para `.ts` — não é o que faz o silêncio
+de hoje.
 
-Os três casos, alimentando o hook por stdin com um evento sintético:
+### Conferido — e o primeiro teste não valia
+
+O teste que eu tinha escrito aqui alimentava o hook com
+`lib/meta/publicar.ts` e concluía do silêncio que o `ignoreFiles` estava
+funcionando. **Não provava nada:** aquele caminho sai em silêncio de
+qualquer jeito (zero achados, `.ts` fora de `ACK_EXTS`). O teste passou pelo
+motivo errado, e foi por isso que a chave no topo do objeto sobreviveu tanto
+tempo sem ninguém notar.
+
+**Um teste de escopo só vale se o alvo produzir achado quando NÃO está
+ignorado.** Hoje o alvo que serve é `app/`, que rende 5:
 
 ```bash
-# pula (ignoreFiles)
-echo '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{"file_path":"lib/meta/publicar.ts"}}' \
-  | node .claude/skills/impeccable/scripts/hook.mjs
+# 5 achados — a linha de base
+node .claude/skills/impeccable/scripts/detect.mjs --json app
 
-# pula (extensão)
-echo '{"hook_event_name":"PostToolUse","tool_name":"Write","tool_input":{"file_path":"supabase/migrations/0013_aplicar_proposta.sql"}}' \
-  | node .claude/skills/impeccable/scripts/hook.mjs
-
-# PROCESSA e devolve contexto
-echo '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{"file_path":"app/(protected)/vendas/page.tsx"}}' \
-  | node .claude/skills/impeccable/scripts/hook.mjs
+# acrescente "app/**" a detector.ignoreFiles e rode de novo: tem que dar 0
+# tire de novo: tem que voltar a 5
 ```
 
-Os dois primeiros saem em silêncio com código 0; o terceiro devolve
-`hookSpecificOutput.additionalContext`. **Repita estes três depois de
-qualquer atualização** — é o teste mais curto que prova que o escopo
-sobreviveu.
+É a ida E a volta que provam o escopo. Só a ida confunde "ignorado" com
+"limpo" — a mesma confusão do teste antigo.
+
+Para o hook em si, o par que discrimina:
+
+```bash
+# PROCESSA e devolve additionalContext
+echo '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{"file_path":"app/(protected)/vendas/page.tsx"}}'   | node .claude/skills/impeccable/scripts/hook.mjs
+
+# pula por extensão (.sql nunca entra)
+echo '{"hook_event_name":"PostToolUse","tool_name":"Write","tool_input":{"file_path":"supabase/migrations/0013_aplicar_proposta.sql"}}'   | node .claude/skills/impeccable/scripts/hook.mjs
+```
 
 ### Desligar de vez, quando o trabalho é todo de backend
 
@@ -176,7 +199,52 @@ de funcionar.
 
 ---
 
-## 4. As regras do projeto continuam valendo sobre ela
+## 4. O detector NÃO conhece o nosso design system
+
+Isso é o mais importante deste documento depois do §1, e é contraintuitivo:
+rodar o detector **não** faz a skill ler os nossos tokens.
+
+O que ele carrega como "design system" vem de `DESIGN.md` ou de
+`.impeccable/design.json` (`findDesignRoot` sobe a árvore procurando esses
+dois nomes). **Nenhum dos dois existe neste repositório.** O `globals.css`
+é lido como ALVO da varredura — para resolver a cascata de CSS — e nunca
+como fonte de verdade. Ele achou o arquivo, traçou o grafo de import a
+partir do `layout.tsx`, e os 5 achados de hoje estão todos dentro dele.
+Mas os nossos 47 tokens do `:root` são invisíveis para ele.
+
+### A consequência que interessa: a regra da cor está DESLIGADA
+
+`isAllowedColorRaw` começa com `if (!designSystem?.hasColors) return true`.
+Sem `DESIGN.md`, toda cor é permitida. Testado com um arquivo descartável
+em `app/`:
+
+```css
+.teste { color: #ff00aa; background: rgb(12, 200, 90); border: 1px solid #123456; }
+.fonte { font-family: 'Inter', sans-serif; }
+```
+
+**As três cores literais passaram sem um único achado.** Só o `'Inter'` foi
+pego, e por uma regra de fonte genérica embutida nela (`overused-font`), não
+por comparação com a nossa paleta.
+
+Ou seja: **"zero valor de cor fora do `:root`" continua sendo regra nossa
+que nenhuma ferramenta verifica.** A skill *pode* passar a verificar, mas só
+depois que existir um `DESIGN.md` declarando a paleta — é para isso que
+serve `/impeccable document` (registra um sistema que já existe), e não o
+`init`, que escreve `PRODUCT.md` e não toca em design.
+
+Enquanto isso não existir, quem confere cor literal é revisão humana e
+`grep`. Não presuma cobertura que o teste acima mostra que não existe.
+
+### Componentes: ele não inventaria
+
+Não há passo de catálogo de componente. Os nossos 10 de `components/ui/`
+não aparecem em relatório nenhum, porque o detector é um varredor de regras
+sobre arquivo, não um documentador de biblioteca.
+
+---
+
+## 5. As regras do projeto continuam valendo sobre ela
 
 A skill tem opinião própria sobre design, e em alguns pontos ela vai
 sugerir o contrário do que este projeto decidiu. Quando conflitar, o
