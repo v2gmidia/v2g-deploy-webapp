@@ -161,7 +161,7 @@ mereça não ganha faixa.
 |---|---|---|
 | `/vendas` | quantas pessoas começaram conversa — ou, hoje, que ninguém começou e o motivo | É a razão de a tela existir. Sem esse número, ela não tem assunto. |
 | `/anuncios` | **condicional**: o que espera você agora (peça para aprovar, publicação que falhou). Sem pendência, **sem faixa**. | O conteúdo normal é uma lista, e lista não grita. Faixa permanente aqui viraria moldura decorativa. |
-| `/alertas` (menu: Avisos) | **condicional**: o aviso mais recente que pede ação. Sem aviso, **sem faixa**. | Mesma lógica. "Nenhum aviso" é boa notícia e não merece o maior elemento da tela. |
+| `/alertas` (menu: Avisos) | **nada. Sem faixa** — esta previsão estava errada, ver abaixo. | A contagem vive no título da seção. |
 | `/conta` | **nada. Sem faixa — decisão deliberada, ver abaixo.** | É tela de ajuste: o cliente chega sabendo o que veio fazer. Destacar uma seção seria escolher por ele, e a escolha mudaria a cada visita. |
 
 Duas das quatro só ganham faixa quando há o que dizer, e uma nunca ganha.
@@ -185,35 +185,77 @@ recusada com a campanha parada é o único candidato plausível — ele entra
 como faixa **condicional**, no mesmo desenho da `/anuncios` e da
 `/alertas`: aparece porque há motivo, some quando não há. Nunca permanente.
 
-### A faixa condicional, implementada nas duas
+### A `/alertas` também não ganha faixa — e esta previsão estava ERRADA
+
+A primeira versão deste documento previa faixa condicional aqui: "o aviso
+mais recente que pede ação". A faixa foi construída, revisada na tela e
+**removida**. O registro fica porque previsão errada apagada vira previsão
+que alguém reimplementa daqui a três meses lendo a versão antiga.
+
+**O que a construção mostrou.** Faixa compra atenção antes da rolagem. Na
+`/vendas` isso vale: o número é o assunto da tela. Na `/anuncios` vale por
+outro motivo — a faixa fala de pendência que vive em **outra rota**, e a
+lista abaixo é assunto diferente; a faixa leva para fora. Na `/alertas` não
+havia nem um nem outro: o título da seção já está acima da dobra, três
+centímetros abaixo, e a faixa repetia com letra maior.
+
+### Três defeitos apontando para o mesmo elemento significam que o defeito é o elemento
+
+Vale além desta tela, e é por isso que está escrito aqui e não num commit.
+
+A revisão da faixa da `/alertas` levantou três problemas que pareciam
+independentes:
+
+1. o rótulo "Precisa de você" aparecia duas vezes, na faixa e no título da
+   seção logo abaixo;
+2. o CTA saltava para um card que já estava visível;
+3. o número no tamanho herói parecia grande demais.
+
+A saída fácil era corrigir os três: renomear um dos rótulos, esconder o CTA
+abaixo de um mínimo de itens, reduzir a fonte. Três remendos, e a faixa
+continuaria de pé.
+
+Mas os três tinham **a mesma causa**: a faixa e a seção tinham o mesmo
+assunto. O rótulo duplicava porque o assunto era o mesmo; o CTA não saía do
+lugar porque o destino já estava na tela; o número parecia grande porque
+`clamp(56px, 11vw, 104px)` foi calibrado para um número que **é** o assunto,
+não para contar itens de uma lista logo abaixo.
+
+**Quando vários defeitos independentes apontam para o mesmo elemento, o
+defeito costuma ser o elemento — não os detalhes dele.** Corrigir um por um
+funciona, deixa a tela passável, e mantém no lugar a coisa que não devia
+estar lá. Antes de remendar o terceiro, vale perguntar se os três não são o
+mesmo.
+
+### Quando a `/alertas` reabre a discussão
+
+Ela ganha faixa quando existir pendência **categoricamente diferente** das
+outras — não "mais uma", outra classe. O candidato óbvio é **campanha parada
+por falta de pagamento**: a própria tela já diz, na barra lateral, que é o
+único aviso que não dá para desligar, porque é dinheiro parado.
+
+Aí a faixa antecipa algo que a lista não distingue, que é exatamente o
+serviço que ela presta. Hoje `decisions` não separa esse caso, então o
+critério fica escrito esperando o dado existir.
+
+### A faixa condicional, implementada em uma tela só
 
 | Tela | Quando aparece | O que mostra | Quando não aparece |
 |---|---|---|---|
 | `/anuncios` | há pendência | a pendência, em cascata de gravidade: publicação falhada → criativo reprovado → peça esperando | some inteira; fica o `.page-head` e a lista |
-| `/alertas` | `needs_review = true` em `decisions` | **a contagem**, não a descrição | some inteira; responde o `.empty-hero` |
 
-**Por que a `/alertas` conta em vez de descrever.** Os cards das pendências
-estão logo abaixo da faixa, na mesma tela. Descrever a mais urgente na
-faixa a repetiria como card três centímetros depois. Contar não repete — e
-a contagem é a informação que não existia: com sete pendências ninguém
-sabia que eram sete sem rolar.
+Uma tela só do grupo app tem faixa, e é uma exceção com motivo: ela aponta
+para **fora** da tela. Exceção com motivo é melhor que regra cumprida por
+simetria.
 
-A alternativa considerada era a faixa mostrar a primeira e a lista mostrar
-só o resto. Foi recusada porque quebra no caso de uma pendência só: a seção
-"Precisa de você" ficaria vazia **enquanto existe uma pendência** — mentira
-por omissão, que é o que este projeto vem tirando das telas.
+**A contagem, onde ela ficou.** Na `/alertas` a contagem vive no título da
+seção, via `.grp-count` — o mesmo padrão que a `/anuncios` já usava nos
+cabeçalhos de grupo. Dá a mesma informação, no lugar onde a pessoa já vai
+olhar, sem gastar o elemento mais caro da tela.
 
-**A `/alertas` não tem cascata de gravidade, e isso é deliberado.** A
-`/anuncios` ordena por gravidade porque aqueles três estados existem e têm
-gravidade conhecida. Em `decisions` os `kind` são `classification` e
-`diagnosis`, e nenhum é mais urgente que o outro. Ordenar por gravidade
-inventada fingiria um julgamento que ninguém fez; a ordem é a que a
-consulta já usava — mais recente primeiro. O CTA leva à primeira dessa
-ordem, por âncora, porque não existe rota por decisão.
-
-**Concordância tratada:** *"1 coisa precisa de você"* e *"3 coisas precisam
-de você"*. Errar concordância num elemento que ocupa a dobra é o tipo de
-detalhe que faz a tela inteira parecer não revisada.
+**Concordância tratada:** *"1 coisa"* e *"3 coisas"*. Sobreviveu à remoção
+da faixa porque o problema é o mesmo: errar concordância faz a tela parecer
+não revisada, e num contador isso aparece no primeiro uso real.
 
 ---
 
