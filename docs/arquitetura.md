@@ -156,6 +156,56 @@ leitura, mas **não foi aplicada contra um banco real**. Isso está registrado
 explicitamente no README e no relatório final, para não passar a falsa
 impressão de que já rodou contra produção.
 
+## Decisão 10 — Toda função `security definer` revoga de `public`, `anon` **e** `authenticated`
+
+**Escrito porque erramos.** A migration 0010 fez
+`revoke all on function ... from public, anon` e parou ali. Parece completo.
+Não é.
+
+O Supabase concede `execute` **por privilégio padrão** no schema `public` a
+`anon` **e** a `authenticated`. `revoke ... from public` derruba a concessão do
+pseudo-papel `PUBLIC`, mas não toca nas duas concessões explícitas. Revogar de
+`public, anon` deixa `authenticated` intacto — ou seja, qualquer usuário logado
+podia chamar `registrar_procedencia()`, que é `security definer`, ignora RLS, e
+escreve procedência em **qualquer** `business_id`. Passou por uma conferência
+que perguntou "anon tem execute?" e recebeu "não".
+
+A regra, para toda função nova:
+
+```sql
+create or replace function public.minha_funcao(...) ...
+  security definer set search_path = public as $$ ... $$;
+
+revoke all on function public.minha_funcao(...) from public, anon, authenticated;
+grant execute on function public.minha_funcao(...) to service_role;
+```
+
+Três coisas que vêm junto:
+
+- **A revogação fica coladinha na criação, na mesma migration.** `create or
+  replace` preserva a ACL existente, mas uma função nova nasce com o padrão. Se
+  a revogação estiver em outro arquivo, existe uma janela — e a janela pode
+  durar meses.
+- **A assinatura completa em ambas as linhas.** `revoke` e `grant` resolvem por
+  assinatura; mudar a lista de argumentos cria uma função nova, com ACL padrão,
+  e a revogação antiga passa a apontar para uma função que não existe mais **sem
+  dar erro**.
+- **Conferir lendo o `proacl` inteiro**, não perguntando por um papel:
+
+  ```sql
+  select p.proname, pg_get_function_identity_arguments(p.oid), p.proacl::text
+    from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+   where n.nspname = 'public' and p.prosecdef;
+  ```
+
+  Perguntar "anon tem?" responde sobre anon. Ler a ACL responde sobre todos —
+  e é a diferença entre as duas perguntas que deixou o furo passar.
+
+**Quando um papel precisar mesmo executar**, o caminho não é reabrir o
+`execute`: é a função checar dono por dentro, com `private.owns_business(...)`.
+Uma função `security definer` aberta para `authenticated` é RLS desligada com
+outro nome.
+
 ## Estrutura de pastas
 
 ```
