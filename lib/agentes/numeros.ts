@@ -105,12 +105,22 @@ function numerosEmDigito(texto: string): number[] {
 /**
  * Números escritos por extenso.
  *
- * Acumula unidade e fecha o bloco a cada escala, que é como a fala
- * funciona: "dois mil e quinhentos" = (2 × mil) + 500. A conjunção "e" é
- * ignorada — ela liga, não soma.
+ * Acumula unidade e fecha o bloco a cada escala: "dois mil e quinhentos" =
+ * (2 × mil) + 500.
  *
- * Sequências separadas por qualquer outra palavra viram números
- * diferentes: em "oitenta reais, cem clientes" saem 80 e 100, e não 180.
+ * O "e" NÃO é um separador confiável, e essa foi a lição de um falso
+ * positivo real. A primeira versão tratava "e" como mera ligação, e por
+ * isso lia "entre doze e quarenta reais" como 52 — descartando dois itens
+ * corretos numa extração de verdade.
+ *
+ * O que separa em português é a MAGNITUDE, não a conjunção: dentro de um
+ * mesmo número as parcelas são estritamente decrescentes. "cento e
+ * cinquenta" é 150 porque 50 < 100; "doze e quarenta" são dois números
+ * porque 40 não é menor que 12. É essa comparação que decide, e não a
+ * palavra no meio.
+ *
+ * Sequências separadas por qualquer palavra que não seja numeral também
+ * viram números diferentes: "oitenta reais, cem clientes" dá 80 e 100.
  */
 function numerosPorExtenso(texto: string): number[] {
   const palavras = semAcento(texto)
@@ -121,12 +131,15 @@ function numerosPorExtenso(texto: string): number[] {
   const achados: number[] = [];
   let total = 0;
   let atual = 0;
+  /** A última parcela somada. Zera após uma escala e a cada número novo. */
+  let ultima = 0;
   let aberto = false;
 
   const fechar = () => {
     if (aberto) achados.push(total + atual);
     total = 0;
     atual = 0;
+    ultima = 0;
     aberto = false;
   };
 
@@ -138,12 +151,18 @@ function numerosPorExtenso(texto: string): number[] {
       atual = (atual === 0 ? 1 : atual) * escala;
       total += atual;
       atual = 0;
+      // Depois da escala, o que vier é parcela menor dela: em "mil e
+      // duzentos" o 200 pertence ao mesmo número.
+      ultima = 0;
       aberto = true;
       continue;
     }
     const unidade = UNIDADES[p];
     if (unidade !== undefined) {
+      // Parcela que não decresce começa outro número.
+      if (aberto && ultima !== 0 && unidade >= ultima) fechar();
       atual += unidade;
+      ultima = unidade;
       aberto = true;
       continue;
     }
