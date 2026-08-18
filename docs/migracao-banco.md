@@ -128,7 +128,7 @@ de arquivo, vídeo, aprovações, compliance e volume de storage.
 | **CHECK ENVIAR** | `899f120c` | Único exemplar completo do modo `enviar`. `estrutura_pronta`, 3 criativos enviados, 1 vídeo, 2 aprovações. E o único com `requer_revisao = false` **e** `compliance_visual` nulo — a combinação que testa a armadilha do "nulo não é aprovado". 0,01 MB. |
 | **Facetas Curitiba** | `ee301c4f` | Único com os **três tipos** de criativo (`criativo`, `foto`, `logo`) e os dois formatos (`feed`, `stories`). `compliance_visual` preenchido, `requer_revisao = true`, 2 aprovações. Cobre o modo `gerar` inteiro em 0,01 MB. |
 | **Deo Clínica** | `a56d3dea` | O peso. 12 criativos e **19,10 MB** — é o único que prova que a mudança de bucket aguenta volume de verdade. Também a maior lista de aprovações (4), que exercita o `jsonb` append-only. |
-| **Açaí da V2G** *(opcional)* | `e3c5944f` | Status legado `gerado`, e o **único registro com confiança na escala 0–100** (75, 65, 45) em vez de 0–1. É a fixture do segundo ramo de `formatarConfianca` — sem ele, aquele código fica sem nenhum caso real que o exercite. Custa **0 criativos e 0 bytes**. |
+| **Suco do victor** *(opcional)* | `e3c5944f` | Status legado `gerado`, e o **único registro com confiança na escala 0–100** (75, 65, 45) em vez de 0–1. É a fixture do segundo ramo de `formatarConfianca` — sem ele, aquele código fica sem nenhum caso real que o exercite. Custa **0 criativos e 0 bytes**. |
 
 Os três primeiros são o conjunto mínimo. O quarto é de graça e eu o
 guardaria: descartá-lo transforma um ramo de código testado em código sem
@@ -263,3 +263,44 @@ minutos, o que exporia 41 MB e deixaria uma janela aberta por engano se
 alguém esquecesse de reverter.
 
 Essa chave sai do `.env.local` depois que a migração terminar.
+
+
+## Passos 3 e 4 — FEITOS e conferidos
+
+```
+execucoes                        4   (esperado 4)
+criativos                       20   (esperado 20)
+objetos no bucket               20   (esperado 20)
+volume                       19,13 MB
+criativos com arquivo presente  20
+criativos SEM arquivo            0
+tamanho confere com o banco     20 de 20
+```
+
+URL assinada aberta como prova: `HTTP 200`, `image/png`, **71 bytes — o
+mesmo que `criativos.tamanho_bytes` diz**. O arquivo atravessou, não só o
+registro.
+
+Cobertura preservada, conferida no destino:
+
+| Dimensão | Presente |
+|---|---|
+| tipos | `criativo`, `foto`, `logo` — os três |
+| formatos | `feed`, `stories` e nulo (modo enviar) |
+| vídeo | 1 |
+| execuções com aprovações | 3 de 4 |
+| execuções com `compliance_visual` | 2 de 4 (as outras nulas — a armadilha preservada) |
+| modos | `gerar` e `enviar` |
+| status | `estrutura_pronta` (3) e o legado `gerado` (1) |
+
+**Correção de nome:** a quarta execução, `e3c5944f`, é **Suco do victor**,
+não "Açaí da V2G" como este documento dizia antes. A escolha estava certa
+— é ela que tem a confiança na escala 0–100 e o status legado —, só o
+rótulo estava trocado.
+
+O script é `scripts/migrar-execucoes.mjs` e é **idempotente**: as linhas
+vão com `id` explícito e `merge-duplicates`, e o upload usa `x-upsert`.
+Rodar de novo não duplica. `--conferir` só verifica, sem escrever.
+
+**Nada foi apagado no Oregon.** Ele segue intacto com as 47 execuções, os
+89 criativos e os 88 objetos.
