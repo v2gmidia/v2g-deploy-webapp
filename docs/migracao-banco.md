@@ -104,3 +104,106 @@ viram decoração e o acervo fica aberto.
   portar. `atualizado_em` não é mantido por gatilho — quem escreve é a
   aplicação.
 - **Zero usuários e zero segredos no Vault** do Oregon.
+
+---
+
+# PLANO FINAL
+
+Revisado depois de confirmado que **as 47 execuções são teste do Gabriel**.
+Nenhum dado de cliente. Isso remove o seed de `businesses` do plano e
+transforma a migração numa mudança de infraestrutura, não de dados.
+
+**Nada abaixo foi executado.** A troca das variáveis no Easypanel tem
+confirmação própria, porque derruba o pipeline enquanto não apontar para o
+lugar certo.
+
+## 1. Os quatro casos de referência que eu guardaria
+
+Escolhidos por **cobertura**, não por serem os maiores. O que um teste de
+migração precisa exercitar é o que muda de forma: modo de criativo, tipo
+de arquivo, vídeo, aprovações, compliance e volume de storage.
+
+| Guardar | id | Por quê |
+|---|---|---|
+| **CHECK ENVIAR** | `899f120c` | Único exemplar completo do modo `enviar`. `estrutura_pronta`, 3 criativos enviados, 1 vídeo, 2 aprovações. E o único com `requer_revisao = false` **e** `compliance_visual` nulo — a combinação que testa a armadilha do "nulo não é aprovado". 0,01 MB. |
+| **Facetas Curitiba** | `ee301c4f` | Único com os **três tipos** de criativo (`criativo`, `foto`, `logo`) e os dois formatos (`feed`, `stories`). `compliance_visual` preenchido, `requer_revisao = true`, 2 aprovações. Cobre o modo `gerar` inteiro em 0,01 MB. |
+| **Deo Clínica** | `a56d3dea` | O peso. 12 criativos e **19,10 MB** — é o único que prova que a mudança de bucket aguenta volume de verdade. Também a maior lista de aprovações (4), que exercita o `jsonb` append-only. |
+| **Açaí da V2G** *(opcional)* | `e3c5944f` | Status legado `gerado`, e o **único registro com confiança na escala 0–100** (75, 65, 45) em vez de 0–1. É a fixture do segundo ramo de `formatarConfianca` — sem ele, aquele código fica sem nenhum caso real que o exercite. Custa **0 criativos e 0 bytes**. |
+
+Os três primeiros são o conjunto mínimo. O quarto é de graça e eu o
+guardaria: descartá-lo transforma um ramo de código testado em código sem
+fixture.
+
+### Uma lacuna que nenhuma escolha resolve
+
+`criativos.origem` na base inteira: **`gerado` = 0**, `enviado` = 10,
+nulo = 79.
+
+Nenhum criativo foi marcado como gerado pela IA — nem entre os que vou
+guardar, nem entre os que vão ser apagados. O caminho `origem = 'gerado'`
+**não tem fixture hoje e não terá depois**. Isso não é consequência do
+descarte; já era assim.
+
+## 2. O que exatamente vai ser apagado
+
+Guardando as quatro acima:
+
+| | Guardado | Apagado |
+|---|---|---|
+| execuções | **4** | **43** |
+| criativos | **20** | **69** |
+| objetos no storage | **20** | **68** |
+| volume | 19,13 MB | **22,28 MB** |
+
+Some 88 objetos e 41,4 MB — bate com o levantamento.
+
+Sem as quatro de referência, seriam 47 execuções, 89 criativos e 88
+objetos apagados. Se quiser o conjunto mais leve, tire a Deo Clínica
+`a56d3dea`: cai para 19,13 → 0,03 MB guardados, e some o único teste de
+volume.
+
+## 3. A sequência
+
+Cada passo é reversível até o 5. O 5 não é.
+
+```
+1. V2G-SITE: rodar as DUAS migrations do backend
+   (`baseline_schema` e `0002_workflow_b`)
+   → sem colisão: clientes/execucoes/criativos/campanhas_meta não existem lá
+   → NÃO migrar `clientes`: zero linhas e token em texto puro (§5)
+
+2. V2G-SITE: criar o bucket `v2g-midia`
+   → PRIVADO, sem limite de tamanho, todos os mime types — igual ao atual
+   → se nascer público, as URLs assinadas de 12h viram decoração
+
+3. Copiar as 4 execuções, seus 20 criativos e os 20 objetos
+
+4. Conferir no destino, antes de tocar em qualquer outra coisa:
+     select count(*) from public.execucoes;   -- espera 4
+     select count(*) from public.criativos;   -- espera 20
+     select count(*) from storage.objects;    -- espera 20
+   e abrir uma URL assinada para provar que o arquivo veio junto
+
+5. >>> CONFIRMAR COM O GABRIEL <<<
+   Trocar SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY e SUPABASE_BUCKET
+   no Easypanel + redeploy
+   → o pipeline dele fica fora do ar entre a troca e o redeploy
+   → depois: GET /saude deve responder 200 e
+     GET /execucoes-em-revisao deve devolver as que sobraram
+
+6. Só então apagar no Oregon. Ou melhor: não apagar —
+   deixar o projeto de pé por alguns dias como backup vivo, e só
+   depois remover.
+```
+
+**O passo 6 é de propósito.** Não há motivo para apagar o Oregon no mesmo
+dia: ele já não custa nada em uso, e enquanto existir é a única cópia dos
+43 registros descartados. Apagar é a única coisa aqui que não tem volta.
+
+## 4. O que fica pendente depois
+
+- Nenhum `business` é criado a partir destas execuções — elas são teste, e
+  o vínculo `execucoes → businesses` passa a valer só para o que entrar
+  daqui para frente.
+- O patch do `RespostaExecucao` (`patch-resposta-execucao.md`) continua
+  independente e não foi aplicado — verificado no `/openapi.json`.
