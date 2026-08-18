@@ -1892,3 +1892,124 @@ code {
    é o id, e o nome é contexto — invertir isso faria o operador procurar
    pelo nome, que não é único nem sempre existe. */
 .lr-nome { font-weight: 500; color: var(--ink-soft); }
+
+/* ============================================================
+   REVISÃO DA PROPOSTA DE PERFIL — tela de operador
+   ============================================================
+   Zero valor de cor aqui: tudo sai dos tokens do :root, então a tela
+   acompanha o tema claro/escuro sem nenhuma regra própria. */
+
+.rev-erro {
+  background: var(--crit-soft);
+  color: var(--crit);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+
+.rev-de { font-size: 18px; color: var(--ink-mute); font-weight: 500; }
+
+.rev-lista { display: grid; gap: 12px; }
+
+.rev-item {
+  background: var(--card-bg);
+  border: 1px solid var(--linha);
+  border-radius: 14px;
+  padding: 14px 16px;
+}
+/* Item decidido recua visualmente, mas NÃO some: o operador precisa
+   conseguir reler o que já decidiu para achar o próprio erro. */
+.rev-item.decidido { opacity: 0.72; }
+
+.rev-head {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.rev-rotulo { font-weight: 600; font-size: 14.5px; display: flex; flex-direction: column; gap: 2px; }
+.rev-coluna { font-size: 11.5px; color: var(--ink-mute); font-weight: 400; background: none; padding: 0; }
+.rev-selos { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* O TRECHO FICA AO LADO, não atrás de um clique. É a regra que faz a
+   revisão ser revisão: conferir a fonte não pode custar uma interação. */
+.rev-corpo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+.rev-etiqueta {
+  display: block; font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--ink-mute); margin-bottom: 3px;
+}
+.rev-texto { margin: 0; font-size: 14px; line-height: 1.5; }
+.rev-corrigido { margin: 10px 0 0; font-size: 14px; }
+.rev-trecho blockquote {
+  margin: 0; padding-left: 12px;
+  border-left: 3px solid var(--linha);
+  font-size: 13.5px; line-height: 1.55; color: var(--ink-soft);
+}
+
+.rev-diverge { display: grid; gap: 10px; }
+.rev-duas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.rev-opcao {
+  border: 1px solid var(--linha); border-radius: 10px; padding: 10px;
+  display: grid; gap: 8px; align-content: start;
+}
+.rev-dica { margin: 0; font-size: 12.5px; color: var(--ink-mute); line-height: 1.5; }
+
+.rev-acoes {
+  display: flex; align-items: center; gap: 8px;
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--linha);
+  flex-wrap: wrap;
+}
+.rev-acoes form { display: contents; }
+.rev-corrigir { display: flex !important; gap: 6px; flex: 1 1 220px; }
+.rev-corrigir input, .rev-corrigir textarea {
+  flex: 1; min-width: 120px;
+  border: 1px solid var(--linha); border-radius: 8px;
+  padding: 6px 9px; font: inherit; font-size: 13px;
+  background: var(--canvas); color: var(--ink);
+}
+.rev-quem { font-size: 12px; color: var(--ink-mute); }
+
+.btn-linha {
+  border: 1px solid var(--linha); border-radius: 8px;
+  padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 500;
+  background: var(--card-bg); color: var(--ink); cursor: pointer;
+}
+.btn-linha:hover { border-color: var(--ink-mute); }
+.btn-linha.forte { background: var(--plate); color: var(--plate-ink); border-color: transparent; }
+.btn-linha.fraco { color: var(--ink-mute); }
+/* Foco visível: a tela inteira é operável por teclado, e vinte campos
+   seguidos são exatamente onde alguém usa Tab em vez do mouse. */
+.btn-linha:focus-visible,
+.rev-corrigir input:focus-visible,
+.rev-corrigir textarea:focus-visible {
+  outline: 2px solid var(--cobalt); outline-offset: 2px;
+}
+
+.rev-explica { font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 12px; max-width: 78ch; }
+
+.rev-aplicar { margin-top: 28px; }
+.rev-previa { display: grid; gap: 8px; margin-bottom: 14px; }
+.rev-plinha { border: 1px solid var(--linha); border-radius: 12px; padding: 12px 14px; }
+.rev-plinha.bloqueia { border-color: var(--crit); }
+.rev-phead { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
+.rev-pvalores { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.rev-bloqueio {
+  background: var(--crit-soft); color: var(--crit);
+  border-radius: 12px; padding: 12px 14px;
+  font-size: 13.5px; line-height: 1.55; max-width: 78ch;
+}
+.rev-aplicar-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* 375px: as duas colunas viram uma. O trecho passa a ficar ABAIXO do
+   valor, não escondido — em tela estreita a ordem de leitura substitui a
+   proximidade, mas a fonte continua visível sem interação. */
+@media (max-width: 720px) {
+  .rev-corpo, .rev-duas, .rev-pvalores { grid-template-columns: 1fr; }
+  .rev-corrigir { flex-basis: 100%; }
+}

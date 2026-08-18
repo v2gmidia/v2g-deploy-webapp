@@ -25,6 +25,10 @@ const PROTECTED_PREFIXES = [
   // descubra a URL vê linguagem interna. A marcação de conta interna está
   // proposta no fim de app/(protected)/saude-meta/page.tsx.
   "/saude-meta",
+  // Idem: revisão da proposta de perfil, tela de operador. Precisa estar
+  // aqui porque OPERADOR_PREFIXES filtra SOBRE a checagem de sessão, não
+  // no lugar dela — fora desta lista, o segundo filtro nunca rodaria.
+  "/revisar-perfil",
   // `/campanhas` e `/criativos` viraram `/anuncios` no lote 8. Ficam aqui
   // porque continuam existindo como redirecionamento — e redirecionar
   // quem não tem sessão para o destino protegido seria vazar a rota.
@@ -48,7 +52,7 @@ const PROTECTED_PREFIXES = [
  * Precisam estar TAMBÉM em `PROTECTED_PREFIXES` — a checagem de sessão
  * vem primeiro, e esta é um segundo filtro sobre ela, não um substituto.
  */
-const OPERADOR_PREFIXES = ["/saude-meta"];
+const OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil"];
 
 /** O papel declarado no JWT, ou `null`. */
 function obterPapel(user: { app_metadata?: Record<string, unknown> } | null): string | null {
