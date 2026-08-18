@@ -53,7 +53,7 @@ longa demais para o corpo do texto.
 
 ---
 
-## 2. Escala tipográfica — **27 tamanhos hoje**
+## 2. Escala tipográfica — **23 tamanhos hoje**
 
 Você previu certo: é sintoma. São **136 declarações de `font-size` em 27
 valores distintos**, muitos separados por 0,5px — diferença que ninguém
@@ -162,11 +162,58 @@ mereça não ganha faixa.
 | `/vendas` | quantas pessoas começaram conversa — ou, hoje, que ninguém começou e o motivo | É a razão de a tela existir. Sem esse número, ela não tem assunto. |
 | `/anuncios` | **condicional**: o que espera você agora (peça para aprovar, publicação que falhou). Sem pendência, **sem faixa**. | O conteúdo normal é uma lista, e lista não grita. Faixa permanente aqui viraria moldura decorativa. |
 | `/alertas` (menu: Avisos) | **condicional**: o aviso mais recente que pede ação. Sem aviso, **sem faixa**. | Mesma lógica. "Nenhum aviso" é boa notícia e não merece o maior elemento da tela. |
-| `/conta` | **nada. Sem faixa.** | É tela de ajuste: o cliente chega sabendo o que veio fazer. Destacar uma seção seria escolher por ele, e a escolha mudaria a cada visita. |
+| `/conta` | **nada. Sem faixa — decisão deliberada, ver abaixo.** | É tela de ajuste: o cliente chega sabendo o que veio fazer. Destacar uma seção seria escolher por ele, e a escolha mudaria a cada visita. |
 
 Duas das quatro só ganham faixa quando há o que dizer, e uma nunca ganha.
 Isso é de propósito: se toda tela tiver faixa, faixa deixa de significar
 "olhe aqui".
+
+### A `/conta` não ganha faixa. Isso está pronto, não pela metade.
+
+Escrito aqui porque a ausência parece esquecimento, e alguém vai querer
+"completar" a propagação visual acrescentando uma faixa a ela. **Não
+acrescente.**
+
+Uma faixa precisa de um assunto fixo. Na `/conta` esse assunto mudaria a
+cada visita — hoje o cartão recusado, amanhã o tema, depois o plano — e
+faixa que muda de assunto não é destaque, é moldura. Moldura ensina o olho
+a pular, e o custo não cai só na `/conta`: cai na `/vendas`, que precisa que
+a faixa cobalto ainda signifique alguma coisa quando aparecer.
+
+Se um dia a `/conta` tiver **um** estado que valha a dobra — cobrança
+recusada com a campanha parada é o único candidato plausível — ele entra
+como faixa **condicional**, no mesmo desenho da `/anuncios` e da
+`/alertas`: aparece porque há motivo, some quando não há. Nunca permanente.
+
+### A faixa condicional, implementada nas duas
+
+| Tela | Quando aparece | O que mostra | Quando não aparece |
+|---|---|---|---|
+| `/anuncios` | há pendência | a pendência, em cascata de gravidade: publicação falhada → criativo reprovado → peça esperando | some inteira; fica o `.page-head` e a lista |
+| `/alertas` | `needs_review = true` em `decisions` | **a contagem**, não a descrição | some inteira; responde o `.empty-hero` |
+
+**Por que a `/alertas` conta em vez de descrever.** Os cards das pendências
+estão logo abaixo da faixa, na mesma tela. Descrever a mais urgente na
+faixa a repetiria como card três centímetros depois. Contar não repete — e
+a contagem é a informação que não existia: com sete pendências ninguém
+sabia que eram sete sem rolar.
+
+A alternativa considerada era a faixa mostrar a primeira e a lista mostrar
+só o resto. Foi recusada porque quebra no caso de uma pendência só: a seção
+"Precisa de você" ficaria vazia **enquanto existe uma pendência** — mentira
+por omissão, que é o que este projeto vem tirando das telas.
+
+**A `/alertas` não tem cascata de gravidade, e isso é deliberado.** A
+`/anuncios` ordena por gravidade porque aqueles três estados existem e têm
+gravidade conhecida. Em `decisions` os `kind` são `classification` e
+`diagnosis`, e nenhum é mais urgente que o outro. Ordenar por gravidade
+inventada fingiria um julgamento que ninguém fez; a ordem é a que a
+consulta já usava — mais recente primeiro. O CTA leva à primeira dessa
+ordem, por âncora, porque não existe rota por decisão.
+
+**Concordância tratada:** *"1 coisa precisa de você"* e *"3 coisas precisam
+de você"*. Errar concordância num elemento que ocupa a dobra é o tipo de
+detalhe que faz a tela inteira parecer não revisada.
 
 ---
 

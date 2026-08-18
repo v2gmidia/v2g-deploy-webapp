@@ -46,6 +46,20 @@ export default async function AlertasPage() {
   const temPendencia = (pendentes?.length ?? 0) > 0;
   const temRegistro = (registradas?.length ?? 0) > 0;
 
+  // A faixa CONTA, não descreve. Descrever repetiria os cards logo abaixo;
+  // contar é a informação que hoje não existe — com sete pendências
+  // ninguém sabe que são sete sem rolar a tela.
+  //
+  // SEM CASCATA DE URGÊNCIA, e isso é deliberado. A `/anuncios` ordena por
+  // gravidade (publicação falhada > criativo reprovado > peça esperando)
+  // porque aqueles três estados existem e têm gravidade conhecida. Aqui as
+  // pendências são linhas de `decisions`, cujos `kind` são
+  // `classification` e `diagnosis` — nenhum deles é mais urgente que o
+  // outro. Inventar uma ordem de gravidade seria fingir um julgamento que
+  // ninguém fez. A ordem é a que a consulta já usa: mais recente primeiro.
+  const quantasPendentes = pendentes?.length ?? 0;
+  const primeiraPendencia = pendentes?.[0];
+
   return (
     <>
       <div className="page-head">
@@ -55,6 +69,26 @@ export default async function AlertasPage() {
           Depois, a prestação de contas do que a IA fez sozinha.
         </p>
       </div>
+
+      {/* Condicional: existe só quando há motivo. Sem pendência não vira
+          nada mais discreto — some inteira, e quem responde pelo estado
+          vazio é o `.empty-hero` abaixo, que já distingue "ainda não
+          começou" de "está tudo rodando". Faixa permanente viraria moldura,
+          e moldura ensina a ignorar. */}
+      {quantasPendentes > 0 && (
+        <section className="hero-destaque">
+          <span className="eyebrow">Precisa de você</span>
+          <p className="hero-num">{quantasPendentes}</p>
+          <p className="hero-legenda">
+            {quantasPendentes === 1 ? "coisa precisa de você" : "coisas precisam de você"}
+          </p>
+          {primeiraPendencia && (
+            <a className="cta cta-faixa" href={`#pendencia-${primeiraPendencia.id}`}>
+              {quantasPendentes === 1 ? "Ver o que é" : "Ver a primeira"}
+            </a>
+          )}
+        </section>
+      )}
 
       <div className="dash-grid">
         <div className="dash-main">
@@ -66,7 +100,7 @@ export default async function AlertasPage() {
             {temPendencia ? (
               <div className="dash-main">
                 {pendentes!.map((d) => (
-                  <article className="alert-card warn" key={d.id}>
+                  <article className="alert-card warn" key={d.id} id={`pendencia-${d.id}`}>
                     <b>{tituloDaDecisao(d.kind)}</b>
                     <p>{resumoDaDecisao(d.payload)}</p>
                     <time>{formatarData(d.created_at)}</time>

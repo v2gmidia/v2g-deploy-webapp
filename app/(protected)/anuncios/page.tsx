@@ -130,7 +130,7 @@ export default async function AnunciosPage() {
           <p className="hero-frase">{pendencia.frase}</p>
           <p className="hero-note">{pendencia.nota}</p>
           {pendencia.href && (
-            <a className="cta" href={pendencia.href} style={{ marginTop: 22, width: "max-content" }}>
+            <a className="cta cta-faixa" href={pendencia.href}>
               {pendencia.rotulo}
             </a>
           )}

@@ -1347,6 +1347,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--cobalt);
 }
 .hero-destaque .cta:hover { background: var(--ice); }
+
+/* O CTA da faixa. Nasceu como `style={{ marginTop: 22, width: "max-content" }}`
+   inline na /anuncios; virou classe porque a /alertas precisou do mesmo, e
+   medida repetida em dois arquivos diverge. O 22px nao e arbitrario: e a
+   distancia entre blocos do sistema, a mesma do `.dash-grid` e do
+   `.page-head`. */
+.hero-destaque .cta-faixa { margin-top: 22px; width: max-content; }
 .hero-destaque .hero-note { color: rgb(var(--surface-rgb) / 0.72); margin-top: 16px; max-width: 46ch; }
 .hero-destaque .hero-note a,
 .hero-destaque .hero-note .est-link { color: var(--lime); }
