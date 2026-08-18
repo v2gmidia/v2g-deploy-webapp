@@ -414,7 +414,11 @@ alter table public.businesses
 **A trava que faz a marcação valer alguma coisa:** `lib/meta/publicar.ts`
 recusa a cadeia se o negócio for `dados_ficticios`. Sem isso, a coluna é
 documentação; com isso, é impossível um negócio de teste virar gasto no Meta.
-A checagem entra junto do piso de orçamento, antes de qualquer `POST`.
+A checagem fica logo depois de carregar o negócio — antes do token e antes de
+marcar `publish_state = "publishing"`, não junto do piso de orçamento como eu
+tinha escrito. A resposta não depende de nada do Meta: gastar requisição para
+descobrir isso é trabalho jogado fora, e deixaria a campanha num estado
+"publishing" que ninguém vai encerrar.
 
 **Onde o filtro precisa entrar:** telas de operador, contagens de dashboard e
 qualquer fila de revisão. Vale escrever a lista no PR — é o tipo de filtro que

@@ -311,11 +311,31 @@ export async function publicarCampanha(campaignId: string): Promise<ResultadoPub
 
   const { data: negocio } = await supa
     .from("businesses")
-    .select("id, name, city, radius_km, monthly_budget, geo_lat, geo_lng, geo_key, geo_label")
+    .select("id, name, city, radius_km, monthly_budget, geo_lat, geo_lng, geo_key, geo_label, dados_ficticios")
     .eq("id", campanha.business_id)
     .maybeSingle();
 
   if (!negocio) return { ok: false, mensagem: "Não encontramos seu negócio." };
+
+  // ---------- Negócio de teste não publica ----------
+  // A coluna `dados_ficticios` existe para permitir transcrição inventada
+  // sem contaminar contagem, fila de operador e perfil (ver
+  // docs/extracao-perfil.md §9). Sem ESTA checagem ela seria só
+  // documentação: é a trava que torna impossível um negócio de teste virar
+  // gasto no Meta.
+  //
+  // Vem ANTES do token e antes de marcar `publish_state = "publishing"`,
+  // não junto do piso de orçamento: a resposta não depende de nada do
+  // Meta, então gastar uma requisição — ou deixar a campanha marcada como
+  // publicando — para descobrir isso seria trabalho jogado fora, e um
+  // estado "publishing" que ninguém vai encerrar.
+  if (negocio.dados_ficticios) {
+    return {
+      ok: false,
+      mensagem:
+        "Este negócio está marcado como dados fictícios e não pode publicar anúncio.",
+    };
+  }
 
   const { data: conta } = await supa
     .from("ad_accounts")
