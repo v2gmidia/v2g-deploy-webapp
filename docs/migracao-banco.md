@@ -207,3 +207,59 @@ dia: ele já não custa nada em uso, e enquanto existir é a única cópia dos
   daqui para frente.
 - O patch do `RespostaExecucao` (`patch-resposta-execucao.md`) continua
   independente e não foi aplicado — verificado no `/openapi.json`.
+
+---
+
+# EXECUÇÃO — passos 1 e 2 feitos, 3 e 4 bloqueados
+
+## Feito
+
+**Passo 1 — tabelas no V2G-SITE** (migration `backend_execucoes_criativos`)
+
+O DDL foi extraído do **schema vivo** do Oregon, não dos arquivos de
+migration — eles não estão nesta máquina, e o schema vivo é o que o
+backend realmente usa.
+
+- `execucoes` (33 colunas), `criativos` (18), `campanhas_meta` (9)
+- `clientes` **não** foi criada, como decidido: zero linhas e
+  `meta_access_token` em texto puro
+- as colunas `cliente_id` ficaram, porque o backend escreve nelas, mas
+  **sem a FK** que apontava para `clientes`
+- FKs de `criativos` e `campanhas_meta` para `execucoes` agora com
+  `ON DELETE CASCADE` — no Oregon não havia, e é assim que se chega a
+  criativo apontando para execução que não existe
+- RLS **ligada e sem política**, igual ao Oregon: nega para todos exceto
+  `service_role`. O webapp deste projeto conecta com chave anônima e não
+  deve ler estas tabelas direto — ele fala com a FastAPI
+
+**Passo 2 — bucket** `v2g-midia`, privado, sem limite, todos os mimes.
+Idêntico ao original.
+
+## Bloqueado: falta a chave do Oregon
+
+Os passos 3 e 4 precisam **ler** do Oregon, e o acesso que tenho lá é só
+o painel de administração — que não serve para baixar arquivo de bucket
+privado nem para mover 56 KB de `jsonb` sem passar tudo por uma janela de
+conversa.
+
+O que falta é a `service_role` do projeto do Oregon. Com ela, os dois
+passos viram um script que roda direto entre os dois bancos, com
+conferência no fim.
+
+Acrescente ao `.env.local`:
+
+```
+V2G_OREGON_URL=https://cvwxfalweuplrlchzzeo.supabase.co
+V2G_OREGON_SERVICE_KEY=
+```
+
+Painel do Supabase → projeto `v2gmidia's Project` → Settings → API →
+`service_role`.
+
+**Por que não dá para contornar:** o bucket é privado e `storage.objects`
+tem RLS ligada sem nenhuma política — a chave anônima não lê um byte. E é
+assim que tem que ser; o contorno seria tornar o bucket público por alguns
+minutos, o que exporia 41 MB e deixaria uma janela aberta por engano se
+alguém esquecesse de reverter.
+
+Essa chave sai do `.env.local` depois que a migração terminar.
