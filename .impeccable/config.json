@@ -1,0 +1,10 @@
+{
+  "ignoreFiles": [
+    "lib/**",
+    "scripts/**",
+    "supabase/**",
+    "prompts/**",
+    "proxy.ts",
+    "**/actions.ts"
+  ]
+}

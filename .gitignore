@@ -24,3 +24,10 @@ Thumbs.db
 
 # logs
 *.log
+
+# Impeccable (skill de design, ver docs/impeccable.md)
+# O manifesto de hook é efeito colateral LOCAL de máquina: quem não quiser o
+# hook não deve ser obrigado a ele por um commit.
+.claude/settings.local.json
+# Cache de dedupe do hook — estado de sessão, não configuração.
+.impeccable/hook.cache.json
