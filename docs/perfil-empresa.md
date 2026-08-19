@@ -295,6 +295,33 @@ Proponho **deixá-lo morrer** — não repovoar, não apontar para `businesses`.
 `business_id` é o vínculo novo; manter dois campos de dono convida metade
 do código a usar um e metade o outro. Sai na fase 3, junto com o resto.
 
+> ### REVISTO EM 19/08/2026 — o `cliente_id` passa a ser enviado
+>
+> O parágrafo acima decidiu deixar o campo morrer, e o argumento dele
+> continua bom. **O que ele não previu:** `business_id` só pode ser
+> escrito **depois** que o `POST /cadastro` responde — e a resposta é
+> exatamente o que se perde num timeout. Nesse caso a execução existe do
+> lado de lá com `business_id` nulo, e é indistinguível de uma execução
+> que nunca nasceu. A retomada duplicaria.
+>
+> `cliente_id` é o único campo nosso que cabe na **ida** da requisição.
+> Medido em 19/08/2026: o backend o lê e valida como UUID (um valor sujo
+> devolve 422 `uuid_parsing`), então não é campo morto no schema.
+>
+> **A regra que preserva a intenção original**, e que é a Decisão 12 da
+> `arquitetura.md`:
+>
+> > `business_id` é o vínculo. `cliente_id` é o eco do que a gente
+> > mandou. Nenhuma consulta de produto lê `cliente_id` — só a
+> > reconciliação de `lib/pipeline/disparar.ts`, que existe justamente
+> > para escrever `business_id`.
+>
+> Não são dois donos: são o mesmo valor, um deles servindo de marca de
+> transporte. A fase 3 continua valendo — quando o backend passar a
+> aceitar `business_id`, o eco deixa de ser necessário.
+>
+> Desenho e medição em [`disparo-pipeline.md`](./disparo-pipeline.md) §4.2.
+
 ---
 
 ## 5. O que NÃO está resolvido: a política de privacidade

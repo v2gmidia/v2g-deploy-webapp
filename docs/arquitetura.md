@@ -299,6 +299,47 @@ autoriza; com `definer` seria preciso reescrever a checagem de dono dentro
 da função, que é o `if` que se esquece. **Menos poder quando o poder não é
 necessário** — e é por isso que ela não contradiz a Decisão 10.
 
+## Decisão 12 — Quem escreve o quê em `execucoes`, e o que `cliente_id` significa
+
+Registrado em 19/08/2026, no lote do disparo do pipeline
+(`docs/disparo-pipeline.md`). Existe porque `execucoes` passou a ser
+escrita por **dois** lados: o backend do Gabriel (via n8n) e o webapp.
+Duas mãos na mesma tabela sem regra escrita é como nascem as colunas que
+metade do código preenche e a outra metade ignora.
+
+| Coluna | Quem escreve | Quando |
+|---|---|---|
+| `execucoes.*` (tudo, menos abaixo) | backend / n8n | durante o pipeline |
+| `execucoes.business_id` | **webapp**, `service_role` | logo após o `POST /cadastro` |
+| `execucoes.cliente_id` | backend, com o valor que **mandamos** | no `POST /cadastro` |
+| `businesses.*` | webapp | onboarding, perfil, `/conta` |
+| `businesses.cadastro_*` | webapp | disparo (migration 0018) |
+
+`business_id` é a **única** coluna de `execucoes` que o webapp escreve.
+
+**E `cliente_id` não é um segundo dono.** Ele é o eco do que a gente
+mandou na ida — a marca de transporte que permite reencontrar uma execução
+cuja resposta se perdeu. Nenhuma consulta de produto o lê; quem lê é só a
+reconciliação de `lib/pipeline/disparar.ts`, e ela existe justamente para
+preencher `business_id`.
+
+Isso **revisa** a decisão do `perfil-empresa.md` §4, que mandava o campo
+morrer. O motivo da revisão, e ele não é gosto: `business_id` só pode ser
+escrito depois da resposta chegar, e a resposta é exatamente o que o
+timeout come. Sem marca na ida, uma execução órfã é indistinguível de uma
+execução que nunca nasceu, e a retomada duplica — o que aqui custa token
+de LLM e de imagem, não um objeto pausado como no `publicar.ts`.
+
+**A consequência de leitura**, que é a parte que se esquece:
+`execucoes` continua com RLS ligada e **zero políticas** — `default deny`,
+só `service_role`. Não foi esquecimento; foi decidido depois da auditoria
+de `docs/auditoria-resultados.md`, que achou raciocínio interno da IA
+sobre o negócio do cliente, estratégia de nicho e saída de mock nas mesmas
+colunas que o texto escrito para ele. Uma política de RLS libera a
+**linha**; o problema é a **coluna**. Quando uma tela de cliente precisar
+ler execução, ela pede `status` e `atualizado_em` por uma função de
+servidor — nunca `select *`.
+
 ## Estrutura de pastas
 
 ```

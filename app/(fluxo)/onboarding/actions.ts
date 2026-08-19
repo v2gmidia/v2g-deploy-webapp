@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
 import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
+import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 
 /**
  * Uma resposta como fica gravada em `businesses.onboarding`.
@@ -228,6 +229,21 @@ export async function salvarRespostaAction(entrada: {
   }
 
   revalidatePath("/onboarding");
+
+  // SIM, TAMBÉM AQUI — e não é excesso de zelo.
+  //
+  // O bloco 1 grava `name` e `description`, dois dos seis obrigatórios do
+  // `/cadastro`. O caminho comum é bloco 1 → bloco 2 → /verba, e nesse
+  // caminho o cadastro nunca fecha aqui. Mas as perguntas não são
+  // obrigatoriamente respondidas em ordem: dá para responder ramo e praça,
+  // seguir para as contas, definir a verba, e só então voltar e escrever o
+  // nome. Aí o último dos seis entra NESTA ação.
+  //
+  // Sem esta linha, esse cliente teria o cadastro completo e nenhum
+  // disparo — e nada na tela contaria isso, porque as pendências ficariam
+  // vazias e o `/inicio` pararia de cobrar. Falha silenciosa, do tipo que
+  // só aparece quando alguém pergunta por que a campanha não saiu.
+  await dispararSeCompleto();
 
   return {
     ok: true,

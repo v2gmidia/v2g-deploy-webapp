@@ -21,6 +21,56 @@ import { createClient } from "@/lib/supabase/server";
  *   - `failed` / `error`      → falha
  * Qualquer outro valor cai em "em andamento", que é o padrão seguro:
  * na dúvida, a tela espera em vez de dizer que deu errado.
+ *
+ * ============================================================
+ * ESTA TELA NUNCA FUNCIONOU. NÃO MEXA SEM LER ISTO.
+ *
+ * `analysis_runs` tem ZERO linhas, e ninguém escreve nela. Quem
+ * escreveria é o N8N depois do repontamento do `n8n-repontamento.md`,
+ * cujo checklist da §7 está com os sete itens em aberto. `offers` e
+ * `decisions` — as outras duas tabelas do mesmo repontamento — também
+ * estão em zero.
+ *
+ * Consequência: o `if (!run)` abaixo pega SEMPRE, e a tela mostra "Não
+ * há nada sendo montado agora" para todo mundo, inclusive para quem tem
+ * execução rodando. Não é caso de borda; é o comportamento único.
+ *
+ * Desde quando: commit 974be8d, 01/08/2026 ("Fecha o lote 3"). O
+ * `git log -S "analysis_runs"` sobre este arquivo devolve esse commit e
+ * só esse — a tabela entrou junto com a tela e nunca foi trocada.
+ *
+ * Por que ninguém viu: o estado vazio é bonito e plausível. Uma tela
+ * vazia não prova ausência de dado, do mesmo jeito que log vazio não
+ * prova ausência de evento.
+ *
+ * A PARTIR DO LOTE E ISTO VIROU CONTRADIÇÃO ATIVA, não só dívida: o
+ * front passou a disparar o pipeline de verdade
+ * (`lib/pipeline/disparar.ts`). O cliente responde o último campo, a
+ * execução nasce em `execucoes`, e esta tela continua dizendo que não há
+ * nada sendo montado. Isso vai aparecer no primeiro uso real.
+ *
+ * O CONSERTO É O LOTE SEGUINTE, e o desenho dele está pronto:
+ * `docs/disparo-pipeline.md` §3, incluindo o levantamento §3.4 dos seis
+ * estados de `EstadoExecucao` contra os quatro desta tela. Os quatro
+ * pontos que ele precisa resolver, e que um `.from("execucoes")` sozinho
+ * NÃO resolve:
+ *
+ *   1. `cadastro_completo` cairia em "em andamento" e diria "estamos
+ *      montando" quando ninguém pegou a execução ainda.
+ *   2. `aguardando_fotos` é espera DELE, não nossa — "pode fechar o app,
+ *      a gente te avisa" ali manda o cliente esperar a si mesmo.
+ *   3. `EstadoExecucao` não tem estado de falha. O `Falha` abaixo ficaria
+ *      sem fonte; quem o produz é o silêncio medido em
+ *      `lib/pipeline/relogios.ts`.
+ *   4. A leitura do cliente não pode ser `select *`:
+ *      `docs/auditoria-resultados.md` achou raciocínio interno da IA
+ *      sobre o negócio dele, estratégia de nicho e saída de mock nas
+ *      mesmas colunas. A tela precisa de `status` e `atualizado_em`, e
+ *      de nada mais.
+ *
+ * Trocar só o `.from()` foi considerado e RECUSADO: trocaria tela muda
+ * por tela errada em quatro estados.
+ * ============================================================
  */
 
 const LIMITE_ESPERA_LONGA_MIN = 30;

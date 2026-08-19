@@ -221,6 +221,24 @@ quebra num `.map`, longe daqui, com um erro que não menciona o backend.
 
 ### 6.0 `GET /campanhas/pre-requisitos` NÃO EXISTE no backend publicado
 
+> **SUPERADO EM 19/08/2026 — a rota subiu.** Medição nova em
+> [`disparo-pipeline.md`](./disparo-pipeline.md) §0.1: responde **200**,
+> com os dois controles negativos que dão sentido ao 200 (token inválido
+> → 401; rota inexistente com token válido → 404). O aviso no
+> `lib/backend/index.ts` foi trocado.
+>
+> **O texto abaixo fica como está**, porque é registro de medição e
+> reescrevê-lo apagaria a evidência de que a rota já não existiu — que é
+> a razão de a regra da §0 deste documento existir. Leia o que segue como
+> história, não como estado.
+>
+> Uma ressalva nova, essa sim de estado: `Prevoo.tem_whatsapp` é
+> `boolean` com `default: false` no schema publicado, **sem `null`**.
+> Nosso `boolean | null` continua certo como tipo, mas contra este
+> backend o `null` nunca acontece — então "não consegui verificar" chega
+> como `false`. É o bug do `oauth-meta.md` §2.1 outra vez, e o conserto é
+> do lado do Gabriel.
+
 Medido contra `https://api.v2gmidia.com.br` com o token válido:
 
 ```
@@ -322,6 +340,17 @@ Quando o backend ganhar autenticação de usuário final (Supabase Auth,
 segundo o plano), isso deixa de ser responsabilidade só nossa. Até lá, é.
 
 ### 6.3 Nada de escrita, e nenhum polling
+
+> **SUPERADO EM 19/08/2026 pelo lote E.** Existe escrita: `enviar()` em
+> `cliente.ts` e `enviarCadastro()` em `cadastro.ts`, que fazem
+> `POST /cadastro`. A promessa abaixo foi cumprida ao pé da letra — os
+> dois métodos passam por uma função interna só (`chamar()`), então não há
+> função paralela que esqueça metade dos casos.
+>
+> O que **continua** verdade: não existe upload multipart, não existe laço
+> de consulta de 3s, e nenhum endpoint de 600s é chamado por nós — os
+> `/agentes/*` são do n8n. Desenho em
+> [`disparo-pipeline.md`](./disparo-pipeline.md).
 
 Este lote tem só `GET`. Não existe `POST`, upload multipart, nem o laço de
 consulta de 3s. O `obter()` é a única porta, de propósito: quando houver

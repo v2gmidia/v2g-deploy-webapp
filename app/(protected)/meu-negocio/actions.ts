@@ -9,6 +9,7 @@ import {
   type CampoDoCliente,
 } from "@/lib/perfil/catalogo-cliente";
 import { conferirFaixaDeTicket, converterValor } from "@/lib/perfil/valores";
+import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 
 /**
  * As ações da tela `/meu-negocio`.
@@ -187,6 +188,7 @@ export async function confirmarCampoAction(
   }
 
   revalidatePath("/meu-negocio");
+  await dispararSeCompleto();
   return { ok: "Conferido.", chave };
 }
 
@@ -258,6 +260,7 @@ async function gravar(
     if (!b.ok) return { erro: b.mensagem, chave };
 
     revalidatePath("/meu-negocio");
+    await dispararSeCompleto();
     return { ok: "Salvo.", chave };
   }
 
@@ -265,6 +268,7 @@ async function gravar(
   if (!r.ok) return { erro: r.mensagem, chave };
 
   revalidatePath("/meu-negocio");
+  await dispararSeCompleto();
   return { ok: r.ato === "preencheu" ? "Anotado." : "Salvo.", chave };
 }
 

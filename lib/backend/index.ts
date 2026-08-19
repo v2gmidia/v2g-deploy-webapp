@@ -14,6 +14,13 @@ import "server-only";
 
 export { backendConfigurado, saude, TIMEOUTS } from "./cliente";
 export {
+  enviarCadastro,
+  ESTADOS_DE_EXECUCAO,
+  type Cadastrado,
+  type EstadoExecucao,
+  type StatusRecebido,
+} from "./cadastro";
+export {
   MENSAGEM_GENERICA_BACKEND,
   type CategoriaErro,
   type FalhaBackend,
@@ -27,10 +34,22 @@ export {
 } from "./execucoes";
 
 /**
- * ATENÇÃO: `consultarPreRequisitos` está correto e testado, mas a rota
- * `GET /campanhas/pre-requisitos` NÃO EXISTE no backend publicado —
- * devolve 404. Fica guardado para quando a rota subir. Ver
- * `docs/backend-integracao.md` §6.0.
+ * `GET /campanhas/pre-requisitos` — read-only, e **já funciona**.
+ *
+ * Ficou guardado um tempo porque a rota não estava no deploy (404). Ela
+ * subiu: medido em 19/08/2026, responde 200, com os dois controles
+ * negativos que dão sentido ao 200 — token inválido devolve 401, e rota
+ * inexistente com token válido devolve 404. Registro em
+ * `docs/disparo-pipeline.md` §0.1.
+ *
+ * UMA RESSALVA AO USAR: `Prevoo.tem_whatsapp` é `boolean` com
+ * `default: false` no schema publicado, **sem `null`**. Nosso
+ * `temWhatsapp: boolean | null` continua certo como tipo, mas contra
+ * este backend o `null` nunca acontece — então um cliente cujo WhatsApp
+ * a Meta não soube informar chega aqui como `false`, indistinguível de
+ * "verificamos e não tem". É o bug do `oauth-meta.md` §2.1 de novo, e o
+ * conserto é do lado do backend. Não trate o `false` desta rota como
+ * negativa dura numa tela.
  */
 export {
   consultarPreRequisitos,

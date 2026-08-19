@@ -7,6 +7,7 @@ import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/proc
 import { montarCadastro, type NegocioParaCadastro } from "@/lib/cadastro/montar";
 import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/consultar";
 import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
+import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import {
   TICKET_FAIXA,
   custoDaSobra,
@@ -271,6 +272,12 @@ export async function salvarContaAction(entrada: {
   }
 
   revalidatePath("/onboarding/contas");
+
+  // O cadastro pode ter acabado de ficar completo com esta resposta. A
+  // função decide sozinha se há o que fazer, e NUNCA lança — o campo do
+  // cliente já está salvo, e uma falha do disparo não pode virar "não
+  // conseguimos salvar" na tela dele.
+  await dispararSeCompleto();
 
   const depois = await obterNegocio();
   return {

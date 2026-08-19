@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { gravarCamposDoCliente } from "@/lib/cadastro/procedencia";
+import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 
 export interface VerbaActionState {
   erro?: string;
@@ -79,5 +80,13 @@ export async function definirVerbaAction(
 
   revalidatePath("/verba");
   revalidatePath("/inicio");
+
+  // A verba é, na maioria dos cadastros, o último dos seis a entrar — é a
+  // única pergunta que não tem "não sei" e a única que mora fora do
+  // onboarding. Então este é o lugar onde o disparo mais acontece de
+  // fato. Ainda assim a decisão não é daqui: quem decide é
+  // `dispararSeCompleto`, com a mesma regra das outras duas superfícies.
+  await dispararSeCompleto();
+
   return { ok: "Pronto. É esse o seu teto do mês." };
 }

@@ -7,6 +7,8 @@ import {
   type CategoriaErro,
   type ExecucaoEmRevisao,
 } from "@/lib/backend";
+import { vigiarExecucoes, type Vigilancia as VigilanciaDados } from "@/lib/pipeline/vigilancia";
+import { MINUTOS_ATE_DEMORANDO, MINUTOS_ATE_PARADA } from "@/lib/pipeline/relogios";
 
 /**
  * Fila de revisão — TELA DE OPERADOR, não de cliente.
@@ -49,7 +51,12 @@ export default async function SaudeMetaPage() {
   } = await supabase.auth.getUser();
   if (user?.app_metadata?.papel !== "operador") notFound();
 
-  const [fila, backend] = await Promise.all([listarEmRevisao(), saude()]);
+  const agora = new Date();
+  const [fila, backend, vigilancia] = await Promise.all([
+    listarEmRevisao(),
+    saude(),
+    vigiarExecucoes(agora),
+  ]);
 
   return (
     <>
@@ -70,6 +77,7 @@ export default async function SaudeMetaPage() {
       <div className="dash-grid">
         <div className="dash-main">
           {fila.ok && <Fila execucoes={fila.dados} />}
+          <Vigilancia dados={vigilancia} />
           <NaoVemNaResposta />
         </div>
 
@@ -102,6 +110,113 @@ function Veredicto({ quantas }: { quantas: number }) {
         {quantas === 0
           ? "Nenhuma execução com requer_revisao verdadeiro."
           : "A resposta não traz data de nenhum tipo, então não há como ordenar por tempo de espera nem dizer há quanto tempo cada uma está parada. A ordem abaixo é a que o backend devolveu."}
+      </p>
+    </section>
+  );
+}
+
+/**
+ * O que ficou pelo caminho. Bloco novo do lote E.
+ *
+ * NÃO VEM DA API — vem da tabela, pelo `service_role`. A API não expõe
+ * campo de tempo nenhum, e sem tempo não dá para dizer que algo parou.
+ * As colunas `criado_em`/`atualizado_em` existem na tabela e é delas que
+ * este bloco vive. Ver `lib/pipeline/vigilancia.ts`.
+ *
+ * `null` é estado próprio e não vira lista vazia: "não consegui olhar" e
+ * "não há nada parado" são coisas diferentes, e a segunda é a que
+ * tranquiliza. Trocar uma pela outra é o jeito mais fácil de esta tela
+ * mentir.
+ */
+function Vigilancia({ dados }: { dados: VigilanciaDados | null }) {
+  if (dados === null) {
+    return (
+      <section>
+        <div className="section-title">
+          <h2>O que ficou pelo caminho</h2>
+        </div>
+        <p className="lr-erro">
+          Não conseguimos ler a tabela de execuções agora. Isto <b>não</b> quer dizer que não há
+          nada parado — quer dizer que não foi possível olhar.
+        </p>
+      </section>
+    );
+  }
+
+  const { paradas, orfas, disparosPresos, total } = dados;
+  const quantos = paradas.length + orfas.length + disparosPresos.length;
+
+  return (
+    <section>
+      <div className="section-title">
+        <h2>O que ficou pelo caminho</h2>
+        <span className="grp-count">{quantos}</span>
+      </div>
+
+      <div className="card acct-list">
+        {quantos === 0 && (
+          <div className="acct-row" aria-disabled="true">
+            <span className="ar-text">
+              <b>Nada parado.</b>
+              <small>
+                {total} {total === 1 ? "execução lida" : "execuções lidas"} na tabela, todas com
+                movimento recente ou já encerradas.
+              </small>
+            </span>
+          </div>
+        )}
+
+        {paradas.map((e) => (
+          <div className="acct-row" key={e.id}>
+            <span className="ar-text">
+              <b>
+                {e.nomeDoNegocio ?? e.nomeNaExecucao ?? "(sem negócio ligado)"}
+                {" · "}
+                {e.status}
+              </b>
+              <small>
+                sem mudança há {e.minutosParada ?? "?"} min
+                {e.andamento === "parada" ? " — tratada como parada" : " — está demorando"}
+              </small>
+            </span>
+            <span className="pill off">{e.andamento}</span>
+          </div>
+        ))}
+
+        {orfas.map((e) => (
+          <div className="acct-row" key={`orfa-${e.id}`}>
+            <span className="ar-text">
+              <b>{e.nomeNaExecucao ?? "(sem nome)"} · órfã</b>
+              <small>
+                sem <code>business_id</code> e sem <code>cliente_id</code>: não dá para saber de
+                qual negócio veio. Criada em {e.criadoEm?.slice(0, 10) ?? "data desconhecida"}.
+              </small>
+            </span>
+            <span className="pill off">{e.status}</span>
+          </div>
+        ))}
+
+        {disparosPresos.map((d) => (
+          <div className="acct-row" key={`preso-${d.businessId}`}>
+            <span className="ar-text">
+              <b>{d.nome} · disparo preso</b>
+              <small>
+                em <code>enviando</code> há {d.desdeMin} min. A trava é de 2 min, então a
+                tentativa morreu no meio — a próxima gravação de campo do cliente reconcilia
+                sozinha.
+              </small>
+            </span>
+            <span className="pill off">enviando</span>
+          </div>
+        ))}
+      </div>
+
+      <p className="diag-meta">
+        Os cortes de {MINUTOS_ATE_DEMORANDO} e {MINUTOS_ATE_PARADA} minutos são{" "}
+        <b>chute, sem medição</b> — ninguém cronometrou um pipeline ainda. Ajustáveis por{" "}
+        <code>V2G_MIN_ATE_DEMORANDO</code> e <code>V2G_MIN_ATE_PARADA</code>.{" "}
+        <code>aguardando_fotos</code> fica de fora da conta: não é a gente que está parada, é o
+        cliente que ainda não mandou foto.
       </p>
     </section>
   );

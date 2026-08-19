@@ -82,16 +82,23 @@ export interface OpcoesChamada {
 }
 
 /**
- * Uma chamada GET ao backend. Devolve o corpo cru, ainda não validado —
- * quem chama passa por um validador (ver `pre-requisitos.ts`).
+ * O miolo de toda chamada ao backend — GET e POST passam por aqui.
  *
- * Só GET por enquanto, e de propósito: este lote não escreve nada. Quando
- * houver POST, ele entra aqui com a mesma normalização de erro, não numa
- * função paralela que esquece metade dos casos.
+ * UMA FUNÇÃO SÓ, e é o motivo de ela existir: enquanto havia só leitura,
+ * este arquivo prometia por escrito que "quando houver POST, ele entra
+ * aqui com a mesma normalização de erro, não numa função paralela que
+ * esquece metade dos casos". Duas funções irmãs copiadas divergiriam no
+ * primeiro caso novo — e o caso que uma esquecesse seria justamente o
+ * 200-com-corpo-ilegível, que não dá erro em lugar nenhum.
+ *
+ * Devolve o corpo cru, ainda não validado: quem chama passa por um
+ * validador (ver `pre-requisitos.ts` e `cadastro.ts`).
  */
-export async function obter(
+async function chamar(
+  metodo: "GET" | "POST",
   caminho: string,
-  opcoes: OpcoesChamada = {},
+  corpo: unknown | undefined,
+  opcoes: OpcoesChamada,
 ): Promise<Resultado<unknown>> {
   const cfg = configuracao();
   const contexto = opcoes.contexto ?? caminho;
@@ -114,11 +121,13 @@ export async function obter(
   let resposta: Response;
   try {
     resposta = await fetch(url, {
-      method: "GET",
+      method: metodo,
       headers: {
         "X-V2G-Token": cfg.token,
         Accept: "application/json",
+        ...(corpo !== undefined ? { "Content-Type": "application/json" } : {}),
       },
+      ...(corpo !== undefined ? { body: JSON.stringify(corpo) } : {}),
       // `AbortSignal.timeout` em vez de um AbortController à mão: ele
       // rejeita com `TimeoutError`, que dá para distinguir de um abort
       // provocado por outra coisa.
@@ -127,14 +136,17 @@ export async function obter(
     });
   } catch (erro) {
     const { categoria, codigo } = categoriaDaExcecao(erro);
-    registrarErroBackend(contexto, { metodo: "GET", caminho, categoria, codigo });
+    registrarErroBackend(contexto, { metodo, caminho, categoria, codigo });
     return falha(categoria);
   }
 
+  // `resposta.ok` cobre 200–299, e é por isso que o 201 do `POST
+  // /cadastro` passa sem caso especial. Uma checagem `status === 200`
+  // escrita por reflexo recusaria todo cadastro criado com sucesso.
   if (!resposta.ok) {
     const categoria = categoriaDoStatus(resposta.status);
     registrarErroBackend(contexto, {
-      metodo: "GET",
+      metodo,
       caminho,
       status: resposta.status,
       categoria,
@@ -148,13 +160,46 @@ export async function obter(
     // 200 com corpo que não é JSON: acontece quando um proxy devolve
     // página de erro com status 200. É ilegível, não é sucesso.
     registrarErroBackend(contexto, {
-      metodo: "GET",
+      metodo,
       caminho,
       status: resposta.status,
       categoria: "resposta_ilegivel",
     });
     return falha("resposta_ilegivel", resposta.status);
   }
+}
+
+/** Uma chamada GET ao backend. */
+export async function obter(
+  caminho: string,
+  opcoes: OpcoesChamada = {},
+): Promise<Resultado<unknown>> {
+  return chamar("GET", caminho, undefined, opcoes);
+}
+
+/**
+ * Uma chamada POST ao backend, com corpo JSON.
+ *
+ * ============================================================
+ * ISTO ESCREVE. Diferente de tudo que veio antes neste diretório.
+ *
+ * Uma chamada que falha na volta pode ter funcionado na ida: o recurso
+ * nasce do lado de lá e a resposta se perde. Por isso NENHUM chamador
+ * pode tratar `tempo_esgotado` como "não aconteceu" — ver
+ * `docs/disparo-pipeline.md` §5.2, e a reconciliação em
+ * `lib/pipeline/disparar.ts`.
+ *
+ * E por isso não existe retry aqui dentro. Uma função que cria recurso
+ * não se repete sozinha; quem decide repetir é quem sabe se o recurso
+ * já existe.
+ * ============================================================
+ */
+export async function enviar(
+  caminho: string,
+  corpo: unknown,
+  opcoes: OpcoesChamada = {},
+): Promise<Resultado<unknown>> {
+  return chamar("POST", caminho, corpo, opcoes);
 }
 
 /**
