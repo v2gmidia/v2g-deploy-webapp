@@ -16,7 +16,13 @@ import { readFileSync, writeFileSync } from "node:fs";
 const CSS = "app/globals.css";
 const MD = "DESIGN.md";
 
-const css = readFileSync(CSS, "utf8");
+// COMENTÁRIO FORA ANTES DE QUALQUER COISA. O `globals.css` é mais comentário
+// que regra, e os comentários citam tokens pelo nome — `--fs-corpo: 13px era o
+// valor mais usado` é prosa, não declaração. Sem esta linha o regex casa dentro
+// do comentário e engole a declaração seguinte junto: foi assim que o
+// `--fs-legenda` sumiu da escala na primeira geração, sem erro nenhum.
+// Substituído por espaço, não removido, para os índices continuarem valendo.
+const css = readFileSync(CSS, "utf8").replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, " "));
 const inicioEscuro = css.indexOf("prefers-color-scheme: dark");
 const ehCor = /^(#[0-9a-fA-F]{3,8}|rgb\(|rgba\(|hsl\()/;
 
@@ -53,8 +59,31 @@ linhas.push(
   '    fontFamily: "ui-monospace, Cascadia Mono, Consolas, monospace"',
   "  monoLegado:",
   '    fontFamily: "Consolas, SFMono-Regular, Courier New, monospace"',
-  "---",
 );
+
+// A ESCALA É LIDA DO CSS, pelo mesmo motivo que as cores são: degrau copiado
+// à mão erra em silêncio, e um degrau errado aqui reprova tamanho legítimo ou
+// aprova tamanho que não existe.
+//
+// Só os degraus FIXOS entram. Os `--fs-hero-*` são `clamp()` e o `--fs-code` é
+// `em`; nenhum dos dois é um degrau, e declará-los teria efeito colateral: o
+// detector trata as duas pontas de um `clamp()` declarado como tamanhos
+// válidos em qualquer lugar, o que devolveria 14px e 16px à rampa — justo os
+// valores que este lote acabou de tirar de circulação.
+const degraus = new Map();
+const pulados = [];
+const fimClaro = inicioEscuro > 0 ? inicioEscuro : css.length;
+for (const m of css.slice(0, fimClaro).matchAll(/--fs-([a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+  const nome = m[1];
+  const valor = m[2].trim();
+  if (/^[\d.]+px$/.test(valor)) degraus.set(nome, valor);
+  else pulados.push(`${nome} (${valor})`);
+}
+if (degraus.size === 0) throw new Error("nenhum --fs-* fixo achado no :root — o CSS mudou de forma?");
+linhas.push("  scale:");
+for (const [nome, valor] of degraus) linhas.push(`    ${nome}: "${valor}"`);
+
+linhas.push("---");
 
 const md = readFileSync(MD, "utf8");
 const fim = md.indexOf("\n---", md.indexOf("---") + 3);
@@ -63,3 +92,5 @@ writeFileSync(MD, linhas.join("\n") + prosa);
 
 const escurasDistintas = [...escuro.keys()].filter((n) => escuro.get(n) !== claro.get(n)).length;
 console.log(`DESIGN.md: ${claro.size} cores claras + ${escurasDistintas} variantes escuras = ${claro.size + escurasDistintas} chaves`);
+console.log(`escala: ${degraus.size} degraus (${[...degraus.values()].join(", ")})`);
+if (pulados.length) console.log(`fora da escala, de propósito: ${pulados.join(", ")}`);

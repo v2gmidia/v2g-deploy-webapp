@@ -69,6 +69,13 @@ typography:
     fontFamily: "ui-monospace, Cascadia Mono, Consolas, monospace"
   monoLegado:
     fontFamily: "Consolas, SFMono-Regular, Courier New, monospace"
+  scale:
+    legenda: "11px"
+    corpo: "13px"
+    titulo: "15px"
+    bloco: "18px"
+    tela: "22px"
+    destaque: "26px"
 ---
 # Sistema visual da V2G
 
@@ -122,23 +129,49 @@ registradas como estão (`mono` e `monoLegado`). Unificá-las seria mudança de
 design, não registro — e este arquivo não propõe nada. Fica anotado como
 inconsistência conhecida: uma delas provavelmente devia sumir.
 
-## O que este arquivo NÃO declara, de propósito
+## Escala tipográfica — seis degraus, aplicada em 19/08/2026
 
-**Não há escala tipográfica.** O `globals.css` usa 23 tamanhos distintos, em
-incrementos de meio pixel (9.5px, 10px, 10.5px, 11px, 11.5px…). Isso é uso
-ad hoc, não escala. Declarar os 23 como se fossem uma rampa tornaria a regra
-inútil; declarar sete inventaria um sistema que ninguém adotou — e a escala
-de sete passos está registrada como *não aplicada*. O detector abstém-se
-quando `typography.scale` está ausente, que é o comportamento correto aqui.
+Este arquivo passou a declarar `typography.scale`, e com isso a regra de
+tamanho de fonte ligou. Antes eram 23 tamanhos distintos em incrementos de
+meio pixel; o levantamento completo, o mapeamento de cada valor antigo e as
+medições que decidiram os casos duvidosos estão em
+`docs/escala-tipografica.md`.
+
+Os seis degraus saem do `:root` por script, como as cores — não estão
+escritos à mão aqui. Os `--fs-hero-*` (`clamp()`) e o `--fs-code` (`em`)
+ficam **fora** da escala de propósito: nenhum dos dois é um degrau, e
+declarar um `clamp()` como papel faria o detector aceitar as duas pontas dele
+como tamanhos válidos em qualquer lugar — o que devolveria `14px` e `16px` à
+rampa, justo os valores que o lote tirou de circulação.
+
+**O limite desta regra, medido.** Com a rampa ligada, o detector reprova
+`9.5px`, `12px`, `14px` e um `clamp()` cru cujas pontas estejam fora — e
+**aprova `11.5px`**, porque ele aceita qualquer valor a até 0,5px de um
+degrau (`FONT_SIZE_TOLERANCE_PX`, em `detector/design-system.mjs:22`). Ou
+seja: a rampa pega o desvio de 1px e não pega o de meio pixel, que foi
+exatamente a forma que este problema teve.
+
+O que pega o meio pixel é a ausência de literal. Depois deste lote, nenhum
+tamanho de fonte vive fora do `:root`, e qualquer um que reapareça é
+regressão independente do valor:
+
+```bash
+grep -n "font-size:" app/globals.css | grep -v "var(--fs-"
+```
+
+Tem que devolver **nada**. Essa é a guarda que a ferramenta não dá.
+
+## O que este arquivo ainda NÃO declara, de propósito
 
 **Não há escala de raio.** Não existe token `--radius*` no `:root`; os 8
 valores de `border-radius` (3, 4, 6, 8, 10, 12, 14, 999px) estão soltos nas
-regras. Mesmo raciocínio: registrar o que não é sistema fingiria uma decisão
-que não foi tomada.
+regras. Registrar o que não é sistema fingiria uma decisão que não foi
+tomada — foi o mesmo raciocínio que segurou a escala tipográfica até ela ser
+decidida de verdade.
 
-As duas ausências são **honestas, não incompletude**. Se um dia a escala for
-adotada de verdade, ela entra aqui — e aí a regra correspondente liga
-sozinha.
+A ausência é **honesta, não incompletude**. Se um dia o raio virar sistema,
+ele entra aqui — e aí a regra correspondente liga sozinha, como a de tamanho
+ligou.
 
 ## Como regenerar
 

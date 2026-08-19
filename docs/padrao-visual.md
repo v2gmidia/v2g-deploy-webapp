@@ -53,54 +53,32 @@ longa demais para o corpo do texto.
 
 ---
 
-## 2. Escala tipográfica — **23 tamanhos hoje**
+## 2. Escala tipográfica — **resolvida, em `docs/escala-tipografica.md`**
 
-Você previu certo: é sintoma. São **136 declarações de `font-size` em 27
-valores distintos**, muitos separados por 0,5px — diferença que ninguém
-percebe lado a lado, mas que impede qualquer ajuste global.
+Esta seção descrevia os 23 tamanhos soltos e propunha uma rampa de sete
+degraus que nunca foi aplicada. **Os dois deixaram de valer em 19/08/2026**,
+quando a escala foi medida, decidida e aplicada. Manter aqui o inventário
+antigo seria manter um documento que descreve um estado que não existe.
 
-Inventário completo, por frequência:
+O que vale agora, em uma linha: **seis degraus** — 11 · 13 · 15 · 18 · 22 ·
+26px — mais a faixa fluida do herói, todos com token no `:root` e nenhum
+literal de `font-size` fora dele. O `DESIGN.md` declara a rampa, e o
+detector reprova tamanho fora dela.
 
-```
-22× 13px      6× 13.5px     2× 26px      1× 20px
-18× 12.5px    6× 11px       2× 18px      1× 17px
-16× 12px      6× 10px       2× 9.5px     1× 16px
-14× 14px      6× 10.5px     1× 27px      1× 15.5px
-12× 15px      3× 22px       1× 24px      1× 21px
- 8× 11.5px                  1× 13px !important
+Tudo o mais está em **[`escala-tipografica.md`](escala-tipografica.md)**: o
+levantamento das 162 declarações, o mapeamento valor a valor, as quatro
+mudanças que passaram de 1px e foram medidas no navegador antes de entrar, e
+— o que mais importa para quem for mexer nisso — o limite medido da
+fiscalização, que aceita meio pixel de desvio e por isso não é a guarda
+principal.
 
-fluidos: clamp(56,11vw,104) · clamp(26,3.4vw,40) · clamp(24,2.6vw,34)
-         clamp(15,1.8vw,19) · clamp(14,1.5vw,16)
-```
-
-Onze desses valores aparecem **uma vez só**. Não são decisões — são
-sobras de portes de tela feitos em momentos diferentes.
-
-### A escala mínima proposta: 7 degraus
-
-Cinco não dá, e vale dizer por quê: são necessários seis níveis de
-**texto** (sobrescrito, apoio, corpo, leitura, título de seção, título de
-tela) e o número-herói, que não é texto — é peça gráfica. Forçar cinco
-faria o título de seção colidir com o da tela.
-
-| Token | Valor | Papel | Absorve hoje |
-|---|---|---|---|
-| `--fs-micro` | `11px` | eyebrow, pílula, delta, rótulo de eixo | 9.5, 10, 10.5, 11, 11.5 |
-| `--fs-sm` | `12.5px` | metadado, nota de rodapé, hint | 12, 12.5 |
-| `--fs-body` | `14px` | corpo de texto padrão | 13, 13.5, 14 |
-| `--fs-lead` | `16px` | subtítulo, primeira linha de bloco | 15, 15.5, 16, 17 |
-| `--fs-h2` | `20px` | título de seção | 18, 20, 21, 22 |
-| `--fs-h1` | `26px` | título da tela (`.page-head h1`) | 24, 26, 27 |
-| `--fs-hero` | `clamp(56px, 11vw, 104px)` | o número que domina | — |
-
-Os fluidos intermediários (`.hero-legenda`, `.hero-sub`, `.hero-frase`)
-continuam fluidos: eles existem porque precisam encolher em 375px, e
-travá-los quebraria justamente o caso que motivou o `clamp`.
-
-**Isto ainda não foi aplicado.** Trocar 136 declarações é mudança de
-risco próprio e merece passo separado — mexe em toda tela ao mesmo tempo,
-inclusive nas que não estão neste lote. Proponho fazer depois que as telas
-estiverem alinhadas, para a comparação antes/depois ser confiável.
+Duas correções ao que estava escrito aqui, para quem comparar com o
+histórico: a contagem era de **136 declarações em 27 valores** e a medição
+de agosto achou **162 em 28** — o arquivo cresceu, não houve erro. E a rampa
+de sete degraus não teria funcionado: `--fs-body: 14px` movia a âncora (13px
+era o valor mais usado, em 32 declarações), e os degraus de baixo ficavam a
+1,5px um do outro, dentro da tolerância do detector — aplicada, ela deixaria
+`11.5`, `12`, `13` e `13.5` todos válidos.
 
 ---
 

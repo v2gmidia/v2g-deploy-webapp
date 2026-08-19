@@ -124,6 +124,47 @@
      precisa clarear enquanto a placa não. */
   --plate: #111E2F;
   --plate-ink: #F1F6F7;
+
+  /* ------------------------------------------------------------
+     ESCALA TIPOGRÁFICA — seis degraus.
+
+     Antes daqui eram 23 tamanhos distintos em incrementos de meio
+     pixel, e meio pixel não é decisão: é digitação. O levantamento
+     completo, com o mapeamento de cada valor antigo e as quatro
+     mudanças que foram medidas no navegador antes de entrar, está
+     em docs/escala-tipografica.md.
+
+     Por que SEIS, e não sete: o detector aceita qualquer valor a
+     até 0,5px de um degrau declarado (FONT_SIZE_TOLERANCE_PX, em
+     detector/design-system.mjs). Dois degraus a menos de 2px um do
+     outro não são degraus distintos para ele — tudo entre os dois
+     passa. Seis é o máximo que sobrevive a essa regra dentro da
+     amplitude que o app usa.
+
+     A âncora é --fs-corpo: 13px era o valor mais usado do arquivo,
+     em 32 declarações, e não se mexe no que já é maioria.
+     ------------------------------------------------------------ */
+  --fs-legenda: 11px;    /* etiqueta em caixa alta, nota, timestamp */
+  --fs-corpo: 13px;      /* texto corrido e apoio — a âncora */
+  --fs-titulo: 15px;     /* título de item, rótulo forte, campo */
+  --fs-bloco: 18px;      /* título de bloco, saudação, selo */
+  --fs-tela: 22px;       /* título de tela, número de métrica */
+  --fs-destaque: 26px;   /* o título maior — /entrar e .page-head h1 */
+
+  /* Faixa de display do herói. NÃO entra na rampa: é fluida de
+     propósito, porque precisa encolher em 375px sem estourar a
+     linha. Rampa de UI e tipografia de display são dois sistemas,
+     e fingir que são um só faria mal aos dois. */
+  --fs-hero-num: clamp(56px, 11vw, 104px);
+  --fs-hero-frase: clamp(26px, 3.4vw, 40px);
+  --fs-hero-legenda: clamp(15px, 1.8vw, 19px);
+  --fs-hero-sub: clamp(14px, 1.5vw, 16px);
+  --fs-hero-card: clamp(24px, 2.6vw, 34px);  /* .hero-phrase — hoje sem uso */
+
+  /* Relativo de propósito: o código herda o tamanho de quem o
+     contém, então ele encolhe junto quando está dentro de uma nota
+     e cresce junto quando está dentro de um parágrafo. */
+  --fs-code: 0.92em;
 }
 
 /* ============================================================
@@ -309,12 +350,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    não é um tom aproximado escolhido a olho. Numa arte de duas cores este
    truque não serviria, e aí o caminho seria um segundo arquivo. */
 .sidebar .glyph-img { filter: brightness(0) invert(1); }
-.wordmark .wm { font-family: var(--display); font-weight: 700; font-size: 18px; line-height: 1; color: var(--navy); }
+.wordmark .wm { font-family: var(--display); font-weight: 700; font-size: var(--fs-bloco); line-height: 1; color: var(--navy); }
 .wordmark .wm small {
   display: block;
   font-family: var(--body);
   font-weight: 400;
-  font-size: 10px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-mute);
@@ -326,7 +367,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .field label {
   display: block;
   font-family: var(--display);
-  font-size: 11px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink);
@@ -337,22 +378,22 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: 1.5px solid var(--line);
   background: var(--surface);
   padding: 12px 13px;
-  font-size: 15px;
+  font-size: var(--fs-titulo);
   font-family: var(--body);
   color: var(--ink);
   border-radius: 4px;
 }
 .field input::placeholder { color: var(--ink-mute); }
 .field input:focus { border-color: var(--cobalt); outline: none; }
-.field .note { font-size: 11.5px; line-height: 1.45; color: var(--ink-soft); margin-top: 5px; }
-.field .error { font-size: 11.5px; line-height: 1.45; color: var(--crit); margin-top: 5px; }
+.field .note { font-size: var(--fs-legenda); line-height: 1.45; color: var(--ink-soft); margin-top: 5px; }
+.field .error { font-size: var(--fs-legenda); line-height: 1.45; color: var(--crit); margin-top: 5px; }
 
 .form-error {
   background: var(--crit-soft);
   color: var(--crit);
   border-radius: 6px;
   padding: 11px 13px;
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   line-height: 1.5;
   margin-bottom: 14px;
 }
@@ -362,7 +403,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--ink);
   border-radius: 6px;
   padding: 13px 14px;
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   line-height: 1.55;
   margin-bottom: 14px;
 }
@@ -378,7 +419,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 14px 16px;
   font-family: var(--display);
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-titulo);
   letter-spacing: 0.02em;
   transition: background 0.15s ease;
   text-align: center;
@@ -404,7 +445,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .pill {
   display: inline-flex; align-items: center; gap: 5px;
   font-family: var(--display);
-  font-size: 10px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-weight: 700;
@@ -429,11 +470,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .proof-card b.title {
   display: block;
   font-family: var(--display);
-  font-size: 14px;
+  font-size: var(--fs-titulo);
   color: var(--navy);
   margin-bottom: 8px;
 }
-.proof-card p { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin: 0; }
+.proof-card p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink-soft); margin: 0; }
 
 /* ============================================================
    SHELL DE ENTRADA (público) — claro do começo ao fim, sem sidebar.
@@ -481,7 +522,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: center;
   gap: 8px;
   font-family: var(--display);
-  font-size: 12.5px;
+  font-size: var(--fs-corpo);
   font-weight: 700;
   color: var(--cobalt);
   text-decoration: none;
@@ -500,14 +541,14 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .auth-h {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 27px;
+  font-size: var(--fs-destaque);
   line-height: 1.13;
   letter-spacing: -0.005em;
   color: var(--navy);
   margin: 0 0 10px;
 }
 .auth-sub {
-  font-size: 14px;
+  font-size: var(--fs-corpo);
   line-height: 1.6;
   color: var(--ink-soft);
   margin: 0 0 22px;
@@ -523,7 +564,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-top: 1px solid var(--line);
   margin-top: 20px;
   padding-top: 15px;
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   line-height: 1.7;
   color: var(--ink-mute);
   text-align: center;
@@ -533,7 +574,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: none;
   padding: 0;
   font-family: var(--display);
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   font-weight: 700;
   color: var(--cobalt);
 }
@@ -546,7 +587,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 @media (max-width: 620px) {
   .auth-top, .auth-wrap { padding-left: 18px; padding-right: 18px; }
   .auth-card { padding: 22px 20px; border-radius: 12px; }
-  .auth-h { font-size: 22px; }
+  .auth-h { font-size: var(--fs-tela); }
 }
 
 /* ============================================================
@@ -581,7 +622,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   text-decoration: none;
   color: var(--sidebar-ink);
   font-family: var(--display);
-  font-size: 14px;
+  font-size: var(--fs-titulo);
   font-weight: 700;
   position: relative;
   border-radius: 10px;
@@ -607,11 +648,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 50%;
   background: rgb(255 255 255 / 0.16); color: var(--sidebar-ink-strong);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--display); font-weight: 700; font-size: 14px;
+  font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo);
 }
-.side-account .who b { display: block; font-family: var(--display); font-size: 12.5px; color: var(--sidebar-ink-strong); }
+.side-account .who b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--sidebar-ink-strong); }
 .side-account .who span,
-.side-account .who .link-btn { font-size: 10.5px; color: var(--sidebar-ink); }
+.side-account .who .link-btn { font-size: var(--fs-legenda); color: var(--sidebar-ink); }
 
 /* ---------- tudo que vive DENTRO da sidebar cobalto ----------
    Estas regras existem porque a sidebar é a única região com fundo
@@ -655,7 +696,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 18px 34px;
   border-bottom: 1.5px solid var(--line);
 }
-.topbar .hi { font-family: var(--display); font-weight: 700; font-size: 20px; color: var(--navy); }
+.topbar .hi { font-family: var(--display); font-weight: 700; font-size: var(--fs-bloco); color: var(--navy); }
 .canvas { flex: 1; padding: 30px 34px 56px; max-width: var(--shell-max); width: 100%; }
 
 @media (max-width: 900px) {
@@ -684,7 +725,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   max-width: 78%;
   padding: 11px 13px;
   border-radius: 10px;
-  font-size: 13.5px;
+  font-size: var(--fs-corpo);
   line-height: 1.5;
 }
 .bubble.ai {
@@ -704,7 +745,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .chips-row { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip-opt {
   font-family: var(--display);
-  font-size: 12.5px;
+  font-size: var(--fs-corpo);
   padding: 9px 15px;
   border: 1.5px solid var(--cobalt);
   color: var(--cobalt);
@@ -719,7 +760,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 @keyframes qslide { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .qcount {
   font-family: "Consolas", "SFMono-Regular", "Courier New", monospace;
-  font-size: 10.5px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--cobalt);
@@ -733,7 +774,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: none;
   padding: 0;
   margin: 10px 0 0;
-  font-size: 12px;
+  font-size: var(--fs-legenda);
   color: var(--ink-mute);
   text-decoration: underline;
 }
@@ -747,7 +788,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: 1.5px solid var(--line);
   border-radius: 4px;
   padding: 11px 12px;
-  font-size: 13.5px;
+  font-size: var(--fs-corpo);
   font-family: var(--body);
   color: var(--ink);
   background: var(--surface);
@@ -767,7 +808,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 0 16px;
   font-family: var(--display);
   font-weight: 700;
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   flex: none;
 }
 .mini-send:hover { background: var(--cobalt-dark); }
@@ -775,7 +816,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .mission-tag {
   font-family: var(--display);
-  font-size: 10.5px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-mute);
@@ -784,7 +825,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .eyebrow {
   font-family: var(--display);
-  font-size: 11px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink);
@@ -796,12 +837,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: 1.5px solid var(--ice);
   border-radius: 6px;
   padding: 14px;
-  font-size: 12px;
+  font-size: var(--fs-corpo);
   line-height: 1.6;
   color: var(--ink);
   margin-bottom: 16px;
 }
-.trust b { display: block; font-family: var(--display); font-size: 13px; margin-bottom: 3px; }
+.trust b { display: block; font-family: var(--display); font-size: var(--fs-corpo); margin-bottom: 3px; }
 
 .sr-only {
   position: absolute;
@@ -827,7 +868,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .rail-labels span {
   flex: 1;
   font-family: var(--display);
-  font-size: 9.5px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--ink-mute);
@@ -835,7 +876,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .rail-labels span.now { color: var(--cobalt); font-weight: 700; }
 .rail-labels span.done { color: var(--ink); }
-.rail-note { font-size: 11.5px; color: var(--ink-soft); margin-top: 7px; }
+.rail-note { font-size: var(--fs-legenda); color: var(--ink-soft); margin-top: 7px; }
 .rail-note b { color: var(--ink); }
 .lock { width: 9px; height: 9px; flex: none; }
 
@@ -862,12 +903,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .assemble .mark i.pxbuild { background: var(--ice); animation: buildpulse 1.5s ease infinite; }
 .assemble .mark i.pxoff { background: rgb(var(--offwhite-rgb) / 0.16); }
 @keyframes buildpulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
-.assemble .hint { font-size: 11.5px; line-height: 1.5; color: var(--ink-soft); margin: 0; }
+.assemble .hint { font-size: var(--fs-legenda); line-height: 1.5; color: var(--ink-soft); margin: 0; }
 .assemble .hint b { color: var(--ink); font-weight: 600; display: block; margin-top: 2px; }
 
 /* ---------- lista de garantias do card de prova ---------- */
 .proof-list { margin: 0 0 14px; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.proof-list li { display: flex; gap: 10px; font-size: 12.5px; line-height: 1.5; color: var(--ink-soft); }
+.proof-list li { display: flex; gap: 10px; font-size: var(--fs-corpo); line-height: 1.5; color: var(--ink-soft); }
 .proof-list li .tick {
   width: 17px; height: 17px; flex: none;
   background: var(--lime);
@@ -877,7 +918,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .proof-list li b { color: var(--ink); font-weight: 600; }
 .proof-actions { display: flex; flex-direction: column; gap: 8px; }
-.proof-actions .cta { background: var(--surface); padding: 11px 12px; font-size: 13px; }
+.proof-actions .cta { background: var(--surface); padding: 11px 12px; font-size: var(--fs-corpo); }
 .proof-actions .cta:hover { border-color: var(--cobalt); color: var(--cobalt); }
 
 /* ============================================================
@@ -906,7 +947,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-back:hover { background: rgb(var(--navy-rgb) / 0.11); }
 .ec-label {
   font-family: var(--display);
-  font-size: 11px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--navy);
@@ -923,7 +964,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-dots i.now { background: var(--cobalt); box-shadow: 0 0 0 3px rgb(var(--cobalt-rgb) / 0.14); }
 .ec-count {
   font-family: var(--display);
-  font-size: 12px;
+  font-size: var(--fs-corpo);
   color: var(--navy);
   font-variant-numeric: tabular-nums;
 }
@@ -933,7 +974,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 @keyframes ec-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
 .ec-icon { color: var(--navy); display: block; margin-bottom: 14px; line-height: 0; }
-.ec-h { font-size: 26px; max-width: 21ch; margin-bottom: 12px; }
+.ec-h { font-size: var(--fs-destaque); max-width: 21ch; margin-bottom: 12px; }
 .ec-h:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 4px; }
 .ec-sub { max-width: 52ch; margin-bottom: 18px; }
 
@@ -946,17 +987,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-swap-label {
   display: block;
   font-family: var(--display);
-  font-size: 10.5px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--cobalt);
   margin-bottom: 6px;
 }
-.ec-swap p { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 0; max-width: 50ch; }
+.ec-swap p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink); margin: 0; max-width: 50ch; }
 
 .ec-outlink {
   display: inline-block;
-  font-size: 12.5px;
+  font-size: var(--fs-corpo);
   color: var(--navy);
   text-decoration: underline;
   margin-top: 14px;
@@ -965,7 +1006,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-receipt { list-style: none; margin: 0; padding: 0; }
 .ec-receipt li {
   display: flex; align-items: center; gap: 9px;
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   line-height: 1.5;
   color: var(--navy);
   padding: 5px 0;
@@ -977,7 +1018,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: none;
   border: none;
   padding: 0;
-  font-size: 12.5px;
+  font-size: var(--fs-corpo);
   font-weight: 600;
   color: var(--cobalt);
   text-decoration: none;
@@ -1008,7 +1049,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   transform: translate(-50%, -50%) scale(0.85);
   font-family: var(--display);
   font-weight: 700;
-  font-size: 18px;
+  font-size: var(--fs-bloco);
   letter-spacing: 0.04em;
   color: var(--plate-ink);
   background: var(--plate);
@@ -1029,7 +1070,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   display: flex; align-items: center; gap: 10px;
   background: var(--plate);
   color: var(--plate-ink);
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   line-height: 1.45;
   padding: 13px 17px;
   border-radius: 8px;
@@ -1043,7 +1084,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .toast.show { opacity: 1; transform: none; }
 
 @media (max-width: 620px) {
-  .ec-h { font-size: 22px; }
+  .ec-h { font-size: var(--fs-tela); }
   .ec-steps { min-height: 0; }
   .ec-nav { flex-wrap: wrap; }
   .ec-nav .ec-prev { flex: 1 0 100%; order: 2; }
@@ -1062,12 +1103,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .page-head h1 {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 26px;
+  font-size: var(--fs-destaque);
   color: var(--navy);
   margin: 0 0 6px;
   letter-spacing: -0.005em;
 }
-.page-head p { font-size: 13.5px; color: var(--ink-soft); margin: 0; max-width: 70ch; line-height: 1.55; }
+.page-head p { font-size: var(--fs-corpo); color: var(--ink-soft); margin: 0; max-width: 70ch; line-height: 1.55; }
 
 .dash-grid {
   display: grid;
@@ -1084,18 +1125,18 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .section-title h2 {
   font-family: var(--display);
-  font-size: 15px;
+  font-size: var(--fs-titulo);
   letter-spacing: 0.02em;
   color: var(--navy);
   margin: 0;
 }
 .section-title a {
   font-family: var(--display);
-  font-size: 12.5px;
+  font-size: var(--fs-corpo);
   font-weight: 700;
   text-decoration: none;
 }
-.st-note, .side-note { font-size: 12.5px; color: var(--ink-mute); }
+.st-note, .side-note { font-size: var(--fs-corpo); color: var(--ink-mute); }
 
 .card {
   background: var(--surface);
@@ -1103,8 +1144,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 10px;
   padding: 16px 18px;
 }
-.hint { font-size: 12.5px; line-height: 1.6; color: var(--ink-soft); margin: 0 0 14px; }
-.foot-line { font-size: 12px; color: var(--ink-mute); margin: 12px 2px 0; line-height: 1.6; }
+.hint { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink-soft); margin: 0 0 14px; }
+.foot-line { font-size: var(--fs-legenda); color: var(--ink-mute); margin: 12px 2px 0; line-height: 1.6; }
 
 .form-card { padding: 20px; }
 .form-card .field-row { margin-bottom: 14px; }
@@ -1116,7 +1157,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: 1.5px solid var(--line);
   background: var(--surface);
   padding: 12px 13px;
-  font-size: 15px;
+  font-size: var(--fs-titulo);
   font-family: var(--body);
   color: var(--ink);
   border-radius: 4px;
@@ -1135,31 +1176,31 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .alert-card.warn { border-left-color: var(--warn); }
 .alert-card.crit { border-left-color: var(--crit); }
 .alert-card.good { border-left-color: var(--good); }
-.alert-card b { font-family: var(--display); font-size: 15px; color: var(--navy); display: block; margin-bottom: 3px; }
-.alert-card p { font-size: 13px; line-height: 1.5; color: var(--ink-soft); margin: 0; max-width: 66ch; }
-.alert-card time { font-size: 10.5px; color: var(--ink-mute); display: block; }
+.alert-card b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); display: block; margin-bottom: 3px; }
+.alert-card p { font-size: var(--fs-corpo); line-height: 1.5; color: var(--ink-soft); margin: 0; max-width: 66ch; }
+.alert-card time { font-size: var(--fs-legenda); color: var(--ink-mute); display: block; }
 
 .time-label {
   font-family: var(--display);
-  font-size: 10px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-mute);
   margin: 16px 0 7px;
 }
-.list-footnote { font-size: 11.5px; line-height: 1.5; color: var(--ink-mute); margin: 14px 0 0; }
-.log-row { font-size: 12px; color: var(--ink-soft); line-height: 1.5; padding: 9px 0; border-top: 1px dashed var(--line); }
+.list-footnote { font-size: var(--fs-legenda); line-height: 1.5; color: var(--ink-mute); margin: 14px 0 0; }
+.log-row { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.5; padding: 9px 0; border-top: 1px dashed var(--line); }
 .chip-lime {
   display: inline-block;
   background: var(--lime); color: var(--black);
-  font-family: var(--display); font-weight: 700; font-size: 11.5px;
+  font-family: var(--display); font-weight: 700; font-size: var(--fs-legenda);
   letter-spacing: 0.03em;
   padding: 6px 11px; border-radius: 6px;
 }
 
 .badge {
   font-family: var(--display);
-  font-size: 10.5px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--navy);
@@ -1181,13 +1222,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .empty-hero h3 {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 24px;
+  font-size: var(--fs-tela);
   color: var(--navy);
   margin: 0 0 10px;
 }
-.empty-hero p { font-size: 13.5px; line-height: 1.6; color: var(--ink-soft); margin: 0 auto; max-width: 44ch; }
+.empty-hero p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink-soft); margin: 0 auto; max-width: 44ch; }
 .empty-hero .eh-note {
-  font-size: 12px;
+  font-size: var(--fs-legenda);
   color: var(--ink-mute);
   margin-top: 14px;
   padding-top: 14px;
@@ -1216,14 +1257,14 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .empty-head {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 22px;
+  font-size: var(--fs-tela);
   color: var(--navy);
   margin: 4px 0 10px;
   text-wrap: balance;
 }
-.empty-body { font-size: 13.5px; line-height: 1.6; color: var(--ink); margin: 0 0 18px; max-width: 52ch; }
+.empty-body { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink); margin: 0 0 18px; max-width: 52ch; }
 .empty-copy .cta { width: auto; padding: 14px 20px; }
-.empty-note { font-size: 12px; color: var(--ink-soft); margin: 10px 0 0; }
+.empty-note { font-size: var(--fs-corpo); color: var(--ink-soft); margin: 10px 0 0; }
 .empty-list {
   list-style: none;
   margin: 0;
@@ -1235,12 +1276,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .empty-list li, .tips-list li {
   display: flex; align-items: flex-start; gap: 9px;
-  font-size: 12.5px; line-height: 1.5; color: var(--ink-soft);
+  font-size: var(--fs-corpo); line-height: 1.5; color: var(--ink-soft);
 }
 .empty-list li b { color: var(--ink); font-weight: 600; }
 
 .tips-card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; }
-.tips-title { font-family: var(--display); font-weight: 700; font-size: 13.5px; color: var(--navy); margin: 0 0 10px; }
+.tips-title { font-family: var(--display); font-weight: 700; font-size: var(--fs-corpo); color: var(--navy); margin: 0 0 10px; }
 .tips-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .tick {
   width: 17px; height: 17px; flex: none; margin-top: 1px;
@@ -1273,17 +1314,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .acct-list .acct-row:disabled { cursor: not-allowed; }
 .acct-list .acct-row:disabled .ar-text b { color: var(--ink-mute); }
 .ar-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.ar-text b { font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--cobalt); }
-.ar-text span { font-size: 12px; color: var(--ink-soft); line-height: 1.45; }
+.ar-text b { font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo); color: var(--cobalt); }
+.ar-text span { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.45; }
 
-.support-block { border-radius: 10px; padding: 18px; margin: 0; font-size: 13px; }
-.support-block b { font-size: 14px; margin-bottom: 5px; }
+.support-block { border-radius: 10px; padding: 18px; margin: 0; font-size: var(--fs-corpo); }
+.support-block b { font-size: var(--fs-titulo); margin-bottom: 5px; }
 .support-block .wa { display: inline-block; margin-top: 8px; font-weight: 600; color: var(--cobalt); text-decoration: none; }
 
 /* ---------- sidebar: complementos das telas de app ---------- */
 .nav-eyebrow {
   font-family: var(--display);
-  font-size: 9.5px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-mute);
@@ -1297,12 +1338,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 13px;
   margin-bottom: 12px;
 }
-.side-support b { display: block; font-family: var(--display); font-size: 12.5px; color: var(--navy); margin-bottom: 3px; }
-.side-support p { font-size: 11px; line-height: 1.5; color: var(--ink-soft); margin: 0 0 9px; }
-.side-support .cta { padding: 9px 12px; font-size: 12.5px; }
+.side-support b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--navy); margin-bottom: 3px; }
+.side-support p { font-size: var(--fs-legenda); line-height: 1.5; color: var(--ink-soft); margin: 0 0 9px; }
+.side-support .cta { padding: 9px 12px; font-size: var(--fs-corpo); }
 
 /* ---------- topbar com saudação ---------- */
-.greet .sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; }
+.greet .sub { font-size: var(--fs-corpo); color: var(--ink-soft); margin-top: 3px; }
 .greet .sub b { color: var(--navy); font-weight: 600; }
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 
@@ -1364,7 +1405,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-num {
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(56px, 11vw, 104px);
+  font-size: var(--fs-hero-num);
   line-height: 0.92;
   letter-spacing: -0.03em;
   color: var(--white);
@@ -1376,7 +1417,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    significa, e é o único lugar da tela onde ele aparece. */
 .hero-destaque .hero-legenda {
   font-family: var(--display);
-  font-size: clamp(15px, 1.8vw, 19px);
+  font-size: var(--fs-hero-legenda);
   line-height: 1.3;
   color: var(--lime);
   margin: 12px 0 0;
@@ -1387,7 +1428,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    número. Uma coisa por tela continua valendo. */
 .hero-destaque .hero-sub {
   font-family: var(--display);
-  font-size: clamp(14px, 1.5vw, 16px);
+  font-size: var(--fs-hero-sub);
   font-weight: 500;
   color: rgb(var(--surface-rgb) / 0.85);
   margin: 4px 0 0;
@@ -1397,7 +1438,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-destaque .hero-frase {
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(26px, 3.4vw, 40px);
+  font-size: var(--fs-hero-frase);
   line-height: 1.1;
   letter-spacing: -0.015em;
   color: var(--offwhite);
@@ -1417,7 +1458,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-phrase {
   font-family: var(--display);
   font-weight: 700;
-  font-size: clamp(24px, 2.6vw, 34px);
+  font-size: var(--fs-hero-card);
   line-height: 1.18;
   color: var(--navy);
   margin: 0 0 12px;
@@ -1425,7 +1466,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   max-width: 24ch;
 }
 .hero-phrase .num-cobalt { color: var(--cobalt); }
-.hero-note { font-size: 13px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+.hero-note { font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft); margin: 0; }
 
 /* As métricas de apoio PERDERAM a borda e o fundo branco. Antes cada uma
    era um card com o mesmo peso do herói; agora são texto sobre o fundo
@@ -1445,7 +1486,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .metric + .metric { border-left: 1px solid var(--line); padding-left: 20px; }
 .metric .m-label {
   font-family: var(--display);
-  font-size: 10px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-mute);
@@ -1456,11 +1497,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-family: var(--display);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  font-size: 21px;
+  font-size: var(--fs-tela);
   color: var(--ink-soft);
   line-height: 1.1;
 }
-.metric .m-delta { font-size: 11px; margin-top: 4px; color: var(--ink-soft); display: block; }
+.metric .m-delta { font-size: var(--fs-legenda); margin-top: 4px; color: var(--ink-soft); display: block; }
 
 .campaign-list { display: flex; flex-direction: column; gap: 12px; }
 .list-row {
@@ -1473,7 +1514,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .list-row .lr-title {
   font-family: var(--display);
   font-weight: 700;
-  font-size: 15px;
+  font-size: var(--fs-titulo);
   color: var(--navy);
   flex: 1;
   min-width: 0;
@@ -1481,17 +1522,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .list-row .lr-nums {
   display: flex; gap: 26px; flex-wrap: wrap;
   margin-top: 11px;
-  font-size: 12px;
+  font-size: var(--fs-corpo);
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
-.list-row .lr-nums b { display: block; font-family: var(--display); font-size: 15px; color: var(--ink); }
-.list-row .lr-fresh { font-size: 11px; color: var(--ink-mute); margin: 10px 0 0; }
+.list-row .lr-nums b { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--ink); }
+.list-row .lr-fresh { font-size: var(--fs-legenda); color: var(--ink-mute); margin: 10px 0 0; }
 
 .grp-dot { width: 8px; height: 8px; display: inline-block; margin-right: 7px; border-radius: 50%; }
 .grp-dot.live { background: var(--good); }
 .grp-dot.wait { background: var(--warn); }
-.grp-count { font-size: 12px; color: var(--ink-mute); }
+.grp-count { font-size: var(--fs-legenda); color: var(--ink-mute); }
 
 .navy-card {
   background: var(--plate);
@@ -1501,16 +1542,16 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 12px;
   padding: 20px;
 }
-.navy-card p { font-size: 12.5px; line-height: 1.55; color: rgb(var(--offwhite-rgb) / 0.82); margin: 8px 0 0; }
+.navy-card p { font-size: var(--fs-corpo); line-height: 1.55; color: rgb(var(--offwhite-rgb) / 0.82); margin: 8px 0 0; }
 .navy-card .nc-head {
   display: flex; align-items: center; gap: 9px;
-  font-family: var(--display); font-weight: 700; font-size: 13px;
+  font-family: var(--display); font-weight: 700; font-size: var(--fs-corpo);
   letter-spacing: 0.02em;
   color: var(--offwhite);
 }
 .navy-card .nc-head svg { color: var(--ice); flex: none; }
 .navy-card .nc-foot {
-  font-size: 11.5px;
+  font-size: var(--fs-legenda);
   color: rgb(var(--offwhite-rgb) / 0.65);
   margin-top: 14px;
   padding-top: 12px;
@@ -1525,14 +1566,14 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .card.noturno { background: var(--surface); border: 1.5px solid var(--line); }
 .card.noturno .nc-head {
   display: flex; align-items: center; gap: 9px;
-  font-family: var(--display); font-weight: 700; font-size: 13px;
+  font-family: var(--display); font-weight: 700; font-size: var(--fs-corpo);
   color: var(--navy);
   margin-bottom: 8px;
 }
 .card.noturno .nc-head svg { color: var(--cobalt); flex: none; }
-.card.noturno p { font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); margin: 0; }
+.card.noturno p { font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft); margin: 0; }
 .card.noturno .nc-foot {
-  font-size: 11.5px;
+  font-size: var(--fs-legenda);
   color: var(--ink-mute);
   margin-top: 14px;
   padding-top: 12px;
@@ -1552,13 +1593,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 12px;
   padding: 20px;
 }
-.command-card b.title { font-family: var(--display); font-size: 14px; color: var(--navy); display: block; margin-bottom: 6px; }
-.command-card .limit { font-size: 12.5px; line-height: 1.55; color: var(--ink-soft); margin: 0 0 14px; }
+.command-card b.title { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); display: block; margin-bottom: 6px; }
+.command-card .limit { font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft); margin: 0 0 14px; }
 .command-card .limit a { font-weight: 600; text-decoration: none; }
 
 .btn-sm {
   font-family: var(--display);
-  font-size: 12px;
+  font-size: var(--fs-corpo);
   letter-spacing: 0.04em;
   padding: 9px 15px;
   border-radius: 4px;
@@ -1571,7 +1612,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .est-link {
   background: none; border: none; padding: 0;
-  color: var(--cobalt); font-size: 13px; font-weight: 600;
+  color: var(--cobalt); font-size: var(--fs-corpo); font-weight: 600;
   text-decoration: underline;
 }
 
@@ -1584,15 +1625,15 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .mission-slot .ms-tag {
   font-family: var(--display);
-  font-size: 10px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--cobalt);
   display: block;
   margin-bottom: 8px;
 }
-.mission-slot b { font-family: var(--display); font-size: 15px; color: var(--navy); display: block; margin-bottom: 6px; }
-.mission-slot p { font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 0; max-width: 58ch; }
+.mission-slot b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); display: block; margin-bottom: 6px; }
+.mission-slot p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink-soft); margin: 0; max-width: 58ch; }
 
 /* ============================================================
    ESCOLHA DE CONTA (conexão com o Instagram)
@@ -1622,8 +1663,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 14px 16px;
   background: var(--surface);
 }
-.escolhido b { display: block; font-family: var(--display); font-size: 15px; color: var(--navy); }
-.escolhido > span { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+.escolhido b { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); }
+.escolhido > span { display: block; font-size: var(--fs-corpo); color: var(--ink-soft); margin-top: 2px; }
 .escolhido .hint { margin-top: 8px; }
 
 /* Passo a passo numerado das telas de destravamento (WhatsApp Business,
@@ -1641,43 +1682,50 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--white);
   font-family: var(--display);
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-titulo);
   display: grid;
   place-items: center;
 }
 .passos > li > div > b {
   display: block;
   font-family: var(--display);
-  font-size: 15px;
+  font-size: var(--fs-titulo);
   color: var(--navy);
   margin-bottom: 4px;
 }
-.passos p { font-size: 14px; line-height: 1.6; color: var(--ink); margin: 0; }
+.passos p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink); margin: 0; }
 .passos p + p { margin-top: 8px; }
 /* O aviso dentro do passo: é o "isso vai acontecer e é normal". Sem ele
-   a pessoa acha que quebrou alguma coisa e para no meio. */
+   a pessoa acha que quebrou alguma coisa e para no meio.
+
+   UM DEGRAU ABAIXO do parágrafo do passo, de propósito. Ele era 13px
+   contra os 14px do `.passos p`, e o `!important` existia para vencer
+   a especificidade e manter essa diferença. A escala tipográfica jogou
+   os dois em `--fs-corpo` e empatou o aviso com o texto que ele
+   comenta — o que apagava a intenção sem apagar o `!important`, o pior
+   dos dois mundos. Volta a ser menor, agora num degrau da escala. */
 .passo-aviso {
   border-left: 2px solid var(--line);
   padding-left: 10px;
   color: var(--ink-soft) !important;
-  font-size: 13px !important;
+  font-size: var(--fs-legenda) !important;
 }
 
 /* Peça em aprovação. */
 .peca-card { margin-top: 22px; }
 .peca-bloco { padding: 14px 0; border-top: 1px solid var(--line); }
 .peca-bloco:first-of-type { border-top: 0; }
-.peca-oferta { font-family: var(--display); font-size: 17px; color: var(--navy); margin: 6px 0 0; }
-.peca-titulo { font-family: var(--display); font-size: 16px; color: var(--navy); margin: 6px 0 0; }
-.peca-corpo { font-size: 14px; line-height: 1.65; color: var(--ink); margin: 8px 0 0; white-space: pre-wrap; }
+.peca-oferta { font-family: var(--display); font-size: var(--fs-bloco); color: var(--navy); margin: 6px 0 0; }
+.peca-titulo { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); margin: 6px 0 0; }
+.peca-corpo { font-size: var(--fs-corpo); line-height: 1.65; color: var(--ink); margin: 8px 0 0; white-space: pre-wrap; }
 
 /* As duas cobranças, lado a lado no desktop e empilhadas no celular —
    ver as duas juntas é o que faz entender que são separadas. */
 .duas-cobrancas { display: grid; gap: 14px; grid-template-columns: 1fr; }
 @media (min-width: 720px) { .duas-cobrancas { grid-template-columns: 1fr 1fr; } }
 .cobranca { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface); }
-.cobranca b { display: block; font-family: var(--display); font-size: 15px; color: var(--navy); margin: 6px 0 6px; }
-.cobranca p { font-size: 13px; line-height: 1.6; color: var(--ink-soft); margin: 0; }
+.cobranca b { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); margin: 6px 0 6px; }
+.cobranca p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink-soft); margin: 0; }
 
 .acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 
@@ -1696,8 +1744,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .tema-opcao:hover { border-color: var(--cobalt); }
 .tema-opcao.picked { border-color: var(--cobalt); box-shadow: 0 0 0 3px rgb(var(--cobalt-rgb) / 0.16); }
-.tema-opcao b { font-family: var(--display); font-size: 14px; color: var(--ink); margin-top: 6px; }
-.tema-opcao span { font-size: 12px; line-height: 1.45; color: var(--ink-soft); }
+.tema-opcao b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--ink); margin-top: 6px; }
+.tema-opcao span { font-size: var(--fs-corpo); line-height: 1.45; color: var(--ink-soft); }
 /* A miniatura: duas faixas — fundo e superfície — com um ponto de acento
    em cada. Suficiente para reconhecer o tema sem desenhar uma tela
    inteira em 60 pixels. */
@@ -1708,7 +1756,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* Erro de publicação na linha do anúncio. Vermelho contido: é
    informação, não alarme — nada foi gasto. */
 .lr-erro {
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   line-height: 1.5;
   color: var(--crit);
   background: var(--crit-soft);
@@ -1716,10 +1764,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 8px 10px;
   margin: 8px 0 0;
 }
-.lr-pecas { font-size: 12px; color: var(--ink-mute); margin: 8px 0 0; }
+.lr-pecas { font-size: var(--fs-legenda); color: var(--ink-mute); margin: 8px 0 0; }
 
-.esc-texto b { display: block; font-family: var(--display); font-size: 14px; color: var(--navy); }
-.esc-texto span { display: block; font-size: 12px; line-height: 1.45; color: var(--ink-soft); margin-top: 2px; }
+.esc-texto b { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); }
+.esc-texto span { display: block; font-size: var(--fs-corpo); line-height: 1.45; color: var(--ink-soft); margin-top: 2px; }
 
 /* ---------- faixa de reconexão ---------- */
 .faixa-reconectar {
@@ -1730,9 +1778,9 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 16px 20px;
   margin-bottom: 22px;
 }
-.faixa-reconectar b { font-family: var(--display); font-size: 15px; color: var(--crit); display: block; }
-.faixa-reconectar span { font-size: 13px; line-height: 1.5; color: var(--ink); display: block; margin-top: 2px; }
-.faixa-reconectar .cta { margin-left: auto; width: auto; flex: none; padding: 11px 18px; font-size: 13px; }
+.faixa-reconectar b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--crit); display: block; }
+.faixa-reconectar span { font-size: var(--fs-corpo); line-height: 1.5; color: var(--ink); display: block; margin-top: 2px; }
+.faixa-reconectar .cta { margin-left: auto; width: auto; flex: none; padding: 11px 18px; font-size: var(--fs-corpo); }
 
 /* ============================================================
    PROCESSAMENTO — passos verticais
@@ -1763,20 +1811,20 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   0%, 100% { box-shadow: 0 0 0 0 rgb(var(--cobalt-rgb) / 0.35); }
   50% { box-shadow: 0 0 0 6px rgb(var(--cobalt-rgb) / 0); }
 }
-.stepper .s-copy b { font-family: var(--display); font-size: 15.5px; color: var(--navy); display: block; }
-.stepper .s-copy span { font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; display: block; margin-top: 2px; }
+.stepper .s-copy b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); display: block; }
+.stepper .s-copy span { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.5; display: block; margin-top: 2px; }
 .stepper li.pending .s-copy b { color: var(--ink-mute); }
 .stepper .s-copy .elapsed { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 .stepper .split-tag {
   font-family: var(--display);
-  font-size: 10px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-mute);
   display: block;
   margin-bottom: 2px;
 }
-.card-note { font-size: 12px; line-height: 1.6; color: var(--ink-mute); margin: 0; }
+.card-note { font-size: var(--fs-legenda); line-height: 1.6; color: var(--ink-mute); margin: 0; }
 
 /* bloco de falha: mesma gramática do `.trust`, severidade pelo token */
 .fail-block {
@@ -1786,8 +1834,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 16px 18px;
   margin-bottom: 16px;
 }
-.fail-block b { display: block; font-family: var(--display); font-size: 14px; color: var(--crit); margin-bottom: 5px; }
-.fail-block p { font-size: 13px; line-height: 1.6; color: var(--ink); margin: 0; }
+.fail-block b { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--crit); margin-bottom: 5px; }
+.fail-block p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink); margin: 0; }
 
 @media (max-width: 1080px) {
   .dash-grid { grid-template-columns: 1fr; }
@@ -1833,7 +1881,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    ============================================================ */
 code {
   font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
-  font-size: 0.92em;
+  font-size: var(--fs-code);
   background: rgb(var(--navy-rgb) / 0.06);
   border-radius: 4px;
   padding: 1px 5px;
@@ -1847,19 +1895,19 @@ code {
   padding: 10px 12px;
   background: var(--surface);
 }
-.diag-lista li code { background: none; padding: 0; font-size: 13px; line-height: 1.5; }
+.diag-lista li code { background: none; padding: 0; font-size: var(--fs-corpo); line-height: 1.5; }
 /* Bloqueio impede publicar; aviso não. A borda esquerda carrega essa
    diferença sem precisar de rótulo repetido em cada linha. */
 .diag-lista.critica li { border-left-color: var(--crit); }
 
-.diag-meta { font-size: 12px; color: var(--ink-mute); margin: 10px 0 0; }
+.diag-meta { font-size: var(--fs-legenda); color: var(--ink-mute); margin: 10px 0 0; }
 
 /* O corpo cru do /saude. `overflow-x: auto` porque JSON não quebra
    linha em lugar bonito, e forçar quebra num diagnóstico atrapalha a
    leitura mais do que a rolagem. */
 .diag-json {
   font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
-  font-size: 11.5px;
+  font-size: var(--fs-legenda);
   line-height: 1.5;
   background: rgb(var(--navy-rgb) / 0.06);
   border-radius: 6px;
@@ -1888,12 +1936,12 @@ code {
 .diag-campo { display: flex; flex-direction: column; gap: 2px; }
 .dc-rotulo {
   font-family: var(--display);
-  font-size: 10px;
+  font-size: var(--fs-legenda);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-mute);
 }
-.dc-valor { font-size: 13px; color: var(--ink); }
+.dc-valor { font-size: var(--fs-corpo); color: var(--ink); }
 
 /* O nome gerado, ao lado do id. Peso normal de propósito: o identificador
    é o id, e o nome é contexto — invertir isso faria o operador procurar
@@ -1911,18 +1959,18 @@ code {
   color: var(--crit);
   border-radius: 12px;
   padding: 12px 14px;
-  font-size: 13.5px;
+  font-size: var(--fs-corpo);
   line-height: 1.5;
   margin-bottom: 18px;
 }
 
-.rev-de { font-size: 18px; color: var(--ink-mute); font-weight: 500; }
+.rev-de { font-size: var(--fs-bloco); color: var(--ink-mute); font-weight: 500; }
 
 .rev-lista { display: grid; gap: 12px; }
 
 .rev-item {
-  background: var(--card-bg);
-  border: 1px solid var(--linha);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 14px;
   padding: 14px 16px;
 }
@@ -1934,8 +1982,8 @@ code {
   display: flex; align-items: flex-start; justify-content: space-between;
   gap: 12px; margin-bottom: 10px; flex-wrap: wrap;
 }
-.rev-rotulo { font-weight: 600; font-size: 14.5px; display: flex; flex-direction: column; gap: 2px; }
-.rev-coluna { font-size: 11.5px; color: var(--ink-mute); font-weight: 400; background: none; padding: 0; }
+.rev-rotulo { font-weight: 600; font-size: var(--fs-titulo); display: flex; flex-direction: column; gap: 2px; }
+.rev-coluna { font-size: var(--fs-legenda); color: var(--ink-mute); font-weight: 400; background: none; padding: 0; }
 .rev-selos { display: flex; gap: 6px; flex-wrap: wrap; }
 
 /* O TRECHO FICA AO LADO, não atrás de um clique. É a regra que faz a
@@ -1947,44 +1995,44 @@ code {
   align-items: start;
 }
 .rev-etiqueta {
-  display: block; font-size: 11px; text-transform: uppercase;
+  display: block; font-size: var(--fs-legenda); text-transform: uppercase;
   letter-spacing: 0.04em; color: var(--ink-mute); margin-bottom: 3px;
 }
-.rev-texto { margin: 0; font-size: 14px; line-height: 1.5; }
-.rev-corrigido { margin: 10px 0 0; font-size: 14px; }
+.rev-texto { margin: 0; font-size: var(--fs-corpo); line-height: 1.5; }
+.rev-corrigido { margin: 10px 0 0; font-size: var(--fs-corpo); }
 .rev-trecho blockquote {
   margin: 0; padding-left: 12px;
-  border-left: 3px solid var(--linha);
-  font-size: 13.5px; line-height: 1.55; color: var(--ink-soft);
+  border-left: 3px solid var(--line);
+  font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft);
 }
 
 .rev-diverge { display: grid; gap: 10px; }
 .rev-duas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .rev-opcao {
-  border: 1px solid var(--linha); border-radius: 10px; padding: 10px;
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px;
   display: grid; gap: 8px; align-content: start;
 }
-.rev-dica { margin: 0; font-size: 12.5px; color: var(--ink-mute); line-height: 1.5; }
+.rev-dica { margin: 0; font-size: var(--fs-corpo); color: var(--ink-mute); line-height: 1.5; }
 
 .rev-acoes {
   display: flex; align-items: center; gap: 8px;
-  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--linha);
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line);
   flex-wrap: wrap;
 }
 .rev-acoes form { display: contents; }
 .rev-corrigir { display: flex !important; gap: 6px; flex: 1 1 220px; }
 .rev-corrigir input, .rev-corrigir textarea {
   flex: 1; min-width: 120px;
-  border: 1px solid var(--linha); border-radius: 8px;
-  padding: 6px 9px; font: inherit; font-size: 13px;
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 9px; font: inherit; font-size: var(--fs-corpo);
   background: var(--canvas); color: var(--ink);
 }
-.rev-quem { font-size: 12px; color: var(--ink-mute); }
+.rev-quem { font-size: var(--fs-legenda); color: var(--ink-mute); }
 
 .btn-linha {
-  border: 1px solid var(--linha); border-radius: 8px;
-  padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 500;
-  background: var(--card-bg); color: var(--ink); cursor: pointer;
+  border: 1px solid var(--line); border-radius: 8px;
+  padding: 6px 12px; font: inherit; font-size: var(--fs-corpo); font-weight: 500;
+  background: var(--surface); color: var(--ink); cursor: pointer;
 }
 .btn-linha:hover { border-color: var(--ink-mute); }
 .btn-linha.forte { background: var(--plate); color: var(--plate-ink); border-color: transparent; }
@@ -1997,11 +2045,11 @@ code {
   outline: 2px solid var(--cobalt); outline-offset: 2px;
 }
 
-.rev-explica { font-size: 13px; color: var(--ink-soft); line-height: 1.55; margin: 0 0 12px; max-width: 78ch; }
+.rev-explica { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.55; margin: 0 0 12px; max-width: 78ch; }
 
 .rev-aplicar { margin-top: 28px; }
 .rev-previa { display: grid; gap: 8px; margin-bottom: 14px; }
-.rev-plinha { border: 1px solid var(--linha); border-radius: 12px; padding: 12px 14px; }
+.rev-plinha { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
 .rev-plinha.bloqueia { border-color: var(--crit); }
 .rev-phead { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
 .rev-pvalores { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
@@ -2009,7 +2057,7 @@ code {
 .rev-bloqueio {
   background: var(--crit-soft); color: var(--crit);
   border-radius: 12px; padding: 12px 14px;
-  font-size: 13.5px; line-height: 1.55; max-width: 78ch;
+  font-size: var(--fs-corpo); line-height: 1.55; max-width: 78ch;
 }
 .rev-aplicar-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 
@@ -2035,13 +2083,13 @@ code {
   padding: 12px 14px;
   margin-bottom: 16px;
 }
-.id-aviso b { display: block; font-size: 13.5px; color: var(--warn); margin-bottom: 4px; }
-.id-aviso p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+.id-aviso b { display: block; font-size: var(--fs-corpo); color: var(--warn); margin-bottom: 4px; }
+.id-aviso p { margin: 0; font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft); }
 .id-saida { margin-top: 8px !important; }
 .id-saida a { color: var(--cobalt); font-weight: 600; }
 
 .id-recado {
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   line-height: 1.5;
   /* Nasce colado no formulário que o gerou, não no topo da seção. */
   margin: 10px 0 0;
@@ -2055,9 +2103,9 @@ code {
 .id-bloco { padding-top: 16px; border-top: 1px solid var(--line); margin-top: 16px; }
 .id-bloco:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
 .id-cabeca { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-.id-cabeca b { font-size: 14px; }
+.id-cabeca b { font-size: var(--fs-titulo); }
 
-.id-vazio { font-size: 13px; line-height: 1.55; color: var(--ink-mute); margin: 0 0 12px; max-width: 62ch; }
+.id-vazio { font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-mute); margin: 0 0 12px; max-width: 62ch; }
 
 .id-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
 /* Xadrez atrás do logo: sem ele, um PNG transparente sobre card claro
@@ -2097,7 +2145,7 @@ code {
    mesmo peso ao lado um do outro não dizem qual é o próximo passo. */
 .id-arquivo {
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   color: var(--ink-soft);
   max-width: 100%;
   min-width: 0;
@@ -2105,7 +2153,7 @@ code {
 }
 .id-arquivo::file-selector-button {
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-corpo);
   font-weight: 500;
   color: var(--ink);
   background: var(--surface-2);

@@ -6,7 +6,8 @@
       "supabase/**",
       "prompts/**",
       "proxy.ts",
-      "**/actions.ts"
+      "**/actions.ts",
+      "app/(marketing)/lp.css"
     ]
   }
 }
