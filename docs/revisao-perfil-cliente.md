@@ -3,9 +3,19 @@
 **Nada implementado.** Este documento é para aprovação.
 
 A tela onde o cliente vê o que a V2G entendeu do negócio dele e confirma ou
-corrige. É o único lugar do sistema que produz a procedência `confirmado` —
-nível que existe desde a 0010 e que nunca foi exercitado, porque ninguém
-nunca teve onde confirmar nada.
+corrige.
+
+> **Este parágrafo dizia que a tela era "o único lugar do sistema que produz
+> `confirmado`". Deixou de ser verdade durante a própria implementação.** A
+> função `confirmar_campo_do_cliente` (0015) é que é a única porta — e o
+> onboarding expandido, da outra frente, passou a entrar por ela também.
+> Medido em 19/08/2026 no negócio de teste do Victor: sete campos
+> `confirmado`, todos com `por = cliente:f5188fd0…`, seis deles gravados
+> dentro do mesmo segundo, que é ritmo de código e não de gente clicando.
+>
+> Não é problema — é a função sendo usada como devia. Mas a frase estava
+> errada e frase errada em documento de desenho é o que alguém cita daqui a
+> seis meses.
 
 Complementa `docs/perfil-empresa.md` (o que o perfil guarda) e
 `docs/extracao-perfil.md` (como ele é preenchido). Este responde *como o dono
@@ -114,10 +124,8 @@ regras diferentes.
 
 ### Duas saídas. **Aprovada a (a)**, e ela foi além do que eu tinha proposto.
 
-**(a) A `/conta` perde os quatro campos de perfil.** `FormNegocio` fica com
-`nome` e `raio` — os dois que não saem de conversa nenhuma e não têm entrada
-no catálogo — e ganha um link para `/meu-negocio`. Segmento, cidade, ticket e
-limite passam a se editar num lugar só, com procedência.
+**(a) A `/conta` perde os quatro campos de perfil.** Segmento, cidade, ticket
+e limite passam a se editar num lugar só, com procedência.
 
 > **Correção na aprovação:** formulário de dois campos parece resto de algo
 > maior. `nome` e `raio` vão **também** para a `/meu-negocio`, e o
@@ -126,6 +134,25 @@ limite passam a se editar num lugar só, com procedência.
 > da 0015 e ganham procedência como qualquer outro campo: procedência num
 > campo que ninguém extrai é inofensiva (só registra que o dono disse), e o
 > ganho é não sobrar nenhum segundo caminho de escrita.
+
+> **O que dependia do formulário, e não era quem o chamava.** Remover o
+> `FormNegocio` não quebrou nenhum import — quebraria três LINKS, que é a
+> forma que essa pergunta assume aqui. A `/inicio` tinha três apontando para
+> a `/conta` esperando encontrar os campos lá: *"Conferir seus dados — nome
+> do negócio, cidade e ticket médio"*, *"Conferir os dados do negócio —
+> ticket médio, cidade e raio"*, e o *"mudar limite"* do cartão de comando.
+> Os três foram repontados para `/meu-negocio`. Nenhum deles apareceria numa
+> busca por quem importa o componente.
+
+> **`name` ENTROU no catálogo depois.** A primeira versão deste parágrafo
+> dizia que `nome` e `raio` "não têm entrada no catálogo". Valia quando foi
+> escrito e parou de valer no mesmo dia: o bloco 2 do onboarding expandido
+> acrescentou `businesses.name` a `lib/agentes/campos.ts`, e ele passou a ser
+> campo extraível como qualquer outro. **`radius_km` continua fora** — é o
+> único campo que a tela do cliente mostra sem ter entrada no catálogo, e por
+> isso está declarado à parte, em `EXTRAS` de
+> `lib/perfil/catalogo-cliente.ts`. O conferidor `conferir:lista-branca` da
+> outra frente também o conhece, em `EXTRAS_ESPERADOS`.
 
 A favor: uma coluna, um lugar de escrita, uma regra. E a tela nova explica
 cada número na linguagem do cliente, coisa que o formulário da Conta nunca
@@ -239,12 +266,32 @@ mais agradável de ler e o de menor consequência se ficar sem conferir.
 | `observacoes` | Observações de identidade | **Outras coisas sobre a marca** |
 | `site_url` · `instagram_handle` | Site · Instagram | **Seu site** · **Seu Instagram** |
 
-**Onde isso mora no código:** um segundo rótulo no mesmo
-`lib/agentes/campos.ts`, campo `rotuloCliente`, e não um segundo catálogo. O
-arquivo existe justamente para ser fonte única (o comentário do topo dele diz
-isso). Dois catálogos divergem no dia em que alguém acrescenta um campo em um
-e esquece o outro — e o campo novo apareceria na tela do operador e não na do
-cliente, sem erro nenhum.
+**Onde isso mora no código — MUDOU na implementação.** O desenho dizia: um
+segundo rótulo dentro do próprio `lib/agentes/campos.ts`, para não criar um
+segundo catálogo. Virou `lib/perfil/catalogo-cliente.ts`, um arquivo separado
+que importa `CAMPOS` e acrescenta rótulo, bloco e a marcação de difícil,
+chaveado por `chaveDoCampo()`.
+
+Não é um segundo catálogo — é apresentação sobre o mesmo — e a troca ganhou
+duas coisas:
+
+1. **O `campos.ts` é editado por quem mexe na extração e no onboarding**, e a
+   linguagem do cliente é outro assunto com outro critério de revisão. As duas
+   frentes deixaram de disputar o mesmo arquivo.
+2. **A verificação de exaustividade**, que é o que decidiu. Campo novo no
+   catálogo sem rótulo de cliente **quebra o módulo**, nos dois sentidos
+   (campo sem apresentação, apresentação órfã). Sem ela o campo novo
+   simplesmente não apareceria na tela, sem erro nenhum — que foi exatamente
+   o que aconteceu com `target_profit_per_customer`.
+
+**O que essa verificação é, dito com precisão:** ela roda na importação do
+módulo, então derruba o `next build` e a primeira renderização em
+desenvolvimento. **Não é erro de tipo.** `CAMPOS` está anotado como
+`readonly Campo[]`, e a anotação alarga as chaves para `string` antes que o
+`as const` do fim do array valha — sem chave literal, o compilador não tem o
+que exigir. Trocar a anotação por `satisfies readonly Campo[]` preservaria os
+literais e faria disto um erro de compilação de verdade. É uma linha, no
+arquivo da outra frente, e está **proposta e não feita**.
 
 ### 3.5 De onde veio cada valor — três estados, não dois
 
@@ -676,6 +723,54 @@ Estado vazio honesto: *"A gente ainda não sabe nada do seu negócio. Isso
 começa no onboarding"*, com o link — mesma copy que a `/conta` já usa quando
 não há `business`.
 
+### 8.7 Esvaziar — o quarto ato, que veio de fora do desenho
+
+O desenho tinha três atos: confirmar, corrigir, preencher. Apagar não estava
+lá, e passou a estar por dois motivos que apareceram na implementação.
+
+O primeiro é que dissolver o `FormNegocio` da `/conta` (§2) tira do cliente
+uma capacidade que ele tinha: deixar em branco um campo opcional. Sem repor,
+a tela nova seria uma regressão.
+
+O segundo é que a capacidade **já existe no banco**, escrita pela outra
+frente: `esvaziar_campos_do_cliente()`, migration 0017. Ela zera a coluna e
+remove a chave da `procedencia` **no mesmo `update`** — que é a parte que
+importa, porque coluna vazia com procedência afirmando `confirmado` faz a
+trava da 0013 recusar uma proposta futura para proteger um valor que não
+existe mais.
+
+**Duas funções, e a bifurcação está escrita no código, não inferida de um
+`if`.** `app/(protected)/meu-negocio/actions.ts` tem uma tabela `DESPACHO`
+com caso, função e motivo. O motivo que mais importa: a de esvaziar é
+`security invoker` e é chamada com o cliente **do usuário**, não com o admin —
+quem autoriza é a RLS, e chamá-la com `service_role` desligaria exatamente a
+autorização que ela usa.
+
+**A assimetria herdada, dita em voz alta:** a 0017 só escreve em
+`businesses`. Ela nasceu para o formulário da `/conta`, que só mexia nessa
+tabela. Então, hoje, campo de `narrativa_negocio` e de `identidade_visual` se
+corrige mas **não se esvazia** — a tela não desenha o botão, e o banco
+recusaria se desenhasse. Não inventei migration para consertar: não é deste
+lote, e a alternativa (deixar o botão e ver o erro) seria pior. Fica
+registrado como limitação conhecida.
+
+**E a coincidência precisa ser mantida.** A tela não desenhar o botão
+exatamente onde o banco recusaria é a decisão certa, mas hoje ela se sustenta
+em duas listas que ninguém obriga a concordar: `PODE_ESVAZIAR` em
+`lib/perfil/catalogo-cliente.ts` e `v_permitidos` dentro da 0017. Basta
+alguém acrescentar um campo de narrativa à lista da tela sem tocar na função
+para o cliente clicar e tomar erro — e o erro aparece só no clique, no
+navegador dele, não em nenhum build.
+
+É a mesma família dos dois conferidores que já existem
+(`conferir:lista-branca`, que compara catálogo com o SQL das migrations, e a
+exaustividade de `catalogo-cliente.ts`, que compara catálogo com rótulo de
+cliente). Falta a terceira comparação: **`PODE_ESVAZIAR` contra o
+`v_permitidos` da 0017**, incluindo o fato de a função só escrever em
+`businesses`. O `conferir-lista-branca.ts` já lê esse array do SQL para a
+checagem 4 — a peça está lá, falta apontá-la para a lista do TypeScript.
+Anotado como trabalho a fazer, não feito.
+
 ### 8.6 Reconfirmar e recorrigir
 
 Permitido, sempre. Confirmar campo já `confirmado` atualiza a data. Corrigir
@@ -792,7 +887,51 @@ quatro perguntas não é a mesma coisa que revisar um valor escrito — e inflar
 `confirmado` para cobrir o chat esvaziaria o nível antes do primeiro uso.
 **Deixo em aberto de propósito**, e registro que a escolha existe.
 
+> **A pergunta foi respondida por fora, e a resposta foi a outra.** O
+> onboarding expandido passou a gravar por `confirmar_campo_do_cliente`, e
+> portanto a marcar `confirmado`. A escolha que eu deixei em aberto foi feita
+> pela outra frente, no sentido oposto ao que eu tinha inclinado, e o
+> argumento de lá é bom: o bloco 2 não é um chat de quatro perguntas — ele
+> mostra o número calculado e espera um "é isso" explícito antes de escrever
+> a coluna. Isso É revisar um valor escrito.
+>
+> **O que continua sem procedência**, medido no mesmo negócio:
+> `avg_direct_cost = 400`, valor presente e chave ausente no jsonb. Não
+> determinei qual caminho o escreveu — o `salvarNegocioAction` da `/conta`
+> não toca nessa coluna, e o caminho do onboarding hoje carimba. Provável
+> resto de uma versão anterior. Fica registrado como o defeito do §2 visível
+> em dado real, e não corrigido: é código da outra frente, e um `update` meu
+> em cima de um campo cuja origem eu não sei seria inventar a origem.
+
 ---
+
+## 10.3 O conferidor de listas paralelas — três comparações, uma tarefa
+
+**Anotado, não feito.** Vale como um trabalho só, dentro do `pnpm conferir`,
+porque as três divergências têm a mesma forma: duas listas que precisam
+concordar e que nada obriga a concordar. Todas falham do mesmo jeito — em
+silêncio, e só na cara do cliente.
+
+| # | compara | estado |
+|---|---|---|
+| 1 | catálogo (`campos.ts`) ↔ lista branca da `confirmar_campo_do_cliente` | **existe** — `scripts/conferir-lista-branca.ts` |
+| 2 | `PODE_ESVAZIAR` ↔ `v_permitidos` da 0017, e o fato de a 0017 só escrever em `businesses` | falta |
+| 3 | rotas sob `app/(protected)/` ↔ `PROTECTED_PREFIXES` do `proxy.ts` | falta |
+
+**A 2** deixa um botão que o cliente clica e toma erro: a tela desenha
+"deixe em branco" onde a função recusa. Hoje as duas listas concordam por
+coincidência mantida à mão.
+
+**A 3** é mais séria, porque falha para o lado errado: rota nova sob
+`(protected)` que ninguém acrescenta à lista fica **fora da primeira camada
+da Decisão 3**. Foi o que aconteceu com `/meu-negocio` neste lote — pegou
+porque eu fui ler o `proxy.ts`, não porque alguma coisa acusou. O route group
+não alimenta a lista, e a segunda camada (o `layout.tsx`) esconde o sintoma:
+a rota continua funcionando, só sem o primeiro filtro.
+
+A peça para a 2 já existe: o `conferir-lista-branca.ts` lê o `v_permitidos`
+da 0017 para a própria checagem 4 — falta apontá-la para a lista do
+TypeScript. A 3 é uma leitura de diretório contra um array.
 
 ## 11. O que eu quero que você conteste antes de eu codar
 

@@ -62,7 +62,24 @@ export interface Campo {
   guia: string;
 }
 
-export const CAMPOS: readonly Campo[] = [
+/**
+ * `as const satisfies` e NÃO a anotação `: readonly Campo[]`.
+ *
+ * A diferença não é estilo. A anotação alarga `tabela` e `campo` para
+ * `string` — e a alargação acontece ANTES de o `as const` do fim do array
+ * valer, então as chaves literais se perdiam. Quem depende delas é
+ * `lib/perfil/catalogo-cliente.ts`, que exige rótulo de cliente para todo
+ * campo do catálogo: com `string`, a exigência só podia ser checada rodando;
+ * com os literais preservados, ela é erro de compilação, no editor, na hora.
+ *
+ * `satisfies` mantém a conferência que a anotação fazia — um item fora do
+ * formato `Campo` continua sendo erro aqui mesmo. O que ele não faz é jogar
+ * fora o que o `as const` sabe.
+ *
+ * Foi assim que `target_profit_per_customer` entrou aqui sem entrar na tela
+ * do cliente e ninguém viu.
+ */
+export const CAMPOS = [
   // ---------- businesses: fatos ----------
   {
     tabela: "businesses",
@@ -277,7 +294,7 @@ export const CAMPOS: readonly Campo[] = [
     guia:
       "Qualquer coisa sobre a marca que não cabe nos outros campos: cores citadas por nome, referências, o que ela não quer ver no anúncio.",
   },
-] as const;
+] as const satisfies readonly Campo[];
 
 /** Chave estável de um campo. Usada no item, no log e no mapa da resposta. */
 export function chaveDoCampo(c: Pick<Campo, "tabela" | "campo">): string {

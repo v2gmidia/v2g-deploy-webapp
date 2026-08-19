@@ -12,115 +12,22 @@ export interface ContaActionState {
   ok?: string;
 }
 
-function numeroOuNulo(bruto: string): number | null {
-  const limpo = bruto.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
-  if (!limpo) return null;
-  const n = Number(limpo);
-  return Number.isFinite(n) && n >= 0 ? n : null;
-}
-
 /**
- * Dados do negócio. Escreve nas MESMAS colunas que o onboarding
- * preenche (`niche`, `city`, `radius_km`, `avg_ticket_min/max`,
- * `monthly_budget`) — esta tela é onde a pessoa corrige depois o que
- * respondeu no chat, então não existe um segundo lugar de verdade.
+ * A ESCRITA DOS DADOS DO NEGÓCIO SAIU DAQUI, e não foi para outro lugar
+ * nesta pasta: foi para `/meu-negocio`.
  *
- * O ticket é um par min/max desde a migration 0004. Aqui o campo é um
- * valor só, então min e max recebem o mesmo número: é um valor informado
- * com precisão, não uma faixa.
+ * O que existia aqui gravava `niche`, `city`, `avg_ticket_min/max` e
+ * `monthly_budget` — cinco campos do catálogo de extração — SEM registrar
+ * procedência. O efeito: o cliente corrigia o ticket, a coluna mudava, e o
+ * jsonb continuava afirmando que aquele número tinha vindo da entrevista. Um
+ * campo que mente sobre a própria origem é pior que um campo desatualizado,
+ * porque a trava da 0013 lê exatamente isso para decidir se uma proposta do
+ * agente pode passar por cima.
  *
- * AGORA COM PROCEDÊNCIA. Antes esta ação gravava com um `update` comum,
- * sem origem nenhuma — e como o onboarding passou a gravar `confirmado`,
- * corrigir um campo aqui REBAIXARIA a origem dele para `desconhecida`. O
- * valor ficava, a afirmação de quem disse sumia, e o
- * `diagnosticar-orcamento` voltava a desconfiar de um número que o dono
- * tinha acabado de digitar.
- *
- * DOIS CAMINHOS, E SÓ UM É PELA FUNÇÃO — a diferença é o campo esvaziado:
- *
- *  - campo COM valor → `confirmar_campo_do_cliente`, que grava valor e
- *    procedência na mesma transação;
- *  - campo ESVAZIADO → a função não serve. Ela recusa branco de
- *    propósito ("Vazio se preenche, nao se confirma"), e com razão: não
- *    existe procedência de campo vazio. Mas deixar o `update` sozinho
- *    apagaria o valor e MANTERIA a procedência afirmando origem de um
- *    campo que não existe mais — mentira pior que a ausência. Então o
- *    apagamento vai num `update` único que zera a coluna E remove a
- *    chave da procedência juntos.
- *
- * O que resolveria isto direito é uma `limpar_campo_do_cliente` irmã da
- * 0015, e ela não existe. Registrado aqui em vez de simulado.
+ * Não foi consertado com um remendo aqui porque duas telas escrevendo a mesma
+ * coluna com regras diferentes é o estado que produz a divergência de novo na
+ * primeira distração. Ver docs/revisao-perfil-cliente.md §2.
  */
-export async function salvarNegocioAction(
-  _prev: ContaActionState,
-  formData: FormData,
-): Promise<ContaActionState> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { erro: "Sua sessão expirou. Entre de novo." };
-
-  const nome = String(formData.get("nome") ?? "").trim();
-  if (!nome) return { erro: "O nome do negócio não pode ficar em branco." };
-
-  const raioBruto = String(formData.get("raio") ?? "").trim();
-  const raio = raioBruto ? Number(raioBruto) : null;
-  const ticket = numeroOuNulo(String(formData.get("ticket") ?? ""));
-  const limite = numeroOuNulo(String(formData.get("limite") ?? ""));
-
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (!business) return { erro: "Não encontramos seu negócio. Comece pelo onboarding." };
-
-  const segmento = String(formData.get("segmento") ?? "").trim();
-  const cidade = String(formData.get("cidade") ?? "").trim();
-
-  // O `name` nunca entra aqui: ele é obrigatório e já foi validado acima.
-  const informados: Array<[string, string | number | null]> = [
-    ["niche", segmento || null],
-    ["city", cidade || null],
-    ["radius_km", raio],
-    ["avg_ticket_min", ticket],
-    ["avg_ticket_max", ticket],
-    ["monthly_budget", limite],
-  ];
-
-  const comValor: CampoParaGravar[] = [{ campo: "name", valor: nome }];
-  const esvaziados: string[] = [];
-  for (const [campo, valor] of informados) {
-    if (valor === null) esvaziados.push(campo);
-    else comValor.push({ campo, valor });
-  }
-
-  const gravacao = await gravarCamposDoCliente({
-    profileId: user.id,
-    businessId: business.id,
-    tabela: "businesses",
-    campos: comValor,
-  });
-  if (!gravacao.ok) return { erro: gravacao.erro };
-
-  if (esvaziados.length > 0) {
-    const { error } = await supabase.rpc("esvaziar_campos_do_cliente", {
-      p_business_id: business.id,
-      p_campos: esvaziados,
-    });
-    if (error) {
-      console.error("[conta] falha ao esvaziar campos ::", error.message);
-      return { erro: "Não conseguimos salvar agora. Tente de novo em instantes." };
-    }
-  }
-
-  revalidatePath("/conta");
-  return { ok: "Dados do negócio salvos." };
-}
 
 /**
  * Trocar a página do Facebook sem refazer a conexão inteira.

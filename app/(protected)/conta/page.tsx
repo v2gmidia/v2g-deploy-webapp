@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listarPaginas, type PaginaDoFacebook } from "@/lib/meta/graph";
 import { registrarErroMeta } from "@/lib/meta/erros";
-import { FormNegocio, FormPerfil } from "./Formularios";
+import { FormPerfil } from "./Formularios";
 import { TrocarPagina } from "./TrocarPagina";
 import { Identidade } from "./Identidade";
 import { listarIdentidade } from "@/lib/identidade/armazenar";
@@ -13,9 +13,15 @@ import { SeletorDeTema } from "./SeletorDeTema";
  *
  * O QUE É REAL E O QUE É ESTADO VAZIO:
  *
- * Real (lê e grava no banco): dados do negócio (`businesses`) e perfil
- * (`profiles`). São as mesmas colunas que o onboarding preenche — esta
- * é a tela onde a pessoa corrige depois o que respondeu no chat.
+ * Real (lê e grava no banco): o perfil da pessoa (`profiles`), a identidade
+ * visual e a página do Facebook.
+ *
+ * Os DADOS DO NEGÓCIO saíram daqui e viraram uma linha que aponta para
+ * `/meu-negocio`. Esta tela lê `businesses` só para saber que ele existe. O
+ * motivo está em docs/revisao-perfil-cliente.md §2: o formulário que existia
+ * aqui escrevia cinco campos do catálogo de extração sem registrar
+ * procedência, e um campo que mente sobre a própria origem desarma a trava da
+ * 0013.
  *
  * Estado vazio: tudo que depende de assinatura — plano, forma de
  * pagamento, recibos, "já voltou R$ 3,40 por real investido", os 23
@@ -43,7 +49,7 @@ export default async function ContaPage() {
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("id, name, niche, city, radius_km, avg_ticket_min, avg_ticket_max, monthly_budget")
+    .select("id, name")
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -83,10 +89,6 @@ export default async function ContaPage() {
     }
   }
 
-  // O onboarding grava faixa (min/max). Como campo único, o mais
-  // informativo é o piso — e a legenda do campo explica a origem.
-  const ticket = business?.avg_ticket_min ?? null;
-
   return (
     <>
       <div className="page-head">
@@ -124,14 +126,23 @@ export default async function ContaPage() {
                 <h2>Dados do seu negócio</h2>
                 <span className="side-note">É com isso que a IA pilota</span>
               </div>
-              <FormNegocio
-                nome={business.name ?? ""}
-                segmento={business.niche ?? ""}
-                cidade={business.city ?? ""}
-                raio={business.radius_km}
-                ticket={ticket}
-                limite={business.monthly_budget}
-              />
+              {/* UMA LINHA, e não um formulário. Os campos que moravam aqui
+                  foram para `/meu-negocio`, onde cada um registra de onde
+                  veio o valor. O que sobraria aqui — nome e raio — seria um
+                  formulário de dois campos, que parece resto de algo maior.
+                  Ver docs/revisao-perfil-cliente.md §2. */}
+              <div className="card acct-list">
+                <a className="acct-row" href="/meu-negocio">
+                  <span className="ar-text">
+                    <b>O que a gente entendeu do seu negócio</b>
+                    <span>
+                      Montado a partir da nossa conversa. Dá uma conferida — principalmente nos
+                      números.
+                    </span>
+                  </span>
+                  <Seta />
+                </a>
+              </div>
             </section>
           ) : (
             <section>

@@ -2297,3 +2297,169 @@ code {
   .id-logo { flex-direction: column; align-items: flex-start; }
   .id-form { flex-direction: column; align-items: stretch; }
 }
+
+/* ============================================================
+   /meu-negocio — o cliente confere o próprio perfil
+   ============================================================
+   SEM FAIXA e SEM CONTADOR: as duas ausências são decisão, e estão
+   argumentadas em docs/revisao-perfil-cliente.md §9 e §6. Não
+   acrescente nenhuma das duas aqui achando que faltou.
+
+   A HIERARQUIA É INVERTIDA em relação ao resto do app: o rótulo é
+   menor que o valor. Na maioria das telas o rótulo nomeia um campo
+   que o cliente vai preencher; aqui ele já está preenchido, e o que
+   a pessoa veio fazer é LER o valor e dizer se está certo. O assunto
+   da linha é o valor, então o valor é que tem o corpo maior. */
+
+.rc-tranquilo {
+  font-size: var(--fs-corpo);
+  color: var(--ink-mute);
+  line-height: 1.55;
+  margin: 0 0 22px;
+  max-width: 70ch;
+}
+
+.rc-bloco { margin-bottom: 28px; }
+.rc-abertura {
+  font-size: var(--fs-corpo);
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin: 0 0 12px;
+  max-width: 70ch;
+}
+
+/* O card é a lista; cada campo é uma linha separada por divisória
+   interna — `1px` e não `1.5px`, que é a regra do padrão visual para
+   borda que separa sem delimitar. */
+.rc-lista-campos { padding: 2px 18px; }
+
+.rc-campo { padding: 15px 0; border-top: 1px solid var(--line); }
+.rc-campo:first-child { border-top: none; }
+
+.rc-rotulo b {
+  display: block;
+  font-size: var(--fs-corpo);
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.rc-ajuda {
+  display: block;
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  line-height: 1.45;
+  margin-top: 3px;
+  max-width: 62ch;
+}
+
+.rc-valor {
+  font-size: var(--fs-titulo);
+  color: var(--ink);
+  line-height: 1.5;
+  margin-top: 6px;
+}
+.rc-sem { color: var(--ink-mute); }
+.rc-lista { margin: 0; padding-left: 18px; }
+.rc-lista li { margin-bottom: 2px; }
+
+.rc-origem {
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  line-height: 1.45;
+  margin: 5px 0 0;
+}
+/* Verde só aqui, e só depois do ato. É a única cor de estado da tela:
+   nada é vermelho, nada é amarelo, porque campo não conferido não é
+   erro nem pendência — é campo não conferido. */
+.rc-origem.conferido { color: var(--good); }
+
+.rc-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+.rc-acoes form { display: contents; }
+
+.rc-erro { font-size: var(--fs-legenda); color: var(--crit); margin: 8px 0 0; line-height: 1.45; }
+.rc-ok { font-size: var(--fs-legenda); color: var(--good); margin: 8px 0 0; }
+
+/* ---------- o campo aberto ---------- */
+
+.rc-editor { display: grid; gap: 8px; margin-top: 8px; }
+
+.rc-editor input,
+.rc-editor textarea {
+  width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: var(--fs-corpo);
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.rc-editor textarea { resize: vertical; line-height: 1.5; }
+
+.rc-editor input:focus-visible,
+.rc-editor textarea:focus-visible,
+.btn-texto:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+.rc-faixa { display: flex; gap: 10px; }
+.rc-faixa label {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+}
+
+.rc-apagar {
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  margin: 2px 0 0;
+  line-height: 1.45;
+}
+.btn-texto {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--fs-legenda);
+  color: var(--cobalt);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* ---------- o que a gente ainda não sabe ----------
+   Nunca vira cobrança: sem selo, sem contagem, sem cor de alerta.
+   Fundo levemente rebaixado para ler como nota de rodapé do bloco, e
+   não como lista de tarefas. */
+.rc-nao-sabemos {
+  margin-top: 10px;
+  padding: 14px 18px;
+  border-radius: 10px;
+  background: rgb(var(--navy-rgb) / 0.04);
+}
+.rc-nao-sabemos > b {
+  display: block;
+  font-size: var(--fs-corpo);
+  color: var(--ink-soft);
+  margin-bottom: 8px;
+}
+.rc-pendente { padding: 5px 0; }
+.rc-pend-rotulo { display: block; font-size: var(--fs-corpo); color: var(--ink); }
+.rc-pend-nota {
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  line-height: 1.5;
+  margin: 10px 0 0;
+  max-width: 66ch;
+}
+
+@media (max-width: 620px) {
+  .rc-faixa { flex-direction: column; }
+}

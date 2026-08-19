@@ -198,7 +198,7 @@ export default async function InicioPage() {
                   </span>
                   <Seta />
                 </a>
-                <a className="acct-row" href="/conta">
+                <a className="acct-row" href="/meu-negocio">
                   <span className="ar-text">
                     <b>Conferir seus dados</b>
                     <span>Nome do negócio, cidade e ticket médio.</span>
@@ -279,7 +279,7 @@ export default async function InicioPage() {
                 </span>
                 <Seta />
               </a>
-              <a className="acct-row" href="/conta">
+              <a className="acct-row" href="/meu-negocio">
                 <span className="ar-text">
                   <b>Conferir os dados do negócio</b>
                   <span>Ticket médio, cidade e raio — é daí que sai a mira dos anúncios.</span>
@@ -451,7 +451,7 @@ export default async function InicioPage() {
               {business?.monthly_budget
                 ? `${dinheiro(total.investido)} de ${dinheiro(Number(business.monthly_budget))} investidos este mês · `
                 : ""}
-              <a href="/conta">mudar limite</a>
+              <a href="/meu-negocio">mudar limite</a>
             </p>
             <a
               className="cta quiet"

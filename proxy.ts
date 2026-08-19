@@ -19,6 +19,11 @@ const PROTECTED_PREFIXES = [
   "/vendas",
   "/anuncios",
   "/conta",
+  // Fora do menu de cinco itens, alcançada pela /conta. Está aqui porque
+  // mostra o perfil inteiro do negócio: sem sessão a página cairia no estado
+  // vazio em vez de vazar dado, mas depender disso seria trocar a primeira
+  // camada da Decisão 3 por uma consequência do código da página.
+  "/meu-negocio",
   "/alertas",
   // Tela de OPERADOR, fora do menu. Protegida por sessão como as outras,
   // mas isso é o piso, não o suficiente: qualquer cliente logado que

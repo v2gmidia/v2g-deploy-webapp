@@ -73,7 +73,13 @@ const nok = (m: string) => {
 
 // ---------------------------------------------------------------- as listas
 
-const catalogo = CAMPOS.filter((c) => c.tabela === "businesses").map((c) => c.campo);
+// `: string[]` explícito, e ele passou a ser necessário: `CAMPOS` virou
+// `as const satisfies readonly Campo[]` para que a exaustividade de
+// `lib/perfil/catalogo-cliente.ts` seja erro de compilação. Com isso
+// `c.campo` é união de literais, e `catalogo.includes(<string>)` da checagem
+// 2 e o campo inventado da checagem 5 deixariam de compilar — o controle
+// negativo depende justamente de comparar com algo que NÃO está na união.
+const catalogo: string[] = CAMPOS.filter((c) => c.tabela === "businesses").map((c) => c.campo);
 
 const confirmar = ultimaDefinicao("confirmar_campo_do_cliente");
 const permitidos = literaisDoArray(confirmar.sql, "when 'businesses' then array[");
