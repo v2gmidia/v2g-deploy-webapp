@@ -113,9 +113,9 @@ Revisado depois de confirmado que **as 47 execuções são teste do Gabriel**.
 Nenhum dado de cliente. Isso remove o seed de `businesses` do plano e
 transforma a migração numa mudança de infraestrutura, não de dados.
 
-**Nada abaixo foi executado.** A troca das variáveis no Easypanel tem
-confirmação própria, porque derruba o pipeline enquanto não apontar para o
-lugar certo.
+**Este plano foi executado até o passo 5, inclusive.** Ver a seção EXECUÇÃO
+no fim do documento. A troca das variáveis no Easypanel teve confirmação
+própria, porque derruba o pipeline enquanto não apontar para o lugar certo.
 
 ## 1. Os quatro casos de referência que eu guardaria
 
@@ -210,7 +210,7 @@ dia: ele já não custa nada em uso, e enquanto existir é a única cópia dos
 
 ---
 
-# EXECUÇÃO — passos 1 e 2 feitos, 3 e 4 bloqueados
+# EXECUÇÃO — passos 1 a 5 feitos; falta só o 6 (apagar o Oregon)
 
 ## Feito
 
@@ -304,3 +304,51 @@ Rodar de novo não duplica. `--conferir` só verifica, sem escrever.
 
 **Nada foi apagado no Oregon.** Ele segue intacto com as 47 execuções, os
 89 criativos e os 88 objetos.
+
+---
+
+## Passo 5 — FEITO e conferido
+
+Variáveis trocadas no Easypanel e redeploy dado. O backend passou a ler o
+V2G-SITE (`ushccxpoxjikzqnwhgfd`, região `sa-east-1`, São Paulo).
+
+Conferido pelo endpoint, que é o teste que o próprio passo 5 previa:
+
+```
+GET /execucoes-em-revisao  →  HTTP 200, 3 execuções
+  e3c5944f  gerado             confianca_minima null
+  ee301c4f  estrutura_pronta   0,52
+  a56d3dea  estrutura_pronta   0,66
+```
+
+**São 3, e não 4, e isso está certo.** A tabela tem as 4 de referência; o
+endpoint filtra `requer_revisao = true`, e **CHECK ENVIAR** (`899f120c`,
+confiança 0,78) passou no gate. É a mesma execução que a seção "Os quatro
+casos de referência" guardou justamente por ser o único exemplar com
+`requer_revisao = false` e `compliance_visual` nulo. Ela sair da fila é a
+prova de que o filtro funciona, não sinal de dado faltando.
+
+Contagem nos dois bancos no momento da conferência:
+
+| | V2G-SITE (`sa-east-1`) | Oregon (`us-west-2`) |
+|---|---|---|
+| `execucoes` | 4 | 47 |
+| `requer_revisao = true` | 3 | 29 |
+
+Os 29 de Oregon são o número que aparece nos comentários de
+`lib/backend/execucoes.ts`. Aquelas medições foram feitas contra Oregon e
+**continuam válidas como descrição do schema** — o formato de
+`motivos_revisao`, as duas escalas de confiança, `cliente_id` nulo —, mas
+os totais citados lá (29 execuções na fila, 28 com motivos) descrevem uma
+fila que não existe mais. Se alguém for reconferir aqueles números contra a
+fila atual, vai achar divergência e o motivo é este.
+
+## Falta só o passo 6
+
+Apagar o Oregon, que segue intacto com as 47 execuções, os 89 criativos e
+os 88 objetos. As 43 execuções que não vieram ficaram para trás **por
+decisão** — as 47 eram todas teste do Gabriel, e as 4 guardadas foram
+escolhidas por cobertura, não por volume. Não é migração incompleta.
+
+Antes de apagar, rotacionar a `service_role` do Oregon: ela circulou em
+texto claro e, enquanto o projeto existir, continua valendo.
