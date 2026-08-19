@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { dinheiro } from "@/lib/formato";
 import { raioValido } from "@/lib/meta/geo";
+import { FormVerba } from "./FormVerba";
 
 /**
  * Verba e cartão.
@@ -62,6 +63,8 @@ export default async function VerbaPage() {
         </p>
       </section>
 
+      <FormVerba atual={teto} />
+
       <AlcanceReal negocio={negocio ?? null} />
 
       <section className="passos-card">
@@ -120,8 +123,8 @@ export default async function VerbaPage() {
 
       <section className="trust">
         <b>Quer mudar o valor, ou entender a cobrança?</b>
-        O limite mensal fica em Conta, e você mexe nele quando quiser. Para qualquer dúvida sobre
-        cobrança, fala com a gente — é uma pessoa que responde.
+        Você muda o limite aqui em cima quando quiser, e ele também aparece em Conta. Para
+        qualquer dúvida sobre cobrança, fala com a gente — é uma pessoa que responde.
         <br />
         <a
           className="wa"

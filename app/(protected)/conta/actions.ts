@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listarPaginas } from "@/lib/meta/graph";
 import { registrarErroMeta } from "@/lib/meta/erros";
+import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
 
 export interface ContaActionState {
   erro?: string;
@@ -27,6 +28,28 @@ function numeroOuNulo(bruto: string): number | null {
  * O ticket é um par min/max desde a migration 0004. Aqui o campo é um
  * valor só, então min e max recebem o mesmo número: é um valor informado
  * com precisão, não uma faixa.
+ *
+ * AGORA COM PROCEDÊNCIA. Antes esta ação gravava com um `update` comum,
+ * sem origem nenhuma — e como o onboarding passou a gravar `confirmado`,
+ * corrigir um campo aqui REBAIXARIA a origem dele para `desconhecida`. O
+ * valor ficava, a afirmação de quem disse sumia, e o
+ * `diagnosticar-orcamento` voltava a desconfiar de um número que o dono
+ * tinha acabado de digitar.
+ *
+ * DOIS CAMINHOS, E SÓ UM É PELA FUNÇÃO — a diferença é o campo esvaziado:
+ *
+ *  - campo COM valor → `confirmar_campo_do_cliente`, que grava valor e
+ *    procedência na mesma transação;
+ *  - campo ESVAZIADO → a função não serve. Ela recusa branco de
+ *    propósito ("Vazio se preenche, nao se confirma"), e com razão: não
+ *    existe procedência de campo vazio. Mas deixar o `update` sozinho
+ *    apagaria o valor e MANTERIA a procedência afirmando origem de um
+ *    campo que não existe mais — mentira pior que a ausência. Então o
+ *    apagamento vai num `update` único que zera a coluna E remove a
+ *    chave da procedência juntos.
+ *
+ * O que resolveria isto direito é uma `limpar_campo_do_cliente` irmã da
+ * 0015, e ela não existe. Registrado aqui em vez de simulado.
  */
 export async function salvarNegocioAction(
   _prev: ContaActionState,
@@ -56,22 +79,43 @@ export async function salvarNegocioAction(
 
   if (!business) return { erro: "Não encontramos seu negócio. Comece pelo onboarding." };
 
-  const { error } = await supabase
-    .from("businesses")
-    .update({
-      name: nome,
-      niche: String(formData.get("segmento") ?? "").trim() || null,
-      city: String(formData.get("cidade") ?? "").trim() || null,
-      radius_km: raio,
-      avg_ticket_min: ticket,
-      avg_ticket_max: ticket,
-      monthly_budget: limite,
-    })
-    .eq("id", business.id);
+  const segmento = String(formData.get("segmento") ?? "").trim();
+  const cidade = String(formData.get("cidade") ?? "").trim();
 
-  if (error) {
-    console.error("[conta] falha ao salvar negócio ::", error.message);
-    return { erro: "Não conseguimos salvar agora. Tente de novo em instantes." };
+  // O `name` nunca entra aqui: ele é obrigatório e já foi validado acima.
+  const informados: Array<[string, string | number | null]> = [
+    ["niche", segmento || null],
+    ["city", cidade || null],
+    ["radius_km", raio],
+    ["avg_ticket_min", ticket],
+    ["avg_ticket_max", ticket],
+    ["monthly_budget", limite],
+  ];
+
+  const comValor: CampoParaGravar[] = [{ campo: "name", valor: nome }];
+  const esvaziados: string[] = [];
+  for (const [campo, valor] of informados) {
+    if (valor === null) esvaziados.push(campo);
+    else comValor.push({ campo, valor });
+  }
+
+  const gravacao = await gravarCamposDoCliente({
+    profileId: user.id,
+    businessId: business.id,
+    tabela: "businesses",
+    campos: comValor,
+  });
+  if (!gravacao.ok) return { erro: gravacao.erro };
+
+  if (esvaziados.length > 0) {
+    const { error } = await supabase.rpc("esvaziar_campos_do_cliente", {
+      p_business_id: business.id,
+      p_campos: esvaziados,
+    });
+    if (error) {
+      console.error("[conta] falha ao esvaziar campos ::", error.message);
+      return { erro: "Não conseguimos salvar agora. Tente de novo em instantes." };
+    }
   }
 
   revalidatePath("/conta");

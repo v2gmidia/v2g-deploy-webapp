@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { perguntaPorId, numeroDoTexto, RAIO_KM, TICKET_FAIXA } from "./perguntas";
+import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
+import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
+import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
 
 /**
  * Uma resposta como fica gravada em `businesses.onboarding`.
@@ -40,7 +42,10 @@ function lerRespostas(onboarding: unknown): Record<string, RespostaGravada> {
   if (!onboarding || typeof onboarding !== "object") return {};
   const brutas = (onboarding as { respostas?: unknown }).respostas;
   if (!brutas || typeof brutas !== "object") return {};
-  return brutas as Record<string, RespostaGravada>;
+  // As chaves numéricas antigas viram nome antes de qualquer leitura. Sem
+  // isto, quem começou o onboarding antes deste lote veria a resposta de
+  // ticket no lugar da descrição — ver `migrarChaves`.
+  return migrarChaves(brutas as Record<string, RespostaGravada>);
 }
 
 /**
@@ -80,7 +85,7 @@ async function obterOuCriarBusiness(): Promise<
 
   const { data: criado, error: erroCriacao } = await supabase
     .from("businesses")
-    .insert({ profile_id: user.id, name: "Meu negócio" })
+    .insert({ profile_id: user.id, name: NOME_PROVISORIO })
     .select("id, onboarding")
     .single();
 
@@ -114,7 +119,7 @@ export async function carregarEstadoAction(): Promise<
  * por pergunta, que para 5 perguntas é irrelevante.
  *
  * Os campos estruturados também vão para colunas de `businesses`
- * (`niche`, `avg_ticket`, `city`, `radius_km`) para poderem ser
+ * (`name`, `niche`, `description`, `city`, `radius_km`) para poderem ser
  * consultados sem abrir o jsonb. O jsonb continua com a resposta crua:
  * a coluna é derivada, ele é a fonte.
  *
@@ -137,8 +142,18 @@ export async function salvarRespostaAction(entrada: {
 
   // Resposta por chip precisa bater com uma opção real da pergunta —
   // o cliente não escolhe o que quiser só porque manda o campo `origem`.
+  // Numa pergunta `soTexto` a lista é vazia, então isto recusa qualquer
+  // chip forjado sem precisar de um caso à parte.
   if (entrada.origem === "chip" && !pergunta.opcoes.some((o) => o.echo === texto)) {
     return { ok: false, erro: "Essa opção não existe nesta pergunta." };
+  }
+
+  // O piso de caracteres é do SCHEMA do backend (`descricao_livre`,
+  // `minLength: 10`), e é conferido aqui porque o cliente não pode
+  // descobrir isso como 422 três telas adiante. O recado não cita o
+  // número — ver `perguntas.ts`.
+  if (pergunta.minimo && texto.length < pergunta.minimo.tamanho) {
+    return { ok: false, erro: pergunta.minimo.recado };
   }
 
   const cidade = entrada.cidade?.trim();
@@ -161,45 +176,50 @@ export async function salvarRespostaAction(entrada: {
     em: new Date().toISOString(),
   };
 
-  const atualizacao: Record<string, unknown> = {
-    onboarding: { versao: 1, passo: 1, respostas },
-  };
-
-  // ---- campos estruturados que ganham coluna própria ----
-  if (entrada.qid === "1") {
-    atualizacao.niche = texto;
-  }
-  if (entrada.qid === "2") {
-    if (entrada.origem === "chip") {
-      const faixa = TICKET_FAIXA[texto];
-      if (faixa) {
-        atualizacao.avg_ticket_min = faixa.min;
-        atualizacao.avg_ticket_max = faixa.max;
-      }
-    } else {
-      // Número escrito à mão é um valor exato, não uma faixa: min = max.
-      const exato = numeroDoTexto(texto);
-      if (exato != null) {
-        atualizacao.avg_ticket_min = exato;
-        atualizacao.avg_ticket_max = exato;
-      }
-    }
-  }
-  if (entrada.qid === "3") {
+  // ---- campos de perfil ----
+  //
+  // O TICKET SAIU DAQUI. Ele é a primeira conta do bloco 2
+  // (`/onboarding/contas`), porque o backend quer um escalar e a faixa
+  // sozinha não fecha — ver `docs/onboarding-expandido.md` §3.2 e §4.3.
+  //
+  // Nada aqui é `update` direto: cada campo vai pela
+  // `confirmar_campo_do_cliente`, que grava valor e procedência juntos.
+  // O cliente é a origem da afirmação, então a origem é `confirmado` —
+  // ver §4.1 do desenho.
+  const campos: CampoParaGravar[] = [];
+  if (entrada.qid === "nome") campos.push({ campo: "name", valor: texto });
+  if (entrada.qid === "ramo") campos.push({ campo: "niche", valor: texto });
+  if (entrada.qid === "descricao") campos.push({ campo: "description", valor: texto });
+  if (entrada.qid === "praca") {
     // Cidade só existe quando veio do campo dedicado. Na resposta
     // escrita à mão ("atendo o interior todo") não dá para inferir sem
     // chutar, então a coluna fica nula e o texto vive no jsonb.
-    if (cidade) atualizacao.city = cidade;
+    if (cidade) campos.push({ campo: "city", valor: cidade });
     if (entrada.origem === "chip") {
       const raio = RAIO_KM[texto];
-      if (raio != null) atualizacao.radius_km = raio;
+      if (raio != null) campos.push({ campo: "radius_km", valor: raio });
     }
+  }
+
+  // PRIMEIRO as colunas, DEPOIS o jsonb. Se uma gravação falhar no meio,
+  // a resposta não é marcada como dada e a pergunta continua aberta —
+  // ele responde de novo e as colunas são reescritas juntas. Marcar o
+  // jsonb antes deixaria a pergunta fechada por cima de uma coluna que
+  // não gravou, e nada na tela contaria isso.
+  if (campos.length > 0) {
+    const gravacao = await gravarCamposDoCliente({
+      profileId: resultado.userId,
+      businessId: linha.id,
+      tabela: "businesses",
+      campos,
+    });
+    if (!gravacao.ok) return { ok: false, erro: gravacao.erro };
   }
 
   const supabase = await createClient();
   const { error } = await supabase
     .from("businesses")
-    .update(atualizacao)
+    .update({ onboarding: { versao: 1, passo: 1, respostas } })
     .eq("id", linha.id);
 
   if (error) {

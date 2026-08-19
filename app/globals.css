@@ -787,6 +787,114 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .text-fallback:hover { color: var(--cobalt); }
 
+/* ---- bloco 2 do onboarding: as contas ----------------------------------
+   Sem faixa cobalto aqui, e é decisão: o `.hero-destaque` sangra
+   `0 -34px`, medida contra o padding do `.canvas`, e dentro do
+   `.auth-card` (padding 30px) ela estoura 4px de cada lado — defeito
+   conhecido em padrao-visual.md §6, hoje em /verba, /sem-instagram e
+   /whatsapp-business. Não acrescento a quarta tela ao defeito para
+   ganhar volume. O número da confirmação usa `.hero-card` +
+   `.hero-phrase`, que já são do sistema. */
+.conta-feita {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid var(--line);
+  padding: 0 0 8px;
+  margin: 0 0 10px;
+}
+.conta-feita .eyebrow { margin: 0; color: var(--ink-mute); }
+.conta-feita b {
+  font-family: var(--display);
+  font-size: var(--fs-titulo);
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.conta-pergunta {
+  font-size: var(--fs-titulo);
+  line-height: 1.45;
+  color: var(--ink);
+  margin: 0 0 10px;
+}
+
+.conta-hint {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  margin: 10px 0 8px;
+}
+
+/* O valor em reais dentro do chip. Ele é o que torna a troca visível —
+   quanto mais fica no bolso, menos a IA pode gastar. Fica mais claro que
+   o rótulo para não competir com a escolha em si. */
+.chip-valor { color: var(--ink-mute); }
+
+/* ---- o que ainda falta -------------------------------------------------
+   BLOCO, E NÃO FAIXA. A faixa cobalto existe quando o número é o assunto
+   da tela; pendência não é o assunto do /inicio, é uma condição dela. O
+   commit 30acbe9 já tirou a faixa da /alertas por duplicar o que estava
+   logo abaixo, e uma faixa permanente no /inicio seria a mesma moldura
+   com outro nome.
+
+   Superfície de gelo, a mesma dos blocos de confiança: acalma e não
+   compete com o CTA cobalto que vive dentro dele. */
+.pendencia-bloco {
+  background: var(--ice-soft);
+  border: 1.5px solid var(--ice);
+  border-radius: 12px;
+  padding: 18px 18px 16px;
+  margin-bottom: 22px;
+}
+.pendencia-bloco b {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  color: var(--ink);
+  margin-bottom: 6px;
+}
+.pendencia-bloco p {
+  font-size: var(--fs-corpo);
+  line-height: 1.55;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 62ch;
+}
+.pendencia-bloco .cta { margin-top: 14px; }
+
+/* ---- índice do operador: quem está esperando --------------------------- */
+.lista-espera { display: flex; flex-direction: column; gap: 10px; }
+.espera-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1fr) 88px minmax(200px, 1.4fr);
+  gap: 14px;
+  align-items: start;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 14px 16px;
+}
+.espera-quem b { display: block; font-family: var(--display); font-size: var(--fs-titulo); }
+.espera-id {
+  font-family: "Consolas", "SFMono-Regular", "Courier New", monospace;
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+}
+.espera-tempo { font-variant-numeric: tabular-nums; font-size: var(--fs-corpo); }
+/* Vermelho só depois do prazo. Antes disso a espera é normal, e pintar
+   tudo de alerta faz o alerta parar de significar alguma coisa. */
+.espera-tarde { color: var(--crit); font-weight: 700; }
+.espera-ok { color: var(--ink-soft); }
+.espera-neutro { color: var(--ink-mute); font-size: var(--fs-legenda); }
+.espera-campos { list-style: none; margin: 0; padding: 0; font-size: var(--fs-legenda); }
+.espera-campos li { color: var(--ink-soft); line-height: 1.7; }
+.espera-motivo { color: var(--ink-mute); }
+
+@media (max-width: 720px) {
+  .espera-row { grid-template-columns: 1fr; gap: 8px; }
+}
+
 .fallback-field { display: flex; gap: 8px; margin-top: 10px; }
 .fallback-field input,
 .city-row input {

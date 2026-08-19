@@ -15,6 +15,26 @@
  *
  * Este módulo NÃO importa `server-only`: não tem segredo, e a tela de
  * revisão do operador precisa dos rótulos.
+ *
+ * ------------------------------------------------------------------
+ * ACRESCENTOU UM CAMPO AQUI? ELE PRECISA DE UMA MIGRATION TAMBÉM.
+ *
+ * As três coisas da lista acima saem daqui automaticamente. A QUARTA não:
+ * a lista branca de `confirmar_campo_do_cliente` (0015, ampliada pela
+ * 0016) vive em SQL, e é ela que decide o que o cliente pode gravar. Ela
+ * não pode ser derivada deste arquivo — precisa continuar valendo quando o
+ * TypeScript estiver errado, porque é ela que impede um `p_campo` forjado
+ * de escrever em `profile_id`.
+ *
+ * Cópia que não pode ser derivada é cópia que envelhece, e esta já
+ * envelheceu uma vez: `target_profit_per_customer` entrou aqui e ficou
+ * dois passos sem poder ser gravado.
+ *
+ *     pnpm conferir:lista-branca
+ *
+ * acusa a divergência e diz qual campo está sobrando. Rode depois de mexer
+ * neste array — ou deixe o CI rodar por você.
+ * ------------------------------------------------------------------
  */
 
 export type TipoCampo = "texto" | "numero" | "booleano" | "lista";
@@ -44,6 +64,14 @@ export interface Campo {
 
 export const CAMPOS: readonly Campo[] = [
   // ---------- businesses: fatos ----------
+  {
+    tabela: "businesses",
+    campo: "name",
+    tipo: "texto",
+    rotulo: "Nome do negócio",
+    guia:
+      "O nome do negócio como a própria pessoa o chama, do jeito que estaria numa placa. Não use razão social se ela não disser, e não acrescente o ramo ao nome — 'Padaria do Zé' só se ela falou 'padaria do Zé', não se ela falou 'do Zé' e você sabe que é padaria.",
+  },
   {
     tabela: "businesses",
     campo: "city",
@@ -167,6 +195,15 @@ export const CAMPOS: readonly Campo[] = [
     rotulo: "Custo direto por venda",
     guia:
       "Quanto sai do bolso para entregar UMA venda: material, produto, comissão. Não é despesa fixa do mês.",
+  },
+  {
+    tabela: "businesses",
+    campo: "target_profit_per_customer",
+    tipo: "numero",
+    dinheiro: true,
+    rotulo: "Lucro desejado por cliente",
+    guia:
+      "Quanto a pessoa QUER que sobre para ela a cada cliente novo, em reais, depois de pagar o que gastou para entregar. É uma vontade, não um fato do negócio: se ela não disser, marque ausente. Não deduza da margem, não calcule a partir do ticket e do custo — o número que sai de conta não é o que ela quer, é o que ela teria.",
   },
   {
     tabela: "businesses",

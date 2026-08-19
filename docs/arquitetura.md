@@ -156,6 +156,52 @@ leitura, mas **não foi aplicada contra um banco real**. Isso está registrado
 explicitamente no README e no relatório final, para não passar a falsa
 impressão de que já rodou contra produção.
 
+### O texto acima descreve uma prática que o projeto não segue mais
+
+Escrito em 19/08/2026, e não é ajuste de redação: **é um doc dizendo uma
+coisa e sete migrations fazendo outra.** Alguém lendo só a Decisão 9 daqui a
+três meses aplica pelo caminho errado, ou pior, supõe que o banco está atrás
+do repositório quando não está.
+
+Da 0009 em diante nada foi aplicado por `supabase db push`. Todas foram pela
+ferramenta MCP do Supabase (`apply_migration`), contra o `V2G-SITE`
+(`ushccxpoxjikzqnwhgfd`) direto. A lista aplicada, lida de
+`supabase_migrations.schema_migrations`, bate com os cabeçalhos dos arquivos:
+
+```
+20260818000449  backend_execucoes_criativos
+20260818004950  perfil_empresa
+20260818005122  perfil_empresa_rls_e_escrita
+20260818130048  procedencia_generalizada
+20260818130135  procedencia_fecha_execute
+20260818134837  propostas_de_perfil
+20260818145052  aplicar_proposta
+20260819135117  identidade_do_negocio
+20260819…       confirmacao_do_cliente
+```
+
+Repare que a 0010 e a 0011 entraram **em duas partes cada** — os arquivos
+`0010_` e `0011_` são consolidações escritas depois, e não o que rodou. Isso
+é consequência direta da prática: `apply_migration` recebe um bloco de SQL e
+um nome, não um arquivo, então o arquivo do repositório passa a ser um
+registro do que foi aplicado em vez de ser a coisa aplicada. Enquanto os dois
+não forem a mesma coisa, o arquivo é uma cópia que pode divergir sem ninguém
+notar.
+
+**Isto está registrado como divergência, não resolvido.** As duas saídas são
+excludentes e nenhuma é minha para escolher sozinho:
+
+- **a decisão muda** — a Decisão 9 passa a dizer MCP, o README acompanha, e
+  fica escrito que o arquivo numerado é o registro consolidado, com o dever
+  de bater com o que rodou;
+- **a prática volta** — `supabase link` + `db push`, e antes disso alguém
+  concilia as sete: o banco tem nove linhas de migration e o repositório tem
+  quinze arquivos numerados, com correspondência de um para dois em duas
+  delas.
+
+Enquanto não se decidir, quem for aplicar migration confere esta seção antes
+da Decisão 9, e não depois.
+
 ## Decisão 10 — Toda função `security definer` revoga de `public`, `anon` **e** `authenticated`
 
 **Escrito porque erramos.** A migration 0010 fez
@@ -205,6 +251,53 @@ Três coisas que vêm junto:
 `execute`: é a função checar dono por dentro, com `private.owns_business(...)`.
 Uma função `security definer` aberta para `authenticated` é RLS desligada com
 outro nome.
+
+## Decisão 11 — A escrita de `procedencia` é garantida por convenção, não pelo banco
+
+Registrado em 19/08/2026, durante o lote do onboarding expandido
+(`docs/onboarding-expandido.md`, D5). **Não foi consertado — foi medido e
+deixado explícito**, que é diferente de não ter sido visto.
+
+`registrar_procedencia()` e `confirmar_campo_do_cliente()` são
+`security definer` e só `service_role` executa. Isso parece fazer delas o
+único caminho de escrita da coluna `procedencia`. Não faz:
+
+```
+information_schema.role_table_grants, tabela businesses
+→ authenticated: UPDATE (nível de TABELA)
+```
+
+Com `UPDATE` no nível da tabela, o usuário logado escreve direto em
+`businesses.procedencia` da própria linha, com qualquer conteúdo, sem passar
+pela lista branca de origem nem pela checagem de campo existente que as
+funções fazem.
+
+**A armadilha ao consertar é a mesma do token do Meta.** Um
+`revoke update (procedencia) on businesses from authenticated` é **no-op**
+enquanto existir o grant de `UPDATE` no nível da tabela — foi exatamente
+assim que a coluna de token de `meta_connections` ficou legível por qualquer
+usuário autenticado até a migration 0003. Revogar na coluna não desfaz o que
+foi concedido na tabela. O conserto real é trocar o grant de tabela por
+grants de coluna explícitos, e isso alcança **toda** escrita em `businesses`
+— por isso é passo próprio, e não um remendo no meio de outro lote.
+
+E a revogação, quando vier, tem que cobrir `public`, `anon` **e**
+`authenticated`. Ver a Decisão 10: conferir um e concluir sobre os dois já
+abriu escrita em perfil alheio aqui.
+
+**O impacto hoje é baixo, e vale dizer para não inflar o risco:** a RLS
+confina a escrita à linha do próprio dono, e ele poderia declarar o mesmo
+valor pela interface, legitimamente. O que se perde é a garantia de que toda
+entrada de `procedencia` passou pela validação — e isso passa a importar no
+dia em que a origem `confirmado` decidir orçamento sozinha, que é
+exatamente o que o `diagnosticar-orcamento` deve fazer.
+
+**Contraste deliberado:** `esvaziar_campos_do_cliente()` (0017) é a única
+das quatro funções de procedência que é `security invoker`, e a única que
+`authenticated` executa. Apagar o próprio campo é escrita que a RLS já
+autoriza; com `definer` seria preciso reescrever a checagem de dono dentro
+da função, que é o `if` que se esquece. **Menos poder quando o poder não é
+necessário** — e é por isso que ela não contradiz a Decisão 10.
 
 ## Estrutura de pastas
 

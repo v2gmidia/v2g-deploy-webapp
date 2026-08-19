@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bubble } from "@/components/ui/Bubble";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
-import { ORDEM, PERGUNTAS, ULTIMA, proximaPergunta, type Pergunta } from "./perguntas";
+import { ORDEM, PERGUNTAS, proximaPergunta, type Pergunta } from "./perguntas";
 
 interface ChatProps {
   inicial: Record<string, RespostaGravada>;
@@ -19,10 +19,6 @@ export function Chat({ inicial }: ChatProps) {
   const [texto, setTexto] = useState("");
   const [sacode, setSacode] = useState<"cidade" | "texto" | null>(null);
 
-  // Só aparece quando a última resposta é dada NESTA sessão. Quem
-  // reabre a página com o passo já concluído não leva confete de novo.
-  const [comemorou, setComemorou] = useState(false);
-
   const campoTexto = useRef<HTMLInputElement>(null);
   const campoCidade = useRef<HTMLInputElement>(null);
 
@@ -30,15 +26,16 @@ export function Chat({ inicial }: ChatProps) {
   const atual = proximaPergunta(respondidas);
   const concluido = atual === null;
 
-  useEffect(() => {
-    if (textoAberto) campoTexto.current?.focus();
-  }, [textoAberto, atual?.id]);
+  // Numa pergunta sem chip o campo é a única resposta possível: ele nasce
+  // aberto, e não atrás de um "ou digite sua resposta" que só teria uma
+  // saída. `soTexto` decide isso; `textoAberto` continua sendo o
+  // interruptor das perguntas que têm chip E texto.
+  const campoVisivel = (p: Pergunta) => p.soTexto === true || textoAberto;
 
   useEffect(() => {
-    if (!comemorou) return;
-    const t = setTimeout(() => setComemorou(false), 3400);
-    return () => clearTimeout(t);
-  }, [comemorou]);
+    if (atual && campoVisivel(atual)) campoTexto.current?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [textoAberto, atual?.id]);
 
   function chacoalhar(qual: "cidade" | "texto") {
     setSacode(null);
@@ -88,7 +85,6 @@ export function Chat({ inicial }: ChatProps) {
     setTexto("");
     setTextoAberto(false);
     setCidade("");
-    if (pergunta.id === ULTIMA) setComemorou(true);
   }
 
   return (
@@ -130,6 +126,7 @@ export function Chat({ inicial }: ChatProps) {
                 </div>
               )}
 
+              {(p.opcoes.length > 0 || p.chipAbreTexto) && (
               <div className="chips-row">
                 {p.opcoes.map((o) => (
                   <button
@@ -153,10 +150,11 @@ export function Chat({ inicial }: ChatProps) {
                   </button>
                 )}
               </div>
+              )}
 
               {ehAtual && p.fallbackPlaceholder && (
                 <>
-                  {!textoAberto && (
+                  {!campoVisivel(p) && (
                     <button
                       className="text-fallback"
                       type="button"
@@ -165,7 +163,7 @@ export function Chat({ inicial }: ChatProps) {
                       ou digite sua resposta
                     </button>
                   )}
-                  {textoAberto && (
+                  {campoVisivel(p) && (
                     <div className="fallback-field">
                       <label className="sr-only" htmlFor="campo-texto">
                         {p.fallbackLabel}
@@ -203,30 +201,25 @@ export function Chat({ inicial }: ChatProps) {
           );
         })}
 
-        {concluido && <Bubble de="ai">Perfeito. Já sei o essencial sobre o seu negócio.</Bubble>}
+        {concluido && (
+          <Bubble de="ai">
+            Boa. Agora faltam três contas rápidas sobre o seu dinheiro — e se você não
+            souber alguma, tudo bem, a gente resolve numa conversa.
+          </Bubble>
+        )}
       </div>
 
       {concluido && (
         <>
-          {/* O passo 2 (visual da marca) depende de upload de arquivo e o
-              passo 3 de conexão com o Meta e geração de criativo — nada
-              disso existe ainda. O botão fica visível e desabilitado em vez
-              de levar a uma tela que não está pronta. */}
-          <p className="form-notice">
-            Seu passo 1 está salvo. O passo 2 (o visual da sua marca) ainda não está
-            disponível — assim que estiver, é daqui que ele continua.
-          </p>
-          <button className="cta" type="button" disabled>
-            Continuar para o visual da marca
-          </button>
+          {/* NÃO HÁ CONFETE AQUI, e a ausência é a decisão. O bloco 1 não
+              termina o passo 1: as contas do bloco 2 são a outra metade de
+              "sobre o seu negócio". Comemorar aqui daria a peça por
+              encaixada com três perguntas ainda por fazer — e celebração
+              antes de conquista real é justamente o que a marca não faz. */}
+          <a className="cta" href="/onboarding/contas">
+            Continuar para as contas
+          </a>
         </>
-      )}
-
-      {comemorou && (
-        <div className="toast show" role="status" aria-live="polite">
-          <span className="pip" />
-          <span>1 de 3 concluído — primeira peça no lugar.</span>
-        </div>
       )}
     </>
   );

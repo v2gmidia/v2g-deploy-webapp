@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { dinheiro, numero } from "@/lib/formato";
+import { pendenciasDoCliente } from "@/lib/cadastro/consultar";
+import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
 
 /**
  * Início / dashboard — porte de `tela-05-dashboard-desktop.html`.
@@ -26,6 +28,35 @@ import { dinheiro, numero } from "@/lib/formato";
  * reservado para o wireframe do Figma — a mecânica de missão ainda não
  * existe, mas fechar a tela num vazio simples seria justamente o erro.
  */
+/**
+ * O que ainda falta, EM TODOS OS TRÊS ESTADOS da tela.
+ *
+ * Esta página tem três ramos de render: sem campanha, com campanha e sem
+ * número, e o dashboard cheio. Na primeira tentativa este bloco entrou só
+ * no segundo — ou seja, aparecia para quem já tinha campanha no ar e
+ * NÃO aparecia para quem ainda não tinha, que é exatamente quem tem
+ * pendência de cadastro. Por isso ele é componente e é chamado nos três,
+ * ao lado da `FaixaReconectar`, que resolveu o mesmo problema antes.
+ *
+ * O texto vem de `resumirPendencias` — o mesmo do fim do bloco 2 do
+ * onboarding. As duas telas leem o mesmo `montarCadastro` e dizem a mesma
+ * frase sobre o mesmo campo.
+ */
+function BlocoPendencias({ resumo }: { resumo: ResumoDePendencias }) {
+  if (resumo.vazio) return null;
+  return (
+    <section className="pendencia-bloco">
+      <b>{resumo.titulo}</b>
+      <p>{resumo.corpo}</p>
+      {resumo.acao && (
+        <a className="cta" href={resumo.acao.href}>
+          {resumo.acao.rotulo}
+        </a>
+      )}
+    </section>
+  );
+}
+
 export default async function InicioPage() {
   const supabase = await createClient();
   const {
@@ -40,6 +71,11 @@ export default async function InicioPage() {
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
+
+  // O MESMO `montarCadastro` do fim do bloco 2, pela mesma função — ver
+  // `lib/cadastro/consultar.ts`. Compartilhar o dado, e não só a copy, é o
+  // que impede as duas telas de listarem pendências diferentes.
+  const resumo = resumirPendencias(await pendenciasDoCliente(), new Date());
 
   const { data: campanhas } = await supabase
     .from("campaigns")
@@ -95,6 +131,7 @@ export default async function InicioPage() {
             conexão caiu, ela precisa saber agora — e não descobrir
             quando a primeira campanha não subir. */}
         <FaixaReconectar />
+        <BlocoPendencias resumo={resumo} />
         <div className="page-head">
           <h1>Sua primeira campanha ainda não está no ar.</h1>
           <p>
@@ -185,6 +222,7 @@ export default async function InicioPage() {
     return (
       <>
         <FaixaReconectar />
+        <BlocoPendencias resumo={resumo} />
         <div className="page-head">
           <h1>Seus anúncios estão no ar. Os números ainda não.</h1>
           <p>
@@ -278,7 +316,7 @@ export default async function InicioPage() {
                 {business?.monthly_budget
                   ? `Seu teto do mês é ${dinheiro(Number(business.monthly_budget))}. `
                   : "Você ainda não definiu um teto mensal. "}
-                <a href="/conta">
+                <a href="/verba">
                   {business?.monthly_budget ? "mudar limite" : "definir agora"}
                 </a>
               </p>
@@ -310,6 +348,7 @@ export default async function InicioPage() {
   return (
     <>
       <FaixaReconectar />
+      <BlocoPendencias resumo={resumo} />
       <div className="page-head">
         <h1>Seu resultado essa semana</h1>
         <p>

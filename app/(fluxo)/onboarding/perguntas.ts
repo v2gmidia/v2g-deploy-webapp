@@ -1,11 +1,14 @@
 /**
- * As perguntas do passo 1, na ordem do protótipo
- * (`tela-03-onboarding-desktop.html`). Copy idêntica ao original.
+ * As perguntas do bloco 1 — "sobre o seu negócio".
  *
- * Fixas nesta etapa, por decisão: nada de LLM aqui ainda. Ficam num
- * módulo próprio (e não dentro do componente) porque o servidor também
- * precisa delas — é ele quem valida a resposta recebida contra as
- * opções existentes antes de gravar.
+ * Fixas, por decisão: nada de LLM aqui. Ficam num módulo próprio (e não
+ * dentro do componente) porque o servidor também precisa delas — é ele quem
+ * valida a resposta recebida contra as opções existentes antes de gravar.
+ *
+ * O BLOCO 2 (as contas) NÃO ESTÁ AQUI. Ticket, custo direto e lucro
+ * desejado vivem em `/onboarding/contas`, porque não são pergunta de
+ * preferência: são conta, com resultado em reais e confirmação. Ver
+ * `docs/onboarding-expandido.md` §3.
  */
 
 export interface Opcao {
@@ -20,24 +23,45 @@ export interface Pergunta {
   contador?: string;
   texto: string;
   opcoes: Opcao[];
-  /** q3 pede a cidade num campo à parte antes de escolher o alcance */
+  /** a praça pede a cidade num campo à parte antes de escolher o alcance */
   pedeCidade?: boolean;
   fallbackLabel?: string;
   fallbackPlaceholder?: string;
   /** chip que só abre o campo de texto, sem responder (o "Outro") */
   chipAbreTexto?: string;
+  /** pergunta sem chip nenhum: só o campo de texto, já aberto */
+  soTexto?: true;
+  /** piso de caracteres, quando o backend impõe um */
+  minimo?: { tamanho: number; recado: string };
 }
 
+/**
+ * IDs SÃO NOMES, e não mais "0".."4".
+ *
+ * A numeração antiga amarrava a resposta à POSIÇÃO da pergunta. Este lote
+ * tira o ticket do meio e o objetivo do fim, então a antiga `"2"` (ticket)
+ * passaria a ser lida como a descrição, e o balão do usuário mostraria
+ * "R$ 100 a R$ 300" onde ele escreveu o que vende. Nome não desloca.
+ */
 export const PERGUNTAS: Pergunta[] = [
   {
-    id: "0",
+    id: "inicio",
     texto:
       "Oi! Sou a IA da V2G. Vou te fazer só algumas perguntas rápidas pra montar sua campanha do jeito certo. Bora?",
     opcoes: [{ echo: "Bora começar", rotulo: "Bora começar" }],
   },
   {
-    id: "1",
+    id: "nome",
     contador: "Pergunta 1 de 4",
+    texto: "Como se chama o seu negócio? É esse nome que vai aparecer no anúncio.",
+    opcoes: [],
+    soTexto: true,
+    fallbackLabel: "O nome do seu negócio",
+    fallbackPlaceholder: "O nome do seu negócio",
+  },
+  {
+    id: "ramo",
+    contador: "Pergunta 2 de 4",
     texto: "Qual desses é o seu negócio?",
     opcoes: [
       { echo: "Clínica / Consultório", rotulo: "Clínica / Consultório" },
@@ -51,22 +75,26 @@ export const PERGUNTAS: Pergunta[] = [
     fallbackPlaceholder: "Como você descreveria seu negócio em poucas palavras?",
   },
   {
-    id: "2",
-    contador: "Pergunta 2 de 4",
+    id: "descricao",
+    contador: "Pergunta 3 de 4",
     texto:
-      "Quanto costuma ser o valor médio que um cliente paga em cada compra ou serviço? Isso ajuda a IA a não gastar seu investimento com o público errado.",
-    opcoes: [
-      { echo: "Até R$ 100", rotulo: "Até R$ 100" },
-      { echo: "R$ 100 a R$ 300", rotulo: "R$ 100 a R$ 300" },
-      { echo: "R$ 300 a R$ 800", rotulo: "R$ 300 a R$ 800" },
-      { echo: "Acima de R$ 800", rotulo: "Acima de R$ 800" },
-    ],
-    fallbackLabel: "Valor médio",
-    fallbackPlaceholder: "Digite o valor médio",
+      "Me conta com suas palavras o que você vende ou faz. Pode ser uma frase — é isso que a IA usa pra escrever seu anúncio.",
+    opcoes: [],
+    soTexto: true,
+    fallbackLabel: "O que você vende ou faz",
+    fallbackPlaceholder: "Ex: bolos e salgados feitos no dia, pra festa e pro dia a dia",
+    // O schema do backend exige 10 caracteres (`descricao_livre`,
+    // `minLength: 10`). O recado NÃO cita o número: contar caractere na
+    // tela é linguagem de formulário, e o piso útil é bem maior que o piso
+    // do schema de qualquer jeito.
+    minimo: {
+      tamanho: 10,
+      recado: "Conta um pouco mais — uma frase inteira ajuda a IA a entender o que você vende.",
+    },
   },
   {
-    id: "3",
-    contador: "Pergunta 3 de 4",
+    id: "praca",
+    contador: "Pergunta 4 de 4 · última",
     texto:
       "De onde vêm seus clientes? Me diz sua cidade — e até que distância vale a pena buscar cliente.",
     pedeCidade: true,
@@ -78,61 +106,72 @@ export const PERGUNTAS: Pergunta[] = [
     fallbackLabel: "Onde seus clientes estão",
     fallbackPlaceholder: "Conte com suas palavras onde seus clientes estão",
   },
-  {
-    id: "4",
-    contador: "Pergunta 4 de 4 · última",
-    texto: "Perfeito. E o que você mais quer agora com os anúncios?",
-    opcoes: [
-      { echo: "Vender mais", rotulo: "Vender mais" },
-      { echo: "Gerar contatos de interessados", rotulo: "Gerar contatos" },
-      { echo: "Marcar visitas ou agendamentos", rotulo: "Marcar visitas ou agendamentos" },
-    ],
-    fallbackLabel: "O que você quer com os anúncios",
-    fallbackPlaceholder: "Diga com suas palavras o que você quer",
-  },
 ];
 
 export const ORDEM = PERGUNTAS.map((p) => p.id);
 export const ULTIMA = ORDEM[ORDEM.length - 1]!;
 
+/**
+ * As chaves antigas, para quem começou o onboarding antes deste lote.
+ *
+ * Só migra as DUAS perguntas que sobreviveram sem mudar de sentido. A
+ * antiga `"2"` (ticket em faixas) e a `"4"` (objetivo) não têm destino: a
+ * primeira virou conta no bloco 2 e a segunda saiu (§6). Elas continuam no
+ * jsonb, que é a fonte — não são apagadas, só não são mais lidas como
+ * resposta de pergunta.
+ */
+const CHAVE_ANTIGA: Record<string, string> = {
+  "0": "inicio",
+  "1": "ramo",
+  "3": "praca",
+};
+
+/**
+ * Traduz as chaves antigas para as novas, sem sobrescrever o que já existe
+ * com o nome novo. Quem respondeu depois do lote manda.
+ */
+export function migrarChaves<T>(respostas: Record<string, T>): Record<string, T> {
+  const saida: Record<string, T> = {};
+  for (const [chave, valor] of Object.entries(respostas)) {
+    const nova = CHAVE_ANTIGA[chave];
+    if (nova === undefined) {
+      saida[chave] = valor;
+    } else if (respostas[nova] === undefined) {
+      saida[nova] = valor;
+    }
+  }
+  return saida;
+}
+
 /** minutos restantes mostrados na trilha, por pergunta respondida */
 export const MIN_RESTANTES: Record<string, number> = {
-  "0": 10,
-  "1": 9,
-  "2": 8,
-  "3": 7,
-  "4": 5,
-};
-
-/** blocos acesos na trilha do passo 1 (de 6), por pergunta respondida */
-export const BLOCOS_ACESOS: Record<string, number> = {
-  "0": 2,
-  "1": 3,
-  "2": 4,
-  "3": 5,
-  "4": 6,
+  inicio: 12,
+  nome: 11,
+  ramo: 10,
+  descricao: 9,
+  praca: 7,
 };
 
 /**
- * Ticket médio: os chips são faixas, e a coluna antiga `avg_ticket` era
- * numérica. Cada chip é uma FAIXA, e é como faixa que ela é gravada
- * (`avg_ticket_min` / `avg_ticket_max`). Guardar o ponto médio, como se
- * fazia antes, jogava fora a largura da faixa — que é justamente o sinal
- * de quanta incerteza existe na resposta. Ver a migration 0004.
+ * Blocos acesos na trilha do passo 1 (de 6), por pergunta respondida.
  *
- * `max: null` = faixa aberta para cima.
+ * O bloco 1 vai até 4. Os dois últimos são do bloco 2 (as contas), que é
+ * parte do MESMO passo 1 — "sobre o seu negócio" não acaba antes de a gente
+ * saber quanto sai uma venda. Acender os 6 aqui daria a peça por completa
+ * com três perguntas ainda por fazer.
  */
-export const TICKET_FAIXA: Record<string, { min: number; max: number | null }> = {
-  "Até R$ 100": { min: 0, max: 100 },
-  "R$ 100 a R$ 300": { min: 100, max: 300 },
-  "R$ 300 a R$ 800": { min: 300, max: 800 },
-  "Acima de R$ 800": { min: 800, max: null },
+export const BLOCOS_ACESOS: Record<string, number> = {
+  inicio: 1,
+  nome: 2,
+  ramo: 3,
+  descricao: 4,
+  praca: 4,
 };
 
 /**
- * Raio: mesma lógica. "Na cidade toda" e "Cidade + região" não têm um
- * número exato — 25 km e 60 km são aproximações para a segmentação
- * inicial, ajustáveis depois pelo próprio usuário.
+ * Raio: "Na cidade toda" e "Cidade + região" não têm um número exato —
+ * 25 km e 60 km são aproximações para a segmentação inicial, ajustáveis
+ * depois pelo próprio usuário.
  */
 export const RAIO_KM: Record<string, number> = {
   "Só aqui perto (até 5 km)": 5,
@@ -162,13 +201,10 @@ export function proximaPergunta(respondidas: string[]): Pergunta | null {
 }
 
 /**
- * As duas funções abaixo derivam o estado da trilha a partir das
- * respostas. Vivem aqui, e não no componente de chat, porque quem as
- * chama é a `page.tsx` — que roda no servidor. Num módulo `"use client"`
- * elas não seriam chamáveis de lá.
- *
- * Só olham quais chaves existem, então basta um `Record` de qualquer
- * coisa — evita importar o tipo de `actions.ts` e fechar um ciclo.
+ * As duas funções abaixo derivam o estado da trilha a partir das respostas.
+ * Vivem aqui, e não no componente de chat, porque quem as chama é a
+ * `page.tsx` — que roda no servidor. Num módulo `"use client"` elas não
+ * seriam chamáveis de lá.
  */
 function ultimaRespondida(respostas: Record<string, unknown>): string | undefined {
   const respondidas = ORDEM.filter((id) => respostas[id]);
@@ -184,5 +220,5 @@ export function blocosDoPasso1(respostas: Record<string, unknown>): number {
 /** Minutos restantes mostrados na trilha. */
 export function minutosRestantes(respostas: Record<string, unknown>): number {
   const ultima = ultimaRespondida(respostas);
-  return ultima ? (MIN_RESTANTES[ultima] ?? 10) : 10;
+  return ultima ? (MIN_RESTANTES[ultima] ?? 12) : 12;
 }
