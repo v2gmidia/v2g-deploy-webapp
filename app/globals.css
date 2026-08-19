@@ -2020,3 +2020,74 @@ code {
   .rev-corpo, .rev-duas, .rev-pvalores { grid-template-columns: 1fr; }
   .rev-corrigir { flex-basis: 100%; }
 }
+
+/* ============================================================
+   IDENTIDADE DO NEGÓCIO — /conta
+   ============================================================ */
+
+/* O aviso da seção 2-A da política. Fica ANTES do seletor de arquivo, e
+   por isso tem peso visual: depois do upload é tarde, porque o arquivo já
+   está no servidor. Usa o par warn e não crit — é uma regra a seguir, não
+   um erro que aconteceu. */
+.id-aviso {
+  background: var(--warn-soft);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+}
+.id-aviso b { display: block; font-size: 13.5px; color: var(--warn); margin-bottom: 4px; }
+.id-aviso p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-soft); }
+.id-saida { margin-top: 8px !important; }
+.id-saida a { color: var(--cobalt); font-weight: 600; }
+
+.id-recado {
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--good-soft);
+  color: var(--good);
+}
+.id-recado.erro { background: var(--crit-soft); color: var(--crit); }
+
+.id-bloco { padding-top: 16px; border-top: 1px solid var(--line); margin-top: 16px; }
+.id-bloco:first-of-type { border-top: none; padding-top: 0; margin-top: 0; }
+.id-cabeca { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.id-cabeca b { font-size: 14px; }
+
+.id-vazio { font-size: 13px; line-height: 1.55; color: var(--ink-mute); margin: 0 0 12px; max-width: 62ch; }
+
+.id-logo { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+/* Xadrez atrás do logo: sem ele, um PNG transparente sobre card claro
+   parece ter fundo branco, e o cliente não vê que a transparência
+   funcionou. Feito com gradiente em token, sem imagem e sem cor literal. */
+.id-logo img {
+  width: 96px; height: 96px; object-fit: contain;
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 8px;
+  background-color: var(--surface);
+  background-image:
+    linear-gradient(45deg, var(--line) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--line) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--line) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--line) 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+}
+.id-logo-lado { display: grid; gap: 6px; }
+
+.id-galeria { list-style: none; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+.id-galeria li { display: grid; gap: 6px; justify-items: start; }
+.id-galeria img {
+  width: 100%; aspect-ratio: 1; object-fit: cover;
+  border: 1.5px solid var(--line); border-radius: 10px;
+}
+
+.id-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.id-form input[type="file"] { font: inherit; font-size: 13px; color: var(--ink-soft); max-width: 100%; }
+.id-form input[type="file"]:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+
+@media (max-width: 620px) {
+  .id-logo { flex-direction: column; align-items: flex-start; }
+  .id-form { flex-direction: column; align-items: stretch; }
+}

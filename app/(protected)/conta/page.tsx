@@ -4,6 +4,8 @@ import { listarPaginas, type PaginaDoFacebook } from "@/lib/meta/graph";
 import { registrarErroMeta } from "@/lib/meta/erros";
 import { FormNegocio, FormPerfil } from "./Formularios";
 import { TrocarPagina } from "./TrocarPagina";
+import { Identidade } from "./Identidade";
+import { listarIdentidade } from "@/lib/identidade/armazenar";
 import { SeletorDeTema } from "./SeletorDeTema";
 
 /**
@@ -46,6 +48,12 @@ export default async function ContaPage() {
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
+
+  // Logo e fotos do negócio. Uma consulta e uma assinatura de URLs em
+  // lote — o bucket é privado, então nada é servido por URL pública.
+  const identidade = business?.id
+    ? await listarIdentidade(business.id)
+    : { logo: null, fotos: [] };
 
   // As páginas alcançadas pela conexão. Precisa do token, que só o
   // `service_role` lê do Vault — daí o cliente admin. Falha aqui não
@@ -138,6 +146,21 @@ export default async function ContaPage() {
                 <a className="cta" href="/onboarding" style={{ width: "max-content" }}>
                   Começar agora
                 </a>
+              </div>
+            </section>
+          )}
+
+          {/* Identidade visual. Fica DEPOIS do que o negócio é e ANTES de
+              como ele aparece — a ordem da tela acompanha a ordem em que a
+              pessoa pensa sobre o próprio negócio. */}
+          {business && (
+            <section>
+              <div className="section-title">
+                <h2>A cara do seu negócio</h2>
+                <span className="side-note">Entra nos anúncios</span>
+              </div>
+              <div className="card">
+                <Identidade logo={identidade.logo} fotos={identidade.fotos} />
               </div>
             </section>
           )}
