@@ -230,7 +230,7 @@ function EsperaLonga({ minutos }: { minutos: number }) {
 
       <p className="card-note">
         Se preferir falar com alguém agora,{" "}
-        <a href="https://wa.me/5521980351531" target="_blank" rel="noopener">
+        <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">
           chame a gente no WhatsApp
         </a>
         .
@@ -308,7 +308,7 @@ function Falha({ minutos }: { minutos: number }) {
         </p>
       </div>
 
-      <a className="cta" href="https://wa.me/5521980351531" target="_blank" rel="noopener">
+      <a className="cta" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
         Falar com uma pessoa agora
       </a>
       <p className="card-note" style={{ marginTop: 12 }}>

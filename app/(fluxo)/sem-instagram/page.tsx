@@ -106,7 +106,7 @@ export default function SemInstagramPage() {
         <br />
         <a
           className="wa"
-          href="https://wa.me/5521980351531?text=Oi!%20Preciso%20deixar%20meu%20Instagram%20profissional%20para%20anunciar%20pela%20V2G."
+          href="https://wa.me/5521936182176?text=Oi!%20Preciso%20deixar%20meu%20Instagram%20profissional%20para%20anunciar%20pela%20V2G."
           target="_blank"
           rel="noopener"
         >

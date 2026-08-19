@@ -30,7 +30,7 @@ export function Identidade({ logo, fotos }: Props) {
         <p className="id-saida">
           Tem uma foto boa com alguém da sua equipe?{" "}
           <a
-            href="https://wa.me/5521980351531?text=Oi!%20Tenho%20uma%20foto%20com%20algu%C3%A9m%20da%20minha%20equipe%20e%20queria%20usar%20no%20an%C3%BAncio."
+            href="https://wa.me/5521936182176?text=Oi!%20Tenho%20uma%20foto%20com%20algu%C3%A9m%20da%20minha%20equipe%20e%20queria%20usar%20no%20an%C3%BAncio."
             target="_blank"
             rel="noopener"
           >

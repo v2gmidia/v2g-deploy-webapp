@@ -122,7 +122,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         <div className="side-support">
           <b>Fala com gente de verdade</b>
           <p>Sem robô. Resposta em até 2 horas úteis, no WhatsApp.</p>
-          <a className="cta ghost" href="https://wa.me/5521980351531" target="_blank" rel="noopener">
+          <a className="cta ghost" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
             Falar com uma pessoa
           </a>
         </div>

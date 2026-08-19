@@ -154,7 +154,7 @@ export function Trilha({ passo, blocos, minutos, pecas }: TrilhaProps) {
           </a>
           <a
             className="cta quiet"
-            href="https://wa.me/5521980351531"
+            href="https://wa.me/5521936182176"
             target="_blank"
             rel="noopener"
           >

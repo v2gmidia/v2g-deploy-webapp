@@ -36,7 +36,7 @@ export default async function FluxoLayout({ children }: { children: React.ReactN
       <header className="auth-top">
         <Marca href="/inicio" />
         {/* Única saída da tela, como no original: falar com gente. */}
-        <a className="auth-help" href="https://wa.me/5521980351531" target="_blank" rel="noopener">
+        <a className="auth-help" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
           <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
             <path d="M6 1a5 5 0 0 0-4.3 7.6L1 11l2.5-.7A5 5 0 1 0 6 1z" />
           </svg>

@@ -173,7 +173,7 @@ function PrecisaDeWhatsApp() {
       <br />
       <a
         className="wa"
-        href="https://wa.me/5521980351531?text=Oi!%20Preciso%20ligar%20o%20WhatsApp%20na%20minha%20p%C3%A1gina%20do%20Facebook%20para%20anunciar%20pela%20V2G."
+        href="https://wa.me/5521936182176?text=Oi!%20Preciso%20ligar%20o%20WhatsApp%20na%20minha%20p%C3%A1gina%20do%20Facebook%20para%20anunciar%20pela%20V2G."
         target="_blank"
         rel="noopener"
       >

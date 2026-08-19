@@ -124,7 +124,7 @@ export default async function ReprovadoPage() {
         <br />
         <a
           className="wa"
-          href="https://wa.me/5521980351531?text=Oi!%20Um%20an%C3%BAncio%20meu%20foi%20reprovado%20e%20queria%20entender%20o%20motivo."
+          href="https://wa.me/5521936182176?text=Oi!%20Um%20an%C3%BAncio%20meu%20foi%20reprovado%20e%20queria%20entender%20o%20motivo."
           target="_blank"
           rel="noopener"
         >

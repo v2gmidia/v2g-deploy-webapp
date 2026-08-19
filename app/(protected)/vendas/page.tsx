@@ -99,7 +99,7 @@ export default async function VendasPage() {
           <section className="trust support-block">
             <b>Ficou com dúvida?</b>
             Gente de verdade responde, sem robô, em até 2 horas úteis.
-            <a className="wa" href="https://wa.me/5521980351531" target="_blank" rel="noopener">
+            <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
               Chamar no WhatsApp &rarr;
             </a>
           </section>

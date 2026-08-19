@@ -131,7 +131,7 @@ export default async function WhatsAppBusinessPage() {
         <br />
         <a
           className="wa"
-          href="https://wa.me/5521980351531?text=Oi!%20Preciso%20trocar%20meu%20WhatsApp%20para%20o%20WhatsApp%20Business%20para%20conseguir%20anunciar%20pela%20V2G."
+          href="https://wa.me/5521936182176?text=Oi!%20Preciso%20trocar%20meu%20WhatsApp%20para%20o%20WhatsApp%20Business%20para%20conseguir%20anunciar%20pela%20V2G."
           target="_blank"
           rel="noopener"
         >

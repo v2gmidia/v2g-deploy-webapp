@@ -125,7 +125,7 @@ export default async function VerbaPage() {
         <br />
         <a
           className="wa"
-          href="https://wa.me/5521980351531?text=Oi!%20Tenho%20uma%20d%C3%BAvida%20sobre%20a%20verba%20e%20a%20cobran%C3%A7a%20da%20V2G."
+          href="https://wa.me/5521936182176?text=Oi!%20Tenho%20uma%20d%C3%BAvida%20sobre%20a%20verba%20e%20a%20cobran%C3%A7a%20da%20V2G."
           target="_blank"
           rel="noopener"
         >
@@ -196,7 +196,7 @@ function AlcanceReal({
       <p style={{ marginTop: 10 }}>
         <a
           className="wa"
-          href="https://wa.me/5521980351531?text=Oi!%20Preciso%20colocar%20o%20endere%C3%A7o%20na%20minha%20p%C3%A1gina%20do%20Facebook%20para%20o%20an%C3%BAncio%20chegar%20s%C3%B3%20perto%20de%20mim."
+          href="https://wa.me/5521936182176?text=Oi!%20Preciso%20colocar%20o%20endere%C3%A7o%20na%20minha%20p%C3%A1gina%20do%20Facebook%20para%20o%20an%C3%BAncio%20chegar%20s%C3%B3%20perto%20de%20mim."
           target="_blank"
           rel="noopener"
         >

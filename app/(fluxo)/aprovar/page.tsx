@@ -125,7 +125,7 @@ export default async function AprovarPage() {
         <br />
         <a
           className="wa"
-          href="https://wa.me/5521980351531?text=Oi!%20Quero%20falar%20sobre%20a%20pe%C3%A7a%20que%20apareceu%20para%20eu%20aprovar."
+          href="https://wa.me/5521936182176?text=Oi!%20Quero%20falar%20sobre%20a%20pe%C3%A7a%20que%20apareceu%20para%20eu%20aprovar."
           target="_blank"
           rel="noopener"
         >

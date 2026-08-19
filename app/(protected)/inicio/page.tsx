@@ -284,7 +284,7 @@ export default async function InicioPage() {
               </p>
               <a
                 className="cta quiet"
-                href="https://wa.me/5521980351531"
+                href="https://wa.me/5521936182176"
                 target="_blank"
                 rel="noopener"
               >
@@ -416,7 +416,7 @@ export default async function InicioPage() {
             </p>
             <a
               className="cta quiet"
-              href="https://wa.me/5521980351531"
+              href="https://wa.me/5521936182176"
               target="_blank"
               rel="noopener"
             >
@@ -445,7 +445,7 @@ function Suporte() {
     <section className="trust support-block">
       <b>Travou em alguma parte?</b>
       Gente de verdade responde, sem robô, em até 2 horas úteis.
-      <a className="wa" href="https://wa.me/5521980351531" target="_blank" rel="noopener">
+      <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
         Chamar no WhatsApp &rarr;
       </a>
     </section>

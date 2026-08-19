@@ -98,7 +98,7 @@ export default async function ConectarPage({ searchParams }: Props) {
         <p className="card-note" style={{ marginTop: 14 }}>
           Não tem conta profissional no Instagram?{" "}
           <a
-            href="https://wa.me/5521980351531?text=Oi!%20Quero%20conectar%20meu%20Instagram%20na%20V2G%2C%20mas%20acho%20que%20minha%20conta%20n%C3%A3o%20%C3%A9%20profissional."
+            href="https://wa.me/5521936182176?text=Oi!%20Quero%20conectar%20meu%20Instagram%20na%20V2G%2C%20mas%20acho%20que%20minha%20conta%20n%C3%A3o%20%C3%A9%20profissional."
             target="_blank"
             rel="noopener"
           >

@@ -219,7 +219,7 @@ function BecoSemSaida({
 
         <a
           className="cta"
-          href="https://wa.me/5521980351531?text=Oi!%20Tentei%20conectar%20minha%20conta%20na%20V2G%20e%20apareceu%20que%20n%C3%A3o%20h%C3%A1%20conta%20de%20an%C3%BAncio%20dispon%C3%ADvel."
+          href="https://wa.me/5521936182176?text=Oi!%20Tentei%20conectar%20minha%20conta%20na%20V2G%20e%20apareceu%20que%20n%C3%A3o%20h%C3%A1%20conta%20de%20an%C3%BAncio%20dispon%C3%ADvel."
           target="_blank"
           rel="noopener"
         >
