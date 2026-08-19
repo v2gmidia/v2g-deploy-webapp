@@ -307,28 +307,60 @@ Rodar de novo não duplica. `--conferir` só verifica, sem escrever.
 
 ---
 
-## Passo 5 — FEITO e conferido
+## Passo 5 — FEITO, confirmado por escrita controlada
 
-Variáveis trocadas no Easypanel e redeploy dado. O backend passou a ler o
-V2G-SITE (`ushccxpoxjikzqnwhgfd`, região `sa-east-1`, São Paulo).
+Variáveis trocadas no Easypanel e redeploy dado.
 
-Conferido pelo endpoint, que é o teste que o próprio passo 5 previa:
+**Confirmado que o backend lê o V2G-SITE ao vivo**, por um teste que só tem
+uma explicação possível:
 
 ```
-GET /execucoes-em-revisao  →  HTTP 200, 3 execuções
-  e3c5944f  gerado             confianca_minima null
-  ee301c4f  estrutura_pronta   0,52
-  a56d3dea  estrutura_pronta   0,66
+1. GET /execucoes-em-revisao            → 3
+2. insert em execucoes no V2G-SITE      (id 00000000-…-dead,
+                                         requer_revisao = true, conf 0,11)
+3. GET /execucoes-em-revisao            → 4, e a linha inserida veio junto
+4. delete da linha de teste             → tabela de volta a 4 totais / 3 na fila
 ```
 
-**São 3, e não 4, e isso está certo.** A tabela tem as 4 de referência; o
-endpoint filtra `requer_revisao = true`, e **CHECK ENVIAR** (`899f120c`,
-confiança 0,78) passou no gate. É a mesma execução que a seção "Os quatro
-casos de referência" guardou justamente por ser o único exemplar com
-`requer_revisao = false` e `compliance_visual` nulo. Ela sair da fila é a
-prova de que o filtro funciona, não sinal de dado faltando.
+O passo 3 é a prova. Uma linha escrita direto no V2G-SITE apareceu na
+resposta do endpoint segundos depois. Isso descarta cache e descarta base
+própria — só sobra leitura ao vivo do V2G-SITE.
 
-Contagem nos dois bancos no momento da conferência:
+Corroborado nos logs: `edge_logs` registra `GET /rest/v1/execucoes` cerca de
+um segundo depois de cada chamada ao endpoint (medido em duas chamadas
+independentes, 15:14:59 e 15:19:24 UTC). O backend fala por PostgREST, não
+por conexão direta.
+
+### Por que a conferência anterior tinha concluído errado
+
+Antes deste teste, a evidência era só o número devolvido pelo endpoint, e
+duas leituras estavam furadas:
+
+1. **"Os ids batem com os quatro casos de referência, logo é o V2G-SITE."**
+   Não prova nada: aqueles ids foram copiados DE Oregon e existem nos dois
+   bancos. Bater id não prova origem.
+
+2. **"Os logs não mostram tráfego nenhum, logo o backend não consulta o
+   banco."** Errado por pressa. Os registros existiam; a consulta foi feita
+   antes de eles serem ingeridos. Repetida a MESMA consulta, na MESMA
+   janela, minutos depois, o registro estava lá.
+
+**Log vazio logo após o evento não é evidência de que o evento não
+aconteceu.** A janela precisa ser reconsultada depois, ou a ausência não
+significa nada. Registrado aqui porque é o tipo de erro que se repete.
+
+O único argumento que se sustentava sozinho era o contraste de volume: o
+endpoint filtra `requer_revisao = true`, Oregon tem 29 linhas assim e o
+V2G-SITE tem 3. Lendo Oregon, a resposta seria 29. Ainda assim isso é
+indício, não prova — a prova foi a escrita controlada.
+
+### São 3 na fila, e está certo
+
+A tabela tem as 4 de referência; o endpoint devolve 3 porque **CHECK
+ENVIAR** (`899f120c`, confiança 0,78) tem `requer_revisao = false` e passou
+no gate. É a mesma execução guardada justamente por ser o único exemplar com
+`requer_revisao = false` e `compliance_visual` nulo. Ela ficar fora da fila é
+o filtro funcionando, não dado faltando.
 
 | | V2G-SITE (`sa-east-1`) | Oregon (`us-west-2`) |
 |---|---|---|
@@ -337,11 +369,10 @@ Contagem nos dois bancos no momento da conferência:
 
 Os 29 de Oregon são o número que aparece nos comentários de
 `lib/backend/execucoes.ts`. Aquelas medições foram feitas contra Oregon e
-**continuam válidas como descrição do schema** — o formato de
-`motivos_revisao`, as duas escalas de confiança, `cliente_id` nulo —, mas
-os totais citados lá (29 execuções na fila, 28 com motivos) descrevem uma
-fila que não existe mais. Se alguém for reconferir aqueles números contra a
-fila atual, vai achar divergência e o motivo é este.
+**continuam válidas como descrição do schema** — formato de
+`motivos_revisao`, as duas escalas de confiança, `cliente_id` nulo —, mas os
+TOTAIS citados lá (29 na fila, 28 com motivos) descrevem uma fila que não
+existe mais.
 
 ## Falta só o passo 6
 
