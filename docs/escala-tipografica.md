@@ -697,10 +697,13 @@ Meu levantamento não podia achar isso: ele contou declarações, e aqui o
 defeito é a ausência de declaração. Só apareceu na varredura do que foi
 desenhado.
 
-Não é regressão — sempre foi 16px. Mas contradiz a frase "nenhum tamanho fora
-do sistema", então fica registrado. O degrau natural é `--fs-titulo` (15px,
-−1px): é título de card acima de um parágrafo, o mesmo papel do
-`.section-title h2`.
+Não era regressão — sempre foi 16px. Mas contradizia a frase "nenhum tamanho
+fora do sistema".
+
+**Corrigido:** `.pc-title { font-size: var(--fs-titulo) }`, 15px, −1px. É
+título de card acima de um parágrafo, o mesmo papel do `.section-title h2`.
+Só o tamanho — a família não foi mexida, para a correção não virar redesenho.
+Medido depois: 15px na `/alertas`.
 
 #### Achado 2 — `.stepper .split-tag` nunca teve efeito
 
@@ -717,40 +720,88 @@ está no arquivo desde sempre e nunca pintou nada. O levantamento a contou
 como uma das sete etiquetas de 10px; ela era uma etiqueta de 12,5px
 disfarçada.
 
-Consertar é uma linha (`.stepper .s-copy .split-tag`), mas muda a renderização
-em −2px, que é mais do que 1px e portanto não entra sem decisão — a mesma
-régua da §6.
+**Corrigido:** o seletor passou a ser `.stepper .s-copy .split-tag` (0,3,0),
+que vence. Medido depois: a etiqueta em 11px, o `<span>` irmão em 13px. São
+−2px numa etiqueta, decididos caso a caso como manda a §6.
 
-**Não varri as outras.** Existem 29 regras de `font-size` com descendente por
-tag (`.alert-card p`, `.empty-hero p`, `.escolhido > span`, `.passos p`…), e
-qualquer classe de especificidade menor dentro desses containers cai no mesmo
-buraco. O `.passo-aviso` era outro caso e sobrevive porque tem `!important` —
-o que agora se entende: o `!important` estava lá justamente para vencer o
-`.passos p`. Descobrir os demais exige a mesma varredura de computado contra
-declarado, tela por tela, com dado que as exercite.
+#### O buraco maior, que fica escrito e não foi varrido
 
-#### Achado 3 — a faixa cobalto tem texto quase preto no tema escuro
+Existem **29 regras de `font-size` com descendente por tag** no arquivo —
+`.alert-card p`, `.empty-hero p`, `.escolhido > span`, `.passos p`,
+`.empty-list li, .tips-list li`, `.field input`, `.navy-card p`, e por aí.
+Cada uma delas ganha de qualquer regra de classe única aplicada ao mesmo
+elemento, porque a classe sozinha vale (0,1,0) e a descendente por tag vale
+pelo menos (0,1,1).
 
-Fora do escopo e não causado por este lote (que só mexeu em tamanho), mas
-medido e grave demais para não registrar.
+Ou seja: **um token pode estar declarado, correto e inerte**, e nem a guarda
+do `grep` nem o detector percebem — os dois olham o que está escrito, e o
+problema é o que o navegador escolhe. O `.split-tag` foi o caso que apareceu
+por acaso; o `.passo-aviso` era outro, e sobrevive só porque tem
+`!important` — o que agora se entende, porque o `!important` estava lá
+justamente para vencer o `.passos p`.
 
-Na `/whatsapp-business`, com o tema escuro do sistema:
+**As 29 não foram varridas.** A varredura confiável é a que achou esta:
+computado contra declarado, elemento a elemento, em tela com dado que a
+exercite. É trabalho de sessão própria, e depende de ter conta com campanha
+rodando — quatro componentes do app não renderizam sem isso.
 
-| | Computado |
-|---|---|
-| Fundo da `.hero-destaque` | `rgb(2, 57, 199)` — o cobalto escuro |
-| `.hero-frase` | `rgb(5, 10, 19)` — `--offwhite`, que no escuro é quase preto |
-| `.hero-note` e `.eyebrow` | `rgba(12, 21, 35, 0.72)` — `--surface-rgb`, idem |
+#### Achado 3 — a faixa cobalto era ilegível no tema escuro
 
-A faixa usa `--offwhite` e `--surface-rgb` como **tinta** sobre uma superfície
-que continua escura nos dois temas. Quando esses tokens viram escuros no modo
-escuro, a tinta vira escura junto e some no azul. É o modo de falha que o
-próprio comentário do `globals.css` descreve, ao contrário: em vez de pintar
-superfície com token de acento, pinta acento com token de superfície.
+Não foi causado por este lote (que só mexeu em tamanho), mas é a faixa do
+`/inicio`, a primeira tela que todo cliente abre, então foi consertado junto.
 
-O `.navy-card` resolve o mesmo problema com `--plate-ink`, que é claro nos
-dois temas. Provavelmente é para lá que a faixa deve apontar. **Não mexi** —
-é cor, e cor não é deste lote.
+**A doença.** A faixa usava `--offwhite` e `--surface-rgb` como **tinta**
+sobre uma superfície que continua escura nos dois temas. Esses dois tokens
+viram escuros no modo escuro — é o trabalho deles, são tokens de *fundo de
+página* e *superfície de card*. A tinta virava escura junto e sumia no azul.
+
+É o modo de falha que o comentário do modo escuro no `globals.css` descreve,
+só que ao contrário: em vez de pintar superfície com token de acento, estava
+pintando acento com token de superfície.
+
+**O token certo estava documentado o tempo todo.** O `:root` diz, sobre o
+`--white`: *"branco literal — texto sobre cobalto, sobre vermelho crítico"*.
+Era exatamente esse o caso. Faltava o canal RGB para a versão translúcida, e
+ele foi acrescentado (`--white-rgb`), pelo mesmo motivo que os outros
+`--*-rgb` existem: transparência precisa do canal separado.
+
+**Contraste medido, antes e depois, nos dois temas** (WCAG AA pede 4,5:1
+para texto normal):
+
+| | Escuro antes | Escuro depois | Claro antes | Claro depois |
+|---|---:|---:|---:|---:|
+| `.eyebrow` e `.hero-note` | **1,82** | **5,19** | 4,49 | **4,53** |
+| `.hero-frase` | **2,28** | **8,70** | 6,77 | **7,38** |
+| `.cta` (texto sobre o botão) | **2,10** | **8,70** | 7,38 | **7,38** |
+
+No escuro os três estavam entre 1,8 e 2,3 — abaixo até do mínimo de 3:1 que
+a WCAG pede para *indicador de foco*. Agora os seis números passam AA.
+
+O botão era o pior sintoma e o mais fácil de explicar: `background:
+var(--surface)` fazia dele um retângulo **escuro** com texto cobalto sobre a
+faixa cobalto. O comentário logo acima da regra já dizia o que ele devia ser
+— *"Inverte: superfície branca, texto cobalto"* — e agora é `var(--white)`,
+que é o que a frase queria dizer.
+
+**Uma correção intermediária que a medição derrubou.** A primeira tentativa
+usou `--plate-ink`, que também não vira escuro. Funcionou no escuro, mas no
+claro derrubou o eyebrow de 4,49 para **4,21**, cruzando abaixo do mínimo da
+WCAG — o `--plate-ink` (`#F1F6F7`) é um pouco mais escuro que o `--surface`
+(`#FEFEFE`) que estava lá antes. Só apareceu porque o antes e o depois foram
+medidos nos **dois** temas. Consertar o tema quebrado e piorar o que estava
+bom teria passado despercebido medindo só o escuro.
+
+**O `.navy-card` tinha a mesma doença**, e minha frase anterior sobre ele
+estava incompleta: a base dele usa `--plate-ink` corretamente, mas
+`nc-head`, `p` e `nc-foot` sobrescreviam com `--offwhite` e
+`--offwhite-rgb`, que viram `#050A13` e `5 10 19` no escuro. Corrigido para
+`--plate-ink` e `--plate-ink-rgb` (token novo, mesmo motivo do
+`--white-rgb`). **Correção preventiva:** `.navy-card` não tem nenhum uso em
+`.tsx` hoje — é CSS morto, como `.hero-phrase` e `.hero-card`. Não removi,
+pela mesma razão da §9.4.
+
+Cada superfície ficou com o token que lhe cabe: a faixa cobalto com
+`--white`, a placa navy com `--plate-ink`.
 
 #### O que continua sem confirmação visual
 
@@ -845,7 +896,118 @@ fina. Afeta as telas `.rev-*` (revisão de perfil pelo operador) e
   `f86cb8d`) e nenhum pegou.
 
 Ou seja: **as bordas das telas de revisão de perfil nunca renderizaram
-certo, desde ontem**, que é quando a tela foi escrita. Está em tarefa
-separada, rodando em worktree próprio
-(`.claude/worktrees/suspicious-liskov-b8045c`) — sem conflito com as edições
-deste lote no `globals.css` da árvore principal.
+certo, desde ontem**, que é quando a tela foi escrita.
+
+Corrigido no `a01dcae`, junto com um segundo token que a mesma auditoria
+achou: `--card-bg`, 2 usos, também nunca definido em commit nenhum. Sem
+valor, `background` cai para `transparent` — o `.rev-item` não tinha fundo.
+Os dois viraram `--line` e `--surface`.
+
+---
+
+## 14. DÍVIDA — a cascata nunca foi varrida
+
+**Para o próximo lote de visual. Não é achado, é buraco conhecido.**
+
+### O tamanho, medido
+
+Contado no `globals.css` depois deste lote — e a primeira contagem que fiz
+saiu **29**, com um regex frouxo demais. Os números certos:
+
+| | |
+|---|---:|
+| Seletores de `font-size` com ≥1 classe e terminando em tag | **58** |
+| Regras de `font-size` de **classe única**, que perdem para elas | **76** |
+| Colisões efetivamente conferidas | **1** |
+
+`.alert-card p`, `.empty-hero p`, `.escolhido > span`, `.passos p`,
+`.empty-list li`, `.field input`, `.navy-card p`, `.stepper .s-copy span` e
+mais cinquenta. Uma classe sozinha vale (0,1,0); descendente-por-tag com uma
+classe vale (0,1,1) e ganha. O token declarado na classe fica correto,
+legível, versionado — e inerte. (`code` é a única regra de tag pura; sendo
+(0,0,1), ela perde para classe e não engole ninguém.)
+
+**A única colisão conferida deu positivo.** O `.stepper .split-tag` pedia
+`--fs-legenda` e o navegador desenhava os 13px do `.stepper .s-copy span`. A
+regra estava no arquivo desde sempre e nunca pintou nada: antes da escala
+pedia 10px e saía 12,5px. Foi consertada.
+
+Uma de uma. Isso não estima nada sobre as outras — mas também não permite
+supor que sejam raras.
+
+O `.passo-aviso` era o mesmo caso e sobrevive porque tem `!important` — que
+até este lote parecia arbitrário e agora se explica sozinho. Vale como
+sintoma: **`!important` neste arquivo é sinal de colisão, não de descuido.**
+
+O atalho barato, portanto, é `grep !important` — ele acha as colisões que
+alguém já sentiu e contornou. Rodado agora, o arquivo tem quatro, e três
+merecem olhar:
+
+- `.passo-aviso` — `color` e `font-size`. Colisão conhecida, contra `.passos p`.
+- `.rev-corrigir { display: flex !important }` — contra o quê? Não investiguei.
+- `.id-saida { margin-top: 8px !important }` — idem.
+- `* { transition: none !important }` dentro de `prefers-reduced-motion` —
+  legítimo, é o uso correto da palavra.
+
+Os dois do meio não são `font-size`, e é justamente o ponto: o problema é da
+cascata, não da propriedade. As colisões caras continuam sendo as que
+ninguém sentiu, porque não deixaram `!important` para trás.
+
+### Por que nenhuma das guardas atuais pega
+
+Esta é a parte que importa, e é o motivo de a dívida existir apesar de o
+lote ter fechado com tudo verde:
+
+| Guarda | Por que passa batido |
+|---|---|
+| `grep "font-size:" \| grep -v "var(--fs-"` | lê o que está **escrito**. A regra inerte está escrita e está certa. |
+| `detect.mjs` (rampa do `DESIGN.md`) | idem — analisa o arquivo, não a cascata. |
+| Varredura de computado fora dos degraus | **também não pega**, e é o ponto sutil: o `.split-tag` renderizava a 13px, que **é** um degrau. Passou limpo. |
+
+A terceira linha é a lição. A varredura barata de "todo texto está num
+degrau?" acha ausência de regra (foi assim que apareceu o `.pc-title` a
+16px), mas **não acha regra derrotada**, porque a regra que venceu costuma
+estar na escala também. Fica errada e conforme ao mesmo tempo.
+
+### O método que funcionou
+
+Comparar, para cada regra, o que ela **declara** com o que o navegador
+**computa** no elemento real — na estrutura real, com dado que exercite a
+tela.
+
+Concretamente, foi assim que o `.split-tag` apareceu: montar o componente com
+a marcação do `.tsx` (não uma aproximação), medir, e comparar com o valor da
+regra.
+
+```js
+// no console da página, com a marcação real do componente montada
+const h = document.createElement('div');
+h.innerHTML = '<ol class="stepper"><li><div class="s-copy">' +
+              '<span class="split-tag">Agora</span><b>t</b><span>d</span>' +
+              '</div></li></ol>';
+document.body.appendChild(h);
+getComputedStyle(h.querySelector('.split-tag')).fontSize;  // 13px, e a regra pedia 11px
+```
+
+A marcação tem que vir do `.tsx`, não de memória: o defeito **é** o
+aninhamento. Se eu tivesse montado o `.split-tag` como irmão do `.s-copy` em
+vez de filho, ele teria medido 11px e eu teria concluído que estava tudo bem.
+
+### O que trava a varredura completa hoje
+
+**Quatro componentes não renderizam sem conta com campanha rodando** —
+`.metric`, `.list-row`, `.peca-*` e `.stepper`. A conta usada na verificação
+deste lote está no dia zero. Banco de prova com marcação real cobre a
+geometria e a relação entre tamanhos, mas não exercita as regras em
+quantidade e variação reais.
+
+Então a dívida tem uma dependência: **varrer direito depende de ter conta de
+teste com campanha**. Sem isso, a varredura cobre as telas de estado vazio e
+mente por omissão sobre o resto.
+
+### Onde isso vale além do tamanho
+
+O mesmo padrão de especificidade governa **cor, peso, espaçamento e raio** —
+nada nele é específico de `font-size`. Se um dia houver lote de espaçamento
+ou de raio, a dívida é a mesma e a varredura é a mesma; só muda a
+propriedade medida.

@@ -56,6 +56,7 @@
      ------------------------------------------------------------ */
   --surface: #FEFEFE;
   --white: #FFFFFF;
+  --white-rgb: 255 255 255;
 
   /* derivados */
   --cobalt-dark: #0532A5;  /* hover do cobalto */
@@ -124,6 +125,7 @@
      precisa clarear enquanto a placa não. */
   --plate: #111E2F;
   --plate-ink: #F1F6F7;
+  --plate-ink-rgb: 241 246 247;
 
   /* ------------------------------------------------------------
      ESCALA TIPOGRÁFICA — seis degraus.
@@ -701,7 +703,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 @media (max-width: 900px) {
   :root { --sidebar-w: 76px; }
-  .side-brand .wm, .nav-item span, .side-account .who { display: none; }
+  /* O `.nav-eyebrow` entra nesta lista pelo mesmo motivo dos outros: é
+     texto, e aqui só cabe ícone. Com a sidebar em 76px, os paddings
+     deixam 20px de caixa — "SEU NEGÓCIO" em caixa alta precisa de 94px
+     numa linha, quebra em duas e a mais larga ainda vaza 43px para fora
+     do cobalto. Ele ficou de fora quando a regra foi escrita; nunca coube. */
+  .side-brand .wm, .nav-item span, .side-account .who, .nav-eyebrow { display: none; }
   .side-brand { display: flex; justify-content: center; padding: 4px 0 20px; }
   .nav-item { justify-content: center; }
   .side-account { justify-content: center; border: none; }
@@ -1144,6 +1151,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 10px;
   padding: 16px 18px;
 }
+/* Titulo de card no aside. A classe era aplicada em tres lugares e NAO
+   existia aqui: sem regra, o <b> herdava do body, que nunca teve
+   font-size, e renderizava nos 16px padrao do navegador — fora da
+   escala. So apareceu varrendo o computado, nao o declarado. */
+.pc-title { font-size: var(--fs-titulo); }
 .hint { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink-soft); margin: 0 0 14px; }
 .foot-line { font-size: var(--fs-legenda); color: var(--ink-mute); margin: 12px 2px 0; line-height: 1.6; }
 
@@ -1379,12 +1391,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    carrega o significado (o rótulo do número, ou a palavra em destaque
    da frase) — se ele aparecer também no rótulo de seção e no botão,
    deixa de destacar qualquer coisa. */
-.hero-destaque .eyebrow { color: rgb(var(--surface-rgb) / 0.72); margin: 0 0 14px; }
+.hero-destaque .eyebrow { color: rgb(var(--white-rgb) / 0.72); margin: 0 0 14px; }
 
 /* O botão padrão é cobalto sobre branco; aqui seria cobalto sobre
    cobalto. Inverte: superfície branca, texto cobalto. */
 .hero-destaque .cta {
-  background: var(--surface);
+  background: var(--white);
   color: var(--cobalt);
 }
 .hero-destaque .cta:hover { background: var(--ice); }
@@ -1395,7 +1407,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    distancia entre blocos do sistema, a mesma do `.dash-grid` e do
    `.page-head`. */
 .hero-destaque .cta-faixa { margin-top: 22px; width: max-content; }
-.hero-destaque .hero-note { color: rgb(var(--surface-rgb) / 0.72); margin-top: 16px; max-width: 46ch; }
+.hero-destaque .hero-note { color: rgb(var(--white-rgb) / 0.72); margin-top: 16px; max-width: 46ch; }
 .hero-destaque .hero-note a,
 .hero-destaque .hero-note .est-link { color: var(--lime); }
 
@@ -1430,7 +1442,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-family: var(--display);
   font-size: var(--fs-hero-sub);
   font-weight: 500;
-  color: rgb(var(--surface-rgb) / 0.85);
+  color: rgb(var(--white-rgb) / 0.85);
   margin: 4px 0 0;
 }
 
@@ -1441,7 +1453,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-hero-frase);
   line-height: 1.1;
   letter-spacing: -0.015em;
-  color: var(--offwhite);
+  color: var(--white);
   margin: 0;
   max-width: 20ch;
   text-wrap: balance;
@@ -1542,17 +1554,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 12px;
   padding: 20px;
 }
-.navy-card p { font-size: var(--fs-corpo); line-height: 1.55; color: rgb(var(--offwhite-rgb) / 0.82); margin: 8px 0 0; }
+.navy-card p { font-size: var(--fs-corpo); line-height: 1.55; color: rgb(var(--plate-ink-rgb) / 0.82); margin: 8px 0 0; }
 .navy-card .nc-head {
   display: flex; align-items: center; gap: 9px;
   font-family: var(--display); font-weight: 700; font-size: var(--fs-corpo);
   letter-spacing: 0.02em;
-  color: var(--offwhite);
+  color: var(--plate-ink);
 }
 .navy-card .nc-head svg { color: var(--ice); flex: none; }
 .navy-card .nc-foot {
   font-size: var(--fs-legenda);
-  color: rgb(var(--offwhite-rgb) / 0.65);
+  color: rgb(var(--plate-ink-rgb) / 0.65);
   margin-top: 14px;
   padding-top: 12px;
   border-top: 1px dashed rgb(var(--ice-rgb) / 0.25);
@@ -1815,7 +1827,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .stepper .s-copy span { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.5; display: block; margin-top: 2px; }
 .stepper li.pending .s-copy b { color: var(--ink-mute); }
 .stepper .s-copy .elapsed { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
-.stepper .split-tag {
+/* A CLASSE PRECISA DO .s-copy no seletor. Sem ele isto e (0,2,0) e perde
+   para `.stepper .s-copy span` (0,2,1) logo acima — que casa neste mesmo
+   elemento, porque no processando/page.tsx a etiqueta e um <span> dentro
+   do .s-copy. A regra existia desde sempre e nunca pintou nada: antes da
+   escala ela pedia 10px e o navegador desenhava os 12,5px do vizinho. */
+.stepper .s-copy .split-tag {
   font-family: var(--display);
   font-size: var(--fs-legenda);
   letter-spacing: 0.12em;
