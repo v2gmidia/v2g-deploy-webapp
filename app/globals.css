@@ -2043,7 +2043,8 @@ code {
 .id-recado {
   font-size: 13px;
   line-height: 1.5;
-  margin: 0 0 14px;
+  /* Nasce colado no formulário que o gerou, não no topo da seção. */
+  margin: 10px 0 0;
   padding: 10px 12px;
   border-radius: 8px;
   background: var(--good-soft);
@@ -2084,8 +2085,40 @@ code {
 }
 
 .id-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.id-form input[type="file"] { font: inherit; font-size: 13px; color: var(--ink-soft); max-width: 100%; }
-.id-form input[type="file"]:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+
+/* O botão nativo do input de arquivo destoa de tudo em volta: ele é
+   desenhado pelo sistema operacional, não pela página, e muda de forma
+   entre Windows, macOS e Android. `::file-selector-button` é o padrão que
+   permite vesti-lo — o input em si continua sendo o input, então o
+   comportamento nativo e a acessibilidade ficam intactos.
+
+   Ele fica com o peso de botão SECUNDÁRIO de propósito. Escolher o arquivo
+   é meio caminho; quem confirma é o `.cta` ao lado, e dois botões com o
+   mesmo peso ao lado um do outro não dizem qual é o próximo passo. */
+.id-arquivo {
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink-soft);
+  max-width: 100%;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+.id-arquivo::file-selector-button {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--surface-2);
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 14px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+.id-arquivo::file-selector-button:hover { border-color: var(--ink-mute); }
+/* O foco vai no INPUT, não no pseudo-elemento: é o input que recebe o Tab,
+   e estilizar o foco no botão deixaria a moldura em volta da coisa errada. */
+.id-arquivo:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
 
 @media (max-width: 620px) {
   .id-logo { flex-direction: column; align-items: flex-start; }

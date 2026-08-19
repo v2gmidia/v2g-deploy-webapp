@@ -207,7 +207,7 @@ export async function arquivarImagem(
   imagemId: string,
 ): Promise<{ ok: boolean }> {
   const supa = createAdminClient();
-  const { error } = await supa
+  const { data, error } = await supa
     .from("creatives")
     .update({ arquivado_em: new Date().toISOString() })
     // O `business_id` no filtro não é redundante: sem ele, um id de outro
@@ -215,7 +215,20 @@ export async function arquivarImagem(
     .eq("business_id", businessId)
     .eq("id", imagemId)
     .in("uso", ["logo", "identidade"])
-    .is("arquivado_em", null);
+    .is("arquivado_em", null)
+    // `select` para saber QUANTAS linhas mudaram. Sem ele, a resposta a
+    // "arquivou?" seria só "não deu erro" — e não dar erro é o que
+    // acontece quando o filtro não casa com nada.
+    .select("id");
 
-  return { ok: !error };
+  // NENHUMA LINHA MUDOU NÃO É SUCESSO. Medido: o `update` de uma imagem já
+  // arquivada casa com zero linhas, `error` vem nulo, e a versão anterior
+  // desta função respondia `ok`. Quem chamou concluiu que arquivou; a tela
+  // recarregaria mostrando a imagem ainda lá, sem explicação nenhuma.
+  //
+  // Zero linhas quer dizer uma de três: o id não existe, é de outro
+  // negócio, ou já estava arquivada. As três merecem a mesma resposta —
+  // não fizemos o que você pediu.
+  if (error || !data || data.length === 0) return { ok: false };
+  return { ok: true };
 }
