@@ -1,4 +1,9 @@
 import type { CampoDoCliente } from "./catalogo-cliente";
+// Relativo, não `@/` — este módulo é lido por `scripts/conferir-verba.ts`,
+// que roda no node puro, sem os `paths` do tsconfig. Import de VALOR com
+// `@/` quebraria ali (o de TIPO não, porque some no type-stripping).
+import { dinheiro } from "../formato.ts";
+import { DIAS, PISO_MENSAL_DA_CASA, TETO_MENSAL_DA_CASA } from "../verba/limites.ts";
 
 /**
  * O que o cliente digitou → o valor que vai para a coluna.
@@ -66,6 +71,36 @@ export function converterValor(campo: CampoDoCliente, bruto: string): Convertido
       // deixa procedência afirmando que alguém conferiu o zero.
       if (campo.dinheiro && n === 0) {
         return { ok: false, mensagem: "Esse valor não pode ser zero." };
+      }
+      // A VERBA TEM PISO E TETO, E ELES SÃO OS MESMOS DA `/verba`.
+      //
+      // Este campo é o único do catálogo que também tem tela própria — e
+      // até o lote QA-3 as duas gravavam a mesma coluna com regras
+      // diferentes: lá qualquer coisa acima de zero, aqui qualquer coisa
+      // acima de zero, e a recusa só na publicação, depois de o pipeline
+      // já ter sido disparado. Ver `lib/verba/limites.ts` e
+      // `docs/qa3-telas-isoladas.md` §2.
+      //
+      // O piso é NOSSO, não do Facebook: o dele varia por conta e a frase
+      // não pode dizer que é dele.
+      if (campo.chave === "businesses.monthly_budget") {
+        if (n < PISO_MENSAL_DA_CASA) {
+          return {
+            ok: false,
+            mensagem:
+              `Com esse valor o anúncio não roda. Nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA)} ` +
+              `por mês — uns ${dinheiro(PISO_MENSAL_DA_CASA / DIAS)} por dia. O mínimo do ` +
+              `Facebook é outro, muda de conta para conta, e a gente confere na hora de publicar.`,
+          };
+        }
+        if (n > TETO_MENSAL_DA_CASA) {
+          return {
+            ok: false,
+            mensagem:
+              "Esse limite mensal é maior do que a gente publica automaticamente. Fale com a " +
+              "gente que a gente configura junto com você.",
+          };
+        }
       }
       return { ok: true, valor: n };
     }

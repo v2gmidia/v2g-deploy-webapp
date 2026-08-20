@@ -3,11 +3,9 @@
 import { useActionState, useState } from "react";
 import { dinheiro } from "@/lib/formato";
 import { definirVerbaAction, type VerbaActionState } from "./actions";
+import { DIAS, PISO_MENSAL_DA_CASA } from "@/lib/verba/limites";
 
 const inicial: VerbaActionState = {};
-
-/** 30 dias, como o resto do app (`lib/meta/orcamento.ts`). */
-const DIAS = 30;
 
 export function FormVerba({ atual }: { atual: number | null }) {
   const [estado, action, pendente] = useActionState(definirVerbaAction, inicial);
@@ -61,12 +59,15 @@ export function FormVerba({ atual }: { atual: number | null }) {
         </button>
       </div>
 
-      {/* O piso do Facebook varia por conta, moeda e objetivo, e só dá para
-          consultar depois da conexão. Dizer aqui um número inventado seria
-          pior que não dizer — ver `definirVerbaAction`. */}
+      {/* DOIS MÍNIMOS, E A TELA NÃO PODE MISTURAR OS DOIS. O nosso é fixo e
+          aplicado aqui; o do Facebook varia por conta, moeda e objetivo, só
+          dá para consultar depois da conexão, e continua sem número
+          inventado neste repositório — ver `./limites`. */}
       <p className="empty-note">
-        O Facebook tem um valor mínimo por dia, e ele muda de conta para conta. A gente confere
-        isso na hora de publicar e avisa se o seu limite não alcançar.
+        Nosso mínimo é {dinheiro(PISO_MENSAL_DA_CASA)} por mês, uns{" "}
+        {dinheiro(PISO_MENSAL_DA_CASA / DIAS)} por dia — abaixo disso o anúncio não roda. O
+        Facebook tem um mínimo próprio, que muda de conta para conta e pode ser maior que o nosso:
+        a gente confere na hora de publicar e avisa se o seu limite não alcançar.
       </p>
     </form>
   );

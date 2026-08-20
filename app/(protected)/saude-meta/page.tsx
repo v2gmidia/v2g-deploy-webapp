@@ -490,7 +490,7 @@ function Falha({ categoria, http }: { categoria: CategoriaErro; http?: number })
   const f = FALHAS[categoria];
   return (
     <section className="fail-block">
-      <b>{f.titulo}</b>
+      <b className="title">{f.titulo}</b>
       <p style={{ marginTop: 8 }}>{f.texto}</p>
       <p className="diag-meta">
         categoria=<code>{categoria}</code>
@@ -517,7 +517,7 @@ function Falha({ categoria, http }: { categoria: CategoriaErro; http?: number })
 function SaudeDoBackend({ resultado }: { resultado: Awaited<ReturnType<typeof saude>> }) {
   return (
     <section className="trust support-block">
-      <b>Backend (GET /saude)</b>
+      <b className="title">Backend (GET /saude)</b>
       {resultado.ok ? (
         <>
           Respondeu. Corpo cru:

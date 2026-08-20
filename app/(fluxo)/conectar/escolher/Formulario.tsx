@@ -165,7 +165,7 @@ export function FormularioEscolha({ contas, paginas }: Props) {
 function PrecisaDeWhatsApp() {
   return (
     <div className="trust">
-      <b>A página precisa ter um WhatsApp ligado</b>
+      <b className="title">A página precisa ter um WhatsApp ligado</b>
       Seus anúncios levam a pessoa direto para uma conversa no WhatsApp. Sem um número
       ligado à página, o anúncio não tem para onde mandar quem clica. Para conferir: no
       Facebook, abra a página e vá em <b>Configurações → WhatsApp</b>. A gente confirma

@@ -208,7 +208,7 @@ function BecoSemSaida({
 
         {detalhe && detalhe.length > 0 && (
           <div className="trust">
-            <b>O que encontramos</b>
+            <b className="title">O que encontramos</b>
             {detalhe.map((linha) => (
               <span key={linha} style={{ display: "block", marginTop: 4 }}>
                 {linha}

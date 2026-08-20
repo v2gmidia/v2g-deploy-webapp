@@ -132,6 +132,17 @@
   --auth-max: 1040px;
   --auth-card: 480px;
 
+  /* A SANGRIA DA FAIXA COBALTO — quanto ela avança para cada lado.
+     Existe porque o valor certo depende de ONDE a faixa está: no
+     `.canvas` ela acompanha o padding do canvas (34/22/18), e dentro do
+     `.auth-card` ela precisa acompanhar o padding do card (30/20). Até
+     aqui os dois números eram o mesmo escrito à mão, e o card ficava
+     desalinhado — medido em 20/08/2026: a faixa saía 6px mais LARGA que
+     o card em 1440px e 18px mais ESTREITA em 900px, no mesmo elemento.
+     Defeito registrado em padrao-visual.md §6; conserto em
+     docs/qa3-telas-isoladas.md §3. */
+  --sangria: 34px;
+
   /* ------------------------------------------------------------
      CAMADA SEMÂNTICA — o que sustenta os dois temas.
 
@@ -203,6 +214,16 @@
      linha. Rampa de UI e tipografia de display são dois sistemas,
      e fingir que são um só faria mal aos dois. */
   --fs-hero-num: clamp(56px, 11vw, 104px);
+  /* O MESMO NÚMERO, QUANDO A FAIXA MORA DENTRO DE UM CARD.
+     `11vw` mede a JANELA; dentro do `.auth-card` a caixa é fixa em
+     580px, então quanto mais larga a tela, maior o número dentro de um
+     bloco que não cresce. Medido em 20/08/2026: em 1440px o valor
+     "R$ 2.000,00" quebrava com o "R$" sozinho na primeira linha, e
+     valores de sete dígitos saíam da faixa — brancos sobre o `--canvas`,
+     1,1:1, invisíveis. `cqi` mede a CAIXA (ver `.auth-card
+     .hero-destaque`), que é o que o número precisa saber.
+     Ver docs/qa3-telas-isoladas.md §3. */
+  --fs-hero-num-card: clamp(52px, 16.5cqi, 104px);
   --fs-hero-frase: clamp(26px, 3.4vw, 40px);
   --fs-hero-legenda: clamp(15px, 1.8vw, 19px);
   --fs-hero-sub: clamp(14px, 1.5vw, 16px);
@@ -611,6 +632,23 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: 1.5px solid var(--line);
   border-radius: 14px;
   padding: 30px;
+  /* A faixa cobalto que vive aqui dentro sangra até a borda DO CARD, não
+     até a do canvas. Ver a nota de `--sangria` no `:root`. */
+  --sangria: 30px;
+}
+
+/* A FAIXA DENTRO DO CARD MEDE A CAIXA, NÃO A JANELA.
+   `container-type: inline-size` é o que dá sentido ao `cqi` do
+   `--fs-hero-num-card`: sem isto, `cqi` não tem contêiner e a regra
+   inteira seria inerte — o tipo de regra que o `grep` acha e que não
+   pinta nada (docs/regra-inerte.md). */
+.auth-card .hero-destaque { container-type: inline-size; }
+.auth-card .hero-num {
+  font-size: var(--fs-hero-num-card);
+  /* Rede de segurança para valor legado acima do teto que a `/verba`
+     passou a aplicar: partir o número é feio, e é melhor que ele sair da
+     faixa e virar branco sobre branco. Só age quando não cabe mesmo. */
+  overflow-wrap: anywhere;
 }
 .auth-h {
   font-family: var(--display);
@@ -1156,7 +1194,9 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--ink);
   margin-bottom: 16px;
 }
-.trust b { display: block; font-family: var(--display); font-size: var(--fs-corpo); margin-bottom: 3px; }
+/* O título é `b.title`, e não `b`. A regra por tag pegava também o
+   negrito de dentro da frase — ver a nota da família em `.fail-block`. */
+.trust b.title { display: block; font-family: var(--display); font-size: var(--fs-corpo); margin-bottom: 3px; }
 
 .sr-only {
   position: absolute;
@@ -1753,8 +1793,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-destaque {
   background: var(--cobalt);
   color: var(--white);
-  margin: 0 -34px 22px;
-  padding: 40px 34px 36px;
+  margin: 0 calc(-1 * var(--sangria)) 22px;
+  padding: 40px var(--sangria) 36px;
 }
 /* O eyebrow NÃO é lima. O lima é reservado para o um elemento que
    carrega o significado (o rótulo do número, ou a palavra em destaque
@@ -2105,7 +2145,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .duas-cobrancas { display: grid; gap: 14px; grid-template-columns: 1fr; }
 @media (min-width: 720px) { .duas-cobrancas { grid-template-columns: 1fr 1fr; } }
 .cobranca { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface); }
-.cobranca b { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); margin: 6px 0 6px; }
+/* `b.title`, e não `b` — ver a nota da família em `.fail-block`. Aqui a
+   regra por tag transformava a palavra "inteiro", no meio da frase "vai
+   inteiro para o Facebook", num bloco navy de 15px. */
+.cobranca b.title { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); margin: 6px 0 6px; }
 .cobranca p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink-soft); margin: 0; }
 
 .acoes { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
@@ -2220,7 +2263,28 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 16px 18px;
   margin-bottom: 16px;
 }
-.fail-block b { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--crit); margin-bottom: 5px; }
+/* O TÍTULO É `b.title` — e a razão é uma família de defeito, não gosto.
+   ------------------------------------------------------------------
+   `.fail-block b`, `.trust b` e `.cobranca b` eram descendente por tag:
+   pegavam TODO negrito lá dentro, inclusive a ênfase no meio da frase.
+   Cada uma virava bloco, com linha própria antes e depois, tamanho e cor
+   de título. Medido em 20/08/2026, o primeiro parágrafo da caixa de
+   `/verba` saía assim:
+
+       Você escolheu
+       5 km
+       em volta do seu negócio, … exibido para
+       Rio de janeiro inteira
+       .
+
+   O ponto final sozinho na última linha. Cinco telas estavam nisso:
+   `/verba` (três vezes), `/sem-instagram`, `/conectar/escolher`.
+
+   `b.title` é a convenção que `.proof-card` e `.command-card` já usavam
+   desde o começo — estas três é que ficaram de fora. Ver
+   `docs/qa3-telas-isoladas.md` §5.
+   ------------------------------------------------------------------ */
+.fail-block b.title { display: block; font-family: var(--display); font-size: var(--fs-titulo); color: var(--crit); margin-bottom: 5px; }
 .fail-block p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink); margin: 0; }
 
 @media (max-width: 1080px) {
@@ -2229,22 +2293,25 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   .empty-card { grid-template-columns: 72px minmax(0, 1fr); }
   .empty-list { grid-column: 1 / -1; }
 }
-/* O sangramento acompanha o padding do `.canvas` em cada largura —
-   se as margens negativas não baterem exatamente com ele, sobra uma
-   faixa clara de um lado ou aparece rolagem horizontal. */
+/* O sangramento acompanha o padding do CONTÊINER em cada largura — se as
+   margens negativas não baterem exatamente com ele, sobra uma faixa clara
+   de um lado ou aparece rolagem horizontal. Agora quem carrega o número é
+   `--sangria`, redefinida por largura aqui e por contexto no
+   `.auth-card`: a faixa não precisa saber onde está, só herdar. */
 @media (max-width: 900px) {
-  .hero-destaque { margin-left: -22px; margin-right: -22px; padding-left: 22px; padding-right: 22px; }
+  :root { --sangria: 22px; }
 }
 @media (max-width: 700px) {
   .metrics { grid-template-columns: 1fr; }
   .metric + .metric { border-left: none; border-top: 1px solid var(--line); padding-left: 0; }
 }
 @media (max-width: 620px) {
-  .hero-destaque {
-    margin-left: -18px;
-    margin-right: -18px;
-    padding: 30px 18px 28px;
-  }
+  :root { --sangria: 18px; }
+  /* O padding do `.auth-card` também encolhe aqui (22px 20px), e a
+     sangria dentro dele acompanha o card, não o canvas. */
+  .auth-card { --sangria: 20px; }
+  /* Só o vertical: o lateral agora vem do token. */
+  .hero-destaque { padding-top: 30px; padding-bottom: 28px; }
 }
 @media (max-width: 760px) {
   .field-row { grid-template-columns: 1fr; }

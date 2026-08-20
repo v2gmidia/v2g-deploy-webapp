@@ -208,7 +208,7 @@ export default async function AnunciosPage() {
         <aside className="dash-aside">
           <DicasDeFoto />
           <section className="trust support-block">
-            <b>Ficou com dúvida?</b>
+            <b className="title">Ficou com dúvida?</b>
             Gente de verdade responde, sem robô, em até 2 horas úteis.
             <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
               Chamar no WhatsApp &rarr;
@@ -424,7 +424,7 @@ function SemAnuncioNenhum({
         <aside className="dash-aside">
           <DicasDeFoto />
           <section className="trust support-block">
-            <b>Sua privacidade</b>
+            <b className="title">Sua privacidade</b>
             Suas fotos são usadas só para criar os seus anúncios. Nada é compartilhado com outras
             empresas, e você pode tirar qualquer foto de circulação quando quiser.
           </section>

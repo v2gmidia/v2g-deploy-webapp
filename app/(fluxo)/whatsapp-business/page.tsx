@@ -114,7 +114,7 @@ export default async function WhatsAppBusinessPage() {
         </ol>
 
         <div className="trust">
-          <b>Quando terminar, é só voltar aqui</b>
+          <b className="title">Quando terminar, é só voltar aqui</b>
           A gente confere de novo na hora de publicar. Enquanto isso, nada foi criado e nenhuma
           verba foi gasta — seu anúncio fica esperando, do jeito que está.
           <br />
@@ -125,7 +125,7 @@ export default async function WhatsAppBusinessPage() {
       </section>
 
       <section className="trust">
-        <b>Prefere que a gente faça junto?</b>
+        <b className="title">Prefere que a gente faça junto?</b>
         A gente acompanha por chamada de vídeo ou por mensagem, no seu ritmo. Sem custo e sem
         robô — é uma pessoa do outro lado.
         <br />

@@ -97,7 +97,7 @@ export default async function VendasPage() {
               diz isso, e dizer duas vezes na mesma tela enfraquece as
               duas. */}
           <section className="trust support-block">
-            <b>Ficou com dúvida?</b>
+            <b className="title">Ficou com dúvida?</b>
             Gente de verdade responde, sem robô, em até 2 horas úteis.
             <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
               Chamar no WhatsApp &rarr;

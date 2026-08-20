@@ -60,7 +60,7 @@ export default async function ConectarPage({ searchParams }: Props) {
             className="fail-block"
             style={{ background: "var(--warn-soft)", borderColor: "var(--warn)" }}
           >
-            <b>Sua conexão precisa ser refeita uma vez</b>
+            <b className="title">Sua conexão precisa ser refeita uma vez</b>
             <p>
               A gente melhorou a conexão desde a última vez que você conectou — agora ela também
               guarda de qual página seus anúncios vão sair, que é o que faltava para publicar.
@@ -70,7 +70,7 @@ export default async function ConectarPage({ searchParams }: Props) {
         )}
 
         <div className="trust">
-          <b>A próxima tela é do Facebook, não nossa</b>
+          <b className="title">A próxima tela é do Facebook, não nossa</b>
           Ela vai falar em &quot;Meta&quot;, &quot;Business Manager&quot;, &quot;gerenciar suas
           contas de anúncios&quot; e &quot;acessar suas Páginas&quot;. É o nome técnico das
           coisas, e é assim para qualquer empresa que anuncia no Instagram. Pode seguir: é a tela
@@ -78,14 +78,14 @@ export default async function ConectarPage({ searchParams }: Props) {
         </div>
 
         <div className="trust">
-          <b>Por que ele pede &quot;gerenciar seus anúncios&quot;</b>
+          <b className="title">Por que ele pede &quot;gerenciar seus anúncios&quot;</b>
           É essa permissão que deixa a gente criar e ajustar seus anúncios por você — que é o
           serviço que você contratou. Sem ela, a gente só conseguiria olhar. Ela não dá acesso ao
           seu perfil pessoal, às suas mensagens nem ao seu feed.
         </div>
 
         <div className="trust">
-          <b>Por que ele pede acesso às suas Páginas</b>
+          <b className="title">Por que ele pede acesso às suas Páginas</b>
           Seus anúncios saem de uma página, e é o WhatsApp dela que recebe as conversas. A gente
           precisa ver quais páginas você tem para você escolher de qual eles vão sair. A gente não
           publica nada na página nem lê as conversas dela.
@@ -136,11 +136,28 @@ export default async function ConectarPage({ searchParams }: Props) {
           </ul>
         </section>
 
+        {/* A FRASE PROMETIA UM BOTÃO QUE NÃO EXISTE — D8 do lote QA-3.
+            "Dá para desconectar quando quiser, direto por aqui" não tinha
+            controle nenhum atrás: `grep` por desconectar/revogar/deauth em
+            `app` e `lib` devolvia esta linha e mais nada.
+
+            Corrigimos a frase em vez de construir o botão, e a razão está
+            em `docs/qa3-telas-isoladas.md` §4: esta é a tela do
+            CONSENTIMENTO, e ação destrutiva não mora no aside de um "vamos
+            começar". Desconectar tira o token do Vault e deixa campanha
+            publicada sem quem cuide dela — é desenho com confirmação, não
+            é botão. Quando existir, mora na `/conta`, que é onde a conexão
+            já é gerenciada.
+
+            A promessa nova é mais forte que a antiga, não mais fraca:
+            desconectar hoje já acontece — só que por uma pessoa, no mesmo
+            WhatsApp que a tela inteira usa. */}
         <section className="proof-card">
           <b className="title">Você continua dono de tudo</b>
           <p>
             A conta de anúncio é sua, o Instagram é seu. Se um dia sair da V2G, leva tudo com
-            você — e dá para desconectar quando quiser, direto por aqui.
+            você — e para tirar o nosso acesso é só pedir: a gente desconecta na hora e te manda a
+            confirmação.
           </p>
         </section>
       </aside>

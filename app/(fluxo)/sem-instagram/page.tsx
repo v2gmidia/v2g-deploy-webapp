@@ -89,7 +89,7 @@ export default function SemInstagramPage() {
         </ol>
 
         <div className="trust">
-          <b>Como saber se deu certo</b>
+          <b className="title">Como saber se deu certo</b>
           No seu perfil vai aparecer um botão novo, escrito <b>Ferramentas profissionais</b> ou{" "}
           <b>Painel profissional</b>. Se ele está lá, está pronto.
           <br />
@@ -100,7 +100,7 @@ export default function SemInstagramPage() {
       </section>
 
       <section className="trust">
-        <b>Se travar em algum passo, chama</b>
+        <b className="title">Se travar em algum passo, chama</b>
         O Instagram muda o nome dos menus de tempos em tempos, e às vezes o que está escrito aqui
         não bate com o que você vê. Manda um print que a gente te diz onde tocar.
         <br />

@@ -151,7 +151,7 @@ export default async function AlertasPage() {
           </section>
 
           <section className="trust support-block">
-            <b>Fala com gente de verdade</b>
+            <b className="title">Fala com gente de verdade</b>
             Dúvida de cobrança, de resultado ou de saída: é a mesma pessoa que responde.
             WhatsApp, resposta em até 2 horas úteis, sem robô e sem menu de atendimento.
             <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">

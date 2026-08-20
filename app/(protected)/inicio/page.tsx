@@ -134,7 +134,7 @@ export default async function InicioPage() {
                   className="fail-block"
                   style={{ background: "var(--warn-soft)", borderColor: "var(--warn)" }}
                 >
-                  <b>O que não fazer agora</b>
+                  <b className="title">O que não fazer agora</b>
                   <p>
                     Não pause e não mexa no investimento nestes primeiros dias. Cada mudança
                     reinicia o aprendizado do zero, e o que já foi gasto nele se perde. É a
@@ -374,7 +374,7 @@ function resumoDaDecisao(payload: unknown): string {
 function Suporte() {
   return (
     <section className="trust support-block">
-      <b>Travou em alguma parte?</b>
+      <b className="title">Travou em alguma parte?</b>
       Gente de verdade responde, sem robô, em até 2 horas úteis.
       <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
         Chamar no WhatsApp &rarr;

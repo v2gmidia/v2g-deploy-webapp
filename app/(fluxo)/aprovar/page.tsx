@@ -77,7 +77,7 @@ export default async function AprovarPage() {
           momento, é "o que estava errado?" — não "como ficou?". */}
       {ehSubstituto && reprovado && (
         <section className="trust" style={{ borderColor: "var(--warn)", background: "var(--warn-soft)" }}>
-          <b>O que não passou antes</b>
+          <b className="title">O que não passou antes</b>
           {reprovado.meta_status
             ? `O Facebook recusou a versão anterior. Motivo informado: ${reprovado.meta_status}.`
             : "O Facebook recusou a versão anterior sem detalhar o motivo — acontece."}{" "}
@@ -119,7 +119,7 @@ export default async function AprovarPage() {
       </section>
 
       <section className="trust">
-        <b>A aprovação ainda não está ligada</b>
+        <b className="title">A aprovação ainda não está ligada</b>
         Falta a parte que guarda a sua resposta e coloca a peça na fila. Enquanto isso, se quiser
         aprovar ou pedir mudança, é mais rápido pelo WhatsApp — e a gente registra por você.
         <br />
@@ -159,7 +159,7 @@ function NadaParaAprovar() {
         </p>
       </div>
       <section className="trust">
-        <b>Enquanto isso</b>
+        <b className="title">Enquanto isso</b>
         Dá para ver como estão seus anúncios ou conferir o que já foi decidido por você.
         <br />
         <a className="cta" href="/anuncios" style={{ marginTop: 12, width: "max-content" }}>

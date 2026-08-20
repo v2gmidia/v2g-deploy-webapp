@@ -1,5 +1,6 @@
 import "server-only";
 import { lerMarketing } from "./marketing";
+import { TETO_DIARIO_ABSOLUTO_CENTAVOS } from "../verba/limites";
 
 /**
  * Validação de orçamento. Desenho em `docs/publicar-campanha.md` §5.
@@ -14,13 +15,18 @@ import { lerMarketing } from "./marketing";
 /** Dias usados para partir o teto mensal. Fixo: mês comercial. */
 const DIAS_DO_MES = 30;
 
-/**
- * Último freio contra dado corrompido no banco. Não é regra de negócio —
- * é a pergunta "isso pode ser um erro de digitação ou um bug?". Um
- * cliente que realmente queira gastar mais que isso por dia vai falar com
- * a gente, e aí a gente sobe o número sabendo o que está fazendo.
+/*
+ * O TETO ABSOLUTO SAIU DAQUI, e o motivo é o lote QA-3: a `/verba` e a
+ * `/meu-negocio` passaram a aplicar o mesmo limite na hora de GRAVAR, em
+ * vez de deixar o valor impossível chegar até aqui. Três lugares julgando
+ * a mesma coluna com três cópias do mesmo número é como um deles fica
+ * para trás na primeira mudança — o defeito que o QA-2 consertou noutro
+ * campo. Agora o número mora em `lib/verba/limites.ts`, sem `server-only`
+ * na cadeia (o rodapé da `/verba` é componente de cliente).
+ *
+ * O valor e a razão dele não mudaram: R$ 1.000,00/dia, último freio
+ * contra dado corrompido no banco.
  */
-const TETO_DIARIO_ABSOLUTO_CENTAVOS = 100_000; // R$ 1.000,00/dia
 
 export type FalhaDeOrcamento =
   | "sem_teto"

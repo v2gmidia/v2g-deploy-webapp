@@ -2,12 +2,49 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { dinheiro } from "@/lib/formato";
 import { gravarCamposDoCliente } from "@/lib/cadastro/procedencia";
+import { validarOrcamento } from "@/lib/meta/orcamento";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
+import { DIAS, PISO_MENSAL_DA_CASA } from "@/lib/verba/limites";
 
 export interface VerbaActionState {
   erro?: string;
   ok?: string;
+}
+
+/**
+ * O piso REAL do Meta, quando ele já é conhecido — sem chamar o Meta.
+ *
+ * `publicar.ts` guarda em `ad_accounts.min_daily_budget_cents` o valor que
+ * `/act_<id>/minimum_budgets` devolveu na última publicação. Ler daqui é
+ * de graça e não põe token nenhum neste caminho.
+ *
+ * PEGA O MENOR entre as contas que têm valor, e a razão não é preguiça:
+ * qual conta a campanha vai usar só se decide quando a campanha existe
+ * (`campaigns.ad_account_id`) — o negócio medido tem TRÊS contas ativas.
+ * Usar o maior recusaria um valor que talvez funcionasse na conta
+ * escolhida. Na dúvida, quem recusa é o Meta na publicação, não a gente
+ * aqui.
+ *
+ * Devolve `null` para "não sei" — e `null` não vira zero nem vira chute:
+ * cai no piso da casa.
+ */
+async function pisoConhecidoEmCentavos(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  businessId: string,
+): Promise<number | null> {
+  const { data } = await supabase
+    .from("ad_accounts")
+    .select("min_daily_budget_cents")
+    .eq("business_id", businessId)
+    .not("min_daily_budget_cents", "is", null);
+
+  const valores = (data ?? [])
+    .map((linha) => Number(linha.min_daily_budget_cents))
+    .filter((n) => Number.isFinite(n) && n > 0);
+
+  return valores.length > 0 ? Math.min(...valores) : null;
 }
 
 /**
@@ -35,12 +72,23 @@ function reais(bruto: string): number | null {
  * único lugar que definia era a `/conta`, que é área logada, depois do
  * fluxo. Quem estava no fluxo lia "você ainda não definiu" sem ter onde.
  *
- * NÃO VALIDA CONTRA O PISO DO META, de propósito. O piso é por conta,
- * moeda e objetivo, e só é consultável com token
- * (`lib/meta/orcamento.ts`, `consultarPisoDiario`) — que aqui ainda não
- * existe. Um piso fixo inventado recusaria valor válido ou aceitaria
- * inválido, nos dois casos com cara de certeza. A validação dura continua
- * na publicação, onde ela já está e já funciona.
+ * NÃO INVENTA O PISO DO META, e isso não mudou: o piso dele é por conta,
+ * moeda e objetivo, e só é consultável com token. O que mudou no lote
+ * QA-3 é parar de usar "não sei o piso do Meta" como licença para aceitar
+ * qualquer coisa. São três estados:
+ *
+ *   1. piso do Meta CONHECIDO (`ad_accounts.min_daily_budget_cents`, que
+ *      a publicação já grava) — recusa com o número real dele;
+ *   2. piso DESCONHECIDO — recusa só o impossível, com o piso da casa, e
+ *      a tela diz que o número é nosso e que o do Facebook pode ser maior;
+ *   3. teto — o mesmo `TETO_DIARIO_ABSOLUTO_CENTAVOS` que a publicação já
+ *      aplica, alcançado por `validarOrcamento`. Duas telas com regras
+ *      diferentes para o mesmo campo é o defeito que o QA-2 acabou de
+ *      consertar em outro lugar; não vale reintroduzir aqui.
+ *
+ * A validação dura continua na publicação. Esta aqui é a que evita o
+ * "Pronto" para um valor que nunca vai virar anúncio — e evita disparar o
+ * pipeline com ele.
  */
 export async function definirVerbaAction(
   _prev: VerbaActionState,
@@ -70,6 +118,27 @@ export async function definirVerbaAction(
 
   if (!negocio) return { erro: "Não encontramos seu negócio. Comece pelo onboarding." };
 
+  // ---------- O que a gente aceita guardar ----------
+  const piso = await pisoConhecidoEmCentavos(supabase, negocio.id);
+
+  // O piso da casa só vale quando o do Meta é desconhecido. Se o real é
+  // conhecido, ele é a autoridade — recusar por cima dele seria a gente
+  // barrando um valor que o Facebook aceitaria.
+  if (piso === null && valor < PISO_MENSAL_DA_CASA) {
+    return {
+      erro:
+        `Com ${dinheiro(valor)} por mês o anúncio fica em ${dinheiro(valor / DIAS)} por dia, e ` +
+        `nesse valor ele não roda. Nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA)} por mês — ` +
+        `uns ${dinheiro(PISO_MENSAL_DA_CASA / DIAS)} por dia. Esse mínimo é nosso: o do Facebook ` +
+        `pode ser maior, muda de conta para conta, e a gente confere na hora de publicar.`,
+    };
+  }
+
+  // Piso real (quando conhecido), teto e consistência do cálculo saem da
+  // MESMA função que a publicação usa — de propósito.
+  const veredito = validarOrcamento(valor, piso);
+  if (!veredito.ok) return { erro: veredito.mensagem };
+
   const gravacao = await gravarCamposDoCliente({
     profileId: user.id,
     businessId: negocio.id,
@@ -88,5 +157,14 @@ export async function definirVerbaAction(
   // `dispararSeCompleto`, com a mesma regra das outras duas superfícies.
   await dispararSeCompleto();
 
-  return { ok: "Pronto. É esse o seu teto do mês." };
+  // O "Pronto" seco afirmava que estava tudo certo para anunciar — e a
+  // tela não sabe disso enquanto o piso do Meta for desconhecido. Diz o
+  // que foi guardado, quanto dá por dia, e de quem é a próxima palavra.
+  return {
+    ok:
+      `Guardado: ${dinheiro(valor)} por mês, uns ${dinheiro(valor / DIAS)} por dia. ` +
+      (piso === null
+        ? "O Facebook tem um mínimo por dia que muda de conta para conta — a gente confere na hora de publicar e te avisa se não alcançar."
+        : "Esse valor passa do mínimo que o Facebook pede na sua conta."),
+  };
 }

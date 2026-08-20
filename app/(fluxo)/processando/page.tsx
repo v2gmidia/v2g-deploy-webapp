@@ -232,7 +232,7 @@ function EmAndamento() {
       />
 
       <div className="trust">
-        <b>Sobre o seu dinheiro</b>
+        <b className="title">Sobre o seu dinheiro</b>
         O primeiro real só entra depois que a aprovação dos anúncios sair. Não antes disso — você
         não paga por um anúncio que ainda não existe.
       </div>
@@ -273,7 +273,7 @@ function EsperaLonga({ minutos }: { minutos: number }) {
       />
 
       <div className="trust">
-        <b>Você não precisa esperar aqui</b>
+        <b className="title">Você não precisa esperar aqui</b>
         Feche o app à vontade. Se passar do razoável, a gente te procura no WhatsApp — você não
         vai descobrir por conta própria que algo travou.
       </div>
@@ -351,7 +351,7 @@ function Falha({ minutos }: { minutos: number }) {
       />
 
       <div className="fail-block">
-        <b>Nada foi cobrado e nenhum anúncio foi ao ar</b>
+        <b className="title">Nada foi cobrado e nenhum anúncio foi ao ar</b>
         <p>
           A montagem parou antes de qualquer anúncio existir, então não houve gasto nenhum. Suas
           respostas continuam salvas — quando isso voltar, retoma de onde parou, sem recomeçar.

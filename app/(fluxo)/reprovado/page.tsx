@@ -106,7 +106,7 @@ export default async function ReprovadoPage() {
       </section>
 
       <section className="trust">
-        <b>O que acontece agora, sem você fazer nada</b>
+        <b className="title">O que acontece agora, sem você fazer nada</b>
         A IA refaz a peça mudando o que costuma causar recusa — normalmente uma palavra do texto
         ou a quantidade de texto sobre a foto. Quando a nova versão ficar pronta, ela aparece para
         você aprovar, e você vai ver o que mudou.
@@ -117,7 +117,7 @@ export default async function ReprovadoPage() {
       </section>
 
       <section className="trust">
-        <b>Os motivos mais comuns, para você reconhecer</b>
+        <b className="title">Os motivos mais comuns, para você reconhecer</b>
         Prometer resultado (&quot;emagreça 10kg&quot;), falar de saúde ou dinheiro de forma
         direta, texto ocupando boa parte da imagem, ou foto com marca de outra empresa. Nada disso
         é acusação — são regras da plataforma, iguais para todo mundo.

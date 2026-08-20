@@ -109,7 +109,7 @@ export default async function MeuNegocioPage() {
       ))}
 
       <section className="trust support-block">
-        <b>Achou alguma coisa errada e não sabe como arrumar?</b>
+        <b className="title">Achou alguma coisa errada e não sabe como arrumar?</b>
         Fala com a gente que a gente ajusta junto. WhatsApp, resposta em até 2 horas úteis, sem
         robô e sem menu de atendimento.
         <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
