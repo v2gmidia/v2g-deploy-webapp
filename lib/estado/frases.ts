@@ -54,7 +54,28 @@ export interface Etapa {
   id: IdDeEtapa;
   concluida: boolean;
   bola: QuemTemABola;
-  /** o que o cliente lê. Nunca nome de coluna, nunca nome de campo da API. */
+  /**
+   * COMO A ETAPA SE CHAMA — substantivo, não chamado de ação.
+   *
+   * Existe porque o `titulo` é escrito para o estado PENDENTE dela: "Falta
+   * conectar sua conta" é a frase certa no herói e a frase errada numa
+   * lista, onde a mesma etapa aparece já resolvida. Numa conta real a lista
+   * mostrava "Falta conectar sua conta · Já está feito", que é uma
+   * contradição na mesma linha.
+   *
+   * `nome` funciona nos três estados porque não afirma nada sobre o estado.
+   */
+  nome: string;
+  /**
+   * A frase do herói. Nunca nome de coluna, nunca nome de campo da API.
+   *
+   * **SÓ TEM SENTIDO ENQUANTO `concluida` É FALSO.** Ela é escrita para o
+   * estado pendente — e na etapa 1, que delega a copy ao
+   * `resumirPendencias`, ela é literalmente STRING VAZIA quando o cadastro
+   * fecha (aquele módulo não tem frase para "não falta nada", porque nunca
+   * precisou renderizar isso). Quem for mostrar uma etapa concluída usa
+   * `nome`, não isto.
+   */
   titulo: string;
   corpo: string;
   /**
@@ -215,6 +236,7 @@ function etapaCadastro(m: MedidaDoCliente): Etapa {
     id: "cadastro",
     concluida: r.vazio,
     bola,
+    nome: "Seu cadastro",
     titulo: r.titulo,
     corpo: r.corpo,
     acao: r.acao,
@@ -227,6 +249,7 @@ function etapaConexao(m: MedidaDoCliente): Etapa {
     id: "conexao",
     concluida: m.conexaoAtiva,
     bola: "cliente",
+    nome: "A conexão da sua conta",
     titulo: "Falta conectar sua conta",
     corpo:
       "É pela sua conta que o anúncio sai — com o nome e a cara do seu negócio, não com os nossos. Leva menos de um minuto, e você pode desfazer quando quiser.",
@@ -256,6 +279,7 @@ function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
       id: "peca",
       concluida: m.pecasProntas > 0,
       bola: "nos",
+      nome: "A peça do seu anúncio",
       titulo: "A gente está devendo o seu primeiro anúncio",
       corpo: `Seu cadastro chegou aqui${quando ? ` em ${quando}` : ""} e a gente ainda não te mandou nenhuma peça para aprovar. Já passou do tempo, e isso é nosso — não é nada que você deixou de fazer. Se quiser puxar agora, é só chamar.`,
       acao: { rotulo: "Falar com a gente", href: WHATSAPP_PECA },
@@ -268,6 +292,7 @@ function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
     id: "peca",
     concluida: m.pecasProntas > 0,
     bola: "nos",
+    nome: "A peça do seu anúncio",
     titulo: "A gente está montando o seu primeiro anúncio",
     corpo: `Seu cadastro está completo${quando ? ` desde ${quando}` : ""} e agora é com a gente: a IA escreve o texto e escolhe a arte. Quando ficar pronto, chega aqui para você aprovar — nada vai ao ar sem o seu sim.`,
     // SEM AÇÃO. Não há o que ele fazer, e um botão aqui inventaria trabalho
@@ -284,6 +309,7 @@ function etapaAprovacao(m: MedidaDoCliente): Etapa {
     id: "aprovacao",
     concluida: m.pecasParaAprovar === 0,
     bola: "cliente",
+    nome: "A sua aprovação",
     titulo: uma ? "Tem uma peça esperando você" : "Tem peça esperando você",
     corpo: uma
       ? "A IA montou seu anúncio — o texto e a foto. Nada vai ao ar antes de você ler e dizer que sim."
@@ -303,6 +329,7 @@ function etapaNoAr(m: MedidaDoCliente, agora: Date): Etapa {
       id: "no_ar",
       concluida: false,
       bola: "nos",
+      nome: "O anúncio no ar",
       titulo: "Uma publicação não deu certo",
       corpo:
         "Nada foi ativado e nenhuma verba foi gasta. O motivo está na linha do anúncio, e resolver é com a gente.",
@@ -322,6 +349,7 @@ function etapaNoAr(m: MedidaDoCliente, agora: Date): Etapa {
     id: "no_ar",
     concluida: m.publicadaEm !== null,
     bola: "nos",
+    nome: "O anúncio no ar",
     titulo: admitindo
       ? "Seu anúncio devia estar no ar e não está"
       : "A gente está colocando seu anúncio no ar",
@@ -353,6 +381,7 @@ function etapaNumeros(m: MedidaDoCliente, agora: Date): Etapa {
       id: "numeros",
       concluida: m.temNumero,
       bola: "nos",
+      nome: "Os primeiros números",
       titulo: "Faz dias que seu anúncio está no ar e nenhum número chegou",
       corpo:
         "O aprendizado do Facebook leva de 2 a 3 dias, e já passou disso. Se ainda não há número aqui, o problema é nosso e a gente vai atrás.",
@@ -366,6 +395,7 @@ function etapaNumeros(m: MedidaDoCliente, agora: Date): Etapa {
     id: "numeros",
     concluida: m.temNumero,
     bola: "facebook",
+    nome: "Os primeiros números",
     titulo: "O Facebook está aprendendo quem é o seu cliente",
     corpo:
       "Nos primeiros dias ele mostra seu anúncio para perfis diferentes de pessoas só para descobrir quem responde. Enquanto esse teste roda, o custo fica mais alto e a venda demora — não porque a campanha está ruim, mas porque ela ainda não sabe para quem falar. Costuma levar de 2 a 3 dias.",
@@ -413,5 +443,65 @@ export function tarja(etapa: Etapa): string {
       return "Com a gente agora";
     case "facebook":
       return "Por que ainda não há número";
+  }
+}
+
+// -------------------------------------------------- a etapa vista de lista
+
+/**
+ * Onde a etapa está EM RELAÇÃO À ATUAL. Três valores, não dois.
+ *
+ * ============================================================
+ * ESTE É O ERRO QUE A LISTA DO `/inicio` COMETEU, e é o mesmo que este
+ * projeto já pagou caro em outro lugar: dois estados onde havia três.
+ *
+ * A lista perguntava só `etapa.concluida`, e imprimia "Já está feito" para
+ * tudo que não estava pendente. Numa conta real isso escreveu "A sua
+ * aprovação · Já está feito" para um cliente que nunca aprovou nada — o
+ * predicado da etapa (`pecasParaAprovar === 0`) é VERDADE VAZIA quando não
+ * existe peça nenhuma para aprovar.
+ *
+ * Numa cadeia, "não está pendente" tem dois significados incompatíveis:
+ * aconteceu, e ainda não chegou a vez. Quem sabe a diferença não é a etapa
+ * sozinha — é a POSIÇÃO dela em relação à atual. Uma etapa depois da atual
+ * não aconteceu, e o que o predicado dela diz é irrelevante: não dá para
+ * ter aprovado uma peça que ainda não existe.
+ * ============================================================
+ */
+export type PosicaoNaCadeia = "feita" | "atual" | "ainda_nao";
+
+export function posicoesDaCadeia(
+  etapas: Etapa[],
+  atual: Etapa | null,
+): Array<{ etapa: Etapa; posicao: PosicaoNaCadeia }> {
+  const iAtual = atual ? etapas.findIndex((e) => e.id === atual.id) : etapas.length;
+  return etapas.map((etapa, i) => ({
+    etapa,
+    posicao: i < iAtual ? "feita" : i === iAtual ? "atual" : "ainda_nao",
+  }));
+}
+
+/**
+ * O estado da etapa em uma linha, para a lista.
+ *
+ * UMA VOZ SÓ. A lista pareia `nome` (substantivo) com estado (afirmação
+ * sobre o mundo). Antes ela pareava `titulo` — que é chamado de ação — com
+ * estado, e "Falta conectar sua conta · Já está feito" mistura as duas
+ * vozes na mesma linha, além de se contradizer.
+ *
+ * O futuro diz DE QUEM VAI SER a vez, e não só que ainda não chegou: é a
+ * mesma informação que o herói dá sobre o presente, e é o que faz a lista
+ * ser mapa em vez de enfeite.
+ */
+export function estadoNaLista(etapa: Etapa, posicao: PosicaoNaCadeia): string {
+  if (posicao === "feita") return "Já está feito.";
+  if (posicao === "atual") return "É o que está acontecendo agora.";
+  switch (etapa.bola) {
+    case "cliente":
+      return "Ainda não chegou — vai depender de você.";
+    case "nos":
+      return "Ainda não chegou — vai ser com a gente.";
+    case "facebook":
+      return "Ainda não chegou — vai depender do Facebook.";
   }
 }

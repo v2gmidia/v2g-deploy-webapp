@@ -4,7 +4,7 @@ import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { dinheiro, numero } from "@/lib/formato";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
-import type { Etapa } from "@/lib/estado/frases";
+import { estadoNaLista, posicoesDaCadeia, type Etapa } from "@/lib/estado/frases";
 
 /**
  * Início / dashboard — porte de `tela-05-dashboard-desktop.html`.
@@ -38,13 +38,6 @@ import type { Etapa } from "@/lib/estado/frases";
  * 3. Com número — o dashboard de verdade, de `metrics_daily`.
  */
 
-/** De quem é a vez, em uma linha. Mesma regra da tarja, formato de lista. */
-function dono(e: Etapa): string {
-  if (e.bola === "cliente") return "Depende de você.";
-  if (e.bola === "facebook") return "Depende do Facebook.";
-  return "É com a gente.";
-}
-
 /**
  * O resto do caminho — a cadeia, sem peso.
  *
@@ -52,9 +45,22 @@ function dono(e: Etapa): string {
  * que ela deve FAZER agora é o herói; isto é o mapa. Etapa concluída fica
  * na lista, marcada: sumir com ela encolheria a lista a cada visita e
  * tiraria justamente a sensação de ter andado.
+ *
+ * ============================================================
+ * DUAS COISAS QUE ESTA LISTA ERRAVA, e as duas viraram regra em
+ * `lib/estado/frases.ts` para não voltarem por outra tela:
+ *
+ * 1. Ela lia `etapa.titulo`, que é CHAMADO DE AÇÃO, e pareava com estado:
+ *    "Falta conectar sua conta · Já está feito", duas vozes e uma
+ *    contradição na mesma linha. Agora lê `etapa.nome`, que é substantivo
+ *    e funciona nos três estados.
+ * 2. Ela decidia por `etapa.concluida`, que é dois estados onde há três —
+ *    e escrevia "Já está feito" para etapas que nunca aconteceram. Agora
+ *    quem decide é a POSIÇÃO em relação à atual.
+ * ============================================================
  */
 function RestoDoCaminho({ etapas, atual }: { etapas: Etapa[]; atual: Etapa }) {
-  const outras = etapas.filter((e) => e.id !== atual.id);
+  const outras = posicoesDaCadeia(etapas, atual).filter((p) => p.posicao !== "atual");
   if (outras.length === 0) return null;
 
   return (
@@ -63,11 +69,11 @@ function RestoDoCaminho({ etapas, atual }: { etapas: Etapa[]; atual: Etapa }) {
         <h2>O resto do caminho</h2>
       </div>
       <div className="card acct-list">
-        {outras.map((e) => (
-          <div className="acct-row" key={e.id}>
+        {outras.map(({ etapa, posicao }) => (
+          <div className="acct-row" key={etapa.id}>
             <span className="ar-text">
-              <b>{e.titulo}</b>
-              <span>{e.concluida ? "Já está feito." : dono(e)}</span>
+              <b>{etapa.nome}</b>
+              <span>{estadoNaLista(etapa, posicao)}</span>
             </span>
           </div>
         ))}

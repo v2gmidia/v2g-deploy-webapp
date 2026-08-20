@@ -595,3 +595,72 @@ mesma coisa — e que a `/onboarding/contas` mostra R$ 200,00.
 **Os prazos de 2 e 4 dias nunca foram vistos em produção**, só no conferidor.
 Eles são escolha, não medição (§2.5), e o primeiro cliente que cruzar o corte
 é quem vai dizer se o número está certo.
+
+---
+
+## 11. A LISTA DO "RESTO DO CAMINHO" — defeito e conserto, 20/08/2026
+
+Achado na revisão do lote, na tela, na conta `a85c37a9`. A lista mostrava:
+
+```
+(sem título)                            Já está feito.
+Falta conectar sua conta                Já está feito.
+Tem peça esperando você                 Já está feito.
+```
+
+**Não era deslocamento entre título e estado.** Rodei o componente linha a
+linha: cada `<b>` estava pareado com o próprio `<span>`, na mesma iteração.
+Eram três defeitos independentes que se pareciam com um.
+
+### 11.1 O título vazio
+
+A etapa 1 delega a copy ao `resumirPendencias` (§2.6), e aquele módulo
+devolve `titulo: ""` quando não há pendência — ele nunca precisou de frase
+para "não falta nada", porque nunca renderizou esse caso. A delegação estava
+certa; o buraco é que ela só cobria o estado pendente, e a lista mostra o
+estado resolvido.
+
+### 11.2 Nome não é chamado de ação
+
+`titulo` é escrito para o herói, onde a etapa está pendente: *"Falta
+conectar sua conta"* é a frase certa lá. Numa lista, onde a mesma etapa
+aparece resolvida, ela vira contradição — e mistura duas vozes na mesma
+linha: chamado de ação de um lado, estado do outro.
+
+Cada etapa ganhou **`nome`**, substantivo, que funciona nos três estados:
+*Seu cadastro · A conexão da sua conta · A peça do seu anúncio · A sua
+aprovação · O anúncio no ar · Os primeiros números*. `titulo` continua sendo
+a frase do herói, e está documentado no tipo que ele **só tem sentido
+enquanto `concluida` é falso**.
+
+### 11.3 O terceiro, que é o grave: dois estados onde havia três
+
+*"Tem peça esperando você · Já está feito"* para um cliente que nunca
+aprovou nada. A lista perguntava `etapa.concluida`, e o predicado da
+aprovação é `pecasParaAprovar === 0` — **verdade vazia** quando não existe
+peça nenhuma.
+
+Numa cadeia, "não está pendente" tem dois significados incompatíveis:
+aconteceu, e ainda não chegou a vez. Quem sabe a diferença não é a etapa
+sozinha: é a **posição dela em relação à atual**. Não dá para ter aprovado
+uma peça que ainda não existe.
+
+É a mesma classe de defeito que este projeto já registrou — `true`, `false`
+e `null` para "não sei"; o `false` que era "não consegui verificar" acusou
+todo cliente de não ter WhatsApp. Aqui o "não está pendente" que era "ainda
+não chegou" afirmava serviço prestado.
+
+`posicoesDaCadeia()` devolve `feita | atual | ainda_nao`, e o futuro diz de
+quem VAI ser a vez — a mesma informação que o herói dá sobre o presente:
+
+```
+Seu cadastro              Já está feito.
+A conexão da sua conta    Já está feito.
+A sua aprovação           Ainda não chegou — vai depender de você.
+O anúncio no ar           Ainda não chegou — vai ser com a gente.
+Os primeiros números      Ainda não chegou — vai depender do Facebook.
+```
+
+O §9 de `conferir-estado.ts` cobre os três — inclusive a asserção de que a
+aprovação tem `concluida === true` E posição `ainda_nao`, que é o par exato
+que produzia a mentira. 48 conferências, verde.

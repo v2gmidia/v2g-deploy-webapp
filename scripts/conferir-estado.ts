@@ -21,7 +21,9 @@ import { resumirPendencias } from "../lib/cadastro/pendencias.ts";
 import type { Pendencia } from "../lib/cadastro/montar.ts";
 import {
   blocosDaTrilha,
+  estadoNaLista,
   montarEtapas,
+  posicoesDaCadeia,
   DIAS_ATE_ADMITIR_NUMEROS,
   DIAS_ATE_ADMITIR_PECA,
   type Etapa,
@@ -233,6 +235,58 @@ secao("8. a etapa 1 DELEGA a copy — não escreve a própria");
   const p = proximo(m, maisDias(5))!;
   ok(p.admitindo, "passados 5 dias sem a ligação, a etapa 1 admite");
   ok(p.bola === "nos", "  e a bola é nossa");
+}
+
+secao("9. a lista do 'resto do caminho' — a regressão de 20/08");
+{
+  // A conta real do §0: cadastro fechado, conexão viva, parada na peça.
+  // A lista mostrava "Já está feito" para a APROVAÇÃO, que nunca
+  // aconteceu — `pecasParaAprovar === 0` é verdade vazia quando não existe
+  // peça nenhuma para aprovar. E mostrava `titulo` (chamado de ação) onde
+  // precisava de nome.
+  const m = base();
+  const etapas = montarEtapas(m, maisDias(1));
+  const atual = etapas.find((e) => !e.concluida)!;
+  const linhas = posicoesDaCadeia(etapas, atual);
+  const por = (id: string) => linhas.find((l) => l.etapa.id === id)!;
+
+  ok(por("cadastro").posicao === "feita", "o cadastro, antes da atual, é 'feita'");
+  ok(por("conexao").posicao === "feita", "a conexão, antes da atual, é 'feita'");
+  ok(por("peca").posicao === "atual", "a peça é a ATUAL");
+  ok(
+    por("aprovacao").etapa.concluida === true,
+    "a aprovação tem `concluida === true` (verdade vazia: zero peças)",
+  );
+  ok(
+    por("aprovacao").posicao === "ainda_nao",
+    "  mas a POSIÇÃO dela é 'ainda_nao' — é a posição que manda",
+  );
+  ok(por("no_ar").posicao === "ainda_nao", "o no ar é 'ainda_nao'");
+  ok(por("numeros").posicao === "ainda_nao", "os números são 'ainda_nao'");
+
+  ok(
+    !estadoNaLista(por("aprovacao").etapa, "ainda_nao").includes("Já está feito"),
+    "  e a aprovação NÃO lê 'Já está feito'",
+  );
+  ok(
+    estadoNaLista(por("aprovacao").etapa, "ainda_nao").includes("vai depender de você"),
+    "  ela diz de quem VAI ser a vez",
+  );
+
+  // Toda etapa precisa de um nome que sirva nos três estados. String vazia
+  // foi exatamente o que a linha do cadastro mostrou em tela.
+  ok(
+    etapas.every((e) => e.nome.trim().length > 0),
+    "toda etapa tem `nome` não vazio — inclusive a concluída",
+  );
+  ok(
+    etapas.every((e) => !e.nome.startsWith("Falta")),
+    "e nenhum `nome` começa com 'Falta' — nome é substantivo, não chamado",
+  );
+  ok(
+    por("cadastro").etapa.titulo === "",
+    "o `titulo` do cadastro concluído É vazio — por isso a lista usa `nome`",
+  );
 }
 
 console.log(
