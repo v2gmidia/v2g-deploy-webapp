@@ -182,13 +182,86 @@ function lerContas(onboarding: unknown): Partial<Record<ChaveDeConta, RespostaDe
 }
 
 /**
- * Os três estados do §5, decididos por (coluna, jsonb) — nunca pela coluna
- * sozinha, que não distingue "não soube" de "não perguntamos".
+ * O que se sabe hoje sobre uma das três contas, resolvendo COLUNA e JSONB.
+ *
+ * ============================================================
+ * A COLUNA GANHA. SEMPRE. Ver docs/estado-do-cliente.md §4.
+ *
+ * Medido em 20/08/2026 numa conta real: o jsonb dizia
+ * `lucro.naoSei = true` (19/08 19:56) e a coluna
+ * `target_profit_per_customer` tinha 200 com procedência `confirmado`
+ * (19/08 23:31, três horas e meia depois, pela `/meu-negocio`). A
+ * `/onboarding/contas` lia o jsonb e dizia "Você não soube" sobre um
+ * número que o próprio cliente havia conferido — e que já estava
+ * definindo quanto a IA pode gastar para trazer um cliente.
+ *
+ * Três razões para a coluna ganhar, em ordem de peso: é ela que fecha o
+ * cadastro e vai no `POST /cadastro`; é a única com procedência (quem
+ * disse, quando, e se confirmou ou corrigiu); e é a única com caminho de
+ * escrita auditado (`confirmar_campo_do_cliente`, 0015/0016).
+ *
+ * O JSONB NÃO É LIXO: ele é o MOTIVO de a coluna estar vazia, e é o que
+ * distingue "ele não soube" de "ninguém perguntou" — a distinção que
+ * manda a conversa para a entrevista. Só que esse motivo só tem o que
+ * decidir enquanto não há valor.
+ *
+ * E ele NÃO É APAGADO quando a coluna enche. Aquilo registra um fato com
+ * hora: às 19:56 daquele dia, essa pessoa disse que não sabia. Apagar é
+ * reescrever medição. Deixar de ler não é apagar.
+ * ============================================================
  */
-function motivoDaConta(conta: RespostaDeConta | undefined): MotivoPendencia {
-  if (!conta) return "nao_perguntado";
-  if (conta.naoSei) return "nao_sei";
-  return conta.confirmado ? "nao_perguntado" : "nao_confirmado";
+export type LeituraDaConta =
+  /** a coluna tem valor — não importa o que o jsonb diga */
+  | { estado: "respondida"; valor: number }
+  /** coluna vazia, e ele viu a pergunta e não soube */
+  | { estado: "nao_sei"; em?: string }
+  /** coluna vazia, ele viu um número calculado e ainda não disse se bate */
+  | { estado: "calculada"; calculado: number | null; em?: string }
+  /** coluna vazia e ninguém perguntou */
+  | { estado: "nao_perguntado" };
+
+export function lerConta(
+  coluna: number | null,
+  conta: RespostaDeConta | undefined,
+): LeituraDaConta {
+  // A ORDEM É A REGRA. Trocar estas duas linhas de lugar reintroduz o
+  // defeito inteiro.
+  if (coluna !== null) return { estado: "respondida", valor: coluna };
+  if (!conta) return { estado: "nao_perguntado" };
+  if (conta.naoSei) return { estado: "nao_sei", em: conta.em };
+  if (conta.confirmado) {
+    // Marcado como confirmado no jsonb e coluna vazia: a gravação da
+    // coluna falhou depois de o jsonb ter sido escrito. Isso não deveria
+    // acontecer — `gravarCamposDoCliente` roda ANTES — e se acontecer, a
+    // pergunta volta a ficar aberta, que é o comportamento que se cura
+    // sozinho na próxima resposta.
+    return { estado: "nao_perguntado" };
+  }
+  return { estado: "calculada", calculado: conta.calculado, em: conta.em };
+}
+
+/**
+ * Os três estados do §5, agora escritos EM CIMA de `lerConta` — para não
+ * haver duas regras de combinação de coluna e jsonb.
+ */
+function motivoDaConta(
+  coluna: number | null,
+  conta: RespostaDeConta | undefined,
+): MotivoPendencia {
+  const leitura = lerConta(coluna, conta);
+  switch (leitura.estado) {
+    case "nao_sei":
+      return "nao_sei";
+    case "calculada":
+      return "nao_confirmado";
+    // A coluna tem valor e mesmo assim virou pendência: o valor existe e
+    // não passa na regra (um custo negativo, um ticket zerado). Oferecer
+    // "confirmar um valor" é o certo — há o que olhar na tela.
+    case "respondida":
+      return "nao_confirmado";
+    default:
+      return "nao_perguntado";
+  }
 }
 
 /**
@@ -266,7 +339,7 @@ export function montarCadastro(negocio: NegocioParaCadastro): Cadastro {
   );
   const ticketValido = ticket !== null && ticket > 0;
   if (!ticketValido) {
-    anotar("ticket_medio", motivoDaConta(contas.ticket), "/onboarding/contas", contas.ticket?.em);
+    anotar("ticket_medio", motivoDaConta(ticket, contas.ticket), "/onboarding/contas", contas.ticket?.em);
   }
 
   // ---- custo direto: minimum 0 (zero é válido — revenda de consignado,
@@ -274,14 +347,14 @@ export function montarCadastro(negocio: NegocioParaCadastro): Cadastro {
   const custo = numero(negocio.avg_direct_cost);
   const custoValido = custo !== null && custo >= 0;
   if (!custoValido) {
-    anotar("custo_direto_medio", motivoDaConta(contas.custo), "/onboarding/contas", contas.custo?.em);
+    anotar("custo_direto_medio", motivoDaConta(custo, contas.custo), "/onboarding/contas", contas.custo?.em);
   }
 
   // ---- lucro desejado: minimum 0 (zero é válido — quem quer só crescer)
   const lucro = numero(negocio.target_profit_per_customer);
   const lucroValido = lucro !== null && lucro >= 0;
   if (!lucroValido) {
-    anotar("lucro_desejado_por_cliente", motivoDaConta(contas.lucro), "/onboarding/contas", contas.lucro?.em);
+    anotar("lucro_desejado_por_cliente", motivoDaConta(lucro, contas.lucro), "/onboarding/contas", contas.lucro?.em);
   }
 
   // ---- verba: exclusiveMinimum 0. Vive em `/verba` (D2), e não tem

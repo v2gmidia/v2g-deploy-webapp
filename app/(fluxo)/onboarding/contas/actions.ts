@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { ticketEscalar, type ChaveDeConta, type RespostaDeConta } from "@/lib/cadastro/montar";
+import {
+  lerConta,
+  ticketEscalar,
+  type ChaveDeConta,
+  type LeituraDaConta,
+  type RespostaDeConta,
+} from "@/lib/cadastro/montar";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
 import { montarCadastro, type NegocioParaCadastro } from "@/lib/cadastro/montar";
 import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/consultar";
@@ -23,6 +29,17 @@ export interface EstadoDasContas {
   /** o ticket que vale hoje, para as contas seguintes */
   ticket: number | null;
   margem: number | null;
+  /**
+   * O que se sabe de cada conta, JÁ RESOLVIDO entre coluna e jsonb.
+   *
+   * A tela lê isto, e não `contas` direto. O jsonb sozinho dizia "Você não
+   * soube" sobre um valor que o cliente havia confirmado três horas depois
+   * pela `/meu-negocio` — medido em conta real em 20/08. A coluna manda.
+   * Ver `lerConta` e docs/estado-do-cliente.md §4.
+   */
+  leituras: Record<ChaveDeConta, LeituraDaConta>;
+  /** quando o cliente confirmou cada coluna, se confirmou */
+  confirmadoEm: Partial<Record<ChaveDeConta, string>>;
   /**
    * O que ainda falta, JÁ EM TEXTO, calculado no servidor.
    *
@@ -72,7 +89,10 @@ async function obterNegocio(): Promise<{ erro: string } | { linha: LinhaNegocio;
 
   const { data, error } = await supabase
     .from("businesses")
-    .select(COLUNAS_DO_CADASTRO)
+    // `COLUNAS_DO_CADASTRO` + `procedencia`: a tela precisa dizer QUANDO o
+    // cliente conferiu um valor, e isso não é dado de cadastro. A constante
+    // fica como está — ela é o contrato do que `montarCadastro` lê.
+    .select(`${COLUNAS_DO_CADASTRO}, procedencia`)
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -86,15 +106,54 @@ async function obterNegocio(): Promise<{ erro: string } | { linha: LinhaNegocio;
   return { linha: data as unknown as LinhaNegocio, userId: user.id };
 }
 
+/**
+ * Quando o cliente confirmou uma coluna, lido da `procedencia`.
+ *
+ * Só `origem = "confirmado"` conta. Um valor `extraido` da transcrição ou
+ * `manual` não foi conferido por ele, e escrever "você conferiu isso"
+ * embaixo seria afirmar um ato que não aconteceu — a mesma regra que a
+ * `/meu-negocio` já aplica em `lerProcedencia`.
+ */
+function confirmadoEmDe(
+  procedencia: unknown,
+  coluna: string,
+): string | undefined {
+  const mapa = (procedencia ?? {}) as Record<
+    string,
+    { origem?: string; em?: string } | undefined
+  >;
+  const e = mapa[coluna];
+  return e?.origem === "confirmado" ? e.em : undefined;
+}
+
 function montarEstado(linha: LinhaNegocio): EstadoDasContas {
   const ticket = ticketEscalar(num(linha.avg_ticket_min), num(linha.avg_ticket_max));
   const custo = num(linha.avg_direct_cost);
+  const lucro = num(linha.target_profit_per_customer);
+  const contas = lerContas(linha.onboarding);
   const cadastro = montarCadastro(linha);
+  const proc = (linha as { procedencia?: unknown }).procedencia;
+
   return {
     businessId: linha.id,
-    contas: lerContas(linha.onboarding),
+    contas,
     ticket,
     margem: ticket !== null && custo !== null ? Math.round((ticket - custo) * 100) / 100 : null,
+    // A COLUNA PRIMEIRO, SEMPRE. `lerConta` é a única regra de combinação
+    // entre coluna e jsonb no projeto — `motivoDaConta` também é escrita em
+    // cima dela.
+    leituras: {
+      ticket: lerConta(ticket, contas.ticket),
+      custo: lerConta(custo, contas.custo),
+      lucro: lerConta(lucro, contas.lucro),
+    },
+    confirmadoEm: {
+      // O ticket são duas colunas; a procedência que vale é a do `min`, que
+      // é a que a `/meu-negocio` mostra como par.
+      ticket: confirmadoEmDe(proc, "avg_ticket_min"),
+      custo: confirmadoEmDe(proc, "avg_direct_cost"),
+      lucro: confirmadoEmDe(proc, "target_profit_per_customer"),
+    },
     resumo: resumirPendencias(cadastro.completo ? [] : cadastro.pendencias, new Date()),
   };
 }

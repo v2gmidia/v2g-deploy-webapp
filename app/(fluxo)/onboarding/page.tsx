@@ -1,6 +1,6 @@
 import { carregarEstadoAction } from "./actions";
 import { Chat } from "./Chat";
-import { blocosDoPasso1, minutosRestantes } from "./perguntas";
+import { estadoDoCliente } from "@/lib/estado/cliente";
 import { Trilha } from "./Trilha";
 
 /**
@@ -40,7 +40,12 @@ export default async function OnboardingPage() {
   }
 
   const { respostas } = estado;
-  const blocos = blocosDoPasso1(respostas);
+
+  // A TRILHA LÊ A MESMA FONTE QUE O RESTO DO APP. Antes ela lia
+  // `blocosDoPasso1`/`minutosRestantes`, duas tabelas fixas indexadas pela
+  // última pergunta respondida do bloco 1 — que não enxergavam as contas
+  // nem a `/verba`. Ver docs/estado-do-cliente.md §0.3.
+  const { blocosDaTrilha: blocos } = await estadoDoCliente(new Date());
 
   return (
     <div className="auth-grid">
@@ -49,12 +54,7 @@ export default async function OnboardingPage() {
       </section>
 
       <aside className="auth-aside">
-        <Trilha
-          passo={1}
-          blocos={blocos}
-          minutos={minutosRestantes(respostas)}
-          pecas={blocos >= 6 ? 1 : 0}
-        />
+        <Trilha passo={1} blocos={blocos} pecas={blocos >= 6 ? 1 : 0} />
       </aside>
     </div>
   );

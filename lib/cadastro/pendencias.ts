@@ -54,6 +54,16 @@ export interface ResumoDePendencias {
   nossaDivida: boolean;
   /** os rótulos, na ordem em que aparecem na tela */
   itens: string[];
+  /**
+   * Quantos dos `itens` são "não sei".
+   *
+   * Exposto porque a trilha do onboarding precisa distinguir o campo que
+   * espera O CLIENTE do campo que espera a GENTE, e ela não tem como
+   * descobrir isso a partir dos rótulos. Sai daqui, e não de uma segunda
+   * contagem em `lib/estado/`, porque contar pendência em dois lugares é o
+   * defeito que este módulo existe para não ter.
+   */
+  quantosNaoSei: number;
 }
 
 function diasDesde(iso: string | undefined, agora: Date): number | null {
@@ -81,7 +91,10 @@ export function resumirPendencias(
   agora: Date,
 ): ResumoDePendencias {
   if (pendencias.length === 0) {
-    return { vazio: true, titulo: "", corpo: "", acao: null, nossaDivida: false, itens: [] };
+    return {
+      vazio: true, titulo: "", corpo: "", acao: null,
+      nossaDivida: false, itens: [], quantosNaoSei: 0,
+    };
   }
 
   const itens = pendencias.map((p) => p.rotulo);
@@ -105,6 +118,7 @@ export function resumirPendencias(
       acao: { rotulo: "Falar com a gente", href: WHATSAPP },
       nossaDivida: true,
       itens,
+      quantosNaoSei: naoSei.length,
     };
   }
 
@@ -117,6 +131,7 @@ export function resumirPendencias(
       acao: null,
       nossaDivida: false,
       itens,
+      quantosNaoSei: naoSei.length,
     };
   }
 
@@ -138,5 +153,6 @@ export function resumirPendencias(
     },
     nossaDivida: false,
     itens,
+    quantosNaoSei: naoSei.length,
   };
 }

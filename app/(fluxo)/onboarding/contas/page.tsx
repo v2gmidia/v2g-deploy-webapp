@@ -1,5 +1,6 @@
 import { carregarContasAction } from "./actions";
 import { Contas } from "./Contas";
+import { estadoDoCliente } from "@/lib/estado/cliente";
 import { Trilha } from "../Trilha";
 
 /**
@@ -31,12 +32,12 @@ export default async function ContasPage() {
     );
   }
 
-  // Os dois últimos blocos da trilha do passo 1 são destes três: o bloco 1
-  // acende até 4 (`perguntas.ts`), e cada conta fechada acende daqui.
-  const fechadas = (["ticket", "custo", "lucro"] as const).filter(
-    (c) => estado.contas[c]?.confirmado || estado.contas[c]?.naoSei,
-  ).length;
-  const blocos = 4 + Math.min(2, Math.round((fechadas * 2) / 3));
+  // A MESMA FONTE DA OUTRA TRILHA. Isto aqui era uma TERCEIRA contagem —
+  // `4 + Math.round(fechadas * 2 / 3)` blocos e `Math.max(2, 7 - fechadas * 2)`
+  // minutos — lendo o jsonb por conta própria, com regra diferente da do
+  // `/onboarding` e diferente da do `montarCadastro`. Três telas, três
+  // aritméticas, um assunto só.
+  const { blocosDaTrilha: blocos } = await estadoDoCliente(new Date());
 
   return (
     <div className="auth-grid">
@@ -45,12 +46,7 @@ export default async function ContasPage() {
       </section>
 
       <aside className="auth-aside">
-        <Trilha
-          passo={1}
-          blocos={blocos}
-          minutos={Math.max(2, 7 - fechadas * 2)}
-          pecas={fechadas === 3 ? 1 : 0}
-        />
+        <Trilha passo={1} blocos={blocos} pecas={blocos >= 6 ? 1 : 0} />
       </aside>
     </div>
   );

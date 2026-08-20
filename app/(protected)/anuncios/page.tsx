@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { dinheiro, numero } from "@/lib/formato";
+import { estadoDoCliente } from "@/lib/estado/cliente";
+import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
+import type { Etapa } from "@/lib/estado/frases";
 
 /**
  * Seus anúncios — a fusão de `/campanhas` e `/criativos`.
@@ -17,9 +20,30 @@ import { dinheiro, numero } from "@/lib/formato";
  *
  * ESTADO VAZIO COMO CAMINHO PRINCIPAL: sem anúncio nenhum, a tela explica
  * o que falta para o primeiro existir, em vez de mostrar lista vazia.
+ *
+ * ============================================================
+ * O "O QUE FALTA" NÃO É ESCRITO AQUI — vem de `estadoDoCliente()`.
+ *
+ * Até 20/08/2026 esta tela AFIRMAVA, sem consultar nada: a frase "Falta a
+ * IA conhecer o negócio" estava escrita dentro do ramo "não existe
+ * campanha" e não lia o cadastro em lugar nenhum. Numa conta com os seis
+ * obrigatórios preenchidos e a execução já criada, ela era simplesmente
+ * falsa — e não havia leitura para corrigir, só uma frase.
+ *
+ * A outra metade do defeito era a contagem: `pecas.length` contava TODA
+ * linha de `creatives`, inclusive `uso = 'logo'` e inclusive arquivada.
+ * Numa conta cujas duas linhas eram logos (uma removida), esta tela dizia
+ * "você já tem 2 fotos guardadas" enquanto a `/conta` dizia "nenhuma foto
+ * ainda". As duas liam a mesma tabela.
+ * ============================================================
  */
 export default async function AnunciosPage() {
   const supabase = await createClient();
+
+  // A resposta para "o que falta" vem pronta e é a MESMA que o `/inicio` e
+  // a trilha do onboarding leem. O que muda daqui para lá é o
+  // enquadramento, não o fato — ver docs/estado-do-cliente.md §3.
+  const estado = await estadoDoCliente(new Date());
 
   const [{ data: campanhas }, { data: criativos }] = await Promise.all([
     supabase
@@ -28,7 +52,7 @@ export default async function AnunciosPage() {
       .order("created_at", { ascending: false }),
     supabase
       .from("creatives")
-      .select("id, campaign_id, file_name, vision_description, status, meta_status, created_at")
+      .select("id, campaign_id, file_name, vision_description, status, meta_status, uso, created_at")
       .order("created_at", { ascending: false }),
   ]);
 
@@ -36,7 +60,7 @@ export default async function AnunciosPage() {
   const pecas = criativos ?? [];
 
   if (lista.length === 0) {
-    return <SemAnuncioNenhum temFoto={pecas.length > 0} quantasFotos={pecas.length} />;
+    return <SemAnuncioNenhum proximo={estado.proximo} fotos={estado.melhoras.fotos} />;
   }
 
   const { data: metricas } = await supabase
@@ -68,50 +92,17 @@ export default async function AnunciosPage() {
   // não grita — faixa permanente aqui viraria moldura decorativa. Ela só
   // aparece quando alguma coisa espera o cliente AGORA.
   // Ver docs/padrao-visual.md §5.
-  const falhou = lista.filter((c) => c.publish_state === "failed");
+  //
+  // O QUE SOBROU DE LOCAL AQUI: só a peça reprovada pela revisão do
+  // Facebook. Ela é evento de LINHA — aconteceu com uma peça, tem rota
+  // própria, e não é elo da cadeia: a campanha pode seguir no ar com as
+  // outras peças.
+  //
+  // O que era calculado aqui e não é mais: "publicação falhou" e "peça
+  // esperando aprovação". As duas viraram elo da cadeia
+  // (`lib/estado/frases.ts`), porque as duas respondem à pergunta "o que
+  // falta pra sair anúncio?" — e essa pergunta tem um dono só.
   const reprovadas = pecas.filter((p) => p.status === "rejected");
-  const aprovar = pecas.filter((p) => p.status === "draft");
-
-  const pendencia =
-    falhou.length > 0
-      ? {
-          eyebrow: "Precisa de você",
-          frase: (
-            <>
-              Uma publicação <span className="destaque">não deu certo</span>.
-            </>
-          ),
-          nota: "Nada foi ativado e nenhuma verba foi gasta. O motivo está na linha do anúncio, logo abaixo.",
-          href: null,
-          rotulo: null,
-        }
-      : reprovadas.length > 0
-        ? {
-            eyebrow: "Precisa de você",
-            frase: (
-              <>
-                {reprovadas.length === 1 ? "Uma peça" : `${reprovadas.length} peças`} não{" "}
-                {reprovadas.length === 1 ? "passou" : "passaram"} na{" "}
-                <span className="destaque">revisão do Facebook</span>.
-              </>
-            ),
-            nota: "Acontece com frequência e seus outros anúncios não são afetados. A IA já está refazendo.",
-            href: "/reprovado",
-            rotulo: "Ver o que aconteceu",
-          }
-        : aprovar.length > 0
-          ? {
-              eyebrow: "Esperando você",
-              frase: (
-                <>
-                  Tem peça <span className="destaque">esperando sua aprovação</span>.
-                </>
-              ),
-              nota: "Nada vai ao ar sem você dizer que sim — texto e foto, um de cada vez.",
-              href: "/aprovar",
-              rotulo: "Ver a peça",
-            }
-          : null;
 
   return (
     <>
@@ -124,17 +115,24 @@ export default async function AnunciosPage() {
         </p>
       </div>
 
-      {pendencia && (
+      {reprovadas.length > 0 ? (
         <section className="hero-destaque">
-          <span className="eyebrow">{pendencia.eyebrow}</span>
-          <p className="hero-frase">{pendencia.frase}</p>
-          <p className="hero-note">{pendencia.nota}</p>
-          {pendencia.href && (
-            <a className="cta cta-faixa" href={pendencia.href}>
-              {pendencia.rotulo}
-            </a>
-          )}
+          <span className="eyebrow">Precisa de você</span>
+          <p className="hero-frase">
+            {reprovadas.length === 1 ? "Uma peça" : `${reprovadas.length} peças`} não{" "}
+            {reprovadas.length === 1 ? "passou" : "passaram"} na{" "}
+            <span className="destaque">revisão do Facebook</span>.
+          </p>
+          <p className="hero-note">
+            Acontece com frequência e seus outros anúncios não são afetados. A IA já está
+            refazendo.
+          </p>
+          <a className="cta cta-faixa" href="/reprovado">
+            Ver o que aconteceu
+          </a>
         </section>
+      ) : (
+        estado.proximo && <HeroDaEtapa etapa={estado.proximo} />
       )}
 
       <div className="dash-grid">
@@ -193,8 +191,17 @@ export default async function AnunciosPage() {
               por tela. A rota /reprovado continua alcançável pelo botão
               da faixa. */}
 
-          <SemCampanhaAssociada
-            pecas={pecas.filter((p) => !p.campaign_id || !lista.some((c) => c.id === p.campaign_id))}
+          {/* SÓ peça de anúncio. O filtro por `uso` é o conserto: sem ele,
+              esta seção listava o logo do cliente sob o título "Fotos
+              guardadas" — e era a mesma contagem crua que fazia a tela
+              dizer "você já tem 2 fotos". As fotos do cliente moram na
+              `/conta`, e é lá que elas são contadas. */}
+          <PecasSemAnuncio
+            pecas={pecas.filter(
+              (p) =>
+                p.uso === "campanha" &&
+                (!p.campaign_id || !lista.some((c) => c.id === p.campaign_id)),
+            )}
           />
         </div>
 
@@ -296,12 +303,17 @@ function rotuloDoStatus(c: {
 }
 
 /**
- * Fotos que existem mas ainda não pertencem a nenhum anúncio.
+ * Peças de anúncio que existem e ainda não pertencem a nenhum anúncio.
  *
  * Só aparece quando existem. Uma seção vazia permanente diria ao cliente
  * que falta alguma coisa quando não falta.
+ *
+ * O NOME MUDOU DE "Fotos guardadas" e a mudança é o conserto: as linhas que
+ * apareciam aqui incluíam o logo e a identidade visual, que não são peça de
+ * anúncio nenhuma. Quem conta foto do cliente é o `estadoDoCliente`, com
+ * `uso = 'identidade'`, e quem as mostra é a `/conta`.
  */
-function SemCampanhaAssociada({
+function PecasSemAnuncio({
   pecas,
 }: {
   pecas: Array<{ id: string; file_name: string | null }>;
@@ -310,9 +322,9 @@ function SemCampanhaAssociada({
   return (
     <section>
       <div className="section-title">
-        <h2>Fotos guardadas</h2>
+        <h2>Peças ainda sem anúncio</h2>
         <span className="grp-count">
-          {pecas.length} {pecas.length === 1 ? "foto" : "fotos"}
+          {pecas.length} {pecas.length === 1 ? "peça" : "peças"}
         </span>
       </div>
       <div className="card">
@@ -329,7 +341,13 @@ function SemCampanhaAssociada({
   );
 }
 
-function SemAnuncioNenhum({ temFoto, quantasFotos }: { temFoto: boolean; quantasFotos: number }) {
+function SemAnuncioNenhum({
+  proximo,
+  fotos,
+}: {
+  proximo: Etapa | null;
+  fotos: number;
+}) {
   return (
     <>
       <FaixaReconectar />
@@ -349,17 +367,33 @@ function SemAnuncioNenhum({ temFoto, quantasFotos }: { temFoto: boolean; quantas
             </div>
             <div className="empty-copy">
               <p className="empty-head">Seu primeiro anúncio ainda não existe.</p>
-              <p className="empty-body">
-                Ele nasce depois que a IA lê o que você contou sobre o negócio e monta a peça —
-                foto e texto. Nada vai ao ar sem você aprovar antes.
-              </p>
-              <a className="cta" href="/onboarding" style={{ width: "max-content" }}>
-                Contar sobre o meu negócio
-              </a>
+
+              {/* O ENQUADRAMENTO É DAQUI; O FATO VEM DO ESTADO. A tela diz
+                  por que o anúncio não existe — e quem sabe por quê é a
+                  cadeia, não esta função. Antes havia aqui uma frase fixa
+                  ("Falta a IA conhecer o negócio") que não consultava
+                  nada e mentia para todo cliente com cadastro completo. */}
+              {proximo ? (
+                <>
+                  <p className="empty-body">{proximo.titulo}</p>
+                  <p className="empty-body">{proximo.corpo}</p>
+                  {proximo.acao && (
+                    <a className="cta" href={proximo.acao.href} style={{ width: "max-content" }}>
+                      {proximo.acao.rotulo}
+                    </a>
+                  )}
+                </>
+              ) : (
+                <p className="empty-body">
+                  Está tudo certo do seu lado. Assim que a primeira peça ficar pronta, ela
+                  aparece aqui para você aprovar.
+                </p>
+              )}
+
               <p className="empty-note">
-                {temFoto
-                  ? `Você já tem ${quantasFotos} ${quantasFotos === 1 ? "foto guardada" : "fotos guardadas"}. Falta a IA conhecer o negócio para montar o anúncio.`
-                  : "São quatro perguntas. Dá para parar no meio e voltar depois."}
+                {fotos === 0
+                  ? "Nada vai ao ar sem você aprovar antes."
+                  : `Suas ${fotos} ${fotos === 1 ? "foto" : "fotos"} já estão guardadas e a IA usa quando montar a peça. Nada vai ao ar sem você aprovar antes.`}
               </p>
             </div>
             <ul className="empty-list">

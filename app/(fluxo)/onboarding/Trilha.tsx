@@ -30,15 +30,35 @@ const Tick = () => (
 interface TrilhaProps {
   /** passo atual do fluxo (1 a 3) */
   passo: number;
-  /** blocos acesos no passo atual, de 6 */
+  /**
+   * Blocos acesos no passo atual, de 6.
+   *
+   * Vem de `blocosDaTrilha()`, que conta os SEIS OBRIGATÓRIOS do cadastro.
+   * Não vem mais da tabela `BLOCOS_ACESOS`, que era indexada pela última
+   * pergunta respondida do bloco 1 e não enxergava nem as contas nem a
+   * `/verba` — numa conta com o cadastro fechado e a execução criada ela
+   * continuava dizendo 4 de 6.
+   */
   blocos: number;
-  /** minutos restantes; 0 mostra "quase lá" */
-  minutos: number;
   /** peças da logomark já montadas (0 a 3) */
   pecas: number;
 }
 
-export function Trilha({ passo, blocos, minutos, pecas }: TrilhaProps) {
+/**
+ * OS MINUTOS SAÍRAM, e a ausência é decisão — 20/08/2026.
+ *
+ * A trilha dizia "faltam ~7 min", vindo de `MIN_RESTANTES`, uma tabela fixa
+ * por pergunta respondida. Ela não media nada: com a `praca` respondida o
+ * valor era 7 e continuava 7 para sempre, inclusive depois do cadastro
+ * fechar e a execução ser criada. Número inventado numa tela cuja promessa
+ * inteira é honestidade custa mais do que rende, e um número inventado que
+ * nunca muda é pior — a pessoa volta no dia seguinte e lê os mesmos 7
+ * minutos.
+ *
+ * O que ficou no lugar é o que a tela realmente sabe: em que passo a pessoa
+ * está, e se ele fechou.
+ */
+export function Trilha({ passo, blocos, pecas }: TrilhaProps) {
   const titulos: Record<number, string> = {
     1: "Passo 1 de 3 · Sobre o seu negócio",
     2: "Passo 2 de 3 · O visual da sua marca",
@@ -84,7 +104,7 @@ export function Trilha({ passo, blocos, minutos, pecas }: TrilhaProps) {
 
           <p className="rail-note" role="status">
             <b>{titulos[passo]}</b>
-            {minutos > 0 ? <> · faltam ~{minutos} min</> : <> · quase lá</>}
+            {blocos >= 6 && <> · tudo respondido</>}
           </p>
         </div>
 

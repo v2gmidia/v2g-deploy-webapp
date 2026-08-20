@@ -20,13 +20,30 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
   const [ajustando, setAjustando] = useState<ChaveDeConta | null>(null);
   const [rascunho, setRascunho] = useState("");
 
-  const { contas } = estado;
+  const { contas, leituras } = estado;
 
-  // A conta atual é a primeira que ainda não fechou. "Não sei" FECHA a
-  // conta — ele respondeu, e a resposta foi que não sabe. Tratar como
-  // pendente devolveria a mesma pergunta e ele chutaria um número na
-  // segunda vez só para a tela parar de pedir.
-  const fechada = (c: ChaveDeConta) => !!(contas[c]?.confirmado || contas[c]?.naoSei);
+  // ============================================================
+  // A CONTA FECHADA É A QUE TEM VALOR — ou a que ele disse que não sabe.
+  //
+  // Isto lia SÓ o jsonb (`contas[c]?.confirmado || contas[c]?.naoSei`), e
+  // errava nos dois sentidos:
+  //
+  //  - jsonb com `naoSei` e coluna preenchida por outro caminho: a tela
+  //    mostrava "Você não soube" sobre um número que o próprio cliente
+  //    havia confirmado na `/meu-negocio` três horas depois. Medido em
+  //    conta real, 19/08.
+  //  - coluna preenchida e jsonb sem a chave (valor veio da extração e foi
+  //    confirmado na `/meu-negocio`): a tela PERGUNTAVA DE NOVO um número
+  //    já conferido, e responder reescrevia a coluna por cima de um
+  //    `confirmado`.
+  //
+  // `lerConta` resolve os dois com a mesma regra: a coluna manda.
+  // "Não sei" continua FECHANDO a conta — ele respondeu, e a resposta foi
+  // que não sabe. Tratar como pendente devolveria a mesma pergunta e ele
+  // chutaria um número na segunda vez só para a tela parar de pedir.
+  // ============================================================
+  const fechada = (c: ChaveDeConta) =>
+    leituras[c].estado === "respondida" || leituras[c].estado === "nao_sei";
   const atual: ChaveDeConta | null = !fechada("ticket")
     ? "ticket"
     : !fechada("custo")
@@ -85,16 +102,30 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       {/* ---- o que já fechou ---- */}
       {(["ticket", "custo", "lucro"] as ChaveDeConta[])
         .filter((c) => fechada(c))
-        .map((c) => (
-          <p className="conta-feita" key={c}>
-            <span className="eyebrow">{contador[c]}</span>
-            {contas[c]!.naoSei ? (
-              <b>Você não soube — a gente resolve na conversa.</b>
-            ) : (
-              <b>{dinheiro(contas[c]!.calculado ?? 0)}</b>
-            )}
-          </p>
-        ))}
+        .map((c) => {
+          const leitura = leituras[c];
+          const quando = estado.confirmadoEm[c];
+          return (
+            <p className="conta-feita" key={c}>
+              <span className="eyebrow">{contador[c]}</span>
+              {/* O VALOR VEM DA COLUNA, não do `calculado` do jsonb: o jsonb
+                  guarda o que a conta produziu na hora, e a coluna guarda o
+                  que vale hoje. Quando o cliente corrigiu o número depois,
+                  pela `/meu-negocio`, os dois são diferentes — e o certo é o
+                  que a IA está usando. */}
+              <b>
+                {leitura.estado === "respondida"
+                  ? dinheiro(leitura.valor)
+                  : "Você não soube — a gente resolve na conversa."}
+              </b>
+              {leitura.estado === "respondida" && quando && (
+                <span className="conta-origem">
+                  ✓ você conferiu isso em {new Date(quando).toLocaleDateString("pt-BR")}
+                </span>
+              )}
+            </p>
+          );
+        })}
 
       {atual && (
         <section className="hero-card">

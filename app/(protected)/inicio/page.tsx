@@ -2,57 +2,76 @@ import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { dinheiro, numero } from "@/lib/formato";
-import { pendenciasDoCliente } from "@/lib/cadastro/consultar";
-import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
+import { estadoDoCliente } from "@/lib/estado/cliente";
+import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
+import type { Etapa } from "@/lib/estado/frases";
 
 /**
  * Início / dashboard — porte de `tela-05-dashboard-desktop.html`.
  *
- * TRÊS ESTADOS, e o do meio é o que mais importa:
+ * ============================================================
+ * ESTA TELA NÃO DECIDE MAIS O QUE FALTA. Ela mostra.
  *
- * 1. Sem campanha — a pessoa acabou de entrar. Mostra por onde começar.
- * 2. Campanha no ar, sem número ainda — o "dia zero". Ver a nota longa
- *    abaixo; é o estado que decide se o cliente fica ou desiste.
- * 3. Com número — o dashboard de verdade, com dados de `metrics_daily`.
+ * Até 20/08/2026 ela decidia duas vezes, em dois lugares do mesmo
+ * arquivo: um `<BlocoPendencias>` lendo `resumirPendencias`, e trinta
+ * linhas abaixo um herói lendo `Object.keys(respostas).length >= 5`. As
+ * duas falavam do mesmo assunto e podiam discordar — e discordavam. O
+ * contador de chaves era o pior dos dois: ele lia o jsonb CRU, sem
+ * `migrarChaves`, então cinco chaves do formato antigo (`"0".."4"`)
+ * bastavam para a tela afirmar "a IA já sabe o essencial" a um negócio
+ * sem nome e sem descrição. Medido em conta real em 20/08.
  *
- * SOBRE O ESTADO 2. Nas primeiras 48h não há número porque o Facebook
- * ainda está aprendendo para quem mostrar o anúncio. É um vazio
- * legítimo, mas parece fracasso — e o comportamento mais destrutivo do
- * cliente ansioso é pausar tudo no dia 3, justamente quando o
- * aprendizado ia terminar. Pausar reinicia o aprendizado e joga fora o
- * que já foi gasto nele.
+ * Agora a única fonte é `estadoDoCliente()`, e o que esta tela escolhe é
+ * FORMA, não fato: o `proximo` vai no herói, o resto da cadeia vira lista
+ * secundária. Se a frase que você precisa não existe no estado, o lugar
+ * de acrescentá-la é `lib/estado/frases.ts` — não aqui.
+ * ============================================================
  *
- * Por isso este estado faz duas coisas de propósito: explica o motivo
- * do vazio em português simples, e oferece algo para fazer que NÃO seja
- * mexer na campanha. O espaço da missão (`.mission-slot`) fica
- * reservado para o wireframe do Figma — a mecânica de missão ainda não
- * existe, mas fechar a tela num vazio simples seria justamente o erro.
+ * OS TRÊS CORPOS DA TELA seguem existindo, e o do meio é o que mais
+ * importa:
+ *
+ * 1. Sem campanha — a pessoa acabou de entrar.
+ * 2. Campanha no ar, sem número — o "dia zero". O texto dele mora agora na
+ *    etapa `numeros`, e é o herói que o mostra quando é a vez do Facebook.
+ *    O comportamento mais destrutivo do cliente ansioso é pausar tudo no
+ *    dia 3, justamente quando o aprendizado ia terminar.
+ * 3. Com número — o dashboard de verdade, de `metrics_daily`.
  */
+
+/** De quem é a vez, em uma linha. Mesma regra da tarja, formato de lista. */
+function dono(e: Etapa): string {
+  if (e.bola === "cliente") return "Depende de você.";
+  if (e.bola === "facebook") return "Depende do Facebook.";
+  return "É com a gente.";
+}
+
 /**
- * O que ainda falta, EM TODOS OS TRÊS ESTADOS da tela.
+ * O resto do caminho — a cadeia, sem peso.
  *
- * Esta página tem três ramos de render: sem campanha, com campanha e sem
- * número, e o dashboard cheio. Na primeira tentativa este bloco entrou só
- * no segundo — ou seja, aparecia para quem já tinha campanha no ar e
- * NÃO aparecia para quem ainda não tinha, que é exatamente quem tem
- * pendência de cadastro. Por isso ele é componente e é chamado nos três,
- * ao lado da `FaixaReconectar`, que resolveu o mesmo problema antes.
- *
- * O texto vem de `resumirPendencias` — o mesmo do fim do bloco 2 do
- * onboarding. As duas telas leem o mesmo `montarCadastro` e dizem a mesma
- * frase sobre o mesmo campo.
+ * Existe para a pessoa saber que há uma sequência e onde ela está nela. O
+ * que ela deve FAZER agora é o herói; isto é o mapa. Etapa concluída fica
+ * na lista, marcada: sumir com ela encolheria a lista a cada visita e
+ * tiraria justamente a sensação de ter andado.
  */
-function BlocoPendencias({ resumo }: { resumo: ResumoDePendencias }) {
-  if (resumo.vazio) return null;
+function RestoDoCaminho({ etapas, atual }: { etapas: Etapa[]; atual: Etapa }) {
+  const outras = etapas.filter((e) => e.id !== atual.id);
+  if (outras.length === 0) return null;
+
   return (
-    <section className="pendencia-bloco">
-      <b>{resumo.titulo}</b>
-      <p>{resumo.corpo}</p>
-      {resumo.acao && (
-        <a className="cta" href={resumo.acao.href}>
-          {resumo.acao.rotulo}
-        </a>
-      )}
+    <section>
+      <div className="section-title">
+        <h2>O resto do caminho</h2>
+      </div>
+      <div className="card acct-list">
+        {outras.map((e) => (
+          <div className="acct-row" key={e.id}>
+            <span className="ar-text">
+              <b>{e.titulo}</b>
+              <span>{e.concluida ? "Já está feito." : dono(e)}</span>
+            </span>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }
@@ -64,51 +83,8 @@ export default async function InicioPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, onboarding, monthly_budget")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  // O MESMO `montarCadastro` do fim do bloco 2, pela mesma função — ver
-  // `lib/cadastro/consultar.ts`. Compartilhar o dado, e não só a copy, é o
-  // que impede as duas telas de listarem pendências diferentes.
-  const resumo = resumirPendencias(await pendenciasDoCliente(), new Date());
-
-  const { data: campanhas } = await supabase
-    .from("campaigns")
-    .select("id, name, published_at, meta_status")
-    .order("created_at", { ascending: false });
-
-  const noAr = (campanhas ?? []).filter((c) => c.published_at !== null);
-
-  // Últimos 7 dias. `date` é `date` no banco, então a comparação é por
-  // string ISO de data — sem hora, sem fuso no meio.
-  const seteDiasAtras = new Date();
-  seteDiasAtras.setDate(seteDiasAtras.getDate() - 7);
-  const desde = seteDiasAtras.toISOString().slice(0, 10);
-
-  const { data: metricas } = await supabase
-    .from("metrics_daily")
-    .select("spend, conversions, revenue, impressions, date")
-    .gte("date", desde);
-
-  const total = (metricas ?? []).reduce(
-    (acc, m) => ({
-      investido: acc.investido + Number(m.spend ?? 0),
-      // `conversions` guarda o evento otimizado da campanha, que é
-      // `onsite_conversion.messaging_conversation_started_7d` — conversa
-      // iniciada. O nome da coluna é genérico; o significado, não.
-      conversas: acc.conversas + Number(m.conversions ?? 0),
-      receita: acc.receita + Number(m.revenue ?? 0),
-      alcance: acc.alcance + Number(m.impressions ?? 0),
-    }),
-    { investido: 0, conversas: 0, receita: 0, alcance: 0 },
-  );
-
-  const temNumero = total.investido > 0;
+  // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
+  const estado = await estadoDoCliente(new Date());
 
   const { data: ultimaDecisao } = await supabase
     .from("decisions")
@@ -117,238 +93,90 @@ export default async function InicioPage() {
     .limit(1)
     .maybeSingle();
 
-  const respostas =
-    business?.onboarding && typeof business.onboarding === "object"
-      ? ((business.onboarding as { respostas?: Record<string, unknown> }).respostas ?? {})
-      : {};
-  const onboardingCompleto = Object.keys(respostas).length >= 5;
+  const { proximo, resultado, temNumero } = estado;
 
-  // ---------- ESTADO 1: nenhuma campanha ----------
-  if (noAr.length === 0) {
+  // ---------- ainda falta alguma coisa: o herói é a próxima etapa ----------
+  if (proximo || !temNumero) {
+    // O bloco "não mexa na campanha" só existe quando há campanha para
+    // mexer e a espera é do Facebook. Antes disso ele assustaria sem
+    // motivo.
+    const diaZero = proximo?.id === "numeros";
+
     return (
       <>
-        {/* A faixa vale mesmo sem campanha: se a pessoa conectou e a
-            conexão caiu, ela precisa saber agora — e não descobrir
-            quando a primeira campanha não subir. */}
         <FaixaReconectar />
-        <BlocoPendencias resumo={resumo} />
         <div className="page-head">
-          <h1>Sua primeira campanha ainda não está no ar.</h1>
+          <h1>
+            {diaZero
+              ? "Seus anúncios estão no ar. Os números ainda não."
+              : "Sua primeira campanha ainda não está no ar."}
+          </h1>
           <p>
-            Falta pouco. Abaixo está o que ainda depende de você — nesta ordem, sem pular etapa.
+            {diaZero
+              ? "É assim que começa para todo mundo — e é o momento em que mais vale não mexer em nada."
+              : "Abaixo está o próximo passo, e de quem ele depende. Nesta ordem, sem pular etapa."}
           </p>
         </div>
 
-        {/* O destaque aqui é o PRÓXIMO passo, não a lista inteira. Antes
-            os três tinham o mesmo peso e a pessoa escolhia no escuro.
-            Fica FORA da grade para sangrar até as bordas do canvas. */}
-        <section className="hero-destaque">
-          <span className="eyebrow">Seu próximo passo</span>
-          <p className="hero-frase">
-            {onboardingCompleto ? (
+        {proximo && <HeroDaEtapa etapa={proximo} />}
+
+        <div className="dash-grid">
+          <div className="dash-main">
+            {diaZero && (
               <>
-                Falta <span className="destaque">separar suas fotos</span>.
-              </>
-            ) : (
-              <>
-                Comece <span className="destaque">contando do seu negócio</span>.
+                <div
+                  className="fail-block"
+                  style={{ background: "var(--warn-soft)", borderColor: "var(--warn)" }}
+                >
+                  <b>O que não fazer agora</b>
+                  <p>
+                    Não pause e não mexa no investimento nestes primeiros dias. Cada mudança
+                    reinicia o aprendizado do zero, e o que já foi gasto nele se perde. É a
+                    coisa mais cara que dá para fazer aqui — e a mais tentadora.
+                  </p>
+                </div>
+
+                {/* Espaço reservado da missão do dia zero (wireframe do
+                    Figma). A mecânica ainda não existe; o lugar dela sim,
+                    para a tela não terminar num vazio que empurra a pessoa
+                    para a campanha. */}
+                <section className="mission-slot">
+                  <span className="ms-tag">Enquanto isso</span>
+                  <b>Adiante o que vai fazer falta depois</b>
+                  <p>
+                    O melhor uso destes dias não é olhar a campanha — é deixar pronto o que ela
+                    vai pedir a seguir: mais fotos para a IA ter de onde escolher, e seus dados
+                    de negócio conferidos, que é de onde ela decide para quem mostrar.
+                  </p>
+                </section>
               </>
             )}
-          </p>
-          <p className="hero-note">
-            {onboardingCompleto
-              ? "A IA já sabe o essencial. O que falta é material visual: o produto pronto, a fachada, um vídeo curto de celular."
-              : "São quatro perguntas rápidas. É delas que a IA parte para montar sua primeira campanha — dá para parar no meio e voltar depois."}
-          </p>
-          <a
-            className="cta"
-            href={onboardingCompleto ? "/anuncios" : "/onboarding"}
-            style={{ width: "max-content", marginTop: 22 }}
-          >
-            {onboardingCompleto ? "Separar minhas fotos" : "Começar agora"}
-          </a>
-        </section>
 
-        <div className="dash-grid">
-          <div className="dash-main">
-            <section>
-              <div className="section-title">
-                <h2>O resto do caminho</h2>
-              </div>
-              <div className="card acct-list">
-                <a className="acct-row" href="/expectativas">
-                  <span className="ar-text">
-                    <b>Ler os combinados</b>
-                    <span>Os 4 acordos, antes de qualquer cobrança. Leva 2 minutos.</span>
-                  </span>
-                  <Seta />
-                </a>
-                <a className="acct-row" href={onboardingCompleto ? "/onboarding" : "/anuncios"}>
-                  <span className="ar-text">
-                    <b>
-                      {onboardingCompleto
-                        ? "Rever o que você contou sobre o negócio"
-                        : "Separar suas fotos"}
-                    </b>
-                    <span>
-                      {onboardingCompleto
-                        ? "As quatro perguntas já estão respondidas — dá para mudar quando quiser."
-                        : "Pode ir juntando desde já; a IA usa depois."}
-                    </span>
-                  </span>
-                  <Seta />
-                </a>
-                <a className="acct-row" href="/meu-negocio">
-                  <span className="ar-text">
-                    <b>Conferir seus dados</b>
-                    <span>Nome do negócio, cidade e ticket médio.</span>
-                  </span>
-                  <Seta />
-                </a>
-              </div>
-            </section>
+            {proximo && <RestoDoCaminho etapas={estado.etapas} atual={proximo} />}
+
+            <Melhoras fotos={estado.melhoras.fotos} />
           </div>
 
           <aside className="dash-aside">
-            <Suporte />
+            {diaZero ? <Noturno decisao={ultimaDecisao} /> : <Suporte />}
+            <Comando verba={estado.verbaMensal} investido={null} />
           </aside>
         </div>
       </>
     );
   }
 
-  // ---------- ESTADO 2: campanha no ar, sem número (o "dia zero") ----------
-  if (!temNumero) {
-    return (
-      <>
-        <FaixaReconectar />
-        <BlocoPendencias resumo={resumo} />
-        <div className="page-head">
-          <h1>Seus anúncios estão no ar. Os números ainda não.</h1>
-          <p>
-            É assim que começa para todo mundo — e é o momento em que mais vale não mexer em
-            nada.
-          </p>
-        </div>
-
-        {/* O que grita nesta tela é o MOTIVO do vazio. Sem ele, a pessoa
-            lê a ausência de número como fracasso e vai mexer na campanha —
-            que é o que não pode acontecer. */}
-        <section className="hero-destaque">
-          <span className="eyebrow">Por que ainda não há número</span>
-          <p className="hero-frase">
-            O Facebook está <span className="destaque">aprendendo</span> quem é o seu cliente.
-          </p>
-          <p className="hero-note">
-            Nos primeiros dias ele mostra seu anúncio para perfis diferentes de pessoas só para
-            descobrir quem responde. Enquanto esse teste roda, o custo fica mais alto e a venda
-            demora — não porque a campanha está ruim, mas porque ela ainda não sabe para quem
-            falar. Costuma levar de 2 a 3 dias.
-          </p>
-        </section>
-
-        <div className="dash-grid">
-          <div className="dash-main">
-            <div className="fail-block" style={{ background: "var(--warn-soft)", borderColor: "var(--warn)" }}>
-              <b>O que não fazer agora</b>
-              <p>
-                Não pause e não mexa no investimento nestes primeiros dias. Cada mudança
-                reinicia o aprendizado do zero, e o que já foi gasto nele se perde. É a coisa
-                mais cara que dá para fazer aqui — e a mais tentadora.
-              </p>
-            </div>
-
-            {/* Espaço reservado da missão do dia zero (wireframe do Figma).
-                A mecânica ainda não existe; o lugar dela sim, para a tela
-                não terminar num vazio que empurra a pessoa para a campanha. */}
-            <section className="mission-slot">
-              <span className="ms-tag">Enquanto isso</span>
-              <b>Adiante o que vai fazer falta depois</b>
-              <p>
-                O melhor uso destes dias não é olhar a campanha — é deixar pronto o que ela vai
-                pedir a seguir: mais fotos para a IA ter de onde escolher, e seus dados de
-                negócio conferidos, que é de onde ela decide para quem mostrar.
-              </p>
-            </section>
-
-            <div className="card acct-list">
-              <a className="acct-row" href="/anuncios">
-                <span className="ar-text">
-                  <b>Separar mais fotos</b>
-                  <span>Quanto mais material, mais a IA tem de onde escolher.</span>
-                </span>
-                <Seta />
-              </a>
-              <a className="acct-row" href="/meu-negocio">
-                <span className="ar-text">
-                  <b>Conferir os dados do negócio</b>
-                  <span>Ticket médio, cidade e raio — é daí que sai a mira dos anúncios.</span>
-                </span>
-                <Seta />
-              </a>
-            </div>
-          </div>
-
-          <aside className="dash-aside">
-            <section className="card noturno">
-              <div className="nc-head">
-                <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                  <path d="M9 1a5 5 0 1 0 2 8.5A5.5 5.5 0 0 1 9 1z" />
-                </svg>
-                Enquanto você dormia
-              </div>
-              {ultimaDecisao ? (
-                <p>{resumoDaDecisao(ultimaDecisao.payload)}</p>
-              ) : (
-                <p>
-                  A IA ainda não tomou nenhuma decisão. Quando tomar — remanejar investimento,
-                  pausar o que não rende — aparece aqui, com data, hora e motivo.
-                </p>
-              )}
-              <p className="nc-foot">
-                <a href="/alertas">ver tudo que a IA já fez</a>
-              </p>
-            </section>
-
-            <section className="command-card">
-              <b className="title">Você está no comando</b>
-              <p className="limit">
-                {business?.monthly_budget
-                  ? `Seu teto do mês é ${dinheiro(Number(business.monthly_budget))}. `
-                  : "Você ainda não definiu um teto mensal. "}
-                <a href="/verba">
-                  {business?.monthly_budget ? "mudar limite" : "definir agora"}
-                </a>
-              </p>
-              <a
-                className="cta quiet"
-                href="https://wa.me/5521936182176"
-                target="_blank"
-                rel="noopener"
-              >
-                Falar com uma pessoa
-              </a>
-              <p className="note">Gente de verdade, sem robô. Resposta em até 2 horas úteis.</p>
-            </section>
-          </aside>
-        </div>
-      </>
-    );
-  }
-
-  // ---------- ESTADO 3: com número ----------
+  // ---------- com número ----------
   // O herói mede CONVERSA, não venda. A campanha é click-to-WhatsApp
   // otimizada para CONVERSATIONS: o evento que o Meta conta e otimiza é
   // "alguém abriu conversa", e é só isso que a plataforma sabe. Se a
   // pessoa comprou depois, quem sabe é o dono do negócio, não o Meta.
-  // Herdar "vendas" de `conversions` era afirmar o que ninguém mediu.
-  const conversas = total.conversas;
-  const custoPorConversa = conversas > 0 ? total.investido / conversas : null;
+  const conversas = resultado.conversas;
+  const custoPorConversa = conversas > 0 ? resultado.investido / conversas : null;
 
   return (
     <>
       <FaixaReconectar />
-      <BlocoPendencias resumo={resumo} />
       <div className="page-head">
         <h1>Seu resultado essa semana</h1>
         <p>
@@ -369,9 +197,7 @@ export default async function InicioPage() {
               {conversas === 1 ? "pessoa começou" : "pessoas começaram"} uma conversa no seu
               WhatsApp pelo anúncio
             </p>
-            <p className="hero-sub">
-              a {dinheiro(custoPorConversa ?? 0)} cada
-            </p>
+            <p className="hero-sub">a {dinheiro(custoPorConversa ?? 0)} cada</p>
           </>
         ) : (
           <p className="hero-frase">Ninguém começou conversa pelo anúncio ainda.</p>
@@ -395,16 +221,16 @@ export default async function InicioPage() {
             </div>
             <div className="metric">
               <span className="m-label">Investido</span>
-              <span className="m-value">{dinheiro(total.investido)}</span>
+              <span className="m-value">{dinheiro(resultado.investido)}</span>
               <span className="m-delta">
-                {business?.monthly_budget
-                  ? `de ${dinheiro(Number(business.monthly_budget))} no mês`
+                {estado.verbaMensal !== null
+                  ? `de ${dinheiro(estado.verbaMensal)} no mês`
                   : "sem teto mensal definido"}
               </span>
             </div>
             <div className="metric">
               <span className="m-label">Pessoas alcançadas</span>
-              <span className="m-value">{numero(total.alcance)}</span>
+              <span className="m-value">{numero(resultado.alcance)}</span>
               <span className="m-delta">nos últimos 7 dias</span>
             </div>
           </div>
@@ -415,11 +241,11 @@ export default async function InicioPage() {
               <a href="/anuncios">Ver todas &rarr;</a>
             </div>
             <div className="campaign-list">
-              {noAr.map((c) => (
+              {estado.campanhasNoAr.map((c) => (
                 <div className="list-row" key={c.id}>
                   <div className="lr-head">
-                    <span className="lr-title">{c.name ?? "Campanha sem nome"}</span>
-                    <span className="pill ok">{c.meta_status ?? "No ar"}</span>
+                    <span className="lr-title">{c.nome ?? "Campanha sem nome"}</span>
+                    <span className="pill ok">{c.metaStatus ?? "No ar"}</span>
                   </div>
                 </div>
               ))}
@@ -428,44 +254,104 @@ export default async function InicioPage() {
         </div>
 
         <aside className="dash-aside">
-          <section className="card noturno">
-            <div className="nc-head">
-              <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                <path d="M9 1a5 5 0 1 0 2 8.5A5.5 5.5 0 0 1 9 1z" />
-              </svg>
-              Enquanto você dormia
-            </div>
-            {ultimaDecisao ? (
-              <p>{resumoDaDecisao(ultimaDecisao.payload)}</p>
-            ) : (
-              <p>A IA ainda não registrou nenhuma decisão nesta semana.</p>
-            )}
-            <p className="nc-foot">
-              <a href="/alertas">ver tudo que a IA já fez</a>
-            </p>
-          </section>
-
-          <section className="command-card">
-            <b className="title">Você está no comando</b>
-            <p className="limit">
-              {business?.monthly_budget
-                ? `${dinheiro(total.investido)} de ${dinheiro(Number(business.monthly_budget))} investidos este mês · `
-                : ""}
-              <a href="/meu-negocio">mudar limite</a>
-            </p>
-            <a
-              className="cta quiet"
-              href="https://wa.me/5521936182176"
-              target="_blank"
-              rel="noopener"
-            >
-              Falar com uma pessoa
-            </a>
-            <p className="note">Gente de verdade, sem robô. Resposta em até 2 horas úteis.</p>
-          </section>
+          <Noturno decisao={ultimaDecisao} />
+          <Comando verba={estado.verbaMensal} investido={resultado.investido} />
         </aside>
       </div>
     </>
+  );
+}
+
+/**
+ * O que melhora o anúncio e não o trava.
+ *
+ * FOTO MORA AQUI, e a mudança de lugar é a decisão: até 20/08 ela era o
+ * herói da tela, com tarja de "Seu próximo passo" e botão. Ela não bloqueia
+ * nada — o `origem_criativo` é fixo em `"gerar"` e a IA monta a peça sem
+ * foto do cliente. Prometer que o anúncio depende dela é fazer a pessoa
+ * cumprir uma tarefa e não ver resultado nenhum.
+ *
+ * A contagem vem do estado, com o MESMO filtro que a `/conta` usa.
+ */
+function Melhoras({ fotos }: { fotos: number }) {
+  return (
+    <section>
+      <div className="section-title">
+        <h2>Enquanto isso, se você quiser</h2>
+        <span className="side-note">Ajuda, mas não trava nada</span>
+      </div>
+      <div className="card acct-list">
+        <a className="acct-row" href="/conta">
+          <span className="ar-text">
+            <b>Separar fotos do seu negócio</b>
+            <span>
+              {fotos === 0
+                ? "Você ainda não mandou nenhuma. Quanto mais material, mais a IA tem de onde escolher."
+                : `Você já mandou ${fotos} ${fotos === 1 ? "foto" : "fotos"}. Quanto mais material, mais a IA tem de onde escolher.`}
+            </span>
+          </span>
+          <Seta />
+        </a>
+        <a className="acct-row" href="/meu-negocio">
+          <span className="ar-text">
+            <b>Conferir o que a gente entendeu do seu negócio</b>
+            <span>Principalmente os números — é deles que sai a mira dos anúncios.</span>
+          </span>
+          <Seta />
+        </a>
+        <a className="acct-row" href="/expectativas">
+          <span className="ar-text">
+            <b>Ler os combinados</b>
+            <span>Os 4 acordos, antes de qualquer cobrança. Leva 2 minutos.</span>
+          </span>
+          <Seta />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+function Noturno({ decisao }: { decisao: { payload: unknown } | null }) {
+  return (
+    <section className="card noturno">
+      <div className="nc-head">
+        <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+          <path d="M9 1a5 5 0 1 0 2 8.5A5.5 5.5 0 0 1 9 1z" />
+        </svg>
+        Enquanto você dormia
+      </div>
+      {decisao ? (
+        <p>{resumoDaDecisao(decisao.payload)}</p>
+      ) : (
+        <p>
+          A IA ainda não tomou nenhuma decisão. Quando tomar — remanejar investimento, pausar o
+          que não rende — aparece aqui, com data, hora e motivo.
+        </p>
+      )}
+      <p className="nc-foot">
+        <a href="/alertas">ver tudo que a IA já fez</a>
+      </p>
+    </section>
+  );
+}
+
+function Comando({ verba, investido }: { verba: number | null; investido: number | null }) {
+  return (
+    <section className="command-card">
+      <b className="title">Você está no comando</b>
+      <p className="limit">
+        {verba === null
+          ? "Você ainda não definiu um teto mensal. "
+          : investido !== null
+            ? `${dinheiro(investido)} de ${dinheiro(verba)} investidos este mês · `
+            : `Seu teto do mês é ${dinheiro(verba)}. `}
+        <a href="/verba">{verba === null ? "definir agora" : "mudar limite"}</a>
+      </p>
+      <a className="cta quiet" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
+        Falar com uma pessoa
+      </a>
+      <p className="note">Gente de verdade, sem robô. Resposta em até 2 horas úteis.</p>
+    </section>
   );
 }
 

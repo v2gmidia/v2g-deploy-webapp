@@ -143,30 +143,24 @@ export function migrarChaves<T>(respostas: Record<string, T>): Record<string, T>
   return saida;
 }
 
-/** minutos restantes mostrados na trilha, por pergunta respondida */
-export const MIN_RESTANTES: Record<string, number> = {
-  inicio: 12,
-  nome: 11,
-  ramo: 10,
-  descricao: 9,
-  praca: 7,
-};
-
 /**
- * Blocos acesos na trilha do passo 1 (de 6), por pergunta respondida.
+ * ============================================================
+ * `MIN_RESTANTES` e `BLOCOS_ACESOS` FORAM REMOVIDAS EM 20/08/2026.
  *
- * O bloco 1 vai até 4. Os dois últimos são do bloco 2 (as contas), que é
- * parte do MESMO passo 1 — "sobre o seu negócio" não acaba antes de a gente
- * saber quanto sai uma venda. Acender os 6 aqui daria a peça por completa
- * com três perguntas ainda por fazer.
+ * Eram duas tabelas fixas indexadas pela última pergunta respondida DO
+ * BLOCO 1. Elas não enxergavam o bloco 2 (as contas) nem a `/verba`, então
+ * numa conta com o cadastro fechado e a execução já criada a trilha
+ * continuava mostrando 4 blocos de 6 e "faltam ~7 min" — para sempre.
+ *
+ * Não foram removidas por não terem chamador: foram removidas porque
+ * QUALQUER chamador futuro herdaria o mesmo defeito. Quem precisa do
+ * progresso da trilha chama `blocosDaTrilha()` em `lib/estado/frases.ts`,
+ * que conta os seis obrigatórios do cadastro — a mesma fonte que decide o
+ * que falta em todas as outras telas.
+ *
+ * Os minutos não voltaram em outro lugar. Ver docs/estado-do-cliente.md §5.
+ * ============================================================
  */
-export const BLOCOS_ACESOS: Record<string, number> = {
-  inicio: 1,
-  nome: 2,
-  ramo: 3,
-  descricao: 4,
-  praca: 4,
-};
 
 /**
  * Raio: "Na cidade toda" e "Cidade + região" não têm um número exato —
@@ -198,27 +192,4 @@ export function proximaPergunta(respondidas: string[]): Pergunta | null {
     if (!respondidas.includes(p.id)) return p;
   }
   return null;
-}
-
-/**
- * As duas funções abaixo derivam o estado da trilha a partir das respostas.
- * Vivem aqui, e não no componente de chat, porque quem as chama é a
- * `page.tsx` — que roda no servidor. Num módulo `"use client"` elas não
- * seriam chamáveis de lá.
- */
-function ultimaRespondida(respostas: Record<string, unknown>): string | undefined {
-  const respondidas = ORDEM.filter((id) => respostas[id]);
-  return respondidas[respondidas.length - 1];
-}
-
-/** Quantos blocos da trilha do passo 1 estão acesos (de 6). */
-export function blocosDoPasso1(respostas: Record<string, unknown>): number {
-  const ultima = ultimaRespondida(respostas);
-  return ultima ? (BLOCOS_ACESOS[ultima] ?? 1) : 1;
-}
-
-/** Minutos restantes mostrados na trilha. */
-export function minutosRestantes(respostas: Record<string, unknown>): number {
-  const ultima = ultimaRespondida(respostas);
-  return ultima ? (MIN_RESTANTES[ultima] ?? 12) : 12;
 }

@@ -983,10 +983,25 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  /* `wrap` para a marca de conferido cair na linha de baixo em vez de
+     espremer o valor. Ver `.conta-origem`. */
+  flex-wrap: wrap;
   gap: 12px;
   border-bottom: 1px solid var(--line);
   padding: 0 0 8px;
   margin: 0 0 10px;
+}
+
+/* Quando o cliente conferiu o valor, e quando.
+   `flex-basis: 100%` empurra para a própria linha: a frase é longa e o
+   valor é curto, e dividir a mesma linha entre os dois quebra feio em
+   390px. Verde é o mesmo `--good` da `/meu-negocio`, que é o único lugar
+   onde esta marca já existia — a mesma afirmação com a mesma cor. */
+.conta-origem {
+  flex-basis: 100%;
+  font-size: var(--fs-legenda);
+  color: var(--good);
+  line-height: 1.45;
 }
 .conta-feita .eyebrow { margin: 0; color: var(--ink-mute); }
 .conta-feita b {

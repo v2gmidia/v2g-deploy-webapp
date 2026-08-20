@@ -13,7 +13,8 @@
     "typecheck": "tsc --noEmit",
     "conferir:cadastro": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-cadastro.ts",
     "conferir:lista-branca": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-lista-branca.ts",
-    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:cadastro",
+    "conferir:estado": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-estado.ts",
+    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:cadastro",
     "db:migrate": "supabase db push",
     "db:studio": "supabase start"
   },
