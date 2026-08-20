@@ -33,6 +33,17 @@ export default async function FluxoLayout({ children }: { children: React.ReactN
 
   return (
     <div className="auth-shell">
+      {/* AS TELAS DE FLUXO NÃO GANHAM A BARRA INFERIOR do celular, e isso
+          é desenho, não esquecimento — o grupo existe para tarefa sem
+          fuga. Ver docs/navegacao-mobile.md §10.
+
+          O que mudou no lote QA-1: a saída daqui era ACIDENTAL. Estas
+          telas escapavam do defeito de navegação do celular só porque a
+          marca, por acaso, é link — enquanto as telas de app ficavam sem
+          nenhum clicável. Agora está declarado: a saída de uma tela de
+          fluxo é esta linha, a marca leva ao Início, e os dois alvos são
+          alvos de celular de verdade (medidos, e ajustados no CSS do
+          `.auth-top`). */}
       <header className="auth-top">
         <Marca href="/inicio" />
         {/* Única saída da tela, como no original: falar com gente. */}

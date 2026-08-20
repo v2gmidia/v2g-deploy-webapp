@@ -7,6 +7,7 @@ import { TrocarPagina } from "./TrocarPagina";
 import { Identidade } from "./Identidade";
 import { listarIdentidade } from "@/lib/identidade/armazenar";
 import { SeletorDeTema } from "./SeletorDeTema";
+import { signOutAction } from "../actions";
 
 /**
  * Sua conta — porte de `tela-09-conta-desktop.html`.
@@ -272,6 +273,39 @@ export default async function ContaPage() {
             <p className="foot-line">
               Estas duas ficam aqui desde já, no mesmo peso do resto, para você saber onde
               procurar no dia em que precisar.
+            </p>
+          </section>
+
+          {/* ESTA CONTA — a casa do "Sair".
+              Ver docs/navegacao-mobile.md §7.
+
+              Antes ele existia num lugar só: dentro do `.side-account` da
+              sidebar. E `.side-account .who` já estava em `display: none`
+              abaixo de 900px, o que deixava a conta SEM SAÍDA no tablet
+              muito antes de existir barra inferior — medido em 899px, o
+              botão dava 0 × 0. Com a sidebar virando barra de cinco itens
+              no celular, ele precisava de casa própria de qualquer jeito.
+
+              A action é a mesma do layout, não uma cópia: `signOutAction`
+              mudou de lugar na tela, não de comportamento. */}
+          <section>
+            <div className="section-title">
+              <h2>Esta conta</h2>
+            </div>
+            <div className="card sessao-atual">
+              <div className="sessao-quem">
+                <b>{business?.name?.trim() || user.email}</b>
+                <span>{user.email}</span>
+              </div>
+              <form action={signOutAction}>
+                <button type="submit" className="cta ghost">
+                  Sair desta conta
+                </button>
+              </form>
+            </div>
+            <p className="foot-line">
+              Sair não cancela nada e não apaga nada — só fecha a sessão neste aparelho. Para
+              voltar, é o mesmo e-mail e a mesma senha.
             </p>
           </section>
         </div>

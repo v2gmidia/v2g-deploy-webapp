@@ -83,6 +83,11 @@
   --body: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
 
   --sidebar-w: 252px;
+  /* Altura da barra de navegação do celular — ver docs/navegacao-mobile.md.
+     É token porque TRÊS regras dependem dela: a própria barra, o
+     `padding-bottom` do `.canvas` e o `bottom` do `.toast`. Número solto
+     nos três é o jeito de um deles ficar para trás na próxima mudança. */
+  --barra-h: 56px;
   --shell-max: 1240px;
   --auth-max: 1040px;
   --auth-card: 480px;
@@ -494,7 +499,16 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   max-width: var(--auth-max);
   margin: 0 auto;
   padding: 24px 34px 6px;
+  /* As telas de fluxo não têm barra inferior — a saída delas é esta
+     linha, e por isso os dois alvos precisam se comportar como alvo de
+     celular. Medido em 375px antes: a marca terminava em 146px e o link
+     começava em 146px, colados. Dois alvos encostados num cabeçalho de
+     celular é toque errado esperando acontecer. Ver docs/navegacao-mobile.md §10. */
+  gap: 12px;
 }
+/* 43px de altura media 1px abaixo do piso do iOS. O `min-height` iguala
+   o alvo da marca ao do link ao lado sem mexer no desenho dela. */
+.auth-top .wordmark { min-height: 44px; }
 .auth-wrap {
   flex: 1;
   width: 100%;
@@ -701,23 +715,125 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .topbar .hi { font-family: var(--display); font-weight: 700; font-size: var(--fs-bloco); color: var(--navy); }
 .canvas { flex: 1; padding: 30px 34px 56px; max-width: var(--shell-max); width: 100%; }
 
+/* ------------------------------------------------------------
+   A SIDEBAR VIRA BARRA INFERIOR EM 900px.
+   Desenho e medições em docs/navegacao-mobile.md.
+
+   Antes havia DUAS regras mexendo neste elemento: em 900px ele
+   encolhia para um trilho de 76px só de ícones, e em 620px sumia
+   (`display: none`) sem nada no lugar. O segundo é o defeito que o QA
+   achou — em 390px o shell não tinha um clicável sequer. O primeiro
+   também estava quebrado: o `.side-support` não entrava na lista de
+   escondidos e virava uma coluna de letras de 44 × 378, e o "Sair",
+   dentro de `.side-account .who`, media 0 × 0 — ou seja, entre 621px e
+   900px não havia como sair da conta.
+
+   Três defeitos no mesmo elemento: o defeito era o elemento. O trilho
+   de 76px deixou de existir, e uma regra só decide a navegação inteira.
+
+   NÃO É COMPONENTE NOVO: é a mesma `.sidebar`, o mesmo `NavItem`, o
+   mesmo `usePathname` decidindo o ativo. Só o layout muda.
+   ------------------------------------------------------------ */
 @media (max-width: 900px) {
-  :root { --sidebar-w: 76px; }
-  /* O `.nav-eyebrow` entra nesta lista pelo mesmo motivo dos outros: é
-     texto, e aqui só cabe ícone. Com a sidebar em 76px, os paddings
-     deixam 20px de caixa — "SEU NEGÓCIO" em caixa alta precisa de 94px
-     numa linha, quebra em duas e a mais larga ainda vaza 43px para fora
-     do cobalto. Ele ficou de fora quando a regra foi escrita; nunca coube. */
-  .side-brand .wm, .nav-item span, .side-account .who, .nav-eyebrow { display: none; }
-  .side-brand { display: flex; justify-content: center; padding: 4px 0 20px; }
-  .nav-item { justify-content: center; }
-  .side-account { justify-content: center; border: none; }
+  .app-shell { grid-template-columns: 1fr; }
+
+  .sidebar {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 50;
+    height: var(--barra-h);
+    align-self: auto;
+    flex-direction: row;
+    padding: 0;
+    border-top: 1px solid var(--sidebar-line);
+    /* No tema escuro o cobalto vira `#080E1A` e o fundo da página é
+       `#050A13` — quase o mesmo tom. A linha e a sombra são o que
+       separa a barra do conteúdo lá; no claro elas só assentam. */
+    box-shadow: 0 -10px 24px -18px rgb(var(--navy-rgb) / 0.55);
+  }
+
+  /* O que era da coluna e não cabe numa barra de cinco itens. Cada um
+     tem casa nova, e está escrito qual: o card de suporte virou o link
+     da `.topbar` (logo abaixo); o bloco de conta e o "Sair" viraram a
+     seção "Esta conta" da `/conta`. Esconder sem repor é o defeito que
+     este lote conserta — repeti-lo em escala menor seria o mesmo erro. */
+  .side-brand,
+  .side-spacer,
+  .side-support,
+  .side-account,
+  .nav-eyebrow { display: none; }
+
+  .side-nav { flex: 1; flex-direction: row; gap: 0; }
+
+  /* Cinco células iguais, cada uma o alvo inteiro: largura da tela ÷ 5
+     por `--barra-h`. Dá 78 × 56 em 390px, 75 × 56 em 375px e 64 × 56 em
+     320px — acima dos 44 do iOS e dos 48 do Android nos três. Sem `gap`:
+     espaço morto entre dois alvos, num alvo de 64px, é área de erro sem
+     ganho nenhum. */
+  .nav-item {
+    flex: 1;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 2px;
+    border-radius: 0;
+    font-size: var(--fs-legenda);
+  }
+  /* O rótulo VOLTA. O trilho de ícones mudos era o contrário do público:
+     quem aprendeu celular no WhatsApp lê o rótulo, não decifra o ícone. */
+  .nav-item span {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    line-height: 1.15;
+  }
+
+  /* A pílula do item ativo é um pseudo-elemento recuado, e não o fundo
+     da célula: assim o alvo continua sendo a célula inteira (o dedo que
+     erra o ícone por 10px ainda acerta) e o desenho continua sendo a
+     pílula do mockup, não um bloco colado nas bordas da barra. */
+  .nav-item.active { background: none; }
+  .nav-item.active::before {
+    content: "";
+    position: absolute;
+    inset: 4px 6px;
+    border-radius: 10px;
+    background: var(--sidebar-active-bg);
+    z-index: -1;
+  }
+  .nav-item:hover { background: none; }
+
+  /* Com um campo de texto em foco, a barra some — ver §9 do desenho.
+     Android encolhe a viewport e a barra comeria 56px do que sobrou,
+     podendo cobrir o campo; o iOS não encolhe e ela ficaria atrás do
+     teclado. Sumir antes de atrapalhar é melhor que sobreviver mal nos
+     dois. Volta sozinha ao fechar o teclado, sem toque nenhum.
+
+     Escopo estreito de propósito: só campo de digitação. Foco em link,
+     em botão ou no rádio do seletor de tema NÃO esconde a navegação —
+     senão quem navega por teclado perderia a barra ao tabular nela. */
+  body:has(
+    input:not([type="button"], [type="submit"], [type="hidden"], [type="radio"], [type="checkbox"], [type="file"]):focus,
+    textarea:focus
+  ) .sidebar { display: none; }
+
+  /* A regra que MOSTRA o `.topbar-help` não mora aqui, e não é
+     descuido: ela precisa vir depois da que o esconde, lá embaixo no
+     arquivo. Media query não soma especificidade — escrita aqui, ela
+     perdia para o `display: none` que vem 800 linhas adiante e o link
+     ficava invisível no celular, que é justamente onde ele existe.
+     Medido em 390px antes de mover. */
+
+  /* A barra é fixa: sem esta folga o último elemento da página fica
+     embaixo dela. */
+  .canvas { padding-bottom: calc(var(--barra-h) + 24px); }
   .canvas, .topbar { padding-left: 22px; padding-right: 22px; }
 }
 @media (max-width: 620px) {
-  .app-shell { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .canvas { padding: 20px 18px 40px; }
+  .canvas { padding: 20px 18px calc(var(--barra-h) + 24px); }
 }
 
 /* ============================================================
@@ -1198,6 +1314,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .toast .pip { width: 8px; height: 8px; background: var(--lime); flex: none; }
 .toast.show { opacity: 1; transform: none; }
 
+/* Abaixo de 900px o rodapé é da barra de navegação — o toast sobe para
+   cima dela, senão aparece por baixo. Ver docs/navegacao-mobile.md §9. */
+@media (max-width: 900px) {
+  .toast { bottom: calc(var(--barra-h) + 16px); }
+}
 @media (max-width: 620px) {
   .ec-h { font-size: var(--fs-tela); }
   .ec-steps { min-height: 0; }
@@ -1466,6 +1587,50 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .greet .sub { font-size: var(--fs-corpo); color: var(--ink-soft); margin-top: 3px; }
 .greet .sub b { color: var(--navy); font-weight: 600; }
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+/* Ajuda no topo das telas de app — SÓ abaixo de 900px, onde o card
+   `.side-support` da sidebar não existe mais (ver docs/navegacao-mobile.md
+   §7). Não é padrão novo: é o que o cabeçalho de `(fluxo)` já faz, marca
+   à esquerda e "Falar com uma pessoa" à direita.
+
+   Existe porque o bloco de suporte do CORPO das telas não cobre todos os
+   estados — medido: o vazio de `/anuncios` e o de `/meu-negocio` não têm
+   nenhum. Cliente novo, que é quem mais precisa, ficaria sem canal. */
+.topbar-help {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  color: var(--cobalt);
+  text-decoration: none;
+  border: 1.5px solid var(--line);
+  background: var(--surface);
+  border-radius: 999px;
+  /* 11px em cima e embaixo põem o alvo em 44px de altura, o piso do iOS —
+     a `.auth-help` de `(fluxo)`, com 9px, mede 41px e fica abaixo dele. */
+  padding: 11px 15px;
+}
+.topbar-help:hover { border-color: var(--cobalt); }
+/* Aqui, e não junto do resto da regra de 900px lá em cima: a mesma
+   especificidade decide pela ORDEM no arquivo, e lá em cima esta linha
+   perdia para o `display: none` acima. Ver o comentário na regra de
+   900px, que aponta para cá. */
+@media (max-width: 900px) {
+  .topbar-help { display: inline-flex; }
+}
+
+/* ---------- /conta: a sessão e a porta de saída ----------
+   O "Sair" morava só dentro de `.side-account`, na sidebar — e
+   `.side-account .who` já estava escondido abaixo de 900px, o que
+   deixava a conta sem saída no tablet muito antes desta barra existir.
+   Aqui ele tem casa em toda largura. Ver docs/navegacao-mobile.md §7. */
+.sessao-atual { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.sessao-quem { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sessao-quem b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); }
+.sessao-quem span { font-size: var(--fs-corpo); color: var(--ink-soft); overflow-wrap: anywhere; }
+.sessao-atual form { flex: none; }
 
 /* ============================================================
    DASHBOARD E CAMPANHAS — herói, métricas, lista e cartão navy

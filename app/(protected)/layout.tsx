@@ -89,6 +89,13 @@ export default async function ProtectedLayout({ children }: { children: React.Re
               barra inferior de celular, e o produto é para ser usado no
               celular.
 
+              A barra prevista aqui existe desde o lote QA-1: abaixo de
+              900px esta mesma `.sidebar` vira a barra inferior, só por
+              CSS — mesmo DOM, mesmo `NavItem`, mesmo item ativo. O
+              desenho e as medições estão em docs/navegacao-mobile.md.
+              Um sexto item quebra a conta: são cinco células de 64px na
+              menor tela que a gente atende.
+
               Campanhas e Criativos viraram ANÚNCIOS. O cliente não separa
               a campanha do criativo: para ele, "meu anúncio" é a foto e o
               dinheiro por trás dela, junto. Dois itens para isso era
@@ -153,6 +160,32 @@ export default async function ProtectedLayout({ children }: { children: React.Re
               )}
               <DataDeHoje />
             </div>
+          </div>
+
+          {/* AJUDA NO TOPO — só aparece abaixo de 900px, onde a sidebar
+              virou barra inferior e o card `.side-support` não existe
+              mais. Ver docs/navegacao-mobile.md §7.
+
+              Por que não confiar no bloco de suporte do corpo das telas:
+              porque ele não está em todos os ESTADOS. Medido — o vazio de
+              `/anuncios` e o de `/meu-negocio` não têm nenhum, e é o
+              cliente novo que cai neles. Quem mais precisa de ajuda era
+              justamente quem ficava sem canal.
+
+              O desenho não é invenção: é o mesmo do cabeçalho de
+              `(fluxo)` — marca à esquerda, gente de verdade à direita. */}
+          <div className="topbar-actions">
+            <a
+              className="topbar-help"
+              href="https://wa.me/5521936182176"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+                <path d="M6 1a5 5 0 0 0-4.3 7.6L1 11l2.5-.7A5 5 0 1 0 6 1z" />
+              </svg>
+              Falar com uma pessoa
+            </a>
           </div>
         </header>
         <div className="canvas">{children}</div>
