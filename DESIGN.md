@@ -14,7 +14,7 @@ colors:
   ice: "#B0E9FD"
   ice-soft: "#E3F6FE"
   ink: "#111E2F"
-  ink-mute: "#607080"
+  ink-mute: "#5A6977"
   ink-soft: "#485A6B"
   lime: "#E8FC65"
   line: "#D9E3E6"

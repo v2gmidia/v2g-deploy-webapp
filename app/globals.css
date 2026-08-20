@@ -66,9 +66,17 @@
   /* --ink-mute era #78899A, e media 3,30:1 sobre o `--canvas`: abaixo do
      minimo da WCAG num tom que carrega quase todo o texto de apoio do app,
      quase todo em 11px, para um publico de 40+ lendo no celular. Mesmo
-     matiz, mesma saturacao, luminosidade de 54% para 44% — da 4,67:1 sobre
-     o `--canvas` e 5,05:1 sobre a `--surface`. Ver docs/contraste.md §4. */
-  --ink-mute: #607080;
+     matiz, mesma saturacao, luminosidade de 54% para 41%.
+
+     O 41% saiu da MEDICAO, nao da conta de mesa: a 44% os fundos levemente
+     tingidos (`.pill.off`, o `code`, os blocos aninhados da /meu-negocio)
+     ainda ficavam entre 4,07 e 4,39. A 41% o pior par do app inteiro e
+     4,52. Ver docs/contraste.md §14.
+
+     O PRECO: a distancia entre `--ink-soft` e `--ink-mute` cai de 1,98
+     para 1,26. Os tres degraus de tinta continuam tres, mas o terceiro
+     ficou mais perto do segundo. Registrado em docs/contraste.md §14. */
+  --ink-mute: #5A6977;
   --line: #D9E3E6;
 
   /* ------------------------------------------------------------
@@ -475,9 +483,14 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    estas duas linhas elas herdavam o `--cobalt-dark` do hover acima e ficavam
    com tinta cobalto sobre fundo cobalto: 1,42:1 no claro e 1,33:1 no escuro.
    O realce vira tingimento, que e o que o `.chip-opt:hover` ja faz.
-   Ver docs/contraste.md §7. */
-.cta.ghost:hover { background: rgb(var(--cobalt-rgb) / 0.08); }
-.cta.quiet:hover { background: rgb(var(--navy-rgb) / 0.07); }
+
+   O tingimento e de `--cobalt-rgb`, e nao de `--navy-rgb`, por medicao: o
+   navy-rgb CLAREIA no tema escuro (la ele e 210 224 240, porque e o token
+   de texto), e clarear o fundo derrubava para 4,15 o `.cta.quiet` que o
+   `.proof-actions` pinta de cobalto no hover. O cobalt-rgb escurece nos
+   dois temas. Ver docs/contraste.md §7 e §14. */
+.cta.ghost:hover,
+.cta.quiet:hover { background: rgb(var(--cobalt-rgb) / 0.08); }
 .cta:disabled { background: var(--ink-mute); cursor: not-allowed; }
 .cta.ghost {
   background: transparent;

@@ -1,7 +1,8 @@
 # Contraste nos dois temas — medição e desenho
 
-**Lote QA-4. Este documento é o passo 1: medição e proposta. Nada foi
-alterado no CSS nem no TSX.**
+**Lote QA-4.** §1 a §12 são o passo 1 — a medição e o desenho, escritos
+antes de qualquer alteração e aprovados em 20/08/2026. §13 e §14 são o
+passo 2: o que mudou, e o que a medição de depois mostrou.
 
 Medido em 20/08/2026 sobre o `app/globals.css` do commit `6834136`.
 
@@ -610,3 +611,262 @@ Se aparecer necessidade fora disso, eu paro e aviso.
    da bancada não vale.
 7. `pnpm conferir` verde e o detector sem achado novo, com o `DESIGN.md`
    regerado pelo script.
+
+---
+
+## 13. O que foi alterado (passo 2)
+
+Um arquivo com código: `app/globals.css`. Mais o `DESIGN.md`, regerado
+pelo script.
+
+### 13.1 Camada de token
+
+| token | claro | escuro |
+|---|---|---|
+| `--cobalt-ink` (**novo**) | `var(--cobalt)` — sem mudança | `#5C88FA` |
+| `--ink-mute` | `#78899A` → `#5A6977` | `#6C7D95` → `#7D8CA1` |
+| `--good` | `#2E9E5B` → `#237644` | sem mudança |
+| `--warn` | `#B97F1D` → `#8D6116` | sem mudança |
+| `--crit` | `#C24A44` → `#AD3E38` | sem mudança |
+
+O `--cobalt-ink` entrou nos **três** lugares: o `:root` claro, o
+`@media (prefers-color-scheme: dark)` e o `:root[data-tema="escuro"]`. Os
+dois blocos escuros são duplicação manual, e esquecer um deles seria o
+defeito silencioso da §8.
+
+**O `--ink-mute` claro ficou em `#5A6977`, e não no `#607080` proposto na
+§9.3.** O `#607080` saía da conta de mesa contra `--canvas` e `--surface`;
+a medição de depois mostrou que os fundos levemente tingidos
+(`.pill.off`, o `code`, os blocos aninhados da `/meu-negocio`) continuavam
+entre 4,07 e 4,39. A 41% de luminosidade o pior par do app inteiro é 4,52.
+É o §9.4, item 4, resolvido pela medição em vez de pelo palpite.
+
+### 13.2 Regras
+
+| regra | o que mudou |
+|---|---|
+| 31 regras de `color:` / `outline:` | `var(--cobalt)` → `var(--cobalt-ink)` |
+| `.hero-destaque .cta` | **NÃO** mudou — é tinta sobre branco (§9.1) |
+| `.badge` | `--navy` → `--black` |
+| `.nav-eyebrow` (a 2ª, que vencia) | perdeu o `color`, para a 1ª deixar de ser inerte |
+| `.nav-eyebrow` (a 1ª, da sidebar) | `rgb(255 255 255 / 0.5)` → `var(--sidebar-ink)` |
+| `.cta.ghost:hover`, `.cta.quiet:hover` | param de herdar o fundo de `.cta:hover`; ganham tingimento de `--cobalt-rgb` |
+| `.side-support :focus-visible` (**nova**) | anel de `--cobalt-ink` em vez do branco da sidebar |
+| `.hero-destaque .rev-de` (**nova**) | `rgb(var(--white-rgb) / 0.72)`, a convenção da faixa |
+
+Nenhum `.tsx`. Nenhuma rota, lógica, consulta, layout ou regra de mídia.
+
+### 13.3 Uma decisão do passo 2 que não estava no desenho
+
+O tingimento do hover de `.ghost` e `.quiet` começou como
+`rgb(var(--navy-rgb) / 0.07)`. **A medição reprovou:** no tema escuro
+`--navy-rgb` é `210 224 240` — claro, porque ali o navy é o token de
+texto —, então o tingimento CLAREAVA o fundo e derrubava para **4,15** o
+`.cta.quiet` que o `.proof-actions` pinta de cobalto no hover. Trocado por
+`--cobalt-rgb`, que escurece nos dois temas.
+
+É o mesmo erro que este lote inteiro persegue, cometido por mim, no passo
+2, e pego pela varredura de falha nova — não pela leitura do diff.
+
+---
+
+## 14. A medição de depois
+
+Mesma bancada, mesmas 23 telas, mesmo DOM. **Só a folha de estilo mudou** —
+o `link[rel=stylesheet]` foi trocado no lugar, sem recarregar a página, o
+que mantém o DOM idêntico e permite parear elemento a elemento **pelo
+índice de posição**.
+
+(Na primeira tentativa eu pareei por `tela + seletor + texto`, e a chave
+colidia: o extrator repete o texto de amostra "texto" em dezenas de
+elementos. Aquilo produziu cinco "falhas novas" que não existiam. O par
+por índice é o que vale.)
+
+### 14.1 O placar
+
+| | antes | depois | resolvidas |
+|---|---:|---:|---:|
+| texto, tema claro | 264 | **30** | 234 |
+| texto, tema escuro | 254 | **24** | 230 |
+| anel de foco, claro | 13 | **4** | 9 |
+| anel de foco, escuro | **237** | **4** | 233 |
+| hover, claro | 17 | **4** | 13 |
+| hover, escuro | 75 | **2** | 73 |
+
+**Falhas novas: zero, nos dois temas.** **Elementos que pioraram mais de
+0,3 sem chegar a falhar: zero.** Os dois foram conferidos por comparação
+pareada, elemento a elemento, e não por amostragem.
+
+### 14.2 Tudo o que sobrou, e por quê
+
+As 30 falhas de texto do claro e as 24 do escuro estão **todas** dentro de
+`.rev-item.decidido`, que tem `opacity: 0.72` — a causa 6, que você tirou
+do escopo deste lote. Isso não é afirmação: foi conferido por
+`el.closest('.rev-item.decidido')` em cada elemento que sobrou, nos dois
+temas, e a lista dos que estão fora dessa condição veio **vazia**.
+
+Os 4 anéis de foco que sobram, nos dois temas, estão dentro de
+`.escolha-item.off` — `opacity: 0.55`, `cursor: not-allowed`. Componente
+inativo, isento pela WCAG 1.4.3. Conferido lendo `opacity` e `cursor` na
+cadeia, não pelo nome da classe.
+
+Os 4 e 2 de hover são os mesmos elementos do `.rev-item.decidido`.
+
+Registrados em `docs/buraco-opacidade-decidido.md`.
+
+### 14.3 Os casos do QA, antes e depois
+
+Medidos na **página real** (`/entrar` servida pelo `next dev`), não na
+bancada:
+
+| | antes | depois |
+|---|---:|---:|
+| `button.link-btn` "→ Entrar", escuro | 2,10 | **5,54** |
+| `div.auth-foot`, escuro | 4,36 | **5,35** |
+| `small` "Tráfego no piloto", escuro | 4,72 | **5,79** |
+| `small`, claro | 3,30 | **5,18** |
+| `div.auth-foot`, claro | 3,56 | **5,59** |
+
+A bancada foi reconferida contra a página real depois da mudança, como a
+§12 exigia: os valores batem.
+
+E os três casos do QA que não dá para abrir sem sessão, medidos na
+bancada:
+
+| | antes | depois |
+|---|---:|---:|
+| Badge "Nada pendente", escuro | **1,12** | **15,34** |
+| `a.wa` "Chamar no WhatsApp →", escuro | **1,87** | 4,92 |
+| `.nav-eyebrow` "SEU NEGÓCIO", claro | **2,05** | 5,06 |
+| `.cta.ghost` no hover, escuro | **1,33** | 5,54 |
+
+### 14.4 O preço, dito em número
+
+A distância entre `--ink-soft` e `--ink-mute` — a distinção visual entre o
+segundo e o terceiro degrau de tinta — **encolheu**:
+
+| | antes | depois |
+|---|---:|---:|
+| claro (`#485A6B` × `--ink-mute`) | 1,98 | **1,26** |
+| escuro (`#9FB0C6` × `--ink-mute`) | 1,90 | **1,55** |
+
+Os três degraus continuam três, mas o terceiro ficou mais perto do
+segundo, e isso é visível — principalmente no claro. É consequência
+direta de empurrar o `--ink-mute` contra o piso de 4,5:1 sem mexer no
+`--ink-soft`.
+
+**Se isso incomodar, o conserto é escurecer também o `--ink-soft`**, que
+hoje mede 7,06 sobre a `--surface` e tem folga de sobra. Não fiz porque
+não estava no desenho aprovado e porque mexeria em mais texto do que o
+lote pediu.
+
+### 14.5 As ferramentas do projeto
+
+- `pnpm conferir`: **verde** (`TUDO CERTO`).
+- `DESIGN.md`: regerado pelo `scripts/gerar-design-md.mjs`, não à mão.
+  Ficou em **59 chaves**, não 60 como eu disse na §10 — porque
+  `--cobalt-ink` no claro é `var(--cobalt)`, e o script só lista literais.
+  Isso é de propósito: escrever `#0743DC` ali duplicaria o valor e deixaria
+  a variante clara para trás na próxima troca de paleta, que é exatamente
+  o bug que o cabeçalho do `globals.css` registra ter acontecido com 21
+  tons.
+- Detector: **5 achados, os mesmos 5 do `6834136`** — três `side-tab`, um
+  `layout-transition` e um `codex-grid-background`, todos anteriores a este
+  lote e nenhum de cor. Conferido rodando o detector também sobre
+  `git show HEAD:app/globals.css`, e não só sobre o arquivo de agora.
+- O teste de dois lados do detector, que o `DESIGN.md` exige, foi rodado
+  antes: 1 achado para o `#ff00aa` e nenhum para o `#0239C7`.
+
+### 14.6 O que não foi verificado
+
+- **Nenhuma captura de tela.** A aba do navegador não está sendo exibida
+  nesta sessão, e sem isso a página não compõe quadro — a ferramenta
+  devolve erro em vez de imagem. A evidência deste lote é numérica.
+- **Aparelho real.** Tudo em navegador de desktop, como no passo 1.
+- **A `(marketing)`**, que segue fora.
+
+---
+
+## 15. Remedição contra a árvore de hoje
+
+A verificação da §14 foi feita contra o DOM e o CSS do `6834136` — o
+"antes" que o QA mediu. Enquanto ela rodava, o **QA-1 fechou o lote dele**
+(commits `d14bdee` e `bb7cbbb`), o que trouxe a barra inferior do celular
+e mais 153 linhas de `globals.css`. Um número medido contra um arquivo que
+já não existe não vale, então tudo foi remedido.
+
+Bancada refeita do zero: DOM reextraído dos `.tsx` de agora, `globals.css`
+de agora, mesmo código de medição.
+
+| | 1280px | 390px |
+|---|---:|---:|
+| texto, claro — elementos medidos | 1497 | 1410 |
+| falhas | **30** | **30** |
+| texto, escuro — elementos medidos | 1497 | 1410 |
+| falhas | **24** | **24** |
+
+Os mesmos 30 e 24 da §14, e **todos** continuam dentro de
+`.rev-item.decidido` — conferido de novo com `el.closest()`, nos dois
+temas e nas duas larguras, e a lista dos que estão fora veio vazia.
+
+### A ressalva da §8 está fechada
+
+A §8 dizia: *"Isto vale para o `6834136`. O QA-1 está adicionando cor
+dentro de `@media (max-width: 900px)`."* A barra inferior existe agora, e
+foi medida a 390px:
+
+| elemento da barra | claro | escuro | mínimo |
+|---|---:|---:|---:|
+| item ativo — rótulo e ícone | 7,38 | 19,30 | 4,5 / 3 |
+| item inativo — rótulo e ícone | 5,06 | 7,56 | 4,5 / 3 |
+
+Passa nos dois temas. A barra nasce com contraste.
+
+### O `.topbar-help`, que "nascia quebrado"
+
+Era o encostão da §10: o link que o QA-1 criou usava `color: var(--cobalt)`
+sobre `--surface`, e nascia em 2,10:1 no escuro. Trocado para
+`--cobalt-ink` junto com as outras 30 regras. Medido a 390px, onde ele
+aparece:
+
+| | antes | depois |
+|---|---:|---:|
+| `a.topbar-help`, claro | 7,32 | 7,32 |
+| `a.topbar-help`, escuro | **2,10** | **5,54** |
+
+---
+
+## 16. Um problema de commit, não de código
+
+**O commit `bb7cbbb` do QA-1 levou junto as alterações do QA-4 que ainda
+estavam na árvore de trabalho.** Ele se chama "Navegacao no celular: barra
+inferior no lugar da sidebar 2" e contém, além do trabalho de navegação:
+o token `--cobalt-ink`, a recalibração do `--ink-mute`, do `--good`, do
+`--warn` e do `--crit`, as 31 trocas de `--cobalt` para `--cobalt-ink`, o
+conserto do `.badge`, o do `.nav-eyebrow` e o `DESIGN.md` regerado. O
+`d14bdee`, o anterior, levou o `docs/contraste.md`.
+
+Era o risco anunciado na §10 — dois lotes na mesma árvore, um só
+`globals.css` — e ele aconteceu.
+
+**O código está certo e verificado.** O que ficou misturado é o histórico:
+duas mensagens de commit que falam de navegação descrevem também um lote
+de cor. Quem for ler `git log` para entender por que o `--ink-mute` mudou
+não vai achar a resposta onde procuraria.
+
+Ficou fora dos dois commits, na árvore de trabalho, só o fim do QA-4: o
+`--ink-mute` claro em `#5A6977` (a §13.1 explica por que não parou em
+`#607080`), a unificação do hover de `.ghost` e `.quiet`, este documento
+do §13 em diante, e os dois registros de achado.
+
+Separar isso exigiria reescrever os dois últimos commits, e commit neste
+projeto é feito por você, no GitHub Desktop. **Não mexi.** As opções, na
+ordem em que eu as recomendaria:
+
+1. **Deixar como está** e anotar aqui que os dois lotes vieram juntos —
+   já está anotado, é este parágrafo. Custo: o `git log` mente por
+   omissão.
+2. **Corrigir a mensagem** do `bb7cbbb` para dizer que ele carrega os dois
+   lotes. Um `git commit --amend` só na mensagem, sem tocar em conteúdo.
+3. **Separar de verdade**, refazendo os dois commits. É o mais limpo e o
+   mais arriscado, e só vale se nada foi para o GitHub ainda.

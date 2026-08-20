@@ -117,3 +117,80 @@ está medindo outra coisa.
 Não é proposta de trocar a Decisão 7. Um `globals.css` só continua sendo
 a escolha certa aqui; o que falta não é arquitetura, é uma trava — do
 mesmo tipo das outras três, que também nasceram cada uma de um bug real.
+
+---
+
+## 6. Adendo do QA-4 — a varredura foi rodada, e achou mais três
+
+**Escrito em 20/08/2026**, ao fechar o QA-4. Não reescreve nada acima: o
+que está em §1–§5 é a medição daquele momento e continua valendo como
+registro.
+
+O QA-4 precisava saber se o caso 2 era único, e por isso rodou o passo 2
+da receita da §4 — agrupar por (seletor, propriedade) e acusar
+redeclaração posterior. **Numa versão reduzida: só propriedades de cor**
+(`color`, `background`, `background-color`, `border-color`,
+`outline-color`), e só no nível raiz da folha.
+
+### O que ela acusou, antes de qualquer conserto
+
+Quatro, e o primeiro é a linha de base que a §4 exige:
+
+| seletor | propriedade | declarada em | perdida para |
+|---|---|---|---|
+| `.nav-eyebrow` | `color` | 724 | 1616 |
+| `.side-support` | `background` | 734 | 1625 |
+| `.side-support b` | `color` | 738 | 1632 |
+| `.side-support p` | `color` | 739 | 1633 |
+
+O caso 2 deste documento apareceu — **a varredura não roda em vazio**, que
+era a condição posta na §4. O caso 4 (`.topbar-help`, `display`) **não**
+aparece, e isso não é falha: `display` não é cor, e esta versão só olha
+cor. Quem escrever o `conferir:cascata` de verdade não pode se apoiar
+nesta redução.
+
+Rodada de novo depois do conserto do QA-4, ela acusa **três** — o
+`.nav-eyebrow` saiu. É o comportamento certo dos dois lados.
+
+### Os três novos são o mesmo bloco, e são piores de ler
+
+Todos no bloco de correções da sidebar, todos perdidos para o bloco
+"sidebar: complementos das telas de app":
+
+| seletor | o que está escrito | o que renderiza |
+|---|---|---|
+| `.side-support` | `background: rgb(255 255 255 / .10)` | `background: var(--ice-soft)` |
+| `.side-support b` | `color: var(--sidebar-ink-strong)` | `color: var(--navy)` |
+| `.side-support p` | `color: var(--sidebar-ink)` | `color: var(--ink-soft)` |
+
+**Nenhum dos três dá falha de contraste** — o que renderiza é legível.
+Por isso o QA-4 não os tocou: seria mudar aparência sem defeito medido.
+
+Mas eles são piores de ler que o caso 2, por um motivo que o caso 2 não
+tinha: **o comentário acima deles afirma uma decisão de desenho que não
+está em vigor** — "o card claro ali dentro brigaria com a faixa do herói
+pela atenção", justificando um card de vidro sobre o cobalto que nunca
+aparece. Quem ler o arquivo vai acreditar. O caso 2 pintava a cor errada;
+estes três documentam uma decisão revogada em silêncio.
+
+Fica pendente **decidir qual é a verdade**: se o card é vidro, as três
+regras de baixo precisam sair do caminho; se é o `--ice-soft` que aparece
+hoje, as três de cima e o comentário devem ser apagados. O que não pode
+ficar é como está.
+
+Uma amarra prática, para quem mexer: o QA-4 pôs
+`.side-support :focus-visible { outline-color: var(--cobalt-ink) }`
+justamente porque o card renderiza claro (o anel branco da sidebar dava
+1,11:1 ali). **Se o vidro passar a vencer, esse anel tem que voltar a ser
+branco** — a nota está no próprio CSS, ao lado da regra.
+
+### Por que este adendo mora aqui, e não num documento novo
+
+Porque o QA-4 tinha escrito um `buraco-regras-inertes.md` próprio, e dois
+documentos sobre o mesmo padrão é a armadilha que o projeto já registra
+duas vezes: cada um delega ao outro e o caso fica sem dono. O documento
+foi apagado antes de existir por mais de uma hora, e o achado veio para
+cá, que é onde o padrão já tinha dono.
+
+Medição completa do contraste em [`contraste.md`](./contraste.md) §4
+(causa 3) e §13.2.
