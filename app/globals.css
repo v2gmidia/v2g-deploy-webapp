@@ -62,18 +62,50 @@
   --cobalt-dark: #0532A5;  /* hover do cobalto */
   --ink: #111E2F;          /* texto = navy */
   --ink-soft: #485A6B;
-  --ink-mute: #78899A;
+
+  /* --ink-mute era #78899A, e media 3,30:1 sobre o `--canvas`: abaixo do
+     minimo da WCAG num tom que carrega quase todo o texto de apoio do app,
+     quase todo em 11px, para um publico de 40+ lendo no celular. Mesmo
+     matiz, mesma saturacao, luminosidade de 54% para 44% — da 4,67:1 sobre
+     o `--canvas` e 5,05:1 sobre a `--surface`. Ver docs/contraste.md §4. */
+  --ink-mute: #607080;
   --line: #D9E3E6;
+
+  /* ------------------------------------------------------------
+     COBALTO COMO TINTA != COBALTO COMO SUPERFICIE.
+
+     `--cobalt` continua sendo o azul da marca e o fundo do botao, da
+     sidebar e da faixa. `--cobalt-ink` e o mesmo azul quando ele e
+     TEXTO, ICONE ou ANEL DE FOCO — e so ele muda no tema escuro.
+
+     Existem separados porque o cobalto escuro (#0239C7) e bom como fundo
+     e pessimo como tinta: sobre as superficies escuras media de 1,86 a
+     2,28:1, o que deixava todo link do app ilegivel no modo escuro.
+     Nenhum azul da paleta servia — `--cobalt-dark` da 2,48 e
+     `--sidebar-active-bg` da 2,31. Ver docs/contraste.md §9.1.
+
+     ATENCAO ao usar: o criterio e o FUNDO, nao a propriedade. Cobalto
+     como tinta sobre fundo CLARO continua sendo `--cobalt` — e o caso do
+     `.hero-destaque .cta`, botao branco dentro da faixa, que com
+     `--cobalt-ink` cairia de 8,70 para 3,30.
+     ------------------------------------------------------------ */
+  --cobalt-ink: var(--cobalt);
 
   /* Os quatro `-soft` abaixo são tons CLAROS pensados para fundo claro.
      No tema escuro eles não podem ser derivados dos pais — vão precisar
      de valores próprios, calibrados contra a superfície escura. */
   --ice-soft: #E3F6FE;
-  --good: #2E9E5B;
+
+  /* Os tres pares tinta/fundo abaixo foram recalibrados. Sobre o `-soft`
+     correspondente eles mediam 2,96, 3,01 e 3,95 — os selos de severidade
+     falhavam no tema CLARO enquanto passavam no escuro, que e o motivo de
+     nunca terem sido notados. Mesmo matiz e saturacao, so mais escuros.
+     Os valores do tema escuro NAO mudam: la eles ja medem de 5,99 a 7,49. */
+  --good: #237644;   /* era #2E9E5B — 2,96 -> 4,86 sobre --good-soft */
   --good-soft: #E2F3E8;
-  --warn: #B97F1D;
+  --warn: #8D6116;   /* era #B97F1D — 3,01 -> 4,78 sobre --warn-soft */
   --warn-soft: #FAEFD8;
-  --crit: #C24A44;
+  --crit: #AD3E38;   /* era #C24A44 — 3,95 -> 4,89 sobre --crit-soft */
   --crit-soft: #F9E4E2;
 
   /* Bahnschrift (só Windows, não embutida no protótipo original) trocada
@@ -198,6 +230,9 @@
 
     --cobalt: #0239C7;
     --cobalt-dark: #1B4BE8;
+    /* o cobalto de tinta: mesmo matiz (223deg) e mesma saturacao (94%) do
+       `--cobalt`, luminosidade de 45% para 67%. 4,89:1 no pior par. */
+    --cobalt-ink: #5C88FA;
     --lime: #D5EF25;
     --ice: #8FD9F5;
 
@@ -211,7 +246,7 @@
     --navy: #E9EFF8;
     --ink: #E9EFF8;
     --ink-soft: #9FB0C6;
-    --ink-mute: #6C7D95;
+    --ink-mute: #7D8CA1;   /* era #6C7D95 — 4,36 -> 5,35 sobre --surface */
     --line: #1C2840;
 
     --ice-soft: #0E2231;
@@ -250,6 +285,9 @@
 
   --cobalt: #0239C7;
   --cobalt-dark: #1B4BE8;
+  /* o cobalto de tinta: mesmo matiz (223deg) e mesma saturacao (94%) do
+     `--cobalt`, luminosidade de 45% para 67%. 4,89:1 no pior par. */
+  --cobalt-ink: #5C88FA;
   --lime: #D5EF25;
   --ice: #8FD9F5;
 
@@ -263,7 +301,7 @@
   --navy: #E9EFF8;
   --ink: #E9EFF8;
   --ink-soft: #9FB0C6;
-  --ink-mute: #6C7D95;
+  --ink-mute: #7D8CA1;   /* era #6C7D95 — 4,36 -> 5,35 sobre --surface */
   --line: #1C2840;
 
   --ice-soft: #0E2231;
@@ -307,7 +345,7 @@ body {
 
 ::selection { background: var(--lime); color: var(--black); }
 
-a { color: var(--cobalt); }
+a { color: var(--cobalt-ink); }
 
 /* Link que é um bloco inteiro (linha de lista, card, item de menu) não
    leva sublinhado — o alvo de clique já é evidente pela superfície. Só
@@ -324,7 +362,7 @@ a { color: var(--cobalt); }
 .escolha-item { text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-visible {
-  outline: 2px solid var(--cobalt);
+  outline: 2px solid var(--cobalt-ink);
   outline-offset: 2px;
 }
 /* Sobre a superfície de destaque o anel de foco não pode ser cobalto —
@@ -433,10 +471,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   text-decoration: none;
 }
 .cta:hover { background: var(--cobalt-dark); }
+/* `.ghost` e `.quiet` tem fundo transparente e tinta pensada para ele. Sem
+   estas duas linhas elas herdavam o `--cobalt-dark` do hover acima e ficavam
+   com tinta cobalto sobre fundo cobalto: 1,42:1 no claro e 1,33:1 no escuro.
+   O realce vira tingimento, que e o que o `.chip-opt:hover` ja faz.
+   Ver docs/contraste.md §7. */
+.cta.ghost:hover { background: rgb(var(--cobalt-rgb) / 0.08); }
+.cta.quiet:hover { background: rgb(var(--navy-rgb) / 0.07); }
 .cta:disabled { background: var(--ink-mute); cursor: not-allowed; }
 .cta.ghost {
   background: transparent;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   border: 1.5px solid var(--cobalt);
 }
 .cta.quiet {
@@ -464,7 +509,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .pill.ok { background: var(--good-soft); color: var(--good); }
 .pill.warn { background: var(--warn-soft); color: var(--warn); }
 .pill.crit { background: var(--crit-soft); color: var(--crit); }
-.pill.info { background: var(--ice-soft); color: var(--cobalt); }
+.pill.info { background: var(--ice-soft); color: var(--cobalt-ink); }
 .pill.off { background: rgb(var(--navy-rgb) / 0.07); color: var(--ink-mute); }
 
 /* ---------- card de prova (components/ui/ProofCard.tsx) ---------- */
@@ -540,7 +585,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-family: var(--display);
   font-size: var(--fs-corpo);
   font-weight: 700;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   text-decoration: none;
   border: 1.5px solid var(--line);
   background: var(--surface);
@@ -592,7 +637,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-family: var(--display);
   font-size: var(--fs-corpo);
   font-weight: 700;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
 }
 .link-btn:hover { text-decoration: underline; }
 
@@ -676,12 +721,22 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    pensado para fundo claro — e ficaria ilegível sobre o azul. */
 .sidebar { border-right: 0; }
 .side-account { border-color: var(--sidebar-line); }
-.nav-eyebrow { color: rgb(255 255 255 / 0.5); }
+.nav-eyebrow { color: var(--sidebar-ink); }
 .side-brand .wm { color: var(--sidebar-ink-strong); }
 .side-brand .wm small { color: var(--sidebar-ink); }
 .sidebar .link-btn { color: var(--sidebar-ink); }
 .sidebar .link-btn:hover { color: var(--sidebar-ink-strong); }
 .sidebar :focus-visible { outline-color: var(--sidebar-ink-strong); }
+/* ...menos dentro do card de suporte. O anel branco funciona sobre o
+   cobalto da sidebar, mas o card ali dentro e claro, e branco sobre ele
+   dava 1,11:1 em 9 telas. Cobalto de tinta da 6,64 no claro e 4,92 no
+   escuro. Ver docs/contraste.md §7.
+
+   NOTA: isto vale para o card como ele RENDERIZA hoje (`--ice-soft`). A
+   regra de vidro logo abaixo esta inerte — ver docs/contraste.md §13. Se
+   algum dia o vidro passar a vencer, este anel precisa voltar a ser
+   branco. */
+.side-support :focus-visible { outline-color: var(--cobalt-ink); }
 
 /* O bloco de suporte deixa de ser um card gelo e vira vidro sobre o
    cobalto — o card claro ali dentro brigaria com a faixa do herói pela
@@ -871,7 +926,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-corpo);
   padding: 9px 15px;
   border: 1.5px solid var(--cobalt);
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   background: var(--surface);
   border-radius: 999px;
 }
@@ -886,7 +941,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-legenda);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   font-variant-numeric: tabular-nums;
   margin: 0 0 6px;
 }
@@ -901,7 +956,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--ink-mute);
   text-decoration: underline;
 }
-.text-fallback:hover { color: var(--cobalt); }
+.text-fallback:hover { color: var(--cobalt-ink); }
 
 /* ---- bloco 2 do onboarding: as contas ----------------------------------
    Sem faixa cobalto aqui, e é decisão: o `.hero-destaque` sangra
@@ -1105,7 +1160,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--ink-mute);
   display: flex; align-items: center; gap: 4px;
 }
-.rail-labels span.now { color: var(--cobalt); font-weight: 700; }
+.rail-labels span.now { color: var(--cobalt-ink); font-weight: 700; }
 .rail-labels span.done { color: var(--ink); }
 .rail-note { font-size: var(--fs-legenda); color: var(--ink-soft); margin-top: 7px; }
 .rail-note b { color: var(--ink); }
@@ -1150,7 +1205,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .proof-list li b { color: var(--ink); font-weight: 600; }
 .proof-actions { display: flex; flex-direction: column; gap: 8px; }
 .proof-actions .cta { background: var(--surface); padding: 11px 12px; font-size: var(--fs-corpo); }
-.proof-actions .cta:hover { border-color: var(--cobalt); color: var(--cobalt); }
+.proof-actions .cta:hover { border-color: var(--cobalt); color: var(--cobalt-ink); }
 
 /* ============================================================
    TELA DE EXPECTATIVAS (ec-*) — do <style> local de
@@ -1206,7 +1261,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .ec-icon { color: var(--navy); display: block; margin-bottom: 14px; line-height: 0; }
 .ec-h { font-size: var(--fs-destaque); max-width: 21ch; margin-bottom: 12px; }
-.ec-h:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 4px; }
+.ec-h:focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 4px; }
 .ec-sub { max-width: 52ch; margin-bottom: 18px; }
 
 .ec-swap {
@@ -1221,7 +1276,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   margin-bottom: 6px;
 }
 .ec-swap p { font-size: var(--fs-corpo); line-height: 1.6; color: var(--ink); margin: 0; max-width: 50ch; }
@@ -1251,7 +1306,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 0;
   font-size: var(--fs-corpo);
   font-weight: 600;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   text-decoration: none;
   margin-top: 14px;
 }
@@ -1444,7 +1499,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-legenda);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--navy);
+  /* --black, e nao --navy. `--navy` faz papel duplo — tom escuro da marca
+     E cor de texto — e no tema escuro ele vira claro, enquanto o `--lime`
+     continua claro porque ali e superficie. Quase-branco sobre amarelo dava
+     1,12:1. `--black` nao e redefinido no escuro, de proposito, e e o que o
+     `.chip-lime` ja usa com este mesmo fundo. Ver docs/contraste.md §4. */
+  color: var(--black);
   background: var(--lime);
   padding: 6px 12px;
   width: max-content;
@@ -1493,7 +1553,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: 50%;
   background: var(--surface);
   display: flex; align-items: center; justify-content: center;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
 }
 .empty-head {
   font-family: var(--display);
@@ -1534,8 +1594,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* Uma linha da lista pode ser o próximo passo óbvio. `.acct-row.destaque`
    dá a ela a cor do cobalto sem transformá-la num segundo herói — a
    diferença é de cor e de seta, não de superfície. */
-.acct-row.destaque .ar-text b { color: var(--cobalt); }
-.acct-row.destaque svg { color: var(--cobalt); }
+.acct-row.destaque .ar-text b { color: var(--cobalt-ink); }
+.acct-row.destaque svg { color: var(--cobalt-ink); }
 .acct-list .acct-row.destaque { background: rgb(var(--cobalt-rgb) / 0.04); border-radius: 8px; padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
 
 /* ---------- lista da assinatura: todas as linhas com o mesmo peso ---------- */
@@ -1555,20 +1615,28 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .acct-list .acct-row:disabled { cursor: not-allowed; }
 .acct-list .acct-row:disabled .ar-text b { color: var(--ink-mute); }
 .ar-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.ar-text b { font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo); color: var(--cobalt); }
+.ar-text b { font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo); color: var(--cobalt-ink); }
 .ar-text span { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.45; }
 
 .support-block { border-radius: 10px; padding: 18px; margin: 0; font-size: var(--fs-corpo); }
 .support-block b { font-size: var(--fs-titulo); margin-bottom: 5px; }
-.support-block .wa { display: inline-block; margin-top: 8px; font-weight: 600; color: var(--cobalt); text-decoration: none; }
+.support-block .wa { display: inline-block; margin-top: 8px; font-weight: 600; color: var(--cobalt-ink); text-decoration: none; }
 
 /* ---------- sidebar: complementos das telas de app ---------- */
+/* SEM `color` AQUI, e isso e a correcao. Esta regra tem a mesma
+   especificidade da `.nav-eyebrow` do bloco da sidebar (0,1,0) e vem
+   depois, entao vencia a cascata e pintava o rotulo com `--ink-mute` —
+   tinta de pagina — sobre o cobalto: 2,05:1, em 9 telas. A regra certa
+   estava escrita la em cima e estava INERTE. Nem o grep nem o detector
+   pegam isso; so a medicao. Ver docs/contraste.md §4, causa 3.
+
+   Se um dia o `.nav-eyebrow` sair da sidebar e precisar de tinta propria,
+   ela vem com seletor mais especifico — nao como declaracao solta aqui. */
 .nav-eyebrow {
   font-family: var(--display);
   font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-mute);
   padding: 0 12px 8px;
 }
 .nav-item .ico { width: 20px; height: 20px; flex: none; }
@@ -1603,7 +1671,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-family: var(--display);
   font-size: var(--fs-corpo);
   font-weight: 700;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   text-decoration: none;
   border: 1.5px solid var(--line);
   background: var(--surface);
@@ -1750,7 +1818,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   text-wrap: balance;
   max-width: 24ch;
 }
-.hero-phrase .num-cobalt { color: var(--cobalt); }
+.hero-phrase .num-cobalt { color: var(--cobalt-ink); }
 .hero-note { font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft); margin: 0; }
 
 /* As métricas de apoio PERDERAM a borda e o fundo branco. Antes cada uma
@@ -1855,7 +1923,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--navy);
   margin-bottom: 8px;
 }
-.card.noturno .nc-head svg { color: var(--cobalt); flex: none; }
+.card.noturno .nc-head svg { color: var(--cobalt-ink); flex: none; }
 .card.noturno p { font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft); margin: 0; }
 .card.noturno .nc-foot {
   font-size: var(--fs-legenda);
@@ -1864,7 +1932,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding-top: 12px;
   border-top: 1px dashed var(--line);
 }
-.card.noturno .nc-foot a { color: var(--cobalt); font-weight: 600; text-decoration: none; }
+.card.noturno .nc-foot a { color: var(--cobalt-ink); font-weight: 600; text-decoration: none; }
 .card.noturno .chip-lime {
   margin-top: 12px;
   background: transparent;
@@ -1892,12 +1960,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--surface);
   color: var(--ink-soft);
 }
-.btn-sm.primary { border-color: var(--cobalt); color: var(--cobalt); font-weight: 700; }
+.btn-sm.primary { border-color: var(--cobalt); color: var(--cobalt-ink); font-weight: 700; }
 .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .est-link {
   background: none; border: none; padding: 0;
-  color: var(--cobalt); font-size: var(--fs-corpo); font-weight: 600;
+  color: var(--cobalt-ink); font-size: var(--fs-corpo); font-weight: 600;
   text-decoration: underline;
 }
 
@@ -1913,7 +1981,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-legenda);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   display: block;
   margin-bottom: 8px;
 }
@@ -2255,6 +2323,11 @@ code {
 }
 
 .rev-de { font-size: var(--fs-bloco); color: var(--ink-mute); font-weight: 500; }
+/* Dentro da faixa o `--ink-mute` e tinta de pagina sobre superficie de
+   marca: media 2,05:1 no claro e 2,07:1 no escuro. A faixa ja tem
+   convencao propria — e a mesma do `.eyebrow` e do `.hero-note` dela.
+   Ver docs/contraste.md §4, causa 3. */
+.hero-destaque .rev-de { color: rgb(var(--white-rgb) / 0.72); }
 
 .rev-lista { display: grid; gap: 12px; }
 
@@ -2332,7 +2405,7 @@ code {
 .btn-linha:focus-visible,
 .rev-corrigir input:focus-visible,
 .rev-corrigir textarea:focus-visible {
-  outline: 2px solid var(--cobalt); outline-offset: 2px;
+  outline: 2px solid var(--cobalt-ink); outline-offset: 2px;
 }
 
 .rev-explica { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.55; margin: 0 0 12px; max-width: 78ch; }
@@ -2376,7 +2449,7 @@ code {
 .id-aviso b { display: block; font-size: var(--fs-corpo); color: var(--warn); margin-bottom: 4px; }
 .id-aviso p { margin: 0; font-size: var(--fs-corpo); line-height: 1.55; color: var(--ink-soft); }
 .id-saida { margin-top: 8px !important; }
-.id-saida a { color: var(--cobalt); font-weight: 600; }
+.id-saida a { color: var(--cobalt-ink); font-weight: 600; }
 
 .id-recado {
   font-size: var(--fs-corpo);
@@ -2456,7 +2529,7 @@ code {
 .id-arquivo::file-selector-button:hover { border-color: var(--ink-mute); }
 /* O foco vai no INPUT, não no pseudo-elemento: é o input que recebe o Tab,
    e estilizar o foco no botão deixaria a moldura em volta da coisa errada. */
-.id-arquivo:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 2px; }
+.id-arquivo:focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 2px; }
 
 @media (max-width: 620px) {
   .id-logo { flex-direction: column; align-items: flex-start; }
@@ -2569,7 +2642,7 @@ code {
 .rc-editor input:focus-visible,
 .rc-editor textarea:focus-visible,
 .btn-texto:focus-visible {
-  outline: 2px solid var(--cobalt);
+  outline: 2px solid var(--cobalt-ink);
   outline-offset: 2px;
 }
 
@@ -2594,7 +2667,7 @@ code {
   padding: 0;
   font: inherit;
   font-size: var(--fs-legenda);
-  color: var(--cobalt);
+  color: var(--cobalt-ink);
   text-decoration: underline;
   cursor: pointer;
 }
