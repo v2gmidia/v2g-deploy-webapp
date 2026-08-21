@@ -97,11 +97,30 @@ export default async function MeuNegocioPage() {
                 <div key={campo.chave} className="rc-pendente">
                   <span className="rc-pend-rotulo">{campo.rotulo}</span>
                   {campo.ajuda && <span className="rc-ajuda">{campo.ajuda}</span>}
+                  {/* A PORTA. Continua sem `input` — a decisão do lote C está
+                      certa e não muda: chute aqui entra como `confirmado` e
+                      vira orçamento de campanha. O que muda é que o campo
+                      deixa de ser beco: ele aponta para a tela onde a mesma
+                      pergunta existe numa forma respondível.
+
+                      O destino vem do catálogo (`ondeResponder`), nunca de um
+                      `if` sobre nome de campo aqui dentro. Ver
+                      docs/lote-agora-eu-sei.md §5. */}
+                  {campo.ondeResponder && (
+                    <a className="rc-pend-porta" href={campo.ondeResponder.href}>
+                      {campo.ondeResponder.rotulo} &rarr;
+                    </a>
+                  )}
                 </div>
               ))}
+              {/* As DUAS coisas são verdade, e tirar a segunda transformaria
+                  uma oferta em cobrança: dá para responder agora, pela conta,
+                  E a gente chama de qualquer jeito. Quem não quiser mexer não
+                  fica devendo nada. */}
               <p className="rc-pend-nota">
                 Esses a gente levanta junto com você, com uma conta que dá para responder — quase
-                ninguém sabe de cabeça, e chutar aqui sai caro. A gente te chama.
+                ninguém sabe de cabeça, e chutar aqui sai caro. Se quiser adiantar, o caminho está
+                aí em cima; se preferir esperar, a gente te chama do mesmo jeito.
               </p>
             </div>
           )}

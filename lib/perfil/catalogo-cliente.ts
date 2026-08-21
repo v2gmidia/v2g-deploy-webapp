@@ -84,6 +84,22 @@ export interface CampoDoCliente {
    */
   dificil?: true;
   /**
+   * Onde a pergunta desse número existe numa forma que o cliente consegue
+   * responder. **Obrigatório em todo campo `dificil`** — ver a verificação
+   * logo abaixo de `APRESENTACAO`.
+   *
+   * Existe porque `dificil: true` tirava o `input` da tela e não punha nada
+   * no lugar: o campo aparecia no bloco "o que a gente ainda não sabe" e
+   * acabava ali. Para dois dos três, isso era beco — nenhuma superfície do
+   * produto reoferecia a pergunta, e o cliente nunca fechava o cadastro
+   * (docs/buraco-numeros-dificeis.md).
+   *
+   * O destino mora AQUI, e não num `if` sobre nome de campo dentro do
+   * `page.tsx`: foi assim que quatro telas passaram a dizer quatro coisas
+   * diferentes sobre a mesma conta.
+   */
+  ondeResponder?: { href: string; rotulo: string };
+  /**
    * O ticket é UMA pergunta para o cliente e DUAS colunas no banco. O `min`
    * carrega o par; o `max` é marcado como oculto e renderizado dentro dele.
    */
@@ -166,12 +182,14 @@ const APRESENTACAO: Record<ChaveDoCatalogo, Apresentacao> = {
     ajuda:
       "O que você gasta para entregar UMA venda: material, produto, comissão. Não é a conta de luz.",
     dificil: true,
+    ondeResponder: { href: "/onboarding/contas", rotulo: "Responder pela conta (a 2 de 3)" },
   },
   "businesses.target_profit_per_customer": {
     bloco: "numeros",
     rotulo: "Quanto você quer que sobre em cada cliente",
     ajuda: "Depois de pagar o que gastou para entregar.",
     dificil: true,
+    ondeResponder: { href: "/onboarding/contas", rotulo: "Responder pela conta (a 3 de 3)" },
   },
   "businesses.monthly_budget": {
     bloco: "numeros",
@@ -183,6 +201,10 @@ const APRESENTACAO: Record<ChaveDoCatalogo, Apresentacao> = {
     ajuda:
       "É esse valor que você gasta no mês. O Facebook pode gastar um pouco mais num dia em que estiver aparecendo gente boa, e menos nos seguintes para compensar. No fim do mês fecha no seu limite.",
     dificil: true,
+    // A /verba é o contra-exemplo que já funcionava: número difícil com tela
+    // própria e a explicação junto. Foi ela que mostrou a forma do conserto
+    // dos outros dois (docs/buraco-numeros-dificeis.md §6).
+    ondeResponder: { href: "/verba", rotulo: "Escolher quanto investir" },
   },
 
   // ---------- oferta ----------
@@ -339,6 +361,36 @@ if (SOBRANDO.length > 0) {
     "lib/perfil/catalogo-cliente.ts tem apresentação órfã: " +
       SOBRANDO.join(", ") +
       " não existe(m) mais em lib/agentes/campos.ts.",
+  );
+}
+
+/**
+ * TODO CAMPO DIFÍCIL PRECISA DIZER ONDE ELE É RESPONDÍVEL.
+ *
+ * `dificil: true` tira o `input` da tela — com razão, porque um chute ali
+ * entraria como `confirmado`, o nível mais alto da escala, e viraria
+ * orçamento de campanha. Mas tirar a entrada e não pôr nada no lugar foi o
+ * que produziu o beco: dois dos três números difíceis não tinham nenhuma
+ * superfície que reoferecesse a pergunta, e o cliente que respondeu "não
+ * sei" nunca fechava o cadastro (docs/buraco-numeros-dificeis.md).
+ *
+ * A verificação existe porque o buraco NÃO veio de uma decisão errada: veio
+ * de duas decisões certas que se referenciavam, e o caso caiu no vão. Um
+ * lembrete em documento não teria pego o quarto campo difícil daqui a três
+ * meses; isto pega, na importação, antes do build.
+ */
+const DIFICIL_SEM_PORTA = Object.entries(APRESENTACAO)
+  .filter(([, ap]) => ap.dificil && !ap.ondeResponder)
+  .map(([chave]) => chave);
+
+if (DIFICIL_SEM_PORTA.length > 0) {
+  throw new Error(
+    "lib/perfil/catalogo-cliente.ts: " +
+      DIFICIL_SEM_PORTA.join(", ") +
+      " está(ão) marcado(s) como `dificil` sem `ondeResponder`. Campo difícil " +
+      "não ganha entrada na /meu-negocio, então sem um destino ele vira beco: " +
+      "aparece em “o que a gente ainda não sabe” e acaba ali. Aponte para a " +
+      "tela que faz a pergunta numa forma que o cliente consegue responder.",
   );
 }
 

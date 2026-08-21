@@ -167,3 +167,47 @@ respondeu "não sei".
 
 O desbloqueio usado, e por que é honesto, está em
 [`disparo-pipeline.md`](./disparo-pipeline.md) §13.5.
+
+---
+
+## CONSERTADO em 21/08/2026
+
+Nada acima foi alterado. O conserto seguiu a forma proposta no §6 e está
+desenhado em [`lote-agora-eu-sei.md`](./lote-agora-eu-sei.md).
+
+O que foi feito:
+
+- **"Agora eu sei"** na `/onboarding/contas`, no bloco do que já fechou,
+  só no estado `nao_sei`. Ele reabre a conta e a pergunta volta para a fila.
+- **A reabertura não apaga o "não sei"** — acrescenta `reabertoEm` ao lado
+  dele. A hora em que o cliente disse que não sabia continua legível, que é
+  o que faz o `/inicio` trocar de dono no dia 5.
+- **`lerConta` ganhou o estado `reaberta`**, e não reaproveitou
+  `nao_perguntado`: perguntaram, ele não soube, e ele voltou — três fatos.
+- **A `/meu-negocio` aponta para a conta.** Continua sem `input` (a decisão
+  do §8.4 do `revisao-perfil-cliente.md` está certa e não mudou), mas cada
+  campo difícil vazio agora leva à tela onde a pergunta existe numa forma
+  respondível. O destino mora no catálogo (`ondeResponder`), não num `if`
+  no `page.tsx`.
+- **A armadilha ficou fechada por verificação, não por lembrete.**
+  `catalogo-cliente.ts` recusa importar se algum campo `dificil` não
+  disser `ondeResponder`. O §7 deste documento diz que a classe de falha se
+  repete; um campo difícil novo daqui a três meses não vai depender de
+  alguém lembrar deste documento.
+
+Conferido em `pnpm conferir:cadastro` §6 e §7 — 12 conferências, os dois
+lados de cada transição. Base explícita: com a leitura de `reabertoEm`
+desligada, o §6 acusa **3 falhas**.
+
+### O que este conserto NÃO resolveu
+
+- **O §7 continua aberto.** A varredura dos pares de referência cruzada
+  (cinco candidatos listados lá) não foi feita. O que este lote fez foi
+  fechar o caso que gerou o documento e pôr uma trava para o caso análogo
+  do mesmo campo — não varrer as outras delegações.
+- **Nenhum cliente reabriu nada.** O caso vivo no banco é o negócio `V2G`,
+  que respondeu "não sei" em 19/08 e teve a coluna preenchida depois — ou
+  seja, hoje ele lê `respondida`, e o botão não aparece para ninguém. O
+  conserto está conferido por fixture, não por uso.
+- **A `/verba` já tinha porta** e não foi tocada. Ela ganhou só a entrada
+  no catálogo, para a `/meu-negocio` poder apontar para ela.

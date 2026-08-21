@@ -2803,6 +2803,17 @@ code {
 }
 .rc-pendente { padding: 5px 0; }
 .rc-pend-rotulo { display: block; font-size: var(--fs-corpo); color: var(--ink); }
+/* A porta de volta do número difícil.
+   Link, e não botão: botão aqui leria como "resolva isso", e o bloco
+   inteiro existe para não cobrar. Fica discreto de propósito — quem quiser
+   esperar a ligação não pode sentir que está deixando tarefa para trás. */
+.rc-pend-porta {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: var(--fs-legenda);
+  color: var(--cobalt-ink);
+  text-decoration: underline;
+}
 .rc-pend-nota {
   font-size: var(--fs-legenda);
   color: var(--ink-mute);

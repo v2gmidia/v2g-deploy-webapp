@@ -54,6 +54,15 @@ export interface RespostaDeConta {
   confirmado: boolean;
   /** ele viu a pergunta e não soube — ver §5, é diferente de não perguntado */
   naoSei?: true;
+  /**
+   * Quando ELE voltou e pediu a pergunta de novo ("Agora eu sei").
+   *
+   * ACRESCENTA, não substitui: `naoSei` e o `em` original continuam do
+   * lado. São dois fatos com hora — às 19:56 ele não sabia, às 22:10 ele
+   * voltou — e apagar o primeiro é reescrever medição. Ver o cabeçalho de
+   * `lerConta` e docs/lote-agora-eu-sei.md §2.
+   */
+  reabertoEm?: string;
   em: string;
 }
 
@@ -215,6 +224,15 @@ export type LeituraDaConta =
   | { estado: "respondida"; valor: number }
   /** coluna vazia, e ele viu a pergunta e não soube */
   | { estado: "nao_sei"; em?: string }
+  /**
+   * coluna vazia, ele não soube E DEPOIS voltou para responder.
+   *
+   * Estado próprio, e não um `nao_perguntado` disfarçado: "ninguém
+   * perguntou" seria falso. Perguntaram, ele não soube, e ele voltou —
+   * três fatos, e a leitura tem que caber os três, porque é dela que a
+   * tela tira o "você tinha dito que não sabia".
+   */
+  | { estado: "reaberta"; naoSeiEm?: string; reabertoEm: string }
   /** coluna vazia, ele viu um número calculado e ainda não disse se bate */
   | { estado: "calculada"; calculado: number | null; em?: string }
   /** coluna vazia e ninguém perguntou */
@@ -228,6 +246,12 @@ export function lerConta(
   // defeito inteiro.
   if (coluna !== null) return { estado: "respondida", valor: coluna };
   if (!conta) return { estado: "nao_perguntado" };
+  // A ORDEM AQUI TAMBÉM É A REGRA: reaberta é lida ANTES de `nao_sei`,
+  // porque a linha reaberta continua tendo `naoSei: true` — ela tem que
+  // ter, senão a hora em que ele não soube some. Ver docs/lote-agora-eu-sei.md.
+  if (conta.naoSei && conta.reabertoEm) {
+    return { estado: "reaberta", naoSeiEm: conta.em, reabertoEm: conta.reabertoEm };
+  }
   if (conta.naoSei) return { estado: "nao_sei", em: conta.em };
   if (conta.confirmado) {
     // Marcado como confirmado no jsonb e coluna vazia: a gravação da
@@ -252,6 +276,20 @@ function motivoDaConta(
   switch (leitura.estado) {
     case "nao_sei":
       return "nao_sei";
+    // REABERTA VIRA `nao_perguntado`, e isso é decisão. `MotivoPendencia`
+    // existe para decidir O QUE A TELA OFERECE (está escrito no tipo), não
+    // para descrever histórico — e o que se oferece a uma conta reaberta é
+    // o mesmo que a uma nunca perguntada: a pergunta. O histórico continua
+    // inteiro no jsonb e na `LeituraDaConta`.
+    //
+    // O efeito colateral é o certo: a pendência deixa de ser "não sei",
+    // então o relógio da dívida (`DIAS_ATE_TROCAR_DE_DONO`) para de correr
+    // contra nós. Enquanto ele não sabia, a dívida era nossa — a gente
+    // tinha que ligar. Depois que ele clicou em "agora eu sei", cobrar de
+    // nós um telefonema que ele dispensou seria a tela mentindo do outro
+    // lado. Ver docs/lote-agora-eu-sei.md §3.
+    case "reaberta":
+      return "nao_perguntado";
     case "calculada":
       return "nao_confirmado";
     // A coluna tem valor e mesmo assim virou pendência: o valor existe e

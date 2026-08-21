@@ -165,6 +165,86 @@ export async function carregarContasAction(): Promise<{ erro: string } | EstadoD
 }
 
 /**
+ * REABRE uma conta que ele respondeu "não sei".
+ *
+ * ============================================================
+ * ISTO NÃO CONTRADIZ O LOTE B, E A DIFERENÇA É QUEM COMEÇOU.
+ *
+ * A razão de "não sei" fechar a conta era a tela não COBRAR: reoferecer a
+ * mesma pergunta faz a pessoa chutar um número na segunda vez só para a
+ * tela parar de pedir, e um chute entra como `confirmado` — o nível mais
+ * alto da escala — e vira orçamento de campanha.
+ *
+ * Um caminho que ELE clica não é a tela pedindo. É ele voltando.
+ *
+ * Sem isto, "não sei" era terminal: `montarCadastro` exige os seis campos,
+ * e um cliente nessa situação nunca dispara o pipeline — sem erro, sem
+ * pendência acionável, sem nada na tela que diga o que falta acontecer.
+ * Medido em docs/buraco-numeros-dificeis.md.
+ * ============================================================
+ *
+ * NÃO APAGA O "NÃO SEI". Acrescenta `reabertoEm` ao lado dele. O jsonb
+ * registra um fato com hora — às 19:56 daquele dia essa pessoa disse que
+ * não sabia — e apagar é reescrever medição. Deixar de ler não é apagar
+ * (ver o cabeçalho de `lerConta`).
+ *
+ * NENHUMA COLUNA É TOCADA aqui, e por isso esta ação não passa por
+ * `gravarCamposDoCliente`: reabrir não afirma valor nenhum sobre o
+ * negócio. Quem escreve a coluna é a resposta que vem depois, pelo
+ * caminho normal, com procedência.
+ */
+export async function reabrirContaAction(entrada: {
+  conta: ChaveDeConta;
+}): Promise<ResultadoDaConta> {
+  const r = await obterNegocio();
+  if ("erro" in r) return { ok: false, erro: r.erro };
+
+  const { linha } = r;
+  const estado = montarEstado(linha);
+
+  // SÓ O "NÃO SEI" REABRE. Uma conta respondida já tem caminho — a
+  // `/meu-negocio`, que corrige valor com procedência — e um segundo
+  // caminho de reescrita para a mesma coluna é como a `/conta` perdeu
+  // procedência. Server Action é endpoint, não é botão: a checagem tem que
+  // estar aqui, não só no `disabled` do JSX.
+  if (estado.leituras[entrada.conta].estado !== "nao_sei") {
+    return { ok: false, erro: "Essa conta não está marcada como “não sei”." };
+  }
+
+  const anterior = estado.contas[entrada.conta];
+  if (!anterior) return { ok: false, erro: "Essa conta ainda não foi respondida." };
+
+  const contas = {
+    ...estado.contas,
+    [entrada.conta]: { ...anterior, reabertoEm: new Date().toISOString() },
+  };
+
+  const onboardingAtual =
+    linha.onboarding && typeof linha.onboarding === "object"
+      ? (linha.onboarding as Record<string, unknown>)
+      : {};
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("businesses")
+    .update({ onboarding: { ...onboardingAtual, contas } })
+    .eq("id", linha.id);
+
+  if (error) {
+    console.error("[contas] falha ao reabrir ::", error.message);
+    return { ok: false, erro: "Não conseguimos abrir a pergunta agora. Tente de novo." };
+  }
+
+  revalidatePath("/onboarding/contas");
+
+  const depois = await obterNegocio();
+  return {
+    ok: true,
+    estado: "erro" in depois ? undefined : montarEstado(depois.linha),
+  };
+}
+
+/**
  * Grava UMA conta.
  *
  * `escolha` é sempre um ID de opção ou um número — nunca o rótulo. O

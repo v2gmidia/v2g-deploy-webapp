@@ -18,11 +18,13 @@
  */
 
 import {
+  lerConta,
   montarCadastro,
   NOME_PROVISORIO,
   type CampoObrigatorio,
   type NegocioParaCadastro,
 } from "../lib/cadastro/montar.ts";
+import { CAMPOS_DO_CLIENTE } from "../lib/perfil/catalogo-cliente.ts";
 
 const URL_SCHEMA =
   process.env.V2G_BACKEND_URL?.replace(/\/$/, "") ?? "https://api.v2gmidia.com.br";
@@ -366,6 +368,105 @@ if (desconhecidas.length) {
   console.log("       (uma restrição não conferida vira aprovação silenciosa — ajuste CONHECIDAS)");
 } else {
   ok("nenhuma restrição do schema ficou sem conferência");
+}
+
+// --- 6. a porta de volta do "não sei"
+//
+// O QUE ISTO PROTEGE. "Não sei" fecha a conta de propósito — reoferecer a
+// pergunta faz a pessoa chutar um número, e chute entra como `confirmado` e
+// vira orçamento de campanha. Mas até 21/08 ele era TERMINAL: nenhuma das
+// quatro superfícies do produto reabria, e como `montarCadastro` exige os
+// seis campos, esse cliente nunca disparava o pipeline — sem erro, sem
+// pendência acionável, sem nada na tela. Medido em
+// docs/buraco-numeros-dificeis.md; desenho em docs/lote-agora-eu-sei.md.
+//
+// OS DOIS LADOS DE CADA TRANSIÇÃO. O alvo do lado que importa não existe no
+// banco: o negócio real que respondeu "não sei" teve a coluna preenchida
+// depois, então o caso vivo é `respondida`. Fixture, e os dois lados.
+console.log("\n6. o \"não sei\" tem porta de volta, e ela não apaga nada");
+{
+  const emQueNaoSoube = "2026-08-19T22:56:00.000Z";
+  const emQueVoltou = "2026-08-21T01:10:00.000Z";
+  const naoSei = {
+    echo: "Não sei",
+    calculado: null,
+    confirmado: false,
+    naoSei: true as const,
+    em: emQueNaoSoube,
+  };
+
+  const casos: Array<[string, Parameters<typeof lerConta>[0], Parameters<typeof lerConta>[1], string]> = [
+    ["não sei, sem reabrir → nao_sei (continua fechada)", null, naoSei, "nao_sei"],
+    ["não sei + reabertoEm → reaberta (volta para a fila)", null, { ...naoSei, reabertoEm: emQueVoltou }, "reaberta"],
+    ["reaberta e coluna preenchida → respondida (a coluna manda, sempre)", 200, { ...naoSei, reabertoEm: emQueVoltou }, "respondida"],
+    ["reabertoEm sem naoSei não inventa estado", null, { echo: "metade", calculado: 12, confirmado: false, em: emQueNaoSoube, reabertoEm: emQueVoltou }, "calculada"],
+  ];
+  for (const [nome, coluna, conta, esperado] of casos) {
+    const leitura = lerConta(coluna, conta);
+    if (leitura.estado === esperado) ok(nome);
+    else nok(`${nome}: veio ${leitura.estado}`);
+  }
+
+  // O "não sei" original CONTINUA LEGÍVEL depois de reaberta. Apagá-lo seria
+  // reescrever medição: às 19:56 daquele dia essa pessoa disse que não sabia,
+  // e é essa hora que faz o /inicio trocar de dono no dia 5.
+  const reaberta = lerConta(null, { ...naoSei, reabertoEm: emQueVoltou });
+  if (reaberta.estado === "reaberta" && reaberta.naoSeiEm === emQueNaoSoube) {
+    ok("a hora em que ele não soube sobrevive à reabertura");
+  } else {
+    nok("a reabertura apagou a hora do \"não sei\"");
+  }
+
+  // E o efeito na cadeia: a pendência sai de "a gente te liga" (sem ação) e
+  // vira acionável. Os dois lados, na mesma conta.
+  const comNaoSei = negocioCompleto();
+  comNaoSei.target_profit_per_customer = null;
+  comNaoSei.onboarding = { contas: { lucro: naoSei } };
+  const antes = montarCadastro(comNaoSei);
+  const pAntes = antes.completo
+    ? undefined
+    : antes.pendencias.find((x) => x.campo === "lucro_desejado_por_cliente");
+
+  const reabriu = negocioCompleto();
+  reabriu.target_profit_per_customer = null;
+  reabriu.onboarding = { contas: { lucro: { ...naoSei, reabertoEm: emQueVoltou } } };
+  const depois = montarCadastro(reabriu);
+  const pDepois = depois.completo
+    ? undefined
+    : depois.pendencias.find((x) => x.campo === "lucro_desejado_por_cliente");
+
+  if (pAntes?.motivo === "nao_sei") ok("antes de reabrir, o motivo é nao_sei (a dívida é nossa)");
+  else nok(`antes de reabrir: esperava nao_sei, veio ${pAntes?.motivo ?? "nenhuma pendência"}`);
+
+  if (pDepois?.motivo === "nao_perguntado") {
+    ok("depois de reabrir, vira nao_perguntado — a tela oferece a pergunta");
+  } else {
+    nok(`depois de reabrir: esperava nao_perguntado, veio ${pDepois?.motivo ?? "nenhuma pendência"}`);
+  }
+
+  // O outro lado do outro lado: reabrir NÃO pode fechar o cadastro sozinho.
+  // A coluna continua vazia — ele voltou para responder, não respondeu.
+  if (!depois.completo) ok("reabrir não fecha o cadastro: a coluna continua vazia");
+  else nok("reabrir fechou o cadastro sem ninguém ter respondido");
+}
+
+// --- 7. todo campo difícil tem para onde mandar o cliente
+//
+// A verificação de verdade roda na importação de `catalogo-cliente.ts` e
+// quebra o build. Esta aqui é a que aparece no relatório — e ela existe
+// porque uma exceção lançada na importação some do log de quem só lê o fim
+// da saída.
+console.log("\n7. campo difícil não vira beco");
+{
+  const dificeis = CAMPOS_DO_CLIENTE.filter((c) => c.dificil);
+  if (dificeis.length === 0) {
+    nok("nenhum campo difícil no catálogo — a conferência está medindo o vazio");
+  } else {
+    for (const c of dificeis) {
+      if (c.ondeResponder?.href) ok(`${c.chave} → ${c.ondeResponder.href}`);
+      else nok(`${c.chave} é difícil e não diz onde ser respondido`);
+    }
+  }
 }
 
 console.log(falhas === 0 ? "\nTUDO CERTO" : `\n${falhas} FALHA(S)`);

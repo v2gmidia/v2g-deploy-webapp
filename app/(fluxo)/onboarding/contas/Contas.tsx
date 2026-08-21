@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { dinheiro } from "@/lib/formato";
 import type { ChaveDeConta } from "@/lib/cadastro/montar";
-import { salvarContaAction, type EstadoDasContas } from "./actions";
+import { reabrirContaAction, salvarContaAction, type EstadoDasContas } from "./actions";
 import { POSTURA, SOBRA, TICKET_FAIXA } from "./regras";
 
 /**
@@ -42,6 +42,10 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
   // que não sabe. Tratar como pendente devolveria a mesma pergunta e ele
   // chutaria um número na segunda vez só para a tela parar de pedir.
   // ============================================================
+  //
+  // `reaberta` NÃO fecha: é ele voltando para responder, e a pergunta tem
+  // que reaparecer na fila. Ver `reabrirContaAction` e
+  // docs/lote-agora-eu-sei.md.
   const fechada = (c: ChaveDeConta) =>
     leituras[c].estado === "respondida" || leituras[c].estado === "nao_sei";
   const atual: ChaveDeConta | null = !fechada("ticket")
@@ -71,6 +75,19 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     setEstado(r.estado);
     setAjustando(null);
     setRascunho("");
+  }
+
+  async function reabrir(conta: ChaveDeConta) {
+    if (enviando) return;
+    setEnviando(true);
+    setErro(null);
+    const r = await reabrirContaAction({ conta });
+    setEnviando(false);
+    if (!r.ok || !r.estado) {
+      setErro(r.erro ?? "Não conseguimos abrir a pergunta.");
+      return;
+    }
+    setEstado(r.estado);
   }
 
   const pergunta: Record<ChaveDeConta, string> = {
@@ -122,6 +139,34 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                 <span className="conta-origem">
                   ✓ você conferiu isso em {new Date(quando).toLocaleDateString("pt-BR")}
                 </span>
+              )}
+
+              {/* ============================================================
+                  A PORTA DE VOLTA. Sem ela, "não sei" era terminal: nenhuma
+                  das quatro superfícies do produto reoferecia a pergunta, e
+                  como `montarCadastro` exige os seis campos, o cliente nunca
+                  disparava o pipeline — sem erro e sem pendência acionável.
+                  Medido em docs/buraco-numeros-dificeis.md.
+
+                  ISTO NÃO É A TELA COBRANDO. A razão de "não sei" fechar a
+                  conta era não devolver a mesma pergunta a quem já disse que
+                  não sabe — ele chutaria um número na segunda vez só para a
+                  tela parar de pedir. Um caminho que ELE clica é o contrário
+                  disso: é ele voltando. A diferença é quem começou.
+
+                  Por isso o rótulo é "Agora eu sei" e não "Responder de
+                  novo": um diz que ele mudou, o outro diz que a gente
+                  insiste.
+                  ============================================================ */}
+              {leitura.estado === "nao_sei" && (
+                <button
+                  className="text-fallback"
+                  type="button"
+                  disabled={enviando}
+                  onClick={() => reabrir(c)}
+                >
+                  Agora eu sei
+                </button>
               )}
             </p>
           );
@@ -200,6 +245,15 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
           ) : (
             /* ---------- a pergunta ---------- */
             <>
+              {/* A tela diz que sabe que ele voltou. Fazer a pergunta como
+                  se fosse a primeira vez apagaria da conversa um fato que o
+                  banco guarda — e ele lembra que respondeu "não sei". */}
+              {leituras[atual].estado === "reaberta" && (
+                <p className="conta-hint">
+                  Da última vez você não soube, e tudo bem. Aqui está ela de novo.
+                </p>
+              )}
+
               <p className="conta-pergunta">{pergunta[atual]}</p>
 
               {atual === "custo" && (
