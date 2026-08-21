@@ -194,3 +194,81 @@ cá, que é onde o padrão já tinha dono.
 
 Medição completa do contraste em [`contraste.md`](./contraste.md) §4
 (causa 3) e §13.2.
+
+---
+
+## 7. O conferidor foi construído — 21/08/2026
+
+`pnpm conferir:cascata`, dentro do `pnpm conferir`. Ele faz os passos 1, 2 e
+3 da receita da §4, e o 4 (especificidade) como camada de suspeita. O passo
+5 (caso 1) continua fora — sem promessa.
+
+### A linha de base precisou de um arquivo próprio, e o motivo importa
+
+A §4 põe a condição: *"ele tem que acusar os casos 2 e 4 deste documento
+antes de qualquer conserto. Se rodar limpo num arquivo que contém os dois,
+está medindo outra coisa."*
+
+**Só que os casos 2 e 4 já foram consertados no `app/globals.css`.** O QA-4
+tirou o `color` da segunda `.nav-eyebrow`; o `display: inline-flex` do
+`.topbar-help` mudou de lugar. Rodar contra o arquivo de hoje e ver verde
+não provaria o detector — provaria o conserto, que é outra afirmação.
+
+Então a §0 do conferidor roda contra
+`scripts/fixtures/cascata-casos-conhecidos.css`, que reconstrói os casos 2,
+3 e 4 e mais quatro controles positivos, e **falha se não acusar o 2 e o 4**.
+Medido nos dois sentidos: com a regra do caso 4 desligada à mão, a §0 acusa
+`CASO 4 NÃO acusado`.
+
+Os controles positivos são metade do valor: cascata responsiva normal
+(regra base + `@media` depois), breakpoints encaixados do mais largo para o
+mais estreito, e dois `@keyframes` diferentes com `from`/`to`. A primeira
+versão do detector acusou os quatro pares de `@keyframes` — falso alarme, e
+alarme falso repetido é como se aprende a ignorar o conferidor.
+
+### O que ele acha na folha de hoje
+
+**Três inertes, e são exatamente as três da §6** — o `.side-support`
+(`background`, `b color`, `p color`). O detector chegou nelas sozinho, sem
+saber do adendo. Elas estão numa lista de **conhecidos** com o motivo
+escrito, e não derrubam o `pnpm conferir`: a decisão que falta é de desenho
+(vidro sobre cobalto ou card claro), tem consequência visual em 9 telas, e
+um conferidor que nasce vermelho por decisão pendente é um conferidor que
+alguém desliga na segunda semana.
+
+A lista não é esconderijo: cada entrada é impressa a cada execução, e
+**entrada que deixa de ocorrer vira FALHA** — se alguém consertar e esquecer
+de tirar daqui, o conferidor cobra. Medido com uma entrada falsa.
+
+### O caso 3 ganhou número, e o número não é 58
+
+A §4 diz que a comparação de especificidade é "mais difícil, e provavelmente
+uma segunda etapa". Ela entrou como camada de **suspeita**, e o caminho até
+um número percorrível foi:
+
+| filtro | pares |
+|---|---|
+| cruzamento cru (classe+tag × classe simples, mesma propriedade) | **17.041** |
+| + o JSX: a classe simples é usada NAQUELA TAG, num arquivo que usa as classes ancestrais do composto | **103** |
+| + o valor é diferente dos dois lados | **92** |
+
+São 104 seletores "classe + tag" na folha (não 58 — aquele número era de
+outro recorte), e 92 pares sobrevivem aos três filtros. **Nenhum é
+veredito**, e essa é a parte que não pode ser arredondada: saber se dois
+seletores casam o MESMO elemento exige o DOM montado. O CSS não tem essa
+informação, e o `className` de um arquivo também não.
+
+A camada não derruba nada. Ela troca "pode haver casos como o 3" por uma
+lista de 92 com a propriedade e os dois valores em disputa, ordenada com cor
+e tamanho de fonte na frente — que foram as duas propriedades dos quatro
+casos deste documento.
+
+### Limites que ficam escritos, não resolvidos
+
+- **`!important`**: a folha tem 5 usos e o conferidor não os leva em conta.
+  Ele avisa a contagem.
+- **`@layer` e estilo inline**: não usados hoje; não tratados.
+- **O caso 1** (consumidor do token substituído mais adiante) continua fora
+  do alcance de análise estática.
+- **A leitura do JSX é por expressão regular**: `className` vindo de variável
+  ou de função não é visto. O efeito é a camada 5 achar menos, nunca mais.

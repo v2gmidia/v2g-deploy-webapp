@@ -1,0 +1,117 @@
+/* ============================================================
+   OS CASOS DE `docs/regra-inerte.md`, RECONSTRUÍDOS COMO ALVO.
+
+   Este arquivo NÃO é carregado por nada. Ele existe para o
+   `conferir:cascata` ter contra o que provar que mede alguma coisa.
+
+   Por que ele precisa existir: os casos 2 e 4 do documento — a linha de
+   base que a §4 exige do detector — **já foram consertados** no
+   `app/globals.css` (o QA-4 tirou o `color` da segunda `.nav-eyebrow`, e o
+   `display: inline-flex` do `.topbar-help` mudou de lugar). Rodar o
+   detector contra o arquivo de hoje e ver verde não prova nada: prova que
+   os dois foram arrumados.
+
+   "Se rodar limpo num arquivo que contém os dois, está medindo outra
+   coisa." — regra-inerte.md §4. Este é o arquivo que contém os dois.
+
+   NÃO CONSERTE NADA AQUI. Cada regra abaixo está errada de propósito, e o
+   conferidor falha se parar de acusá-las.
+   ============================================================ */
+
+/* ---------- CASO 2 — mesma especificidade, a ordem decide ----------
+   O rótulo "SEU NEGÓCIO" acima do menu. A regra de cima pede branco a 50%
+   sobre o cobalto da sidebar. A de baixo, 887 linhas depois no arquivo
+   real, tem a MESMA especificidade (0,1,0) e vem depois — então pinta com
+   tinta de página sobre fundo cobalto: 2,05:1.
+   ESPERADO: acusado como inerte. */
+.nav-eyebrow {
+  color: rgb(255 255 255 / 0.5);
+  padding: 0 12px 8px;
+}
+
+.nav-eyebrow {
+  font-family: var(--display);
+  color: var(--ink-mute);
+}
+
+/* ---------- CASO 4 — @media não soma especificidade ----------
+   O link de ajuda da topbar no celular. A regra de cima está dentro de uma
+   media query MAIS RESTRITIVA, e mesmo assim perde: a de baixo não tem
+   media nenhuma, tem a mesma especificidade e vem depois, então vale em
+   todas as larguras — inclusive dentro dos 900px.
+   ESPERADO: acusado como inerte. */
+@media (max-width: 900px) {
+  .topbar-help {
+    display: inline-flex;
+  }
+}
+
+.topbar-help {
+  display: none;
+  border-radius: 999px;
+}
+
+/* ---------- CASO 3 — especificidade menor perde ----------
+   Mesmo elemento, dois seletores. `.split-tag` é (0,1,0);
+   `.stepper .s-copy span` é (0,2,1) e ganha, mesmo vindo antes.
+   ESPERADO: acusado como SUSPEITA de especificidade — não como inerte, e
+   a diferença importa: daqui não dá para saber se os dois casam o mesmo
+   elemento sem olhar o JSX. */
+.stepper .s-copy span {
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+}
+
+.split-tag {
+  font-size: var(--fs-corpo);
+  color: var(--navy);
+}
+
+/* ---------- CONTROLE POSITIVO — isto NÃO pode ser acusado ----------
+   Cascata responsiva normal: a regra de base no topo e a variação dentro
+   de uma media query depois. É o padrão certo, e é o que separa um
+   detector útil de um que grita em tudo. */
+.controle-responsivo {
+  padding: 20px;
+}
+
+@media (max-width: 620px) {
+  .controle-responsivo {
+    padding: 10px;
+  }
+}
+
+/* Breakpoints encaixados, do mais largo para o mais estreito. Também
+   normal: o de 620 vem depois porque tem que vencer dentro de 620. */
+@media (max-width: 900px) {
+  .controle-encaixado {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .controle-encaixado {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Dois `@keyframes` diferentes usam `from`/`to` sem nenhuma relação de
+   cascata entre si. Um detector ingênuo acusa os quatro pares — este
+   controle existe porque a primeira versão deste conferidor acusou. */
+@keyframes controle-anim-a {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes controle-anim-b {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
