@@ -403,7 +403,13 @@ como comparar repositório e deploy em nenhuma direção.
 
 Reforça a REGRA DE OURO da §0 pelo caminho negativo: o `/openapi.json`
 não é só a melhor fonte de verdade sobre o backend, é a **única**.
-Snapshots datados dele ficam em [`docs/openapi/`](./openapi/).
 
-O achado inteiro, com o risco e o procedimento de resgate, está em
-[`deriva-repo-deploy.md`](./deriva-repo-deploy.md).
+O achado inteiro — risco, procedimento de resgate e os snapshots datados do
+contrato — **mora no repositório do backend**, não aqui, porque é lá que se
+conserta:
+
+    v2gmidia/backend_v2g : docs/deriva-repo-deploy.md
+                           docs/openapi/2026-08-21.json
+
+Não é link relativo de propósito: são repositórios diferentes, e link que
+atravessa repo quebra sem avisar.
