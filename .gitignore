@@ -10,9 +10,13 @@ next-env.d.ts
 *.tsbuildinfo
 
 # env — nunca versionar valores reais
+# `.env.*` fecha tudo (.env.production, .env.staging, qualquer sufixo) e o
+# `!` reabre só o template. A lista anterior cobria .env, .env.local e
+# .env*.local — `.env.production` passava. Auditado em 21/08/2026: nenhum
+# .env com valor real foi rastreado em nenhum commit deste repo.
 .env
-.env.local
-.env*.local
+.env.*
+!.env.example
 
 # supabase local (containers, etc.)
 .branches
