@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
 
 /**
  * "Um anúncio não passou."
@@ -21,9 +22,15 @@ export default async function ReprovadoPage() {
   const supabase = await createClient();
 
   const [{ data: reprovados }, { data: campanhas }] = await Promise.all([
-    supabase
-      .from("creatives")
-      .select("id, campaign_id, file_name, meta_status, created_at")
+    // O mesmo filtro da /aprovar, pelo mesmo motivo: `creatives` guarda
+    // logo e foto de identidade junto com peça de anúncio, e "reprovado"
+    // só faz sentido para peça de anúncio vigente.
+    // Ver docs/lote-leitura-de-peca.md.
+    apenasPecasDeAnuncio(
+      supabase
+        .from("creatives")
+        .select("id, campaign_id, file_name, meta_status, created_at"),
+    )
       .eq("status", "rejected")
       .order("created_at", { ascending: false }),
     supabase.from("campaigns").select("id, name, published_at, status"),

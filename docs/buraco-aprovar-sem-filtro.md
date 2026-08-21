@@ -125,3 +125,35 @@ precisa ser criada à mão.
   `select` (`aprovar/page.tsx:48-52`) e no render. Não abri a tela logada
   — não há sessão nesta máquina — então sei o que a consulta devolve, não
   o que o navegador desenha.
+
+---
+
+## CONSERTADO em 21/08/2026
+
+Nada acima foi alterado. O que mudou no código está em
+[`lote-leitura-de-peca.md`](./lote-leitura-de-peca.md), e o resumo é:
+
+- A definição de "peça de anúncio" saiu de dentro das telas e virou
+  `lib/criativos/peca.ts`. As quatro leituras da família passam a chamar
+  ela: `/aprovar`, `/reprovado`, `/anuncios` e a cadeia do `/inicio`.
+- **O quarto filtro proposto no §5 acima NÃO foi aplicado.**
+  `.not("campaign_id", "is", null)` recriaria a divergência pela ponta
+  oposta — a cadeia contaria uma peça que a tela esconderia. O motivo
+  completo está no §3 do documento do lote.
+- Os dois alvos que o §5 exigia existem e são reprodutíveis por comando:
+  `node scripts/alvos-de-peca.mjs --criar` (e `--remover`), no negócio
+  fictício `a0328fb8`.
+
+O §6 deste documento ("o que NÃO foi verificado") foi respondido:
+
+- **`/reprovado`**: era do mesmo formato — `status = 'rejected'` e nada
+  mais. Media, com alvo, trazendo peça arquivada junto. Consertada no
+  mesmo lote.
+- **`/anuncios`**: NÃO mentia hoje, e o motivo é coincidência, não filtro
+  — logo tem `campaign_id` nulo (some no agrupamento) e nasce `draft`
+  (some na contagem de reprovada). O que vazava lá era peça de campanha
+  reprovada **e arquivada**, que seguiria em "precisa de você" para
+  sempre. Trocada pelo predicado mesmo assim.
+- **Se a tela quebra ou só mente**: continua sem resposta. Não há sessão
+  nesta máquina e nenhuma foi criada — a medição é do que a consulta
+  devolve, não do que o navegador desenha.

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
 
 /**
  * Aprovar a oferta e o anúncio.
@@ -31,9 +32,16 @@ import { createClient } from "@/lib/supabase/server";
 export default async function AprovarPage() {
   const supabase = await createClient();
 
-  const { data: pendente } = await supabase
-    .from("creatives")
-    .select("id, campaign_id, file_name, copy, status, meta_status, created_at")
+  // `apenasPecasDeAnuncio` é o que separa a peça que a IA montou da logo
+  // que o cliente subiu na /conta — as duas moram em `creatives` e as duas
+  // nascem `draft`. Sem ele, esta tela apresentava a logo do cliente como
+  // o anúncio dele, enquanto a cadeia do /inicio dizia que não havia nada
+  // para aprovar. Ver docs/lote-leitura-de-peca.md.
+  const { data: pendente } = await apenasPecasDeAnuncio(
+    supabase
+      .from("creatives")
+      .select("id, campaign_id, file_name, copy, status, meta_status, created_at"),
+  )
     .eq("status", "draft")
     .order("created_at", { ascending: false })
     .limit(1)
@@ -44,9 +52,9 @@ export default async function AprovarPage() {
   // O estado "substituto" vem dos dados: existe uma peça reprovada na
   // mesma campanha? Então esta é a que veio no lugar dela.
   const { data: reprovado } = pendente.campaign_id
-    ? await supabase
-        .from("creatives")
-        .select("id, file_name, meta_status")
+    ? await apenasPecasDeAnuncio(
+        supabase.from("creatives").select("id, file_name, meta_status"),
+      )
         .eq("campaign_id", pendente.campaign_id)
         .eq("status", "rejected")
         .order("created_at", { ascending: false })

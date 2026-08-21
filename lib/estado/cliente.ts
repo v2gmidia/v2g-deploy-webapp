@@ -6,6 +6,11 @@ import { montarCadastro, type NegocioParaCadastro } from "@/lib/cadastro/montar"
 import { resumirPendencias } from "@/lib/cadastro/pendencias";
 import { execucaoDoCliente } from "@/lib/pipeline/execucao-do-cliente";
 import {
+  COLUNAS_DO_JULGAMENTO,
+  ehPecaDeAnuncio,
+  esperaAprovacao,
+} from "@/lib/criativos/peca";
+import {
   blocosDaTrilha,
   montarEtapas,
   type Etapa,
@@ -174,9 +179,14 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     execucao,
   ] = await Promise.all([
     supabase.from("meta_connections").select("status").maybeSingle(),
+    // O `is("arquivado_em", null)` fica NO SQL, e não some para o
+    // predicado: as três contagens abaixo (foto de identidade, logo
+    // vigente, peça de campanha) dependem dele, não só a de peça.
+    // `COLUNAS_DO_JULGAMENTO` vem junto porque `esperaAprovacao` exige as
+    // três colunas presentes na linha — ver lib/criativos/peca.ts.
     supabase
       .from("creatives")
-      .select("id, uso, status, copy, arquivado_em")
+      .select(`id, copy, ${COLUNAS_DO_JULGAMENTO}`)
       .eq("business_id", linha.id)
       .is("arquivado_em", null),
     supabase
@@ -209,7 +219,11 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   const pecas = criativos ?? [];
   const fotos = pecas.filter((p) => p.uso === "identidade").length;
   const temLogo = pecas.some((p) => p.uso === "logo");
-  const deCampanha = pecas.filter((p) => p.uso === "campanha");
+  // `ehPecaDeAnuncio` no lugar do `p.uso === "campanha"` escrito aqui: era
+  // esta linha que estava certa enquanto três outras telas liam a mesma
+  // tabela errado. Ela virou a definição do projeto, em
+  // `lib/criativos/peca.ts` — aqui só resta a chamada.
+  const deCampanha = pecas.filter(ehPecaDeAnuncio);
 
   // Peça pronta é peça com TEXTO escrito. `copy` é `not null default '{}'`,
   // então a linha existir não quer dizer que a IA escreveu alguma coisa —
@@ -217,7 +231,7 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   const pecasProntas = deCampanha.filter(
     (p) => p.copy && typeof p.copy === "object" && Object.keys(p.copy).length > 0,
   ).length;
-  const pecasParaAprovar = deCampanha.filter((p) => p.status === "draft").length;
+  const pecasParaAprovar = pecas.filter(esperaAprovacao).length;
 
   const listaDeCampanhas = campanhas ?? [];
   const noAr = listaDeCampanhas.filter((c) => c.published_at !== null);

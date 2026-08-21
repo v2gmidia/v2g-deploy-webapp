@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { dinheiro, numero } from "@/lib/formato";
 import { estadoDoCliente } from "@/lib/estado/cliente";
+import { COLUNAS_DO_JULGAMENTO, foiReprovada } from "@/lib/criativos/peca";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
 import type { Etapa } from "@/lib/estado/frases";
 
@@ -50,9 +51,15 @@ export default async function AnunciosPage() {
       .from("campaigns")
       .select("id, name, status, meta_status, published_at, publish_state, publish_error, created_at")
       .order("created_at", { ascending: false }),
+    // `COLUNAS_DO_JULGAMENTO` traz `uso, status, arquivado_em` — sem
+    // `arquivado_em` no select, o `foiReprovada` lá embaixo vira regra
+    // inerte em silêncio (ele estoura em vez de mentir, mas o lugar de
+    // não deixar acontecer é aqui).
     supabase
       .from("creatives")
-      .select("id, campaign_id, file_name, vision_description, status, meta_status, uso, created_at")
+      .select(
+        `id, campaign_id, file_name, vision_description, meta_status, created_at, ${COLUNAS_DO_JULGAMENTO}`,
+      )
       .order("created_at", { ascending: false }),
   ]);
 
@@ -102,7 +109,13 @@ export default async function AnunciosPage() {
   // esperando aprovação". As duas viraram elo da cadeia
   // (`lib/estado/frases.ts`), porque as duas respondem à pergunta "o que
   // falta pra sair anúncio?" — e essa pergunta tem um dono só.
-  const reprovadas = pecas.filter((p) => p.status === "rejected");
+  //
+  // O `foiReprovada` no lugar do `p.status === "rejected"` escrito à mão:
+  // o que segurava esta linha era coincidência, não filtro. Logo nasce
+  // `draft` e nunca fica `rejected`, então ela não vazava — mas peça de
+  // campanha ARQUIVADA e reprovada vazava, e continuaria aparecendo em
+  // "precisa de você" para sempre. Ver docs/lote-leitura-de-peca.md §5.1.
+  const reprovadas = pecas.filter(foiReprovada);
 
   return (
     <>
