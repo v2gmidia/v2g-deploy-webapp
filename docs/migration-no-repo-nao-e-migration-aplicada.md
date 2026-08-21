@@ -105,3 +105,63 @@ declara os objetos que cria, num manifesto, e o conferidor pergunta ao
 
 > Migration no repositório é intenção. Migration no ledger é fato. E o ledger
 > mente sobre nomes — quem responde de verdade é o objeto no schema.
+
+---
+
+## O conferidor foi feito — 21/08/2026
+
+`pnpm conferir:migrations`, agora dentro do `pnpm conferir`. Desenho em
+[`conferidor-de-migrations.md`](./conferidor-de-migrations.md); o manifesto
+de objetos em `supabase/objetos.ts`.
+
+**77 objetos conferidos** contra o schema vivo, os 20 arquivos, todos
+presentes. Três coisas deste documento mudaram de estado:
+
+- **A camada por objeto existe.** A porta é a especificação do PostgREST
+  (`GET /rest/v1/`), que lista as 20 tabelas com todas as colunas e as 11
+  funções expostas. O `pg_proc` e o `information_schema` não são
+  alcançáveis com o que há no `.env.local` — o PostgREST expõe só o
+  `public` — e essa porta responde a mesma pergunta para tabela, coluna e
+  RPC.
+- **A camada do `migration list --linked` NÃO roda**, e isso está impresso
+  na saída em vez de pulado: o projeto não está linkado
+  (`supabase/.temp/` só tem `cli-latest`, sem `project-ref`), e linkar pede
+  credencial que não está no `.env.local`. Ela é a única camada que enxerga
+  **migration aplicada sem arquivo no repo** — as quatro que este documento
+  listou —, então essa metade da conferência continua sem dono.
+- **31 coisas ficaram declaradas como fora do alcance** (índice,
+  constraint, trigger, policy, grant, corpo de função, schema `private`), e
+  o conferidor imprime essa contagem junto do verde. Um conferidor que
+  confere 60% e diz "TUDO CERTO" produz confiança que não corresponde a
+  nada.
+
+### Duas coisas que o levantamento achou e que não estavam aqui
+
+**1. A 0009 não cria nada.** `0009_backend_execucoes_criativos.sql` tem 13
+linhas e **zero DDL** — é só o cabeçalho explicando que as tabelas vieram
+do projeto do Oregon na unificação de 17/08. Consequência:
+
+> A cadeia de migrations deste repositório **não reconstrói o banco.** Um
+> `supabase db push` contra um projeto vazio produz um schema sem
+> `execucoes`, `criativos` e `campanhas_meta` — e sem erro, porque não há
+> DDL para falhar.
+
+No manifesto as três entram como `documenta`, não como `cria`: o conferidor
+confere que existem e imprime que não vieram desse arquivo. Escrever o DDL
+delas a partir do schema vivo é lote próprio, e não foi feito.
+
+**2. A 0002 se confere pela ausência.** Ela move `owns_business` e
+`handle_new_user` para o schema `private` justamente para elas sumirem do
+PostgREST. Então a prova de que está aplicada é elas **não** aparecerem na
+lista de RPC — e o manifesto tem um tipo de objeto só para isso
+(`rpc_ausente`). Objeto ausente é prova tão boa quanto presente.
+
+### Base explícita
+
+Um conferidor que nunca viu vermelho não está medindo. Dois controles:
+
+- O §0 do próprio script declara quatro objetos inventados a cada execução
+  e falha se não acusar os quatro. Ele roda sempre, não só quando alguém
+  lembra.
+- Declarei à mão dois objetos inexistentes na 0014 e conferi a saída:
+  `1 FALHA(S)`, com os dois nomeados, e código de saída 1.
