@@ -1,5 +1,19 @@
 # Repontamento do N8N — para o Gabriel
 
+> **PROPOSTO — não verificado, e a fonte agora é outra.** MEDIDO em
+> 21/08/2026: das seis tabelas que a §4 manda o n8n preencher,
+> `analysis_runs`, `offers`, `campaigns` e `decisions` têm **zero linhas**.
+> Nenhuma instrução deste documento jamais rodou.
+>
+> **A fonte do contrato n8n ↔ backend é o repositório do backend**, em
+> `v2gmidia/backend_v2g : n8n/CONTRATO.md` — 807 linhas, com os dois
+> gatilhos, os dois formatos de corpo do webhook e o passo a passo dos 78
+> nós. O que existir aqui sobre n8n é cópia envelhecida; em divergência,
+> vale o de lá.
+>
+> Não é link relativo de propósito: são repositórios diferentes, e link que
+> atravessa repo quebra sem avisar.
+
 Documento operacional. O raciocínio por trás das mudanças está em
 [`schema-consolidado.md`](./schema-consolidado.md); aqui é só o que precisa
 mudar no fluxo.
