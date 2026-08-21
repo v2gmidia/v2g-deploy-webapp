@@ -122,31 +122,33 @@ da 0019 os protege. Num negócio sem conferência, o default passa.
 `CadastroCompleto`, e quem preenche o formulário passa a poder não responder.
 Muda contrato público — precisa de lote próprio e de acerto com o lado do n8n.
 
-## `resultado_campanhas_anteriores` — o cliente responde e ninguém lê
+## `resultado_campanhas_anteriores` — resolvido, e a premissa estava errada
 
-MEDIDO em 21/08/2026, no handler `criar_cadastro` de `src/api/rotas.py`.
+MEDIDO em 21/08/2026, no `backend_v2g`.
 
-O campo existe em `CadastroCompleto`, existe no formulário do n8n, e **o
-handler nunca o atribui à `Execucao`**. Ele chega no corpo e morre na rota.
+A versão anterior desta seção dizia que o campo não tem leitor. **É falso, e o
+teste que eu escrevi para afirmar isso quebrou na primeira execução** —
+`src/agentes/diagnosticar_orcamento/` o consome em dois arquivos, e ele entra
+direto no prompt:
 
-São cinco campos que o `criar_cadastro` recebe e descarta: `tem_site`,
-`site_url`, `tem_instagram`, `instagram_handle` e
-`resultado_campanhas_anteriores`. O espelho de 21/08 resolveu dois deles —
-`site_url` e `instagram_handle` agora vão para `businesses`. `tem_site` e
-`tem_instagram` são deriváveis e não precisam de lugar.
+```python
+f"Historico de campanhas anteriores: {entrada.resultado_campanhas_anteriores or 'nenhum'}"
+```
 
-**Sobra um, e é o único que é dado de verdade.**
+**O defeito real era outro.** O handler `criar_cadastro` recebia o campo e
+nunca o atribuía à `Execucao`. Ele chegava e morria na rota.
 
-Duas saídas, e não fazer nada não é uma delas — perguntar ao cliente algo que
-ninguém lê é pior que não perguntar:
+Isso passou despercebido porque **no caminho do formulário o dado chega ao
+agente por outra via**: o n8n repassa os números do corpo do webhook direto
+para o `diagnosticar-orcamento`, sem ler a execução. O campo funcionava sem
+nunca ter sido persistido.
 
-1. **Guardar.** A coluna `execucoes.resultado_campanhas_anteriores` está
-   definida na migration `0007_onboarding_por_call.sql` do backend, que **nunca
-   rodou no V2G-SITE**. Com ela aplicada, o conserto é uma linha no
-   `criar_cadastro`. Depende da decisão sobre as duas cadeias de migration
-   (`deriva-repo-deploy.md`).
-2. **Tirar do formulário**, e junto do `CadastroCompleto`, até que exista onde
-   guardar.
+**E quebraria em silêncio no caminho do app.** Ali o corpo do webhook é
+`{ id_execucao, deve_varrer_site }` e nada mais — tudo o que não estiver na
+linha se perde. O diagnóstico de orçamento passaria a receber `nenhum` para
+todo cliente self-service, sem erro, sem log, com o prompt parecendo íntegro.
 
-E quando alguém for usar histórico de campanha como dado de produto, ele
-merece coluna própria em `businesses`, não jsonb de execução.
+Corrigido em 21/08/2026: uma linha no `criar_cadastro`, mais três testes —
+o valor persistido, o controle negativo com o campo ausente, e um que trava a
+lista de consumidores para que "deixou de ter leitor" quebre visivelmente.
+

@@ -463,6 +463,38 @@ passar por curiosidade arquivada.
 dizer "medi em X e deu N". O que ele não pode fazer é transformar o
 segundo no primeiro sem dizer qual era o X.
 
+## Decisão 14 — Duas portas para o mesmo `POST /cadastro`, e elas não têm a mesma procedência
+
+Registrado em 21/08/2026.
+
+O backend tem **um** endpoint de cadastro e **duas** origens que o alcançam:
+
+| porta | quem preenche | caminho no n8n |
+|---|---|---|
+| formulário do n8n | **alguém da V2G**, numa call de ~1h | caminho (b): corpo cru, o n8n chama o `/cadastro` |
+| webapp | **o próprio cliente**, self-service | caminho (a): `{id_execucao, deve_varrer_site}`, pula o `1. Cadastro` |
+
+A distinção é do `n8n/CONTRATO.md` do backend, seção *"Dois gatilhos, um
+pipeline"*.
+
+**Por que isso importa antes de existir cliente de verdade:** a procedência
+depende de quem respondeu. `manual` está definido desde a 0010 como *"alguém
+da V2G anotou na conversa"* — verdade para a porta do n8n, **mentira para a
+porta do app**, onde quem digitou foi o dono do negócio.
+
+Hoje o espelho grava `manual` para as duas (`ORIGEM` em `src/db/negocio.py` do
+backend, valor fixo), porque o `CadastroCompleto` não tem como dizer por onde
+entrou. Enquanto só a porta do n8n existir na prática, o valor está certo por
+acidente.
+
+**No dia em que o app disparar**, o `manual` passa a afirmar que a V2G anotou
+o que o cliente digitou — e essa é a mesma classe de erro do
+`confirmar_campo_do_cliente`: afirmação falsa sobre quem disse o quê. O
+conserto é o `CadastroCompleto` carregar a porta de entrada, e o `ORIGEM`
+deixar de ser constante.
+
+Não é conserto de agora — é pré-requisito de ligar o webhook do app.
+
 ## Estrutura de pastas
 
 ```
