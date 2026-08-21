@@ -393,3 +393,17 @@ significa 1% — não dá para desambiguar, e não aparece na fila real.
 
 `motivos_revisao` vem preenchido em 28/29, no formato
 `"<agente>: confianca 0.52"`. A exceção é a mesma execução legada.
+
+## 7. Não dá para saber qual commit está no ar
+
+MEDIDO em 21/08/2026. O repositório do backend não abre para esta
+máquina, e o deploy não carimba versão — `GET /saude` e o
+`info.version` do `openapi.json` não trazem commit nem build id. Não há
+como comparar repositório e deploy em nenhuma direção.
+
+Reforça a REGRA DE OURO da §0 pelo caminho negativo: o `/openapi.json`
+não é só a melhor fonte de verdade sobre o backend, é a **única**.
+Snapshots datados dele ficam em [`docs/openapi/`](./openapi/).
+
+O achado inteiro, com o risco e o procedimento de resgate, está em
+[`deriva-repo-deploy.md`](./deriva-repo-deploy.md).

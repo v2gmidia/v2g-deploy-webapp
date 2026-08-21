@@ -173,6 +173,53 @@ O texto precisa dizer o que parou de funcionar, não o erro técnico. Algo na
 linha de "Sua conta de anúncios foi desconectada. Enquanto isso, suas
 campanhas não recebem ajustes automáticos." — a consequência primeiro.
 
+## MEDIDO em 21/08/2026 — o que `expires_at` prova, e o que não prova
+
+Estado real da única conexão no V2G-SITE:
+
+    business_id      a85c37a9-df57-4829-985b-41bc306f8537
+    status           connected
+    token_secret_id  presente
+    expires_at       NULL
+    created_at       2026-08-01 17:33
+
+**O `NULL` não é escrita faltando.** `lib/meta/oauth.ts:224` mapeia o
+`expires_at = 0` do Meta para `null`, com o comentário no próprio código:
+*"expires_at = 0 significa 'não expira' (raro, mas existe)"*. E o
+`/auth/meta/callback` grava `dados.expiraEm?.toISOString() ?? null`. O
+Meta disse que este token não expira, e o app registrou isso fielmente.
+
+**Consequência operacional:** a rotina preventiva descrita acima — marcar
+`expiring` quando `expires_at` está a menos de 7 dias — **nunca dispara
+para esta conexão**. `NULL` nunca está a menos de 7 dias de nada. O
+projeto tem uma conexão só, e ela está fora do alcance da prevenção.
+
+**O princípio, e ele vale nos dois sentidos:**
+
+> `expires_at` no futuro não prova sessão viva.
+> `expires_at` nulo não prova sessão imortal.
+
+Das três formas de o token morrer tabuladas acima, duas — app removido
+(subcode 458) e senha trocada (460) — são detectáveis **só ao usar**, e
+nenhuma delas mexe em `expires_at`. A data é dica preventiva, nunca prova.
+
+Aplicando a regra dos três estados: a vitalidade do token é
+`true | false | null`, e **hoje ela é `null`**. Um pré-voo que devolvesse
+`false` aqui repetiria o bug do WhatsApp — "não consegui verificar"
+virando "não tem".
+
+**O que NÃO foi medido:** se este token está vivo. Nenhuma chamada à
+Graph API foi feita em 21/08/2026.
+
+**Confirmado como construído**, medido e não presumido, de itens do
+checklist abaixo: `obter_token_meta()` e `conectar_meta()` existem, são
+`security definer`, têm `search_path=""` e `EXECUTE` só para `postgres` e
+`service_role`; as rotas `/auth/meta/*` existem; e o tratamento do erro
+190 existe em `lib/meta/erros.ts` — subcodes 458, 460, 463 e 467, com
+subcode desconhecido caindo em `revoked` — já ligado no
+`/conectar/escolher`, que chama `marcar_conexao_meta_quebrada` e não
+retenta.
+
 ## O que fica pendente para o lote do OAuth
 
 - [ ] App do Meta criado no `developers.facebook.com`, com as permissões

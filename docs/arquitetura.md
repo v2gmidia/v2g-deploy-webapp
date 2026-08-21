@@ -345,6 +345,43 @@ servidor — nunca `select *`.
 > o `business_id` vindo de um `select` sob RLS. Ver a Decisão 13 abaixo e
 > `docs/tela-processando.md` §4.
 
+### Adendo — MEDIDO em 21/08/2026, no lote do coletor
+
+Estado real de `execucoes` no V2G-SITE (`ushccxpoxjikzqnwhgfd`):
+
+    business_id  cliente_id   linhas
+        não          não         4     ← importadas do Oregon, órfãs dos dois lados
+        sim          sim         1     ← criada pelo POST /cadastro em 19/08
+
+Nenhuma linha tem um sem o outro. A execução de 19/08 nasceu com
+`cliente_id` gravado pelo backend, confirmando a linha da tabela acima:
+**não há bug de persistência** — o backend grava o `cliente_id` que recebe.
+
+As 4 linhas sem chave nenhuma são cópias importadas em bloco do Oregon
+(txid 1383 e 1384, duas transações únicas), anteriores a este caminho de
+código. Não têm negócio neste banco e **não devem ser processadas,
+migradas nem consertadas.** Ficam como estão: marcá-las com um status novo
+criaria um sétimo estado fora dos seis de `EstadoExecucao`, que
+`ehEstado()` rejeitaria como `desconhecido`.
+
+**Consequência para o coletor:** o filtro exige as duas chaves.
+
+    status = 'cadastro_completo'
+    AND cliente_id  IS NOT NULL
+    AND business_id IS NOT NULL
+
+`business_id` entra no filtro porque `meta_connections` tem
+UNIQUE (business_id) — a busca do token do Meta é por ele, e execução sem
+`business_id` não conseguiria token. Como `business_id` é escrito pelo
+webapp e não pelo backend, execução criada por outro caminho nasceria sem
+ele.
+
+**A fila do coletor NÃO nasce vazia.** Nasce com exatamente 1 item: a
+execução `98447192-3968-4fb1-8062-b14d6a8751ae`, parada em
+`cadastro_completo` desde 19/08. As 4 órfãs estão permanentemente fora do
+filtro. Quem ligar o coletor esperando fila vazia e vir uma execução sendo
+processada está vendo o comportamento correto, não um defeito.
+
 ## Decisão 13 — Estado de pipeline não decide etapa concluída. O artefato decide.
 
 Registrado em 20/08/2026, no lote da `/processando`
