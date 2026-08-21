@@ -42,7 +42,10 @@ const PROTECTED_PREFIXES = [
   // telas de fluxo — grupo `(fluxo)`, sem sidebar, mas igualmente com sessão
   "/onboarding",
   "/expectativas",
-  "/processando",
+  // `/processando` saiu daqui no lote F, junto com a tela
+  // (`docs/tela-processando.md`). O assunto dela — em que pé está a
+  // montagem do anúncio — é a etapa 3 da cadeia do `estadoDoCliente()`, e
+  // mora no `/inicio`, que já está protegido acima.
   "/conectar",
   "/verba",
   "/aprovar",

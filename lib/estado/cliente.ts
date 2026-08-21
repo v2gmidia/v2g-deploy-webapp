@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/consultar";
 import { montarCadastro, type NegocioParaCadastro } from "@/lib/cadastro/montar";
 import { resumirPendencias } from "@/lib/cadastro/pendencias";
+import { execucaoDoCliente } from "@/lib/pipeline/execucao-do-cliente";
 import {
   blocosDaTrilha,
   montarEtapas,
@@ -30,12 +31,32 @@ import {
  * importado em uma delas.
  * ============================================================
  *
- * TUDO SOB RLS, com o cliente do próprio usuário. Nenhum `service_role`
- * aqui, e isso é o que mantém `execucoes` fora do alcance: aquela tabela
- * mistura texto de cliente com raciocínio de agente na mesma coluna
- * (`docs/auditoria-resultados.md`), e o que a gente precisa dela — desde
- * quando a bola é nossa — já está em `businesses.cadastro_iniciado_em`, na
- * linha do próprio negócio.
+ * TUDO SOB RLS, com o cliente do próprio usuário — **com uma exceção, e
+ * ela tem nome.**
+ *
+ * ============================================================
+ * A ÚNICA LEITURA FORA DA RLS AQUI É `execucaoDoCliente()`.
+ *
+ * Até o lote F este cabeçalho dizia "nenhum `service_role` aqui", e era
+ * verdade. Deixou de ser, e o motivo importa mais que o fato.
+ *
+ * `execucoes` está em `default deny` e vai continuar: abrir `SELECT` para
+ * o dono NÃO resolveria o problema, porque RLS decide LINHA e o vazamento
+ * daquela tabela é de COLUNA — as sete colunas jsonb misturam texto
+ * escrito para o cliente com raciocínio de agente sobre ele, sem marca que
+ * separe (`docs/auditoria-resultados.md` §4). Uma política entregaria as
+ * sete de uma vez, com a consciência limpa de ter conferido o dono.
+ *
+ * Então a leitura é `service_role` e o que substitui a rede da RLS é o
+ * PARÂMETRO: o `businessId` que vai para lá é o `linha.id` do `select`
+ * logo abaixo, que já rodou sob RLS com `.eq("profile_id", user.id)`.
+ * Não existe caminho para um id alheio porque não existe superfície que
+ * aceite um. **Quem mudar a ordem dessas duas leituras quebra isso.**
+ *
+ * E o que atravessa são três campos: `status`, `atualizado_em` e o
+ * veredito de tempo. Nenhuma coluna de agente. Ver
+ * `lib/pipeline/execucao-do-cliente.ts` e `docs/tela-processando.md` §4.
+ * ============================================================
  */
 
 /** Os estados em que a conexão FUNCIONA. O domínio é fechado por check
@@ -145,25 +166,39 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   desde.setDate(desde.getDate() - DIAS_DE_JANELA);
   const desdeISO = desde.toISOString().slice(0, 10);
 
-  const [{ data: conexao }, { data: criativos }, { data: campanhas }, { data: metricas }] =
-    await Promise.all([
-      supabase.from("meta_connections").select("status").maybeSingle(),
-      supabase
-        .from("creatives")
-        .select("id, uso, status, copy, arquivado_em")
-        .eq("business_id", linha.id)
-        .is("arquivado_em", null),
-      supabase
-        .from("campaigns")
-        .select("id, name, meta_status, created_at, published_at, publish_state")
-        .order("created_at", { ascending: false }),
-      // `date` é `date` no banco, então a comparação é por string ISO de
-      // data — sem hora, sem fuso no meio.
-      supabase
-        .from("metrics_daily")
-        .select("spend, conversions, revenue, impressions")
-        .gte("date", desdeISO),
-    ]);
+  const [
+    { data: conexao },
+    { data: criativos },
+    { data: campanhas },
+    { data: metricas },
+    execucao,
+  ] = await Promise.all([
+    supabase.from("meta_connections").select("status").maybeSingle(),
+    supabase
+      .from("creatives")
+      .select("id, uso, status, copy, arquivado_em")
+      .eq("business_id", linha.id)
+      .is("arquivado_em", null),
+    supabase
+      .from("campaigns")
+      .select("id, name, meta_status, created_at, published_at, publish_state")
+      .order("created_at", { ascending: false }),
+    // `date` é `date` no banco, então a comparação é por string ISO de
+    // data — sem hora, sem fuso no meio.
+    supabase
+      .from("metrics_daily")
+      .select("spend, conversions, revenue, impressions")
+      .gte("date", desdeISO),
+    // A ÚNICA leitura fora da RLS, e ela entra AQUI dentro de propósito.
+    //
+    // O desenho previa uma sexta ida sequencial, porque ela depende do
+    // `linha.id`. Mas `linha` já está na mão desde o `select` acima — então
+    // ela cabe na mesma leva, e o custo é zero de tempo de parede em vez de
+    // uma viagem a mais. O que ela NÃO pode é subir para antes do `select`
+    // de `businesses`: é dali que o `id` vem sob RLS, e é isso que faz o
+    // `service_role` do outro lado ser seguro (ver o cabeçalho).
+    execucaoDoCliente(linha.id, agora),
+  ]);
 
   // ---- as contagens de peça, cada uma com o seu filtro dito ----
   //
@@ -212,6 +247,7 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     cadastro: resumo,
     conexaoAtiva: CONEXAO_VIVA.includes(conexao?.status ?? ""),
     cadastroEnviadoEm: linha.cadastro_iniciado_em,
+    execucao,
     pecasProntas,
     pecasParaAprovar,
     campanhaCriadaEm: esperandoPublicacao[0]?.created_at ?? null,

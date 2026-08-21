@@ -275,6 +275,25 @@ repetido; é um texto que muda porque a situação mudou.
 | 5 no ar | nós | `campaigns.created_at` | **2 dias** |
 | 6 os números | Facebook | `campaigns.published_at` | **4 dias** |
 
+> **A FONTE DO "DESDE" DA ETAPA 3 MUDOU EM 20/08/2026, no lote F.** O
+> parágrafo abaixo continua aqui porque o argumento dele estava certo e
+> ainda governa o resto; o que mudou foi um fato que ele não tinha.
+>
+> O relógio da etapa 3 passou a contar de `execucoes.atualizado_em`, com
+> `businesses.cadastro_iniciado_em` de reserva. Motivo:
+> `cadastro_iniciado_em` **nunca anda** — marca o instante do disparo e
+> morre ali. Enquanto o pipeline não andava os dois eram iguais (na conta
+> medida aqui eles diferem por 1,7 segundo), e por isso o defeito estava
+> invisível. No dia em que o n8n reagir eles divergem, e a versão antiga
+> acusaria de dívida um pipeline que está trabalhando.
+>
+> **O que NÃO mudou é o que este parágrafo defende:** a leitura continua
+> sem tocar em coluna de agente. São `status` e `atualizado_em`, por uma
+> função de servidor que recebe o `business_id` já vindo de um `select`
+> sob RLS (`lib/pipeline/execucao-do-cliente.ts`). A porta que a auditoria
+> fechou continua fechada — o que se abriu foi uma fresta de duas colunas,
+> nomeadas à mão. Ver `tela-processando.md` §3.2 e §4.
+
 **De onde vem o "desde" da etapa 3, e por que não é de `execucoes`.**
 `cadastro_iniciado_em` e `cadastro_estado` são colunas da própria linha de
 `businesses`, sob RLS, com `SELECT` para `authenticated` — conferido no
@@ -510,7 +529,9 @@ E `pnpm conferir` verde: `typecheck`, `conferir:lista-branca`,
 - **Os outros lotes de QA.** Nada de verba sem piso, `/verba` pedindo
   endereço, contraste, navegação.
 - **A `/processando` lendo `analysis_runs`** — 0 linhas, medido de novo hoje.
-  Já registrado em `disparo-pipeline.md §3`.
+  Já registrado em `disparo-pipeline.md §3`. *(Resolvido no dia seguinte,
+  no lote F: a tela foi apagada e o assunto virou a etapa 3 desta cadeia.
+  Ver `tela-processando.md`.)*
 - **O acionamento do n8n.** É a razão de a conta medida estar parada na etapa
   3, e não muda com este lote. O que muda é a tela **dizer isso** em vez de
   culpar o cliente.

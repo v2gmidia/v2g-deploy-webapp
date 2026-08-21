@@ -54,11 +54,35 @@ export const MINUTOS_ATE_DESTRAVAR_DISPARO = 2;
 export type Andamento = "andando" | "demorando" | "parada" | "esperando_cliente";
 
 /**
+ * A execução do cliente, vista pelo que a TELA DELE pode saber.
+ *
+ * Três campos, e é o TETO — não uma versão reduzida por conveniência, mas
+ * o limite que a `docs/auditoria-resultados.md` §5 impôs: as sete colunas
+ * jsonb de `execucoes` misturam texto escrito para o cliente com
+ * raciocínio de agente sobre ele ("descrição é curta e vaga"), estratégia
+ * de nicho e saída de mock, sem marca que separe. Nenhuma delas entra
+ * aqui, hoje nem depois: quem precisar de conteúdo de agente acrescenta
+ * campo NOMEADO, com alguém tendo lido o texto.
+ *
+ * O tipo mora AQUI, e não em `./execucao-do-cliente.ts`, porque este
+ * arquivo é o que não tem `server-only`: `lib/estado/frases.ts` precisa
+ * dele e é importado pela trilha do onboarding, que é componente de
+ * cliente. Uma segunda declaração estruturalmente igual do outro lado
+ * seriam duas verdades esperando divergir.
+ */
+export interface ExecucaoDoCliente {
+  status: string;
+  atualizadoEm: string | null;
+  andamento: Andamento;
+}
+
+/**
  * Como está uma execução, pelo silêncio dela.
  *
  * Conta desde `atualizado_em`, **não** desde `criado_em`. A `/processando`
- * de hoje conta desde a criação, e isso é pior: um pipeline que avançou
- * aos 29 minutos parece travado aos 31.
+ * contava desde a criação, e isso era pior: um pipeline que avançou aos 29
+ * minutos parecia travado aos 31. (Aquela tela foi apagada no lote F —
+ * `docs/tela-processando.md`. O argumento sobreviveu a ela.)
  *
  * `aguardando_fotos` NÃO entra nos cortes. Ele não está parado — está
  * esperando o cliente mandar foto. Um relógio correndo ali acusaria a

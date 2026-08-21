@@ -29,6 +29,10 @@ import {
   type Etapa,
   type MedidaDoCliente,
 } from "../lib/estado/frases.ts";
+import {
+  andamentoDaExecucao,
+  type ExecucaoDoCliente,
+} from "../lib/pipeline/relogios.ts";
 
 let falhas = 0;
 let testes = 0;
@@ -71,12 +75,36 @@ function base(): MedidaDoCliente {
     cadastro: SEM_PENDENCIA,
     conexaoAtiva: true,
     cadastroEnviadoEm: T0.toISOString(),
+    // Sem execução legível — quem nunca disparou, e o que a cadeia dizia
+    // ANTES do lote F. As seções 1 a 9 rodam nesta base de propósito: elas
+    // são a prova de que a leitura nova é ADIÇÃO, não troca.
+    execucao: null,
     pecasProntas: 0,
     pecasParaAprovar: 0,
     campanhaCriadaEm: null,
     publicacaoFalhou: false,
     publicadaEm: null,
     temNumero: false,
+  };
+}
+
+/**
+ * Uma execução como o `execucaoDoCliente()` a devolveria.
+ *
+ * `andamento` sai do `andamentoDaExecucao` DE VERDADE, e não de um literal
+ * escrito à mão: é ele quem sabe quais status são espera do cliente, e um
+ * valor chapado aqui faria este conferidor concordar com uma regra que o
+ * código não tem.
+ */
+function execucao(
+  status: string,
+  atualizadoEm: string | null,
+  agora: Date = T0,
+): ExecucaoDoCliente {
+  return {
+    status,
+    atualizadoEm,
+    andamento: andamentoDaExecucao(status, atualizadoEm, agora),
   };
 }
 
@@ -286,6 +314,183 @@ secao("9. a lista do 'resto do caminho' — a regressão de 20/08");
   ok(
     por("cadastro").etapa.titulo === "",
     "o `titulo` do cadastro concluído É vazio — por isso a lista usa `nome`",
+  );
+}
+
+secao("10. os SEIS estados de `EstadoExecucao` — cada um com a sua bola");
+{
+  // O mapa do `docs/tela-processando.md` §2.2. O que se confere aqui é que
+  // a etapa 3 sabe a diferença entre uma FILA e TRABALHO ACONTECENDO — e
+  // que nenhum dos seis estados cobra do cliente o que não é dele.
+  const comStatus = (status: string) => {
+    const m = base();
+    m.execucao = execucao(status, T0.toISOString());
+    return proximo(m, maisDias(0.5))!;
+  };
+
+  const naFila = comStatus("cadastro_completo");
+  ok(naFila.bola === "nos", "`cadastro_completo` → a bola é NOSSA");
+  ok(
+    !naFila.titulo.includes("montando"),
+    "  e NÃO diz 'montando': ninguém pegou a execução ainda, é fila",
+  );
+  ok(naFila.titulo.includes("chegou"), "  diz que o cadastro CHEGOU até a gente");
+  ok(naFila.acao === null, "  e sem botão — não há o que ele fazer");
+
+  for (const s of ["pipeline_texto_rodando", "gerando_criativo"]) {
+    const p = comStatus(s);
+    ok(p.bola === "nos", `\`${s}\` → a bola é NOSSA`);
+    ok(p.titulo.includes("montando"), `  e aí SIM diz 'montando' — está rodando mesmo`);
+  }
+
+  for (const s of ["estrutura_pronta", "gerado"]) {
+    const p = comStatus(s);
+    ok(p.bola === "nos", `\`${s}\` → a bola é NOSSA (revisão do gestor)`);
+    ok(p.titulo.includes("conferindo"), "  e a frase diz que a gente está conferindo");
+    ok(
+      p.concluida === false,
+      "  e a etapa NÃO fecha: quem fecha é a peça em `creatives` (Decisão 13)",
+    );
+    ok(p.id === "peca", "  a cadeia continua na PEÇA, não pula para a aprovação");
+  }
+
+  // Decisão 13, dita ao contrário para o teste não ser tautológico: com
+  // peça pronta em `creatives`, a etapa fecha MESMO com a execução ainda
+  // em `pipeline_texto_rodando`. O artefato manda, não o status.
+  {
+    const m = base();
+    m.execucao = execucao("pipeline_texto_rodando", T0.toISOString());
+    m.pecasProntas = 1;
+    m.pecasParaAprovar = 1;
+    const p = proximo(m, maisDias(0.5))!;
+    ok(
+      p.id === "aprovacao",
+      "peça pronta com execução ainda rodando → a cadeia AVANÇA (o artefato manda)",
+    );
+  }
+
+  const desconhecido = comStatus("um_estado_que_o_backend_inventou");
+  ok(desconhecido.bola === "nos", "status fora dos seis → a bola cai em NOSSA");
+  ok(
+    desconhecido.bola !== "cliente",
+    "  e NUNCA em 'cliente' — errar para esse lado culpa quem não tem culpa",
+  );
+}
+
+secao("11. `aguardando_fotos` — a proibição do enunciado, conferida");
+{
+  // A PROIBIÇÃO: a tela não pode dizer que estamos trabalhando quando a
+  // espera é do cliente. Este é o único dos seis estados em que isso pode
+  // acontecer, e era o que a cadeia fazia antes deste lote.
+  const m = base();
+  m.execucao = execucao("aguardando_fotos", T0.toISOString());
+  const p = proximo(m, maisDias(0.5))!;
+
+  ok(p.bola === "cliente", "`aguardando_fotos` → a bola é DO CLIENTE");
+  ok(
+    !p.corpo.includes("a gente está montando") && !p.titulo.includes("montando"),
+    "  e a tela NÃO diz que a gente está montando — a espera é dele",
+  );
+  ok(p.acao !== null, "  ele ganha um canal");
+  ok(
+    p.acao!.href.startsWith("https://wa.me/"),
+    "  e o canal é falar com a gente, NÃO 'subir foto': o upload da /conta " +
+      "grava em creatives e não destrava a execução (buraco-fotos-execucao.md)",
+  );
+  ok(
+    !p.acao!.rotulo.toLowerCase().includes("foto"),
+    "  o rótulo não promete mandar foto — botão que não resolve é pior que silêncio",
+  );
+
+  // E ele NÃO entra no relógio: um cronômetro correndo aqui acusaria a
+  // gente de uma falha que é pendência dele. Mesma disciplina do `nao_sei`.
+  const velho = base();
+  velho.execucao = execucao("aguardando_fotos", T0.toISOString());
+  const depois = proximo(velho, maisDias(30))!;
+  ok(!depois.admitindo, "30 dias em `aguardando_fotos` e a gente NÃO admite dívida");
+  ok(depois.bola === "cliente", "  a bola continua dele");
+}
+
+secao("12. O RELÓGIO CONTA DO ÚLTIMO MOVIMENTO — os dois lados");
+{
+  // ============================================================
+  // ESTA É A SEÇÃO QUE A CONTA REAL NÃO CONSEGUE PROVAR.
+  //
+  // Na `a85c37a9`, `cadastro_iniciado_em` e `execucoes.atualizado_em`
+  // estão a 1,7 segundo um do outro — os dois relógios dão o mesmo
+  // número, e um teste lá passaria COM e SEM a mudança. É o "teste verde
+  // escondendo defeito" que este projeto já pagou quatro vezes.
+  //
+  // Aqui os dois divergem de propósito, que é o único jeito de a troca de
+  // fonte ser visível.
+  // ============================================================
+
+  // Pipeline TRABALHANDO: disparou há 5 dias, mas se mexeu há 1 hora.
+  // Pela fonte antiga (`cadastro_iniciado_em`) isto admitiria dívida sobre
+  // um pipeline saudável. É a asserção que FALHA antes deste lote.
+  {
+    const m = base();
+    m.cadastroEnviadoEm = T0.toISOString();
+    m.execucao = execucao(
+      "gerando_criativo",
+      new Date(maisDias(5).getTime() - 3_600_000).toISOString(),
+    );
+    const p = proximo(m, maisDias(5))!;
+    ok(
+      !p.admitindo,
+      "disparo há 5 dias + movimento há 1 hora → NÃO admite (o pipeline está andando)",
+    );
+    ok(p.titulo.includes("montando"), "  e a frase é a de trabalho acontecendo");
+  }
+
+  // Pipeline PARADO: nada se mexeu desde o disparo. Admite.
+  {
+    const m = base();
+    m.execucao = execucao("cadastro_completo", T0.toISOString());
+    const p = proximo(m, maisDias(DIAS_ATE_ADMITIR_PECA))!;
+    ok(p.admitindo, `silêncio de ${DIAS_ATE_ADMITIR_PECA} dias → ADMITE`);
+    ok(p.titulo.includes("devendo"), "  e o título admite a dívida");
+  }
+
+  // O outro lado do mesmo corte, para não ser teste de um lado só.
+  {
+    const m = base();
+    m.execucao = execucao("cadastro_completo", T0.toISOString());
+    const p = proximo(m, maisDias(DIAS_ATE_ADMITIR_PECA - 0.1))!;
+    ok(!p.admitindo, "  e um décimo de dia antes, ainda não");
+  }
+
+  // Fallback: execução sem `atualizado_em` legível cai em
+  // `cadastro_iniciado_em`, que é o comportamento anterior.
+  {
+    const m = base();
+    m.execucao = execucao("cadastro_completo", null);
+    const p = proximo(m, maisDias(DIAS_ATE_ADMITIR_PECA))!;
+    ok(p.admitindo, "sem `atualizado_em`, o relógio cai em `cadastro_iniciado_em`");
+  }
+
+  // Nem uma coisa nem outra: sem data nenhuma, ausência não é prova.
+  {
+    const m = base();
+    m.cadastroEnviadoEm = null;
+    m.execucao = execucao("cadastro_completo", null);
+    const p = proximo(m, maisDias(90))!;
+    ok(!p.admitindo, "sem data nenhuma, 90 dias depois AINDA não admite");
+  }
+}
+
+secao("13. a frase que veio da /processando — o dinheiro");
+{
+  const m = base();
+  m.execucao = execucao("cadastro_completo", T0.toISOString());
+  const p = proximo(m, maisDias(DIAS_ATE_ADMITIR_PECA))!;
+  ok(
+    p.corpo.includes("Nada foi cobrado"),
+    "quando a gente admite a dívida, a tela diz que NADA FOI COBRADO",
+  );
+  ok(
+    p.corpo.includes("nenhum anúncio foi ao ar"),
+    "  e que nenhum anúncio foi ao ar",
   );
 }
 

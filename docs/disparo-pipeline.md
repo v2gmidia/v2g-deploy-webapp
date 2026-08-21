@@ -361,6 +361,29 @@ três lugares com a mesma regra copiada divergem na primeira edição.
 
 ## 3. DEFEITO REGISTRADO — a `/processando` nunca funcionou
 
+> ### RESOLVIDO EM 20/08/2026, E NÃO DO JEITO QUE ESTA SEÇÃO IMAGINAVA
+>
+> **Nada abaixo desta linha foi reescrito** — é medição, e medição não se
+> atualiza. O que segue é a nota de superação.
+>
+> A tela **foi apagada**, não repontada. O levantamento da §3.4 estava
+> certo em tudo e mesmo assim levou à conclusão oposta: os quatro pontos
+> que ele listou são reais, e o quinto fato — medido no lote seguinte — é
+> que **nenhum caminho do produto jamais levou à `/processando`**. Zero
+> `href` no código e zero na história do git; o protótipo tinha o link
+> (tela 3 → tela 4) e o produto trocou o destino para `/inicio` sem
+> registrar. Ela não era uma tela quebrada, era uma tela órfã.
+>
+> O assunto dela — em que pé está a montagem — virou a etapa 3 da cadeia
+> do `estadoDoCliente()`, que o lote QA-2 criou no dia seguinte a este
+> documento ser escrito. O mapeamento dos seis estados, o relógio de
+> falha e a leitura de duas colunas estão em
+> [`tela-processando.md`](./tela-processando.md).
+>
+> **A §3.5 abaixo deixou de valer**: o cliente passou a ver o que está
+> acontecendo. Mas a §13.5 continua valendo inteira — o pipeline segue sem
+> andar, e agora a tela diz isso em vez de ficar muda.
+
 **Não é consertado neste lote.** Fica registrado porque não pode ficar sem
 registro, e porque ele define o que este lote *não* entrega.
 

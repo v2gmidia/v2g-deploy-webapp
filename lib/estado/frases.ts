@@ -25,6 +25,7 @@
  */
 
 import type { ResumoDePendencias } from "@/lib/cadastro/pendencias";
+import type { ExecucaoDoCliente } from "@/lib/pipeline/relogios";
 
 /**
  * De quem é a vez. TRÊS valores, não dois — e a diferença entre os dois
@@ -180,6 +181,17 @@ export interface MedidaDoCliente {
   conexaoAtiva: boolean;
   /** `businesses.cadastro_iniciado_em` — quando a gente pegou a bola */
   cadastroEnviadoEm: string | null;
+  /**
+   * A execução do pipeline, quando existe. `null` é o caso normal de quem
+   * nunca disparou — e faz a cadeia se comportar como antes do lote F.
+   *
+   * **Ela NÃO decide se uma etapa está concluída** (Decisão 13 da
+   * `arquitetura.md`). Quem decide isso é o artefato: peça pronta é linha
+   * em `creatives` com `copy` escrita, que é o que o cliente pode ver e
+   * aprovar. O status da execução diz de quem é a bola e se a coisa está
+   * andando — nunca uma segunda opinião sobre se ela acabou.
+   */
+  execucao: ExecucaoDoCliente | null;
   /** peças de anúncio com texto já escrito pela IA */
   pecasProntas: number;
   /** peças esperando o "sim" do cliente */
@@ -259,46 +271,188 @@ function etapaConexao(m: MedidaDoCliente): Etapa {
 }
 
 /**
+ * Em que pé está a montagem, do ponto de vista do que dá para CONTAR ao
+ * cliente. É o mapa dos seis `EstadoExecucao` do backend reduzido às
+ * situações que mudam a frase — `docs/tela-processando.md` §2.2.
+ *
+ * `sem_execucao` não é "erro": é quem nunca disparou, quem disparou e a
+ * linha ainda não nasceu, e quem a gente não conseguiu ler. As três dizem
+ * o que a cadeia sempre disse, que é o comportamento anterior ao lote F.
+ */
+type FaseDaPeca =
+  | "sem_execucao"
+  | "na_fila"
+  | "rodando"
+  | "conferindo"
+  | "esperando_foto";
+
+function faseDaPeca(execucao: ExecucaoDoCliente | null): FaseDaPeca {
+  if (!execucao) return "sem_execucao";
+  switch (execucao.status) {
+    case "cadastro_completo":
+      return "na_fila";
+    case "aguardando_fotos":
+      return "esperando_foto";
+    case "estrutura_pronta":
+    case "gerado":
+      return "conferindo";
+    case "pipeline_texto_rodando":
+    case "gerando_criativo":
+      return "rodando";
+    default:
+      // ESTADO NOVO DO BACKEND CAI EM "rodando", NUNCA EM "esperando_foto".
+      // Um valor fora dos seis não pode quebrar a tela — é a mesma regra do
+      // `lib/backend/cadastro.ts`. Mas o lado para o qual se erra não é
+      // indiferente: errar para "a bola é nossa" inventa trabalho para nós;
+      // errar para o outro lado cobra do cliente uma coisa que ele não
+      // deve. Só um dos dois erros culpa quem não tem culpa.
+      return "rodando";
+  }
+}
+
+/**
  * Etapa 3 — a peça. **A bola é nossa, e é a etapa em que o cliente da conta
  * medida em 20/08 estava parado havia um dia sem que nenhuma tela dissesse
  * isso.**
  *
- * `desde` sai de `businesses.cadastro_iniciado_em`, que é o instante em que
- * a gente pegou a bola (`lib/pipeline/disparar.ts`). Não sai de `execucoes`
- * de propósito: aquela tabela mistura texto de cliente com raciocínio de
- * agente na mesma coluna, sem marca que separe (`docs/auditoria-resultados.md`),
- * e chegar perto dela para pegar um `timestamp` seria abrir a porta que a
- * auditoria fechou.
+ * ============================================================
+ * O RELÓGIO CONTA DO ÚLTIMO MOVIMENTO, NÃO DO DISPARO (lote F).
+ *
+ * Antes contava de `businesses.cadastro_iniciado_em`, que **nunca anda**:
+ * ele marca o instante do disparo e morre ali. Enquanto o pipeline não
+ * andava os dois eram iguais, e por isso o defeito ficou invisível — na
+ * conta medida em 20/08 os dois carimbos diferem por 1,7 segundo. No dia
+ * em que o n8n reagir eles divergem, e a versão antiga passaria a acusar
+ * de dívida um pipeline que está trabalhando normalmente.
+ *
+ * `execucoes.atualizado_em` é a única coluna que responde "quando foi a
+ * última vez que alguma coisa aconteceu". `cadastro_iniciado_em` continua
+ * como fallback, para quem não tem execução legível.
+ *
+ * BURACO CONHECIDO, escrito em vez de tapado: um relógio que se reinicia
+ * nunca dispara. Um pipeline que se mexe a cada 47 horas mantém o cliente
+ * esperando para sempre. Não há segundo corte hoje — seria o terceiro
+ * número inventado do projeto, e o cenário exige um pipeline que se mexe
+ * periodicamente por dias, quando o que existe medido é um que nunca se
+ * mexeu. O operador vê o caso pela `/saude-meta`, na régua de 90 minutos.
+ * O conserto, quando aparecer: admitir por silêncio OU por um teto
+ * absoluto desde `cadastro_iniciado_em`. Ver `docs/tela-processando.md`
+ * §3.3.
+ * ============================================================
+ *
+ * POR QUE O PRAZO NÃO SAI DO `andamentoDaExecucao`. Aqueles 20 e 90
+ * minutos são a régua do OPERADOR, e ele pode agir sobre a suspeita —
+ * abrir a execução, ver onde parou. O cliente só pode desconfiar, e
+ * admitir cedo demais ensina a desconfiar de um sistema que estava bem.
+ * O que a gente reusa de lá é uma coisa só: quais status são espera DELE.
  */
 function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
-  const admitindo = passouDoPrazo(m.cadastroEnviadoEm, DIAS_ATE_ADMITIR_PECA, agora);
+  const fase = faseDaPeca(m.execucao);
   const quando = dataCurta(m.cadastroEnviadoEm);
+
+  // Peça pronta é peça com texto escrito, em `creatives`. O status da
+  // execução NÃO fecha esta etapa — Decisão 13. `estrutura_pronta` quer
+  // dizer que o backend terminou e a execução entrou na fila de revisão do
+  // gestor (`GET /execucoes-em-revisao`); entre isso e o cliente ter uma
+  // peça na mão existe um humano nosso. Se ele fechasse a etapa, a cadeia
+  // avançaria e o `/inicio` diria "tem peça esperando você" com o
+  // `/aprovar` vazio — a verdade vazia do `estado-do-cliente.md` §11.3
+  // reintroduzida pela porta dos fundos.
+  const concluida = m.pecasProntas > 0;
+
+  // ESPERA DELE NÃO É ESPERA NOSSA, e sai antes de qualquer relógio.
+  //
+  // Único estado dos seis em que a bola é do cliente. Sem este ramo, a
+  // cadeia diria "a gente está montando o seu primeiro anúncio" para quem
+  // está sendo esperado — a frase proibida, na tela para onde o onboarding
+  // manda. O `esperando_cliente` do `andamentoDaExecucao` é a fonte de
+  // quais status são espera dele, para essa regra ter um dono só.
+  //
+  // A AÇÃO É FALAR COM A GENTE, E NÃO "SUBIR FOTO". O upload da `/conta`
+  // grava em `storage` + `creatives` e não chama
+  // `POST /execucoes/{id}/fotos` — ninguém liga os dois lados. Um botão
+  // "mandar foto" aqui levaria o cliente a fazer uma coisa que não
+  // destrava nada, e botão que não resolve é pior que silêncio. O buraco
+  // está registrado em `docs/buraco-fotos-execucao.md`.
+  if (fase === "esperando_foto") {
+    return {
+      id: "peca",
+      concluida,
+      bola: "cliente",
+      nome: "A peça do seu anúncio",
+      titulo: "Seu anúncio está esperando uma foto sua",
+      corpo:
+        "A montagem chegou num ponto que pede uma foto do seu negócio, e daqui a gente não consegue destravar sozinho. É rápido: chama a gente no WhatsApp que resolvemos junto com você, sem você precisar mexer em nada sozinho.",
+      acao: { rotulo: "Falar com a gente", href: WHATSAPP_PECA },
+      desde: m.execucao?.atualizadoEm ?? undefined,
+      admitindo: false,
+    };
+  }
+
+  // O relógio do cliente, sobre o último movimento. Ver o bloco do
+  // cabeçalho: `atualizado_em` primeiro, `cadastro_iniciado_em` de reserva.
+  const desdeORelogio = m.execucao?.atualizadoEm ?? m.cadastroEnviadoEm;
+  const admitindo = passouDoPrazo(desdeORelogio, DIAS_ATE_ADMITIR_PECA, agora);
 
   if (admitindo) {
     return {
       id: "peca",
-      concluida: m.pecasProntas > 0,
+      concluida,
       bola: "nos",
       nome: "A peça do seu anúncio",
       titulo: "A gente está devendo o seu primeiro anúncio",
-      corpo: `Seu cadastro chegou aqui${quando ? ` em ${quando}` : ""} e a gente ainda não te mandou nenhuma peça para aprovar. Já passou do tempo, e isso é nosso — não é nada que você deixou de fazer. Se quiser puxar agora, é só chamar.`,
+      // A SEGUNDA FRASE VEIO DA `/processando`, e é a única coisa que
+      // aquela tela tinha e esta variante não. Para um cliente de R$490/mês
+      // que ficou dois dias sem anúncio, "não te cobramos por isso" é a
+      // primeira pergunta, não a segunda.
+      corpo: `Seu cadastro chegou aqui${quando ? ` em ${quando}` : ""} e a gente ainda não te mandou nenhuma peça para aprovar. Já passou do tempo, e isso é nosso — não é nada que você deixou de fazer. Nada foi cobrado e nenhum anúncio foi ao ar: a montagem parou antes de qualquer anúncio existir. Se quiser puxar agora, é só chamar.`,
       acao: { rotulo: "Falar com a gente", href: WHATSAPP_PECA },
-      desde: m.cadastroEnviadoEm ?? undefined,
+      desde: desdeORelogio ?? undefined,
       admitindo: true,
     };
   }
 
+  // As três fases em que a bola é nossa e está dentro do prazo. A diferença
+  // entre elas é o que muda: "chegou até a gente" descreve uma FILA;
+  // "a IA está escrevendo" descreve TRABALHO ACONTECENDO. Dizer a segunda
+  // quando é a primeira é a mentira que o lote F existe para tirar da tela
+  // — e é o estado real da única execução de cliente que existe hoje.
+  const porFase: Record<
+    Exclude<FaseDaPeca, "esperando_foto">,
+    { titulo: string; corpo: string }
+  > = {
+    na_fila: {
+      titulo: "Seu cadastro chegou até a gente",
+      corpo: `Seu cadastro está completo${quando ? ` desde ${quando}` : ""} e já está aqui, na fila. Quando a vez dele chegar, a IA escreve o texto e escolhe a arte do seu primeiro anúncio — e ele vem para você aprovar. Nada vai ao ar sem o seu sim.`,
+    },
+    rodando: {
+      titulo: "A gente está montando o seu primeiro anúncio",
+      corpo: `Seu cadastro está completo${quando ? ` desde ${quando}` : ""} e agora é com a gente: a IA escreve o texto e escolhe a arte. Quando ficar pronto, chega aqui para você aprovar — nada vai ao ar sem o seu sim.`,
+    },
+    conferindo: {
+      titulo: "Seu anúncio ficou pronto e a gente está conferindo",
+      corpo:
+        "A IA terminou de montar. Antes de mandar para você, alguém da nossa equipe lê o texto e olha a arte — é o que evita você receber uma peça com erro. Passando por aí, ela chega aqui para o seu sim.",
+    },
+    // Sem execução legível, a cadeia diz exatamente o que dizia antes do
+    // lote F. É o que torna esta mudança uma adição, e não uma troca.
+    sem_execucao: {
+      titulo: "A gente está montando o seu primeiro anúncio",
+      corpo: `Seu cadastro está completo${quando ? ` desde ${quando}` : ""} e agora é com a gente: a IA escreve o texto e escolhe a arte. Quando ficar pronto, chega aqui para você aprovar — nada vai ao ar sem o seu sim.`,
+    },
+  };
+
   return {
     id: "peca",
-    concluida: m.pecasProntas > 0,
+    concluida,
     bola: "nos",
     nome: "A peça do seu anúncio",
-    titulo: "A gente está montando o seu primeiro anúncio",
-    corpo: `Seu cadastro está completo${quando ? ` desde ${quando}` : ""} e agora é com a gente: a IA escreve o texto e escolhe a arte. Quando ficar pronto, chega aqui para você aprovar — nada vai ao ar sem o seu sim.`,
+    titulo: porFase[fase].titulo,
+    corpo: porFase[fase].corpo,
     // SEM AÇÃO. Não há o que ele fazer, e um botão aqui inventaria trabalho
     // para quem está esperando a gente.
     acao: null,
-    desde: m.cadastroEnviadoEm ?? undefined,
+    desde: desdeORelogio ?? undefined,
     admitindo: false,
   };
 }

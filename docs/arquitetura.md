@@ -340,6 +340,92 @@ colunas que o texto escrito para ele. Uma política de RLS libera a
 ler execução, ela pede `status` e `atualizado_em` por uma função de
 servidor — nunca `select *`.
 
+> **Isso deixou de ser hipótese em 20/08/2026.** A função existe:
+> `lib/pipeline/execucao-do-cliente.ts`, duas colunas, `service_role`, com
+> o `business_id` vindo de um `select` sob RLS. Ver a Decisão 13 abaixo e
+> `docs/tela-processando.md` §4.
+
+## Decisão 13 — Estado de pipeline não decide etapa concluída. O artefato decide.
+
+Registrado em 20/08/2026, no lote da `/processando`
+(`docs/tela-processando.md`). Vale para **qualquer** código que leia
+estado de pipeline daqui para frente, não só para a etapa que a motivou.
+
+A regra, numa frase:
+
+> **Uma etapa do cliente está concluída quando existe o ARTEFATO dela, não
+> quando um sistema nosso diz que terminou de produzi-lo.**
+
+| a pergunta | a resposta errada | a resposta certa |
+|---|---|---|
+| a peça do anúncio ficou pronta? | `execucoes.status = 'estrutura_pronta'` | existe `creatives` com `uso='campanha'` e `copy` escrita |
+| o anúncio está no ar? | o backend disse que publicou | `campaigns.published_at` preenchido |
+| os números chegaram? | a campanha está ativa | existe linha em `metrics_daily` |
+
+**Por que isto custou uma decisão numerada.** `estrutura_pronta` parece
+significar "acabou", e significa — para o backend. O que vem depois dele é
+a fila de revisão do gestor (`GET /execucoes-em-revisao`), um humano nosso,
+e só então o cliente tem uma peça na mão. Se `estrutura_pronta` fechasse a
+etapa, a cadeia do `estadoDoCliente()` avançaria e o `/inicio` diria "tem
+peça esperando você" com o `/aprovar` vazio.
+
+Isso é a mesma classe de defeito da §11.3 do `estado-do-cliente.md` — a
+**verdade vazia**, o predicado que é verdadeiro porque o conjunto está
+vazio, não porque o serviço foi prestado. Aquele caso escreveu "A sua
+aprovação · Já está feito" para quem nunca aprovou nada.
+
+**O que o estado do pipeline PODE fazer**, e é o motivo de ele ser lido:
+dizer **de quem é a bola** e **se a coisa está andando** enquanto a etapa
+está aberta. Ele detalha por dentro a resposta que o artefato já deu; não
+dá uma segunda resposta. Uma execução em `pipeline_texto_rodando` com peça
+pronta em `creatives` avança a cadeia — o artefato manda, sempre.
+
+**O corolário que fecha o buraco de audiência:** como o status nunca
+decide estado, ele nunca precisa ser confiável a ponto de justificar
+abrir a tabela. Duas colunas bastam, e é por isso que a Decisão 12 se
+sustenta sem exceção.
+
+### A lição que veio junto: caso "teórico" é medição, não impressão
+
+Registrada aqui e não numa nota de rodapé porque ela vale para todo
+documento deste projeto, e porque foi cometida **no mesmo lote que produziu
+a Decisão 13**, a poucas horas de distância.
+
+> **Antes de registrar que um caso é teórico, meça se existe dado que o
+> exercita. E confira em qual corpus você está medindo.**
+
+O que aconteceu: o lote F registrou que `aguardando_fotos` "pode nunca ser
+percorrido", apoiado numa inferência (`origem_criativo` é fixo em
+`"gerar"`, logo a IA não pede foto) e num número — zero execuções naquele
+estado. O número estava certo e era **das 5 linhas do `V2G-SITE`**.
+
+O histórico de verdade tem 49 linhas e mora no Oregon, e lá
+`aguardando_fotos` aparece **7 vezes, 14% do corpus**. O caso não é
+teórico; é 1 em cada 7. E a inferência que o sustentava está refutada, não
+confirmada. Ver `docs/buraco-fotos-execucao.md` §4.
+
+**O erro não foi de raciocínio, foi de corpus.** As 5 linhas do V2G-SITE
+são 4 escolhidas a dedo *por cobertura* na migração mais uma nova — uma
+amostra curada, e uma amostra curada responde à pergunta para a qual foi
+curada, não à sua.
+
+As três formas que este erro toma, e todas já apareceram aqui:
+
+| forma | como se parece | o que a desarma |
+|---|---|---|
+| corpus curado | "medi e deu zero" numa base que foi escolhida a dedo | perguntar **de onde vieram** as linhas antes de contar |
+| corpus parcial | contar num banco quando existem dois | listar as fontes antes de agregar |
+| ausência como prova | "não há linha, logo não acontece" | tabela vazia não prova ausência de evento, do mesmo jeito que log vazio não prova |
+
+É a mesma família de `log vazio não prova ausência` e de `tela vazia não
+prova ausência de dado`, que este projeto já pagou duas vezes. A diferença
+é o custo: aqui o registro errado ia fazer um beco sem saída de 1-em-7
+passar por curiosidade arquivada.
+
+**A regra operacional, curta:** um documento pode dizer "não medi". Pode
+dizer "medi em X e deu N". O que ele não pode fazer é transformar o
+segundo no primeiro sem dizer qual era o X.
+
 ## Estrutura de pastas
 
 ```

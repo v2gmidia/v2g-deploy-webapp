@@ -2207,7 +2207,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .faixa-reconectar .cta { margin-left: auto; width: auto; flex: none; padding: 11px 18px; font-size: var(--fs-corpo); }
 
 /* ============================================================
-   PROCESSAMENTO — passos verticais
+   ESCADA — passos verticais
+
+   SEM CONSUMIDOR HOJE, E DE PROPOSITO (lote F, docs/tela-processando.md
+   D6). Nasceu na /processando, que foi apagada. Fica porque e o unico
+   componente de progresso do projeto, e o `RestoDoCaminho` do /inicio e
+   hoje uma lista que a escada serviria melhor — adotar la e lote
+   proprio. Apagar para reescrever depois e trabalho duplo.
+
+   A pergunta ao remover nao e "quem chama isto hoje", e "o que dependeria
+   disto depois". Se um dia a resposta virar "nada", ela sai inteira: 45
+   linhas, deste comentario ate o fim do .split-tag.
    ============================================================ */
 .stepper { margin: 0 0 22px; padding: 0; list-style: none; }
 .stepper li { display: flex; gap: 14px; position: relative; padding-bottom: 26px; }
@@ -2241,9 +2251,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .stepper .s-copy .elapsed { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 /* A CLASSE PRECISA DO .s-copy no seletor. Sem ele isto e (0,2,0) e perde
    para `.stepper .s-copy span` (0,2,1) logo acima — que casa neste mesmo
-   elemento, porque no processando/page.tsx a etiqueta e um <span> dentro
-   do .s-copy. A regra existia desde sempre e nunca pintou nada: antes da
-   escala ela pedia 10px e o navegador desenhava os 12,5px do vizinho. */
+   elemento sempre que a etiqueta for um <span> dentro do .s-copy, que era
+   como a /processando a escrevia. A regra existia desde sempre e nunca
+   pintou nada: antes da escala ela pedia 10px e o navegador desenhava os
+   12,5px do vizinho.
+
+   O ARQUIVO CITADO AQUI FOI APAGADO no lote F, e este comentario ficou
+   apontando para o nada por um instante — a regra inerte de sempre, na
+   forma mais ironica possivel: o aviso sobre regra que nao pinta virando
+   comentario que nao aponta. Reescrito para descrever a FORMA do markup,
+   nao o arquivo que a usava, para nao envelhecer de novo com o proximo
+   consumidor. */
 .stepper .s-copy .split-tag {
   font-family: var(--display);
   font-size: var(--fs-legenda);
