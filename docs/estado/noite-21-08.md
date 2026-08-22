@@ -14,26 +14,23 @@ do `.env.local`. Onde uma tarefa esbarrou nisso, está dito abaixo.
 
 ## 0. Comece por aqui: as três coisas que dependem de você
 
-> **Pergunta em aberto, deixada sem ação de propósito.** Você escreveu
-> *"vai de (a), semeia, marca do mesmo jeito do `_teste_visual` que você usou
-> nas `decisions`"*. Medi antes de agir: a tabela `decisions` tem **0
-> linhas**, e a string `_teste_visual` **não existe em nenhum dos três
-> repositórios**. As saídas que propus para o cartão do herói eram numeradas
-> 1–3, não (a)/(b)/(c). Como você disse que colou do outro chat, presumo que
-> o "(a)" e esse padrão sejam de lá.
+> **RESOLVIDO em 22/08.** O "(a), semeia" era sobre o alvo de teste do
+> `/aprovar` (§1), que já estava feito — os dois assuntos se cruzaram. E a
+> decisão do cartão do herói veio: **opção 1**, marcar como exemplo sem
+> inventar número novo e sem tirar o cartão. Feito, commit `df19ec0` na LP.
 >
-> Não adivinhei porque as duas leituras plausíveis são caras e opostas: uma
-> escreve linhas no banco de produção, a outra altera a afirmação principal
-> de uma página de vendas no ar. Se era a minha opção 1 — marcar o cartão do
-> herói como exemplo —, é uma linha de HTML e faço na hora.
+> Fica o registro de por que eu tinha parado: a tabela `decisions` tem 0
+> linhas e a string `_teste_visual` não existe em nenhum dos três
+> repositórios, então a referência não batia com nada daqui. As duas
+> leituras plausíveis eram opostas — uma escrevia no banco de produção, a
+> outra alterava a afirmação principal de uma página de vendas no ar.
 
-1. **A LP afirma um resultado de cliente que nunca existiu.** O cartão do
-   herói mostra "Doceria da Marina — pra cada R$ 1 voltaram R$ 3,40, 14
-   vendas na semana", sem nenhuma marca de exemplo, e o banco tem **zero
-   campanhas e zero dias de métrica**. Não mexi porque trocar o texto dele é
-   escrever afirmação comercial nova. Três saídas propostas em
-   `lp/docs/prova-social-e-legibilidade.md` §2.2. **É o item mais urgente
-   da noite inteira.**
+1. ~~**A LP afirma um resultado de cliente que nunca existiu.**~~
+   **RESOLVIDO em 22/08**, opção 1: o cartão do herói ganhou uma tarja
+   `EXEMPLO — tela de demonstração, não é resultado de cliente` como
+   primeiro elemento, em 15px/14px contra 13,5px do corpo do cartão. Os
+   números e o nome continuam os mesmos; nada foi inventado nem removido.
+   Detalhe em `lp/docs/prova-social-e-legibilidade.md` §7.1.
 2. **Criei 5 linhas de teste no banco de produção**, no negócio fictício
    `a0328fb8`, e elas continuam lá de propósito (§7). Remover:
    `node scripts/alvos-de-peca.mjs --remover`.
@@ -298,6 +295,14 @@ três saídas propostas.
 | alvos de toque < 44px | 10 de 21 | **0** |
 | `[PLACEHOLDER]` visíveis | 9 | **0** |
 
+> **Correção de 22/08:** aquele "0" de contraste era **1**, não 0. A
+> varredura pulava elemento com filho (`children.length > 0`), então não via
+> nada que mistura texto com outra tag. Refeita por **nós de texto**, achou
+> `.cmp-row.total .cmp-mkt` em 4,28:1 e `.pf-tag` em 11,5px. Os dois
+> consertados; agora é 0 de verdade, conferido em 375px e 1280px. A lição
+> não é o número: **um instrumento com ponto cego reporta zero com a mesma
+> cara com que reporta zero de verdade.**
+
 **Nenhuma cor da paleta mudou** — sete lugares trocaram qual token usam,
 `--ink-mute` (3,07–3,50:1) por `--ink-soft` (6,05–6,89:1), os dois já no
 `:root`. A regra da noite era não mexer na paleta; trocar o uso não é trocar
@@ -428,11 +433,14 @@ f392ce3  conferir:cascata — acusa regra inerte, e prova que mede contra fixtur
 
 ```
 ad2fcf4  Tira a prova social inventada e conserta o que estava medido
+df19ec0  Cartao do heroi passa a dizer que e exemplo, com a palavra visivel
 ```
 
-> **Atenção no push da LP:** ele muda o que o público vê. A remoção do
-> `[PLACEHOLDER]` é ganho imediato; o cartão do herói **continua afirmando o
-> que não aconteceu** e o push não conserta isso.
+> **Atenção no push da LP:** ele muda o que o público vê, e agora é o
+> conjunto todo — sai o `[PLACEHOLDER]`, entra a tarja de exemplo no cartão
+> do herói, e o contraste/corpo/toque ficam nos números do §6. Depois de
+> subir, vale reconferir o `curl` no domínio: hoje ele ainda devolve os 9
+> `is-placeholder` e o cartão sem tarja.
 
 **`backend_v2g`** — a partir de `fc29168`:
 
