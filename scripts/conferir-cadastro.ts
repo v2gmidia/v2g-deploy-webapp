@@ -470,4 +470,12 @@ console.log("\n7. campo difícil não vira beco");
 }
 
 console.log(falhas === 0 ? "\nTUDO CERTO" : `\n${falhas} FALHA(S)`);
-process.exit(falhas === 0 ? 0 : 1);
+
+// `exitCode` e não `process.exit()`: no Windows, terminar o processo à força
+// logo depois de um `fetch` aborta o Node com
+// `Assertion failed: !(handle->flags & UV_HANDLE_CLOSING)` e sai com **127**,
+// depois de ter impresso "TUDO CERTO". Este script escapava por fazer
+// trabalho síncrono suficiente entre o `fetch` do `/openapi.json` e o fim —
+// ou seja, por corrida, não por desenho. Medido em 21/08/2026 junto com o
+// `conferir:migrations`, onde o mesmo padrão dava 127 de forma consistente.
+process.exitCode = falhas === 0 ? 0 : 1;

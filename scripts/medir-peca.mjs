@@ -191,4 +191,7 @@ console.log(
     ? "\nMEDIÇÃO OK — a leitura de agora não trouxe logo nem peça arquivada, e o alvo vivo apareceu."
     : `\n${problemas} PROBLEMA(S) na medição.`,
 );
-process.exit(problemas === 0 ? 0 : 1);
+// `exitCode` e não `process.exit()` — ver a nota no fim de
+// `scripts/conferir-migrations.ts`. Aqui o risco é o mesmo por outra porta:
+// o cliente do supabase-js usa `fetch` por baixo.
+process.exitCode = problemas === 0 ? 0 : 1;
