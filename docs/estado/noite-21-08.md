@@ -14,6 +14,19 @@ do `.env.local`. Onde uma tarefa esbarrou nisso, está dito abaixo.
 
 ## 0. Comece por aqui: as três coisas que dependem de você
 
+> **Pergunta em aberto, deixada sem ação de propósito.** Você escreveu
+> *"vai de (a), semeia, marca do mesmo jeito do `_teste_visual` que você usou
+> nas `decisions`"*. Medi antes de agir: a tabela `decisions` tem **0
+> linhas**, e a string `_teste_visual` **não existe em nenhum dos três
+> repositórios**. As saídas que propus para o cartão do herói eram numeradas
+> 1–3, não (a)/(b)/(c). Como você disse que colou do outro chat, presumo que
+> o "(a)" e esse padrão sejam de lá.
+>
+> Não adivinhei porque as duas leituras plausíveis são caras e opostas: uma
+> escreve linhas no banco de produção, a outra altera a afirmação principal
+> de uma página de vendas no ar. Se era a minha opção 1 — marcar o cartão do
+> herói como exemplo —, é uma linha de HTML e faço na hora.
+
 1. **A LP afirma um resultado de cliente que nunca existiu.** O cartão do
    herói mostra "Doceria da Marina — pra cada R$ 1 voltaram R$ 3,40, 14
    vendas na semana", sem nenhuma marca de exemplo, e o banco tem **zero
@@ -365,8 +378,10 @@ Nada foi escrito no negócio real `a85c37a9`.
    Medido: com 50ms de espera ainda 127; com 300ms sai limpo, ou seja esperar
    é corrida, não conserto. O `conferir:migrations` foi escrito com tudo
    dentro de `main()` por causa disso. **Os outros conferidores com `fetch`
-   escapam por fazerem trabalho síncrono suficiente depois da chamada** — é
-   fragilidade latente, registrada e não mexida.
+   escapavam por fazerem trabalho síncrono suficiente depois da chamada.**
+   *Consertado depois, no commit `460f626`*: `conferir-cadastro.ts` e
+   `medir-peca.mjs` passaram a usar `process.exitCode`. Conferidos os dois
+   lados — 5 e 3 execuções saindo 0, e saída 1 com falha forçada.
 4. **`--body` da LP é Segoe UI**, que só existe no Windows (§6).
 5. **`pnpm conferir` já precisava de rede antes desta noite** — o
    `conferir:cadastro` baixa o `/openapi.json`. Isso resolveu a dúvida sobre
@@ -405,6 +420,8 @@ e55c714  Uma definicao so para "peca de anuncio", e o alvo que faltava para test
 85c775c  "Agora eu sei": a porta de volta do numero dificil, sem apagar a medicao
 d2f9e0e  Conferidor de migrations por objeto, com o que ele nao alcanca impresso junto
 f392ce3  conferir:cascata — acusa regra inerte, e prova que mede contra fixture propria
+8c05ccf  Estado da noite de 21/08 (este documento)
+460f626  Tira a corrida do fim dos dois conferidores que usam fetch
 ```
 
 **`v2g-deploy/lp`** — a partir de `5b9189f`:
