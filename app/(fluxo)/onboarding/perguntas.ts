@@ -29,6 +29,15 @@ export interface Pergunta {
   fallbackPlaceholder?: string;
   /** chip que só abre o campo de texto, sem responder (o "Outro") */
   chipAbreTexto?: string;
+  /**
+   * A pergunta é respondida pelo `SeletorDeNicho`, com a lista viva do
+   * `GET /nichos` — e não pelas `opcoes` daqui.
+   *
+   * Quando isto está ligado, as `opcoes` deixam de ser a lista principal e
+   * viram **reserva**: só aparecem se o endpoint não responder. Ver o
+   * comentário na pergunta `ramo`.
+   */
+  seletorDeNicho?: true;
   /** pergunta sem chip nenhum: só o campo de texto, já aberto */
   soTexto?: true;
   /** piso de caracteres, quando o backend impõe um */
@@ -63,6 +72,34 @@ export const PERGUNTAS: Pergunta[] = [
     id: "ramo",
     contador: "Pergunta 2 de 4",
     texto: "Qual desses é o seu negócio?",
+    seletorDeNicho: true,
+    /**
+     * ============================================================
+     * ESTAS CINCO NÃO SÃO MAIS A LISTA. SÃO A RESERVA.
+     *
+     * Elas só chegam à tela quando o `GET /nichos` não responde. Enquanto
+     * foram a lista principal, esta era a conta do estrago, medida opção
+     * por opção contra os dez nichos de `knowledge/`:
+     *
+     *   Clínica / Consultório  → cobre TRÊS (odontológica, estética, médico)
+     *   Beleza e estética      → cobre QUATRO (barbearia, manicure, salão,
+     *                            clínica estética — que aparecia nas duas)
+     *   Restaurante / Bar      → cobre um
+     *   Loja física            → NENHUM
+     *   Serviço (advocacia…)   → NENHUM
+     *
+     * E três nichos reais eram inalcançáveis pelo seletor: `academia`,
+     * `oficina-mecanica`, `petshop`.
+     *
+     * NÃO ACRESCENTE OPÇÃO AQUI. Toda linha nova é uma lista paralela
+     * envelhecendo em silêncio, que é o defeito que este lote apagou. A
+     * lista certa é a do backend; esta existe só para a tela não ficar
+     * sem nada num dia em que ele estiver fora.
+     *
+     * Elas continuam com `echo` porque o servidor valida contra elas
+     * quando é a reserva que está no ar — ver `actions.ts`.
+     * ============================================================
+     */
     opcoes: [
       { echo: "Clínica / Consultório", rotulo: "Clínica / Consultório" },
       { echo: "Loja física", rotulo: "Loja física" },

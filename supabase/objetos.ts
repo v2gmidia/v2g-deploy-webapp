@@ -318,4 +318,17 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "esta é a irmã da migration do backend que ficou 13 dias sem rodar — o caso que gerou o conferidor",
     ],
   },
+  {
+    arquivo: "0021_aproximacao_da_reserva.sql",
+    cria: [
+      { tipo: "rpc", nome: "registrar_procedencia" },
+      { tipo: "rpc", nome: "confirmar_campo_do_cliente" },
+    ],
+    foraDoAlcance: [
+      "ESTA MIGRATION MUDA CORPO E ASSINATURA, e o conferidor só enxerga o nome: as duas RPCs já existiam antes dela",
+      "o que ela realmente faz é acrescentar `aproximacao` ao domínio de origem e trocar o literal `'confirmado'` por um parâmetro `p_origem`",
+      "a prova de que rodou NÃO é o nome responder: é a assinatura de SEIS argumentos existir. Chamar `confirmar_campo_do_cliente` com `p_origem` contra o banco velho devolve 'function not found' — é esse o teste",
+      "o `drop function` da assinatura antiga de cinco argumentos, que também não é visível por nome",
+    ],
+  },
 ];

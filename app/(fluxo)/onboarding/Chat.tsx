@@ -2,14 +2,28 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Bubble } from "@/components/ui/Bubble";
+import { SeletorDeNicho } from "@/components/ui/SeletorDeNicho";
+import type { Nicho } from "@/lib/nichos/tipos";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
 import { ORDEM, PERGUNTAS, proximaPergunta, type Pergunta } from "./perguntas";
 
 interface ChatProps {
   inicial: Record<string, RespostaGravada>;
+  /**
+   * A lista viva do `GET /nichos`, buscada no servidor e passada por props.
+   *
+   * O TOKEN NÃO PODE VIR PARA CÁ. `X-V2G-Token` é segredo entre máquinas —
+   * quem o tem age em nome de qualquer cliente. Por isso a chamada fica no
+   * Server Component e este componente recebe a lista já pronta; o filtro,
+   * esse sim, roda aqui.
+   *
+   * `null` = o backend não respondeu. Aí entram os cinco chips de reserva
+   * de `perguntas.ts`.
+   */
+  nichos: Nicho[] | null;
 }
 
-export function Chat({ inicial }: ChatProps) {
+export function Chat({ inicial, nichos }: ChatProps) {
   const [respostas, setRespostas] = useState(inicial);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -104,6 +118,12 @@ export function Chat({ inicial }: ChatProps) {
           const ehAtual = atual?.id === p.id;
           if (!resposta && !ehAtual) return null;
 
+          // O seletor de nicho substitui os chips E o campo de texto desta
+          // pergunta: ele já é os dois. Sem lista viva ele não entra, e a
+          // pergunta volta a ser o que sempre foi — os cinco chips de
+          // reserva com o "Outro".
+          const usaSeletor = p.seletorDeNicho === true && nichos !== null;
+
           return (
             <div className="qblock" key={p.id}>
               {p.contador && <p className="qcount">{p.contador}</p>}
@@ -126,7 +146,27 @@ export function Chat({ inicial }: ChatProps) {
                 </div>
               )}
 
-              {(p.opcoes.length > 0 || p.chipAbreTexto) && (
+              {/*
+                SÓ ENQUANTO É A PERGUNTA DA VEZ, ao contrário dos chips das
+                outras, que ficam na tela desbotados depois de respondidas.
+                A diferença é de peso: cinco chips apagados são um rastro da
+                conversa; dez chips apagados mais um campo de busca são
+                mobília morta entre a pergunta e a resposta. O balão do
+                usuário logo abaixo já diz o que foi escolhido.
+              */}
+              {ehAtual && p.seletorDeNicho && nichos && (
+                <SeletorDeNicho
+                  nichos={nichos}
+                  ocupado={enviando}
+                  aoEscolher={(n) => enviar(p, n.rotulo, "chip")}
+                  aoEscreverLivre={(t) => enviar(p, t, "texto")}
+                  rotuloOutro={p.chipAbreTexto ?? "Outro"}
+                  placeholderLivre={p.fallbackPlaceholder}
+                  rotuloLivre={p.fallbackLabel}
+                />
+              )}
+
+              {!usaSeletor && (p.opcoes.length > 0 || p.chipAbreTexto) && (
               <div className="chips-row">
                 {p.opcoes.map((o) => (
                   <button
@@ -152,7 +192,7 @@ export function Chat({ inicial }: ChatProps) {
               </div>
               )}
 
-              {ehAtual && p.fallbackPlaceholder && (
+              {ehAtual && !usaSeletor && p.fallbackPlaceholder && (
                 <>
                   {!campoVisivel(p) && (
                     <button

@@ -4,6 +4,12 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
+import { listarNichos } from "@/lib/backend";
+import {
+  conferirEscolhaDeNicho,
+  PROCEDENCIA_DA_LISTA_VIVA,
+  PROCEDENCIA_DA_RESERVA,
+} from "@/lib/nichos/escolha";
 import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 
@@ -138,15 +144,51 @@ export async function salvarRespostaAction(entrada: {
   const pergunta = perguntaPorId(entrada.qid);
   if (!pergunta) return { ok: false, erro: "Pergunta desconhecida." };
 
-  const texto = entrada.texto.trim();
+  // `let` porque a conferência do nicho pode reescrever isto com a grafia
+  // canônica do backend — ver `conferirEscolhaDeNicho`.
+  let texto = entrada.texto.trim();
   if (!texto) return { ok: false, erro: "Escreva uma resposta antes de enviar." };
+
+  // A procedência do `niche`, quando esta resposta grava um. Vira
+  // `aproximacao` só no caminho dos chips de reserva; ver o bloco abaixo.
+  let origemDoNicho: typeof PROCEDENCIA_DA_LISTA_VIVA | typeof PROCEDENCIA_DA_RESERVA =
+    PROCEDENCIA_DA_LISTA_VIVA;
 
   // Resposta por chip precisa bater com uma opção real da pergunta —
   // o cliente não escolhe o que quiser só porque manda o campo `origem`.
-  // Numa pergunta `soTexto` a lista é vazia, então isto recusa qualquer
-  // chip forjado sem precisar de um caso à parte.
-  if (entrada.origem === "chip" && !pergunta.opcoes.some((o) => o.echo === texto)) {
-    return { ok: false, erro: "Essa opção não existe nesta pergunta." };
+  if (entrada.origem === "chip") {
+    if (pergunta.seletorDeNicho) {
+      // ============================================================
+      // A LISTA DESTA PERGUNTA NÃO ESTÁ EM `pergunta.opcoes`.
+      //
+      // Ela vem do `GET /nichos`, então conferir contra as `opcoes`
+      // recusaria toda escolha válida — e a tentação seguinte seria
+      // apagar a checagem, o que reabriria o buraco de forjar
+      // `origem: "chip"` que ela existe para fechar. Confere-se contra a
+      // MESMA lista viva que a tela mostrou.
+      //
+      // Custa um `GET /nichos` por resposta de ramo: 17 ms, medido, e uma
+      // vez por cliente na vida. Barato pelo que compra.
+      // ============================================================
+      const lista = await listarNichos();
+      const conferencia = conferirEscolhaDeNicho({
+        lista: lista.ok ? lista.dados : null,
+        // A reserva é o que a tela mostra quando o backend está fora. Se
+        // ela é que está no ar, é contra ela que se confere — senão o
+        // cliente escolhe um chip que existe e ouve que ele não existe.
+        reserva: pergunta.opcoes.map((o) => o.echo),
+        texto,
+      });
+      if (!conferencia.ok) return { ok: false, erro: conferencia.erro };
+      texto = conferencia.texto;
+      // A escolha saiu dos chips de reserva: o valor fica, mas marcado
+      // como palpite. Ver `PROCEDENCIA_DA_RESERVA`.
+      if (conferencia.viaReserva) origemDoNicho = PROCEDENCIA_DA_RESERVA;
+    } else if (!pergunta.opcoes.some((o) => o.echo === texto)) {
+      // Numa pergunta `soTexto` a lista é vazia, então isto recusa
+      // qualquer chip forjado sem precisar de um caso à parte.
+      return { ok: false, erro: "Essa opção não existe nesta pergunta." };
+    }
   }
 
   // O piso de caracteres é do SCHEMA do backend (`descricao_livre`,
@@ -189,7 +231,18 @@ export async function salvarRespostaAction(entrada: {
   // ver §4.1 do desenho.
   const campos: CampoParaGravar[] = [];
   if (entrada.qid === "nome") campos.push({ campo: "name", valor: texto });
-  if (entrada.qid === "ramo") campos.push({ campo: "niche", valor: texto });
+  if (entrada.qid === "ramo") {
+    // A origem viaja JUNTO com o campo, não solta no lote: a resposta de
+    // `praca` grava dois campos de uma vez, e marcar o lote inteiro
+    // mentiria sobre o que não foi aproximado.
+    //
+    // O TEXTO LIVRE FICA `confirmado`, inclusive durante a degradação, e
+    // é decisão: quem escreveu o próprio ramo com as próprias palavras
+    // deu uma resposta de verdade. Palpite é o chip que cobre três nichos
+    // de uma vez, não a frase que a pessoa escreveu.
+    const origem = entrada.origem === "chip" ? origemDoNicho : PROCEDENCIA_DA_LISTA_VIVA;
+    campos.push({ campo: "niche", valor: texto, origem });
+  }
   if (entrada.qid === "descricao") campos.push({ campo: "description", valor: texto });
   if (entrada.qid === "praca") {
     // Cidade só existe quando veio do campo dedicado. Na resposta
