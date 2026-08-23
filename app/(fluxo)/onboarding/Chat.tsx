@@ -17,8 +17,9 @@ interface ChatProps {
    * Server Component e este componente recebe a lista já pronta; o filtro,
    * esse sim, roda aqui.
    *
-   * `null` = o backend não respondeu. Aí entram os cinco chips de reserva
-   * de `perguntas.ts`.
+   * `null` = o backend não respondeu. NÃO existe lista de reserva: a
+   * pergunta passa a ser só o campo de texto, com uma linha dizendo que a
+   * lista não carregou. Ver `semLista` abaixo.
    */
   nichos: Nicho[] | null;
 }
@@ -44,7 +45,12 @@ export function Chat({ inicial, nichos }: ChatProps) {
   // aberto, e não atrás de um "ou digite sua resposta" que só teria uma
   // saída. `soTexto` decide isso; `textoAberto` continua sendo o
   // interruptor das perguntas que têm chip E texto.
-  const campoVisivel = (p: Pergunta) => p.soTexto === true || textoAberto;
+  //
+  // A pergunta de nicho COM O CATÁLOGO FORA cai na mesma regra e pelo
+  // mesmo motivo: ali o texto é a única saída que existe.
+  const semListaViva = (p: Pergunta) => p.seletorDeNicho === true && nichos === null;
+  const campoVisivel = (p: Pergunta) =>
+    p.soTexto === true || semListaViva(p) || textoAberto;
 
   useEffect(() => {
     if (atual && campoVisivel(atual)) campoTexto.current?.focus();
@@ -119,10 +125,26 @@ export function Chat({ inicial, nichos }: ChatProps) {
           if (!resposta && !ehAtual) return null;
 
           // O seletor de nicho substitui os chips E o campo de texto desta
-          // pergunta: ele já é os dois. Sem lista viva ele não entra, e a
-          // pergunta volta a ser o que sempre foi — os cinco chips de
-          // reserva com o "Outro".
+          // pergunta: ele já é os dois.
           const usaSeletor = p.seletorDeNicho === true && nichos !== null;
+
+          // ============================================================
+          // CATÁLOGO FORA: SÓ O TEXTO LIVRE, E A TELA DIZ POR QUÊ.
+          //
+          // Não existe lista de reserva. Os cinco chips fixos que havia
+          // aqui até 22/08 não eram nichos — um cobria três de uma vez,
+          // dois não cobriam nenhum — e gravar um deles seria palpite com
+          // cara de escolha do cliente. Quando o catálogo está fora, a
+          // verdade é que não sabemos o nicho, e a frase da pessoa é a
+          // única fonte honesta que sobra.
+          //
+          // A LINHA DE CONTEXTO NÃO É ENFEITE. "Escreva do seu jeito"
+          // sozinho parece que nunca houve lista — a pessoa não tem como
+          // saber que está vendo um estado degradado, e conclui que o
+          // produto é assim. Dizer que a lista não carregou é a diferença
+          // entre uma falha nossa e uma limitação nossa.
+          // ============================================================
+          const semLista = p.seletorDeNicho === true && nichos === null;
 
           return (
             <div className="qblock" key={p.id}>
@@ -166,7 +188,14 @@ export function Chat({ inicial, nichos }: ChatProps) {
                 />
               )}
 
-              {!usaSeletor && (p.opcoes.length > 0 || p.chipAbreTexto) && (
+              {ehAtual && semLista && (
+                <p className="nicho-sem-lista" role="status" aria-live="polite">
+                  A lista de ramos não carregou agora. Escreva o seu do jeito que você
+                  chama — a gente confere depois.
+                </p>
+              )}
+
+              {!usaSeletor && !semLista && (p.opcoes.length > 0 || p.chipAbreTexto) && (
               <div className="chips-row">
                 {p.opcoes.map((o) => (
                   <button

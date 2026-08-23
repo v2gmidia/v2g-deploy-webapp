@@ -5,11 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
 import { listarNichos } from "@/lib/backend";
-import {
-  conferirEscolhaDeNicho,
-  PROCEDENCIA_DA_LISTA_VIVA,
-  PROCEDENCIA_DA_RESERVA,
-} from "@/lib/nichos/escolha";
+import { conferirEscolhaDeNicho } from "@/lib/nichos/escolha";
 import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 
@@ -149,11 +145,6 @@ export async function salvarRespostaAction(entrada: {
   let texto = entrada.texto.trim();
   if (!texto) return { ok: false, erro: "Escreva uma resposta antes de enviar." };
 
-  // A procedência do `niche`, quando esta resposta grava um. Vira
-  // `aproximacao` só no caminho dos chips de reserva; ver o bloco abaixo.
-  let origemDoNicho: typeof PROCEDENCIA_DA_LISTA_VIVA | typeof PROCEDENCIA_DA_RESERVA =
-    PROCEDENCIA_DA_LISTA_VIVA;
-
   // Resposta por chip precisa bater com uma opção real da pergunta —
   // o cliente não escolhe o que quiser só porque manda o campo `origem`.
   if (entrada.origem === "chip") {
@@ -172,18 +163,16 @@ export async function salvarRespostaAction(entrada: {
       // ============================================================
       const lista = await listarNichos();
       const conferencia = conferirEscolhaDeNicho({
+        // Sem lista, NENHUM chip passa — não existe lista de reserva. Com
+        // o catálogo fora a tela não mostra chip nenhum, só o texto
+        // livre; qualquer `origem: "chip"` que chegue aqui é forjado ou
+        // veio de uma aba que carregou antes da queda. Nos dois casos a
+        // resposta certa é a mesma: não dá para conferir agora.
         lista: lista.ok ? lista.dados : null,
-        // A reserva é o que a tela mostra quando o backend está fora. Se
-        // ela é que está no ar, é contra ela que se confere — senão o
-        // cliente escolhe um chip que existe e ouve que ele não existe.
-        reserva: pergunta.opcoes.map((o) => o.echo),
         texto,
       });
       if (!conferencia.ok) return { ok: false, erro: conferencia.erro };
       texto = conferencia.texto;
-      // A escolha saiu dos chips de reserva: o valor fica, mas marcado
-      // como palpite. Ver `PROCEDENCIA_DA_RESERVA`.
-      if (conferencia.viaReserva) origemDoNicho = PROCEDENCIA_DA_RESERVA;
     } else if (!pergunta.opcoes.some((o) => o.echo === texto)) {
       // Numa pergunta `soTexto` a lista é vazia, então isto recusa
       // qualquer chip forjado sem precisar de um caso à parte.
@@ -231,18 +220,17 @@ export async function salvarRespostaAction(entrada: {
   // ver §4.1 do desenho.
   const campos: CampoParaGravar[] = [];
   if (entrada.qid === "nome") campos.push({ campo: "name", valor: texto });
-  if (entrada.qid === "ramo") {
-    // A origem viaja JUNTO com o campo, não solta no lote: a resposta de
-    // `praca` grava dois campos de uma vez, e marcar o lote inteiro
-    // mentiria sobre o que não foi aproximado.
-    //
-    // O TEXTO LIVRE FICA `confirmado`, inclusive durante a degradação, e
-    // é decisão: quem escreveu o próprio ramo com as próprias palavras
-    // deu uma resposta de verdade. Palpite é o chip que cobre três nichos
-    // de uma vez, não a frase que a pessoa escreveu.
-    const origem = entrada.origem === "chip" ? origemDoNicho : PROCEDENCIA_DA_LISTA_VIVA;
-    campos.push({ campo: "niche", valor: texto, origem });
-  }
+  // SEMPRE `confirmado`, e não existe mais nada além disso.
+  //
+  // Chegou aqui por chip: foi conferido contra a lista viva. Chegou por
+  // texto: é a frase que a própria pessoa escreveu, o que também é
+  // verdade — inclusive quando o catálogo está fora, que é justamente o
+  // caso em que ela é a única fonte que temos.
+  //
+  // A `aproximacao` existiu por algumas horas em 22/08, para marcar
+  // escolha feita numa lista de reserva. A reserva saiu (ver
+  // `lib/nichos/escolha.ts`), e com ela a marcação e a migration `0021`.
+  if (entrada.qid === "ramo") campos.push({ campo: "niche", valor: texto });
   if (entrada.qid === "descricao") campos.push({ campo: "description", valor: texto });
   if (entrada.qid === "praca") {
     // Cidade só existe quando veio do campo dedicado. Na resposta

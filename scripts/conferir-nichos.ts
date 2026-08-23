@@ -38,15 +38,13 @@
  * Roda com `pnpm conferir:nichos`.
  */
 
-import { readFileSync } from "node:fs";
 import { validarListaDeNichos } from "../lib/nichos/validar.ts";
 import {
   conferirEscolhaDeNicho,
   NAO_DEU_PARA_CONFERIR,
   NAO_E_OPCAO,
-  PROCEDENCIA_DA_LISTA_VIVA,
-  PROCEDENCIA_DA_RESERVA,
 } from "../lib/nichos/escolha.ts";
+import { PERGUNTAS } from "../app/(fluxo)/onboarding/perguntas.ts";
 import {
   filtrarNichos,
   nichoPeloRotulo,
@@ -164,7 +162,7 @@ secao("2. normalização — os DOIS lados, sempre");
 const temEnv = Boolean(process.env.V2G_BACKEND_URL && process.env.V2G_BACKEND_TOKEN);
 if (!temEnv) {
   console.log("\n" + "=".repeat(68));
-  console.log("PULANDO OS §§ 3 a 10: sem V2G_BACKEND_URL / V2G_BACKEND_TOKEN.");
+  console.log("PULANDO OS §§ 3 a 9: sem V2G_BACKEND_URL / V2G_BACKEND_TOKEN.");
   console.log("Estes são os que provam que a BUSCA funciona. Sem eles, o");
   console.log("verde acima diz só que o validador e a normalização estão de pé.");
   console.log("=".repeat(68));
@@ -336,18 +334,8 @@ secao("7. `nichoPeloRotulo` — igualdade, não substring");
 
 secao("8. a validação do servidor — a que quebraria calada");
 {
-  // A reserva de `perguntas.ts`, como o servidor a passa.
-  const RESERVA = [
-    "Clínica / Consultório",
-    "Loja física",
-    "Restaurante / Bar",
-    "Serviço (advocacia, arquitetura, contabilidade)",
-    "Beleza e estética",
-  ];
-  const comLista = (texto: string) =>
-    conferirEscolhaDeNicho({ lista: nichos, reserva: RESERVA, texto });
-  const semLista = (texto: string) =>
-    conferirEscolhaDeNicho({ lista: null, reserva: RESERVA, texto });
+  const comLista = (texto: string) => conferirEscolhaDeNicho({ lista: nichos, texto });
+  const semLista = (texto: string) => conferirEscolhaDeNicho({ lista: null, texto });
 
   // ---- com a lista viva ----
   const r1 = comLista("Dentista");
@@ -369,26 +357,31 @@ secao("8. a validação do servidor — a que quebraria calada");
   );
 
   // Os dois lados: o que a lista viva tem que RECUSAR.
-  ok(!comLista("Clínica / Consultório").ok, "chip velho é recusado quando a lista viva está no ar");
-  ok(!comLista("Loja física").ok, '"Loja física" recusada — nunca cobriu nicho nenhum');
   ok(!comLista("Dent").ok, "pedaço de rótulo é recusado (substring não é escolha)");
   ok(!comLista("padaria").ok, "termo sem nicho é recusado como chip");
   ok(!comLista("qualquer coisa forjada").ok, "texto forjado com `origem: chip` é recusado");
   const r4 = comLista("padaria");
   ok(!r4.ok && r4.erro === NAO_E_OPCAO, "e a recusa acusa a opção, porque a lista estava no ar");
 
-  // ---- com a lista fora ----
-  const r5 = semLista("Loja física");
-  ok(r5.ok && r5.texto === "Loja física", "com o backend fora, o chip da RESERVA passa");
-  ok(semLista("Clínica / Consultório").ok, "a reserva inteira continua válida na degradação");
+  // ---- com a lista fora: NÃO EXISTE RESERVA ----
+  // Decisão do Victor, 22/08. Os cinco chips fixos saíram: eles não eram
+  // nichos, e gravar um deles seria palpite com cara de escolha do
+  // cliente. Com o catálogo fora, a tela mostra só o texto livre.
+  for (const antigo of [
+    "Clínica / Consultório",
+    "Loja física",
+    "Restaurante / Bar",
+    "Serviço (advocacia, arquitetura, contabilidade)",
+    "Beleza e estética",
+  ]) {
+    ok(!semLista(antigo).ok, `"${antigo}" NÃO passa mais — a reserva não existe`);
+  }
+  ok(!comLista("Clínica / Consultório").ok, "e também não passa com a lista no ar");
 
-  // A ARMADILHA QUE ESTE PAR FECHA: sem a checagem da reserva, quem
-  // respondesse durante a queda ouviria que o chip que a tela acabou de
-  // mostrar não existe.
-  const r6 = semLista("Dentista");
-  ok(!r6.ok, "com o backend fora, nicho da lista viva não pode ser confirmado");
+  const r5 = semLista("Dentista");
+  ok(!r5.ok, "com o catálogo fora, nem nicho de verdade pode ser confirmado");
   ok(
-    !r6.ok && r6.erro === NAO_DEU_PARA_CONFERIR,
+    !r5.ok && r5.erro === NAO_DEU_PARA_CONFERIR,
     "e o recado diz que NÓS não conseguimos conferir — não acusa o cliente",
   );
   // O `as string` é para o TypeScript deixar comparar dois literais que ele
@@ -399,7 +392,17 @@ secao("8. a validação do servidor — a que quebraria calada");
     (NAO_DEU_PARA_CONFERIR as string) !== NAO_E_OPCAO,
     "os dois recados são diferentes, e têm que continuar sendo",
   );
-  ok(!semLista("loja fisica").ok, "a reserva é igualdade exata: nela não há campo para digitar");
+
+  // A pergunta `ramo` não pode voltar a ter opção fixa: `actions.ts`
+  // confere chip contra `pergunta.opcoes`, e uma opção ali seria uma
+  // resposta aceita sem passar pelo catálogo — a reserva entrando de novo
+  // pela porta dos fundos.
+  const ramo = PERGUNTAS.find((q) => q.id === "ramo");
+  ok(ramo?.seletorDeNicho === true, "a pergunta `ramo` usa o seletor");
+  ok(
+    ramo !== undefined && ramo.opcoes.length === 0,
+    `\`ramo\` não tem opção fixa nenhuma (tem ${ramo?.opcoes.length ?? "?"})`,
+  );
 }
 
 secao("9. o que o Enter faz — `resolverConsulta`");
@@ -466,76 +469,6 @@ secao("9. o que o Enter faz — `resolverConsulta`");
   const ambiguos = nichos.filter((n) => filtrarNichos(nichos, n.rotulo).length > 1);
   console.log(
     `        (rótulos que hoje deixam mais de um resultado: ${ambiguos.length}${ambiguos.length ? ` — ${ambiguos.map((n) => n.nicho).join(", ")}` : ""})`,
-  );
-}
-
-secao("10. a marcação `aproximacao` — o palpite tem que se declarar");
-{
-  const RESERVA = [
-    "Clínica / Consultório",
-    "Loja física",
-    "Restaurante / Bar",
-    "Serviço (advocacia, arquitetura, contabilidade)",
-    "Beleza e estética",
-  ];
-
-  // Lista viva no ar: escolha real, procedência cheia.
-  const viva = conferirEscolhaDeNicho({ lista: nichos, reserva: RESERVA, texto: "Dentista" });
-  ok(viva.ok && viva.viaReserva === false, "chip da lista viva NÃO é aproximação");
-
-  // Backend fora: o chip de reserva passa, mas marcado.
-  const reserva = conferirEscolhaDeNicho({
-    lista: null,
-    reserva: RESERVA,
-    texto: "Clínica / Consultório",
-  });
-  ok(reserva.ok && reserva.viaReserva === true, "chip da RESERVA vem marcado como aproximação");
-
-  // O par que dá sentido à marcação: o mesmo texto, os dois estados.
-  const mesmoTexto = "Beleza e estética";
-  const a = conferirEscolhaDeNicho({ lista: nichos, reserva: RESERVA, texto: mesmoTexto });
-  const b = conferirEscolhaDeNicho({ lista: null, reserva: RESERVA, texto: mesmoTexto });
-  ok(
-    !a.ok && b.ok && b.viaReserva === true,
-    "\"Beleza e estética\" é recusado com a lista no ar e aproximado com ela fora — os dois lados",
-  );
-
-  ok(
-    PROCEDENCIA_DA_RESERVA !== (PROCEDENCIA_DA_LISTA_VIVA as string),
-    "as duas procedências são valores diferentes",
-  );
-
-  // ---- o código e a migration não podem divergir ----
-  // A função do banco recusa origem fora do domínio dela. Se alguém
-  // renomear a constante aqui sem mexer na `0021`, a gravação passa no
-  // typecheck e explode em runtime, no caminho degradado — o pior lugar
-  // para descobrir.
-  const sql = readFileSync("supabase/migrations/0021_aproximacao_da_reserva.sql", "utf8");
-  ok(
-    sql.includes(`'${PROCEDENCIA_DA_RESERVA}'`),
-    `a migration 0021 conhece '${PROCEDENCIA_DA_RESERVA}'`,
-  );
-  ok(
-    sql.includes("not in ('confirmado', 'manual', 'extraido', 'aproximacao')"),
-    "`registrar_procedencia` aceita os quatro valores",
-  );
-  ok(
-    sql.includes("not in ('confirmado', 'aproximacao')"),
-    "`confirmar_campo_do_cliente` aceita só os dois do ato do cliente",
-  );
-  ok(
-    sql.includes("drop function if exists public.confirmar_campo_do_cliente(uuid, uuid, text, text, jsonb);"),
-    "a assinatura antiga de cinco argumentos é derrubada (senão o PostgREST fica ambíguo)",
-  );
-
-  // A trava do valor do cliente compara com o literal `confirmado`. Se
-  // alguém "consertar" isso para incluir aproximacao, o palpite passa a
-  // ser protegido contra correção — o oposto do que ele significa.
-  const m0019 = readFileSync("supabase/migrations/0019_escrever_apenas_se_livre.sql", "utf8");
-  const m0013 = readFileSync("supabase/migrations/0013_aplicar_proposta.sql", "utf8");
-  ok(
-    !m0019.includes("aproximacao") && !m0013.includes("aproximacao"),
-    "as travas da 0013 e 0019 NÃO conhecem `aproximacao` — é assim que ele fica abaixo de `confirmado`",
   );
 }
 

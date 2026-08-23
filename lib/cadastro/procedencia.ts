@@ -23,17 +23,6 @@ export type TabelaDePerfil = "businesses" | "identidade_visual" | "narrativa_neg
 
 export type ValorDeCampo = string | number | boolean | string[];
 
-/**
- * A procedência que esta porta sabe produzir. Duas, e só duas.
- *
- * `manual` e `extraido` NÃO entram: são o vocabulário de outros canais
- * (alguém da V2G anotou na conversa; o agente tirou da transcrição), e
- * quem escreve com eles é a `escrever_apenas_se_livre` da `0019`. A função
- * do banco recusa qualquer outro valor — a restrição existe nas duas
- * camadas de propósito.
- */
-export type OrigemDoCliente = "confirmado" | "aproximacao";
-
 export interface CampoParaGravar {
   campo: string;
   /**
@@ -42,16 +31,6 @@ export interface CampoParaGravar {
    * aspas e gravaria `"Sorocaba"` numa coluna text.
    */
   valor: ValorDeCampo;
-  /**
-   * A procedência deste campo. Omitido = `confirmado`, que é o caso de
-   * todo mundo que existia antes da migration `0021`.
-   *
-   * POR CAMPO E NÃO POR LOTE: numa mesma gravação pode haver um campo que
-   * o cliente afirmou e outro que ele aproximou. A resposta de `praca`
-   * grava `city` e `radius_km` juntos; se um dia uma dessas virar palpite,
-   * marcar o lote inteiro mentiria sobre a outra.
-   */
-  origem?: OrigemDoCliente;
 }
 
 export interface AtoRegistrado {
@@ -93,27 +72,13 @@ export async function gravarCamposDoCliente(args: {
   const admin = createAdminClient();
   const atos: AtoRegistrado[] = [];
 
-  for (const { campo, valor, origem } of args.campos) {
+  for (const { campo, valor } of args.campos) {
     const { data, error } = await admin.rpc("confirmar_campo_do_cliente", {
       p_profile_id: args.profileId,
       p_business_id: args.businessId,
       p_tabela: args.tabela,
       p_campo: campo,
       p_valor: valor,
-      // ============================================================
-      // ESTE ARGUMENTO EXIGE A MIGRATION `0021` APLICADA.
-      //
-      // Ele é sempre mandado, inclusive com o valor padrão, e é decisão:
-      // mandar só quando é `aproximacao` faria o caminho degradado ser o
-      // ÚNICO a exercitar a assinatura nova. O erro apareceria pela
-      // primeira vez com o backend já fora — o pior momento possível para
-      // descobrir que a migration não rodou.
-      //
-      // Mandando sempre, banco velho quebra na primeira gravação de
-      // qualquer campo, em desenvolvimento, na hora. Ver
-      // `docs/migration-no-repo-nao-e-migration-aplicada.md`.
-      // ============================================================
-      p_origem: origem ?? "confirmado",
     });
 
     if (error) {

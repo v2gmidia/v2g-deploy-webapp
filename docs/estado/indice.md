@@ -36,7 +36,7 @@ Regras que fazem a pasta continuar legível:
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
 | [`noite-21-08.md`](./noite-21-08.md) | 21/08/2026 | Seis tarefas de trabalho autônomo: a `/aprovar` mostrando logo como anúncio, o `use_mock_db` com default `True`, os números difíceis sem porta de volta, o conferidor de migrations, as regras inertes do CSS, e o visual da landing page. | Nenhuma — a §0 dele foi resolvida em 22/08 (cartão do herói da LP). |
-| [`seletor-de-nicho-22-08.md`](./seletor-de-nicho-22-08.md) | 22/08/2026 | O lote do seletor de nicho: o `GET /nichos`, os dez chips com busca, a validação no servidor contra a lista viva, e a marcação `aproximacao` da reserva. | **Sim, e é bloqueio:** a migration `0021` não foi aplicada. Ver a §0.1 dele. |
+| [`seletor-de-nicho-22-08.md`](./seletor-de-nicho-22-08.md) | 22/08/2026 | O lote do seletor de nicho: o `GET /nichos`, os dez chips com busca e o "Outro" no fim, a validação no servidor contra a lista viva, e o estado degradado (sem chips, só texto livre) quando o catálogo está fora. | Nenhuma bloqueando. O §0 lista o que ficou para depois: a `/meu-negocio` e o gate de completude. |
 
 ---
 

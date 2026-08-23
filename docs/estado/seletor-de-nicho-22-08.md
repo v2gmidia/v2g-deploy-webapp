@@ -1,75 +1,45 @@
 # Seletor de nicho — o lote, em 22/08
 
 Os três passos que o Victor pediu, na ordem que ele pediu: o endpoint, os
-chips, a validação. **Os três fechados**, mais a marcação `aproximacao` do
-§4, que entrou depois. Base: `docs/handoff-seletor-de-nicho.md`.
+chips, a validação. **Os três fechados.** Base:
+`docs/handoff-seletor-de-nicho.md`.
 
-**Falta um `pnpm db:migrate` para o lote funcionar** — ver §0.1.
+**Não há migration neste lote, e nada bloqueia.** A marcação `aproximacao`
+do §4 chegou a ser construída, com a migration `0021`, e foi **revertida no
+mesmo dia** junto com a lista de reserva que ela existia para marcar — §0.1.
 
 Nenhuma ação proibida foi executada — sem migration aplicada, sem `POST
 /cadastro`, sem webhook do n8n, sem Meta, sem Easypanel/Vercel/painel do
 Supabase, sem push, sem tocar nas páginas legais, sem chave fora do
-`.env.local`. O `.env.local` foi desligado e restaurado durante o teste da
-reserva (§4); está como estava.
+`.env.local`. O `.env.local` foi desligado e restaurado durante o teste do
+estado degradado (§4); está como estava. A migration `0021` foi escrita e
+depois apagada — nunca chegou a rodar contra banco nenhum.
 
 ---
 
 ## 0. Comece por aqui: o que depende de você
 
-1. **A MIGRATION `0021` PRECISA SER APLICADA, E ATÉ LÁ O ONBOARDING NÃO
-   GRAVA.** É a única coisa que depende de você para este lote fechar, e é
-   bloqueio duro, não recado.
+1. **Nada. A reserva saiu e levou o único bloqueio junto.**
 
-   ```bash
-   pnpm db:migrate
-   ```
+   Decisão do Victor em 22/08, revertendo uma dele mesmo de horas antes:
+   **não existe lista de reserva.** Com o `GET /nichos` fora, a tela não
+   mostra chip nenhum — só o campo de texto e uma linha dizendo que a lista
+   não carregou.
 
-   Aplicar migration contra banco real exige autorização humana explícita
-   (`CLAUDE.md`), então o arquivo está escrito e **não** foi rodado.
+   O motivo dele: *"quando o catálogo está fora, a verdade é que não sabemos
+   o nicho. Gravar a frase da pessoa como confirmado é honesto; gravar um
+   dos cinco chips fixos é palpite com cara de escolha do cliente."* É o
+   mesmo princípio do `padaria` não achar nada.
 
-   **Por que quebra:** `lib/cadastro/procedencia.ts` agora manda `p_origem`
-   em **toda** gravação de campo, inclusive com o valor padrão. Contra o
-   banco velho, a assinatura de seis argumentos não existe e o PostgREST
-   responde "function not found".
+   **O que caiu junto:** a marcação `aproximacao` e a migration
+   `0021_aproximacao_da_reserva.sql`, apagada antes de ser aplicada. Sem
+   reserva não há palpite para marcar. O `p_origem` saiu do
+   `lib/cadastro/procedencia.ts`, e a `confirmar_campo_do_cliente` continua
+   com a assinatura de cinco argumentos da `0016`.
 
-   **E isso é escolha, não descuido.** A alternativa — mandar `p_origem` só
-   quando é `aproximacao` — faria o caminho degradado ser o único a
-   exercitar a assinatura nova. O erro apareceria pela primeira vez com o
-   backend do V2G já fora, que é o pior momento concebível para descobrir
-   que a migration não rodou. Mandando sempre, a divergência aparece na
-   primeira resposta de qualquer campo, em desenvolvimento, na hora. É a
-   lição de `migration-no-repo-nao-e-migration-aplicada.md`.
-
-   Se você preferir o contrário, é uma linha: trocar `p_origem: origem ??
-   "confirmado"` por mandar o argumento só quando `origem` existe.
-
-   **O que a `0021` faz** (as duas funções foram reescritas inteiras, por
-   cópia mecânica — o diff contra `0011` e `0016` tem 2 linhas removidas em
-   cada uma, e só as pretendidas):
-
-   - `registrar_procedencia` passa a aceitar `aproximacao` como quarto valor
-     de origem;
-   - `confirmar_campo_do_cliente` troca o literal `'confirmado'` por um
-     parâmetro `p_origem`, com default `'confirmado'` e restrito a
-     `confirmado | aproximacao` — `manual` e `extraido` são vocabulário de
-     outros canais e não passam por esta porta;
-   - a assinatura antiga de cinco argumentos é **derrubada**. Um `create or
-     replace` com argumento novo criaria uma segunda função, e duas
-     sobrecargas deixam o PostgREST ambíguo — ele recusa a chamada em vez de
-     escolher.
-
-   **`aproximacao` fica abaixo de `confirmado` de graça, e isso é o miolo do
-   desenho.** As duas travas que protegem valor do cliente comparam com o
-   literal: `0013` (`v_atual = 'confirmado' and decisao = 'aceito'`) e `0019`
-   (`if v_atual = 'confirmado'`). Um valor marcado `aproximacao` cai fora das
-   duas — ou seja, proposta de agente e escrita automática **podem**
-   corrigi-lo. É o certo: é palpite sobre uma lista errada, não afirmação do
-   dono. Há conferência (`conferir:nichos` §10) garantindo que ninguém
-   "conserte" essas travas para incluir `aproximacao`.
-
-   **O texto livre continua `confirmado`**, inclusive durante a degradação:
-   quem escreveu o próprio ramo com as próprias palavras deu resposta de
-   verdade. Palpite é o chip que cobre três nichos de uma vez.
+   **A ideia fica registrada** em `decisoes.md`, porque era boa e pode
+   voltar no dia em que existir uma fonte de nicho que seja palpite
+   legítimo — extração de site, por exemplo.
 
 2. **A `/meu-negocio` (§7 do handoff) não entrou, e virou o lote seguinte.**
    Medido e escrito em
@@ -124,8 +94,10 @@ Arquivos:
 inteira em vez de ser descartado. Descartar é pior do que parece: o nicho
 sumido não vira erro em lugar nenhum — vira um dono de petshop que digita
 "petshop", não acha, e conclui que o produto não atende o ramo dele.
-Reprovar acende a reserva, que é degradação **visível**. Lista vazia também
-reprova: zero chip é pior que cinco chips imprecisos.
+Reprovar cai no estado degradado — sem chips, com a linha dizendo que a
+lista não carregou —, que é degradação **visível**. Lista vazia também
+reprova: uma lista de zero nichos é muito mais provável como defeito do que
+como verdade.
 
 **Não filtro `generico`.** Quem filtra é o backend, e é lá que a regra
 mora. Medido: ele não vem. Se um dia vier, vai aparecer como chip — e isso
@@ -232,12 +204,12 @@ informação, e quem usa leitor de tela precisa saber disso.
 A `page.tsx` dispara `listarNichos()` **antes** de esperar as duas coisas
 que já esperava, e só coleta no fim. Com 17 ms em paralelo, o custo é perto
 de zero. Por isso **não** existe estado de "carregando a lista", e **não**
-existe reserva aparecendo primeiro para ser trocada por dez chips meio
+existe lista provisória aparecendo primeiro para ser trocada por dez chips meio
 segundo depois — trocar chip na cara de quem está lendo é pior que as duas
 alternativas que a manobra tentaria evitar.
 
 Isso não fica apoiado na medição continuar verdadeira: o teto de 2,5 s
-garante a reserva por estrutura.
+garante o estado degradado por estrutura.
 
 ### A medição do ponto de vista do CLIENTE — pedida em 22/08
 
@@ -274,12 +246,29 @@ marcador nunca rodou. O número seria inventado. Fica registrado como não
 medido, e vale medir num navegador de verdade se alguém quiser o absoluto.
 Ele é o mesmo para os chips e para a busca, então não muda a decisão.
 
-### As cinco opções antigas
+### Com o catálogo fora: só o texto livre, e a tela diz por quê
 
-Continuam em `perguntas.ts`, **agora como reserva**, com a conta do estrago
-escrita em cima delas (qual cobria três nichos, quais cobriam nenhum, quais
-três nichos eram inalcançáveis) e um "não acrescente opção aqui". A flag
-nova é `Pergunta.seletorDeNicho`.
+As cinco opções antigas **saíram**. `perguntas.ts` guarda `opcoes: []` para
+a pergunta `ramo`, com a conta do estrago escrita em cima (qual cobria três
+nichos, quais cobriam nenhum, quais três nichos eram inalcançáveis) e um
+"não acrescente opção aqui". A flag nova é `Pergunta.seletorDeNicho`.
+
+A lista vazia tem efeito também no servidor: `actions.ts` confere chip
+contra `pergunta.opcoes`, então nenhum chip forjado passa quando o seletor
+não está no ar. Há conferência impedindo que a pergunta volte a ter opção
+fixa (`conferir:nichos` §8).
+
+No lugar da reserva, a tela mostra:
+
+> A lista de ramos não carregou agora. Escreva o seu do jeito que você
+> chama — a gente confere depois.
+
+**A linha é parte da decisão, não enfeite.** "Escreva do seu jeito" sozinho
+parece que nunca houve lista — a pessoa não tem como saber que está vendo
+um estado degradado, e conclui que o produto é assim. Dizer que a lista não
+carregou é a diferença entre uma falha nossa e uma limitação nossa. Com
+`aria-live`, porque o recado nasce de uma condição que não estava lá quando
+a tela foi lida.
 
 ---
 
@@ -310,15 +299,16 @@ dia por relatório.
 | situação | recado |
 |---|---|
 | lista no ar, texto não casa | "Essa opção não existe nesta pergunta." |
-| lista fora, nem a reserva casa | "Não consegui confirmar sua escolha agora. Tente de novo em instantes." |
+| lista fora | "Não consegui confirmar sua escolha agora. Tente de novo em instantes." |
 
 A diferença é quem errou. Com a lista fora, **nós** é que não conseguimos
 conferir — acusar o cliente de escolher opção inexistente é o sistema
 culpando ele pelo próprio defeito. Há uma conferência guardando essa
 diferença, para o dia em que alguém "simplificar" os dois num só.
 
-E com a lista fora, os chips da reserva **passam** — senão o cliente
-escolhe um chip que a tela acabou de mostrar e ouve que ele não existe.
+E o segundo recado alcança um caso real, não só o forjado: a lista estava
+no ar quando a tela carregou, a pessoa tocou num chip, e o backend caiu
+antes da resposta chegar. "Tente de novo em instantes" é verdade ali.
 
 ### O que fica gravado
 
@@ -363,11 +353,19 @@ O que ele prova e vale citar:
 | `padaria` | zero chips, apareceu o Enviar e o recado; enviou como texto livre |
 | `clinica de estetica` (sem acento) | virou chip `Clínica de estética` / `clinica-estetica` |
 
-**No navegador, com a env desligada de verdade** (as duas linhas
-`V2G_BACKEND_*` comentadas no `.env.local`, servidor reiniciado, arquivo
-restaurado depois): a pergunta 2 voltou a mostrar os cinco chips, o
-"Outro" e o "ou digite sua resposta". Exatamente o comportamento anterior
-ao lote.
+**No navegador, com a env desligada de verdade** — as duas linhas
+`V2G_BACKEND_*` comentadas no `.env.local`, **build de produção**, servidor
+reiniciado, arquivo restaurado depois. Medido no HTML servido:
+
+- **zero chips** na pergunta 2. Nenhum dos cinco antigos, e nem o "Outro";
+- a linha *"A lista de ramos não carregou agora. Escreva o seu do jeito que
+  você chama — a gente confere depois."*;
+- o campo já aberto, com o rótulo e o placeholder da própria pergunta, e o
+  botão de enviar.
+
+E o caminho de volta, que é metade do teste: restaurada a env e reconstruído,
+os dez chips e o "Outro" voltaram, e a linha de degradação **não** aparece.
+Um teste que só olha o lado degradado não prova que o normal sobreviveu.
 
 **Suíte completa e build:** `pnpm conferir` limpo, `pnpm build` limpo.
 
@@ -375,19 +373,11 @@ ao lote.
 
 ## 5. O que ficou pela metade
 
-- **A marcação `aproximacao` está escrita, mas a migration `0021` não foi
-  APLICADA** — §0 item 1. Código e conferidor prontos; falta um
-  `pnpm db:migrate` com autorização humana. Até lá o onboarding não grava,
-  de propósito e ruidosamente;
 - **`/meu-negocio` (§7 do handoff)** e **o gate do §5** — fora dos três
   passos pedidos. O §7 virou
   [`buraco-meu-negocio-nicho-livre.md`](../buraco-meu-negocio-nicho-livre.md)
   e é o lote seguinte; o §5 depende de uma decisão já aberta em
   `decisoes.md`;
-- **A `0021` não foi exercitada contra Postgres nenhum.** Ela é cópia
-  mecânica de duas funções que já rodam em produção, com diff de 2 linhas
-  removidas em cada — mas cópia mecânica não é execução. O primeiro
-  `db:migrate` é também o primeiro teste de sintaxe dela;
 - **`.claude/launch.json`** foi criado para poder subir o dev server pelo
   preview. Não está no `.gitignore`. Se não for para versionar, apagar
   antes do commit.
@@ -426,25 +416,13 @@ scripts/conferir-nichos.ts
 ```
 app/(fluxo)/onboarding/page.tsx       busca em paralelo, passa a lista por props
 app/(fluxo)/onboarding/Chat.tsx       recebe `nichos`, monta o seletor
-app/(fluxo)/onboarding/perguntas.ts   `seletorDeNicho`, as cinco viram reserva
-app/(fluxo)/onboarding/actions.ts     valida contra a lista viva; marca a reserva
-lib/cadastro/procedencia.ts           `origem` por campo, mandada sempre
+app/(fluxo)/onboarding/perguntas.ts   `seletorDeNicho`, as cinco opções saem
+app/(fluxo)/onboarding/actions.ts     valida contra a lista viva
 app/globals.css                       `.seletor-nicho`, `.nicho-sem-lista`
 lib/backend/index.ts                  exporta `listarNichos`
 package.json                          `conferir:nichos`, dentro da suíte
 ```
 
-**Uma migration, e ela NÃO foi aplicada:**
-
-```
-supabase/migrations/0021_aproximacao_da_reserva.sql
-supabase/objetos.ts                   entrada da 0021 no manifesto do conferidor
-```
-
-O handoff §8 dizia "neste lote não há migration nenhuma", e isso valia
-enquanto o §4 (a marcação `aproximacao`) estivesse fora. Com o §4 dentro, as
-duas instruções não cabiam juntas — a contradição está registrada no §0.1,
-junto com a decisão do Victor de fazer a marcação.
-
-O que o §8 dizia e **continua valendo**: `niche` já está na lista branca
-(`0015`/`0016`/`0017`), e não se escreve migration para isso.
+**Nenhuma migration**, como o handoff §8 mandava. A `0021` existiu por
+algumas horas e foi apagada antes de ser aplicada — ver §0.1. `niche` já
+está na lista branca (`0015`/`0016`/`0017`).
