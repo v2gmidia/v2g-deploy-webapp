@@ -67,7 +67,11 @@ pnpm db:migrate           # supabase db push
 São ~45 documentos. **Não leia todos.** Escolha pelo assunto:
 
 **Comece sempre por aqui**
-- `docs/estado/` — o estado mais recente, por data. Leia o arquivo mais novo antes de qualquer coisa.
+- `docs/estado/indice.md` — **a lista dos documentos de estado e o que cada
+  um cobre.** Comece por ele: o mais novo não substitui o mais velho, eles
+  cobrem assuntos diferentes. O índice também diz quais pendências estão
+  abertas em cada um.
+- `docs/estado/` — o registro de cada sessão, por data.
 - `docs/arquitetura.md` — as decisões estruturais e o porquê de cada uma
 
 **Contratos e integração**

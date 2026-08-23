@@ -56,3 +56,16 @@ export {
   type FiltrosPreRequisitos,
   type PreRequisitos,
 } from "./pre-requisitos";
+
+/**
+ * `GET /nichos` — a lista viva de nichos, e a fonte única dela.
+ *
+ * Medido em 22/08/2026: responde 200 com dez nichos e 183 termos, em 17 ms
+ * de mediana. Sem o `X-V2G-Token` devolve **401, não 404** — o backend não
+ * tem caminho que produza 404 para rota existente.
+ *
+ * O TIPO SAI DE `@/lib/nichos/tipos`, que não é `server-only`: o filtro da
+ * busca roda no navegador, então o componente de cliente precisa do tipo.
+ * A chamada, essa, fica deste lado.
+ */
+export { listarNichos } from "./nichos";

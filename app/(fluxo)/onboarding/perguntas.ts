@@ -29,6 +29,16 @@ export interface Pergunta {
   fallbackPlaceholder?: string;
   /** chip que só abre o campo de texto, sem responder (o "Outro") */
   chipAbreTexto?: string;
+  /**
+   * A pergunta é respondida pelo `SeletorDeNicho`, com a lista viva do
+   * `GET /nichos`.
+   *
+   * As `opcoes` desta pergunta ficam **vazias**, e não existe lista de
+   * reserva: com o endpoint fora, a tela mostra só o texto livre e uma
+   * linha dizendo que a lista não carregou. Ver o comentário na pergunta
+   * `ramo`.
+   */
+  seletorDeNicho?: true;
   /** pergunta sem chip nenhum: só o campo de texto, já aberto */
   soTexto?: true;
   /** piso de caracteres, quando o backend impõe um */
@@ -63,13 +73,40 @@ export const PERGUNTAS: Pergunta[] = [
     id: "ramo",
     contador: "Pergunta 2 de 4",
     texto: "Qual desses é o seu negócio?",
-    opcoes: [
-      { echo: "Clínica / Consultório", rotulo: "Clínica / Consultório" },
-      { echo: "Loja física", rotulo: "Loja física" },
-      { echo: "Restaurante / Bar", rotulo: "Restaurante / Bar" },
-      { echo: "Serviço (advocacia, arquitetura, contabilidade)", rotulo: "Serviço" },
-      { echo: "Beleza e estética", rotulo: "Beleza e estética" },
-    ],
+    seletorDeNicho: true,
+    /**
+     * ============================================================
+     * SEM OPÇÕES FIXAS AQUI, E A LISTA VAZIA É A DECISÃO.
+     *
+     * Até 22/08 existiam cinco, e elas viraram a lista de RESERVA quando o
+     * seletor passou a ler o `GET /nichos`. Depois saíram de vez, porque
+     * reserva não é degradação: é palpite com cara de escolha do cliente.
+     * Esta era a conta do estrago, medida opção por opção contra os dez
+     * nichos de `knowledge/`:
+     *
+     *   Clínica / Consultório  → cobria TRÊS (odontológica, estética, médico)
+     *   Beleza e estética      → cobria QUATRO (barbearia, manicure, salão,
+     *                            clínica estética — que aparecia nas duas)
+     *   Restaurante / Bar      → cobria um
+     *   Loja física            → NENHUM
+     *   Serviço (advocacia…)   → NENHUM
+     *
+     * Com o catálogo fora, a verdade é que NÃO SABEMOS o nicho. A tela
+     * passa a oferecer só o texto livre, com uma linha dizendo que a lista
+     * não carregou — e a frase da pessoa é gravada como `confirmado`,
+     * porque ela é verdade: foi ela que disse.
+     *
+     * NÃO ACRESCENTE OPÇÃO AQUI. Toda linha nova é uma lista paralela
+     * envelhecendo em silêncio, que é o defeito que este lote apagou. A
+     * lista certa é a do backend, e ela é a única.
+     *
+     * A lista vazia também tem efeito no SERVIDOR: `actions.ts` confere
+     * resposta de chip contra `pergunta.opcoes`, então nenhum chip forjado
+     * passa por aqui quando o seletor não está no ar.
+     * ============================================================
+     */
+    opcoes: [],
+    /** o rótulo do chip que abre o texto livre, no fim dos dez */
     chipAbreTexto: "Outro",
     fallbackLabel: "Como você descreveria seu negócio",
     fallbackPlaceholder: "Como você descreveria seu negócio em poucas palavras?",

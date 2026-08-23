@@ -1009,6 +1009,21 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .text-fallback:hover { color: var(--cobalt-ink); }
 
+/* ---- seletor de nicho ---------------------------------------------------
+   Os dez chips e o campo de busca abaixo deles. O espaco entre os dois e
+   maior que o `gap` entre chips de proposito: a busca nao e o decimo
+   primeiro chip, e uma segunda saida para quem nao se achou na lista.
+
+   Sem `--fs-legenda` no recado do "nao achou": ele nao e nota de rodape, e
+   instrucao do que fazer agora. Legenda e para timestamp. E sem `--crit`
+   tambem — nao achar o proprio ramo na lista nao e erro do cliente. */
+.seletor-nicho .fallback-field { margin-top: 14px; }
+.nicho-sem-lista {
+  margin: 8px 0 0;
+  font-size: var(--fs-corpo);
+  color: var(--ink);
+}
+
 /* ---- bloco 2 do onboarding: as contas ----------------------------------
    Sem faixa cobalto aqui, e é decisão: o `.hero-destaque` sangra
    `0 -34px`, medida contra o padding do `.canvas`, e dentro do
