@@ -36,7 +36,8 @@ Regras que fazem a pasta continuar legível:
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
 | [`noite-21-08.md`](./noite-21-08.md) | 21/08/2026 | Seis tarefas de trabalho autônomo: a `/aprovar` mostrando logo como anúncio, o `use_mock_db` com default `True`, os números difíceis sem porta de volta, o conferidor de migrations, as regras inertes do CSS, e o visual da landing page. | Nenhuma — a §0 dele foi resolvida em 22/08 (cartão do herói da LP). |
-| [`seletor-de-nicho-22-08.md`](./seletor-de-nicho-22-08.md) | 22/08/2026 | O lote do seletor de nicho: o `GET /nichos`, os dez chips com busca e o "Outro" no fim, a validação no servidor contra a lista viva, e o estado degradado (sem chips, só texto livre) quando o catálogo está fora. | Nenhuma bloqueando. O §0 lista o que ficou para depois: a `/meu-negocio` e o gate de completude. |
+| [`seletor-de-nicho-22-08.md`](./seletor-de-nicho-22-08.md) | 22/08/2026 | O lote do seletor de nicho: o `GET /nichos`, os dez chips com busca e o "Outro" no fim, a validação no servidor contra a lista viva, e o estado degradado (sem chips, só texto livre) quando o catálogo está fora. | Nenhuma. A `/meu-negocio` do §0.2 foi feita em 23/08; o gate de completude do §0.3 continua esperando a decisão "6 campos ou 11?" em `decisoes.md`. |
+| [`nicho-identificador-23-08.md`](./nicho-identificador-23-08.md) | 23/08/2026 | A inversão do armazenamento (`businesses.niche` passa a guardar `clinica-odontologica`, não "Dentista") e o fechamento da porta dos fundos da `/meu-negocio`: o mesmo seletor, a mesma validação, e nicho não reconhecido virando pendência visível em vez de erro. Inclui o jargão que vazava para a tela com o catálogo fora. | Nenhuma bloqueando. O §0 registra que **nenhuma linha foi migrada** e que a extração ainda escreve nicho em texto livre. |
 
 ---
 

@@ -107,6 +107,23 @@ export interface CampoDoCliente {
   oculto?: true;
   /** Opções fechadas. Booleano e escolha não têm "corrigir", têm resposta. */
   opcoes?: readonly { valor: string; rotulo: string }[];
+  /**
+   * A escolha vem da LISTA VIVA do backend, não de `opcoes`.
+   *
+   * Só `businesses.niche` tem isto hoje, e a flag existe aqui — no
+   * catálogo — em vez de um `if (campo.chave === "businesses.niche")`
+   * dentro do `Campo.tsx`, pelo mesmo motivo do `ondeResponder`: foi
+   * assim que quatro telas passaram a dizer quatro coisas diferentes
+   * sobre a mesma conta.
+   *
+   * Quem carrega a lista é a `page.tsx`, e quem confere a escolha no
+   * servidor é `conferirEscolhaDeNicho` — a MESMA função do onboarding.
+   * Enquanto eram duas regras, esta tela gravava texto livre com
+   * procedência `confirmado` e o onboarding restringia a dez nichos:
+   * porta dos fundos para a validação da tela vizinha
+   * (`docs/buraco-meu-negocio-nicho-livre.md`).
+   */
+  seletorDeNicho?: true;
 }
 
 /**
@@ -216,7 +233,16 @@ const APRESENTACAO: Record<ChaveDoCatalogo, Apresentacao> = {
   "businesses.niche": {
     bloco: "oferta",
     rotulo: "O que é o seu negócio",
-    ajuda: "Padaria, salão, clínica — do jeito que você mesmo chama.",
+    // O `ajuda` MUDOU JUNTO com o seletor, em 23/08, e não é cosmética.
+    //
+    // Ele dizia "Padaria, salão, clínica — do jeito que você mesmo
+    // chama", e o exemplo era `padaria`: justamente o termo que não tem
+    // nicho em `knowledge/`, que a busca foi construída para não achar, e
+    // que tem dois testes no backend garantindo que não case com nada.
+    // Uma tela recusava a palavra e a outra a oferecia como modelo de
+    // resposta — duas instruções opostas sobre a mesma coluna.
+    ajuda: "Escolha o seu na lista. É daqui que a IA tira o jeito de falar do seu negócio.",
+    seletorDeNicho: true,
   },
   "businesses.description": {
     // NÃO chamar de "O que você vende": é o título do bloco, e rótulo igual
@@ -391,6 +417,28 @@ if (DIFICIL_SEM_PORTA.length > 0) {
       "não ganha entrada na /meu-negocio, então sem um destino ele vira beco: " +
       "aparece em “o que a gente ainda não sabe” e acaba ali. Aponte para a " +
       "tela que faz a pergunta numa forma que o cliente consegue responder.",
+  );
+}
+
+/**
+ * `seletorDeNicho` E `opcoes` NO MESMO CAMPO É CONTRADIÇÃO.
+ *
+ * São dois editores para a mesma linha: um lê a lista viva do backend, o
+ * outro desenha os botões de `opcoes`. O `Campo.tsx` escolhe um, e o
+ * perdedor vira lista escrita à mão que ninguém vê e ninguém mantém — a
+ * lista paralela que o lote do seletor existiu para apagar, agora
+ * invisível.
+ */
+const SELETOR_COM_OPCOES = Object.entries(APRESENTACAO)
+  .filter(([, ap]) => ap.seletorDeNicho && ap.opcoes)
+  .map(([chave]) => chave);
+
+if (SELETOR_COM_OPCOES.length > 0) {
+  throw new Error(
+    "lib/perfil/catalogo-cliente.ts: " +
+      SELETOR_COM_OPCOES.join(", ") +
+      " tem `seletorDeNicho` E `opcoes`. São dois editores para a mesma linha: " +
+      "a lista viva do backend e uma lista escrita à mão. Escolha um.",
   );
 }
 

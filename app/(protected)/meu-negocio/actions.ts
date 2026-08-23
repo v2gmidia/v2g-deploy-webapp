@@ -9,6 +9,9 @@ import {
   type CampoDoCliente,
 } from "@/lib/perfil/catalogo-cliente";
 import { conferirFaixaDeTicket, converterValor } from "@/lib/perfil/valores";
+import { listarNichos } from "@/lib/backend";
+import { conferirEscolhaDeNicho, NAO_DEU_PARA_CONFERIR } from "@/lib/nichos/escolha";
+import { lerNichoGravado, NICHO_FORA_DA_LISTA } from "@/lib/nichos/gravado";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 
 /**
@@ -180,6 +183,25 @@ export async function confirmarCampoAction(
   // meio-confirmada que a leitura teria que resolver toda vez — e ela
   // resolve pela mais fraca, então o cliente veria "não conferido" logo
   // depois de conferir.
+  // ============================================================
+  // CONFIRMAR TAMBÉM É UM POST, E O RAMO TAMBÉM PASSA PELA LISTA.
+  //
+  // A tela não desenha o "tá certo" num ramo que a lista viva não
+  // reconhece — ver `Campo.tsx`. Mas Server Action é endpoint de verdade,
+  // e quem monta o POST à mão não passa por componente nenhum: sem esta
+  // conferência dava para carimbar procedência `confirmado`, o nível mais
+  // alto da escala, num "Clínica / Consultório" que o pipeline não sabe
+  // ler. O valor não muda, mas a afirmação sobre ele fica falsa — que é a
+  // mesma família do buraco que este lote fechou, só que na procedência.
+  //
+  // Confirmar não manda valor, então o que se confere é o que JÁ ESTÁ na
+  // coluna. Custa uma leitura, e só no campo do ramo.
+  // ============================================================
+  if (campo.seletorDeNicho) {
+    const recusa = await conferirNichoJaGravado(ctx, campo);
+    if (recusa) return { erro: recusa, chave };
+  }
+
   const alvos = [campo, ...(campo.parCom ? [acharCampoDoCliente(campo.parCom)!] : [])];
 
   for (const alvo of alvos) {
@@ -222,12 +244,127 @@ export async function salvarCampoAction(
   const caso: CasoDoCliente =
     formData.get("acao") === "esvaziar" ? "esvaziar" : "gravar";
 
+  // De onde veio a resposta do ramo: um chip da lista viva, ou o texto
+  // livre de quem não se achou nela. Só o campo com `seletorDeNicho` lê
+  // isto; nos outros o valor é ignorado.
+  //
+  // AUSENTE VIRA `texto`, e é o padrão seguro: `chip` é o que passa pela
+  // conferência contra o catálogo, então o pior que um POST sem o campo
+  // consegue é gravar a própria frase — que é o caminho honesto de quem
+  // escreve do seu jeito. Forjar `chip` não compra nada: a conferência
+  // recusa o que não estiver na lista viva.
+  const origem: "chip" | "texto" = formData.get("origem") === "chip" ? "chip" : "texto";
+
   switch (caso) {
     case "esvaziar":
       return esvaziar(ctx, campo, chave);
     case "gravar":
-      return gravar(ctx, campo, chave, bruto, brutoAte);
+      return gravar(ctx, campo, chave, bruto, brutoAte, origem);
   }
+}
+
+/**
+ * O que já está na coluna do ramo ainda é nicho da lista viva?
+ *
+ * Devolve a frase da recusa, ou `null` quando pode seguir. Lê sob RLS,
+ * com o cliente do próprio usuário: é o negócio dele, e o `select` é de
+ * uma coluna só.
+ *
+ * A recusa de "não dá para conferir agora" é a mesma do onboarding, e a
+ * diferença entre ela e "essa opção não existe" continua valendo aqui:
+ * com o catálogo fora, quem não conseguiu conferir fomos nós.
+ */
+async function conferirNichoJaGravado(
+  ctx: Contexto,
+  campo: CampoDoCliente,
+): Promise<string | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("businesses")
+    .select(campo.campo)
+    .eq("id", ctx.businessId)
+    .maybeSingle();
+
+  const atual = (data as Record<string, unknown> | null)?.[campo.campo] ?? null;
+  const gravado = lerNichoGravado(
+    await listarNichos().then((r) => (r.ok ? r.dados : null)),
+    atual,
+  );
+
+  switch (gravado.tipo) {
+    // Vazio não chega aqui pela tela (campo vazio não tem "tá certo"), e
+    // se chegar, a própria função do banco recusa: "vazio se preenche,
+    // não se confirma".
+    case "vazio":
+    case "reconhecido":
+      return null;
+    case "sem-lista":
+      return NAO_DEU_PARA_CONFERIR;
+    case "nao-reconhecido":
+      return NICHO_FORA_DA_LISTA;
+  }
+}
+
+/**
+ * O ramo, conferido contra a MESMA lista viva do onboarding.
+ *
+ * ============================================================
+ * É ISTO QUE FECHA A PORTA DOS FUNDOS.
+ *
+ * Até 23/08 esta ação gravava `niche` como texto livre, com procedência
+ * `confirmado` — o nível mais alto da escala. O cliente escolhia
+ * "Dentista" numa lista conferida no onboarding e trocava por "padaria"
+ * uma tela adiante, sem nenhuma recusa, e o dado ficava indistinguível de
+ * uma escolha feita numa lista real. A validação que o lote do seletor
+ * fechou tinha uma porta dos fundos a uma tela de distância
+ * (`docs/buraco-meu-negocio-nicho-livre.md`).
+ *
+ * Trocar o `input` pelo `SeletorDeNicho` na tela NÃO resolveria sozinho:
+ * Server Action é endpoint POST de verdade, e quem monta o POST à mão não
+ * passa por componente nenhum.
+ *
+ * A função conferida é a mesma do onboarding, não uma cópia. Cópia de
+ * validador concorda consigo mesma para sempre.
+ * ============================================================
+ *
+ * Custa um `GET /nichos` por gravação de ramo: 17 ms de mediana, e só
+ * quando o campo salvo é este.
+ */
+async function gravarNicho(
+  ctx: Contexto,
+  campo: CampoDoCliente,
+  chave: string,
+  bruto: string,
+  origem: "chip" | "texto",
+): Promise<EstadoDaRevisao> {
+  const texto = bruto.trim();
+  if (!texto) return { erro: "Esse campo ficou em branco.", chave };
+
+  // O texto livre NÃO é casado contra nicho nenhum, nem se a pessoa
+  // escrever "Dentista". Ela tocou em "Outro" ou o catálogo está fora —
+  // nos dois casos já disse que não está na lista, e casar ali seria a
+  // sugestão aproximada que foi recusada em 22/08. A frase dela vai para
+  // a coluna e a `/meu-negocio` a mostra como pendência: preenchida, mas
+  // não reconhecida.
+  let valor = texto;
+
+  if (origem === "chip") {
+    const lista = await listarNichos();
+    const conferencia = conferirEscolhaDeNicho({
+      lista: lista.ok ? lista.dados : null,
+      texto,
+    });
+    if (!conferencia.ok) return { erro: conferencia.erro, chave };
+    // O IDENTIFICADOR, nunca o rótulo e nunca o texto que chegou.
+    valor = conferencia.nicho;
+  }
+
+  const r = await gravarNoBanco(ctx, campo, valor);
+  if (!r.ok) return { erro: r.mensagem, chave };
+
+  revalidatePath("/meu-negocio");
+  await dispararSeCompleto();
+  return { ok: r.ato === "preencheu" ? "Anotado." : "Salvo.", chave };
 }
 
 /** `DESPACHO.gravar` — vira `preencheu` ou `corrigiu`, quem decide é o banco. */
@@ -237,7 +374,12 @@ async function gravar(
   chave: string,
   bruto: string,
   brutoAte: string,
+  origem: "chip" | "texto",
 ): Promise<EstadoDaRevisao> {
+  // O ramo sai antes do `converterValor`: ele não é texto qualquer, é
+  // escolha contra um catálogo, e quem confere é a lista viva.
+  if (campo.seletorDeNicho) return gravarNicho(ctx, campo, chave, bruto, origem);
+
   const conv = converterValor(campo, bruto);
   if (!conv.ok) return { erro: conv.mensagem, chave };
 

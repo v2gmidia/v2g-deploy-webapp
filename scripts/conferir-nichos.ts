@@ -47,10 +47,19 @@ import {
 import { PERGUNTAS } from "../app/(fluxo)/onboarding/perguntas.ts";
 import {
   filtrarNichos,
+  nichoPeloIdentificador,
   nichoPeloRotulo,
   normalizar,
   resolverConsulta,
 } from "../lib/nichos/busca.ts";
+import {
+  lerNichoGravado,
+  rotuloDoNichoGravado,
+  NICHO_FORA_DA_LISTA,
+  LISTA_NAO_CARREGOU,
+  NICHO_GUARDADO_SEM_LISTA,
+} from "../lib/nichos/gravado.ts";
+import { acharCampoDoCliente } from "../lib/perfil/catalogo-cliente.ts";
 import type { Nicho } from "../lib/nichos/tipos.ts";
 
 let falhas = 0;
@@ -154,6 +163,50 @@ secao("2. normalização — os DOIS lados, sempre");
   ok(
     normalizar("rodizio") === normalizar("rodízio"),
     "`rodizio` digitado = `rodízio` gravado (a armadilha de produção)",
+  );
+}
+
+// ---------------------------------------------------------------- §2.1
+
+secao("2.1 as duas telas do ramo — mesma coluna, mesmas regras");
+{
+  const ramo = acharCampoDoCliente("businesses.niche");
+  ok(ramo?.seletorDeNicho === true, "a `/meu-negocio` usa o seletor, não um campo de texto");
+  ok(ramo?.opcoes === undefined, "e não tem lista de opções escrita à mão competindo com ele");
+
+  // ============================================================
+  // O `ajuda` DA TELA NÃO PODE OFERECER O QUE A BUSCA RECUSA.
+  //
+  // Ele dizia "Padaria, salão, clínica — do jeito que você mesmo chama",
+  // e `padaria` é exatamente o termo que não tem nicho em `knowledge/`,
+  // que a busca foi construída para não achar, e que tem dois testes no
+  // backend garantindo que não case com nada. Uma tela recusava a palavra
+  // e a outra a oferecia como modelo de resposta.
+  //
+  // A conferência é contra a família inteira do varejo de alimento, e não
+  // só contra "padaria": o defeito não foi a palavra, foi dar exemplo de
+  // ramo que a lista não tem.
+  // ============================================================
+  const semNicho = ["padaria", "doceria", "mercearia", "confeitaria", "mercadinho", "lavanderia"];
+  const ajuda = normalizar(ramo?.ajuda ?? "");
+  const oferecidos = semNicho.filter((t) => ajuda.includes(t));
+  ok(
+    oferecidos.length === 0,
+    `o texto de apoio não dá exemplo de ramo que a lista não tem${oferecidos.length ? ` — oferece: ${oferecidos.join(", ")}` : ""}`,
+  );
+
+  // Os dois recados da tela são diferentes, e a diferença é quem falhou —
+  // a mesma regra dos dois recados de recusa do §8.
+  const recados = [NICHO_FORA_DA_LISTA, LISTA_NAO_CARREGOU, NICHO_GUARDADO_SEM_LISTA];
+  ok(
+    new Set(recados).size === 3,
+    "os três recados da tela são diferentes: 'não está na lista', 'a lista não carregou' e 'não deu para carregar o nome do seu ramo'",
+  );
+  // O terceiro é o do valor gravado que não dá para traduzir. Ele não pode
+  // dizer que o dado sumiu — ele existe, é o NOME dele que não carregou.
+  ok(
+    !normalizar(NICHO_GUARDADO_SEM_LISTA).includes("nao sabe"),
+    "e o do catálogo fora não diz que a gente não sabe o ramo — a gente sabe, só não consegue escrever o nome",
   );
 }
 
@@ -339,7 +392,10 @@ secao("8. a validação do servidor — a que quebraria calada");
 
   // ---- com a lista viva ----
   const r1 = comLista("Dentista");
-  ok(r1.ok && r1.texto === "Dentista", "chip da lista viva passa");
+  ok(
+    r1.ok && r1.nicho === "clinica-odontologica" && r1.rotulo === "Dentista",
+    "chip da lista viva passa, e volta com o PAR: `clinica-odontologica` para gravar, \"Dentista\" para mostrar",
+  );
 
   // O MOTIVO DE TUDO ISTO: antes deste lote, esta linha reprovava. Nenhum
   // nicho está em `pergunta.opcoes`, então toda escolha válida virava
@@ -349,11 +405,27 @@ secao("8. a validação do servidor — a que quebraria calada");
   ok(comLista("Oficina mecânica").ok, "e os outros inalcançáveis também");
 
   const r2 = comLista("dentista");
-  ok(r2.ok && r2.texto === "Dentista", "caixa diferente passa e volta com a grafia canônica");
+  ok(
+    r2.ok && r2.rotulo === "Dentista" && r2.nicho === "clinica-odontologica",
+    "caixa diferente passa e volta com a grafia canônica",
+  );
   const r3 = comLista("clinica de estetica");
   ok(
-    r3.ok && r3.texto === "Clínica de estética",
+    r3.ok && r3.rotulo === "Clínica de estética" && r3.nicho === "clinica-estetica",
     "sem acento passa e volta ACENTUADO (nunca grava o texto do cliente)",
+  );
+
+  // A COLUNA NUNCA RECEBE RÓTULO, e é a metade de servidor da inversão de
+  // 23/08. Se alguém devolver `rotulo` onde o chamador espera `nicho`, a
+  // tela continua bonita — e o pipeline perde o identificador do
+  // documento do nicho sem que nada apareça.
+  const rotulos = new Set(nichos.map((n) => n.rotulo));
+  const vazando = nichos
+    .map((n) => comLista(n.rotulo))
+    .filter((r) => r.ok && rotulos.has(r.nicho));
+  ok(
+    vazando.length === 0,
+    "o que vai para a coluna é identificador, nunca rótulo, nos dez nichos",
   );
 
   // Os dois lados: o que a lista viva tem que RECUSAR.
@@ -470,6 +542,112 @@ secao("9. o que o Enter faz — `resolverConsulta`");
   console.log(
     `        (rótulos que hoje deixam mais de um resultado: ${ambiguos.length}${ambiguos.length ? ` — ${ambiguos.map((n) => n.nicho).join(", ")}` : ""})`,
   );
+}
+
+secao("10. o que a COLUNA guarda — `lerNichoGravado`");
+{
+  const ler = (v: unknown) => lerNichoGravado(nichos, v);
+
+  // ============================================================
+  // O CICLO INTEIRO: O QUE O ONBOARDING GRAVA É O QUE A TELA LÊ.
+  //
+  // Escreve pela mesma função da Server Action, lê pela mesma função do
+  // componente, e confere que o rótulo que volta é o mesmo que a pessoa
+  // tocou. É esta assertiva que pegaria a inversão feita pela metade —
+  // gravar identificador e continuar lendo como rótulo deixa a tela
+  // mostrando `clinica-odontologica` para o dono do consultório, que é o
+  // defeito que o `buraco-meu-negocio-nicho-livre.md` previu.
+  // ============================================================
+  const quebrados: string[] = [];
+  for (const n of nichos) {
+    const escolha = conferirEscolhaDeNicho({ lista: nichos, texto: n.rotulo });
+    if (!escolha.ok) {
+      quebrados.push(`${n.nicho}: a escolha nem passou`);
+      continue;
+    }
+    const lido = ler(escolha.nicho);
+    if (lido.tipo !== "reconhecido" || lido.nicho.nicho !== n.nicho) {
+      quebrados.push(`${n.nicho}: gravou "${escolha.nicho}" e a leitura deu ${lido.tipo}`);
+      continue;
+    }
+    if (rotuloDoNichoGravado(lido) !== n.rotulo) {
+      quebrados.push(`${n.nicho}: a tela mostraria "${rotuloDoNichoGravado(lido)}"`);
+    }
+  }
+  ok(
+    quebrados.length === 0,
+    `escolher -> gravar -> ler devolve o mesmo rótulo, nos dez${quebrados.length ? ` — ${quebrados.join("; ")}` : ""}`,
+  );
+
+  // ---- o identificador é o que a coluna aceita ----
+  const dent = ler("clinica-odontologica");
+  ok(
+    dent.tipo === "reconhecido" && dent.nicho.rotulo === "Dentista",
+    "`clinica-odontologica` na coluna vira \"Dentista\" na tela",
+  );
+  ok(ler("CLINICA-ODONTOLOGICA").tipo === "reconhecido", "caixa não importa na leitura");
+  ok(ler("  clinica-odontologica  ").tipo === "reconhecido", "espaço nas pontas não importa");
+
+  // ============================================================
+  // RÓTULO GRAVADO NÃO É RECONHECIDO — e esta linha é a decisão de 23/08.
+  //
+  // A coluna guardava "Dentista" até 22/08. Medido no banco antes de
+  // inverter: ZERO linhas tinham rótulo válido (as três com valor tinham
+  // "Clínica / Consultório", que nunca foi nicho, e "padaria", fictícia).
+  // Por isso não existe caminho de tolerância a rótulo antigo: não havia
+  // o que tolerar, e uma segunda regra de leitura seria código sem
+  // sujeito, envelhecendo sem ninguém para exercitá-lo.
+  //
+  // Se um dia esta linha falhar, alguém voltou a gravar rótulo.
+  // ============================================================
+  ok(ler("Dentista").tipo === "nao-reconhecido", "RÓTULO na coluna não é reconhecido");
+
+  // ---- o que existe hoje no banco, medido em 23/08 ----
+  ok(
+    ler("Clínica / Consultório").tipo === "nao-reconhecido",
+    "o valor real das duas linhas de hoje cai em pendência, não em erro",
+  );
+  const pad = ler("padaria");
+  ok(pad.tipo === "nao-reconhecido", "o texto livre de quem não se achou também");
+  ok(
+    rotuloDoNichoGravado(pad) === "padaria",
+    "e a tela mostra a frase da própria pessoa, não um vizinho aproximado",
+  );
+
+  // ---- vazio ----
+  ok(ler(null).tipo === "vazio", "coluna nula é vazia");
+  ok(ler("").tipo === "vazio" && ler("   ").tipo === "vazio", "string em branco também");
+
+  // ============================================================
+  // SEM LISTA NÃO É "NÃO RECONHECIDO", E A DIFERENÇA É QUEM FALHOU.
+  //
+  // Com o catálogo fora não dá para afirmar que o valor está fora da
+  // lista — não há lista. Dizer ao cliente "esse ramo não está na nossa
+  // lista" ali é o sistema culpando ele pelo próprio defeito, a mesma
+  // regra dos dois recados de recusa do §8.
+  // ============================================================
+  const semLista = lerNichoGravado(null, "clinica-odontologica");
+  ok(semLista.tipo === "sem-lista", "com o catálogo fora, nem identificador válido é resolvido");
+  // ACHADO NO NAVEGADOR, 23/08: a tela mostrava `clinica-odontologica`
+  // cru para o dono do consultório neste estado. O nome do ramo só existe
+  // com a lista viva; sem ela a função devolve vazio e quem chama mostra
+  // o `NICHO_GUARDADO_SEM_LISTA` no lugar.
+  ok(
+    rotuloDoNichoGravado(semLista) === "",
+    "e o identificador NÃO vaza para a tela — sem lista não há nome para mostrar",
+  );
+  ok(
+    lerNichoGravado(null, "padaria").tipo === "sem-lista",
+    "e nada é acusado de estar fora de uma lista que não carregou",
+  );
+  ok(lerNichoGravado(null, null).tipo === "vazio", "mas vazio continua vazio, com ou sem lista");
+
+  // ---- igualdade, não substring: o mesmo corte do §7 ----
+  ok(
+    nichoPeloIdentificador(nichos, "clinica") === undefined,
+    "pedaço de identificador não resolve (senão `clinica` viraria uma das três clínicas)",
+  );
+  ok(nichoPeloIdentificador(nichos, "") === undefined, "vazio não resolve");
 }
 
 // ---------------------------------------------------------------- placar

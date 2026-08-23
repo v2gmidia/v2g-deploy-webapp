@@ -41,6 +41,12 @@ depois apagada — nunca chegou a rodar contra banco nenhum.
    voltar no dia em que existir uma fonte de nicho que seja palpite
    legítimo — extração de site, por exemplo.
 
+> RESOLVIDO em 23/08 — ver [`nicho-identificador-23-08.md`](./nicho-identificador-23-08.md).
+> A `/meu-negocio` passou a usar o mesmo seletor e a mesma validação, e o
+> armazenamento inverteu para o identificador (a "leitura que circulou" do
+> parágrafo final deste item deixou de ser hipótese: virou o conserto
+> obrigatório, e o `Campo.tsx` agora traduz).
+
 2. **A `/meu-negocio` (§7 do handoff) não entrou, e virou o lote seguinte.**
    Medido e escrito em
    [`buraco-meu-negocio-nicho-livre.md`](../buraco-meu-negocio-nicho-livre.md).

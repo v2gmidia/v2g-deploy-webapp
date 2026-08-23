@@ -1,4 +1,6 @@
 import { carregarPerfilDoCliente } from "@/lib/perfil/revisao-cliente";
+import { listarNichos } from "@/lib/backend";
+import type { Nicho } from "@/lib/nichos/tipos";
 import { Campo } from "./Campo";
 
 /**
@@ -23,7 +25,24 @@ export const metadata = { title: "Seu negócio — V2G" };
 export const dynamic = "force-dynamic";
 
 export default async function MeuNegocioPage() {
-  const perfil = await carregarPerfilDoCliente();
+  // ============================================================
+  // A LISTA VIVA VEM JUNTO, E EM PARALELO.
+  //
+  // O `X-V2G-Token` não pode chegar ao navegador, então quem busca é o
+  // Server Component e o componente de cliente recebe a lista pronta —
+  // a mesma divisão da `/onboarding`.
+  //
+  // Em paralelo porque o custo medido é 17 ms de mediana (60 ms a frio,
+  // teto de 2,5 s), contra uma leitura de perfil que faz quatro consultas
+  // ao Supabase. Encadear somaria os dois tempos para não ganhar nada.
+  //
+  // `null` = o catálogo não respondeu. A tela NÃO trava por isso: o campo
+  // do ramo cai no texto livre com a linha explicando, e os outros 25
+  // campos seguem editáveis. Um endpoint de catálogo fora não pode
+  // impedir o cliente de corrigir o próprio ticket médio.
+  // ============================================================
+  const [perfil, lista] = await Promise.all([carregarPerfilDoCliente(), listarNichos()]);
+  const nichos: Nicho[] | null = lista.ok ? lista.dados : null;
 
   // Estado vazio honesto: sem negócio não há o que conferir, e a tela diz o
   // que precisa acontecer antes.
@@ -82,7 +101,7 @@ export default async function MeuNegocioPage() {
 
           <div className="card rc-lista-campos">
             {bloco.campos.map((campo) => (
-              <Campo key={campo.chave} campo={campo} />
+              <Campo key={campo.chave} campo={campo} nichos={nichos} />
             ))}
           </div>
 

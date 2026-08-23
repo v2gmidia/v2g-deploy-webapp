@@ -145,6 +145,14 @@ export async function salvarRespostaAction(entrada: {
   let texto = entrada.texto.trim();
   if (!texto) return { ok: false, erro: "Escreva uma resposta antes de enviar." };
 
+  // O IDENTIFICADOR DO NICHO, quando a escolha veio da lista viva.
+  //
+  // Ele é o que vai para a coluna; o `texto` acima continua sendo o
+  // rótulo, que é o que aparece no balão e fica no jsonb. Nulo quando a
+  // pessoa escreveu do próprio jeito — aí não há identificador para
+  // gravar, e a frase dela é o que temos. Ver `lib/nichos/gravado.ts`.
+  let nichoEscolhido: string | null = null;
+
   // Resposta por chip precisa bater com uma opção real da pergunta —
   // o cliente não escolhe o que quiser só porque manda o campo `origem`.
   if (entrada.origem === "chip") {
@@ -172,7 +180,8 @@ export async function salvarRespostaAction(entrada: {
         texto,
       });
       if (!conferencia.ok) return { ok: false, erro: conferencia.erro };
-      texto = conferencia.texto;
+      texto = conferencia.rotulo;
+      nichoEscolhido = conferencia.nicho;
     } else if (!pergunta.opcoes.some((o) => o.echo === texto)) {
       // Numa pergunta `soTexto` a lista é vazia, então isto recusa
       // qualquer chip forjado sem precisar de um caso à parte.
@@ -230,7 +239,22 @@ export async function salvarRespostaAction(entrada: {
   // A `aproximacao` existiu por algumas horas em 22/08, para marcar
   // escolha feita numa lista de reserva. A reserva saiu (ver
   // `lib/nichos/escolha.ts`), e com ela a marcação e a migration `0021`.
-  if (entrada.qid === "ramo") campos.push({ campo: "niche", valor: texto });
+  //
+  // A COLUNA LEVA O IDENTIFICADOR, A TELA LEVA O RÓTULO. Desde 23/08:
+  // `clinica-odontologica` na coluna, "Dentista" no balão. O motivo está
+  // em `lib/nichos/gravado.ts` — em uma linha, o rótulo é do backend e
+  // pode mudar, e é o identificador que escolhe o documento do nicho no
+  // pipeline.
+  //
+  // Quem escreveu do próprio jeito não tem identificador, e aí vai a
+  // frase dela mesma. A coluna passa a ter dois tipos de conteúdo, e isso
+  // é honesto: identificador quando sabemos qual é o nicho, a frase da
+  // pessoa quando não sabemos. Quem lê resolve os dois casos numa função
+  // só (`lerNichoGravado`), e o que ela não reconhece vira pendência
+  // visível na `/meu-negocio` — nunca erro na cara de quem respondeu.
+  if (entrada.qid === "ramo") {
+    campos.push({ campo: "niche", valor: nichoEscolhido ?? texto });
+  }
   if (entrada.qid === "descricao") campos.push({ campo: "description", valor: texto });
   if (entrada.qid === "praca") {
     // Cidade só existe quando veio do campo dedicado. Na resposta

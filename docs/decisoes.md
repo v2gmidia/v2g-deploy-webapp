@@ -36,6 +36,37 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-08-23 — `businesses.niche` guarda o identificador, não o rótulo
+**Decisão:** a coluna passa a guardar `clinica-odontologica`; "Dentista" fica
+para a tela. As duas telas mostram rótulo e validam contra a mesma lista viva.
+**Motivo:** o rótulo é do backend e pode mudar — mexer no `nome_exibicao` do
+`knowledge/` deixaria toda linha antiga com o texto velho, sem nada contando
+que ficou. E é o identificador que escolhe o documento do nicho no pipeline.
+**Por que agora:** medido no banco antes de escrever código — **zero linhas
+tinham rótulo válido** (as três com valor tinham `Clínica / Consultório`, que
+nunca foi nicho, e `padaria`, fictícia). Depois de semanas gravando rótulo, a
+mesma inversão custaria uma migration com mapa escrito à mão.
+**NÃO houve migração de dado, e não deve haver:** o mapa rótulo→identificador
+só existe na lista viva. Cravá-lo numa migration recria a lista paralela que o
+lote do seletor existiu para matar. As linhas antigas se consertam quando um
+humano tocar no campo pela `/meu-negocio`.
+**Registro:** `lib/nichos/gravado.ts`, `conferir:nichos` §§2.1/8/10, e
+`docs/estado/nicho-identificador-23-08.md`.
+
+### 2026-08-23 — Nicho não reconhecido não ganha "tá certo"
+**Decisão (Victor):** na `/meu-negocio`, valor de ramo que a lista viva não
+reconhece continua na lista principal, mostrando o valor, com uma linha
+explicando e um único botão — "escolher na lista". O "tá certo" some.
+**Motivo:** confirmar carimbaria procedência `confirmado`, o nível mais alto
+da escala, num valor que o pipeline não consegue usar. O cliente ficaria com a
+sensação de ter resolvido e o dado continuaria mudo.
+**Descartado:** mandar o campo para a seção "o que a gente ainda não sabe" —
+ela é a seção do campo VAZIO, e dizer que não sabemos sobre um campo
+preenchido é impreciso. E manter o "tá certo", pelo motivo acima.
+**Não é erro, e a tela não trata como erro:** em `--fs-corpo` e `--ink`, nunca
+em `--crit`. Quem tem "Clínica / Consultório" respondeu de boa-fé um
+onboarding que oferecia aquilo. Nada mais na tela trava.
+
 ### 2026-08-22 — A reserva de nicho sai; sobra o texto livre
 **Decisão:** com o `GET /nichos` fora, a tela não mostra chip nenhum. Só o
 campo de texto, mais uma linha dizendo que a lista não carregou.

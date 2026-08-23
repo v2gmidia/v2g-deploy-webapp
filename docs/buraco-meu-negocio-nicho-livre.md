@@ -123,3 +123,39 @@ A "Padaria Dona Zilda" é fictícia e é barrada antes por `dados_ficticios`.
 **A regra vale como seguro para linha futura muito mais que como conserto
 para essas.** Não vale construir tela nova por causa delas — o
 reaproveitamento do `naoSabemos` é o teto de esforço justificado.
+
+---
+
+## 4. O conserto — feito em 23/08/2026
+
+Registro abaixo da linha, como manda o cabeçalho: a medição acima **não foi
+alterada**. O lote inteiro está em
+[`estado/nicho-identificador-23-08.md`](./estado/nicho-identificador-23-08.md).
+
+Os quatro itens do §2, e o que aconteceu com cada um:
+
+| item | como ficou |
+|---|---|
+| 1. usar o `SeletorDeNicho` | feito, com `seletorDeNicho: true` no catálogo — a flag mora lá, não num `if` sobre nome de campo |
+| 2. o `ajuda` muda junto | feito. Há conferência (`conferir:nichos` §2.1) contra a **família inteira** do varejo de alimento, não só contra "padaria" |
+| 3. gravar por `conferirEscolhaDeNicho` | feito, e é a metade que importa: sem ela o item 1 seria cosmético |
+| 4. pendência visível, não erro | feito — **com uma diferença**, ver abaixo |
+
+**A diferença no item 4, e é decisão do Victor em 23/08:** o campo **não** vai
+para a seção `naoSabemos`. Ela é a seção do campo VAZIO, e dizer "a gente
+ainda não sabe" sobre um campo preenchido é impreciso. Ele fica na lista
+principal mostrando o valor, com a linha explicando e **um** botão ("escolher
+na lista"). O que sai é o **"tá certo"**: confirmar carimbaria `confirmado` num
+valor que o pipeline não consegue usar.
+
+**Duas coisas que este documento previu e que se confirmaram:**
+
+1. *"Se um dia a decisão de armazenamento inverter para o identificador, esta
+   linha passa a mostrar `clinica-odontologica` para o dono do consultório — e
+   aí ela é o conserto obrigatório."* Inverteu, e a linha 159 do `Campo.tsx` é
+   agora a tradução. Mas a previsão ficou **curta** por um caso: com o catálogo
+   FORA não há o que traduzir, e ali o identificador cru chegou mesmo à tela —
+   achado no navegador, não no código. Ver §3 do documento de estado;
+2. o dimensionamento. Continuam sendo as mesmas três linhas, e **nenhuma foi
+   migrada**: o mapa rótulo→identificador só existe na lista viva, e cravá-lo
+   numa migration recriaria a lista paralela.

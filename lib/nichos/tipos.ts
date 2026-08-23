@@ -26,7 +26,10 @@ export interface Nicho {
   nicho: string;
   /**
    * Voz de dono, não de catálogo: `clinica-odontologica` → "Dentista".
-   * É isto que vai no chip e é isto que é gravado em `businesses.niche`.
+   *
+   * É isto que vai no chip e é isto que a tela mostra — mas NÃO é o que
+   * vai para `businesses.niche`. A coluna guarda o `nicho` acima desde
+   * 23/08; ver `lib/nichos/gravado.ts` para o porquê da inversão.
    */
   rotulo: string;
   /**

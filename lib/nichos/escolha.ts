@@ -44,8 +44,22 @@ import type { Nicho } from "./tipos";
  * chamador.
  */
 
+/**
+ * ============================================================
+ * DEVOLVE OS DOIS, E CADA UM TEM UM DESTINO.
+ *
+ * `nicho` é o identificador (`clinica-odontologica`) e vai para a coluna
+ * `businesses.niche`. `rotulo` é a voz de dono ("Dentista") e vai para o
+ * balão do chat, para o jsonb do onboarding e para a tela.
+ *
+ * Eram um campo só até 22/08, quando a coluna guardava o rótulo. Separar
+ * é o que impede os dois usos de se confundirem de novo: quem grava não
+ * tem como pegar o texto de tela por engano, porque ele se chama outra
+ * coisa. Ver `lib/nichos/gravado.ts`.
+ * ============================================================
+ */
 export type ConferenciaDeNicho =
-  | { ok: true; texto: string }
+  | { ok: true; nicho: string; rotulo: string }
   | { ok: false; erro: string };
 
 /**
@@ -83,13 +97,13 @@ export function conferirEscolhaDeNicho(args: {
   if (!achado) return { ok: false, erro: NAO_E_OPCAO };
 
   // ============================================================
-  // DEVOLVE O RÓTULO DA LISTA, NÃO O TEXTO DO CLIENTE.
+  // NADA DO QUE O CLIENTE DIGITOU SOBREVIVE DAQUI PARA BAIXO.
   //
   // `nichoPeloRotulo` casa normalizado, então "dentista" e "DENTISTA"
-  // entram aqui e casam. Gravar o que chegou deixaria a coluna com
-  // grafias diferentes para o mesmo nicho — e a coluna é lida por tela,
-  // por conferidor e um dia por relatório. O que é gravado é sempre a
-  // grafia canônica do backend.
+  // entram aqui e casam. Devolver o que chegou deixaria a coluna com
+  // grafias diferentes para o mesmo nicho — e ela é lida por tela, por
+  // conferidor e um dia pelo pipeline. O que sai é sempre o par canônico
+  // do backend: o identificador para gravar, o rótulo para mostrar.
   // ============================================================
-  return { ok: true, texto: achado.rotulo };
+  return { ok: true, nicho: achado.nicho, rotulo: achado.rotulo };
 }

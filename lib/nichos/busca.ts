@@ -89,13 +89,41 @@ export function filtrarNichos(nichos: Nicho[], consulta: string): Nicho[] {
  * Igualdade normalizada, não substring: aqui a pergunta é "este valor é um
  * nicho da lista viva?", e substring responderia sim para "Dent", que
  * ninguém escolheu. É esta função que a validação do servidor usa
- * (handoff §6) e é ela que decide se um `niche` já gravado ainda é
- * reconhecido (handoff §5).
+ * (handoff §6), sobre o que o CLIENTE mandou.
+ *
+ * Quem decide se um `niche` já GRAVADO ainda é reconhecido é a
+ * `nichoPeloIdentificador` logo abaixo — desde 23/08 a coluna guarda o
+ * identificador, e conferi-la pelo rótulo passaria a reprovar tudo.
  */
 export function nichoPeloRotulo(nichos: Nicho[], rotulo: string): Nicho | undefined {
   const alvo = normalizar(rotulo);
   if (!alvo) return undefined;
   return nichos.find((n) => normalizar(n.rotulo) === alvo);
+}
+
+/**
+ * O nicho cujo IDENTIFICADOR é exatamente este, ou `undefined`.
+ *
+ * ============================================================
+ * É ELA QUE LÊ O QUE ESTÁ GRAVADO EM `businesses.niche`.
+ *
+ * Desde 23/08 a coluna guarda o identificador (`clinica-odontologica`), e
+ * não o rótulo — ver `lib/nichos/gravado.ts` para o porquê e para o que
+ * acontece com o valor que não casa com nenhum.
+ *
+ * Igualdade normalizada, como a irmã acima. O identificador já vem em
+ * caixa baixa e sem acento do backend, então a normalização aqui não muda
+ * nada hoje; ela existe para o valor que veio da coluna, que pode ter
+ * sido escrito por outro caminho.
+ * ============================================================
+ */
+export function nichoPeloIdentificador(
+  nichos: Nicho[],
+  identificador: string,
+): Nicho | undefined {
+  const alvo = normalizar(identificador);
+  if (!alvo) return undefined;
+  return nichos.find((n) => normalizar(n.nicho) === alvo);
 }
 
 /**

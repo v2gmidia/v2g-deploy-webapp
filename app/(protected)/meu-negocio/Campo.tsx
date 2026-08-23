@@ -2,6 +2,16 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { dinheiro } from "@/lib/formato";
+import { SeletorDeNicho } from "@/components/ui/SeletorDeNicho";
+import {
+  lerNichoGravado,
+  rotuloDoNichoGravado,
+  LISTA_NAO_CARREGOU,
+  NICHO_FORA_DA_LISTA,
+  NICHO_GUARDADO_SEM_LISTA,
+  type NichoGravado,
+} from "@/lib/nichos/gravado";
+import type { Nicho } from "@/lib/nichos/tipos";
 import type { CampoNaTela } from "@/lib/perfil/revisao-cliente";
 import {
   confirmarCampoAction,
@@ -21,7 +31,14 @@ const VAZIO: EstadoDaRevisao = {};
  * pendência converte revisão em tarefa, e tarefa com número visível é o que
  * se adia. Ver §6 do desenho antes de acrescentar um.
  */
-export function Campo({ campo }: { campo: CampoNaTela }) {
+export function Campo({
+  campo,
+  nichos,
+}: {
+  campo: CampoNaTela;
+  /** a lista viva, só usada pelo campo que tem `seletorDeNicho` */
+  nichos: Nicho[] | null;
+}) {
   const [editando, setEditando] = useState(false);
   const [confirmado, acaoConfirmar, confirmando] = useActionState(
     confirmarCampoAction,
@@ -39,6 +56,52 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
   const ok = confirmado.ok ?? (editando ? undefined : salvo.ok);
   const ocupado = confirmando || salvando;
 
+  // O que está na coluna `niche` traduzido pela lista viva. `null` nos
+  // outros 25 campos — só o do ramo passa por aqui.
+  const gravado: NichoGravado | null = campo.seletorDeNicho
+    ? lerNichoGravado(nichos, campo.valor)
+    : null;
+
+  // ============================================================
+  // NICHO QUE A LISTA NÃO RECONHECE NÃO GANHA "TÁ CERTO".
+  //
+  // Decisão do Victor, 23/08. Confirmar carimbaria procedência
+  // `confirmado` — o nível mais alto da escala — num valor que o pipeline
+  // não consegue usar para escolher o documento do nicho. O cliente
+  // ficaria com a sensação de ter resolvido, e o dado continuaria mudo.
+  //
+  // E NÃO É ERRO. As duas linhas reais de hoje têm "Clínica /
+  // Consultório", respondido de boa-fé num onboarding que oferecia
+  // aquilo; a fictícia tem "padaria", que é a verdade sobre o negócio. É
+  // PENDÊNCIA VISÍVEL: a linha explica, o botão abre a lista, e nada mais
+  // na tela trava — os outros campos continuam editáveis e o cadastro
+  // continua andando (`docs/handoff-seletor-de-nicho.md` §5).
+  //
+  // Com o catálogo FORA isto é falso de propósito: sem lista não dá para
+  // afirmar que o valor está fora dela, e acusar seria culpar o cliente
+  // pelo nosso defeito. Ver `lerNichoGravado`.
+  // ============================================================
+  const nichoForaDaLista = gravado?.tipo === "nao-reconhecido";
+
+  // ============================================================
+  // CATÁLOGO FORA, COM VALOR GRAVADO: A LINHA NÃO MOSTRA O VALOR NEM
+  // OFERECE BOTÃO.
+  //
+  // Achado no navegador em 23/08, não no código: sem a lista viva não há
+  // como traduzir `clinica-odontologica` em "Dentista", e a tela estava
+  // mostrando o identificador cru para o dono do consultório.
+  //
+  // Sem botão pelo mesmo motivo: o único editor possível sem lista é o
+  // texto livre, e ele trocaria um identificador válido pela frase da
+  // pessoa — a nossa queda rebaixando o dado dela. Os outros 25 campos
+  // continuam editáveis; um endpoint de catálogo fora não trava a tela.
+  //
+  // Campo VAZIO não entra aqui: ali não há valor para proteger nem para
+  // traduzir, e a resposta certa é a mesma do onboarding degradado —
+  // texto livre, com a linha dizendo que a lista não carregou.
+  // ============================================================
+  const nichoSemLista = gravado?.tipo === "sem-lista";
+
   return (
     <div className={`rc-campo ${campo.origem === "confirmado" ? "conferido" : ""}`}>
       <div className="rc-rotulo">
@@ -47,7 +110,34 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
       </div>
 
       {editando ? (
-        campo.opcoes ? (
+        campo.seletorDeNicho ? (
+          nichos ? (
+            <EditorDeNicho
+              campo={campo}
+              nichos={nichos}
+              escolhido={gravado?.tipo === "reconhecido" ? gravado.nicho.nicho : null}
+              acao={acaoSalvar}
+              salvando={salvando}
+              aoDesistir={() => setEditando(false)}
+            />
+          ) : (
+            // CATÁLOGO FORA: o campo aberto, e a tela diz por quê. Não
+            // existe lista de reserva — os chips fixos que havia até
+            // 22/08 não eram nichos, e gravar um deles seria palpite com
+            // cara de escolha do cliente (`docs/decisoes.md`, 22/08).
+            <>
+              <p className="nicho-sem-lista" role="status" aria-live="polite">
+                {LISTA_NAO_CARREGOU}
+              </p>
+              <Editor
+                campo={campo}
+                acao={acaoSalvar}
+                salvando={salvando}
+                aoDesistir={() => setEditando(false)}
+              />
+            </>
+          )
+        ) : campo.opcoes ? (
           <EditorDeOpcoes
             campo={campo}
             acao={acaoSalvar}
@@ -67,12 +157,21 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
           <div className="rc-valor">
             {campo.vazio ? (
               <span className="rc-sem">a gente ainda não sabe</span>
+            ) : nichoSemLista ? (
+              <span className="rc-sem">{NICHO_GUARDADO_SEM_LISTA}</span>
             ) : (
-              <Valor campo={campo} />
+              <Valor campo={campo} gravado={gravado} />
             )}
           </div>
 
           <Origem campo={campo} />
+
+          {/* A PENDÊNCIA, e ela fica ENTRE a origem e o botão: primeiro o
+              que está lá, depois de onde veio, depois por que ainda tem
+              coisa a fazer, e só então o que fazer. Em `--fs-corpo`, como
+              o recado do seletor, e não em vermelho de erro — não achar o
+              próprio ramo numa lista de dez não é erro do cliente. */}
+          {nichoForaDaLista && <p className="rc-nicho-fora">{NICHO_FORA_DA_LISTA}</p>}
 
           <div className="rc-acoes">
             {campo.vazio ? (
@@ -85,6 +184,16 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
                   contar agora
                 </button>
               )
+            ) : nichoSemLista ? null : nichoForaDaLista ? (
+              // Um botão só. O "tá certo" sumiu de propósito — ver o
+              // bloco de `nichoForaDaLista` lá em cima.
+              <button
+                type="button"
+                className="btn-linha forte"
+                onClick={() => setEditando(true)}
+              >
+                escolher na lista
+              </button>
             ) : campo.origem === "confirmado" ? (
               <button
                 type="button"
@@ -125,7 +234,31 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
 }
 
 /** O valor de hoje, formatado para leitura — nunca o valor cru da coluna. */
-function Valor({ campo }: { campo: CampoNaTela }) {
+function Valor({
+  campo,
+  gravado,
+}: {
+  campo: CampoNaTela;
+  gravado: NichoGravado | null;
+}) {
+  // ============================================================
+  // O RAMO: A COLUNA GUARDA `clinica-odontologica`, A TELA MOSTRA
+  // "Dentista".
+  //
+  // Esta linha é a metade obrigatória da inversão de 23/08. Sem ela, o
+  // dono do consultório abre a `/meu-negocio` e lê o identificador cru —
+  // jargão puro, na tela que existe para ele conferir o que a gente
+  // entendeu do negócio dele. O `buraco-meu-negocio-nicho-livre.md`
+  // avisou exatamente isto: "se um dia a decisão de armazenamento
+  // inverter para o identificador, esta linha passa a mostrar
+  // `clinica-odontologica` para o dono do consultório — e aí ela é o
+  // conserto obrigatório, não opcional."
+  //
+  // O que a lista não reconhece sai cru mesmo, e é o certo: é a frase que
+  // a própria pessoa escreveu.
+  // ============================================================
+  if (gravado) return <>{rotuloDoNichoGravado(gravado)}</>;
+
   if (campo.parCom) {
     const par = campo.valor as { de: unknown; ate: unknown };
     const de = Number(par.de);
@@ -238,6 +371,71 @@ function EditorDeOpcoes({
             </button>
           </form>
         ))}
+        <button type="button" className="btn-linha fraco" onClick={aoDesistir}>
+          deixa como estava
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * O ramo, com a MESMA lista e a MESMA validação do onboarding.
+ *
+ * ============================================================
+ * O COMPONENTE JÁ EXISTIA COMPARTILHADO — ele nasceu em
+ * `components/ui/` em 22/08 justamente para esta tela.
+ *
+ * Trocar o `input` de texto por ele é metade do conserto. A outra metade
+ * é do servidor: sem `conferirEscolhaDeNicho` na Server Action, isto
+ * seria cosmético — a porta dos fundos continuaria aberta para quem
+ * montasse o POST à mão. Ver `actions.ts`.
+ * ============================================================
+ *
+ * `aoEscolher` manda o RÓTULO, não o identificador, e é de propósito: é o
+ * mesmo contrato do `Chat.tsx`, e é o servidor que traduz contra a lista
+ * viva. Se a tela mandasse o identificador, o servidor teria que confiar
+ * nele — e "confiar no que o cliente mandou" é exatamente o buraco que a
+ * conferência fecha.
+ */
+function EditorDeNicho({
+  campo,
+  nichos,
+  escolhido,
+  acao,
+  salvando,
+  aoDesistir,
+}: {
+  campo: CampoNaTela;
+  nichos: Nicho[];
+  escolhido: string | null;
+  acao: (formData: FormData) => void;
+  salvando: boolean;
+  aoDesistir: () => void;
+}) {
+  // Sem `<form>`: o seletor responde por callback, não por submit. O
+  // `FormData` é montado à mão e entregue à mesma Server Action que os
+  // outros campos usam — um caminho de escrita só, como manda o
+  // `DESPACHO`.
+  function enviar(valor: string, origem: "chip" | "texto") {
+    const dados = new FormData();
+    dados.set("chave", campo.chave);
+    dados.set("valor", valor);
+    dados.set("origem", origem);
+    acao(dados);
+  }
+
+  return (
+    <div className="rc-editor">
+      <SeletorDeNicho
+        nichos={nichos}
+        escolhido={escolhido}
+        ocupado={salvando}
+        aoEscolher={(n) => enviar(n.rotulo, "chip")}
+        aoEscreverLivre={(t) => enviar(t, "texto")}
+        rotuloDoCampo={campo.rotulo}
+      />
+      <div className="rc-acoes">
         <button type="button" className="btn-linha fraco" onClick={aoDesistir}>
           deixa como estava
         </button>

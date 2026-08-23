@@ -2738,6 +2738,18 @@ code {
    erro nem pendência — é campo não conferido. */
 .rc-origem.conferido { color: var(--good); }
 
+/* O ramo que a lista viva não reconhece. Em corpo e em `--ink`, como o
+   recado do seletor no onboarding — e NÃO em `--crit` nem em legenda: não
+   achar o próprio ramo numa lista de dez não é erro do cliente, e a frase
+   precisa ser lida, não escondida. Mesma regra da `.nicho-sem-lista`. */
+.rc-nicho-fora {
+  margin: 6px 0 0;
+  font-size: var(--fs-corpo);
+  color: var(--ink);
+  line-height: 1.45;
+  max-width: 62ch;
+}
+
 .rc-acoes {
   display: flex;
   gap: 8px;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Bubble } from "@/components/ui/Bubble";
 import { SeletorDeNicho } from "@/components/ui/SeletorDeNicho";
 import type { Nicho } from "@/lib/nichos/tipos";
+import { LISTA_NAO_CARREGOU } from "@/lib/nichos/gravado";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
 import { ORDEM, PERGUNTAS, proximaPergunta, type Pergunta } from "./perguntas";
 
@@ -190,8 +191,7 @@ export function Chat({ inicial, nichos }: ChatProps) {
 
               {ehAtual && semLista && (
                 <p className="nicho-sem-lista" role="status" aria-live="polite">
-                  A lista de ramos não carregou agora. Escreva o seu do jeito que você
-                  chama — a gente confere depois.
+                  {LISTA_NAO_CARREGOU}
                 </p>
               )}
 
