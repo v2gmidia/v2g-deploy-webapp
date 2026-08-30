@@ -199,6 +199,23 @@ dizendo de onde ele veio e quando foi conferido. Zero chamada nova ao Meta,
 zero token no fluxo — só o valor que `publicar.ts` já grava. Hoje este ramo
 nunca dispara; ele passa a existir sozinho no dia da primeira publicação.
 
+> **⚠ SUPERADO EM 25/08/2026 — o piso é R$ 750,00/mês (R$ 25,00/dia).**
+>
+> A tabela abaixo continua correta como registro do que foi decidido em
+> 20/08, e o que ela argumenta continua válido **para a pergunta que ela
+> respondia**: quem a gente consegue atender. Em 25/08 a pergunta virou
+> outra — quem consegue **ter resultado** — e a resposta mudou junto.
+>
+> Repare que R$ 300 foi descartado aqui por "começa a recusar cliente
+> pequeno legítimo", e o piso novo é 2,5× isso. Não é contradição: é a
+> constatação de que o cliente pequeno com R$ 150 de verba paga R$ 490 de
+> assinatura, veicula R$ 300 em dois meses, não vê resultado e cancela — a
+> ferramenta vira 76% do gasto dele.
+>
+> O raciocínio inteiro está em `docs/decisoes.md`, 2026-08-25. **Não use a
+> tabela abaixo para justificar um piso**; use-a para entender por que o
+> piso já foi outro.
+
 **(b) Piso desconhecido — hoje, sempre.** Recusar só o que é impossível
 pela **nossa** aritmética, com o número **declarado como nosso**. Minha
 proposta: **R$ 150,00/mês (R$ 5,00/dia)**, com a mensagem dizendo, sem

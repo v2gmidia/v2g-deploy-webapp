@@ -36,6 +36,132 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-08-25 — O piso da verba sobe de R$ 150 para R$ 750/mês
+**Decisão:** `PISO_MENSAL_DA_CASA = 750` (R$ 25/dia).
+
+**A razão mudou, e é isso que importa registrar.** Não foi um número
+corrigido; foi outra pergunta sendo respondida.
+
+Em 20/08 a pergunta era **quem a gente consegue atender**. R$ 300 foi
+descartado por "excluir quem quer testar com pouco, que é justamente o
+nosso público" (`docs/qa3-telas-isoladas.md` §2), e R$ 150 ganhou como
+freio contra o impossível e contra o erro de digitação.
+
+Em 25/08 a pergunta virou **quem consegue ter resultado**. Com verba de
+R$ 150 e assinatura de R$ 490, a ferramenta é **76% do gasto total** do
+cliente: ele veicula R$ 300 em dois meses tendo pago R$ 1.280, não vê
+resultado, e cancela. Com R$ 750 a assinatura cai para **40%** do gasto.
+
+Quem entra abaixo disso não é cliente que a gente perdeu — é cliente que ia
+cancelar em dois meses achando que o produto não funciona.
+
+**Isto não invalida a decisão de 20/08**, e as duas ficam nos autos: aquela
+respondeu bem a pergunta que tinha. O `qa3-telas-isoladas.md` §2 recebeu um
+ponteiro para cá, para os dois documentos não se contradizerem em silêncio.
+
+**Registro:** `lib/verba/limites.ts:43` e o bloco de comentário em cima
+dele; casos de corte em `scripts/conferir-verba.ts` §2.1, incluindo um caso
+novo — R$ 150 **recusado** — que existe para pegar reversão acidental da
+constante.
+
+---
+
+### 2026-08-25 — Verba abaixo do piso vinda da entrevista NÃO é defeito
+**Registrado para não parecer bug depois.**
+
+Enquanto o roteiro do onboarding não pedir R$ 750 como piso **na conversa**,
+o caminho normal da entrevista vai gerar verba abaixo do piso com alguma
+frequência. Não é falha do agente nem do extrator: o agente extrai o que o
+cliente disse, e **o cliente não sabe do piso** — ninguém contou para ele.
+
+São os dois lados chegando na mesma regra por caminhos diferentes, e em
+velocidades diferentes. O webapp já sabe do piso; a conversa ainda não.
+
+**O que acontece, e é o comportamento certo:** o valor é gravado (a resposta
+dele não se perde), o cadastro não fecha, e a `/inicio` cobra a diferença
+com os dois números — o dele e o nosso.
+
+**O conserto de verdade é do roteiro, não do código:** a conversa passa a
+dizer o piso antes de perguntar quanto ele pode investir. Até lá, cada uma
+dessas linhas é uma pessoa que precisa ser avisada, não um erro para
+investigar.
+
+---
+
+### 2026-08-25 — Dívida conhecida: a regra do piso mora numa camada que nem todo caminho atravessa
+**Não é para consertar agora.** É para estar escrito antes de morder.
+
+**Medido em 25/08 contra o `/openapi.json` ao vivo:** o `POST /cadastro` do
+backend aceita `orcamento_mensal_disponivel` com `exclusiveMinimum: 0.0` —
+qualquer valor acima de zero. O mesmo vale em `DadosDoOnboarding` e na
+entrada do `diagnosticar-orcamento`. **O piso de R$ 750 é regra só do
+webapp**, e o nome da constante sempre disse isso ("da casa").
+
+Isso vale hoje porque, na prática, só o webapp escreve. Mas **o n8n chama o
+backend direto**, e a `escrever_apenas_se_livre` (migration `0019`) não tem
+nenhum chamador TypeScript neste repositório — ela é chamada de fora. Ou
+seja: a regra de negócio mora numa camada que nem todo caminho atravessa.
+
+**A consequência concreta, medida:** a trava de completude
+(`lib/cadastro/montar.ts:402`) confere `verba > 0`, **não o piso**. Uma
+verba de R$ 200 escrita por fora fecha o cadastro, e o `dispararSeCompleto()`
+manda o pipeline rodar com um valor que a `/verba` teria recusado na cara do
+cliente.
+
+**O que foi feito em 25/08, e o que continua aberto.** A trava de
+completude passou a conferir o piso (`lib/cadastro/montar.ts`), e ela é a
+única camada que fecha o caminho do n8n **sem tocar no backend** — porque o
+disparo é nosso. Uma verba abaixo do piso escrita por fora agora impede o
+`dispararSeCompleto()`.
+
+Isso **não** impede a escrita, só o disparo. O valor entra no banco e fica
+lá até alguém corrigir.
+
+**O piso dentro da função do banco continua como dívida, e não decidi
+sozinho.** Ele fecharia o n8n de verdade — seria a única camada que todo
+caminho atravessa. Contra: é regra de negócio dentro do SQL, e o número
+passaria a viver em dois lugares que precisam concordar (a constante do
+TypeScript e o literal do plpgsql), que é exatamente a forma de defeito que
+o `lib/verba/limites.ts` existe para não ter. Além de ser migration contra
+banco real, que exige autorização humana.
+
+**Medição de 25/08, para dimensionar:** das quatro linhas de `businesses`,
+**nenhuma real** cai na faixa afetada. A única entre R$ 150 e R$ 750 é a
+`a0328fb8` (Padaria Dona Zilda), que tem `dados_ficticios = true` e é
+barrada antes do disparo. A V2G (`a85c37a9`) tem R$ 2.000 e `enviado`. As
+outras duas não têm verba.
+
+### 2026-08-23 — `businesses.niche` guarda o identificador, não o rótulo
+**Decisão:** a coluna passa a guardar `clinica-odontologica`; "Dentista" fica
+para a tela. As duas telas mostram rótulo e validam contra a mesma lista viva.
+**Motivo:** o rótulo é do backend e pode mudar — mexer no `nome_exibicao` do
+`knowledge/` deixaria toda linha antiga com o texto velho, sem nada contando
+que ficou. E é o identificador que escolhe o documento do nicho no pipeline.
+**Por que agora:** medido no banco antes de escrever código — **zero linhas
+tinham rótulo válido** (as três com valor tinham `Clínica / Consultório`, que
+nunca foi nicho, e `padaria`, fictícia). Depois de semanas gravando rótulo, a
+mesma inversão custaria uma migration com mapa escrito à mão.
+**NÃO houve migração de dado, e não deve haver:** o mapa rótulo→identificador
+só existe na lista viva. Cravá-lo numa migration recria a lista paralela que o
+lote do seletor existiu para matar. As linhas antigas se consertam quando um
+humano tocar no campo pela `/meu-negocio`.
+**Registro:** `lib/nichos/gravado.ts`, `conferir:nichos` §§2.1/8/10, e
+`docs/estado/nicho-identificador-23-08.md`.
+
+### 2026-08-23 — Nicho não reconhecido não ganha "tá certo"
+**Decisão (Victor):** na `/meu-negocio`, valor de ramo que a lista viva não
+reconhece continua na lista principal, mostrando o valor, com uma linha
+explicando e um único botão — "escolher na lista". O "tá certo" some.
+**Motivo:** confirmar carimbaria procedência `confirmado`, o nível mais alto
+da escala, num valor que o pipeline não consegue usar. O cliente ficaria com a
+sensação de ter resolvido e o dado continuaria mudo.
+**Descartado:** mandar o campo para a seção "o que a gente ainda não sabe" —
+ela é a seção do campo VAZIO, e dizer que não sabemos sobre um campo
+preenchido é impreciso. E manter o "tá certo", pelo motivo acima.
+**Não é erro, e a tela não trata como erro:** em `--fs-corpo` e `--ink`, nunca
+em `--crit`. Quem tem "Clínica / Consultório" respondeu de boa-fé um
+onboarding que oferecia aquilo. Nada mais na tela trava.
+
 ### 2026-08-22 — A reserva de nicho sai; sobra o texto livre
 **Decisão:** com o `GET /nichos` fora, a tela não mostra chip nenhum. Só o
 campo de texto, mais uma linha dizendo que a lista não carregou.

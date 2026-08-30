@@ -1,8 +1,12 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/consultar";
-import { montarCadastro, type NegocioParaCadastro, type Pendencia } from "@/lib/cadastro/montar";
+import {
+  COLUNAS_DO_CADASTRO,
+  montarCadastro,
+  type NegocioParaCadastro,
+  type Pendencia,
+} from "@/lib/cadastro/montar";
 import { DIAS_ATE_TROCAR_DE_DONO } from "@/lib/cadastro/pendencias";
 
 /**

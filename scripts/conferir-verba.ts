@@ -64,8 +64,8 @@ secao("0. controle negativo — a asserção pega erro quando existe");
 
 secao("1. os limites são UM número só, não uma cópia por tela");
 {
-  ok(PISO_MENSAL_DA_CASA === 150, `piso da casa = R$ ${PISO_MENSAL_DA_CASA},00/mês`);
-  ok(PISO_MENSAL_DA_CASA / DIAS === 5, "que dá R$ 5,00 por dia");
+  ok(PISO_MENSAL_DA_CASA === 750, `piso da casa = R$ ${PISO_MENSAL_DA_CASA},00/mês`);
+  ok(PISO_MENSAL_DA_CASA / DIAS === 25, "que dá R$ 25,00 por dia");
   ok(
     TETO_MENSAL_DA_CASA === (TETO_DIARIO_ABSOLUTO_CENTAVOS * DIAS) / 100,
     "o teto mensal é derivado do teto diário, não escrito duas vezes",
@@ -92,9 +92,12 @@ const campoTicket = CAMPOS_DO_CLIENTE.find((c) => c.chave === "businesses.avg_ti
 const CASOS: Array<{ entrada: string; aceita: boolean; nota: string }> = [
   // ---- o piso, dos dois lados
   { entrada: "5", aceita: false, nota: "R$ 5,00 — o valor do QA, que dava R$ 0,17 por dia" },
-  { entrada: "149,99", aceita: false, nota: "R$ 149,99 — um centavo abaixo do piso" },
-  { entrada: "150", aceita: true, nota: "R$ 150,00 — exatamente o piso, e ele PASSA" },
-  { entrada: "150,01", aceita: true, nota: "R$ 150,01 — um centavo acima" },
+  // O piso VELHO, agora do lado de fora. Esta linha é o que pega uma
+  // reversão acidental para 150: se alguém voltar a constante, ela cai.
+  { entrada: "150", aceita: false, nota: "R$ 150,00 — o piso ANTIGO, hoje recusado" },
+  { entrada: "749,99", aceita: false, nota: "R$ 749,99 — um centavo abaixo do piso" },
+  { entrada: "750", aceita: true, nota: "R$ 750,00 — exatamente o piso, e ele PASSA" },
+  { entrada: "750,01", aceita: true, nota: "R$ 750,01 — um centavo acima" },
   // ---- o teto, dos dois lados
   { entrada: "29.999,99", aceita: true, nota: "R$ 29.999,99 — um centavo abaixo do teto" },
   { entrada: "30.000", aceita: true, nota: "R$ 30.000,00 — exatamente o teto, e ele PASSA" },
@@ -134,9 +137,9 @@ secao("2.2 a recusa diz de QUEM é o mínimo — nosso, não do Facebook");
   // bloco indivisível que ESTOURA a faixa em vez de quebrar linha — o
   // mecanismo do D7. A primeira versão desta asserção procurava um espaço
   // comum e falhava contra um código correto.
-  ok(!r.ok && msg.includes("R$ 150,00"), "o número aparece em reais, formatado");
+  ok(!r.ok && msg.includes("R$ 750,00"), "o número aparece em reais, formatado");
   ok(
-    !r.ok && !msg.includes("R$ 150,00"),
+    !r.ok && !msg.includes("R$ 750,00"),
     "e com o espaço não separável do `Intl`, não com um espaço comum",
   );
 }
