@@ -3,11 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarCadastro } from "@/lib/backend/cadastro";
 import {
+  COLUNAS_DO_CADASTRO,
   montarCadastro,
   type CadastroCompleto,
   type NegocioParaCadastro,
 } from "@/lib/cadastro/montar";
-import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/consultar";
 import { MINUTOS_ATE_DESTRAVAR_DISPARO } from "./relogios";
 
 /**

@@ -1,8 +1,11 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/consultar";
-import { montarCadastro, type NegocioParaCadastro } from "@/lib/cadastro/montar";
+import {
+  COLUNAS_DO_CADASTRO,
+  montarCadastro,
+  type NegocioParaCadastro,
+} from "@/lib/cadastro/montar";
 import { resumirPendencias } from "@/lib/cadastro/pendencias";
 import { execucaoDoCliente } from "@/lib/pipeline/execucao-do-cliente";
 import {
@@ -149,7 +152,9 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     // nossa. A constante não é editada: ela é o contrato do que
     // `montarCadastro` lê, e engordá-la faria o `/verba` e o disparo
     // carregarem colunas que não usam.
-    .select(`${COLUNAS_DO_CADASTRO}, cadastro_estado, cadastro_iniciado_em`)
+    // `cadastro_estado` saiu daqui em 25/08: entrou no `COLUNAS_DO_CADASTRO`,
+    // porque a trava do piso passou a lê-lo. Repetir daria coluna duplicada.
+    .select(`${COLUNAS_DO_CADASTRO}, cadastro_iniciado_em`)
     .eq("profile_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)

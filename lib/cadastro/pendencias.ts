@@ -138,17 +138,56 @@ export function resumirPendencias(
   const primeiro = acionaveis[0]!;
   const soUm = acionaveis.length === 1;
 
+  // ============================================================
+  // "AINDA NÃO SEI" É MENTIRA SOBRE UM CAMPO PREENCHIDO.
+  //
+  // O `abaixo_do_piso` é o campo que a pessoa RESPONDEU e cujo valor não
+  // serve. Dizer "ainda não sei quanto você quer investir" para quem
+  // digitou R$ 200 apaga a resposta dela e faz o sistema parecer
+  // desmemoriado — ela vai digitar 200 de novo.
+  //
+  // Por isso estes saem da frase do "ainda não sei" e ganham a própria,
+  // com o número dela e o nosso. O `detalhe` vem do `montarCadastro`, que
+  // é onde os dois números se encontram.
+  // ============================================================
+  const semResposta = acionaveis.filter((p) => p.motivo !== "abaixo_do_piso");
+  const naoServe = acionaveis.filter((p) => p.motivo === "abaixo_do_piso");
+
+  const frases: string[] = [];
+  if (semResposta.length > 0) {
+    frases.push(`Ainda não sei ${lista(semResposta.map((p) => p.rotulo))}.`);
+  }
+  for (const p of naoServe) {
+    // O `detalhe` sempre existe para este motivo — `montarCadastro` o
+    // preenche junto. O fallback é para o caso de alguém acrescentar um
+    // campo com este motivo e esquecer o número.
+    frases.push(
+      p.detalhe
+        ? `Pra sua campanha rodar, ${p.detalhe} por mês.`
+        : `${p.rotulo} está abaixo do nosso mínimo.`,
+    );
+  }
+  if (naoSei.length > 0) {
+    frases.push(`E ${lista(naoSei.map((p) => p.rotulo))} a gente resolve por telefone.`);
+  }
+
+  const soAjuste = semResposta.length === 0 && naoServe.length > 0;
+
   return {
     vazio: false,
-    titulo: soUm ? "Falta uma coisa pro seu anúncio começar" : "Falta pouco pro seu anúncio começar",
-    corpo:
-      `Ainda não sei ${lista(acionaveis.map((p) => p.rotulo))}.` +
-      (naoSei.length > 0
-        ? ` E ${lista(naoSei.map((p) => p.rotulo))} a gente resolve por telefone.`
-        : ""),
+    titulo: soAjuste
+      ? "Falta ajustar sua verba"
+      : soUm
+        ? "Falta uma coisa pro seu anúncio começar"
+        : "Falta pouco pro seu anúncio começar",
+    corpo: frases.join(" "),
     acao: {
       rotulo:
-        primeiro.motivo === "nao_confirmado" ? "Confirmar um valor" : "Terminar meu cadastro",
+        primeiro.motivo === "nao_confirmado"
+          ? "Confirmar um valor"
+          : primeiro.motivo === "abaixo_do_piso"
+            ? "Ajustar minha verba"
+            : "Terminar meu cadastro",
       href: primeiro.onde,
     },
     nossaDivida: false,

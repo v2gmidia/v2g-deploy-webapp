@@ -10,8 +10,11 @@ import {
   type RespostaDeConta,
 } from "@/lib/cadastro/montar";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
-import { montarCadastro, type NegocioParaCadastro } from "@/lib/cadastro/montar";
-import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/consultar";
+import {
+  COLUNAS_DO_CADASTRO,
+  montarCadastro,
+  type NegocioParaCadastro,
+} from "@/lib/cadastro/montar";
 import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import {

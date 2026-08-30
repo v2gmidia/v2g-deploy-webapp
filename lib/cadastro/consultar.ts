@@ -1,19 +1,8 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { montarCadastro, type NegocioParaCadastro, type Pendencia } from "./montar";
+import { COLUNAS_DO_CADASTRO, montarCadastro, type NegocioParaCadastro, type Pendencia } from "./montar";
 
-/**
- * As colunas que `montarCadastro` lê. Uma constante, e não uma string
- * repetida em cada `select`: uma tela que esquecesse `monthly_budget`
- * receberia `undefined`, e `montarCadastro` chamaria de pendência um campo
- * que está preenchido. A tela mentiria sem erro em lugar nenhum.
- */
-export const COLUNAS_DO_CADASTRO =
-  "id, name, description, avg_ticket_min, avg_ticket_max, avg_direct_cost, " +
-  "target_profit_per_customer, monthly_budget, cep, site_url, instagram_handle, " +
-  "atende_somente_no_local, differentiators, guarantee, delivery_time, " +
-  "payment_policy, business_hours, availability, onboarding";
 
 /**
  * As pendências do negócio de quem está logado.

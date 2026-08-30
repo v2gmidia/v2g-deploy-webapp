@@ -1,3 +1,31 @@
+// As extensões `.ts` são explícitas porque `scripts/conferir-cadastro.ts`
+// importa este arquivo direto do Node, sem bundler para resolver
+// especificador sem extensão. Os dois módulos abaixo não importam nada, então
+// a cadeia para aqui. Mesma forma que `lib/perfil/valores.ts` já usa.
+import { dinheiro } from "../formato.ts";
+import { PISO_MENSAL_DA_CASA } from "../verba/limites.ts";
+
+/**
+ * As colunas que `montarCadastro` lê. Uma constante, e não uma string
+ * repetida em cada `select`: uma tela que esquecesse `monthly_budget`
+ * receberia `undefined`, e `montarCadastro` chamaria de pendência um campo
+ * que está preenchido. A tela mentiria sem erro em lugar nenhum.
+ *
+ * MORA AQUI, e não no `consultar.ts` onde nasceu, desde 25/08: ela é o
+ * contrato do que ESTA função lê, e o `consultar.ts` é `server-only` —
+ * o `conferir-cadastro` não conseguia alcançá-la para provar que
+ * `cadastro_estado` está na lista. Constante que ninguém confere é
+ * exatamente como a regra inerte nasce.
+ */
+export const COLUNAS_DO_CADASTRO =
+  "id, name, description, avg_ticket_min, avg_ticket_max, avg_direct_cost, " +
+  // `cadastro_estado` entra aqui, e não em cada `select`: é a coluna que a
+  // regra retroativa do piso da verba lê. Fora desta constante, um `select`
+  // que a esquecesse faria a regra virar inerte sem erro nenhum.
+  "target_profit_per_customer, monthly_budget, cadastro_estado, cep, site_url, instagram_handle, " +
+  "atende_somente_no_local, differentiators, guarantee, delivery_time, " +
+  "payment_policy, business_hours, availability, onboarding";
+
 /**
  * O veredito único sobre "este negócio já pode ser cadastrado no backend?".
  *
@@ -86,6 +114,19 @@ export interface NegocioParaCadastro {
   target_profit_per_customer: number | string | null;
   monthly_budget: number | string | null;
 
+  /**
+   * ============================================================
+   * LIDO PELA REGRA RETROATIVA DO PISO. PRECISA ESTAR NO `select`.
+   *
+   * Está em `COLUNAS_DO_CADASTRO`, e é de lá que todo chamador o recebe.
+   * Se algum `select` novo esquecer esta coluna, ela chega `undefined`,
+   * o negócio deixa de ser reconhecido como já enviado, e a regra que
+   * protege quem já disparou vira regra inerte — o defeito de
+   * `docs/regra-inerte.md`, que já aconteceu neste repositório.
+   * ============================================================
+   */
+  cadastro_estado?: string | null;
+
   // opcionais do schema que já têm coluna — vão junto quando existem
   cep?: string | null;
   site_url?: string | null;
@@ -120,13 +161,36 @@ export type CampoObrigatorio =
  * número na segunda vez só para a tela parar de pedir, que é exatamente o
  * que este desenho inteiro existe para evitar.
  */
-export type MotivoPendencia = "nao_perguntado" | "nao_sei" | "nao_confirmado";
+export type MotivoPendencia =
+  | "nao_perguntado"
+  | "nao_sei"
+  | "nao_confirmado"
+  /**
+   * O campo está preenchido, e o valor não serve.
+   *
+   * Hoje só a verba abaixo do `PISO_MENSAL_DA_CASA`. É diferente de
+   * `nao_perguntado` na tela: não se pede de novo uma coisa que a pessoa
+   * já respondeu — diz-se o que ela respondeu, quanto falta, e oferece-se
+   * o lugar de mudar.
+   */
+  | "abaixo_do_piso";
 
 export interface Pendencia {
   campo: CampoObrigatorio;
   /** o que o cliente lê. Nunca nome de coluna, nunca nome do campo da API. */
   rotulo: string;
   motivo: MotivoPendencia;
+  /**
+   * A frase com os NÚMEROS, quando o motivo depende deles.
+   *
+   * Só `abaixo_do_piso` preenche hoje. Os outros motivos não têm número
+   * para dizer: "não perguntamos" e "não sei" são estados, não medidas.
+   *
+   * Mora aqui, e não na tela, pelo mesmo motivo que o `rotulo`: as duas
+   * superfícies de cliente leem o mesmo `montarCadastro`, e uma frase
+   * montada em cada tela divergiria na primeira edição.
+   */
+  detalhe?: string;
   onde: "/onboarding" | "/onboarding/contas" | "/verba";
   /**
    * Quando a pendência passou a existir, em ISO. Só existe quando dá para
@@ -350,6 +414,7 @@ export function montarCadastro(negocio: NegocioParaCadastro): Cadastro {
     motivo: MotivoPendencia,
     onde: Pendencia["onde"],
     desde?: string,
+    detalhe?: string,
   ) =>
     pendencias.push({
       campo,
@@ -357,6 +422,7 @@ export function montarCadastro(negocio: NegocioParaCadastro): Cadastro {
       motivo,
       onde,
       ...(desde ? { desde } : {}),
+      ...(detalhe ? { detalhe } : {}),
     });
 
   // ---- nome: a coluna nunca é nula, então o provisório é o "vazio" dela
@@ -395,13 +461,55 @@ export function montarCadastro(negocio: NegocioParaCadastro): Cadastro {
     anotar("lucro_desejado_por_cliente", motivoDaConta(lucro, contas.lucro), "/onboarding/contas", contas.lucro?.em);
   }
 
-  // ---- verba: exclusiveMinimum 0. Vive em `/verba` (D2), e não tem
-  // "não sei": é decisão, não fato — ninguém descobre depois quanto quer
-  // gastar.
+  // ---- verba. Vive em `/verba` (D2), e não tem "não sei": é decisão, não
+  // fato — ninguém descobre depois quanto quer gastar.
+  //
+  // ============================================================
+  // A TRAVA CONFERE O PISO, E NÃO `> 0`. É A LINHA QUE SEGURA O DISPARO.
+  //
+  // O `exclusiveMinimum: 0` do schema do backend continua sendo o que ELE
+  // exige — medido em 25/08 no `/openapi.json`. Mas o piso da casa é
+  // nosso, e até 25/08 esta linha só conferia o do backend. O efeito:
+  // uma verba de R$ 200 escrita por FORA do webapp — a
+  // `escrever_apenas_se_livre` da `0019` não tem chamador TypeScript
+  // neste repositório, ela é chamada pelo n8n — fechava o cadastro, e o
+  // `dispararSeCompleto()` mandava o pipeline rodar com um valor que a
+  // `/verba` teria recusado na cara do cliente.
+  //
+  // Esta é a única das camadas que fecha aquele caminho SEM tocar no
+  // backend, porque o disparo é nosso. Ver `docs/decisoes.md`, 25/08, e a
+  // dívida registrada junto: a regra de negócio mora numa camada que nem
+  // todo caminho atravessa.
+  // ============================================================
   const verba = numero(negocio.monthly_budget);
-  const verbaValida = verba !== null && verba > 0;
-  if (!verbaValida) {
+
+  // ============================================================
+  // QUEM JÁ DISPAROU NÃO É TRAVADO RETROATIVAMENTE.
+  //
+  // Mesma regra do lote do nicho: mudar o piso depois do jogo e barrar
+  // quem o backend já aceitou seria trocar a regra com a partida em
+  // andamento. `enviado` é a marca de que o cadastro passou; para essas
+  // linhas vale o piso antigo do schema, `> 0`.
+  //
+  // `enviando` NÃO entra: está em curso, e se falhar volta para o fluxo
+  // normal — onde o piso novo vale.
+  // ============================================================
+  const jaEnviado = negocio.cadastro_estado === "enviado";
+  const pisoAplicavel = jaEnviado ? 0 : PISO_MENSAL_DA_CASA;
+
+  if (verba === null || verba <= 0) {
     anotar("orcamento_mensal_disponivel", "nao_perguntado", "/verba");
+  } else if (verba < pisoAplicavel) {
+    // Preenchido, e não serve. NÃO é `nao_perguntado`: ele respondeu, e
+    // reoferecer a pergunta como se não tivesse respondido apaga o que
+    // ele disse. A frase diz o número dele e o nosso.
+    anotar(
+      "orcamento_mensal_disponivel",
+      "abaixo_do_piso",
+      "/verba",
+      undefined,
+      `sua verba está em ${dinheiro(verba)} por mês e nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA)}`,
+    );
   }
 
   if (pendencias.length > 0) return { completo: false, pendencias };

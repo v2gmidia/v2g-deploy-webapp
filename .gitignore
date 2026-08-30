@@ -35,3 +35,9 @@ Thumbs.db
 .claude/settings.local.json
 # Cache de dedupe do hook — estado de sessão, não configuração.
 .impeccable/hook.cache.json
+
+# Saída dos acompanhamentos de execução (scripts/acompanhar-execucao.ts).
+# Carrega o texto que os agentes escreveram sobre um negócio real — dado de
+# cliente, não artefato de código. O relatório que interessa vive em
+# docs/estado/; o JSON é material de trabalho.
+acompanhamento-*.json

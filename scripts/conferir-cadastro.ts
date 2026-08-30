@@ -17,7 +17,9 @@
  * `/saude-meta` lê. O envio é assunto do lote E.
  */
 
+import { PISO_MENSAL_DA_CASA } from "../lib/verba/limites.ts";
 import {
+  COLUNAS_DO_CADASTRO,
   lerConta,
   montarCadastro,
   NOME_PROVISORIO,
@@ -186,7 +188,10 @@ function negocioCompleto(): NegocioParaCadastro {
     avg_ticket_max: 25,
     avg_direct_cost: 10,
     target_profit_per_customer: 6,
-    monthly_budget: 600,
+    // 900 e não 600: o piso da casa subiu para R$ 750 em 25/08, e um
+    // fixture "completo" abaixo do piso deixaria de ser completo. Ver
+    // `lib/verba/limites.ts`.
+    monthly_budget: 900,
     cep: "18040-000",
     site_url: null,
     instagram_handle: "padariadoze",
@@ -466,6 +471,82 @@ console.log("\n7. campo difícil não vira beco");
       if (c.ondeResponder?.href) ok(`${c.chave} → ${c.ondeResponder.href}`);
       else nok(`${c.chave} é difícil e não diz onde ser respondido`);
     }
+  }
+}
+
+// ---------------------------------------------------------------- piso
+
+console.log("\n9. o piso da verba trava o DISPARO, não só a tela");
+{
+  // Este bloco é a metade que fecha o caminho do n8n. A
+  // `escrever_apenas_se_livre` (0019) não tem chamador TypeScript neste
+  // repositório — ela é chamada de fora, e nenhuma checagem daqui a
+  // alcança. O que alcança é a trava do cadastro, porque o disparo é
+  // nosso. Ver `docs/decisoes.md`, 25/08.
+  const comVerba = (v: number | null, estado?: string | null) => {
+    const n = negocioCompleto();
+    n.monthly_budget = v;
+    if (estado !== undefined) n.cadastro_estado = estado;
+    return montarCadastro(n);
+  };
+
+  const pend = (r: ReturnType<typeof montarCadastro>) =>
+    r.completo ? undefined : r.pendencias.find((x) => x.campo === "orcamento_mensal_disponivel");
+
+  // ---- os dois lados do corte ----
+  if (comVerba(PISO_MENSAL_DA_CASA).completo) ok(`verba = R$ ${PISO_MENSAL_DA_CASA} (o piso) passa`);
+  else nok(`verba = R$ ${PISO_MENSAL_DA_CASA} devia passar`);
+
+  const abaixo = comVerba(PISO_MENSAL_DA_CASA - 0.01);
+  if (abaixo.completo) nok("um centavo abaixo do piso passou, e não devia");
+  else ok("um centavo abaixo do piso NÃO fecha o cadastro");
+
+  // ---- o valor que o n8n escreveria ----
+  const doAgente = comVerba(200);
+  const p200 = pend(doAgente);
+  if (doAgente.completo) {
+    nok("R$ 200 escrito por fora fechou o cadastro — o pipeline dispararia");
+  } else {
+    ok("R$ 200 escrito por fora NÃO fecha o cadastro (era o buraco de 25/08)");
+  }
+  if (p200?.motivo === "abaixo_do_piso") ok("e o motivo é `abaixo_do_piso`, não `nao_perguntado`");
+  else nok(`motivo errado para verba baixa: ${p200?.motivo}`);
+  if (p200?.detalhe?.includes("R$") && p200.detalhe.includes("200")) {
+    ok(`o detalhe traz os dois números: "${p200.detalhe}"`);
+  } else {
+    nok(`o detalhe não traz os números: ${p200?.detalhe}`);
+  }
+
+  // ---- vazio continua sendo vazio, não "abaixo do piso" ----
+  const vazio = pend(comVerba(null));
+  if (vazio?.motivo === "nao_perguntado") ok("verba nula continua `nao_perguntado`, e não `abaixo_do_piso`");
+  else nok(`verba nula deu motivo ${vazio?.motivo}`);
+  const zero = pend(comVerba(0));
+  if (zero?.motivo === "nao_perguntado") ok("verba zero idem");
+  else nok(`verba zero deu motivo ${zero?.motivo}`);
+
+  // ---- a regra retroativa ----
+  // Quem já disparou não é travado. Mesma regra do lote do nicho.
+  if (comVerba(200, "enviado").completo) {
+    ok("verba de R$ 200 com `cadastro_estado = enviado` NÃO trava (regra retroativa)");
+  } else {
+    nok("a regra retroativa não pegou: quem já enviou foi travado");
+  }
+  if (!comVerba(200, "enviando").completo) {
+    ok("`enviando` NÃO ganha a isenção — está em curso, e se falhar volta ao fluxo normal");
+  } else {
+    nok("`enviando` ganhou a isenção, e não devia");
+  }
+  if (!comVerba(200, null).completo) ok("`null` (nunca enviado) é travado");
+  else nok("`null` não foi travado");
+
+  // ---- a armadilha da regra inerte ----
+  // `docs/regra-inerte.md`: predicado lendo coluna ausente do `select` vira
+  // regra que nunca dispara, sem erro em lugar nenhum. Já aconteceu aqui.
+  if (COLUNAS_DO_CADASTRO.includes("cadastro_estado")) {
+    ok("`cadastro_estado` está em COLUNAS_DO_CADASTRO — a regra retroativa não é inerte");
+  } else {
+    nok("`cadastro_estado` FORA do select: a regra retroativa nunca vai disparar");
   }
 }
 

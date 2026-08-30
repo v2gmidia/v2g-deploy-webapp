@@ -28,19 +28,32 @@
 export const DIAS = 30;
 
 /**
- * O PISO DA CASA: R$ 150,00/mês, que dá R$ 5,00/dia.
+ * O PISO DA CASA: R$ 750,00/mês, que dá R$ 25,00/dia.
  *
  * **Não é o mínimo do Facebook**, e toda tela que mostra este número
  * precisa dizer isso com todas as letras — o do Facebook pode ser maior.
- * Este aqui é o freio contra o impossível e contra o erro de digitação:
- * antes dele, R$ 5,00/mês (R$ 0,17 por dia) era aceito e respondido com
- * "Pronto".
  *
- * Decidido em 20/08/2026 (`docs/qa3-telas-isoladas.md` §2) entre R$ 30 —
- * R$ 1/dia, aritmético demais para pegar erro real — e R$ 300, que
- * excluiria quem quer testar com pouco, que é justamente o nosso público.
+ * ============================================================
+ * ELE MUDOU DE 150 PARA 750 EM 25/08/2026, E MUDOU DE PERGUNTA JUNTO.
+ *
+ * Não foi um número corrigido; foi outra pergunta sendo respondida.
+ *
+ * Em 20/08 a pergunta era **quem a gente consegue atender**, e R$ 300 foi
+ * descartado por "excluir quem quer testar com pouco". R$ 150 ganhou como
+ * freio contra o impossível e contra o erro de digitação — antes dele,
+ * R$ 5,00/mês (R$ 0,17 por dia) era aceito e respondido com "Pronto".
+ *
+ * Em 25/08 a pergunta virou **quem consegue ter resultado**. Com verba de
+ * R$ 150 e assinatura de R$ 490, a ferramenta é 76% do gasto total: o
+ * cliente veicula R$ 300 em dois meses tendo pago R$ 1.280, não vê
+ * resultado, e cancela. Com R$ 750 a assinatura cai para 40% do gasto.
+ *
+ * Quem entra abaixo disso não é um cliente que a gente perdeu — é um
+ * cliente que ia cancelar em dois meses achando que o produto não
+ * funciona. Ver `docs/decisoes.md`, 2026-08-25.
+ * ============================================================
  */
-export const PISO_MENSAL_DA_CASA = 150;
+export const PISO_MENSAL_DA_CASA = 750;
 
 /**
  * O teto que a gente publica sem falar com o cliente: R$ 1.000,00 por
