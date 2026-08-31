@@ -2,6 +2,7 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { enviarCadastro } from "@/lib/backend/cadastro";
+import { obter } from "@/lib/backend/cliente";
 import {
   montarCadastro,
   type CadastroCompleto,
@@ -43,7 +44,13 @@ export type ResultadoDisparo =
   | { fez: "nada"; porque: "ja_em_curso" }
   /** já tinha execução: reaproveitou em vez de criar uma segunda */
   | { fez: "reaproveitou"; idExecucao: string }
-  | { fez: "criou"; idExecucao: string }
+  /**
+   * `pipeline` responde a pergunta que o 200 do webhook nao responde.
+   * Nenhum chamador le isto hoje — os quatro fazem `await` e descartam.
+   * Esta aqui porque o dia em que uma tela precisar dizer "criamos, mas
+   * nao comecou" o dado ja existe, e porque o teste consegue afirmar.
+   */
+  | { fez: "criou"; idExecucao: string; pipeline: ConfirmacaoDeInicio }
   | { fez: "falhou"; mensagem: string }
   /** a resposta se perdeu; a execução PODE existir. Reconcilia depois. */
   | { fez: "incerto" };
@@ -183,83 +190,109 @@ async function travar(businessId: string): Promise<boolean> {
 // O n8n
 // ============================================================
 
-/** O header que o nó `Webhook` do n8n confere. Ver `n8n/CONTRATO.md`. */
-const CABECALHO_N8N = "X-V2G-Webhook";
-
 /**
- * Avisa o n8n, SE houver para onde avisar.
+ * OS DOIS CABEÇALHOS POSSÍVEIS, e a escolha entre eles não é nossa.
  *
- * Sem `V2G_N8N_WEBHOOK_URL` no ambiente, nao chama - mesma disciplina do
- * `backendConfigurado()`. A env continua ausente: nenhuma chamada daqui
- * jamais saiu, e por isso mudar o corpo hoje nao muda nada em producao.
- *
- * A HIPOTESE DO POLLING MORREU, MEDIDA EM 22/08/2026. Esta funcao dizia
- * seguir pela hipotese de que o n8n varria `execucoes` atras de
- * `status = 'cadastro_completo'`. Nao varre: nao existe trigger de
- * Postgres, o `pg_cron` nao esta instalado, e o workflow tem exatamente
- * dois gatilhos - o Form Trigger e o webhook para onde isto aponta. Sem
- * esta chamada, o cadastro nasce e nao anda.
- *
- * O CORPO E O CADASTRO INTEIRO, NAO SO O ID. O motivo esta no no
- * `3. classificar-nicho`, que monta o corpo dele a partir de
- * `$('Configuracao').item.json.cadastro.descricao_livre` - e `cadastro`,
- * no caminho do webhook, e literalmente o corpo que sai daqui. Mandando
- * so o id, o campo chega `undefined`, o `JSON.stringify` do no o
- * descarta, sai `{}`, e o backend recusa com 422 no
- * `Field(min_length=10)`. O preco desse 422 nao e a chamada perdida: o
- * no anterior ja moveu a execucao para `pipeline_texto_rodando`, e a
- * maquina de estados do backend nao tem destino de falha - so
- * `aguardando_fotos`. A execucao fica presa ali para sempre, e a
- * retentativa leva 409 no mesmo ponto, tambem para sempre.
- *
- * `id_execucao` e `deve_varrer_site` vao DEPOIS do spread. O
- * `CadastroCompleto` nao tem essas chaves hoje; a ordem e o que garante
- * que ganhar uma amanha nao sequestre o roteamento do fluxo.
- *
- * `deveVarrerSite` VEM DA RESPOSTA DO BACKEND, nao de conta local - quem
- * decide se o site vale uma varredura e ele, e o n8n so roteia. O valor
- * fixo do outro lado (`$json.body.deve_varrer_site || false`, no no
- * `Normalizar webhook`) continua existindo, mas passa a ser o que era
- * para ser: a queda de quem nao mandou, nao o valor de quem mandou.
- *
- * O HEADER `X-V2G-Webhook` E O QUE O n8n CONFERE. Ele nao e o
- * `X-V2G-Token` do backend, e nao deve reaproveitar o valor dele: sao duas
- * superficies (o webhook do n8n e a API do backend) e um segredo so faria
+ * `X-V2G-Webhook` era o único aqui, com um argumento escrito: o webhook do
+ * n8n e a API do backend são duas superfícies, e um segredo só faria
  * rotacionar uma obrigar a rotacionar a outra.
  *
- * O STATUS DA RESPOSTA E CONFERIDO, e isto e novo. Antes a chamada era
- * disparada e esquecida, o que era aceitavel enquanto o webhook estava
- * aberto: so havia erro de rede para acontecer. Com autenticacao na
- * frente, um 403 significa PIPELINE QUE NAO COMECOU, e engolir isso
- * calado e o mesmo defeito que o cadastro que nasce e nao anda. Segue sem
- * lancar - so registra.
+ * O argumento continua bom e a instância não o segue. Em 31/08/2026 ficou
+ * definido que o webhook em produção confere `X-V2G-Token`, com o mesmo
+ * valor do `API_TOKEN` do Easypanel. Quem manda é o n8n que está de pé, não
+ * o comentário — então os dois são suportados, e o que existir no ambiente
+ * é o que sai.
  *
- * Falha aqui nao derruba nada: a execucao existe e continua existindo.
+ * Se um dia a separação voltar, é só preencher `V2G_N8N_WEBHOOK_TOKEN` em
+ * vez de `V2G_API_TOKEN`: o código não precisa mudar.
+ */
+const CABECALHO_N8N = "X-V2G-Webhook";
+const CABECALHO_BACKEND = "X-V2G-Token";
+
+/** Quanto o webhook pode demorar antes de a gente desistir de esperar. */
+const TIMEOUT_WEBHOOK_MS = 10_000;
+
+/**
+ * A configuração do webhook, ou `null` com o motivo já registrado.
+ *
+ * SEPARADA DA CHAMADA DE PROPÓSITO: ela é consultada ANTES de a execução
+ * ser criada. Webhook mal configurado é erro determinístico — vale para
+ * todo disparo, não para este —, e descobrir isso depois de criar a
+ * execução deixa um recurso nascido que ninguém vai consumir. Ver o
+ * passo 5.5.
+ */
+function webhookConfigurado(): { url: string; cabecalhos: Record<string, string> } | null {
+  const url = process.env.V2G_N8N_WEBHOOK_URL;
+  if (!url) {
+    console.error(
+      "[pipeline] V2G_N8N_WEBHOOK_URL ausente ::",
+      "sem ela o cadastro nasce e não anda, e ninguém fica sabendo",
+    );
+    return null;
+  }
+
+  const cabecalhos: Record<string, string> = { "Content-Type": "application/json" };
+
+  const tokenBackend = process.env.V2G_API_TOKEN;
+  const tokenWebhook = process.env.V2G_N8N_WEBHOOK_TOKEN;
+  if (tokenBackend) cabecalhos[CABECALHO_BACKEND] = tokenBackend;
+  if (tokenWebhook) cabecalhos[CABECALHO_N8N] = tokenWebhook;
+
+  if (!tokenBackend && !tokenWebhook) {
+    console.error(
+      "[pipeline] webhook sem token ::",
+      "preencha V2G_API_TOKEN (ou V2G_N8N_WEBHOOK_TOKEN). Sem header o n8n",
+      "responde 403 e o pipeline não começa",
+    );
+    return null;
+  }
+
+  return { url, cabecalhos };
+}
+
+type ResultadoAviso = { ok: true } | { ok: false; motivo: string };
+
+/**
+ * Avisa o n8n. Nunca lança — devolve o que aconteceu.
+ *
+ * A HIPÓTESE DO POLLING MORREU, MEDIDA EM 22/08/2026. Esta função dizia
+ * seguir pela hipótese de que o n8n varria `execucoes` atrás de
+ * `status = 'cadastro_completo'`. Não varre: não existe trigger de
+ * Postgres, o `pg_cron` não está instalado, e o workflow tem exatamente
+ * dois gatilhos — o Form Trigger e o webhook para onde isto aponta. Sem
+ * esta chamada, o cadastro nasce e não anda.
+ *
+ * O CORPO É O CADASTRO INTEIRO, NÃO SÓ O ID. O motivo está no nó
+ * `3. classificar-nicho`, que monta o corpo dele a partir de
+ * `$('Configuracao').item.json.cadastro.descricao_livre` — e `cadastro`,
+ * no caminho do webhook, é literalmente o corpo que sai daqui. Mandando
+ * só o id, o campo chega `undefined`, o `JSON.stringify` do nó o
+ * descarta, sai `{}`, e o backend recusa com 422 no
+ * `Field(min_length=10)`. O preço desse 422 não é a chamada perdida: o
+ * nó anterior já moveu a execução para `pipeline_texto_rodando`, e a
+ * máquina de estados do backend não tem destino de falha — só
+ * `aguardando_fotos`. A execução fica presa ali para sempre, e a
+ * retentativa leva 409 no mesmo ponto, também para sempre.
+ *
+ * `id_execucao` e `deve_varrer_site` vão DEPOIS do spread. O
+ * `CadastroCompleto` não tem essas chaves hoje; a ordem é o que garante
+ * que ganhar uma amanhã não sequestre o roteamento do fluxo.
+ *
+ * `deveVarrerSite` VEM DA RESPOSTA DO BACKEND, não de conta local — quem
+ * decide se o site vale uma varredura é ele, e o n8n só roteia.
+ *
+ * O CORPO DA RECUSA VAI PARA O LOG, e é `.text()` e não `.json()`: o 403
+ * do n8n vem como texto puro, sem `content-type`. Um `.json()` aqui
+ * lançaria em cima do erro e trocaria "403 unauthorized" por "unexpected
+ * token" — o diagnóstico errado no único log que alguém vai ler.
  */
 async function avisarN8n(
+  url: string,
+  cabecalhos: Record<string, string>,
   idExecucao: string,
   cadastro: CadastroCompleto,
   deveVarrerSite: boolean,
-): Promise<void> {
-  const url = process.env.V2G_N8N_WEBHOOK_URL;
-  if (!url) return;
-
-  const token = process.env.V2G_N8N_WEBHOOK_TOKEN;
-  const cabecalhos: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-  if (token) {
-    cabecalhos[CABECALHO_N8N] = token;
-  } else {
-    // Nao interrompe: o webhook PODE estar aberto, e decidir por ele daqui
-    // seria inventar politica. Mas se estiver fechado isto vira 403, entao
-    // a linha abaixo e o unico aviso que alguem vai ter.
-    console.error(
-      "[pipeline] V2G_N8N_WEBHOOK_URL preenchida sem V2G_N8N_WEBHOOK_TOKEN ::",
-      "se o webhook exigir header, o n8n recusa e o pipeline nao comeca",
-    );
-  }
-
+): Promise<ResultadoAviso> {
   try {
     const resposta = await fetch(url, {
       method: "POST",
@@ -269,21 +302,129 @@ async function avisarN8n(
         id_execucao: idExecucao,
         deve_varrer_site: deveVarrerSite,
       }),
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(TIMEOUT_WEBHOOK_MS),
       cache: "no-store",
     });
-    if (!resposta.ok) {
-      console.error(
-        "[pipeline] n8n recusou o aviso ::",
-        `${resposta.status} — execucao ${idExecucao} criada, pipeline NAO iniciado`,
-      );
-    }
-  } catch (erro) {
+
+    if (resposta.ok) return { ok: true };
+
+    // `.catch` porque ler o corpo também pode falhar, e perder o status
+    // por causa disso seria trocar um diagnóstico por nenhum.
+    const texto = await resposta.text().catch(() => "");
+    const motivo = `n8n ${resposta.status}: ${texto.slice(0, 300)}`;
     console.error(
-      "[pipeline] falha ao avisar n8n ::",
-      erro instanceof Error ? erro.name : "desconhecido",
+      "[pipeline] n8n recusou o aviso ::",
+      `${motivo} — execução ${idExecucao} criada, pipeline NÃO iniciado`,
     );
+    return { ok: false, motivo };
+  } catch (erro) {
+    const motivo = erro instanceof Error ? erro.name : "desconhecido";
+    console.error("[pipeline] falha ao avisar n8n ::", motivo);
+    return { ok: false, motivo: `webhook inalcançável (${motivo})` };
   }
+}
+
+// ============================================================
+// A confirmação — opção C
+// ============================================================
+
+/**
+ * Estados que provam que o pipeline SAIU do lugar.
+ *
+ * `cadastro_completo` não está aqui de propósito: é o estado em que a
+ * execução nasce. Encontrar esse valor é encontrar exatamente o que a
+ * criação deixou, e não prova nada sobre o n8n.
+ */
+const ESTADOS_QUE_PROVAM_INICIO = new Set([
+  "pipeline_texto_rodando",
+  "decidindo_canal",
+  "aguardando_fotos",
+  "aguardando_tagueamento",
+  "gerando_criativo",
+  "estrutura_pronta",
+]);
+
+/**
+ * O 200 DO WEBHOOK NÃO PROVA NADA, e é por isso que isto existe.
+ *
+ * O nó `Webhook` do n8n responde em `onReceived`: o 200 sai antes de o
+ * workflow rodar, então ele só prova que o n8n recebeu o pedido — não que
+ * alguma coisa começou. Um workflow que morre no primeiro nó devolve o
+ * mesmo 200 de um que roda inteiro.
+ *
+ * Quem prova é o estado da execução no backend, e por isso a leitura é
+ * dele e não do nosso banco.
+ *
+ * ELE ESPERA, E A ESPERA É O PONTO DELICADO. Como o 200 vem antes do
+ * trabalho, consultar imediatamente encontra `cadastro_completo` quase
+ * sempre — e reportar falha aí seria um alarme falso em todo cadastro. A
+ * janela abaixo é o que separa "não começou" de "ainda não começou".
+ *
+ * O CUSTO É ACEITÁVEL PORQUE ISTO ACONTECE UMA VEZ NA VIDA DO CLIENTE:
+ * só no caminho `criou`, no instante em que o cadastro fecha. Não é um
+ * atraso por gravação de campo — é um atraso na última delas.
+ *
+ * Inconclusivo NÃO é falha. Se a leitura do backend não voltar, a gente
+ * não sabe, e dizer que não começou seria inventar. O observador do
+ * backend (prazo por estado, varredura e aviso) é quem pega esse caso.
+ */
+const TENTATIVAS_DE_CONFIRMACAO = 3;
+const ESPERA_ENTRE_TENTATIVAS_MS = 1_500;
+
+export type ConfirmacaoDeInicio =
+  | { comecou: true; status: string }
+  | { comecou: false; status: string }
+  | { comecou: "indeterminado"; porque: string };
+
+async function confirmarQueComecou(idExecucao: string): Promise<ConfirmacaoDeInicio> {
+  let ultimoStatus = "";
+  let ultimaFalha = "leitura não tentada";
+
+  for (let tentativa = 1; tentativa <= TENTATIVAS_DE_CONFIRMACAO; tentativa++) {
+    await new Promise((r) => setTimeout(r, ESPERA_ENTRE_TENTATIVAS_MS));
+
+    const resultado = await obter(`/execucoes/${idExecucao}`, {
+      contexto: "confirmar-inicio",
+    });
+
+    if (!resultado.ok) {
+      ultimaFalha = resultado.categoria;
+      continue;
+    }
+
+    // Sem `as`: o corpo é `unknown`, e um status ausente é indeterminado,
+    // não "não começou".
+    const corpo = resultado.dados;
+    const status =
+      typeof corpo === "object" && corpo !== null && "status" in corpo
+        ? String((corpo as { status: unknown }).status)
+        : "";
+
+    if (!status) {
+      ultimaFalha = "resposta sem status";
+      continue;
+    }
+
+    ultimoStatus = status;
+    if (ESTADOS_QUE_PROVAM_INICIO.has(status)) {
+      return { comecou: true, status };
+    }
+  }
+
+  if (ultimoStatus) {
+    console.error(
+      "[pipeline] o pipeline NÃO começou ::",
+      `execução ${idExecucao} continua em "${ultimoStatus}" depois de`,
+      `${TENTATIVAS_DE_CONFIRMACAO} leituras. O n8n respondeu 200 e não fez nada.`,
+    );
+    return { comecou: false, status: ultimoStatus };
+  }
+
+  console.error(
+    "[pipeline] não deu para confirmar o início ::",
+    `execução ${idExecucao}, motivo: ${ultimaFalha}`,
+  );
+  return { comecou: "indeterminado", porque: ultimaFalha };
 }
 
 // ============================================================
@@ -409,6 +550,26 @@ async function disparar(): Promise<ResultadoDisparo> {
     return { fez: "nada", porque: `faltam ${cadastro.pendencias.length} campos` };
   }
 
+  // ---------- 5.5. o webhook existe? ANTES de criar ----------
+  //
+  // Webhook mal configurado e erro deterministico: vale para todo disparo,
+  // nao para este. Descobrir depois de criar deixa uma execucao nascida que
+  // ninguem vai consumir — e foi exatamente assim que ninguem soube que o
+  // pipeline nunca disparou.
+  //
+  // NAO LANCA. A invariante 4 nao e preciosismo: quem chama acabou de salvar
+  // um campo com sucesso, e uma excecao daqui faria a tela dizer que a
+  // gravacao falhou quando ela funcionou. Marcar `falhou` com o motivo
+  // escrito e igualmente barulhento e nao mente para o cliente.
+  const webhook = webhookConfigurado();
+  if (!webhook) {
+    await marcar(negocio.id, {
+      cadastro_estado: "falhou",
+      cadastro_erro: "Webhook do n8n nao configurado. Ninguem foi avisado.",
+    });
+    return { fez: "falhou", mensagem: "webhook do n8n nao configurado" };
+  }
+
   // ---------- 6. camada 3: trava ----------
   if (!(await travar(negocio.id))) {
     return { fez: "nada", porque: "ja_em_curso" };
@@ -445,21 +606,44 @@ async function disparar(): Promise<ResultadoDisparo> {
   // camada 2 a encontra pelo `cliente_id`, que o backend acabou de
   // gravar. O pior caso é o negócio esperar até a próxima gravação de
   // campo — não é uma execução duplicada.
-  if (!(await ligarAoNegocio(resposta.dados.idExecucao, negocio.id))) {
-    await avisarN8n(
+  const avisar = () =>
+    avisarN8n(
+      webhook.url,
+      webhook.cabecalhos,
       resposta.dados.idExecucao,
       cadastro.payload,
       resposta.dados.deveVarrerSite,
     );
+
+  if (!(await ligarAoNegocio(resposta.dados.idExecucao, negocio.id))) {
+    await avisar();
     return { fez: "incerto" };
   }
 
   await marcar(negocio.id, { cadastro_estado: "enviado", cadastro_erro: null });
-  await avisarN8n(
-    resposta.dados.idExecucao,
-    cadastro.payload,
-    resposta.dados.deveVarrerSite,
-  );
 
-  return { fez: "criou", idExecucao: resposta.dados.idExecucao };
+  const aviso = await avisar();
+  if (!aviso.ok) {
+    // A execucao existe e o n8n nao soube. Isso NAO e `falhou`: o cadastro
+    // foi enviado e o recurso nasceu — desfazer seria mentira. O que se
+    // registra e que ninguem comecou, no lugar onde alguem olha.
+    await marcar(negocio.id, { cadastro_erro: aviso.motivo, cadastro_estado: "enviado" });
+    return {
+      fez: "criou",
+      idExecucao: resposta.dados.idExecucao,
+      pipeline: { comecou: false, status: "webhook_recusou" },
+    };
+  }
+
+  // ---------- 9. o 200 nao prova nada: confirma ----------
+  const pipeline = await confirmarQueComecou(resposta.dados.idExecucao);
+  if (pipeline.comecou !== true) {
+    const motivo =
+      pipeline.comecou === false
+        ? `O pipeline nao comecou (execucao em "${pipeline.status}").`
+        : `Nao deu para confirmar o inicio (${pipeline.porque}).`;
+    await marcar(negocio.id, { cadastro_erro: motivo, cadastro_estado: "enviado" });
+  }
+
+  return { fez: "criou", idExecucao: resposta.dados.idExecucao, pipeline };
 }
