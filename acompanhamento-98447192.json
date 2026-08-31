@@ -1,0 +1,400 @@
+{
+  "id": "98447192-3968-4fb1-8062-b14d6a8751ae",
+  "iniciadoEm": "2026-08-25T21:41:52.368Z",
+  "amostras": [
+    {
+      "em": "2026-08-25T21:41:53.007Z",
+      "msDesdeInicio": 639,
+      "status": "cadastro_completo",
+      "atualizado_em": "2026-08-19T23:31:51.303028+00:00",
+      "nicho": null,
+      "preenchidas": []
+    },
+    {
+      "em": "2026-08-25T21:41:58.099Z",
+      "msDesdeInicio": 5731,
+      "status": "cadastro_completo",
+      "atualizado_em": "2026-08-19T23:31:51.303028+00:00",
+      "nicho": null,
+      "preenchidas": []
+    },
+    {
+      "em": "2026-08-25T21:42:03.224Z",
+      "msDesdeInicio": 10856,
+      "status": "cadastro_completo",
+      "atualizado_em": "2026-08-19T23:31:51.303028+00:00",
+      "nicho": null,
+      "preenchidas": []
+    },
+    {
+      "em": "2026-08-25T21:42:08.320Z",
+      "msDesdeInicio": 15952,
+      "status": "cadastro_completo",
+      "atualizado_em": "2026-08-19T23:31:51.303028+00:00",
+      "nicho": null,
+      "preenchidas": []
+    },
+    {
+      "em": "2026-08-25T21:42:13.387Z",
+      "msDesdeInicio": 21019,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:11.632879+00:00",
+      "nicho": null,
+      "preenchidas": []
+    },
+    {
+      "em": "2026-08-25T21:42:18.464Z",
+      "msDesdeInicio": 26096,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:11.632879+00:00",
+      "nicho": null,
+      "preenchidas": []
+    },
+    {
+      "em": "2026-08-25T21:42:23.538Z",
+      "msDesdeInicio": 31170,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:22.298179+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:42:28.612Z",
+      "msDesdeInicio": 36244,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:22.298179+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:42:33.684Z",
+      "msDesdeInicio": 41316,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:22.298179+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:42:38.767Z",
+      "msDesdeInicio": 46399,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:22.298179+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:42:43.981Z",
+      "msDesdeInicio": 51613,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:43.225661+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:42:49.069Z",
+      "msDesdeInicio": 56701,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:43.225661+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:42:54.172Z",
+      "msDesdeInicio": 61804,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:43.225661+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:42:59.272Z",
+      "msDesdeInicio": 66904,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:43.225661+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:04.418Z",
+      "msDesdeInicio": 72050,
+      "status": "pipeline_texto_rodando",
+      "atualizado_em": "2026-08-25T21:42:43.225661+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:09.498Z",
+      "msDesdeInicio": 77130,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:07.139119+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:14.566Z",
+      "msDesdeInicio": 82198,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:07.139119+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:19.769Z",
+      "msDesdeInicio": 87401,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:07.139119+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:24.843Z",
+      "msDesdeInicio": 92475,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:29.913Z",
+      "msDesdeInicio": 97545,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:34.993Z",
+      "msDesdeInicio": 102625,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:40.068Z",
+      "msDesdeInicio": 107700,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:45.152Z",
+      "msDesdeInicio": 112784,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:50.257Z",
+      "msDesdeInicio": 117889,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:43:55.339Z",
+      "msDesdeInicio": 122971,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:44:00.551Z",
+      "msDesdeInicio": 128183,
+      "status": "decidindo_canal",
+      "atualizado_em": "2026-08-25T21:43:22.039958+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta"
+      ]
+    },
+    {
+      "em": "2026-08-25T21:44:05.633Z",
+      "msDesdeInicio": 133265,
+      "status": "aguardando_fotos",
+      "atualizado_em": "2026-08-25T21:44:04.406526+00:00",
+      "nicho": "generico",
+      "preenchidas": [
+        "classificacao",
+        "diagnostico",
+        "oferta",
+        "copy"
+      ]
+    }
+  ],
+  "final": {
+    "id": "98447192-3968-4fb1-8062-b14d6a8751ae",
+    "status": "aguardando_fotos",
+    "nicho": "generico",
+    "requer_revisao": true,
+    "confianca_minima": 0.25,
+    "motivos_revisao": [
+      "classificar-nicho: confianca 0.83",
+      "construir-oferta: confianca 0.25",
+      "decidir-canal: confianca 1.00",
+      "gerar-copy: confianca 0.54"
+    ],
+    "nome_negocio": "V2G",
+    "criado_em": "2026-08-19T23:31:51.303021+00:00",
+    "atualizado_em": "2026-08-25T21:44:04.406526+00:00",
+    "classificacao": {
+      "nicho": "generico",
+      "confianca": 0.83,
+      "justificativa": "A descrição — \"assinatura mensal que cuida do tráfego pago de pequenos negócios com IA, no lugar da agência\" — é um serviço B2B de marketing/software, que não corresponde a nenhum dos nichos de negócio local disponíveis.",
+      "requer_revisao": true,
+      "candidatos_alternativos": []
+    },
+    "varredura_site": null,
+    "diagnostico": {
+      "alertas": [
+        "Nicho generico (fallback): o documento do nicho nao declara faixa de preco de referencia, portanto nao foi possivel validar se o ticket de R$ 800,00 esta coerente com o mercado. Vale confirmar com o cliente se esse valor e por procedimento/servico isolado ou por tratamento/pacote completo.",
+        "Estrutura interna dos numeros esta coerente: custo direto (R$ 400,00) representa 50% do ticket e o lucro desejado (R$ 200,00) deixa um CAC-alvo de R$ 200,00, ou seja 25% do ticket disponivel para aquisicao. Nao ha inviabilidade matematica.",
+        "Volume adequado: R$ 2.000,00/mes divididos pelo CPL-alvo de R$ 40,00 projetam cerca de 50 contatos por mes, bem acima do minimo de ~10 necessario para a Meta sair da fase de aprendizado.",
+        "Orcamento diario recomendado (R$ 66,67 = R$ 2.000,00 / 30 dias) esta acima da faixa de partida de referencia do fallback generico (R$ 25,00/dia). A recomendacao segue o orcamento real informado pelo cliente; se preferir validacao mais conservadora, e possivel iniciar em R$ 25,00-R$ 35,00/dia nas primeiras duas semanas e escalar apos confirmar o CPL real.",
+        "Sem historico de campanhas anteriores: o CPL-alvo de R$ 40,00 e uma referencia teorica derivada da taxa de conversao de 0.2 do nicho. Reavaliar apos os primeiros 14 dias com dados reais."
+      ],
+      "cac_alvo": "200",
+      "cpl_alvo": "40",
+      "confianca": 0.8,
+      "meta_estimada": "entre 35 e 50 contatos por mes",
+      "requer_revisao": false,
+      "objetivo_campanha": "mensagens",
+      "orcamento_diario_recomendado": "66.67"
+    },
+    "oferta": {
+      "usp": "Sem material para USP real: o unico diferencial declarado (\"sou o melhor da regiao\") e autoelogio nao verificavel e nao sobrevive a nenhuma comparacao com concorrente. Provisorio e defensavel apenas isto, ancorado no unico dado concreto informado: pagamento via PIX, sem burocracia e sem intermediario.",
+      "urgencia": "",
+      "confianca": 0.25,
+      "requer_revisao": true,
+      "stack_de_valor": [
+        "Pagamento via PIX — voce fecha e paga na hora, sem cadastro, sem parcela escondida",
+        "Atendimento por mensagem direta — voce descreve o que precisa e recebe resposta do proprio negocio, sem central de atendimento"
+      ],
+      "oferta_headline": "Fale agora no WhatsApp e feche na hora, com pagamento via PIX",
+      "brecha_explorada": "Nenhuma brecha de mercado identificada. O nicho e o fallback generico (sem pesquisa de mercado, sem USPs saturadas mapeadas, canal e temas A_PREENCHER) e os dados de onboarding nao dao interseccao nenhuma: diferencial = autoelogio (\"melhor da regiao\"), garantia = \"Alegria\" (nao e garantia verificavel nem acionavel), prazo = \"1 MIM\" (ambiguo, nao utilizavel em copy), disponibilidade = \"MIL PESSOAS DIA\" (indica folga, portanto urgencia proibida por ser fabricada). Falta tambem saber QUAL e o negocio/servico entregue. Revisao humana obrigatoria: coletar (1) o que o negocio vende de fato, (2) uma garantia concreta e cumprivel, (3) prazo de entrega em unidade clara, (4) prova real disponivel (trabalhos entregues, clientes atendidos). Sem isso, qualquer USP entregue seria cliche ou alegacao enganosa.",
+      "prova_de_confianca": ""
+    },
+    "copy": {
+      "angulos": [
+        {
+          "cta": "Chamar no WhatsApp",
+          "titulo": "Você não quer o serviço. Quer o problema resolvido.",
+          "angulo_origem": "Resultado final, não o serviço",
+          "texto_primario": "Você não acorda querendo contratar {SERVIÇO}. Você acorda querendo aquilo resolvido e fora da sua cabeça.\n\nÉ isso que a gente entrega: você diz o que precisa, a gente diz como resolve e você fecha na hora.\n\nPagamento via PIX, direto comigo. Sem cadastro, sem intermediário, sem burocracia.\n\nChama no WhatsApp e descreve o que você precisa.",
+          "briefing_visual": "o resultado entregue em uso real, não o trabalho sendo feito",
+          "nivel_consciencia": "solution_aware"
+        },
+        {
+          "cta": "Falar no WhatsApp",
+          "titulo": "Fale direto comigo antes de decidir qualquer coisa",
+          "angulo_origem": "Prova que reduz risco",
+          "texto_primario": "O medo não é o preço. É fechar com alguém que você não sabe quem é.\n\nAqui você fala direto com o dono do negócio, por mensagem. Não é atendente, não é central, não é intermediário repassando recado.\n\nVocê descreve o que precisa, entende exatamente o que vai receber e só então decide. O pagamento é via PIX, sem cadastro e sem parcela escondida.\n\nChama no WhatsApp e tira suas dúvidas antes de fechar.",
+          "briefing_visual": "trabalho já entregue, cliente real satisfeito, garantia por escrito quando houver",
+          "nivel_consciencia": "problem_aware"
+        },
+        {
+          "cta": "Perguntar no WhatsApp",
+          "titulo": "Você pergunta o prazo e recebe o prazo",
+          "angulo_origem": "Prazo claro",
+          "texto_primario": "\"Depois a gente combina\" não é resposta.\n\nVocê manda mensagem, descreve o que precisa e recebe o prazo antes de fechar qualquer coisa. Se der para fazer, você sabe quando. Se não der, você também sabe.\n\nFechou, o pagamento é via PIX na hora. Sem cadastro e sem burocracia.\n\nChama no WhatsApp e pergunta o prazo do seu caso.",
+          "briefing_visual": "entrega acontecendo dentro do prazo prometido",
+          "nivel_consciencia": "solution_aware"
+        },
+        {
+          "cta": "Chamar no WhatsApp",
+          "titulo": "Você chama. A gente resolve o resto.",
+          "angulo_origem": "Esforço zero pro cliente",
+          "texto_primario": "Você já tem coisa demais para coordenar no dia. {SERVIÇO} não precisa virar mais uma.\n\nVocê manda uma mensagem contando o que precisa. Eu respondo, alinho o que vai ser feito e conduzo daí em diante.\n\nSem formulário, sem cadastro, sem ficar repetindo a mesma história para três pessoas diferentes. Fechou, paga no PIX.\n\nChama no WhatsApp em uma mensagem só.",
+          "briefing_visual": "processo simples, poucos passos, negócio resolvendo ponta a ponta",
+          "nivel_consciencia": "solution_aware"
+        },
+        {
+          "cta": "Pedir orçamento no WhatsApp",
+          "titulo": "O que assusta não é o valor. É a surpresa no fim.",
+          "angulo_origem": "Custo percebido, não preço",
+          "texto_primario": "Taxa que aparece depois, parcela que ninguém falou, cadastro para preencher, intermediário levando um pedaço.\n\nAqui é o contrário: você fala comigo, entende o que está incluso e paga via PIX, direto. Sem cadastro, sem parcela escondida, sem terceiro no meio.\n\nO combinado é o que sai.\n\nChama no WhatsApp e peça seu orçamento.",
+          "briefing_visual": "condição de pagamento clara, ausência de surpresa",
+          "nivel_consciencia": "problem_aware"
+        }
+      ],
+      "confianca": 0.54,
+      "observacoes": [
+        "Confiança abaixo de 0.60 e revisão obrigatória: o onboarding não informou qual é o serviço vendido. Todos os textos usam o marcador {SERVIÇO} onde o nome real precisa entrar antes de subir. Nenhum anúncio pode rodar com o placeholder.",
+        "Ângulo 'Prova que reduz risco': o campo garantia_oferecida está vazio e não há prova social declarada. Não inventei depoimento nem garantia — ancorei no único elemento verificável informado (contato direto com o negócio, sem intermediário). Se houver garantia real, ela deve substituir esse trecho.",
+        "Ângulo 'Prazo claro': prazo_tipico_entrega não foi informado. Não inventei número de dias. O texto promete apenas que o prazo é dito antes do fechamento, o que a operação consegue cumprir. Se existir prazo típico real, ele deve entrar no lugar.",
+        "Campo Urgência vazio: nenhum dos 5 textos usa escassez, contagem, vaga limitada ou prazo de oferta.",
+        "A USP disponível é fraca (PIX, sem burocracia, sem intermediário) e se repete como sustentação em mais de um ângulo. Os gatilhos são distintos, mas a diferenciação entre os textos seria maior com pelo menos um destes dados: garantia real, prazo típico, número de clientes atendidos ou tempo de mercado."
+      ],
+      "requer_revisao": true
+    }
+  }
+}
