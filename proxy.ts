@@ -13,6 +13,16 @@ import { NextResponse, type NextRequest } from "next/server";
  * mecanismo, arquivo/export renomeados) — como este projeto nasce
  * direto na v16, usamos a convenção atual em vez de começar já com
  * o nome depreciado. Ver https://nextjs.org/docs/messages/middleware-to-proxy
+ *
+ * E O ERRO FÁCIL AQUI É PROCURAR POR `middleware.ts`, NÃO ACHAR, E
+ * CONCLUIR QUE NÃO HÁ MIDDLEWARE. Aconteceu em 31/08/2026, no meio da
+ * investigação do `/auth/confirmar`: a conclusão "nada intercepta a
+ * rota" estava certa — `/auth` não está em `PROTECTED_PREFIXES` — e a
+ * justificativa estava errada, porque este arquivo existe e roda em
+ * tudo que não é asset. Duas coisas dependiam da resposta e teriam sido
+ * respondidas errado: se algum redirect precisa de cuidado com cookie
+ * (precisa — ver `redirecionar`), e se o comentário do
+ * `lib/supabase/server.ts` sobre renovação de sessão é verdade (é).
  */
 const PROTECTED_PREFIXES = [
   "/inicio",
@@ -99,14 +109,54 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  /**
+   * Redireciona SEM PERDER A SESSÃO RENOVADA.
+   *
+   * ============================================================
+   * O BUG QUE ISTO FECHA, medido em 31/08/2026.
+   *
+   * O `setAll` acima escreve os cookies renovados no `supabaseResponse`.
+   * Um `NextResponse.redirect()` cria uma resposta NOVA, que nunca os
+   * recebe — então, quando o `getUser()` deste request renovava a sessão
+   * e o caminho terminava num redirect, o cookie novo era descartado e o
+   * navegador ficava com o antigo. O Supabase rotaciona o refresh token:
+   * o antigo já foi trocado, e a sessão morre na requisição seguinte.
+   *
+   * O sintoma é "às vezes desloga" — intermitente, dependente de o
+   * relógio do token estar perto de expirar, e ligado a uma rota
+   * específica. O formato mais caro de diagnosticar.
+   *
+   * Dois dos três redirects aconteciam COM sessão existente, e o pior é
+   * o mais banal: `/entrar` com o usuário já logado, que é o que faz
+   * quem tem a página nos favoritos.
+   *
+   * POR QUE UMA FUNÇÃO E NÃO TRÊS CÓPIAS DE DUAS LINHAS: a versão
+   * copiada já existia. O `return supabaseResponse` do fim estava certo,
+   * e foram os outros três caminhos que esqueceram — cada um escrito numa
+   * hora diferente, cada um plausível sozinho. Com a função, o quarto
+   * redirect que alguém escrever aqui não tem como esquecer.
+   * ============================================================
+   */
+  function redirecionar(url: URL) {
+    const resposta = NextResponse.redirect(url);
+    for (const cookie of supabaseResponse.cookies.getAll()) {
+      resposta.cookies.set(cookie);
+    }
+    return resposta;
+  }
+
   const { pathname } = request.nextUrl;
   const isProtected = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
 
+  // Sem sessão não há o que renovar, então aqui a cópia é inócua. Passa
+  // por `redirecionar` mesmo assim: um caminho que não precisa mas segue
+  // a mesma regra é mais barato de manter que a exceção que alguém tem
+  // de lembrar por que existe.
   if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/entrar";
     redirectUrl.searchParams.set("next", pathname);
-    return NextResponse.redirect(redirectUrl);
+    return redirecionar(redirectUrl);
   }
 
   // ---------- rotas de OPERADOR ----------
@@ -126,7 +176,7 @@ export async function proxy(request: NextRequest) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = user ? "/inicio" : "/entrar";
       redirectUrl.search = "";
-      return NextResponse.redirect(redirectUrl);
+      return redirecionar(redirectUrl);
     }
   }
 
@@ -134,7 +184,7 @@ export async function proxy(request: NextRequest) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/inicio";
     redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
+    return redirecionar(redirectUrl);
   }
 
   return supabaseResponse;
