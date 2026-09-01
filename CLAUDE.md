@@ -75,7 +75,10 @@ São ~45 documentos. **Não leia todos.** Escolha pelo assunto:
 - `docs/arquitetura.md` — as decisões estruturais e o porquê de cada uma
 
 **Contratos e integração**
-- `docs/contrato-front.md` — o contrato back↔front, tipos e camada `lib/dados/`
+- `docs/contrato-front.md` — **documento de proposta, não de código.** A
+  camada `lib/dados/` que ele desenha nunca foi construída; quem faz esse
+  papel é `lib/backend/`. Vale pela §0, que registra um briefing que
+  contradizia o repositório inteiro.
 - `docs/backend-integracao.md` — como o app fala com o backend
 - `docs/schema-consolidado.md` — o schema do banco
 - `docs/disparo-pipeline.md` — o disparo do pipeline ponta a ponta

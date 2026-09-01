@@ -34,3 +34,19 @@ export function retornoPorReal(receita: number, investido: number): number | nul
   if (!investido || investido <= 0) return null;
   return Math.floor((receita / investido) * 100) / 100;
 }
+
+/**
+ * Dinheiro que chegou em CENTAVOS inteiros.
+ *
+ * O backend do "dia seguinte" fala centavos ("centavos inteiros, nunca
+ * float"), e o `dinheiro()` acima fala reais. A conversão acontece **na
+ * hora de exibir**, aqui, e não na fronteira de rede: dividir por 100 ao
+ * receber jogaria fora a garantia de inteiro logo na porta.
+ *
+ * `null` NÃO VIRA R$ 0,00. Quem chama decide o que escrever no lugar —
+ * "não sabemos" e "não gastou nada" são coisas diferentes, e a tela que
+ * as confunde mente sobre o dinheiro do cliente.
+ */
+export function dinheiroDeCentavos(centavos: number): string {
+  return dinheiro(centavos / 100);
+}

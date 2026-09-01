@@ -36,6 +36,83 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-01 — O que falta para o loop diário funcionar sozinho: um DISPARADOR
+**Decisão (Victor):** `GET /perguntas-pendentes` **não vira tela.**
+
+**O motivo:** ela é a peça que faz a pergunta diária ACONTECER SOZINHA. Se
+virar lista que alguém abre, o produto volta a depender de o dono lembrar de
+responder — e o loop existe justamente para não depender disso.
+
+**O consumidor certo não é tela nenhuma: é um job diário** que lê a lista,
+ordenada pelo maior silêncio, e dispara notificação. **Esse disparador não
+existe** — o contrato do backend diz por extenso que push não existe do lado
+de lá — e não era trabalho deste lote.
+
+**É esta a peça que falta, e ela tem nome.** Enquanto não houver disparador,
+o loop diário está construído e mudo: o cliente só responde se abrir o app
+por conta própria.
+
+**Se alguém quiser uma tela de operador enquanto isso, tudo bem — mas como
+MULETA DECLARADA, não como o desenho.** Uma muleta que não se declara vira
+o desenho por omissão.
+
+**O `nivel` (pergunta → cobrança → oferta de ajuda) é do disparador, não da
+tela.** A `/inicio` mostra a pergunta e pronto; ela não precisa saber o
+nível, e buscar a lista inteira para descobrir o de um cliente seria errado
+já com 300 negócios.
+
+---
+
+### 2026-09-01 — A soma do acumulado: os dois lados se comportam ao contrário
+**Achado do backend, registrado aqui porque o front não pode "consertar".**
+
+No mesmo dia, com duas execuções:
+
+- a **métrica da plataforma SOMA** — duas campanhas no ar gastaram as duas;
+- a **resposta do dono NÃO SOMA** — ele responde "quantas vendas hoje" uma
+  vez por execução, sobre o **mesmo fato do mundo**.
+
+Somar os dois dobraria a receita. E o erro **superestima o retorno**, que é
+o lado errado para errar quando o número na tela é "voltou R$ X" — um
+retorno inflado faz o cliente manter uma campanha que não está pagando.
+
+**Quem resolve é a rota**, `GET /negocios/{id}/consolidado`: uma resposta por
+dia, execução mais recente vence. **O front não refaz essa conta.**
+
+**`dias_com_resposta_de_mais_de_uma_execucao > 0` é defeito de FLUXO, não de
+soma** — significa que a varredura perguntou duas vezes ao mesmo dono no
+mesmo dia. A soma continua certa; o que está errado é ter perguntado duas
+vezes. Vai para diagnóstico (`conferir:dia-seguinte` §4 tem a conferência),
+**nunca** para a tela do cliente: ele não tem o que fazer com isso, e o
+problema é nosso.
+
+---
+
+### 2026-09-01 — `respondeu_hoje` não decide o card sozinho
+**Contexto:** pedido ao backend para resolver "devo mostrar o card de
+pergunta para este cliente agora?". Ele existe e chega nas duas rotas de
+consolidado.
+
+**Resolve, com duas ressalvas que precisam ser fechadas com o backend:**
+
+1. **"Hoje" é o fuso de quem?** Se o backend contar em UTC, às 21h de
+   Brasília já é o dia seguinte lá — e o card reapareceria para um dia que o
+   cliente acabou de responder;
+2. **a pergunta costuma ser sobre ONTEM.** O contrato diz que `dia` é "o dia
+   a que a resposta SE REFERE". Se a tela pergunta "quantas vendas ontem?",
+   um booleano preso a "hoje" responde outra pergunta.
+
+**Enquanto isso não estiver pinado, quem decide o card é
+`jaRespondeu(consolidado, dia)`** (`lib/dia-seguinte/resposta.ts`), que
+pergunta pelo DIA que a tela vai perguntar e lê os campos do dono — não a
+presença do dia na lista, que vai deixar de servir quando o coletor da Meta
+ligar e dias aparecerem só com investimento.
+
+`respondeu_hoje` fica como **conferência cruzada**. Divergência entre os
+dois é sinal, não empate.
+
+---
+
 ### 2026-08-25 — O piso da verba sobe de R$ 150 para R$ 750/mês
 **Decisão:** `PISO_MENSAL_DA_CASA = 750` (R$ 25/dia).
 

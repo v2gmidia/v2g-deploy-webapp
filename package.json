@@ -19,7 +19,8 @@
     "conferir:cascata": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-cascata.ts",
     "conferir:migrations": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-migrations.ts",
   "conferir:nichos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/conferir-nichos.ts",
-    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos",
+  "conferir:dia-seguinte": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/conferir-dia-seguinte.ts",
+    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte",
     "medir:peca": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/medir-peca.mjs",
     "db:migrate": "supabase db push",
     "db:studio": "supabase start"

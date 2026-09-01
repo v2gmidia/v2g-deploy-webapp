@@ -1,5 +1,30 @@
 # Contrato do front — resposta ao briefing
 
+> ## ⚠ DOCUMENTO DE PROPOSTA, NÃO DE CÓDIGO. Conferido em 01/09/2026.
+>
+> **A camada `lib/dados/` da §3 NUNCA FOI CONSTRUÍDA.** Também não existem
+> a `app/api/execucoes/` nem a tela `/execucao/[id]` da §1, nem o hook
+> `useExecucao(id)` com polling.
+>
+> O que existe no lugar é **`lib/backend/`** — que é a forma realizada da
+> opção **(b) do D1**: o Supabase continua sendo a fonte do cliente, e a
+> FastAPI entra como executora de pipeline. A decisão foi tomada **na
+> prática**, escrevendo código, e nunca voltou para cá.
+>
+> **As seis decisões D1–D6 continuam sem resposta NESTE documento.** Duas
+> já foram resolvidas em outro lugar: o D2 pelo lote E (registrado em
+> `buraco-numeros-dificeis.md` §154) e a paleta pelos mockups aprovados.
+>
+> **Cuidado com colisão de nome:** o `D1` daqui ("qual backend manda?") não
+> é o `D1` do `disparo-pipeline.md` §4.2 ("`cliente_id` na ida?"). São
+> dois documentos com numeração própria.
+>
+> **Leia o que está abaixo como o raciocínio de quem propôs, não como o
+> mapa do que existe.** A §0 continua valiosa: ela é o registro de um
+> briefing que descrevia outro backend, outro schema e outra paleta — o
+> caso que originou a regra "se um briefing colado contradiz este
+> repositório, o repositório vence".
+
 Resposta às quatro perguntas do `prompt-claude-code-front-v2g.md`, na
 ordem pedida. Nenhum código foi escrito ainda, como o briefing manda.
 

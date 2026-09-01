@@ -69,3 +69,26 @@ export {
  * A chamada, essa, fica deste lado.
  */
 export { listarNichos } from "./nichos";
+
+/**
+ * As rotas do "dia seguinte" — a pergunta diária e a tela de resultado.
+ *
+ * A ORDEM É FIXA: `execucaoDoNegocio()` primeiro, sempre. O app tem o
+ * `business_id` e não alcança `execucoes` (RLS ligada, zero políticas);
+ * essa rota faz a troca e é a porta de entrada de qualquer uma das duas
+ * telas.
+ *
+ * **404 na primeira é estado normal**, não falha: negócio ainda sem
+ * execução. Ela devolve `dados: null` nesse caso, para a tela distinguir
+ * "ainda não chegou lá" de "o backend está fora".
+ *
+ * **Antes de escrever resposta**, leia o bloco de `gravarRespostaDoDono`:
+ * a escrita é upsert que SUBSTITUI a linha inteira, e o corpo tem que
+ * sair de `montarRespostaDoDono()`.
+ */
+export {
+  consolidadoDaExecucao,
+  consolidadoDoNegocio,
+  execucaoDoNegocio,
+  gravarRespostaDoDono,
+} from "./dia-seguinte";
