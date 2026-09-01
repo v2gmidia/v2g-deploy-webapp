@@ -199,7 +199,25 @@ secao("2. o consolidado — e `null` NUNCA virando zero");
   );
   ok(
     validarConsolidado({ ...CONSOLIDADO_CRU, respondeu_hoje: undefined }) === null,
-    "`respondeu_hoje` ausente reprova (a tela perguntaria de novo a quem já respondeu)",
+    "`respondeu_hoje` AUSENTE reprova (contrato mudado)",
+  );
+  // ============================================================
+  // MAS `null` PASSA, E ISSO DERRUBOU A PERGUNTA DIÁRIA EM 01/09.
+  //
+  // `null` significa "hoje está FORA da janela consultada" — medido contra
+  // a rota real: com `desde=ate=ontem` vem `null`, sem janela vem `false`.
+  // E `desde=ate=ontem` é exatamente o que a Server Action faz para ler o
+  // que já está gravado. Exigindo booleano, o corpo era reprovado e a
+  // pergunta nunca gravava.
+  // ============================================================
+  const foraDaJanela = validarConsolidado({ ...CONSOLIDADO_CRU, respondeu_hoje: null });
+  ok(
+    foraDaJanela !== null && foraDaJanela.respondeuHoje === null,
+    "`respondeu_hoje: null` PASSA — é 'hoje fora da janela', não 'não respondeu'",
+  );
+  ok(
+    validarConsolidado({ ...CONSOLIDADO_CRU, respondeu_hoje: "false" }) === null,
+    "mas string continua reprovando",
   );
   ok(
     validarConsolidado({ ...CONSOLIDADO_CRU, vendas: 2.5 }) === null,
@@ -564,6 +582,28 @@ if (!temEnv) {
                 ` plataforma=${cons.temDadoDaPlataforma}, respondeuHoje=${cons.respondeuHoje})`,
             );
           }
+        }
+
+        // ============================================================
+        // A JANELA DE UM DIA — exatamente o que a Server Action da
+        // pergunta diária faz. Foi aqui que o `respondeu_hoje: null`
+        // apareceu e derrubou a gravação em 01/09.
+        // ============================================================
+        const umDia = "2026-08-31";
+        const j = await fetch(
+          `${base}/negocios/${encodeURIComponent(businessDeTeste!)}/consolidado` +
+            `?desde=${umDia}&ate=${umDia}`,
+          { headers: cabecalho, cache: "no-store" },
+        );
+        ok(j.status === 200, `janela de um dia responde (${j.status})`);
+        if (j.status === 200) {
+          const corpo = (await j.json()) as Record<string, unknown>;
+          ok(corpo.desde === umDia && corpo.ate === umDia, "e a janela pedida é RESPEITADA");
+          const lido = validarConsolidadoDoNegocio(corpo);
+          ok(
+            lido !== null,
+            `o corpo da janela de um dia passa no validador (respondeu_hoje=${JSON.stringify(corpo.respondeu_hoje)})`,
+          );
         }
 
         // O ACUMULADO — a rota que a `/inicio` usa de verdade.

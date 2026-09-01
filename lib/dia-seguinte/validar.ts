@@ -164,12 +164,28 @@ function validarNucleo(o: Record<string, unknown>): ConsolidadoBase | null {
   const diasComOsDoisLados = inteiroOuNulo(o.dias_com_os_dois_lados);
   if (diasComOsDoisLados === undefined || diasComOsDoisLados === null) return null;
 
-  // Sem default nos dois booleanos: `false` é o estado normal hoje, mas
-  // ausência não é `false` — é contrato mudado, e a tela decidiria sozinha
-  // se mostra o lado da plataforma ou se pergunta de novo a quem já
-  // respondeu.
+  // Sem default: `false` é o estado normal hoje, mas ausência não é
+  // `false` — é contrato mudado, e a tela decidiria sozinha se mostra o
+  // lado da plataforma.
   if (typeof o.tem_dado_da_plataforma !== "boolean") return null;
-  if (typeof o.respondeu_hoje !== "boolean") return null;
+
+  // ============================================================
+  // `respondeu_hoje` ACEITA `null`, E ISSO NÃO É AFROUXAR A GUARDA.
+  //
+  // `null` tem significado: hoje está FORA da janela consultada. Medido em
+  // 01/09/2026 — com `desde=ate=ontem`, a rota devolve `null`; sem janela,
+  // devolve `false`.
+  //
+  // Exigir booleano aqui reprovava o corpo inteiro sempre que alguém
+  // consultasse uma janela que não inclui hoje — que é exatamente o que a
+  // Server Action da pergunta diária faz para ler o dia de ontem. A
+  // pergunta não gravava, e o motivo era um `null` legítimo.
+  //
+  // AUSENTE continua reprovando: `undefined` é contrato mudado, `null` é
+  // resposta. A distinção é a mesma do `inteiroOuNulo`.
+  // ============================================================
+  if (o.respondeu_hoje !== null && typeof o.respondeu_hoje !== "boolean") return null;
+  if (!("respondeu_hoje" in o)) return null;
 
   return {
     desde,
@@ -182,7 +198,7 @@ function validarNucleo(o: Record<string, unknown>): ConsolidadoBase | null {
     retornoPorReal,
     diasComOsDoisLados,
     temDadoDaPlataforma: o.tem_dado_da_plataforma,
-    respondeuHoje: o.respondeu_hoje,
+    respondeuHoje: o.respondeu_hoje as boolean | null,
   };
 }
 

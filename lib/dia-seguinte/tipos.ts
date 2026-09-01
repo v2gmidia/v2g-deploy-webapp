@@ -139,8 +139,26 @@ export interface ConsolidadoBase {
    * os campos do dono. Este campo fica como conferência cruzada — e a
    * divergência entre os dois é sinal, não empate.
    * ============================================================
+   *
+   * ============================================================
+   * `null` = HOJE ESTÁ FORA DA JANELA CONSULTADA. Não é "não respondeu".
+   *
+   * MEDIDO em 01/09/2026 contra a rota real: com `desde=ate=2026-08-31`,
+   * o campo volta `null`; sem janela, volta `false`. Faz sentido — ele não
+   * tem como responder sobre um dia que não foi consultado.
+   *
+   * Isto derrubou a pergunta diária inteira: a Server Action consulta com
+   * `desde=ate=ONTEM` para ler o que já está gravado, e essa janela nunca
+   * contém hoje. O validador exigia booleano, reprovava o corpo, e a ação
+   * respondia "não consegui confirmar" para toda resposta — sem nada no
+   * log dizendo que o motivo era um `null` legítimo.
+   *
+   * É a mesma família do `null` NÃO É ZERO da regra 1: ausência de
+   * informação e informação negativa são coisas diferentes, e aqui a
+   * ausência tem uma terceira causa — a pergunta não foi feita.
+   * ============================================================
    */
-  respondeuHoje: boolean;
+  respondeuHoje: boolean | null;
 }
 
 /** `GET /execucoes/{id}/consolidado` — uma rodada do pipeline. */
