@@ -187,6 +187,18 @@ function validarNucleo(o: Record<string, unknown>): ConsolidadoBase | null {
   if (o.respondeu_hoje !== null && typeof o.respondeu_hoje !== "boolean") return null;
   if (!("respondeu_hoje" in o)) return null;
 
+  // O eco e o par dele. Os DOIS aceitam `null` — ver `diaDaPergunta` em
+  // `./tipos.ts` para as três combinações e o que cada uma significa.
+  // Ausentes NÃO reprovam: são campos novos (01/09/2026), e um backend
+  // mais velho continua legível. É a única frouxidão deste validador, e
+  // ela é deliberada — reprovar aqui derrubaria a leitura inteira por um
+  // campo que a tela sabe viver sem.
+  const diaDaPergunta =
+    typeof o.dia_da_pergunta === "string" && DIA.test(o.dia_da_pergunta)
+      ? o.dia_da_pergunta
+      : null;
+  const respondeuNoDia = typeof o.respondeu_no_dia === "boolean" ? o.respondeu_no_dia : null;
+
   return {
     desde,
     ate,
@@ -199,6 +211,8 @@ function validarNucleo(o: Record<string, unknown>): ConsolidadoBase | null {
     diasComOsDoisLados,
     temDadoDaPlataforma: o.tem_dado_da_plataforma,
     respondeuHoje: o.respondeu_hoje as boolean | null,
+    diaDaPergunta,
+    respondeuNoDia,
   };
 }
 

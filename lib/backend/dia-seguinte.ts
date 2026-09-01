@@ -171,13 +171,24 @@ export async function consolidadoDoNegocio(args: {
   /** `YYYY-MM-DD`. Omitidos, valem os defaults do backend. */
   desde?: string;
   ate?: string;
+  /**
+   * O dia sobre o qual a tela vai perguntar. Volta como ECO em
+   * `diaDaPergunta`, junto com `respondeuNoDia` — e é o eco que torna a
+   * resposta legível. Ver `respostaConfiavelSobre()`.
+   */
+  diaDaPergunta?: string;
 }): Promise<Resultado<ConsolidadoDoNegocio>> {
   const resposta = await obter(
     `/negocios/${encodeURIComponent(args.businessId)}/consolidado`,
     {
       contexto: "consolidado-do-negocio",
       timeoutMs: TETO_DE_TELA_MS,
-      params: { profile_id: args.profileId, desde: args.desde, ate: args.ate },
+      params: {
+        profile_id: args.profileId,
+        desde: args.desde,
+        ate: args.ate,
+        dia_da_pergunta: args.diaDaPergunta,
+      },
     },
   );
 
@@ -200,21 +211,19 @@ export async function consolidadoDoNegocio(args: {
  * `POST /execucoes/{id}/resposta-do-dono`
  *
  * ============================================================
- * ISTO ESCREVE, E A ESCRITA É UPSERT QUE SUBSTITUI A LINHA INTEIRA.
+ * ISTO ESCREVE, E O UPSERT FAZ MERGE POR CAMPO (backend, 01/09/2026).
+ *
+ *   campo AUSENTE  → preserva o que está no servidor
+ *   `null`         → APAGA de propósito ("não sei")
+ *   número         → grava. `0` é resposta, não ausência.
  *
  * Não monte o `corpo` à mão. Use `montarRespostaDoDono()` de
- * `lib/dia-seguinte/resposta.ts`, que lê o estado atual do consolidado e
- * reenvia os dois campos — senão corrigir só as vendas APAGA a receita
- * que já estava lá.
+ * `lib/dia-seguinte/resposta.ts`, que omite o que não foi mexido — e é a
+ * omissão que impede apagar um campo que ninguém pediu para apagar.
  *
- * O 201 da segunda chamada não avisa que sobrescreveu. Não há como
- * descobrir o estrago pela resposta.
+ * O 201 não avisa o que mudou. Não há como descobrir estrago pela
+ * resposta.
  * ============================================================
- *
- * `null` é mandado explicitamente, e não omitido: o contrato distingue
- * "não perguntamos / não respondeu" (`null`) de "respondeu que foi zero"
- * (`0`), e omitir o campo perderia essa diferença justo no lugar em que
- * ela foi desenhada.
  */
 export async function gravarRespostaDoDono(args: {
   idExecucao: string;
@@ -224,8 +233,20 @@ export async function gravarRespostaDoDono(args: {
     `/execucoes/${encodeURIComponent(args.idExecucao)}/resposta-do-dono`,
     {
       dia: args.corpo.dia,
-      vendas: args.corpo.vendas,
-      receita_centavos: args.corpo.receitaCentavos,
+      // ============================================================
+      // A OMISSÃO TEM QUE CHEGAR ATÉ O JSON.
+      //
+      // Com o merge por campo, a diferença entre "campo ausente" e
+      // "`null`" é a diferença entre preservar e apagar. Montar a chave
+      // com `undefined` não basta: `JSON.stringify` a descarta, e daria
+      // certo por acidente — mas um `?? null` que alguém acrescentasse
+      // aqui viraria apagamento silencioso. O espalhamento condicional
+      // deixa a intenção explícita.
+      // ============================================================
+      ...(args.corpo.vendas !== undefined ? { vendas: args.corpo.vendas } : {}),
+      ...(args.corpo.receitaCentavos !== undefined
+        ? { receita_centavos: args.corpo.receitaCentavos }
+        : {}),
       pergunta: args.corpo.pergunta,
       ...(args.corpo.origem ? { origem: args.corpo.origem } : {}),
     },

@@ -1,45 +1,44 @@
 import type { ConsolidadoBase, RespostaDoDono } from "./tipos";
 
 /**
- * Montar o corpo do `POST /resposta-do-dono` sem apagar o que já estava lá.
+ * Montar o corpo do `POST /resposta-do-dono`.
  *
  * ============================================================
- * A ARMADILHA QUE ESTA FUNÇÃO EXISTE PARA FECHAR.
+ * SÓ VAI O QUE ELE MEXEU. O RESTO É OMITIDO, NÃO ZERADO.
  *
- * A chave é `(id_execucao, dia)` e a escrita é upsert — então reenviar
- * **SUBSTITUI a linha inteira, não mescla**:
+ * Desde o merge por campo (backend, 01/09/2026) o upsert deixou de
+ * substituir a linha: campo ausente preserva o valor do servidor, `null`
+ * explícito apaga.
  *
- *   1ª resposta: vendas=2, receita=80000
- *   2ª resposta: vendas=5, SEM receita
- *   resultado  : vendas=5, receita=null   ← a receita foi APAGADA
+ * A versão anterior reenviava sempre os dois campos, lidos do
+ * consolidado. Isso era correto sob as duas semânticas — mas deixou de
+ * ser inócuo: **se o consolidado não achasse o dia**, o campo não mexido
+ * ia como `null`, e sob merge `null` APAGA. Janela errada, backend lento,
+ * qualquer motivo — e a receita do cliente sumia.
  *
- * O contrato oferece duas saídas e manda escolher. Escolhemos a primeira
- * — reenviar sempre os dois campos — **com uma correção ao contrato**:
- *
- * ele diz "com os valores atuais NA TELA". Isso está errado. Uma aba
- * aberta há duas horas tem valores velhos, e reenviá-los reescreveria
- * dado novo por cima. Os valores atuais vêm do **CONSOLIDADO**, lido
- * agora, que é o estado real. A tela é memória; o servidor é fato.
+ * Omitir remove esse caminho por completo. Não existe mais um jeito de
+ * esta função apagar um campo que ninguém pediu para apagar.
  * ============================================================
  *
- * Função pura e fora do `"use server"` de propósito: a regra é sutil, e
- * regra sutil que nenhum conferidor alcança é regra em que ninguém
- * confia. Ver `conferir:dia-seguinte`.
+ * O QUE O CONSOLIDADO AINDA FAZ AQUI: só a conferência de que sobra
+ * alguma coisa depois da mudança (ver `NADA_A_RESPONDER`). Ele deixou de
+ * ser necessário para preservar dado — e por isso **não bloqueia mais a
+ * escrita quando falha**. Antes, não conseguir ler impedia gravar; agora
+ * só enfraquece uma checagem local que o backend refaz.
+ *
+ * Função pura e fora do `"use server"`: a regra é sutil, e regra sutil que
+ * nenhum conferidor alcança é regra em que ninguém confia.
  */
 
 /**
  * O que o dono acabou de mexer.
  *
- * A distinção entre `undefined` e `null` **é o miolo**, e não é
- * preciosismo de tipo:
+ * A distinção entre `undefined` e `null` **é o miolo**:
  *
- * - `undefined` — não mexeu neste campo. Vale o que está no servidor.
- * - `null` — disse "não sei". É apagamento DELIBERADO, e passa.
+ * - `undefined` — não mexeu neste campo. É OMITIDO do corpo, e o servidor
+ *   preserva o que já tinha.
+ * - `null` — disse "não sei". Vai explícito, e APAGA.
  * - número — o valor novo. `0` é resposta, não ausência.
- *
- * Sem essa separação, "não sei" e "não mexi" viram a mesma coisa, e uma
- * das duas fica errada: ou o botão "não sei" não apaga nada, ou abrir a
- * tela e salvar apaga o que já estava respondido.
  */
 export interface OQueODonoMexeu {
   vendas?: number | null;
@@ -51,13 +50,19 @@ export type MontagemDaResposta =
   | { ok: false; erro: string };
 
 /**
- * O 422 do backend, evitado antes de sair daqui: "vendas e receita os
- * dois nulos: não é resposta, é ruído".
+ * O recado de quando não sobra resposta nenhuma.
  *
- * Interceptar aqui não é desconfiar do backend — é não gastar um
- * round-trip para descobrir uma coisa que já dá para saber, e não
- * mostrar ao cliente um erro cru de API por uma condição que a tela
- * podia ter previsto.
+ * ============================================================
+ * A CHECAGEM OLHA O RESULTADO, NÃO O PAYLOAD — como o backend passou a
+ * fazer em 01/09.
+ *
+ * `vendas: null` num dia que já tem receita **é resposta válida**: ele
+ * está apagando as vendas e mantendo a receita. Recusar isso porque "um
+ * dos campos é null" olharia o payload, e o payload deixou de ser a
+ * pergunta certa.
+ *
+ * O que não é resposta é o dia ficar SEM NADA depois da mudança.
+ * ============================================================
  */
 export const NADA_A_RESPONDER =
   "Responda pelo menos uma das duas — quantas vendas, ou quanto entrou.";
@@ -77,52 +82,74 @@ export function montarRespostaDoDono(args: {
   pergunta: string;
   mexeu: OQueODonoMexeu;
   /**
-   * O estado real, lido agora. `null` quando não deu para ler — e aí
-   * esta função **não inventa**: ver o bloco abaixo.
+   * O estado atual, quando deu para ler.
    *
-   * `ConsolidadoBase` porque as DUAS rotas servem: a por execução e a do
-   * acumulado do negócio. Esta função só lê `dias`, que é do núcleo
-   * compartilhado — e amarrar a uma delas obrigaria quem tem a outra a
-   * converter, que é como se ganha uma terceira forma do mesmo dado.
+   * `null` NÃO impede mais montar o corpo: com o merge, omitir preserva, e
+   * o que se perde sem ele é só a checagem local de "sobrou alguma coisa"
+   * — que o backend refaz de qualquer forma.
    */
   consolidado: ConsolidadoBase | null;
   origem?: RespostaDoDono["origem"];
 }): MontagemDaResposta {
   const { dia, pergunta, mexeu, consolidado, origem } = args;
 
-  const atual = doServidor(consolidado, dia);
+  const mexeuEmAlgo =
+    mexeu.vendas !== undefined || mexeu.receitaCentavos !== undefined;
+  if (!mexeuEmAlgo) return { ok: false, erro: NADA_A_RESPONDER };
 
-  // ============================================================
-  // SEM CONSOLIDADO, SÓ PASSA O QUE ELE MEXEU DE FATO.
-  //
-  // Não dá para "preservar" um valor que não se conseguiu ler. Mandar
-  // `null` no campo não mexido seria apagar às cegas; mandar um palpite
-  // seria pior. Então: se ele mexeu nos dois, a resposta é completa e
-  // segue. Se mexeu num só e o outro é desconhecido, o que vai é o campo
-  // mexido — e o outro é apagado pelo upsert.
-  //
-  // Isso é perda de dado, e é por isso que quem chama TEM que tentar ler
-  // o consolidado antes. A tela de correção não deve ser oferecida sem
-  // ele.
-  // ============================================================
-  const vendas = mexeu.vendas !== undefined ? mexeu.vendas : atual.vendas;
-  const receitaCentavos =
-    mexeu.receitaCentavos !== undefined ? mexeu.receitaCentavos : atual.receitaCentavos;
-
-  if (vendas === null && receitaCentavos === null) {
-    return { ok: false, erro: NADA_A_RESPONDER };
+  // O RESULTADO depois da mudança — é sobre ele que a checagem é feita.
+  // Sem consolidado não dá para saber o que fica de pé, e aí a checagem é
+  // pulada: o backend a refaz, e recusar aqui por não saber seria impedir
+  // uma resposta legítima por causa de uma leitura que falhou.
+  if (consolidado !== null) {
+    const atual = doServidor(consolidado, dia);
+    const vendasFinal = mexeu.vendas !== undefined ? mexeu.vendas : atual.vendas;
+    const receitaFinal =
+      mexeu.receitaCentavos !== undefined ? mexeu.receitaCentavos : atual.receitaCentavos;
+    if (vendasFinal === null && receitaFinal === null) {
+      return { ok: false, erro: NADA_A_RESPONDER };
+    }
   }
 
   return {
     ok: true,
     corpo: {
       dia,
-      vendas,
-      receitaCentavos,
+      // Omitidos quando não mexeu — ver o bloco do topo. `null` explícito
+      // continua passando, porque apagar é uma escolha.
+      ...(mexeu.vendas !== undefined ? { vendas: mexeu.vendas } : {}),
+      ...(mexeu.receitaCentavos !== undefined
+        ? { receitaCentavos: mexeu.receitaCentavos }
+        : {}),
       pergunta,
       ...(origem ? { origem } : {}),
     },
   };
+}
+
+/**
+ * O `respondeuNoDia` do backend serve para ESTE dia?
+ *
+ * ============================================================
+ * O ECO É A CONDIÇÃO DE LEITURA, NÃO UM ENFEITE.
+ *
+ * O backend devolve `dia_da_pergunta` como eco do que foi pedido. Se ele
+ * não bate com o dia que a tela vai perguntar, o `respondeuNoDia` é sobre
+ * OUTRO dia — e acreditar nele mostraria o card errado, ou o esconderia
+ * quando ele precisava aparecer.
+ *
+ * `null` no eco quer dizer que não pedimos; `null` no `respondeuNoDia`
+ * com eco preenchido quer dizer que o dia está fora do período
+ * consultado. Nos dois casos a resposta não serve.
+ * ============================================================
+ */
+export function respostaConfiavelSobre(
+  consolidado: ConsolidadoBase | null,
+  dia: string,
+): boolean | null {
+  if (!consolidado) return null;
+  if (consolidado.diaDaPergunta !== dia) return null;
+  return consolidado.respondeuNoDia;
 }
 
 /**

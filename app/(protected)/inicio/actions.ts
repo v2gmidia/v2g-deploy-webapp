@@ -86,39 +86,29 @@ export async function responderPerguntaDoDiaAction(entrada: {
   const dia = diaDaPergunta();
 
   // ============================================================
-  // LÊ O ESTADO ATUAL ANTES DE MONTAR. É O QUE IMPEDE O APAGAMENTO.
+  // A LEITURA DEIXOU DE SER OBRIGATÓRIA PARA ESCREVER.
   //
-  // A escrita é upsert e SUBSTITUI a linha inteira: corrigir só as vendas
-  // apagaria a receita. `montarRespostaDoDono` reenvia os dois campos —
-  // com os valores do SERVIDOR, não os da tela. Uma aba aberta há duas
-  // horas tem valor velho, e reenviá-lo reescreveria dado novo por cima.
+  // Antes do merge por campo, não conseguir ler impedia gravar: montar com
+  // um campo só apagaria o outro. Agora o campo não mexido é OMITIDO, e
+  // omitir preserva — então a leitura serve apenas para a checagem local
+  // de "sobrou alguma coisa", que o backend refaz.
   //
-  // NOTA SOBRE O MERGE POR CAMPO (avisado pelo backend em 01/09): quando
-  // ele entrar, mandar só o campo mexido passa a bastar. Mandar os dois
-  // continua CERTO nos dois mundos — sob merge, mandar o valor atual dá
-  // exatamente o mesmo resultado. Por isso não antecipamos: mandar só um
-  // campo é seguro apenas DEPOIS do merge, e errar essa ordem apaga
-  // receita de cliente.
+  // Recusar a resposta do cliente por causa de uma leitura que falhou
+  // seria cobrar dele um problema nosso.
   // ============================================================
   const consolidado = await consolidadoDoNegocio({
     businessId,
     profileId: user.id,
     desde: dia,
     ate: dia,
+    diaDaPergunta: dia,
   });
-
-  if (!consolidado.ok) {
-    // Sem conseguir ler, não se escreve: montar às cegas com um campo só
-    // apagaria o outro. Melhor pedir para tentar de novo que apagar o que
-    // ele já tinha respondido.
-    return { ok: false, erro: "Não consegui confirmar o que você já tinha respondido. Tente de novo." };
-  }
 
   const montagem = montarRespostaDoDono({
     dia,
     pergunta: PERGUNTA_GRAVADA,
     mexeu: { vendas: entrada.vendas, receitaCentavos: entrada.receitaCentavos },
-    consolidado: consolidado.dados,
+    consolidado: consolidado.ok ? consolidado.dados : null,
     origem: "app",
   });
 

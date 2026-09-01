@@ -44,6 +44,7 @@ import {
   jaRespondeu,
   montarRespostaDoDono,
   NADA_A_RESPONDER,
+  respostaConfiavelSobre,
 } from "../lib/dia-seguinte/resposta.ts";
 import type { Consolidado } from "../lib/dia-seguinte/tipos.ts";
 import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "../lib/dia-seguinte/dia.ts";
@@ -149,6 +150,8 @@ const CONSOLIDADO_CRU = {
   dias_com_os_dois_lados: 1,
   tem_dado_da_plataforma: true,
   respondeu_hoje: false,
+  dia_da_pergunta: "2026-09-14",
+  respondeu_no_dia: true,
 };
 
 /** O acumulado do negócio = o núcleo + a identificação + a auditoria da soma. */
@@ -304,7 +307,7 @@ secao("2.1 o acumulado do negócio — e a auditoria da soma");
   );
 }
 
-secao("3. a armadilha do upsert — reenviar SUBSTITUI a linha inteira");
+secao("3. o merge por campo — só vai o que ele mexeu");
 {
   const consolidado = validarConsolidado(CONSOLIDADO_CRU) as Consolidado;
   const DIA = "2026-09-14"; // já tem vendas=3 e receita=160000
@@ -314,77 +317,120 @@ secao("3. a armadilha do upsert — reenviar SUBSTITUI a linha inteira");
     montarRespostaDoDono({ dia: DIA, pergunta: P, mexeu, consolidado: c });
 
   // ============================================================
-  // O CASO QUE O CONTRATO MARCA COMO "o erro mais fácil de cometer".
-  // Corrigir só as vendas NÃO pode apagar a receita.
+  // O CAMPO NÃO MEXIDO É OMITIDO, E NÃO MANDADO COMO `null`.
+  //
+  // Sob merge, ausente preserva e `null` APAGA. A versão anterior
+  // reenviava os dois lidos do consolidado — correto enquanto a leitura
+  // desse certo, e apagamento quando ela não achasse o dia. Omitir tira
+  // esse caminho do mapa.
   // ============================================================
   const soVendas = montar({ vendas: 5 });
   ok(soVendas.ok && soVendas.corpo.vendas === 5, "corrigir só as vendas manda a venda nova");
   ok(
-    soVendas.ok && soVendas.corpo.receitaCentavos === 160000,
-    "e PRESERVA a receita que já estava gravada (era o apagamento silencioso)",
+    soVendas.ok && !("receitaCentavos" in soVendas.corpo),
+    "e a receita é OMITIDA do corpo — o servidor preserva a dele",
   );
 
   const soReceita = montar({ receitaCentavos: 200000 });
   ok(
-    soReceita.ok && soReceita.corpo.vendas === 3,
-    "corrigir só a receita preserva as vendas — o outro lado do mesmo corte",
+    soReceita.ok && !("vendas" in soReceita.corpo),
+    "corrigir só a receita omite as vendas — o outro lado do mesmo corte",
   );
 
-  // ---- "não sei" é apagamento DELIBERADO, e passa ----
+  // ---- "não sei" é apagamento DELIBERADO, e vai explícito ----
   const naoSei = montar({ receitaCentavos: null });
   ok(
-    naoSei.ok && naoSei.corpo.receitaCentavos === null && naoSei.corpo.vendas === 3,
-    '"não sei" na receita apaga a receita e mantém as vendas',
+    naoSei.ok && "receitaCentavos" in naoSei.corpo && naoSei.corpo.receitaCentavos === null,
+    '"não sei" manda `null` EXPLÍCITO — é a diferença entre apagar e não mexer',
   );
-
-  // A distinção que faz tudo isso funcionar: `undefined` é "não mexi",
-  // `null` é "não sei". Sem ela, uma das duas fica errada.
-  const naoMexeu = montar({});
-  ok(
-    naoMexeu.ok && naoMexeu.corpo.vendas === 3 && naoMexeu.corpo.receitaCentavos === 160000,
-    "não mexer em nada reenvia o que estava lá, sem apagar",
-  );
+  ok(naoSei.ok && !("vendas" in naoSei.corpo), "e não toca nas vendas");
 
   // ---- zero é resposta ----
   const zero = montar({ vendas: 0 });
   ok(zero.ok && zero.corpo.vendas === 0, "zero venda vai como 0, e NÃO como null");
 
-  // ---- o 422 evitado antes de sair daqui ----
-  const vazio = montarRespostaDoDono({
-    dia: "2026-09-20",
-    pergunta: P,
-    mexeu: { vendas: null, receitaCentavos: null },
-    consolidado,
-  });
-  ok(!vazio.ok, "os dois nulos não viram requisição — é ruído, e o backend devolveria 422");
-  ok(!vazio.ok && vazio.erro === NADA_A_RESPONDER, "e o recado é o nosso, não o erro cru da API");
+  // ---- não mexeu em nada: não é resposta ----
+  const nada = montar({});
+  ok(!nada.ok && nada.erro === NADA_A_RESPONDER, "não mexer em nada não vira requisição");
 
-  // ---- dia novo, sem nada gravado ----
-  const novo = montarRespostaDoDono({
-    dia: "2026-09-20",
-    pergunta: P,
-    mexeu: { vendas: 2 },
-    consolidado,
-  });
+  // ============================================================
+  // A CHECAGEM OLHA O RESULTADO, NÃO O PAYLOAD — como o backend em 01/09.
+  //
+  // `vendas: null` num dia que JÁ TEM receita é resposta válida: ele está
+  // apagando as vendas e mantendo a receita. Recusar por "um campo é
+  // null" olharia o payload, e o payload deixou de ser a pergunta certa.
+  // ============================================================
+  const apagaUmSo = montar({ vendas: null });
   ok(
-    novo.ok && novo.corpo.vendas === 2 && novo.corpo.receitaCentavos === null,
-    "dia sem resposta anterior manda o que ele deu e `null` no resto",
+    apagaUmSo.ok,
+    "apagar as vendas num dia que tem receita PASSA — a checagem olha o resultado",
   );
 
-  // ---- sem consolidado: não inventa ----
+  // O outro lado: apagar os dois esvazia o dia, e aí não é resposta.
+  const apagaOsDois = montar({ vendas: null, receitaCentavos: null });
+  ok(!apagaOsDois.ok, "apagar os dois esvazia o dia, e isso não é resposta");
+
+  // Num dia SEM nada gravado, apagar um só também não deixa nada de pé.
+  const diaVazio = montarRespostaDoDono({
+    dia: "2026-09-20",
+    pergunta: P,
+    mexeu: { vendas: null },
+    consolidado,
+  });
+  ok(!diaVazio.ok, "e num dia vazio, apagar o único campo também não é resposta");
+
+  // ---- sem consolidado, ESCREVE ASSIM MESMO ----
+  // Antes do merge, não conseguir ler impedia gravar. Agora omitir
+  // preserva, e recusar a resposta do cliente por uma leitura que falhou
+  // seria cobrar dele um problema nosso.
   const cego = montarRespostaDoDono({
     dia: DIA,
     pergunta: P,
     mexeu: { vendas: 5 },
     consolidado: null,
   });
+  ok(cego.ok && cego.corpo.vendas === 5, "sem consolidado, a resposta PASSA");
   ok(
-    cego.ok && cego.corpo.vendas === 5 && cego.corpo.receitaCentavos === null,
-    "sem consolidado, manda só o que ele mexeu — não inventa valor para preservar",
+    cego.ok && !("receitaCentavos" in cego.corpo),
+    "e a receita continua omitida — omitir preserva, mesmo às cegas",
   );
 
   // ---- a pergunta viaja junto, exata ----
   ok(soVendas.ok && soVendas.corpo.pergunta === P, "a pergunta exibida vai no corpo, literal");
+}
+
+secao("3.0 o ECO — sem ele o `respondeuNoDia` não é legível");
+{
+  const c = validarConsolidado(CONSOLIDADO_CRU) as Consolidado;
+  ok(c.diaDaPergunta === "2026-09-14", "o eco chega");
+  ok(
+    respostaConfiavelSobre(c, "2026-09-14") === true,
+    "eco batendo com o dia perguntado: a resposta serve",
+  );
+  // ============================================================
+  // ECO DIFERENTE = RESPOSTA SOBRE OUTRO DIA. Acreditar nela mostraria o
+  // card errado, ou o esconderia quando ele precisava aparecer.
+  // ============================================================
+  ok(
+    respostaConfiavelSobre(c, "2026-09-15") === null,
+    "eco de OUTRO dia: a resposta não serve, e vira null",
+  );
+  const semEco = validarConsolidado({
+    ...CONSOLIDADO_CRU,
+    dia_da_pergunta: null,
+    respondeu_no_dia: null,
+  }) as Consolidado;
+  ok(respostaConfiavelSobre(semEco, "2026-09-14") === null, "sem eco: não pedimos, não serve");
+  ok(respostaConfiavelSobre(null, "2026-09-14") === null, "sem consolidado idem");
+
+  // Ausentes não reprovam o corpo: são campos de 01/09, e um backend mais
+  // velho continua legível.
+  const velho = validarConsolidado({
+    ...CONSOLIDADO_CRU,
+    dia_da_pergunta: undefined,
+    respondeu_no_dia: undefined,
+  });
+  ok(velho !== null && velho.diaDaPergunta === null, "eco AUSENTE não reprova — vira null");
 }
 
 secao("3.1 `jaRespondeu` — pelos campos do dono, não pela presença do dia");

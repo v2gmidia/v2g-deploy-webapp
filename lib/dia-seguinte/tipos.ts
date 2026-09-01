@@ -159,6 +159,29 @@ export interface ConsolidadoBase {
    * ============================================================
    */
   respondeuHoje: boolean | null;
+  /**
+   * O ECO do `dia_da_pergunta` que foi mandado no query.
+   *
+   * ============================================================
+   * SEM O ECO NÃO DÁ PARA LER O `respondeuNoDia`.
+   *
+   * As três combinações, e cada uma quer dizer outra coisa:
+   *
+   *   null + null       não pedimos
+   *   data + true/false  respondeu / não respondeu — resposta de verdade
+   *   data + null        o dia está FORA do período consultado
+   *
+   * Sem o eco, "não perguntei" e "perguntei e o período não cobre" viriam
+   * as duas como `null` e seriam indistinguíveis.
+   *
+   * **CONFIRA QUE O ECO BATE COM O QUE VOCÊ PEDIU** antes de acreditar no
+   * `respondeuNoDia`: eco diferente quer dizer que a resposta é sobre
+   * outro dia. Ver `respostaConfiavelSobre()` em `./resposta.ts`.
+   * ============================================================
+   */
+  diaDaPergunta: string | null;
+  /** ver `diaDaPergunta` — só é legível junto com o eco */
+  respondeuNoDia: boolean | null;
 }
 
 /** `GET /execucoes/{id}/consolidado` — uma rodada do pipeline. */
@@ -214,8 +237,23 @@ export interface ConsolidadoDoNegocio extends ConsolidadoBase {
 export interface RespostaDoDono {
   /** `YYYY-MM-DD` — o dia a que a resposta SE REFERE, não o de hoje. */
   dia: string;
-  vendas: number | null;
-  receitaCentavos: number | null;
+  /**
+   * ============================================================
+   * AUSENTE ≠ `null`, E A DIFERENÇA É O QUE PROTEGE O DADO.
+   *
+   * Desde o merge por campo (backend, 01/09/2026):
+   *
+   *   campo AUSENTE  → preserva o que está no servidor
+   *   `null`         → APAGA de propósito ("não sei")
+   *   número         → grava. `0` é resposta, não ausência.
+   *
+   * Por isso são opcionais no tipo: omitir é uma das três coisas que se
+   * pode querer dizer, e um `number | null` obrigatório tornaria essa
+   * impossível de expressar.
+   * ============================================================
+   */
+  vendas?: number | null;
+  receitaCentavos?: number | null;
   /**
    * O texto EXATO que a tela mostrou. Obrigatório, e é texto, não código.
    *
