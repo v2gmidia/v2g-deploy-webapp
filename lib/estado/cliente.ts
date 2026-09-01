@@ -6,7 +6,7 @@ import {
   montarCadastro,
   type NegocioParaCadastro,
 } from "@/lib/cadastro/montar";
-import { consolidadoDoNegocio, execucaoDoNegocio } from "@/lib/backend";
+import { backendConfigurado, consolidadoDoNegocio, execucaoDoNegocio } from "@/lib/backend";
 import type {
   ConsolidadoDoNegocio,
   ExecucaoDoNegocio,
@@ -298,6 +298,50 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   ]);
   const execucaoDoDiaSeguinte = respExecucao.ok ? respExecucao.dados : null;
   const acumulado = respAcumulado.ok ? respAcumulado.dados : null;
+
+  // ============================================================
+  // POR QUE O CARD NÃO APARECEU — E ISTO EXISTE PORQUE JÁ FALTOU.
+  //
+  // Em 01/09 o card da pergunta diária não renderizou numa conta real, com
+  // a rota provada por `curl`, e o console LIMPO. A investigação levou uma
+  // rodada inteira porque os dois caminhos que zeram a execução são
+  // silenciosos, e por bons motivos separados:
+  //
+  //   - backend não configurado: o `cliente.ts` não loga de propósito —
+  //     "poluir o log com isso treina todo mundo a ignorar o log";
+  //   - 404: `execucaoDoNegocio` devolve `dados: null` sem logar, porque
+  //     negócio sem execução é estado NORMAL, não erro.
+  //
+  // Cada decisão está certa sozinha. Juntas, produzem uma tela que some
+  // sem deixar rastro — e "não tem campanha ainda", "o backend está fora"
+  // e "o `profile_id` não bate" viram a mesma ausência.
+  //
+  // `warn` e não `error`: nenhum desses três é defeito. O que era defeito
+  // é não dar para saber qual.
+  // ============================================================
+  if (execucaoDoDiaSeguinte === null) {
+    console.warn(
+      "[dia-seguinte] sem execução — o card não vai aparecer ::",
+      JSON.stringify({
+        negocio: linha.id,
+        backendConfigurado: backendConfigurado(),
+        motivo: respExecucao.ok
+          ? "404 — negócio sem execução, ou profile_id que não bate"
+          : respExecucao.categoria,
+      }),
+    );
+  }
+
+  if (acumulado === null) {
+    console.warn(
+      "[dia-seguinte] sem acumulado — os números do dono não vão aparecer ::",
+      JSON.stringify({
+        negocio: linha.id,
+        backendConfigurado: backendConfigurado(),
+        motivo: respAcumulado.ok ? "corpo ilegível" : respAcumulado.categoria,
+      }),
+    );
+  }
 
   // ============================================================
   // A `/inicio` PASSA A TER NÚMERO QUANDO O ACUMULADO TEM.
