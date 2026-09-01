@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { dinheiroDeCentavos } from "@/lib/formato";
 import {
   centavosDoQueFoiDigitado,
   PERGUNTA_DE_RECEITA,
@@ -56,12 +57,23 @@ interface PerguntaDoDiaProps {
    * respondeu, não pergunta mais" perderia metade do dado todo dia.
    */
   respondeuAlgo: boolean;
+  /**
+   * O dia sobre o qual se pergunta, `YYYY-MM-DD`.
+   *
+   * Entra para o RÓTULO dizer o período. A tela de resultado mostra o
+   * ACUMULADO ("O que você me contou"); este card mostra UM DIA. Hoje são
+   * o mesmo número, porque só há um dia respondido — amanhã divergem, e
+   * dois "vendas" diferentes sem período na mesma tela é a pessoa
+   * concluindo que um dos dois está errado.
+   */
+  dia: string;
 }
 
 export function PerguntaDoDia({
   vendasAtuais,
   receitaAtualCentavos,
   respondeuAlgo,
+  dia,
 }: PerguntaDoDiaProps) {
   const [vendas, setVendas] = useState(
     vendasAtuais === null ? "" : String(vendasAtuais),
@@ -71,7 +83,26 @@ export function PerguntaDoDia({
   );
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [pronto, setPronto] = useState(false);
+
+  // ============================================================
+  // O QUE ESTÁ SALVO VIVE AQUI, E NÃO SÓ NAS PROPS.
+  //
+  // Depois de gravar, o `revalidatePath` atualiza o servidor — mas este
+  // componente não recebe props novas sem um refresh do router. Ler as
+  // props para montar o resumo mostraria o valor ANTERIOR logo depois de
+  // salvar, que é exatamente o momento em que a pessoa está conferindo se
+  // acertou.
+  // ============================================================
+  const [salvo, setSalvo] = useState<{ vendas: number | null; receita: number | null }>({
+    vendas: vendasAtuais,
+    receita: receitaAtualCentavos,
+  });
+
+  // O card fechado (resumo) ou aberto (campos). Nasce aberto enquanto
+  // faltar resposta, e fechado quando já está tudo respondido.
+  const [corrigindo, setCorrigindo] = useState(
+    vendasAtuais === null || receitaAtualCentavos === null,
+  );
 
   async function enviar(naoSei: "vendas" | "receita" | null) {
     if (enviando) return;
@@ -92,19 +123,48 @@ export function PerguntaDoDia({
       setErro(resultado.erro ?? "Não consegui guardar sua resposta.");
       return;
     }
-    setPronto(true);
+
+    // O que ficou salvo, do ponto de vista do servidor: o campo mexido
+    // mudou, o omitido continua como estava. É a mesma regra do merge —
+    // e refazê-la aqui é o que deixa o resumo certo sem esperar refresh.
+    setSalvo((antes) => ({
+      vendas: naoSei === "vendas" ? null : (vendasDoQueFoiDigitado(vendas) ?? antes.vendas),
+      receita:
+        naoSei === "receita" ? null : (centavosDoQueFoiDigitado(receita) ?? antes.receita),
+    }));
+    setCorrigindo(false);
   }
 
-  if (pronto) {
+  const tudoRespondido = salvo.vendas !== null && salvo.receita !== null;
+
+  // ============================================================
+  // RESPONDIDO, O CARD PARA DE SER CARD.
+  //
+  // Decisão do Victor, 01/09: o card FICA mesmo com os dois respondidos,
+  // porque "o dono digitando no celular vai errar, e errar em campo de
+  // dinheiro sem poder corrigir é pior que perguntar de novo".
+  //
+  // Mas ele não pode ficar do mesmo tamanho. Na tela da cadeia o herói é o
+  // próximo passo — hoje `aguardando_fotos`, o ÚNICO estado que pede ação
+  // do cliente —, e um card titulado embaixo disputa atenção justamente
+  // com a coisa que precisa dele. Na tela de resultado ele repetiria
+  // números que o bloco "O que você me contou" já mostra.
+  //
+  // Então: sem `<h2>`, sem `.card`, sem chrome. Uma linha que diz o que
+  // ficou guardado e oferece a correção. O peso volta só quando ele
+  // escolhe corrigir.
+  // ============================================================
+  if (tudoRespondido && !corrigindo) {
     return (
-      <section className="rc-bloco">
-        <div className="card">
-          {/* Sem confete: guardar um número não é conquista, é a pessoa
-              fazendo um favor à gente. Celebração aqui seria a marca
-              comemorando o próprio trabalho. */}
-          <p className="rc-abertura">Anotado. É isso que faz a conta fechar.</p>
-        </div>
-      </section>
+      <p className="rc-tranquilo">
+        {/* O período está no rótulo de propósito: a tela de resultado
+            mostra o ACUMULADO, e este número é de um dia só. */}
+        Ontem você respondeu: {salvo.vendas}{" "}
+        {salvo.vendas === 1 ? "venda" : "vendas"}, {dinheiroDeCentavos(salvo.receita!)}.{" "}
+        <button className="text-fallback" type="button" onClick={() => setCorrigindo(true)}>
+          corrigir
+        </button>
+      </p>
     );
   }
 

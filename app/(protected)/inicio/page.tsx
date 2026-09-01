@@ -127,20 +127,30 @@ export default async function InicioPage() {
   const vendasDeOntem = linhaDeOntem?.viraramVenda ?? null;
   const receitaDeOntem = linhaDeOntem?.voltouCentavos ?? null;
 
-  // Enquanto FALTAR um dos dois, o card continua. Responder "umas 3" de
-  // cabeça e deixar a receita para depois é o caso normal, e sumir com o
-  // card ali perderia metade do dado todo dia.
-  const cabePerguntar =
-    estado.diaSeguinte.execucao !== null &&
-    (vendasDeOntem === null || receitaDeOntem === null);
-
-  const cardDaPergunta = cabePerguntar ? (
-    <PerguntaDoDia
-      vendasAtuais={vendasDeOntem}
-      receitaAtualCentavos={receitaDeOntem}
-      respondeuAlgo={vendasDeOntem !== null || receitaDeOntem !== null}
-    />
-  ) : null;
+  // ============================================================
+  // O CARD FICA MESMO COM OS DOIS RESPONDIDOS. Decisão do Victor, 01/09.
+  //
+  // Ele sumia quando os dois campos estavam preenchidos, e isso era
+  // desenho meu — errado por um motivo que só aparece com dedo em tela de
+  // celular: **o dono vai errar**. Digitar 10 quando era 12, ou 200 quando
+  // era 2.000. Sem o card, não há como corrigir, e errar em campo de
+  // DINHEIRO sem poder corrigir é pior que perguntar de novo.
+  //
+  // Some junto o efeito colateral: sem card não dava para reenviar um
+  // campo só, e o merge por campo — que o backend fez justamente para a
+  // correção existir — ficava impossível de exercitar pela tela.
+  //
+  // Respondido, ele encolhe para uma linha. Ver `PerguntaDoDia`.
+  // ============================================================
+  const cardDaPergunta =
+    estado.diaSeguinte.execucao !== null ? (
+      <PerguntaDoDia
+        dia={diaDaPergunta}
+        vendasAtuais={vendasDeOntem}
+        receitaAtualCentavos={receitaDeOntem}
+        respondeuAlgo={vendasDeOntem !== null || receitaDeOntem !== null}
+      />
+    ) : null;
 
   // ---------- ainda falta alguma coisa: o herói é a próxima etapa ----------
   if (proximo || !temNumero) {
