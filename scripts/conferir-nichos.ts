@@ -202,7 +202,14 @@ if (!nichos) {
 
 secao("4. a forma da lista viva");
 {
-  ok(nichos.length === 10, `dez nichos (vieram ${nichos.length})`);
+  // PISO, não igualdade — mesma forma da contagem de termos logo abaixo, e
+  // pelo mesmo motivo: o catálogo é vivo e cresce. Em 25/08 o backend
+  // acrescentou o 11º (`analise-coloracao-pessoal`) e esta linha, que era
+  // `=== 10`, derrubou a suíte por uma mudança legítima do outro lado.
+  //
+  // O piso continua valendo como alarme: cair abaixo de dez significa que
+  // um nicho SUMIU, e aí a busca deixou de achar quem existia.
+  ok(nichos.length >= 10, `${nichos.length} nichos (piso 10 — abaixo disso um nicho sumiu)`);
   ok(
     !nichos.some((n) => n.nicho === "generico"),
     "`generico` não vem — é destino de quem não casa, não escolha de lista",
