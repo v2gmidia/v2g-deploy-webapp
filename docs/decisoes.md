@@ -36,6 +36,52 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-01 — A pergunta é sobre ONTEM, no fuso `America/Sao_Paulo`
+**Decisão (Victor):** o dono responde sobre o dia que fechou. "Perguntar
+sobre hoje às 10h da manhã não faz sentido." Fuso `America/Sao_Paulo`.
+
+**Por que o fuso é regra e não detalhe:** a Vercel roda em UTC. Das 21h à
+meia-noite de Brasília o servidor já está no dia seguinte — três horas por
+dia em que "ontem" calculado no fuso do servidor é o dia errado.
+
+**O estrago seria concreto:** às 22h o dono abre o app, a tela pergunta
+sobre anteontem, e a resposta vai para a chave `(execução, dia)` de
+anteontem — **por cima** do que ele já tinha respondido, porque a escrita é
+upsert. Um dia inteiro de venda apagado por causa de fuso.
+
+**Registro:** `lib/dia-seguinte/dia.ts`, com aritmética de calendário (e não
+`agora - 24h`, que erraria na virada de horário de verão). Conferências em
+`conferir:dia-seguinte` §3.3, inclusive o caso das 22h.
+
+**`jaRespondeu(consolidado, dia)` é a AUTORIDADE; `respondeu_hoje` é
+conferência cruzada** — até o backend confirmar que conta em São Paulo.
+
+---
+
+### 2026-09-01 — Duas fontes para "quanto investiu": dívida registrada
+**Não é para consertar agora, mas é para estar escrito.**
+
+A `/inicio` tinha uma tela de resultado alimentada por `metrics_daily`
+(Supabase, local). O acumulado do backend responde a mesma pergunta — e
+mais: ele traz o lado do DONO (quantas viraram venda, quanto entrou), que a
+`metrics_daily` nunca vai ter.
+
+**Medido em 01/09/2026: `metrics_daily` tem ZERO linhas, e `campaigns`
+também.** A tela de resultado era, portanto, **inalcançável** —
+`temNumero` era `spend > 0`. O conflito é de desenho, não visível.
+
+**O que foi feito:** `temNumero` passa a considerar o acumulado também, com
+`||` — a fonte antiga continua viva em vez de ser arrancada. Se a
+`metrics_daily` receber linha um dia, ela conta.
+
+**O que fica aberto:** quem é a fonte quando as duas tiverem dado. O
+palpite é que o backend vence — é ele quem coleta da Meta quando o App
+Review sair, e o mesmo endpoint passa a devolver
+`tem_dado_da_plataforma: true` sem mudança de contrato. Mas isso não foi
+decidido, e `/vendas` também lê `metrics_daily`.
+
+---
+
 ### 2026-09-01 — O que falta para o loop diário funcionar sozinho: um DISPARADOR
 **Decisão (Victor):** `GET /perguntas-pendentes` **não vira tela.**
 

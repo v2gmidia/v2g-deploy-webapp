@@ -6,6 +6,11 @@ import {
   montarCadastro,
   type NegocioParaCadastro,
 } from "@/lib/cadastro/montar";
+import { consolidadoDoNegocio, execucaoDoNegocio } from "@/lib/backend";
+import type {
+  ConsolidadoDoNegocio,
+  ExecucaoDoNegocio,
+} from "@/lib/dia-seguinte/tipos";
 import { resumirPendencias } from "@/lib/cadastro/pendencias";
 import { execucaoDoCliente } from "@/lib/pipeline/execucao-do-cliente";
 import {
@@ -120,6 +125,19 @@ export interface EstadoDoCliente {
   verbaMensal: number | null;
   /** houve gasto na janela */
   temNumero: boolean;
+  /**
+   * O que o backend do "dia seguinte" sabe: a execução corrente e o
+   * acumulado do NEGÓCIO (não o da execução — ver `lib/backend/dia-seguinte.ts`).
+   *
+   * `null` nos dois campos é estado normal, e são estados DIFERENTES:
+   * execução nula = ainda não disparou; acumulado nulo = o backend não
+   * respondeu agora. A tela precisa distinguir "ainda não chegou lá" de
+   * "não consegui ler", e um `??` juntando os dois apagaria a diferença.
+   */
+  diaSeguinte: {
+    execucao: ExecucaoDoNegocio | null;
+    acumulado: ConsolidadoDoNegocio | null;
+  };
 }
 
 const VAZIO: EstadoDoCliente = {
@@ -133,6 +151,7 @@ const VAZIO: EstadoDoCliente = {
   campanhasNoAr: [],
   verbaMensal: null,
   temNumero: false,
+  diaSeguinte: { execucao: null, acumulado: null },
 };
 
 /**
@@ -261,6 +280,44 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     agora,
   );
 
+  // ============================================================
+  // O BACKEND DO "DIA SEGUINTE", EM PARALELO E SEM DERRUBAR A PÁGINA.
+  //
+  // As duas chamadas são independentes uma da outra e do resto desta
+  // função. Nenhuma delas lança: devolvem `Resultado`, e falha vira
+  // `null` — o `/inicio` continua de pé com a cadeia local, que é o que
+  // ele sempre teve.
+  //
+  // A ORDEM DO CONTRATO é `execucao` primeiro; aqui as duas saem juntas
+  // porque a do acumulado é por `business_id`, que já temos. Quem precisa
+  // do `id_execucao` é o POST da resposta, não esta leitura.
+  // ============================================================
+  const [respExecucao, respAcumulado] = await Promise.all([
+    execucaoDoNegocio({ businessId: linha.id, profileId: user.id }),
+    consolidadoDoNegocio({ businessId: linha.id, profileId: user.id }),
+  ]);
+  const execucaoDoDiaSeguinte = respExecucao.ok ? respExecucao.dados : null;
+  const acumulado = respAcumulado.ok ? respAcumulado.dados : null;
+
+  // ============================================================
+  // A `/inicio` PASSA A TER NÚMERO QUANDO O ACUMULADO TEM.
+  //
+  // Até aqui `temNumero` era `metrics_daily.spend > 0`, e essa tabela tem
+  // ZERO LINHAS (medido em 01/09/2026) — a tela de resultado era
+  // inalcançável. O acumulado do backend é quem traz número agora, e ele
+  // traz o lado do DONO, que a `metrics_daily` nunca vai ter.
+  //
+  // O `||` mantém a fonte antiga viva em vez de arrancá-la: se um dia a
+  // `metrics_daily` receber linha, ela continua contando. As duas fontes
+  // convivendo é dívida registrada em `docs/decisoes.md` — não é o
+  // desenho final.
+  // ============================================================
+  const acumuladoTemNumero =
+    acumulado !== null &&
+    (acumulado.investiuCentavos !== null ||
+      acumulado.voltouCentavos !== null ||
+      acumulado.dias.length > 0);
+
   const medida: MedidaDoCliente = {
     temNegocio: true,
     cadastro: resumo,
@@ -272,16 +329,47 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     campanhaCriadaEm: esperandoPublicacao[0]?.created_at ?? null,
     publicacaoFalhou: listaDeCampanhas.some((c) => c.publish_state === "failed"),
     publicadaEm: noAr[noAr.length - 1]?.published_at ?? null,
-    temNumero: resultado.investido > 0,
+    temNumero: resultado.investido > 0 || acumuladoTemNumero,
   };
 
   const etapas = montarEtapas(medida, agora);
+  const proximaEtapa = etapas.find((e) => !e.concluida) ?? null;
+
+  // ============================================================
+  // A DIVERGÊNCIA ENTRE `pede_acao` E A CADEIA LOCAL VAI PARA O LOG.
+  //
+  // Decisão do Victor, 01/09/2026: o `pede_acao` do backend VENCE na tela
+  // — é mais específico e mais novo. Mas quando ele diz "a bola é do
+  // cliente" e a cadeia local diz que não, **uma das duas está errada**, e
+  // saber qual vale mais que resolver o conflito na tela.
+  //
+  // Só este sentido é divergência. O contrário — a cadeia dizendo que a
+  // bola é do cliente e o backend dizendo que não — é NORMAL: o cadastro
+  // incompleto e a conexão com a Meta faltando são coisas que o backend
+  // não enxerga.
+  //
+  // Log, e não tela: o cliente não tem o que fazer com isso. Ver
+  // `docs/decisoes.md`, 01/09.
+  // ============================================================
+  if (execucaoDoDiaSeguinte?.pedeAcao === true && proximaEtapa?.bola !== "cliente") {
+    console.warn(
+      "[dia-seguinte] divergência de bola ::",
+      JSON.stringify({
+        negocio: linha.id,
+        execucao: execucaoDoDiaSeguinte.idExecucao,
+        backendStatus: execucaoDoDiaSeguinte.status,
+        backendPedeAcao: true,
+        etapaLocal: proximaEtapa?.id ?? "nenhuma",
+        bolaLocal: proximaEtapa?.bola ?? "nenhuma",
+      }),
+    );
+  }
 
   return {
     temNegocio: true,
     negocioId: linha.id,
     etapas,
-    proximo: etapas.find((e) => !e.concluida) ?? null,
+    proximo: proximaEtapa,
     melhoras: { fotos, temLogo },
     blocosDaTrilha: blocosDaTrilha(resumo),
     resultado,
@@ -295,5 +383,6 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
         ? null
         : Number(linha.monthly_budget),
     temNumero: medida.temNumero,
+    diaSeguinte: { execucao: execucaoDoDiaSeguinte, acumulado },
   };
 }

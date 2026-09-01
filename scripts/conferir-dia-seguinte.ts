@@ -46,6 +46,13 @@ import {
   NADA_A_RESPONDER,
 } from "../lib/dia-seguinte/resposta.ts";
 import type { Consolidado } from "../lib/dia-seguinte/tipos.ts";
+import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "../lib/dia-seguinte/dia.ts";
+import {
+  AINDA_NAO_SABEMOS,
+  contagemOuAusencia,
+  dinheiroOuAusencia,
+  frasePorRealInvestido,
+} from "../lib/dia-seguinte/exibir.ts";
 import { dinheiroDeCentavos } from "../lib/formato.ts";
 
 let falhas = 0;
@@ -385,11 +392,81 @@ secao("3.1 `jaRespondeu` — pelos campos do dono, não pela presença do dia");
   );
 }
 
+secao("3.3 que dia é ONTEM — no fuso de São Paulo, não no do servidor");
+{
+  // A Vercel roda em UTC. Das 21h à meia-noite de Brasília o servidor já
+  // está no dia seguinte — e é ali que o cálculo ingênuo erra.
+  const asDezDaManha = new Date("2026-09-14T13:00:00Z"); // 10h em SP
+  ok(diaEmSaoPaulo(asDezDaManha) === "2026-09-14", "10h de SP: hoje é 14");
+  ok(diaDeOntemEmSaoPaulo(asDezDaManha) === "2026-09-13", "e ontem é 13");
+
+  // ============================================================
+  // O CASO QUE MOTIVA O ARQUIVO INTEIRO.
+  // 22h de Brasília = 01h UTC do dia seguinte. Calculado no fuso do
+  // servidor, "hoje" seria 15 e "ontem" seria 14 — e a resposta do dono
+  // sobre o dia 13 iria para a chave do dia 14, POR CIMA do que já estava
+  // lá, porque a escrita é upsert.
+  // ============================================================
+  const asDezDaNoite = new Date("2026-09-15T01:00:00Z"); // 22h do dia 14 em SP
+  ok(
+    diaEmSaoPaulo(asDezDaNoite) === "2026-09-14",
+    "22h de SP ainda é dia 14, mesmo o servidor já estando no 15 (UTC)",
+  );
+  ok(
+    diaDeOntemEmSaoPaulo(asDezDaNoite) === "2026-09-13",
+    "e ontem continua 13 — o cálculo no fuso do servidor daria 14, e apagaria um dia",
+  );
+
+  // Virada de mês e de ano, que a aritmética de calendário resolve sozinha.
+  ok(
+    diaDeOntemEmSaoPaulo(new Date("2026-09-01T13:00:00Z")) === "2026-08-31",
+    "primeiro do mês: ontem é o último do mês anterior",
+  );
+  ok(
+    diaDeOntemEmSaoPaulo(new Date("2026-01-01T13:00:00Z")) === "2025-12-31",
+    "primeiro do ano: ontem é 31/12 do ano anterior",
+  );
+  ok(
+    diaDeOntemEmSaoPaulo(new Date("2028-03-01T13:00:00Z")) === "2028-02-29",
+    "ano bissexto: ontem de 01/03/2028 é 29/02",
+  );
+
+  // Zero à esquerda: montar a string à mão erraria o dia 9.
+  ok(
+    diaDeOntemEmSaoPaulo(new Date("2026-09-10T13:00:00Z")) === "2026-09-09",
+    "dia de um dígito vem com zero à esquerda",
+  );
+}
+
 secao("3.2 dinheiro em centavos");
 {
   ok(dinheiroDeCentavos(160000).includes("1.600,00"), "160000 centavos → R$ 1.600,00");
   ok(dinheiroDeCentavos(0).includes("0,00"), "zero centavos → R$ 0,00 (zero é valor)");
   ok(dinheiroDeCentavos(1).includes("0,01"), "um centavo não some no arredondamento");
+}
+
+secao("3.4 na tela — `null` NUNCA vira R$ 0,00");
+{
+  // ============================================================
+  // É a regra 1 do contrato, no lugar onde ela é quebrada: a tela.
+  // `investiu_centavos: null` significa "o coletor da Meta está
+  // desligado". Mostrar R$ 0,00 diz ao dono que a campanha dele não gastou
+  // nada — afirmação sobre o dinheiro dele, e falsa.
+  // ============================================================
+  ok(dinheiroOuAusencia(null) === AINDA_NAO_SABEMOS, "dinheiro nulo NÃO vira R$ 0,00");
+  ok(dinheiroOuAusencia(0).includes("0,00"), "mas zero de verdade aparece como R$ 0,00");
+  ok(dinheiroOuAusencia(34000).includes("340,00"), "e o valor aparece convertido de centavos");
+
+  ok(contagemOuAusencia(null) === AINDA_NAO_SABEMOS, "contagem nula NÃO vira 0");
+  ok(contagemOuAusencia(0) === "0", "zero venda aparece como 0 — é sinal forte, não silêncio");
+  ok(contagemOuAusencia(3) === "3", "e a contagem aparece");
+
+  // O retorno vem CALCULADO. Esta função veste de frase e não divide nada.
+  ok(frasePorRealInvestido(null) === null, "retorno nulo não vira frase");
+  ok(frasePorRealInvestido("nao-e-numero") === null, "retorno ilegível não vira frase");
+  const f = frasePorRealInvestido("4.71");
+  ok(f !== null && f.includes("4,71"), `"4.71" vira "${f}"`);
+  ok(f !== null && !/ROAS|retorno sobre/i.test(f), "e a frase não tem jargão de tráfego");
 }
 
 // ---------------------------------------------------------------- rede

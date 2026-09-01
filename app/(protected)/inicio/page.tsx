@@ -2,6 +2,11 @@ import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { dinheiro, numero } from "@/lib/formato";
+import {
+  contagemOuAusencia,
+  dinheiroOuAusencia,
+  frasePorRealInvestido,
+} from "@/lib/dia-seguinte/exibir";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
 import { estadoNaLista, posicoesDaCadeia, type Etapa } from "@/lib/estado/frases";
@@ -180,6 +185,24 @@ export default async function InicioPage() {
   const conversas = resultado.conversas;
   const custoPorConversa = conversas > 0 ? resultado.investido / conversas : null;
 
+  // ============================================================
+  // O ACUMULADO DO NEGÓCIO — o lado que a `metrics_daily` nunca terá.
+  //
+  // `metrics_daily` só teria o lado da PLATAFORMA, e tem zero linhas
+  // (medido em 01/09/2026). O acumulado traz o lado do DONO — quantas
+  // viraram venda e quanto entrou — que é o que ele respondeu, e o único
+  // lado que existe hoje: o coletor da Meta está desligado até o App
+  // Review.
+  //
+  // É por NEGÓCIO, e não por execução, de propósito: esta tela diz "quanto
+  // eu já investi e quanto voltou", e com duas rodadas a versão por
+  // execução esconderia a anterior.
+  // ============================================================
+  const acumulado = estado.diaSeguinte.acumulado;
+  const fraseDoRetorno = frasePorRealInvestido(acumulado?.retornoPorReal ?? null);
+  const donoRespondeu =
+    acumulado !== null && (acumulado.vendas !== null || acumulado.voltouCentavos !== null);
+
   return (
     <>
       <FaixaReconectar />
@@ -214,6 +237,56 @@ export default async function InicioPage() {
           você — e é isso que a gente te pergunta todo dia.
         </p>
       </section>
+
+      {/*
+        O QUE O DONO RESPONDEU. Só aparece quando ele respondeu alguma
+        coisa — um bloco vazio prometendo número é pior que bloco nenhum.
+
+        `null` NUNCA vira R$ 0,00 aqui: `dinheiroOuAusencia` escreve
+        "ainda não sabemos", porque dizer R$ 0,00 sobre o dinheiro do
+        cliente quando não se sabe é afirmação falsa. Ver
+        `lib/dia-seguinte/exibir.ts`.
+      */}
+      {donoRespondeu && acumulado && (
+        <section className="rc-bloco">
+          <div className="section-title">
+            <h2>O que você me contou</h2>
+          </div>
+          <div className="card">
+            <div className="metrics">
+              <div className="metric">
+                <span className="m-label">Viraram venda</span>
+                <span className="m-value">{contagemOuAusencia(acumulado.vendas)}</span>
+                <span className="m-delta">do que você respondeu</span>
+              </div>
+              <div className="metric">
+                <span className="m-label">Voltou</span>
+                <span className="m-value">{dinheiroOuAusencia(acumulado.voltouCentavos)}</span>
+                <span className="m-delta">
+                  {acumulado.diasComOsDoisLados > 0
+                    ? `${acumulado.diasComOsDoisLados} dia(s) com os dois lados`
+                    : "ainda sem o lado da plataforma"}
+                </span>
+              </div>
+            </div>
+
+            {/* O retorno vem CALCULADO do backend. Se ele é nulo, falta um
+                lado ou o investimento é zero — e a tela não inventa a
+                conta. */}
+            {fraseDoRetorno && <p className="rc-abertura">{fraseDoRetorno}</p>}
+
+            {/* Enquanto o coletor da Meta estiver desligado, dizer isso é
+                melhor que deixar o cliente achar que a metade que falta é
+                culpa dele. */}
+            {!acumulado.temDadoDaPlataforma && (
+              <p className="rc-tranquilo">
+                O quanto foi investido ainda não chega automático — por isso a conta de
+                retorno fica incompleta por enquanto.
+              </p>
+            )}
+          </div>
+        </section>
+      )}
 
       <div className="dash-grid">
         <div className="dash-main">
