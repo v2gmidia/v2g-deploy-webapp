@@ -48,6 +48,11 @@ import {
 import type { Consolidado } from "../lib/dia-seguinte/tipos.ts";
 import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "../lib/dia-seguinte/dia.ts";
 import {
+  centavosDoQueFoiDigitado,
+  PERGUNTA_GRAVADA,
+  vendasDoQueFoiDigitado,
+} from "../lib/dia-seguinte/pergunta.ts";
+import {
   AINDA_NAO_SABEMOS,
   contagemOuAusencia,
   dinheiroOuAusencia,
@@ -467,6 +472,49 @@ secao("3.4 na tela — `null` NUNCA vira R$ 0,00");
   const f = frasePorRealInvestido("4.71");
   ok(f !== null && f.includes("4,71"), `"4.71" vira "${f}"`);
   ok(f !== null && !/ROAS|retorno sobre/i.test(f), "e a frase não tem jargão de tráfego");
+}
+
+secao("3.5 o que o dono digitou vira número — sem perder centavo");
+{
+  // ============================================================
+  // "R$ 1.600,50" TEM QUE VIRAR 160050, E NÃO 1600.5 NEM NaN.
+  //
+  // Em pt-BR o ponto é separador de MILHAR. `Number("1.600,50")` é NaN, e
+  // `Number("1.600")` é 1.6 — o cliente digitaria mil e seiscentos e o
+  // sistema guardaria um real e sessenta.
+  // ============================================================
+  ok(centavosDoQueFoiDigitado("1600") === 160000, '"1600" -> 160000 centavos');
+  ok(centavosDoQueFoiDigitado("1.600,00") === 160000, '"1.600,00" -> 160000');
+  ok(centavosDoQueFoiDigitado("1.600,50") === 160050, '"1.600,50" -> 160050');
+  ok(centavosDoQueFoiDigitado("R$ 1.600,50") === 160050, 'com "R$" na frente também');
+  ok(centavosDoQueFoiDigitado("0,01") === 1, "um centavo não some");
+
+  // O caso do ponto flutuante: 16.005 * 100 dá 1600.4999999999998.
+  // Truncar perderia um centavo do cliente; arredondar devolve o que ele
+  // digitou.
+  ok(centavosDoQueFoiDigitado("16,005") === 1601, "arredonda em vez de truncar (16,005)");
+
+  // Ausência é ausência, e NUNCA zero.
+  ok(centavosDoQueFoiDigitado("") === null, "campo vazio vira null, não 0");
+  ok(centavosDoQueFoiDigitado("   ") === null, "só espaço idem");
+  ok(centavosDoQueFoiDigitado("abc") === null, "letra vira null");
+  ok(centavosDoQueFoiDigitado("-5") === null, "negativo vira null");
+  // E zero digitado É zero: "vendi e não entrou nada" é resposta.
+  ok(centavosDoQueFoiDigitado("0") === 0, '"0" digitado vira 0, e não null');
+
+  ok(vendasDoQueFoiDigitado("3") === 3, '"3" -> 3');
+  ok(vendasDoQueFoiDigitado("0") === 0, '"0" vendas é resposta, e vira 0');
+  ok(vendasDoQueFoiDigitado("") === null, "vazio vira null");
+  ok(vendasDoQueFoiDigitado("umas 3") === null, '"umas 3" vira null — não se adivinha número do cliente');
+  ok(vendasDoQueFoiDigitado("3,5") === null, "meia venda não existe");
+  ok(vendasDoQueFoiDigitado("-1") === null, "negativo vira null");
+
+  // A pergunta gravada tem as duas, e é a MESMA string que a tela mostra.
+  ok(
+    PERGUNTA_GRAVADA.includes("viraram venda") && PERGUNTA_GRAVADA.includes("quanto entrou"),
+    "a pergunta gravada contém as duas que a tela faz",
+  );
+  ok(!/CTR|ROAS|CPM|convers(ão|ões)/i.test(PERGUNTA_GRAVADA), "e não tem jargão de tráfego");
 }
 
 // ---------------------------------------------------------------- rede

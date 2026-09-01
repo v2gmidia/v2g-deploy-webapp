@@ -36,6 +36,45 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-01 — O merge por campo NÃO é antecipado no front
+**Aviso do backend:** o `POST /resposta-do-dono` vai passar a fazer **merge
+por campo** — campo ausente preserva o valor do servidor, `null` explícito
+apaga. Deixa de ser substituição de linha.
+
+**Decisão da sessão:** o front **continua mandando os dois campos**, e a
+mudança só é adotada depois de confirmada no ar.
+
+**Por quê.** Mandar os dois é correto sob as DUAS semânticas: sob merge,
+mandar o valor atual dá exatamente o mesmo resultado. Mandar só o campo
+mexido é seguro **apenas depois** do merge — e errar essa ordem apaga
+receita de cliente, que é o defeito que dois lotes inteiros existiram para
+fechar.
+
+**O que a mudança melhora quando chegar,** e é razão para adotá-la: hoje,
+se o dono responder de dois aparelhos no mesmo dia, o segundo reenvia o que
+leu e sobrescreve o do primeiro. Com merge e envio parcial, só o campo
+tocado muda. É estreito, mas é real.
+
+**A troca é de uma linha** em `app/(protected)/inicio/actions.ts` quando o
+Victor avisar que subiu.
+
+---
+
+### 2026-09-01 — `respondeu_em(dia)` vai substituir a `jaRespondeu` local
+**Aviso do backend:** virá parametrizado por dia, e aí a
+`jaRespondeu(consolidado, dia)` daqui fica redundante.
+
+**Até lá, e por decisão do Victor, a local é a AUTORIDADE** e o
+`respondeu_hoje` é conferência cruzada. Quando o `respondeu_em` subir, a
+ordem se inverte e a local vira a conferência — não se apaga a primeira no
+mesmo dia em que a segunda chega.
+
+**O fuso era UTC mesmo.** Confirmado e corrigido no backend em 01/09: eram
+**seis** lugares, não três, e o `tzdata` nem era dependência declarada —
+vinha por acidente como transitiva do `psycopg`.
+
+---
+
 ### 2026-09-01 — A pergunta é sobre ONTEM, no fuso `America/Sao_Paulo`
 **Decisão (Victor):** o dono responde sobre o dia que fechou. "Perguntar
 sobre hoje às 10h da manhã não faz sentido." Fuso `America/Sao_Paulo`.
@@ -74,11 +113,17 @@ também.** A tela de resultado era, portanto, **inalcançável** —
 `||` — a fonte antiga continua viva em vez de ser arrancada. Se a
 `metrics_daily` receber linha um dia, ela conta.
 
-**O que fica aberto:** quem é a fonte quando as duas tiverem dado. O
-palpite é que o backend vence — é ele quem coleta da Meta quando o App
-Review sair, e o mesmo endpoint passa a devolver
-`tem_dado_da_plataforma: true` sem mudança de contrato. Mas isso não foi
-decidido, e `/vendas` também lê `metrics_daily`.
+**DECIDIDO em 01/09 (Victor): o backend vence.** É ele quem coleta da Meta
+quando o App Review sair, e o mesmo endpoint passa a devolver
+`tem_dado_da_plataforma: true` sem mudança de contrato.
+
+**Não arrancar a `metrics_daily` agora** — a `/vendas` ainda lê dela.
+
+**O GATILHO É O COLETOR LIGAR, NÃO UMA DATA.** Registrado assim de
+propósito: dívida com data vira dívida vencida que ninguém olha; dívida com
+gatilho é acionada pelo evento que a torna urgente. Quando
+`tem_dado_da_plataforma` começar a vir `true`, a `metrics_daily` passa a ter
+duas fontes disputando a mesma tela, e é aí que ela sai.
 
 ---
 

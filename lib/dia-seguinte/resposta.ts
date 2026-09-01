@@ -1,4 +1,4 @@
-import type { Consolidado, RespostaDoDono } from "./tipos";
+import type { ConsolidadoBase, RespostaDoDono } from "./tipos";
 
 /**
  * Montar o corpo do `POST /resposta-do-dono` sem apagar o que já estava lá.
@@ -63,7 +63,7 @@ export const NADA_A_RESPONDER =
   "Responda pelo menos uma das duas — quantas vendas, ou quanto entrou.";
 
 /** O que já está gravado naquele dia, segundo o consolidado. */
-function doServidor(consolidado: Consolidado | null, dia: string) {
+function doServidor(consolidado: ConsolidadoBase | null, dia: string) {
   const linha = consolidado?.dias.find((d) => d.dia === dia);
   return {
     vendas: linha?.viraramVenda ?? null,
@@ -79,8 +79,13 @@ export function montarRespostaDoDono(args: {
   /**
    * O estado real, lido agora. `null` quando não deu para ler — e aí
    * esta função **não inventa**: ver o bloco abaixo.
+   *
+   * `ConsolidadoBase` porque as DUAS rotas servem: a por execução e a do
+   * acumulado do negócio. Esta função só lê `dias`, que é do núcleo
+   * compartilhado — e amarrar a uma delas obrigaria quem tem a outra a
+   * converter, que é como se ganha uma terceira forma do mesmo dado.
    */
-  consolidado: Consolidado | null;
+  consolidado: ConsolidadoBase | null;
   origem?: RespostaDoDono["origem"];
 }): MontagemDaResposta {
   const { dia, pergunta, mexeu, consolidado, origem } = args;
@@ -131,7 +136,7 @@ export function montarRespostaDoDono(args: {
  * medido e sem resposta do dono passa a aparecer na lista. Por isso a
  * pergunta é feita pelos CAMPOS do dono, e não pela presença do dia.
  */
-export function jaRespondeu(consolidado: Consolidado | null, dia: string): boolean {
+export function jaRespondeu(consolidado: ConsolidadoBase | null, dia: string): boolean {
   const linha = consolidado?.dias.find((d) => d.dia === dia);
   if (!linha) return false;
   return linha.viraramVenda !== null || linha.voltouCentavos !== null;

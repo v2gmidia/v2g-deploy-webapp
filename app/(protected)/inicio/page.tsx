@@ -7,6 +7,8 @@ import {
   dinheiroOuAusencia,
   frasePorRealInvestido,
 } from "@/lib/dia-seguinte/exibir";
+import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { PerguntaDoDia } from "./PerguntaDoDia";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
 import { estadoNaLista, posicoesDaCadeia, type Etapa } from "@/lib/estado/frases";
@@ -95,7 +97,8 @@ export default async function InicioPage() {
   if (!user) return null;
 
   // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
-  const estado = await estadoDoCliente(new Date());
+  const agora = new Date();
+  const estado = await estadoDoCliente(agora);
 
   const { data: ultimaDecisao } = await supabase
     .from("decisions")
@@ -105,6 +108,39 @@ export default async function InicioPage() {
     .maybeSingle();
 
   const { proximo, resultado, temNumero } = estado;
+
+  // ============================================================
+  // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
+  //
+  // E isso não é redundância — é o que impede um ciclo fechado. A tela de
+  // resultado só é alcançada com `temNumero`, e hoje `temNumero` só fica
+  // verdadeiro quando o acumulado tem dado — que só existe DEPOIS de ele
+  // responder. Card só na tela de resultado seria uma porta trancada por
+  // dentro: ele nunca chegaria lá para poder responder a primeira vez.
+  //
+  // O dia é ONTEM, no fuso de São Paulo — ver `lib/dia-seguinte/dia.ts`.
+  // ============================================================
+  const diaDaPergunta = diaDeOntemEmSaoPaulo(agora);
+  const linhaDeOntem = estado.diaSeguinte.acumulado?.dias.find(
+    (d) => d.dia === diaDaPergunta,
+  );
+  const vendasDeOntem = linhaDeOntem?.viraramVenda ?? null;
+  const receitaDeOntem = linhaDeOntem?.voltouCentavos ?? null;
+
+  // Enquanto FALTAR um dos dois, o card continua. Responder "umas 3" de
+  // cabeça e deixar a receita para depois é o caso normal, e sumir com o
+  // card ali perderia metade do dado todo dia.
+  const cabePerguntar =
+    estado.diaSeguinte.execucao !== null &&
+    (vendasDeOntem === null || receitaDeOntem === null);
+
+  const cardDaPergunta = cabePerguntar ? (
+    <PerguntaDoDia
+      vendasAtuais={vendasDeOntem}
+      receitaAtualCentavos={receitaDeOntem}
+      respondeuAlgo={vendasDeOntem !== null || receitaDeOntem !== null}
+    />
+  ) : null;
 
   // ---------- ainda falta alguma coisa: o herói é a próxima etapa ----------
   if (proximo || !temNumero) {
@@ -130,6 +166,11 @@ export default async function InicioPage() {
         </div>
 
         {proximo && <HeroDaEtapa etapa={proximo} />}
+
+        {/* Ver o bloco de `cardDaPergunta`: aqui NÃO é redundância. Sem o
+            card nesta tela, o cliente nunca chegaria à outra para poder
+            responder a primeira vez. */}
+        {cardDaPergunta}
 
         <div className="dash-grid">
           <div className="dash-main">
@@ -247,6 +288,8 @@ export default async function InicioPage() {
         cliente quando não se sabe é afirmação falsa. Ver
         `lib/dia-seguinte/exibir.ts`.
       */}
+      {cardDaPergunta}
+
       {donoRespondeu && acumulado && (
         <section className="rc-bloco">
           <div className="section-title">
