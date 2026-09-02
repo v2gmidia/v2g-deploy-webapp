@@ -58,9 +58,40 @@ export default async function ContaPage() {
 
   // Logo e fotos do negócio. Uma consulta e uma assinatura de URLs em
   // lote — o bucket é privado, então nada é servido por URL pública.
-  const identidade = business?.id
-    ? await listarIdentidade(business.id)
-    : { logo: null, fotos: [] };
+  // ============================================================
+  // ESTA CHAMADA TAMBÉM PRECISA DO ADMIN — e foi ela que continuou
+  // derrubando a /conta depois do conserto de 02/09.
+  //
+  // `listarIdentidade` chama `createAdminClient()` lá dentro, e roda 25
+  // linhas ANTES do `try` que envolvia a conexão com o Facebook. Proteger
+  // só aquele bloco não adiantou nada: a página estourava antes de chegar
+  // nele.
+  //
+  // A LIÇÃO, e ela vale mais que o conserto: a pergunta certa não era
+  // "esta linha pode falhar?", era "o que MAIS nesta página precisa de
+  // admin?". Consertei um ponto quando o problema era da página inteira.
+  // O stack do erro dizia isso desde o começo — tinha um quadro de lib
+  // entre a página e o `createAdminClient`, e nenhum bloco meu produzia
+  // esse quadro.
+  //
+  // As duas seções degradam SEPARADAMENTE de propósito: a identidade
+  // visual e a conexão com o Facebook não têm nada a ver uma com a outra,
+  // e uma falha só deve apagar o que ela realmente alcança.
+  // ============================================================
+  let identidade: Awaited<ReturnType<typeof listarIdentidade>> = { logo: null, fotos: [] };
+  let identidadeIlegivel = false;
+
+  if (business?.id) {
+    try {
+      identidade = await listarIdentidade(business.id);
+    } catch (erro) {
+      identidadeIlegivel = true;
+      console.error(
+        "[conta] não consegui ler a identidade visual ::",
+        (erro as Error).message,
+      );
+    }
+  }
 
   // As páginas alcançadas pela conexão. Precisa do token, que só o
   // `service_role` lê do Vault — daí o cliente admin.
@@ -201,7 +232,18 @@ export default async function ContaPage() {
                 <span className="side-note">Entra nos anúncios</span>
               </div>
               <div className="card">
-                <Identidade logo={identidade.logo} fotos={identidade.fotos} />
+                {identidadeIlegivel ? (
+                  // DIZ QUE NÃO LEU. Um `Identidade` vazio afirmaria que
+                  // ele não tem logo nem foto — e o cliente que subiu as
+                  // dele veria o próprio trabalho ter sumido.
+                  <p className="rc-tranquilo">
+                    Não consegui carregar sua logo e suas fotos agora. Elas continuam
+                    guardadas — nada foi perdido. Tente daqui a pouco; se continuar assim,
+                    chama a gente.
+                  </p>
+                ) : (
+                  <Identidade logo={identidade.logo} fotos={identidade.fotos} />
+                )}
               </div>
             </section>
           )}
