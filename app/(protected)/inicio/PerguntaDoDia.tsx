@@ -3,7 +3,9 @@
 import { useState } from "react";
 import { dinheiroDeCentavos } from "@/lib/formato";
 import {
+  centavosDeDigitos,
   centavosDoQueFoiDigitado,
+  centavosNoCampo,
   PERGUNTA_DE_RECEITA,
   PERGUNTA_DE_VENDAS,
   vendasDoQueFoiDigitado,
@@ -78,8 +80,22 @@ export function PerguntaDoDia({
   const [vendas, setVendas] = useState(
     vendasAtuais === null ? "" : String(vendasAtuais),
   );
-  const [receita, setReceita] = useState(
-    receitaAtualCentavos === null ? "" : (receitaAtualCentavos / 100).toFixed(2).replace(".", ","),
+  // ============================================================
+  // O ESTADO DA RECEITA É EM CENTAVOS, NÃO O TEXTO DO CAMPO.
+  //
+  // A máscara é uma função do número, e não uma edição do texto: guardar o
+  // texto obrigaria a reparsear a cada tecla e a decidir o que fazer com
+  // formatação pela metade ("1.6").
+  //
+  // Guardando centavos, o que o campo mostra é sempre DERIVADO — e é essa
+  // a garantia que importa: **não existe estado em que o mostrado e o que
+  // será enviado discordem**. Com o texto como fonte, existiria: bastaria
+  // uma tecla que a máscara ignora, e o campo mostraria um número enquanto
+  // outro seguiria para o banco. Num campo de dinheiro, essa distância é
+  // exatamente o tipo de erro que ninguém percebe até o extrato.
+  // ============================================================
+  const [receitaCentavos, setReceitaCentavos] = useState<number | null>(
+    receitaAtualCentavos,
   );
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -114,8 +130,7 @@ export function PerguntaDoDia({
     // virar "não mexi" e o abrir-e-salvar de virar apagamento.
     const resultado = await responderPerguntaDoDiaAction({
       vendas: naoSei === "vendas" ? null : vendasDoQueFoiDigitado(vendas) ?? undefined,
-      receitaCentavos:
-        naoSei === "receita" ? null : centavosDoQueFoiDigitado(receita) ?? undefined,
+      receitaCentavos: naoSei === "receita" ? null : (receitaCentavos ?? undefined),
     });
 
     setEnviando(false);
@@ -129,8 +144,7 @@ export function PerguntaDoDia({
     // e refazê-la aqui é o que deixa o resumo certo sem esperar refresh.
     setSalvo((antes) => ({
       vendas: naoSei === "vendas" ? null : (vendasDoQueFoiDigitado(vendas) ?? antes.vendas),
-      receita:
-        naoSei === "receita" ? null : (centavosDoQueFoiDigitado(receita) ?? antes.receita),
+      receita: naoSei === "receita" ? null : (receitaCentavos ?? antes.receita),
     }));
     setCorrigindo(false);
   }
@@ -161,8 +175,12 @@ export function PerguntaDoDia({
             mostra o ACUMULADO, e este número é de um dia só. */}
         Ontem você respondeu: {salvo.vendas}{" "}
         {salvo.vendas === 1 ? "venda" : "vendas"}, {dinheiroDeCentavos(salvo.receita!)}.{" "}
-        <button className="text-fallback" type="button" onClick={() => setCorrigindo(true)}>
-          corrigir
+        {/* BOTÃO, não link — mas o mais leve que existe aqui. O resumo
+            deixou de ser card justamente para não competir com a manchete;
+            um botão de peso traria a competição de volta. Ver
+            `.botao-leve` no `globals.css`. */}
+        <button className="botao-leve" type="button" onClick={() => setCorrigindo(true)}>
+          Corrigir
         </button>
       </p>
     );
@@ -210,12 +228,27 @@ export function PerguntaDoDia({
           <input
             id="pd-receita"
             type="text"
-            inputMode="decimal"
+            // `numeric` e não `decimal`: com a máscara, a vírgula entra
+            // sozinha — e um teclado que oferece o separador convida a
+            // digitar um que a máscara vai ignorar.
+            inputMode="numeric"
             autoComplete="off"
             placeholder="Ex: 1.600,00"
-            value={receita}
+            value={receitaCentavos === null ? "" : centavosNoCampo(receitaCentavos)}
             disabled={enviando}
-            onChange={(e) => setReceita(e.target.value)}
+            // DIGITAR: cada dígito entra pela direita.
+            onChange={(e) => setReceitaCentavos(centavosDeDigitos(e.target.value))}
+            // COLAR: o texto vem em REAIS e é lido pelo parser de sempre.
+            // Sem este caminho, colar "1600" viraria R$ 16,00 — o valor
+            // dividido por cem, sem nada avisando. Ver
+            // `centavosDeDigitos` para o porquê de serem dois caminhos.
+            onPaste={(e) => {
+              const colado = e.clipboardData.getData("text");
+              const lido = centavosDoQueFoiDigitado(colado);
+              if (lido === null) return; // deixa o `onChange` cuidar
+              e.preventDefault();
+              setReceitaCentavos(lido);
+            }}
           />
           <button
             className="text-fallback"
@@ -227,7 +260,18 @@ export function PerguntaDoDia({
           </button>
         </div>
 
-        <div className="fallback-field">
+        {/* ============================================================
+            RESPIRO, E NÃO UM BOTÃO MAIOR. Decisão do Victor, 01/09.
+
+            O `.mini-send` foi desenhado para viver AO LADO de um input,
+            dentro do `.fallback-field` — é de lá que ele tira o peso.
+            Sozinho numa linha ele perde o contexto e lê como sobra.
+
+            A saída não é trocá-lo pelo `.cta`: o card acabou de sair da
+            disputa com a manchete, e um botão cheio o devolveria para lá.
+            O espaço em volta devolve a presença sem inflar nada.
+            ============================================================ */}
+        <div className="fallback-field pd-guardar">
           <button
             className="mini-send"
             type="button"

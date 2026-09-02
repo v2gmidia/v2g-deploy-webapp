@@ -102,3 +102,61 @@ export function vendasDoQueFoiDigitado(bruto: string): number | null {
   const n = Number(limpo);
   return Number.isSafeInteger(n) ? n : null;
 }
+
+/**
+ * ============================================================
+ * A MÁSCARA DE MOEDA — teclado de banco, da direita para a esquerda.
+ *
+ *   digita 1      → 0,01
+ *   digita 16     → 0,16
+ *   digita 160    → 1,60
+ *   digita 16050  → 160,50
+ *   digita 200000 → 2.000,00
+ *
+ * POR QUE ELA EXISTE: no celular, com teclado numérico, a vírgula é onde o
+ * dono erra. Digitar "200" querendo dois mil e guardando duzentos é um erro
+ * de uma tecla num campo de dinheiro.
+ *
+ * ============================================================
+ * ELA NÃO SUBSTITUI O `centavosDoQueFoiDigitado`, E ISSO É REGRA.
+ *
+ * Os dois caminhos são diferentes e precisam continuar existindo:
+ *
+ *   DIGITAR → cada dígito entra pela direita. É esta função.
+ *   COLAR   → o texto já vem formatado ("1.600,50", "R$ 1.600,50", "1600")
+ *             e é lido como REAIS, pelo parser de sempre.
+ *
+ * Se a máscara tratasse texto colado, "1600" viraria R$ 16,00 — o valor
+ * que a pessoa colou dividido por cem, sem nada avisando. Por isso o
+ * componente usa `onPaste` para o parser e `onChange` para a máscara: não
+ * é heurística sobre o tamanho da mudança, é o evento dizendo qual é o
+ * caso.
+ * ============================================================
+ */
+export function centavosDeDigitos(bruto: string): number | null {
+  const digitos = bruto.replace(/\D/g, "");
+  if (digitos === "") return null;
+
+  const n = Number(digitos);
+  // Não é decisão de teto de valor — é recusar número que o JavaScript não
+  // representa direito. Acima disso a aritmética de centavos começa a
+  // mentir, e mentir sobre dinheiro em silêncio é o que não pode.
+  if (!Number.isSafeInteger(n)) return null;
+  return n;
+}
+
+/**
+ * Os centavos como o campo os mostra: `1.600,50`.
+ *
+ * SEM o "R$", ao contrário do `dinheiroDeCentavos`. O símbolo dentro do
+ * campo atrapalha a edição — apagar de trás para a frente esbarraria nele,
+ * e o cursor teria que saber pulá-lo. O rótulo do campo diz que é dinheiro.
+ */
+const NO_CAMPO = new Intl.NumberFormat("pt-BR", {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+export function centavosNoCampo(centavos: number): string {
+  return NO_CAMPO.format(centavos / 100);
+}

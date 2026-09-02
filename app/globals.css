@@ -1009,6 +1009,44 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .text-fallback:hover { color: var(--cobalt-ink); }
 
+/* ---- botao leve -----------------------------------------------------
+   O mais discreto que existe no app: parece clicavel, e nao disputa.
+
+   Nasceu no resumo da pergunta diaria ("Ontem voce respondeu: ... Corrigir")
+   e o problema que ele resolve e estreito: um LINK sublinhado no fim de uma
+   frase nao le como acao — a pessoa nao sabe que da para mexer no numero que
+   ela acabou de digitar errado. Mas o `.cta` e o `.mini-send` trariam de volta
+   a competicao com a manchete, que foi o motivo de o resumo ter deixado de ser
+   card.
+
+   Por isso: borda fina em `--line` em vez de fundo cheio, tamanho de legenda,
+   e a tinta so aparece no hover. O peso vem da BORDA, nao da cor. */
+.botao-leve {
+  font-family: var(--display);
+  font-size: var(--fs-legenda);
+  line-height: 1;
+  padding: 5px 10px;
+  margin-left: 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-mute);
+  vertical-align: baseline;
+}
+.botao-leve:hover:not([disabled]) {
+  border-color: var(--cobalt);
+  color: var(--cobalt-ink);
+}
+.botao-leve[disabled] { opacity: 0.4; cursor: default; }
+
+/* O `Guardar` da pergunta diaria, sozinho numa linha.
+
+   O `.mini-send` tira o peso de estar ao lado de um input; sozinho ele le
+   como sobra. Trocar pelo `.cta` resolveria o peso e devolveria o card para
+   a disputa com a manchete — que foi o motivo de ele ter deixado de ser
+   card. O espaco em volta devolve presenca sem inflar nada. */
+.fallback-field.pd-guardar { margin: 18px 0 16px; }
+
 /* ---- seletor de nicho ---------------------------------------------------
    Os dez chips e o campo de busca abaixo deles. O espaco entre os dois e
    maior que o `gap` entre chips de proposito: a busca nao e o decimo

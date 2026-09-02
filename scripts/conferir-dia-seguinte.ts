@@ -49,7 +49,9 @@ import {
 import type { Consolidado } from "../lib/dia-seguinte/tipos.ts";
 import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "../lib/dia-seguinte/dia.ts";
 import {
+  centavosDeDigitos,
   centavosDoQueFoiDigitado,
+  centavosNoCampo,
   PERGUNTA_GRAVADA,
   vendasDoQueFoiDigitado,
 } from "../lib/dia-seguinte/pergunta.ts";
@@ -536,6 +538,63 @@ secao("3.4 na tela — `null` NUNCA vira R$ 0,00");
   const f = frasePorRealInvestido("4.71");
   ok(f !== null && f.includes("4,71"), `"4.71" vira "${f}"`);
   ok(f !== null && !/ROAS|retorno sobre/i.test(f), "e a frase não tem jargão de tráfego");
+}
+
+secao("3.6 a máscara de moeda — teclado de banco");
+{
+  // Os cinco casos que o Victor especificou, na ordem.
+  const passo = (digitado: string) => {
+    const c = centavosDeDigitos(digitado);
+    return c === null ? "" : centavosNoCampo(c);
+  };
+  ok(passo("1") === "0,01", '"1" -> 0,01');
+  ok(passo("16") === "0,16", '"16" -> 0,16');
+  ok(passo("160") === "1,60", '"160" -> 1,60');
+  ok(passo("16050") === "160,50", '"16050" -> 160,50');
+  ok(passo("200000") === "2.000,00", '"200000" -> 2.000,00 (milhar aparece sozinho)');
+
+  // Apagar é o caminho inverso, e tem que funcionar sobre o texto JÁ
+  // formatado — é o que o campo devolve no `onChange` depois do backspace.
+  ok(passo("1.600,5") === "160,05", "backspace sobre o texto formatado anda uma casa");
+  ok(passo("") === "", "campo vazio continua vazio, e não vira 0,00");
+  ok(centavosDeDigitos("") === null, "e o valor é null, não 0");
+
+  // Número que o JavaScript não representa direito é recusado — não é
+  // teto de valor, é não mentir sobre dinheiro em silêncio.
+  ok(centavosDeDigitos("9".repeat(20)) === null, "número acima do inteiro seguro é recusado");
+
+  // ============================================================
+  // A MÁSCARA NÃO SUBSTITUI O PARSER DE COLAR, E ESTE É O CORTE.
+  //
+  // As duas linhas abaixo parecem uma INCONSISTÊNCIA — o mesmo "1600"
+  // dando dois números diferentes. Não é. São dois gestos com duas
+  // origens, e é a origem que diz o significado:
+  //
+  //   COLAR vem de um lugar onde o valor JÁ ESTAVA FORMATADO — a nota, a
+  //   planilha, o extrato. Lá "1600" já quer dizer mil e seiscentos
+  //   reais, com os centavos implícitos em zero.
+  //
+  //   DIGITAR vem de um teclado numérico de celular, ONDE A VÍRGULA NÃO
+  //   EXISTE. Ali cada tecla é um centavo entrando pela direita, e "1600"
+  //   é o caminho de quem está construindo R$ 16,00.
+  //
+  // Se alguém "consertar" a divergência unificando os dois, quebra os
+  // dois: ou colar passa a dividir por cem em silêncio, ou digitar deixa
+  // de ter máscara e a vírgula volta a ser problema do dono.
+  //
+  // ESTA ASSERÇÃO EXISTE PARA IMPEDIR ESSE CONSERTO.
+  // ============================================================
+  ok(centavosDoQueFoiDigitado("1600") === 160000, "COLADO: 1600 -> R$ 1.600,00");
+  ok(centavosDeDigitos("1600") === 1600, "DIGITADO: 1600 -> R$ 16,00");
+  ok(
+    centavosDoQueFoiDigitado("1600") !== centavosDeDigitos("1600"),
+    "os dois caminhos DIVERGEM de propósito — por isso `onPaste` e `onChange` são separados",
+  );
+  // E onde eles concordam: valor colado já com centavos.
+  ok(
+    centavosDoQueFoiDigitado("1.600,50") === 160050 && centavosDeDigitos("1.600,50") === 160050,
+    "com centavos explícitos os dois concordam — é o caso que esconderia o bug",
+  );
 }
 
 secao("3.5 o que o dono digitou vira número — sem perder centavo");
