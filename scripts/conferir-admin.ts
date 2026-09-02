@@ -159,9 +159,12 @@ function caminhosAteOAdmin(inicio: string): string[] {
 }
 
 console.log("\nPONTOS DE ENTRADA alcançados — é aqui que o 500 aparece:");
+// O predicado é explícito porque `.filter(([, t]) => t !== null)` NÃO
+// estreita o tipo da tupla — o TypeScript continua vendo `string | null`,
+// e o `padEnd` abaixo quebraria o typecheck.
 const entradas = [...dependem]
   .map((f) => [f, ehEntrada(f)] as const)
-  .filter(([, t]) => t !== null)
+  .filter((par): par is readonly [string, string] => par[1] !== null)
   .sort((a, b) => curto(a[0]).localeCompare(curto(b[0])));
 
 for (const [f, tipo] of entradas) {
