@@ -63,30 +63,59 @@ export default async function ContaPage() {
     : { logo: null, fotos: [] };
 
   // As páginas alcançadas pela conexão. Precisa do token, que só o
-  // `service_role` lê do Vault — daí o cliente admin. Falha aqui não
-  // derruba a tela: o resto de /conta não depende do Facebook.
+  // `service_role` lê do Vault — daí o cliente admin.
   let paginas: PaginaDoFacebook[] = [];
   let paginaAtual: string | null = null;
 
+  // ============================================================
+  // "FALHA AQUI NÃO DERRUBA A TELA" ERA PROMESSA, E NÃO CÓDIGO.
+  //
+  // O comentário sempre disse isso, e o `try` cobria só a chamada à Meta.
+  // O `createAdminClient()` LANÇA quando falta `SUPABASE_SERVICE_ROLE_KEY`
+  // — e ele estava fora do `try`. Em 02/09 a variável faltou num preview e
+  // a `/conta` inteira virou 500: plano, identidade visual, tema, a porta
+  // de saída. Nada disso tem a ver com o Facebook.
+  //
+  // O comentário estava certo e o código errado. Agora o `try` cobre a
+  // criação do cliente também, e o que cai é só a seção da página.
+  //
+  // A distinção que fica: `null` é "não deu para saber", `[]` é "está
+  // conectado e não há página". A tela precisa das duas, e um `[]` para os
+  // dois casos diria ao cliente que ele não tem página quando o que houve
+  // foi a gente não conseguir olhar.
+  // ============================================================
+  let conexaoIlegivel = false;
+
   if (business?.id) {
-    const admin = createAdminClient();
-    const { data: conexao } = await admin
-      .from("meta_connections")
-      .select("meta_page_id, status")
-      .eq("business_id", business.id)
-      .maybeSingle();
+    try {
+      const admin = createAdminClient();
+      const { data: conexao } = await admin
+        .from("meta_connections")
+        .select("meta_page_id, status")
+        .eq("business_id", business.id)
+        .maybeSingle();
 
-    paginaAtual = conexao?.meta_page_id ?? null;
+      paginaAtual = conexao?.meta_page_id ?? null;
 
-    if (conexao?.status === "active") {
-      try {
-        const { data: token } = await admin.rpc("obter_token_meta", {
-          p_business_id: business.id,
-        });
-        if (token && typeof token === "string") paginas = await listarPaginas(token);
-      } catch (erro) {
-        registrarErroMeta("conta:listar-paginas", erro);
+      if (conexao?.status === "active") {
+        try {
+          const { data: token } = await admin.rpc("obter_token_meta", {
+            p_business_id: business.id,
+          });
+          if (token && typeof token === "string") paginas = await listarPaginas(token);
+        } catch (erro) {
+          registrarErroMeta("conta:listar-paginas", erro);
+        }
       }
+    } catch (erro) {
+      // Aqui só cai o que impede LER a conexão — falta de credencial de
+      // servidor, sobretudo. Não é erro da Meta, então não vai para o
+      // `registrarErroMeta`, que existe para diagnosticar aquele lado.
+      conexaoIlegivel = true;
+      console.error(
+        "[conta] não consegui ler a conexão com o Facebook ::",
+        (erro as Error).message,
+      );
     }
   }
 
@@ -181,13 +210,33 @@ export default async function ContaPage() {
               era reconectar tudo — desproporcional para mudar um campo, e
               cada passagem pelo Facebook é uma chance de o cliente
               recusar ou cair num erro. */}
-          {paginas.length > 0 && (
+          {conexaoIlegivel ? (
             <section>
               <div className="section-title">
                 <h2>De qual página seus anúncios saem</h2>
               </div>
-              <TrocarPagina paginas={paginas} atual={paginaAtual} />
+              {/* DIZ QUE NÃO LEU, em vez de sumir. Uma seção que
+                  desaparece é indistinguível de "você não tem página", e
+                  essa é uma afirmação sobre a conta dele que a gente não
+                  tem como fazer agora. Sem detalhe técnico: o nome da
+                  credencial que falta não o ajuda em nada. */}
+              <div className="card">
+                <p className="rc-tranquilo">
+                  Não consegui verificar sua conexão com o Facebook agora. Sua conta e seus
+                  anúncios não mudaram por causa disso. Tente daqui a pouco; se continuar
+                  assim, chama a gente.
+                </p>
+              </div>
             </section>
+          ) : (
+            paginas.length > 0 && (
+              <section>
+                <div className="section-title">
+                  <h2>De qual página seus anúncios saem</h2>
+                </div>
+                <TrocarPagina paginas={paginas} atual={paginaAtual} />
+              </section>
+            )
           )}
 
           <section>
