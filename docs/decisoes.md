@@ -22,6 +22,16 @@ em vez de escolher sozinhas. Removam a linha quando a decisão for registrada
 na seção de baixo.
 -->
 
+- [ ] **O card só pergunta sobre ONTEM — dia pulado é dia perdido.** Medido
+      em 01/09: `diaDeOntemEmSaoPaulo` é fixo, e o componente recebe UM dia.
+      Se o dono ficar três dias sem abrir o app, os dias 1 e 2 nunca são
+      perguntados — não há tela que os alcance, e o backend não guarda
+      pergunta não respondida ("só existe resposta"). Não apareceu no teste
+      porque foi tudo no mesmo dia; aparece no primeiro fim de semana.
+      Saídas: (a) o card pergunta o dia mais antigo em aberto, e aí falta
+      decidir até onde voltar; (b) o disparador cobre, e a tela continua só
+      de ontem — mas o furo dura enquanto ele não existir. — levantado em 01/09
+
 - [ ] **Trava de completude do cadastro: 6 campos ou 11?** O app conta 6, o
       backend exige 11 no modo `gerar`. Subir para 11 pode barrar cliente que
       hoje passa. — levantado em 22/08
