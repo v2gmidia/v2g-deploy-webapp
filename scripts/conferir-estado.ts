@@ -85,6 +85,8 @@ function base(): MedidaDoCliente {
     publicacaoFalhou: false,
     publicadaEm: null,
     temNumero: false,
+  execucaoDoBackend: null,
+  execucaoIlegivel: false,
   };
 }
 
@@ -491,6 +493,99 @@ secao("13. a frase que veio da /processando — o dinheiro");
   ok(
     p.corpo.includes("nenhum anúncio foi ao ar"),
     "  e que nenhum anúncio foi ao ar",
+  );
+}
+
+// ------------------------------------------------- a fonte da execução
+
+console.log("\nA. de onde a cadeia lê a execução — e o que ela diz sem conseguir ler");
+{
+  const execBackend = (status: string, pedeAcao: boolean) => ({
+    idExecucao: "98447192-3968-4fb1-8062-b14d6a8751ae",
+    businessId: "a85c37a9-0000-0000-0000-000000000000",
+    status,
+    andamento: "Precisamos das suas fotos para continuar",
+    pedeAcao,
+    atualizadoEm: T0.toISOString(),
+  });
+
+  const peca = (m: MedidaDoCliente) =>
+    montarEtapas(m, maisDias(1)).find((e) => e.id === "peca")!;
+
+  // ============================================================
+  // O CASO REAL DE 02/09, QUE ESTE BLOCO EXISTE PARA NÃO REPETIR.
+  //
+  // Num preview sem o cliente admin, a leitura local de `execucoes` morria
+  // e a `/inicio` respondia 200 dizendo "a gente está montando o seu
+  // primeiro anúncio" — para um cliente cuja execução estava em
+  // `aguardando_fotos`, ou seja, para quem A GENTE estava esperando.
+  // ============================================================
+  const semAdmin: MedidaDoCliente = {
+    ...base(),
+    execucao: null, // o admin não respondeu
+    execucaoDoBackend: execBackend("aguardando_fotos", true),
+  };
+  const p1 = peca(semAdmin);
+  ok(p1.bola === "cliente", "sem admin, o backend decide: a bola é do CLIENTE");
+  ok(
+    !/a gente está montando/i.test(p1.titulo),
+    `e a frase NÃO é a otimista de antes — é "${p1.titulo}"`,
+  );
+  ok(p1.acao !== null, "e há o que ele fazer");
+
+  // `pede_acao` VENCE mesmo quando o status não é o que a gente mapeia.
+  const statusNovo: MedidaDoCliente = {
+    ...base(),
+    execucao: null,
+    execucaoDoBackend: execBackend("um_estado_que_nao_existia", true),
+  };
+  const p2 = peca(statusNovo);
+  ok(p2.bola === "cliente", "`pede_acao: true` com status desconhecido AINDA dá bola do cliente");
+  ok(
+    p2.titulo === "Precisamos das suas fotos para continuar",
+    "e a frase vem do `andamento`, que o backend traduz — a tela não inventa",
+  );
+
+  // O outro lado: sem `pede_acao`, a bola continua sendo nossa.
+  const semAcao: MedidaDoCliente = {
+    ...base(),
+    execucao: null,
+    execucaoDoBackend: execBackend("pipeline_texto_rodando", false),
+  };
+  ok(peca(semAcao).bola === "nos", "`pede_acao: false` mantém a bola com a gente");
+
+  // ---- não saber é um estado, e ele se declara ----
+  const ilegivel: MedidaDoCliente = {
+    ...base(),
+    execucao: null,
+    execucaoDoBackend: null,
+    execucaoIlegivel: true,
+  };
+  const p3 = peca(ilegivel);
+  ok(
+    /não consegui carregar/i.test(p3.titulo),
+    `nenhuma fonte respondeu -> a tela DIZ que não leu: "${p3.titulo}"`,
+  );
+  ok(
+    !/admin|service_role|SUPABASE|variável/i.test(p3.titulo + p3.corpo),
+    "e sem detalhe técnico — o nome da variável não ajuda o dono em nada",
+  );
+  ok(p3.bola === "nos", "e a bola fica com a gente, não com ele");
+
+  // ============================================================
+  // 404 NÃO É ILEGÍVEL. É resposta, e quer dizer que não há execução —
+  // aí a cadeia diz o que sempre disse, e esta mudança continua sendo
+  // ADIÇÃO e não troca.
+  // ============================================================
+  const semExecucao: MedidaDoCliente = {
+    ...base(),
+    execucao: null,
+    execucaoDoBackend: null,
+    execucaoIlegivel: false,
+  };
+  ok(
+    /a gente está montando/i.test(peca(semExecucao).titulo),
+    "404 (não há execução) continua com a frase de sempre",
   );
 }
 

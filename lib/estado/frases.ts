@@ -26,6 +26,7 @@
 
 import type { ResumoDePendencias } from "@/lib/cadastro/pendencias";
 import type { ExecucaoDoCliente } from "@/lib/pipeline/relogios";
+import type { ExecucaoDoNegocio } from "@/lib/dia-seguinte/tipos";
 
 /**
  * De quem é a vez. TRÊS valores, não dois — e a diferença entre os dois
@@ -204,6 +205,33 @@ export interface MedidaDoCliente {
   publicadaEm: string | null;
   /** houve gasto nos últimos 7 dias */
   temNumero: boolean;
+  /**
+   * A execução como o BACKEND a vê — `GET /negocios/{id}/execucao`.
+   *
+   * ============================================================
+   * PREFERIDA SOBRE A LOCAL, E O MOTIVO NÃO É QUALIDADE DO DADO.
+   *
+   * A `execucao` acima é lida de `execucoes` por `service_role`, e essa
+   * leitura MORRE quando o cliente admin não está configurado. Em 02/09
+   * isso aconteceu num preview: a `/inicio` respondeu 200 com a execução
+   * nula, caiu em `sem_execucao`, e disse "a gente está montando o seu
+   * primeiro anúncio" para um cliente cuja execução estava em
+   * `aguardando_fotos` — ou seja, para quem a gente estava esperando.
+   *
+   * Esta fonte chega por HTTP com o token do backend e **não precisa de
+   * admin nenhum**. Preferi-la tira a decisão de "de quem é a bola" da
+   * dependência que falhou.
+   * ============================================================
+   */
+  execucaoDoBackend: ExecucaoDoNegocio | null;
+  /**
+   * Nenhuma das duas fontes deu resposta legível.
+   *
+   * NÃO é "não tem execução": 404 do backend é resposta, e quer dizer que
+   * não há execução mesmo. Isto aqui é não saber — e a tela diz isso, em
+   * vez de escolher a frase mais otimista das duas.
+   */
+  execucaoIlegivel: boolean;
 }
 
 // ----------------------------------------------------------------- a cadeia
@@ -280,15 +308,21 @@ function etapaConexao(m: MedidaDoCliente): Etapa {
  * o que a cadeia sempre disse, que é o comportamento anterior ao lote F.
  */
 type FaseDaPeca =
+  | "ilegivel"
   | "sem_execucao"
   | "na_fila"
   | "rodando"
   | "conferindo"
   | "esperando_foto";
 
-function faseDaPeca(execucao: ExecucaoDoCliente | null): FaseDaPeca {
-  if (!execucao) return "sem_execucao";
-  switch (execucao.status) {
+/**
+ * A fase, a partir do STATUS — venha ele de onde vier.
+ *
+ * O vocabulário é o mesmo nas duas fontes (os nove estados do contrato),
+ * então quem chama escolhe a fonte e esta função não precisa saber qual é.
+ */
+function faseDoStatus(status: string): FaseDaPeca {
+  switch (status) {
     case "cadastro_completo":
       return "na_fila";
     case "aguardando_fotos":
@@ -308,6 +342,26 @@ function faseDaPeca(execucao: ExecucaoDoCliente | null): FaseDaPeca {
       // deve. Só um dos dois erros culpa quem não tem culpa.
       return "rodando";
   }
+}
+
+/**
+ * ============================================================
+ * O BACKEND VENCE, E A LOCAL É RESERVA. Decisão de 02/09.
+ *
+ * Ordem: a execução do backend, depois a local, depois o não-saber.
+ *
+ * A local não é pior — é mais frágil: ela depende do cliente admin, e foi
+ * exatamente ele que faltou num preview e fez a tela dizer "a gente está
+ * montando" para quem estava sendo esperado.
+ *
+ * `ilegivel` só acontece quando NENHUMA das duas respondeu. Um 404 do
+ * backend não cai aqui: 404 é resposta, e quer dizer que não há execução.
+ * ============================================================
+ */
+function faseDaPeca(m: MedidaDoCliente): FaseDaPeca {
+  if (m.execucaoDoBackend) return faseDoStatus(m.execucaoDoBackend.status);
+  if (m.execucao) return faseDoStatus(m.execucao.status);
+  return m.execucaoIlegivel ? "ilegivel" : "sem_execucao";
 }
 
 /**
@@ -347,7 +401,7 @@ function faseDaPeca(execucao: ExecucaoDoCliente | null): FaseDaPeca {
  * O que a gente reusa de lá é uma coisa só: quais status são espera DELE.
  */
 function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
-  const fase = faseDaPeca(m.execucao);
+  const fase = faseDaPeca(m);
   const quando = dataCurta(m.cadastroEnviadoEm);
 
   // Peça pronta é peça com texto escrito, em `creatives`. O status da
@@ -374,6 +428,32 @@ function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
   // "mandar foto" aqui levaria o cliente a fazer uma coisa que não
   // destrava nada, e botão que não resolve é pior que silêncio. O buraco
   // está registrado em `docs/buraco-fotos-execucao.md`.
+  // ============================================================
+  // `pede_acao` VENCE. Decisão do Victor, 01/09.
+  //
+  // Ele é mais específico e mais novo que a nossa leitura de status — e é
+  // o campo que o backend criou justamente para dizer de quem é a bola.
+  // Se ele diz que a bola é do cliente e a nossa fase não concorda, quem
+  // manda é ele, e a frase vem do `andamento`, que o backend traduz.
+  //
+  // Sem este ramo, `pede_acao` era só uma linha de log: a decisão estava
+  // tomada e a tela continuava decidindo sozinha.
+  // ============================================================
+  if (m.execucaoDoBackend?.pedeAcao === true && fase !== "esperando_foto") {
+    return {
+      id: "peca",
+      concluida,
+      bola: "cliente",
+      nome: "A peça do seu anúncio",
+      titulo: m.execucaoDoBackend.andamento,
+      corpo:
+        "A montagem chegou num ponto que precisa de você. Chama a gente no WhatsApp que resolvemos junto — sem você precisar mexer em nada sozinho.",
+      acao: { rotulo: "Falar com a gente", href: WHATSAPP_PECA },
+      desde: m.execucaoDoBackend.atualizadoEm,
+      admitindo: false,
+    };
+  }
+
   if (fase === "esperando_foto") {
     return {
       id: "peca",
@@ -391,7 +471,11 @@ function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
 
   // O relógio do cliente, sobre o último movimento. Ver o bloco do
   // cabeçalho: `atualizado_em` primeiro, `cadastro_iniciado_em` de reserva.
-  const desdeORelogio = m.execucao?.atualizadoEm ?? m.cadastroEnviadoEm;
+  // O relógio segue a mesma ordem da fase: backend, local, reserva. Com o
+  // admin fora, contar de `cadastro_iniciado_em` adiantava o prazo em dias
+  // e fazia a tela admitir dívida antes da hora.
+  const desdeORelogio =
+    m.execucaoDoBackend?.atualizadoEm ?? m.execucao?.atualizadoEm ?? m.cadastroEnviadoEm;
   const admitindo = passouDoPrazo(desdeORelogio, DIAS_ATE_ADMITIR_PECA, agora);
 
   if (admitindo) {
@@ -433,6 +517,24 @@ function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
       titulo: "Seu anúncio ficou pronto e a gente está conferindo",
       corpo:
         "A IA terminou de montar. Antes de mandar para você, alguém da nossa equipe lê o texto e olha a arte — é o que evita você receber uma peça com erro. Passando por aí, ela chega aqui para o seu sim.",
+    },
+    // ============================================================
+    // NÃO CONSEGUIMOS LER — E A TELA DIZ ISSO.
+    //
+    // Antes de 02/09 este caso caía em `sem_execucao` e a tela afirmava
+    // "a gente está montando o seu primeiro anúncio". Era a frase mais
+    // otimista das possíveis, escolhida por não saber — e num preview ela
+    // foi dita para um cliente que estava sendo ESPERADO.
+    //
+    // SEM DETALHE TÉCNICO: "admin indisponível" não é problema dele, e o
+    // nome da variável de ambiente não o ajuda em nada. Mas também sem
+    // fingir que está tudo normal — o que ele precisa saber é que o que
+    // está na tela pode estar incompleto, e que não é ele que resolve.
+    // ============================================================
+    ilegivel: {
+      titulo: "Não consegui carregar o andamento do seu anúncio agora",
+      corpo:
+        "O que está aqui pode estar incompleto — não é nada que você tenha feito, e não some nada por causa disso. Atualize daqui a pouco; se continuar assim, chama a gente.",
     },
     // Sem execução legível, a cadeia diz exatamente o que dizia antes do
     // lote F. É o que torna esta mudança uma adição, e não uma troca.

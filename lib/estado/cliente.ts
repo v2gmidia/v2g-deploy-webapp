@@ -374,6 +374,19 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     publicacaoFalhou: listaDeCampanhas.some((c) => c.publish_state === "failed"),
     publicadaEm: noAr[noAr.length - 1]?.published_at ?? null,
     temNumero: resultado.investido > 0 || acumuladoTemNumero,
+    execucaoDoBackend: execucaoDoDiaSeguinte,
+    // ============================================================
+    // ILEGÍVEL É NÃO SABER, E NÃO "NÃO TEM".
+    //
+    // 404 do backend é RESPOSTA: quer dizer que não há execução, e a
+    // cadeia diz o que sempre disse. Só entra aqui quando a chamada em si
+    // falhou — e aí a tela admite que não conseguiu ler, em vez de
+    // escolher a frase mais otimista das possíveis.
+    //
+    // A local não entra na conta: ela depende do cliente admin, que é
+    // justamente o que falhou em 02/09. Se o backend respondeu, sabemos.
+    // ============================================================
+    execucaoIlegivel: !respExecucao.ok,
   };
 
   const etapas = montarEtapas(medida, agora);
