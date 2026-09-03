@@ -113,6 +113,13 @@ pelo outro. Enquanto ela não estiver de pé, `off` evita um 404 por
 apresentação no log. Nada na tela muda nos dois casos — o caminho inteiro
 é fire-and-forget.
 
+**"Fire-and-forget" aqui é medido, não prometido.** `pnpm conferir:apresentada`
+sobe um servidor de mentira no loopback e passa o cliente por 404, 401,
+500, corpo não-JSON, conexão cortada e porta fechada; nenhum estoura, todos
+devolvem falha. E o §6 carrega a Server Action de verdade num processo sem
+requisição — onde `createClient()` lança —, com um controle que prova que
+o estouro aconteceu antes de afirmar que ele foi engolido.
+
 **Se faltar qualquer uma, o app NÃO quebra.** `lib/backend` devolve a
 categoria `indisponivel` e a tela mostra que aquela parte ainda não está
 ligada. O resto do app funciona normalmente.
