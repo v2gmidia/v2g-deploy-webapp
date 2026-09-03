@@ -68,3 +68,18 @@ export function diaDeOntemEmSaoPaulo(agora: Date): string {
   const ontem = new Date(Date.UTC(ano, mes - 1, dia - 1));
   return ontem.toISOString().slice(0, 10);
 }
+
+/**
+ * O dia `n` dias antes de `dia`, em `YYYY-MM-DD`.
+ *
+ * Aritmética de calendário pelo mesmo motivo do `diaDeOntemEmSaoPaulo`:
+ * subtrair `n * 86400000` erra em virada de horário de verão. `Date.UTC`
+ * com `dia - n` resolve mês e ano sozinho.
+ *
+ * Opera sobre a STRING, e não sobre um `Date` — assim ela não reintroduz
+ * fuso nenhum: o dia já foi decidido em São Paulo por quem chamou.
+ */
+export function diasAntesDe(dia: string, n: number): string {
+  const [ano, mes, d] = dia.split("-").map(Number) as [number, number, number];
+  return new Date(Date.UTC(ano, mes - 1, d - n)).toISOString().slice(0, 10);
+}

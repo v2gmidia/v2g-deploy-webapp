@@ -8,7 +8,11 @@ import {
   gravarRespostaDoDono,
   MENSAGEM_GENERICA_BACKEND,
 } from "@/lib/backend";
-import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { diaDeOntemEmSaoPaulo, diasAntesDe } from "@/lib/dia-seguinte/dia";
+import {
+  diaPodeSerRespondido,
+  DIAS_DE_MEMORIA,
+} from "@/lib/dia-seguinte/dias-em-aberto";
 import { PERGUNTA_GRAVADA } from "@/lib/dia-seguinte/pergunta";
 import { montarRespostaDoDono } from "@/lib/dia-seguinte/resposta";
 
@@ -55,6 +59,13 @@ export async function responderPerguntaDoDiaAction(entrada: {
    */
   vendas?: number | null;
   receitaCentavos?: number | null;
+  /**
+   * O dia que a tela estava perguntando, `YYYY-MM-DD`. Omitido = ontem.
+   *
+   * Passou a existir com a correção de dia atrasado. **Vem do cliente, e
+   * por isso é conferido no servidor** — ver `diaPodeSerRespondido`.
+   */
+  dia?: string;
 }): Promise<ResultadoDaResposta> {
   const supabase = await createClient();
   const {
@@ -83,7 +94,7 @@ export async function responderPerguntaDoDiaAction(entrada: {
     return { ok: false, erro: "Sua campanha ainda não começou a rodar." };
   }
 
-  const dia = diaDaPergunta();
+  const ontem = diaDaPergunta();
 
   // ============================================================
   // A LEITURA DEIXOU DE SER OBRIGATÓRIA PARA ESCREVER.
@@ -96,13 +107,47 @@ export async function responderPerguntaDoDiaAction(entrada: {
   // Recusar a resposta do cliente por causa de uma leitura que falhou
   // seria cobrar dele um problema nosso.
   // ============================================================
+  // A JANELA INTEIRA DA MEMÓRIA, e não só o dia pedido.
+  //
+  // Ela serve a dois usos: o valor atual do dia que ele está respondendo, e
+  // a lista de dias em aberto que decide se o dia PEDIDO é permitido. Uma
+  // janela de um dia só bastava enquanto a pergunta era sempre sobre
+  // ontem; com atrasado, ela cegaria a conferência.
   const consolidado = await consolidadoDoNegocio({
     businessId,
     profileId: user.id,
-    desde: dia,
-    ate: dia,
-    diaDaPergunta: dia,
+    desde: diasAntesDe(ontem, DIAS_DE_MEMORIA - 1),
+    ate: ontem,
+    diaDaPergunta: ontem,
   });
+
+  // ============================================================
+  // O DIA VEM DO CLIENTE, ENTÃO O SERVIDOR CONFERE.
+  //
+  // Antes desta mudança o dia era calculado aqui e não havia o que
+  // conferir. Agora a tela escolhe qual dia está corrigindo, e cliente
+  // manda o que quiser — sem esta linha, um POST à mão gravaria resposta em
+  // qualquer data, inclusive futura.
+  //
+  // A conferência usa a MESMA função que monta a tela. Uma regra paralela
+  // no servidor divergiria, e a que divergisse seria a que ninguém olha.
+  // ============================================================
+  const dia = entrada.dia ?? ontem;
+  const permitido = diaPodeSerRespondido({
+    dia,
+    ontem,
+    consolidado: consolidado.ok ? consolidado.dados : null,
+  });
+
+  if (!permitido) {
+    // Sem consolidado legível, só ontem passa — é o único dia que não
+    // depende de saber o que já foi respondido. Recusar aqui não perde
+    // dado: ele responde de novo quando a leitura voltar.
+    return {
+      ok: false,
+      erro: "Não consegui confirmar de que dia é essa resposta. Tente de novo.",
+    };
+  }
 
   const montagem = montarRespostaDoDono({
     dia,

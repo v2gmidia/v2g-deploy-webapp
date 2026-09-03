@@ -8,6 +8,7 @@ import {
   frasePorRealInvestido,
 } from "@/lib/dia-seguinte/exibir";
 import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { PerguntaDoDia } from "./PerguntaDoDia";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
@@ -128,6 +129,33 @@ export default async function InicioPage() {
   const receitaDeOntem = linhaDeOntem?.voltouCentavos ?? null;
 
   // ============================================================
+  // OS DIAS QUE ELE PERDEU — por subtração de calendário.
+  //
+  // Não dá para ler "a quem a pergunta foi feita": o backend tem
+  // `execucoes_de_rotina` com chave `(tarefa, dia)`, mas ela registra que a
+  // ROTINA rodou, não que a pergunta chegou a um cliente. O registro por
+  // cliente foi pedido e não existe (03/09).
+  //
+  // Toda a dedução mora em `diasAtrasados`, uma função só — para o dia em
+  // que o registro existir, a troca custar um arquivo. Ver o bloco dela.
+  // ============================================================
+  const atrasados = diasAtrasados({
+    consolidado: estado.diaSeguinte.acumulado,
+    ontem: diaDaPergunta,
+  });
+
+  // Os valores já gravados de cada atrasado, para o campo nascer cheio
+  // quando ele abrir — mesma regra do card de ontem.
+  const valoresPorDia: Record<string, { vendas: number | null; receita: number | null }> = {};
+  for (const d of atrasados) {
+    const linha = estado.diaSeguinte.acumulado?.dias.find((x) => x.dia === d);
+    valoresPorDia[d] = {
+      vendas: linha?.viraramVenda ?? null,
+      receita: linha?.voltouCentavos ?? null,
+    };
+  }
+
+  // ============================================================
   // O CARD FICA MESMO COM OS DOIS RESPONDIDOS. Decisão do Victor, 01/09.
   //
   // Ele sumia quando os dois campos estavam preenchidos, e isso era
@@ -149,6 +177,8 @@ export default async function InicioPage() {
         vendasAtuais={vendasDeOntem}
         receitaAtualCentavos={receitaDeOntem}
         respondeuAlgo={vendasDeOntem !== null || receitaDeOntem !== null}
+        atrasados={atrasados}
+        valoresPorDia={valoresPorDia}
       />
     ) : null;
 

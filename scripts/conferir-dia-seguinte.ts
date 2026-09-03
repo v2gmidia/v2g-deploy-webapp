@@ -47,7 +47,12 @@ import {
   respostaConfiavelSobre,
 } from "../lib/dia-seguinte/resposta.ts";
 import type { Consolidado } from "../lib/dia-seguinte/tipos.ts";
-import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "../lib/dia-seguinte/dia.ts";
+import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo, diasAntesDe } from "../lib/dia-seguinte/dia.ts";
+import {
+  diaPodeSerRespondido,
+  diasAtrasados,
+  DIAS_DE_MEMORIA,
+} from "../lib/dia-seguinte/dias-em-aberto.ts";
 import {
   centavosDeDigitos,
   centavosDoQueFoiDigitado,
@@ -638,6 +643,84 @@ secao("3.5 o que o dono digitou vira número — sem perder centavo");
     "a pergunta gravada contém as duas que a tela faz",
   );
   ok(!/CTR|ROAS|CPM|convers(ão|ões)/i.test(PERGUNTA_GRAVADA), "e não tem jargão de tráfego");
+}
+
+secao("3.7 os dias em aberto — por subtração de calendário");
+{
+  const ONTEM = "2026-09-02";
+  const comDias = (dias: Array<[string, number | null]>) =>
+    validarConsolidado({
+      ...CONSOLIDADO_CRU,
+      dias: dias.map(([dia, vendas]) => ({
+        dia,
+        investiu_centavos: null,
+        pessoas_que_chegaram: null,
+        viraram_venda: vendas,
+        voltou_centavos: null,
+      })),
+    }) as Consolidado;
+
+  ok(diasAntesDe(ONTEM, 1) === "2026-09-01", "um dia antes");
+  ok(diasAntesDe("2026-03-01", 1) === "2026-02-28", "virada de mês");
+  ok(diasAntesDe("2026-01-01", 1) === "2025-12-31", "virada de ano");
+
+  // ============================================================
+  // O CASO QUE MOTIVA TUDO: dois dias fora do ar.
+  // Respondeu 30/08, sumiu, volta em 03/09. Ontem = 02/09.
+  // ============================================================
+  const sumiuDoisDias = comDias([["2026-08-30", 5]]);
+  const a1 = diasAtrasados({ consolidado: sumiuDoisDias, ontem: ONTEM });
+  ok(
+    a1.join(",") === "2026-08-31,2026-09-01",
+    `os dois dias perdidos aparecem, do mais antigo para o mais novo (${a1.join(",")})`,
+  );
+  ok(!a1.includes(ONTEM), "e ONTEM não entra — ele é a pergunta principal, não atrasado");
+
+  // ---- o piso: antes da primeira resposta não se pergunta ----
+  ok(
+    !a1.includes("2026-08-29"),
+    "dia ANTERIOR à primeira resposta não entra — não há de onde tirar piso",
+  );
+  ok(
+    diasAtrasados({ consolidado: comDias([]), ontem: ONTEM }).length === 0,
+    "quem NUNCA respondeu não tem atrasado: só a pergunta de ontem",
+  );
+
+  // ---- o teto de 7 ----
+  const antigo = comDias([["2026-08-01", 1]]);
+  const a2 = diasAtrasados({ consolidado: antigo, ontem: ONTEM });
+  ok(a2.length === DIAS_DE_MEMORIA - 1, `o teto corta em ${DIAS_DE_MEMORIA} dias (vieram ${a2.length})`);
+  ok(a2[0] === diasAntesDe(ONTEM, DIAS_DE_MEMORIA - 1), "e o mais antigo é o limite da janela");
+
+  // ---- dia já respondido não vira atrasado ----
+  const comBuraco = comDias([
+    ["2026-08-30", 5],
+    ["2026-08-31", 2],
+  ]);
+  const a3 = diasAtrasados({ consolidado: comBuraco, ontem: ONTEM });
+  ok(a3.join(",") === "2026-09-01", "dia respondido no meio não vira atrasado");
+
+  // ---- sem consolidado, não inventa ----
+  ok(
+    diasAtrasados({ consolidado: null, ontem: ONTEM }).length === 0,
+    "sem consolidado devolve vazio — 'não ofereça', e não 'está tudo respondido'",
+  );
+
+  // ============================================================
+  // O SERVIDOR NÃO ACREDITA NO DIA QUE A TELA MANDOU.
+  // O `dia` passou a vir do cliente com a correção de atrasado.
+  // ============================================================
+  const pode = (dia: string, c = sumiuDoisDias) =>
+    diaPodeSerRespondido({ dia, ontem: ONTEM, consolidado: c });
+
+  ok(pode(ONTEM), "ontem sempre pode");
+  ok(pode("2026-09-01"), "atrasado da lista pode");
+  ok(!pode("2026-09-03"), "HOJE não pode — a pergunta é sobre o dia que fechou");
+  ok(!pode("2026-12-25"), "dia futuro não pode");
+  ok(!pode("2026-08-29"), "dia anterior à primeira resposta não pode");
+  ok(!pode("2026-08-30"), "dia JÁ respondido não entra pela porta do atrasado");
+  ok(pode(ONTEM, null as never), "sem consolidado, só ontem passa");
+  ok(!pode("2026-09-01", null as never), "e nenhum atrasado passa às cegas");
 }
 
 // ---------------------------------------------------------------- rede

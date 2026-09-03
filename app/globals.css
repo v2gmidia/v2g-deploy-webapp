@@ -1047,6 +1047,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    card. O espaco em volta devolve presenca sem inflar nada. */
 .fallback-field.pd-guardar { margin: 18px 0 16px; }
 
+/* O convite dos dias atrasados. CONVITE, nao cobranca: mesmo tamanho do
+   texto tranquilo em volta, sem cor de alerta e sem numero grande. Quem
+   nao tocar nao e lembrado de novo na mesma visita. */
+.pd-convite { display: inline-block; margin-top: 10px; font-size: var(--fs-corpo); color: var(--ink-mute); }
+
 /* ---- seletor de nicho ---------------------------------------------------
    Os dez chips e o campo de busca abaixo deles. O espaco entre os dois e
    maior que o `gap` entre chips de proposito: a busca nao e o decimo

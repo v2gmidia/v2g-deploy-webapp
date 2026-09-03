@@ -13,6 +13,26 @@ import {
 import { responderPerguntaDoDiaAction } from "./actions";
 
 /**
+ * `2026-08-31` vira `sábado, 31/08`.
+ *
+ * O dia da semana entra porque é assim que o dono lembra — "quantas vendas
+ * na quinta", e não "no dia 28". A data crua sozinha obrigaria ele a
+ * traduzir de cabeça antes de conseguir responder.
+ *
+ * Montado com `Date.UTC` e lido em UTC de propósito: a string já é o dia
+ * certo em São Paulo, e passar por fuso de novo poderia deslocá-la.
+ */
+function porExtenso(dia: string): string {
+  const [ano, mes, d] = dia.split("-").map(Number) as [number, number, number];
+  const data = new Date(Date.UTC(ano, mes - 1, d));
+  const semana = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(data);
+  return `${semana}, ${String(d).padStart(2, "0")}/${String(mes).padStart(2, "0")}`;
+}
+
+/**
  * A pergunta diária — o card que faz o loop existir.
  *
  * ============================================================
@@ -69,6 +89,13 @@ interface PerguntaDoDiaProps {
    * concluindo que um dos dois está errado.
    */
   dia: string;
+  /**
+   * Dias ANTERIORES a `dia` que continuam sem resposta, do mais antigo
+   * para o mais novo. Vazio quando não há ou não dá para saber.
+   */
+  atrasados: string[];
+  /** o que já está gravado em cada atrasado, para o campo nascer cheio */
+  valoresPorDia: Record<string, { vendas: number | null; receita: number | null }>;
 }
 
 export function PerguntaDoDia({
@@ -76,7 +103,14 @@ export function PerguntaDoDia({
   receitaAtualCentavos,
   respondeuAlgo,
   dia,
+  atrasados,
+  valoresPorDia,
 }: PerguntaDoDiaProps) {
+  const doDia = (d: string) =>
+    d === dia
+      ? { vendas: vendasAtuais, receita: receitaAtualCentavos }
+      : (valoresPorDia[d] ?? { vendas: null, receita: null });
+
   const [vendas, setVendas] = useState(
     vendasAtuais === null ? "" : String(vendasAtuais),
   );
@@ -99,6 +133,25 @@ export function PerguntaDoDia({
   );
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  // ============================================================
+  // ONTEM PRIMEIRO. OS ATRASADOS SÃO CONVITE, NÃO FILA.
+  //
+  // Decisão do Victor, 03/09, e o argumento que a decidiu: uma fila faria
+  // o card REAPARECER depois do "Guardar". Para quem tem pouca facilidade
+  // digital, isso não lê como "faltam mais" — lê como "não funcionou", e a
+  // segunda tentativa reescreve o mesmo dia. Formulário que volta sozinho
+  // ensina desconfiança no botão.
+  //
+  // E inverte o valor: ontem é o dia que ele lembra melhor e o que mantém
+  // a conta atual. Pôr o mais impreciso na frente do mais preciso troca o
+  // melhor dado pelo pior.
+  //
+  // Depois de responder um atrasado, volta para a LINHA — nunca avança
+  // sozinho para o próximo.
+  // ============================================================
+  const [respondendo, setRespondendo] = useState<string>(dia);
+  const [pendentes, setPendentes] = useState<string[]>(atrasados);
 
   // ============================================================
   // O QUE ESTÁ SALVO VIVE AQUI, E NÃO SÓ NAS PROPS.
@@ -129,6 +182,7 @@ export function PerguntaDoDia({
     // sei" (apaga de propósito). A distinção é o que impede o botão de
     // virar "não mexi" e o abrir-e-salvar de virar apagamento.
     const resultado = await responderPerguntaDoDiaAction({
+      dia: respondendo,
       vendas: naoSei === "vendas" ? null : vendasDoQueFoiDigitado(vendas) ?? undefined,
       receitaCentavos: naoSei === "receita" ? null : (receitaCentavos ?? undefined),
     });
@@ -142,11 +196,63 @@ export function PerguntaDoDia({
     // O que ficou salvo, do ponto de vista do servidor: o campo mexido
     // mudou, o omitido continua como estava. É a mesma regra do merge —
     // e refazê-la aqui é o que deixa o resumo certo sem esperar refresh.
-    setSalvo((antes) => ({
-      vendas: naoSei === "vendas" ? null : (vendasDoQueFoiDigitado(vendas) ?? antes.vendas),
-      receita: naoSei === "receita" ? null : (receitaCentavos ?? antes.receita),
-    }));
-    setCorrigindo(false);
+    if (respondendo === dia) {
+      setSalvo((antes) => ({
+        vendas: naoSei === "vendas" ? null : (vendasDoQueFoiDigitado(vendas) ?? antes.vendas),
+        receita: naoSei === "receita" ? null : (receitaCentavos ?? antes.receita),
+      }));
+      setCorrigindo(false);
+      return;
+    }
+
+    // Era um atrasado: sai da lista e o card VOLTA para a pergunta de
+    // ontem. Não avança para o próximo — ver o bloco de `respondendo`.
+    setPendentes((antes) => antes.filter((d) => d !== respondendo));
+    voltarParaOntem();
+  }
+
+  function abrir(d: string) {
+    const v = doDia(d);
+    setRespondendo(d);
+    setVendas(v.vendas === null ? "" : String(v.vendas));
+    setReceitaCentavos(v.receita);
+    setErro(null);
+    setCorrigindo(true);
+  }
+
+  function voltarParaOntem() {
+    abrir(dia);
+  }
+
+  /**
+   * O CONVITE — e ele é convite, não cobrança.
+   *
+   * Sem número grande, sem vermelho, sem "você está atrasado". Diz quantos
+   * dias faltam e oferece; quem não tocar não é lembrado de novo na mesma
+   * visita. É a mesma regra da porta de saída visível: o caminho existe e
+   * não empurra.
+   *
+   * Abre sempre o MAIS ANTIGO dos pendentes — dentro dos atrasados, o mais
+   * velho é o que corre risco de sair da janela de sete dias primeiro.
+   */
+  function Convite() {
+    if (pendentes.length === 0) return null;
+    const maisAntigo = pendentes[0]!;
+    return (
+      <span className="pd-convite">
+        {pendentes.length === 1
+          ? "Faltou um dia antes desse. "
+          : `Faltaram ${pendentes.length} dias antes desse. `}
+        <button
+          className="botao-leve"
+          type="button"
+          disabled={enviando}
+          onClick={() => abrir(maisAntigo)}
+        >
+          Preencher {porExtenso(maisAntigo)}
+        </button>
+      </span>
+    );
   }
 
   const tudoRespondido = salvo.vendas !== null && salvo.receita !== null;
@@ -182,6 +288,7 @@ export function PerguntaDoDia({
         <button className="botao-leve" type="button" onClick={() => setCorrigindo(true)}>
           Corrigir
         </button>
+        <Convite />
       </p>
     );
   }
@@ -189,7 +296,13 @@ export function PerguntaDoDia({
   return (
     <section className="rc-bloco">
       <div className="section-title">
-        <h2>{respondeuAlgo ? "Falta completar o de ontem" : "Uma pergunta rápida sobre ontem"}</h2>
+        <h2>
+          {respondendo !== dia
+            ? `Sobre ${porExtenso(respondendo)}`
+            : respondeuAlgo
+              ? "Falta completar o de ontem"
+              : "Uma pergunta rápida sobre ontem"}
+        </h2>
       </div>
 
       <div className="card">
@@ -289,6 +402,16 @@ export function PerguntaDoDia({
           O Facebook mede quantas pessoas te chamaram. Quantas viraram venda, quem sabe é
           você — e é com isso que a gente calcula se está valendo a pena.
         </p>
+
+        {respondendo !== dia && (
+          <p className="rc-tranquilo">
+            <button className="botao-leve" type="button" disabled={enviando} onClick={voltarParaOntem}>
+              Voltar para ontem
+            </button>
+          </p>
+        )}
+
+        {respondendo === dia && <Convite />}
       </div>
     </section>
   );
