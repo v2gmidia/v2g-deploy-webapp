@@ -272,3 +272,32 @@ Elas precisam mostrar o tema que **não** está ativo. Se usassem os
 tokens, as três amostras ficariam idênticas — pintadas pelo tema atual — e
 a escolha viraria adivinhação. É o único lugar onde um literal é a
 resposta certa, e por isso está escrito lá e aqui.
+
+
+---
+
+## 8. Data que o dono lê leva o dia da semana
+
+`diaPorExtenso()` em `lib/formato.ts`. `2026-08-31` vira **`sábado, 31/08`**.
+
+O dono lembra por dia da semana — *"quantas vendas na quinta"* —, não por
+número do mês. Data crua sozinha obriga ele a traduzir de cabeça antes de
+conseguir responder, e essa tradução aparece exatamente onde a gente menos
+pode pagar por ela: na hora de pedir um número.
+
+Nasceu no card da pergunta diária (`PerguntaDoDia`, 03/09/2026) e virou
+padrão no mesmo dia, por decisão do Victor.
+
+**Onde vale e onde não vale.** Vale para toda data que o dono *lê* —
+convite, pergunta, resumo. **Não vale para carimbo de auditoria:** "você
+conferiu isso em 12/08" é registro, não convite, e ali o dia da semana só
+faz ruído.
+
+**A função mora em `lib/formato.ts`, não na tela.** Regra de formatação que
+mora no componente vira regra de um componente só: a próxima tela reescreve
+à mão, com outra decisão, e o padrão deixa de existir sem ninguém notar.
+
+**O que ainda não migrou**, e por quê: `/alertas`, `/meu-negocio`,
+`Saudacao` e `revisar-perfil` usam `toLocaleDateString` direto. São
+anteriores à regra, e cada uma precisa de uma decisão caso a caso — aquela
+data é para ler ou para conferir? Não é troca em massa.

@@ -139,10 +139,17 @@ export default async function InicioPage() {
   // Toda a dedução mora em `diasAtrasados`, uma função só — para o dia em
   // que o registro existir, a troca custar um arquivo. Ver o bloco dela.
   // ============================================================
-  const atrasados = diasAtrasados({
-    consolidado: estado.diaSeguinte.acumulado,
-    ontem: diaDaPergunta,
-  });
+  // Sem execução não há card (a condição de baixo), logo não há atrasado a
+  // oferecer — e o `idExecucao` que a lista vai passar a usar como chave
+  // só existe aqui dentro. Ver o bloco PARA A TROCA em `diasAtrasados`.
+  const execucaoDoDia = estado.diaSeguinte.execucao;
+  const atrasados = execucaoDoDia
+    ? await diasAtrasados({
+        idExecucao: execucaoDoDia.idExecucao,
+        consolidado: estado.diaSeguinte.acumulado,
+        ontem: diaDaPergunta,
+      })
+    : [];
 
   // Os valores já gravados de cada atrasado, para o campo nascer cheio
   // quando ele abrir — mesma regra do card de ontem.

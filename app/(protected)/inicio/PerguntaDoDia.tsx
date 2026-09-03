@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { dinheiroDeCentavos } from "@/lib/formato";
+import { diaPorExtenso, dinheiroDeCentavos } from "@/lib/formato";
 import {
   centavosDeDigitos,
   centavosDoQueFoiDigitado,
@@ -11,26 +11,6 @@ import {
   vendasDoQueFoiDigitado,
 } from "@/lib/dia-seguinte/pergunta";
 import { responderPerguntaDoDiaAction } from "./actions";
-
-/**
- * `2026-08-31` vira `sábado, 31/08`.
- *
- * O dia da semana entra porque é assim que o dono lembra — "quantas vendas
- * na quinta", e não "no dia 28". A data crua sozinha obrigaria ele a
- * traduzir de cabeça antes de conseguir responder.
- *
- * Montado com `Date.UTC` e lido em UTC de propósito: a string já é o dia
- * certo em São Paulo, e passar por fuso de novo poderia deslocá-la.
- */
-function porExtenso(dia: string): string {
-  const [ano, mes, d] = dia.split("-").map(Number) as [number, number, number];
-  const data = new Date(Date.UTC(ano, mes - 1, d));
-  const semana = new Intl.DateTimeFormat("pt-BR", {
-    weekday: "long",
-    timeZone: "UTC",
-  }).format(data);
-  return `${semana}, ${String(d).padStart(2, "0")}/${String(mes).padStart(2, "0")}`;
-}
 
 /**
  * A pergunta diária — o card que faz o loop existir.
@@ -249,7 +229,7 @@ export function PerguntaDoDia({
           disabled={enviando}
           onClick={() => abrir(maisAntigo)}
         >
-          Preencher {porExtenso(maisAntigo)}
+          Preencher {diaPorExtenso(maisAntigo)}
         </button>
       </span>
     );
@@ -298,7 +278,7 @@ export function PerguntaDoDia({
       <div className="section-title">
         <h2>
           {respondendo !== dia
-            ? `Sobre ${porExtenso(respondendo)}`
+            ? `Sobre ${diaPorExtenso(respondendo)}`
             : respondeuAlgo
               ? "Falta completar o de ontem"
               : "Uma pergunta rápida sobre ontem"}

@@ -50,3 +50,39 @@ export function retornoPorReal(receita: number, investido: number): number | nul
 export function dinheiroDeCentavos(centavos: number): string {
   return dinheiro(centavos / 100);
 }
+
+/**
+ * `2026-08-31` vira `sábado, 31/08`.
+ *
+ * ============================================================
+ * DATA PARA O DONO LER LEVA O DIA DA SEMANA NA FRENTE. É PADRÃO.
+ *
+ * Ele lembra por dia da semana — "quantas vendas na quinta" —, não por
+ * número do mês. Uma data crua sozinha obriga ele a traduzir de cabeça
+ * antes de conseguir responder, e o custo dessa tradução aparece
+ * exatamente onde a gente menos pode pagar: na hora de pedir um número.
+ *
+ * Nasceu no card da pergunta diária, em 03/09/2026, e o Victor definiu
+ * como padrão no mesmo dia. Vale para toda data que o DONO lê. NÃO vale
+ * para carimbo de auditoria — "você conferiu isso em 12/08" é registro,
+ * não convite, e ali o dia da semana só faz ruído.
+ *
+ * As telas que ainda usam `toLocaleDateString` direto são anteriores a
+ * esta regra: `/alertas`, `/meu-negocio`, `Saudacao`, `revisar-perfil`.
+ * Migrar cada uma exige decidir, caso a caso, se aquela data é para ler
+ * ou para conferir — e por isso não foi feito em massa.
+ * ============================================================
+ *
+ * Montada com `Date.UTC` e lida em UTC de propósito: a string já é o dia
+ * certo em São Paulo (ver `lib/dia-seguinte/dia.ts`), e passá-la por fuso
+ * de novo poderia deslocá-la um dia.
+ */
+export function diaPorExtenso(dia: string): string {
+  const [ano, mes, d] = dia.split("-").map(Number) as [number, number, number];
+  const data = new Date(Date.UTC(ano, mes - 1, d));
+  const semana = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(data);
+  return `${semana}, ${String(d).padStart(2, "0")}/${String(mes).padStart(2, "0")}`;
+}

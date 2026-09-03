@@ -133,9 +133,10 @@ export async function responderPerguntaDoDiaAction(entrada: {
   // no servidor divergiria, e a que divergisse seria a que ninguém olha.
   // ============================================================
   const dia = entrada.dia ?? ontem;
-  const permitido = diaPodeSerRespondido({
+  const permitido = await diaPodeSerRespondido({
     dia,
     ontem,
+    idExecucao: execucao.dados.idExecucao,
     consolidado: consolidado.ok ? consolidado.dados : null,
   });
 

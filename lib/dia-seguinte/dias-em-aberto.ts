@@ -18,10 +18,17 @@ import type { ConsolidadoBase } from "./tipos";
  * carrega um erro conhecido: **não distingue "não perguntamos" de
  * "perguntamos e ele não respondeu"**, nem enxerga domingo e feriado.
  *
- * NO DIA EM QUE O REGISTRO POR CLIENTE EXISTIR, o corpo desta função vira
- * uma leitura daquele registro e o resto do app não sente. É por isso que
- * ela é uma função só, com este nome, e que ninguém mais no repositório
- * enumera dia: a troca tem que custar um arquivo.
+ * O SUBSTITUTO JÁ TEM NOME: `perguntas_enviadas`, chave
+ * `(id_execucao, dia)` — a mesma de `respostas_do_dono`. Quando existir, o
+ * corpo daqui vira o `left join` das duas (enviadas sem resposta), e o
+ * `piso` some junto: a linha mais antiga em `perguntas_enviadas` É o piso,
+ * lido em vez de inferido.
+ *
+ * A ASSINATURA ABAIXO JÁ ESTÁ NO FORMATO DA TROCA — ver os dois blocos
+ * marcados PARA A TROCA. É de propósito que ela pareça exagerada hoje: o
+ * preço de acertar agora é este comentário, e o de acertar depois é mexer
+ * em dois chamadores e em vinte e uma asserções do conferidor no mesmo
+ * commit em que a lógica muda.
  * ============================================================
  */
 
@@ -62,6 +69,9 @@ function temRespostaDoDono(consolidado: ConsolidadoBase, dia: string): boolean {
  *
  * Quem nunca respondeu não tem atrasado: só a pergunta de ontem. Não é
  * lacuna a preencher — é que não há de onde tirar o piso sem chutar.
+ *
+ * CONFIRMADO pelo Victor em 03/09/2026, com o argumento fechado:
+ * perguntar sobre dia que não existiu é pior que não perguntar.
  * ============================================================
  */
 function primeiraResposta(consolidado: ConsolidadoBase): string | null {
@@ -82,13 +92,47 @@ function primeiraResposta(consolidado: ConsolidadoBase): string | null {
  * Devolve vazio quando não dá para saber (sem consolidado) ou quando não
  * há piso. Vazio aqui quer dizer "não ofereça atrasado", nunca "está tudo
  * respondido" — a diferença importa para quem for mostrar contagem.
+ *
+ * ============================================================
+ * PARA A TROCA — POR QUE ELA É `async` SEM PRECISAR SER.
+ *
+ * O corpo de hoje é síncrono e puro: daria para devolver `string[]` direto.
+ * Ela devolve `Promise` mesmo assim porque o substituto é uma LEITURA — o
+ * `left join` mora do outro lado da rede, e função que consulta o backend
+ * não pode ser síncrona.
+ *
+ * Se ela nascesse síncrona, o dia da troca mudaria o tipo de retorno das
+ * duas funções daqui, dos dois chamadores e das asserções do conferidor,
+ * tudo no mesmo commit em que a lógica muda — que é justamente quando não
+ * se quer barulho em volta. O `await` de hoje não custa nada: os dois
+ * chamadores já são assíncronos.
+ * ============================================================
  */
-export function diasAtrasados(args: {
+export async function diasAtrasados(args: {
+  /**
+   * ============================================================
+   * PARA A TROCA — ESTE CAMPO NÃO É LIDO HOJE. NÃO O APAGUE.
+   *
+   * `perguntas_enviadas` tem chave `(id_execucao, dia)`: sem o id não há
+   * como endereçar a tabela que vai substituir esta dedução. Ele entra
+   * agora porque **os dois chamadores já têm o id na mão** na linha
+   * anterior à chamada — `page.tsx` por `estado.diaSeguinte.execucao`,
+   * `actions.ts` por `execucaoDoNegocio()` — e passá-lo hoje custa uma
+   * palavra, enquanto acrescentá-lo depois custa mexer em todo mundo.
+   *
+   * E há uma segunda razão, menos óbvia: o `consolidado` que chega aqui é
+   * o acumulado do NEGÓCIO, que atravessa execuções, enquanto a chave da
+   * tabela é por EXECUÇÃO. Com duas rodadas os dois recortes deixam de
+   * coincidir. Não morde hoje — só existe uma execução por negócio —, mas
+   * é o id no argumento que vai permitir estreitar sem trocar assinatura.
+   * ============================================================
+   */
+  idExecucao: string;
   consolidado: ConsolidadoBase | null;
   /** o dia da pergunta principal, `YYYY-MM-DD` */
   ontem: string;
   teto?: number;
-}): string[] {
+}): Promise<string[]> {
   const { consolidado, ontem } = args;
   const teto = args.teto ?? DIAS_DE_MEMORIA;
   if (!consolidado) return [];
@@ -123,12 +167,14 @@ export function diasAtrasados(args: {
  * divergisse seria a do servidor — a que ninguém olha.
  * ============================================================
  */
-export function diaPodeSerRespondido(args: {
+export async function diaPodeSerRespondido(args: {
   dia: string;
   ontem: string;
+  /** ver o bloco PARA A TROCA em `diasAtrasados` */
+  idExecucao: string;
   consolidado: ConsolidadoBase | null;
   teto?: number;
-}): boolean {
+}): Promise<boolean> {
   if (args.dia === args.ontem) return true;
-  return diasAtrasados(args).includes(args.dia);
+  return (await diasAtrasados(args)).includes(args.dia);
 }

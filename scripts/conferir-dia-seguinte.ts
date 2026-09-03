@@ -669,7 +669,11 @@ secao("3.7 os dias em aberto — por subtração de calendário");
   // Respondeu 30/08, sumiu, volta em 03/09. Ontem = 02/09.
   // ============================================================
   const sumiuDoisDias = comDias([["2026-08-30", 5]]);
-  const a1 = diasAtrasados({ consolidado: sumiuDoisDias, ontem: ONTEM });
+  // O `idExecucao` não é lido pelo corpo de hoje — ele existe para o dia
+  // em que `perguntas_enviadas` substituir a dedução. Ver o bloco PARA A
+  // TROCA. Aqui ele é constante justamente porque nada depende dele ainda.
+  const EXEC = "exec-de-teste";
+  const a1 = await diasAtrasados({ idExecucao: EXEC, consolidado: sumiuDoisDias, ontem: ONTEM });
   ok(
     a1.join(",") === "2026-08-31,2026-09-01",
     `os dois dias perdidos aparecem, do mais antigo para o mais novo (${a1.join(",")})`,
@@ -682,13 +686,13 @@ secao("3.7 os dias em aberto — por subtração de calendário");
     "dia ANTERIOR à primeira resposta não entra — não há de onde tirar piso",
   );
   ok(
-    diasAtrasados({ consolidado: comDias([]), ontem: ONTEM }).length === 0,
+    (await diasAtrasados({ idExecucao: EXEC, consolidado: comDias([]), ontem: ONTEM })).length === 0,
     "quem NUNCA respondeu não tem atrasado: só a pergunta de ontem",
   );
 
   // ---- o teto de 7 ----
   const antigo = comDias([["2026-08-01", 1]]);
-  const a2 = diasAtrasados({ consolidado: antigo, ontem: ONTEM });
+  const a2 = await diasAtrasados({ idExecucao: EXEC, consolidado: antigo, ontem: ONTEM });
   ok(a2.length === DIAS_DE_MEMORIA - 1, `o teto corta em ${DIAS_DE_MEMORIA} dias (vieram ${a2.length})`);
   ok(a2[0] === diasAntesDe(ONTEM, DIAS_DE_MEMORIA - 1), "e o mais antigo é o limite da janela");
 
@@ -697,12 +701,12 @@ secao("3.7 os dias em aberto — por subtração de calendário");
     ["2026-08-30", 5],
     ["2026-08-31", 2],
   ]);
-  const a3 = diasAtrasados({ consolidado: comBuraco, ontem: ONTEM });
+  const a3 = await diasAtrasados({ idExecucao: EXEC, consolidado: comBuraco, ontem: ONTEM });
   ok(a3.join(",") === "2026-09-01", "dia respondido no meio não vira atrasado");
 
   // ---- sem consolidado, não inventa ----
   ok(
-    diasAtrasados({ consolidado: null, ontem: ONTEM }).length === 0,
+    (await diasAtrasados({ idExecucao: EXEC, consolidado: null, ontem: ONTEM })).length === 0,
     "sem consolidado devolve vazio — 'não ofereça', e não 'está tudo respondido'",
   );
 
@@ -711,16 +715,16 @@ secao("3.7 os dias em aberto — por subtração de calendário");
   // O `dia` passou a vir do cliente com a correção de atrasado.
   // ============================================================
   const pode = (dia: string, c = sumiuDoisDias) =>
-    diaPodeSerRespondido({ dia, ontem: ONTEM, consolidado: c });
+    diaPodeSerRespondido({ dia, ontem: ONTEM, idExecucao: EXEC, consolidado: c });
 
-  ok(pode(ONTEM), "ontem sempre pode");
-  ok(pode("2026-09-01"), "atrasado da lista pode");
-  ok(!pode("2026-09-03"), "HOJE não pode — a pergunta é sobre o dia que fechou");
-  ok(!pode("2026-12-25"), "dia futuro não pode");
-  ok(!pode("2026-08-29"), "dia anterior à primeira resposta não pode");
-  ok(!pode("2026-08-30"), "dia JÁ respondido não entra pela porta do atrasado");
-  ok(pode(ONTEM, null as never), "sem consolidado, só ontem passa");
-  ok(!pode("2026-09-01", null as never), "e nenhum atrasado passa às cegas");
+  ok(await pode(ONTEM), "ontem sempre pode");
+  ok(await pode("2026-09-01"), "atrasado da lista pode");
+  ok(!(await pode("2026-09-03")), "HOJE não pode — a pergunta é sobre o dia que fechou");
+  ok(!(await pode("2026-12-25")), "dia futuro não pode");
+  ok(!(await pode("2026-08-29")), "dia anterior à primeira resposta não pode");
+  ok(!(await pode("2026-08-30")), "dia JÁ respondido não entra pela porta do atrasado");
+  ok(await pode(ONTEM, null as never), "sem consolidado, só ontem passa");
+  ok(!(await pode("2026-09-01", null as never)), "e nenhum atrasado passa às cegas");
 }
 
 // ---------------------------------------------------------------- rede
