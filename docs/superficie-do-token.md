@@ -5,7 +5,8 @@ conversa. **Este documento é só o mapa.** Nada aqui foi consertado, e
 nenhuma linha dele propõe conserto — a frente fica aberta para depois de
 10/09/2026, por decisão do Victor.
 
-Medido em 03/09/2026, no commit `3dfcc7b`.
+Medido em 03/09/2026. A §3.2 foi recontada depois, com a §5 corrigida
+junto — ver o aviso lá.
 
 ---
 
@@ -121,16 +122,46 @@ Nenhuma rota lê identidade da query string. O conjunto inteiro é:
 
 `/revisar-perfil/[proposta]` — `params.proposta`. Ele endereça dado, e
 **não é escopado por dono**: `carregarProposta(propostaId)` aceita qualquer
-proposta.
+proposta. É a única rota do app onde a autorização é por **papel** e não
+por **posse**.
 
-Isso é desenho, não descuido: é rota de OPERADOR, e operador vê todos. O
-portão é `user.app_metadata.papel !== "operador" → notFound()`, repetido na
-página e em `operadorOuErro()` de cada action.
+Isso é desenho, não descuido: é tela de operador, e operador vê todos.
 
-**Mas é a única rota do app onde a autorização é por PAPEL e não por
-POSSE.** Se o papel de operador for concedido errado, ou se a checagem
-sumir de uma action nova deste diretório, o id da URL passa a alcançar
-qualquer cliente. É o candidato número um da frente.
+**A CONTAGEM, medida em 03/09** — a pergunta era se alguma action já está
+sem a checagem:
+
+| | |
+|---|---|
+| actions exportadas no diretório | **3** — `decidirAction`, `reabrirAction`, `aplicarAction` |
+| que chamam `operadorOuErro()` | **3** |
+| sem a checagem | **0** |
+
+Nas três, `operadorOuErro()` é a **primeira linha do corpo**, antes de
+qualquer leitura de `formData`. Não há lacuna hoje.
+
+**E são três camadas, não uma.** Isto corrige o que a primeira versão
+deste documento dizia — que o portão era a checagem repetida à mão:
+
+1. **`proxy.ts`**, `OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil"]`.
+   Roda no prefixo inteiro, antes de qualquer código de rota. Server Action
+   faz `POST` para a URL da própria página, então a chamada das três passa
+   por aqui;
+2. **a página**, `papel !== "operador" → notFound()`, nas duas
+   (`/revisar-perfil` e `/revisar-perfil/[proposta]`);
+3. **cada action**, `operadorOuErro()`.
+
+**O risco residual, então, é mais estreito do que "esquecer a linha".** Uma
+action nova sem a checagem continua atrás do `proxy.ts` — enquanto for
+invocada de dentro de `/revisar-perfil`. O que a tiraria de lá é ela ser
+importada por uma página de outra rota: o `POST` iria para a URL daquela
+página, fora do prefixo, e a camada 1 não rodaria. Hoje isso não acontece —
+as três são importadas **só** por `[proposta]/page.tsx`, medido.
+
+São, portanto, **duas linhas que alguém não escreveria**, e não uma: a
+checagem ausente E a importação de fora do prefixo. Continua sendo o
+candidato número um da frente, por um motivo que não mudou — nada acusa
+nenhuma das duas. Não há conferidor que ligue "action de operador" a
+"prefixo protegido", e o `pnpm conferir` passaria limpo nos dois casos.
 
 ### 3.3 Um id que vem do cliente por cookie — e é reconferido
 
@@ -201,3 +232,10 @@ page           /inicio, /anuncios, /meu-negocio, /conta, /revisar-perfil, /saude
    `?business_id=` e chamasse o backend funcionaria, passaria no
    `pnpm conferir`, passaria no build — e leria o negócio de qualquer
    cliente. É o que a frente depois do dia 10 tem que resolver.
+
+**CORREÇÃO, mesma data.** A primeira versão desta seção dizia que a rota de
+operador era guardada por uma checagem "repetida à mão em cada action", e
+que esquecê-la abriria tudo. **A contagem mostrou o contrário:** 3 actions,
+3 com a checagem, e `proxy.ts` guardando o prefixo inteiro por baixo. O
+buraco existe, mas exige DUAS omissões, não uma — ver §3.2. A frase antiga
+teria feito priorizar por um risco maior do que o medido.
