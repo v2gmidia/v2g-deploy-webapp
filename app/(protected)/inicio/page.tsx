@@ -131,17 +131,16 @@ export default async function InicioPage() {
   // ============================================================
   // OS DIAS QUE ELE PERDEU — por subtração de calendário.
   //
-  // Não dá para ler "a quem a pergunta foi feita": o backend tem
-  // `execucoes_de_rotina` com chave `(tarefa, dia)`, mas ela registra que a
-  // ROTINA rodou, não que a pergunta chegou a um cliente. O registro por
-  // cliente foi pedido e não existe (03/09).
+  // E vai continuar sendo por subtração: `perguntas_apresentadas` registra
+  // que a pergunta foi MOSTRADA, e dia em que o dono não abriu o app não
+  // gera linha nenhuma. A tabela classifica o que já está nesta lista; ela
+  // não a produz. Ver o bloco de `diasAtrasados`.
   //
-  // Toda a dedução mora em `diasAtrasados`, uma função só — para o dia em
-  // que o registro existir, a troca custar um arquivo. Ver o bloco dela.
+  // Toda a dedução mora numa função só — é onde acrescentar a leitura
+  // quando ela existir.
   // ============================================================
   // Sem execução não há card (a condição de baixo), logo não há atrasado a
-  // oferecer — e o `idExecucao` que a lista vai passar a usar como chave
-  // só existe aqui dentro. Ver o bloco PARA A TROCA em `diasAtrasados`.
+  // oferecer — e o `idExecucao` da chave só existe aqui dentro.
   const execucaoDoDia = estado.diaSeguinte.execucao;
   const atrasados = execucaoDoDia
     ? await diasAtrasados({
@@ -178,8 +177,9 @@ export default async function InicioPage() {
   // Respondido, ele encolhe para uma linha. Ver `PerguntaDoDia`.
   // ============================================================
   const cardDaPergunta =
-    estado.diaSeguinte.execucao !== null ? (
+    execucaoDoDia !== null ? (
       <PerguntaDoDia
+        idExecucao={execucaoDoDia.idExecucao}
         dia={diaDaPergunta}
         vendasAtuais={vendasDeOntem}
         receitaAtualCentavos={receitaDeOntem}

@@ -49,6 +49,7 @@ import {
 import type { Consolidado } from "../lib/dia-seguinte/tipos.ts";
 import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo, diasAntesDe } from "../lib/dia-seguinte/dia.ts";
 import {
+  diaCabeNaMemoria,
   diaPodeSerRespondido,
   diasAtrasados,
   DIAS_DE_MEMORIA,
@@ -725,6 +726,26 @@ secao("3.7 os dias em aberto — por subtração de calendário");
   ok(!(await pode("2026-08-30")), "dia JÁ respondido não entra pela porta do atrasado");
   ok(await pode(ONTEM, null as never), "sem consolidado, só ontem passa");
   ok(!(await pode("2026-09-01", null as never)), "e nenhum atrasado passa às cegas");
+
+  // ============================================================
+  // A CHECAGEM BARATA — a que guarda a TELEMETRIA de apresentação.
+  //
+  // Ela é de propósito mais fraca que a de cima: quem grava dinheiro lê o
+  // consolidado, quem grava contagem não paga uma rede por render. O que
+  // ela tem que barrar é dia futuro e data inventada.
+  // ============================================================
+  const cabe = (dia: string) => diaCabeNaMemoria({ dia, ontem: ONTEM });
+
+  ok(cabe(ONTEM), "ontem cabe");
+  ok(cabe(diasAntesDe(ONTEM, DIAS_DE_MEMORIA - 1)), "o limite da janela cabe");
+  ok(!cabe(diasAntesDe(ONTEM, DIAS_DE_MEMORIA)), "um dia antes do limite não cabe");
+  ok(!cabe("2026-09-03"), "HOJE não cabe — a pergunta é sobre o dia que fechou");
+  ok(!cabe("2027-01-01"), "dia futuro não cabe");
+  ok(!cabe("2020-01-01"), "data antiga inventada não cabe");
+  ok(
+    cabe("2026-08-30") && !(await pode("2026-08-30")),
+    "e ela é MAIS FRACA: um dia já respondido cabe na janela mas não pode ser gravado",
+  );
 }
 
 // ---------------------------------------------------------------- rede

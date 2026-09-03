@@ -91,4 +91,6 @@ export {
   consolidadoDoNegocio,
   execucaoDoNegocio,
   gravarRespostaDoDono,
+  registrarPerguntaApresentada,
+  REGISTRA_PERGUNTA_APRESENTADA,
 } from "./dia-seguinte";

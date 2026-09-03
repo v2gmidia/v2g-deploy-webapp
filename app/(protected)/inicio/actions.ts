@@ -6,10 +6,12 @@ import {
   consolidadoDoNegocio,
   execucaoDoNegocio,
   gravarRespostaDoDono,
+  registrarPerguntaApresentada,
   MENSAGEM_GENERICA_BACKEND,
 } from "@/lib/backend";
 import { diaDeOntemEmSaoPaulo, diasAntesDe } from "@/lib/dia-seguinte/dia";
 import {
+  diaCabeNaMemoria,
   diaPodeSerRespondido,
   DIAS_DE_MEMORIA,
 } from "@/lib/dia-seguinte/dias-em-aberto";
@@ -169,4 +171,81 @@ export async function responderPerguntaDoDiaAction(entrada: {
 
   revalidatePath("/inicio");
   return { ok: true };
+}
+
+/**
+ * Registra que a pergunta do dia FOI MOSTRADA a este cliente.
+ *
+ * ============================================================
+ * ESTA AÇÃO NÃO PODE FALHAR DE FORMA VISÍVEL. NUNCA.
+ *
+ * Ela existe para separar "ele não abriu o app" de "ele abriu, viu a
+ * pergunta e não respondeu" — a distinção que a subtração de calendário
+ * não faz sozinha. Isso é telemetria: útil no dashboard, irrelevante para
+ * o dono.
+ *
+ * Por isso ela devolve `void` e engole tudo. Não é descuido — é o
+ * contrário: um `Promise` rejeitado numa Server Action chamada de
+ * `useEffect` vira erro não tratado no cliente, e no Next isso é capaz de
+ * levar a árvore inteira para o `error.tsx`. **Trocar a tela principal do
+ * produto por uma linha de estatística seria o pior negócio possível.**
+ *
+ * O `try` externo cobre até o que vem antes da rede — `createClient()`
+ * lê env e pode estourar, e foi exatamente assim que a `/conta` caiu em
+ * 02/09.
+ * ============================================================
+ *
+ * ============================================================
+ * NÃO CONFERE O DIA CONTRA `diaPodeSerRespondido`, E É ESCOLHA.
+ *
+ * A conferência completa exige ler o consolidado — uma chamada de rede a
+ * mais por card renderizado, para proteger uma linha de telemetria. Caro
+ * pelo que entrega.
+ *
+ * O que fica é a checagem que não custa rede: o dia tem que estar DENTRO
+ * DA JANELA DE MEMÓRIA. Ela barra o que importa barrar — dia futuro e
+ * data inventada —, e o que passa de errado é, no pior caso, uma linha a
+ * mais numa tabela de estatística. Não escreve dinheiro, não escreve
+ * resposta do dono, e o upsert é idempotente.
+ * ============================================================
+ */
+export async function registrarPerguntaApresentadaAction(entrada: {
+  dia: string;
+}): Promise<void> {
+  try {
+    if (!diaCabeNaMemoria({ dia: entrada.dia, ontem: diaDaPergunta() })) return;
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data: negocio } = await supabase
+      .from("businesses")
+      .select("id")
+      .eq("profile_id", user.id)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    if (!negocio) return;
+
+    // O `id_execucao` sai daqui, nunca do cliente — a mesma disciplina de
+    // `responderPerguntaDoDiaAction`. O componente conhece o id (usa como
+    // chave de deduplicação), e mesmo assim não o manda: o caminho que
+    // aceita id de fora é o que não existe.
+    const execucao = await execucaoDoNegocio({
+      businessId: negocio.id as string,
+      profileId: user.id,
+    });
+    if (!execucao.ok || !execucao.dados) return;
+
+    await registrarPerguntaApresentada({
+      idExecucao: execucao.dados.idExecucao,
+      dia: entrada.dia,
+    });
+  } catch {
+    // De propósito. Ver o bloco acima: o log de quem falhou já sai de
+    // `chamar()`, e não há nada que a tela possa fazer com esta falha.
+  }
 }

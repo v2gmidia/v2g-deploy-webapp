@@ -253,3 +253,68 @@ export async function gravarRespostaDoDono(args: {
     { contexto: "resposta-do-dono", timeoutMs: TIMEOUTS.rapido },
   );
 }
+
+/**
+ * O único canal por onde a pergunta chega hoje.
+ *
+ * A chave da tabela é `(id_execucao, dia, canal)`, e o canal está lá para
+ * o dia em que push ou WhatsApp existirem: "apresentada na tela" e
+ * "mandada por push" são fatos diferentes sobre o mesmo dia, e uma chave
+ * sem canal faria o segundo sobrescrever o primeiro.
+ */
+const CANAL_DA_PERGUNTA = "tela";
+
+/**
+ * O interruptor da telemetria de apresentação.
+ *
+ * ============================================================
+ * ELE EXISTE PARA O APP NÃO ESPERAR O BACKEND, E VICE-VERSA.
+ *
+ * O cliente abaixo foi escrito contra uma rota que pode ainda não estar
+ * de pé. Enquanto não estiver, cada apresentação vira um 404 registrado
+ * por `chamar()` — nada quebra, mas log que grita sem motivo treina todo
+ * mundo a ignorar log.
+ *
+ * `V2G_PERGUNTA_APRESENTADA=off` desliga. Qualquer outro valor, incluindo
+ * a ausência, mantém ligado: o padrão certo é o estado final, e o
+ * desligado é a exceção temporária. Um flag que precisa ser LEMBRADO para
+ * ligar é um flag que fica desligado para sempre.
+ * ============================================================
+ */
+export const REGISTRA_PERGUNTA_APRESENTADA =
+  (process.env.V2G_PERGUNTA_APRESENTADA ?? "").toLowerCase() !== "off";
+
+/**
+ * `POST /execucoes/{id}/pergunta-apresentada`
+ *
+ * ============================================================
+ * ISTO É TELEMETRIA. NINGUÉM PODE DEPENDER DELA.
+ *
+ * Grava que a pergunta do dia FOI MOSTRADA a este cliente. É o que separa
+ * "ele não abriu o app" de "ele abriu, viu a pergunta e não respondeu" —
+ * distinção que a subtração de calendário em `lib/dia-seguinte/
+ * dias-em-aberto.ts` não consegue fazer sozinha.
+ *
+ * O upsert é idempotente com a PRIMEIRA escrita vencendo, então repetir
+ * não estraga nada: o que interessa é o instante da primeira vez que ele
+ * viu, e uma segunda visita no mesmo dia não desloca esse instante.
+ *
+ * **O resultado é para o log, não para a tela.** Quem chama descarta. Ver
+ * `registrarPerguntaApresentadaAction` — o caminho inteiro é
+ * fire-and-forget de propósito: registro de telemetria que derruba a tela
+ * principal é o pior negócio possível.
+ * ============================================================
+ */
+export async function registrarPerguntaApresentada(args: {
+  idExecucao: string;
+  /** o dia a que a pergunta apresentada se refere, `YYYY-MM-DD` */
+  dia: string;
+}): Promise<Resultado<unknown>> {
+  if (!REGISTRA_PERGUNTA_APRESENTADA) return falha("indisponivel");
+
+  return enviar(
+    `/execucoes/${encodeURIComponent(args.idExecucao)}/pergunta-apresentada`,
+    { dia: args.dia, canal: CANAL_DA_PERGUNTA },
+    { contexto: "pergunta-apresentada", timeoutMs: TETO_DE_TELA_MS },
+  );
+}

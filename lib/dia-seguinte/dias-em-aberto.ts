@@ -5,30 +5,59 @@ import type { ConsolidadoBase } from "./tipos";
  * Quais dias o dono ainda não respondeu — por SUBTRAÇÃO DE CALENDÁRIO.
  *
  * ============================================================
- * ESTA FUNÇÃO É PROVISÓRIA POR CONSTRUÇÃO. TROQUE-A QUANDO PUDER.
+ * "EM ABERTO" É DEDUÇÃO, NÃO LEITURA. E vai continuar sendo.
  *
- * Ela existe porque hoje **não dá para saber a quem a pergunta foi
- * feita**. O backend tem `execucoes_de_rotina`, com chave `(tarefa, dia)`
- * e idempotente — mas ela registra que a ROTINA rodou, não que a pergunta
- * chegou a um cliente específico. O registro por cliente foi pedido e não
- * existe (03/09/2026).
+ * Enumera-se o calendário e subtraem-se os dias que têm resposta. Sobra o
+ * que ninguém respondeu.
  *
- * Sem ele, "dia em aberto" só pode ser deduzido: enumera-se o calendário e
- * subtraem-se os dias que têm resposta. É dedução, não leitura — e ela
- * carrega um erro conhecido: **não distingue "não perguntamos" de
- * "perguntamos e ele não respondeu"**, nem enxerga domingo e feriado.
+ * A dedução carrega dois erros conhecidos: sozinha ela **não distingue
+ * "não perguntamos" de "perguntamos e ele não respondeu"** — o primeiro é
+ * resolvido por `perguntas_apresentadas`, ver o bloco seguinte —, e não
+ * enxerga domingo nem feriado, o que segue aceito na v1.
+ * ============================================================
  *
- * O SUBSTITUTO JÁ TEM NOME: `perguntas_enviadas`, chave
- * `(id_execucao, dia)` — a mesma de `respostas_do_dono`. Quando existir, o
- * corpo daqui vira o `left join` das duas (enviadas sem resposta), e o
- * `piso` some junto: a linha mais antiga em `perguntas_enviadas` É o piso,
- * lido em vez de inferido.
+ * ============================================================
+ * NÃO EXISTE SUBSTITUTO. A SUBTRAÇÃO DE CALENDÁRIO É DEFINITIVA — POR
+ * ENQUANTO. Correção do Victor, 03/09/2026, contra o que este bloco dizia
+ * antes.
  *
- * A ASSINATURA ABAIXO JÁ ESTÁ NO FORMATO DA TROCA — ver os dois blocos
- * marcados PARA A TROCA. É de propósito que ela pareça exagerada hoje: o
- * preço de acertar agora é este comentário, e o de acertar depois é mexer
- * em dois chamadores e em vinte e uma asserções do conferidor no mesmo
- * commit em que a lógica muda.
+ * Chegou `perguntas_apresentadas`, chave `(id_execucao, dia, canal)`. A
+ * versão anterior deste comentário prometia que o corpo daqui viraria um
+ * `left join` e pararia de enumerar calendário. **Está errado, e é um erro
+ * que valia caro:** a tabela registra APRESENTAÇÃO, não envio. Não existe
+ * envio — a pergunta aparece quando o dono ABRE o app.
+ *
+ * Ou seja: dia em que ele não abriu não gera linha nenhuma. Um `left join`
+ * enxergaria só os dias em que ele esteve aqui e não respondeu, e perderia
+ * exatamente o caso que motivou esta função — o dono que sumiu três dias.
+ *
+ * O QUE A TABELA ENTREGA É A DISTINÇÃO, NÃO A SUBSTITUIÇÃO:
+ *
+ *   linha + sem resposta   apresentamos e ele não respondeu
+ *   nenhuma das duas       ele não abriu; não apresentamos
+ *
+ * **Os dois continuam "em aberto" para o convite** — quem não viu a
+ * pergunta e quem viu e não respondeu recebem a mesma oferta. Isso muda o
+ * dashboard (dá para separar desinteresse de ausência), e não muda uma
+ * linha do cálculo abaixo.
+ *
+ * Se um dia existir envio de verdade (push, WhatsApp), a conversa volta a
+ * ser outra. Enquanto o único canal for `tela`, o calendário é a única
+ * fonte que enxerga o dia em que ninguém esteve.
+ * ============================================================
+ *
+ * ============================================================
+ * POR QUE `async` E `idExecucao` FICAM MESMO ASSIM.
+ *
+ * A decisão de assinatura foi tomada em 03/09 esperando uma troca de
+ * corpo que não vai acontecer. Ela continua certa — pelo motivo contrário
+ * ao que a motivou: não é que um dia vão precisar ser assim, é que
+ * **sempre vão precisar**. A leitura de `perguntas_apresentadas` que vai
+ * classificar cada dia em aberto é uma chamada de rede endereçada por
+ * `(id_execucao, dia)`, e ela entra aqui dentro — junto do calendário, não
+ * no lugar dele.
+ *
+ * Ver os dois blocos marcados PARA A TROCA nos argumentos.
  * ============================================================
  */
 
@@ -97,15 +126,15 @@ function primeiraResposta(consolidado: ConsolidadoBase): string | null {
  * PARA A TROCA — POR QUE ELA É `async` SEM PRECISAR SER.
  *
  * O corpo de hoje é síncrono e puro: daria para devolver `string[]` direto.
- * Ela devolve `Promise` mesmo assim porque o substituto é uma LEITURA — o
- * `left join` mora do outro lado da rede, e função que consulta o backend
- * não pode ser síncrona.
+ * Ela devolve `Promise` porque a classificação que vem a seguir é uma
+ * LEITURA — `perguntas_apresentadas` mora do outro lado da rede, e função
+ * que consulta o backend não pode ser síncrona.
  *
- * Se ela nascesse síncrona, o dia da troca mudaria o tipo de retorno das
- * duas funções daqui, dos dois chamadores e das asserções do conferidor,
- * tudo no mesmo commit em que a lógica muda — que é justamente quando não
- * se quer barulho em volta. O `await` de hoje não custa nada: os dois
- * chamadores já são assíncronos.
+ * Se ela nascesse síncrona, o dia de acrescentar essa leitura mudaria o
+ * tipo de retorno das duas funções daqui, dos dois chamadores e das
+ * asserções do conferidor, tudo no mesmo commit em que a lógica muda — que
+ * é justamente quando não se quer barulho em volta. O `await` de hoje não
+ * custa nada: os dois chamadores já são assíncronos.
  * ============================================================
  */
 export async function diasAtrasados(args: {
@@ -113,8 +142,9 @@ export async function diasAtrasados(args: {
    * ============================================================
    * PARA A TROCA — ESTE CAMPO NÃO É LIDO HOJE. NÃO O APAGUE.
    *
-   * `perguntas_enviadas` tem chave `(id_execucao, dia)`: sem o id não há
-   * como endereçar a tabela que vai substituir esta dedução. Ele entra
+   * `perguntas_apresentadas` tem chave `(id_execucao, dia, canal)`: sem o
+   * id não há como endereçar a tabela que vai CLASSIFICAR cada dia desta
+   * lista (apresentado e não respondido × nem apresentado). Ele entra
    * agora porque **os dois chamadores já têm o id na mão** na linha
    * anterior à chamada — `page.tsx` por `estado.diaSeguinte.execucao`,
    * `actions.ts` por `execucaoDoNegocio()` — e passá-lo hoje custa uma
@@ -177,4 +207,34 @@ export async function diaPodeSerRespondido(args: {
 }): Promise<boolean> {
   if (args.dia === args.ontem) return true;
   return (await diasAtrasados(args)).includes(args.dia);
+}
+
+/**
+ * O dia cabe na janela de memória? Sete dias terminando em ontem.
+ *
+ * ============================================================
+ * ESTA É A CHECAGEM QUE NÃO CUSTA REDE, e é de propósito que ela seja
+ * mais fraca que `diaPodeSerRespondido`.
+ *
+ * Quem grava DINHEIRO usa a outra: ela lê o consolidado e sabe quais dias
+ * estão de fato em aberto. Quem grava TELEMETRIA usa esta — o registro de
+ * "a pergunta foi apresentada" acontece a cada card renderizado, e uma
+ * leitura de consolidado por render, para proteger uma linha de
+ * estatística, é caro pelo que entrega.
+ *
+ * O que ela barra é o que importa barrar: dia futuro e data inventada. O
+ * que escapa é, no pior caso, uma linha a mais numa tabela de contagem.
+ *
+ * SÍNCRONA, E CONTINUA SÍNCRONA. Diferente das duas de cima, ela não é
+ * um fato sobre o cliente — é aritmética de calendário, e nunca vai
+ * precisar perguntar nada a ninguém.
+ * ============================================================
+ */
+export function diaCabeNaMemoria(args: {
+  dia: string;
+  ontem: string;
+  teto?: number;
+}): boolean {
+  const teto = args.teto ?? DIAS_DE_MEMORIA;
+  return args.dia <= args.ontem && args.dia >= diasAntesDe(args.ontem, teto - 1);
 }

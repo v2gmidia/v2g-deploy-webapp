@@ -104,6 +104,14 @@ Duas variáveis, ambas de servidor, nenhuma com `NEXT_PUBLIC_`:
 |---|---|
 | `V2G_BACKEND_URL` | base da API, sem barra no final |
 | `V2G_BACKEND_TOKEN` | o valor do header `X-V2G-Token` |
+| `V2G_PERGUNTA_APRESENTADA` | `off` desliga a telemetria de apresentação da pergunta diária. Opcional; ligado por padrão. |
+
+A terceira é um interruptor, não uma credencial, e existe por um motivo
+específico: o cliente de `POST /execucoes/{id}/pergunta-apresentada` foi
+escrito **antes** de a rota subir, para os dois lados não esperarem um
+pelo outro. Enquanto ela não estiver de pé, `off` evita um 404 por
+apresentação no log. Nada na tela muda nos dois casos — o caminho inteiro
+é fire-and-forget.
 
 **Se faltar qualquer uma, o app NÃO quebra.** `lib/backend` devolve a
 categoria `indisponivel` e a tela mostra que aquela parte ainda não está

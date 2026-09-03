@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { diaPorExtenso, dinheiroDeCentavos } from "@/lib/formato";
 import {
   centavosDeDigitos,
@@ -10,7 +10,34 @@ import {
   PERGUNTA_DE_VENDAS,
   vendasDoQueFoiDigitado,
 } from "@/lib/dia-seguinte/pergunta";
-import { responderPerguntaDoDiaAction } from "./actions";
+import {
+  registrarPerguntaApresentadaAction,
+  responderPerguntaDoDiaAction,
+} from "./actions";
+
+/**
+ * O que esta sessão já registrou como apresentado — chave
+ * `execução:dia`.
+ *
+ * ============================================================
+ * MÓDULO, E NÃO ESTADO DO COMPONENTE. É a diferença entre funcionar e
+ * não funcionar.
+ *
+ * O card desmonta e remonta o tempo todo: navegar para /vendas e voltar,
+ * o `revalidatePath` depois de guardar, o duplo `useEffect` do StrictMode
+ * em desenvolvimento. Estado do componente morre em cada um desses, e o
+ * registro viraria um POST por render — que é exatamente o que o Victor
+ * pediu para não acontecer.
+ *
+ * Vivendo no módulo, ele dura o que a aba durar. Recarregar a página
+ * zera, e está certo: aí é outra sessão.
+ *
+ * A CHAVE LEVA A EXECUÇÃO junto do dia. Com uma execução por negócio o
+ * dia bastaria — mas numa segunda rodada o mesmo dia é outro fato, e uma
+ * chave só de dia engoliria o registro da campanha nova.
+ * ============================================================
+ */
+const jaRegistradoNestaSessao = new Set<string>();
 
 /**
  * A pergunta diária — o card que faz o loop existir.
@@ -76,6 +103,16 @@ interface PerguntaDoDiaProps {
   atrasados: string[];
   /** o que já está gravado em cada atrasado, para o campo nascer cheio */
   valoresPorDia: Record<string, { vendas: number | null; receita: number | null }>;
+  /**
+   * A execução desta rodada — **só para a chave de deduplicação** do
+   * registro de apresentação.
+   *
+   * Ela NÃO viaja de volta ao servidor: `registrarPerguntaApresentadaAction`
+   * busca a execução por conta própria, a partir do `businesses` lido sob
+   * RLS. É a mesma disciplina de `responderPerguntaDoDiaAction` — o
+   * caminho que aceita id vindo do cliente é o que não existe.
+   */
+  idExecucao: string;
 }
 
 export function PerguntaDoDia({
@@ -85,6 +122,7 @@ export function PerguntaDoDia({
   dia,
   atrasados,
   valoresPorDia,
+  idExecucao,
 }: PerguntaDoDiaProps) {
   const doDia = (d: string) =>
     d === dia
@@ -152,6 +190,46 @@ export function PerguntaDoDia({
   const [corrigindo, setCorrigindo] = useState(
     vendasAtuais === null || receitaAtualCentavos === null,
   );
+
+  // ============================================================
+  // "APRESENTADA" É QUANDO ELE VÊ A PERGUNTA, NÃO QUANDO A PÁGINA CARREGA.
+  //
+  // O registro tem que valer como prova de que a pergunta chegou nos olhos
+  // dele. Por isso não é no mount da página — este componente só existe
+  // quando há execução — e não basta o card existir: se ele já respondeu
+  // tudo, o card é um resumo, e resumo não é pergunta. Registrar ali
+  // encheria a tabela de "apresentamos" para dias que ninguém perguntou, e
+  // o dashboard passaria a contar visita como pergunta ignorada.
+  //
+  // UMA condição basta, e não é economia: o resumo só aparece com os DOIS
+  // campos preenchidos (`tudoRespondido`), então "sobrou algo em aberto no
+  // dia mostrado" já implica que o card está mostrando campos. Escrever as
+  // duas seria fingir que elas podem divergir.
+  //
+  // Roda também quando ele ABRE um atrasado: naquele momento a pergunta
+  // daquele dia foi apresentada, e é um fato diferente sobre outro dia.
+  //
+  // NÃO roda quando ele clica "Corrigir" num dia já respondido — ali não
+  // há pergunta, há revisão.
+  // ============================================================
+  const valoresDoDia = respondendo === dia ? salvo : doDia(respondendo);
+  const temPerguntaEmAberto =
+    valoresDoDia.vendas === null || valoresDoDia.receita === null;
+
+  useEffect(() => {
+    if (!temPerguntaEmAberto) return;
+    const chave = `${idExecucao}:${respondendo}`;
+    if (jaRegistradoNestaSessao.has(chave)) return;
+    // Marca ANTES de disparar: em StrictMode o efeito roda duas vezes
+    // seguidas, e marcar depois do `await` deixaria as duas passarem.
+    jaRegistradoNestaSessao.add(chave);
+
+    // FIRE-AND-FORGET, e o `void` diz isso em voz alta. A ação já engole
+    // tudo do lado do servidor; o `catch` aqui cobre a falha de TRANSPORTE
+    // da própria Server Action — rede caída no meio do POST do Next, que
+    // rejeita antes de o código de lá rodar.
+    void registrarPerguntaApresentadaAction({ dia: respondendo }).catch(() => {});
+  }, [idExecucao, respondendo, temPerguntaEmAberto]);
 
   async function enviar(naoSei: "vendas" | "receita" | null) {
     if (enviando) return;
