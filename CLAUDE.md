@@ -91,6 +91,9 @@ São ~45 documentos. **Não leia todos.** Escolha pelo assunto:
 
 **Credenciais e integrações externas**
 - `docs/token-vault.md`, `docs/oauth-meta.md`, `docs/smtp.md`
+- `docs/superficie-do-token.md` — o `X-V2G-Token` é único, compartilhado e
+  conecta com `service_role`. Onde ele vive, onde o `profile_id` nasce, e
+  por que a separação entre clientes hoje é disciplina de código
 
 **Produto e telas**
 - `docs/onboarding-expandido.md`, `docs/perfil-empresa.md`, `docs/extracao-perfil.md`
