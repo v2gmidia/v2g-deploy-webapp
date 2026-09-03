@@ -21,6 +21,7 @@
     "conferir:nichos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/conferir-nichos.ts",
     "conferir:dia-seguinte": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/conferir-dia-seguinte.ts",
     "conferir:apresentada": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs --conditions=react-server scripts/conferir-apresentada.ts",
+    "conferir:rota-apresentada": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs --conditions=react-server --env-file-if-exists=.env.local scripts/conferir-rota-apresentada.ts",
     "diagnostico:card": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/diagnostico-card-da-pergunta.ts",
     "conferir:admin": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-admin.ts",
     "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte && pnpm conferir:apresentada",

@@ -54,6 +54,13 @@ import type { AddressInfo } from "node:net";
 let passou = 0;
 let falhou = 0;
 
+/**
+ * A parte que fala com produção realmente aconteceu?
+ *
+ * Separado do placar de propósito — ver o bloco no fim do arquivo.
+ */
+let contratoMedido = false;
+
 function ok(condicao: boolean, rotulo: string) {
   if (condicao) {
     passou++;
@@ -182,6 +189,7 @@ if (!doc) {
   );
   process.exitCode = 1;
 } else {
+  contratoMedido = true;
   const paths = doc.paths ?? {};
   const total = Object.keys(paths).length;
   console.log(`   ${total} paths no documento`);
@@ -297,11 +305,26 @@ if (!doc) {
 // ---------------------------------------------------------------- placar
 
 console.log("\n" + "=".repeat(66));
-if (falhou === 0 && passou > 0) {
-  console.log(`TUDO CERTO — ${passou}/${passou} conferências`);
-} else if (passou === 0) {
-  console.log("NADA FOI MEDIDO — ver as mensagens acima");
+
+// ============================================================
+// "NÃO MEDI" NÃO PODE SAIR COMO "TUDO CERTO". Cicatriz de 03/09/2026.
+//
+// A primeira versão deste placar era `falhou === 0 && passou > 0`. Rodei
+// contra um dublê com o `openapi.json` inalcançável e ele imprimiu
+// **TUDO CERTO — 1/1**: o §1 (o que o cliente manda, medido offline)
+// tinha passado, e a parte que fala com produção nem tinha acontecido.
+//
+// Um conferidor que fica verde quando o backend está fora é pior do que
+// não existir — ele responde "o contrato bate" a uma pergunta que
+// ninguém chegou a fazer. Por isso o placar agora olha se a MEDIÇÃO
+// aconteceu, e não só se alguma asserção passou.
+// ============================================================
+if (!contratoMedido) {
+  console.log("NADA FOI MEDIDO do lado de produção — ver as mensagens acima.");
+  console.log("Isto NÃO é 'o contrato está errado'. É 'a pergunta não foi feita'.");
   process.exitCode = 1;
+} else if (falhou === 0) {
+  console.log(`TUDO CERTO — ${passou}/${passou} conferências`);
 } else {
   console.log(`TEM FALHA — ${passou}/${passou + falhou} conferências`);
   process.exitCode = 1;
