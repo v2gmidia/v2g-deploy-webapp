@@ -228,10 +228,17 @@ page           /inicio, /anuncios, /meu-negocio, /conta, /revisar-perfil, /saude
    build recusando a violação, e pelo grafo de imports.
 2. **O `profile_id` nasce sempre da sessão.** Nenhuma rota o lê da URL, e
    nenhum `business_id` vem de fora.
-3. **Isso é hábito, não trava.** Um handler novo que aceitasse
-   `?business_id=` e chamasse o backend funcionaria, passaria no
-   `pnpm conferir`, passaria no build — e leria o negócio de qualquer
-   cliente. É o que a frente depois do dia 10 tem que resolver.
+3. **Isso era hábito, não trava — e virou trava em 08/09/2026.**
+   `pnpm conferir:identidade` acusa todo id que vem de `searchParams`,
+   `params`, `formData` ou cookie e endereça linha, contra a lista branca
+   de `lib/seguranca/excecoes.ts`. Cada exceção declara qual das três
+   autorizações se aplica — **posse**, **papel** ou **prova** — e por quê.
+
+   **O instrumento achou dois arquivos que este documento não tinha.** A
+   §3 foi escrita por leitura e listou três casos; a varredura encontrou
+   seis, com `revisar-perfil/[proposta]/actions.ts` e
+   `conta/identidade-actions.ts` faltando. É a diferença entre ler o
+   repositório e medi-lo.
 
 **CORREÇÃO, mesma data.** A primeira versão desta seção dizia que a rota de
 operador era guardada por uma checagem "repetida à mão em cada action", e

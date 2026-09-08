@@ -22,10 +22,11 @@
     "conferir:dia-seguinte": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/conferir-dia-seguinte.ts",
     "conferir:apresentada": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs --conditions=react-server scripts/conferir-apresentada.ts",
     "conferir:signed-request": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs --conditions=react-server scripts/conferir-signed-request.ts",
+    "conferir:identidade": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-identidade.ts",
     "conferir:rota-apresentada": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs --conditions=react-server --env-file-if-exists=.env.local scripts/conferir-rota-apresentada.ts",
     "diagnostico:card": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/diagnostico-card-da-pergunta.ts",
     "conferir:admin": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-admin.ts",
-    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte && pnpm conferir:apresentada && pnpm conferir:signed-request",
+    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte && pnpm conferir:apresentada && pnpm conferir:signed-request && pnpm conferir:identidade",
     "medir:peca": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/medir-peca.mjs",
     "db:migrate": "supabase db push",
     "db:studio": "supabase start"
