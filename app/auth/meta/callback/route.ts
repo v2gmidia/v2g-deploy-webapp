@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { trocarCodePorToken } from "@/lib/meta/oauth";
+import { trocarCodePorToken,
+  TokenSemDono,
+} from "@/lib/meta/oauth";
 import { registrarErroMeta } from "@/lib/meta/erros";
 import { COOKIE_STATE } from "../iniciar/route";
 
@@ -80,7 +82,10 @@ export async function GET(request: NextRequest) {
     dados = await trocarCodePorToken(code);
   } catch (erro) {
     registrarErroMeta("callback:troca", erro);
-    return limpar(falhar("troca"));
+    // Token sem dono tem mensagem própria: não é falha de troca, é uma
+    // conexão que a gente RECUSA de propósito. Ver `TokenSemDono` —
+    // gravar sem saber de quem é criaria conexão impossível de apagar.
+    return limpar(falhar(erro instanceof TokenSemDono ? "identidade" : "troca"));
   }
 
   // ---- 5. Vault + meta_connections numa transação só ----

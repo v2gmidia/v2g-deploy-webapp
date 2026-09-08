@@ -94,6 +94,8 @@ São ~45 documentos. **Não leia todos.** Escolha pelo assunto:
 - `docs/superficie-do-token.md` — o `X-V2G-Token` é único, compartilhado e
   conecta com `service_role`. Onde ele vive, onde o `profile_id` nasce, e
   por que a separação entre clientes hoje é disciplina de código
+- `docs/exclusao-de-dados-meta.md` — os dois callbacks obrigatórios da
+  Meta, o que "excluir os dados" significa aqui, e o que **não** é apagado
 
 **Produto e telas**
 - `docs/onboarding-expandido.md`, `docs/perfil-empresa.md`, `docs/extracao-perfil.md`

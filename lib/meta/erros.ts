@@ -98,4 +98,9 @@ export const ERROS_DE_CALLBACK: Record<string, string> = {
   // com essa informação — o log do servidor tem o detalhe.
   config:
     "A conexão com o Instagram ainda não está liberada aqui. Já estamos sabendo — fale com a gente que a gente destrava para você.",
+  // Recusa NOSSA, e a mensagem não culpa o cliente: ele autorizou certo, o
+  // Facebook é que não disse quem era. Ver `TokenSemDono` em
+  // `lib/meta/oauth.ts` para o motivo de isto ser recusa e não `""`.
+  identidade:
+    "O Facebook não nos disse quem autorizou, e sem isso a gente não consegue ligar essa conexão a você. Tente de novo — se continuar, fale com a gente.",
 };

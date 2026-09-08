@@ -196,8 +196,48 @@ async function tokenLongo(curto: string): Promise<string> {
 export interface DadosDoToken {
   token: string;
   expiraEm: Date | null;
+  /**
+   * Quem autorizou, do lado do Meta. **Nunca vazio** — ver `TokenSemDono`.
+   *
+   * Deixou de ser "diagnóstico" e virou CHAVE: é por ele que um pedido de
+   * exclusão de dados vindo do Meta acha as conexões da pessoa. Um id
+   * vazio aqui casaria com todas as outras linhas vazias — o pedido de um
+   * apagaria o de todos.
+   */
   metaUserId: string;
   escopos: string[];
+}
+
+/**
+ * O Meta autorizou, mas não disse QUEM.
+ *
+ * ============================================================
+ * POR QUE ISTO RECUSA A CONEXÃO INTEIRA EM VEZ DE GRAVAR `""`.
+ *
+ * `meta_user_id` era só diagnóstico quando foi criado (0005: "quem
+ * autorizou"). Com o callback de exclusão de dados da Meta ele passa a ser
+ * a chave de junção: chega um `signed_request` com o `user_id`, e é por
+ * ele que se acha o que apagar.
+ *
+ * `?? ""` — que era o que estava aqui — transforma "não sei quem" em um
+ * valor que casa com todos os outros "não sei quem". Com um cliente isso
+ * não morde. Com dez, um pedido de exclusão de uma pessoa varre as
+ * conexões de todas as outras que também vieram sem id.
+ *
+ * Medido em 04/09/2026 antes de trocar: uma linha em `meta_connections`,
+ * com `meta_user_id` preenchido, nenhuma vazia. O conserto é barato agora
+ * e não é dívida que envelhece bem.
+ *
+ * Recusar é a escolha certa porque o estado alternativo é pior: uma
+ * conexão gravada que a gente não sabe de quem é, funcionando para
+ * anunciar e invisível para apagar.
+ * ============================================================
+ */
+export class TokenSemDono extends Error {
+  constructor() {
+    super("debug_token nao devolveu user_id");
+    this.name = "TokenSemDono";
+  }
 }
 
 /**
@@ -220,10 +260,16 @@ async function inspecionar(token: string): Promise<Omit<DadosDoToken, "token">> 
   }>(`https://graph.facebook.com/debug_token?${params}`);
 
   const d = dados.data ?? {};
+
+  // Sem dono não há conexão. Ver `TokenSemDono` — este `throw` é o que
+  // impede o `""` de existir no banco.
+  const dono = d.user_id?.trim();
+  if (!dono) throw new TokenSemDono();
+
   return {
     // expires_at = 0 significa "não expira" (raro, mas existe).
     expiraEm: d.expires_at ? new Date(d.expires_at * 1000) : null,
-    metaUserId: d.user_id ?? "",
+    metaUserId: dono,
     escopos: d.scopes ?? [],
   };
 }

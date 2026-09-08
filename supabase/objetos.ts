@@ -318,4 +318,21 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "esta é a irmã da migration do backend que ficou 13 dias sem rodar — o caso que gerou o conferidor",
     ],
   },
+  {
+    arquivo: "0021_exclusao_de_dados_da_meta.sql",
+    cria: [
+      { tipo: "tabela", nome: "exclusoes_de_dados" },
+      { tipo: "rpc", nome: "desautorizar_meta" },
+      { tipo: "rpc", nome: "apagar_dados_da_meta" },
+      { tipo: "rpc", nome: "status_da_exclusao" },
+    ],
+    foraDoAlcance: [
+      "a CHECK `meta_connections_meta_user_id_nao_vazio` — é ela que impede o `''` que faria um pedido de exclusão varrer conexão alheia",
+      "RLS ligada SEM policy na `exclusoes_de_dados` (nega tudo para anon e authenticated), e o revoke que a acompanha",
+      "o grant de `status_da_exclusao` para `anon` — é o que deixa a página pública ler o estado sem cliente admin",
+      "os grants restritos a `service_role` nas duas funções que apagam",
+      "o índice `exclusoes_de_dados_meta_user_id_idx`",
+      "o corpo das funções: que `apagar_dados_da_meta` varre N conexões em laço, que ela apaga o segredo do Vault, e que preserva `campaigns.published_at`",
+    ],
+  },
 ];

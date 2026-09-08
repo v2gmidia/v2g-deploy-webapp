@@ -2883,3 +2883,14 @@ code {
 @media (max-width: 620px) {
   .rc-faixa { flex-direction: column; }
 }
+
+
+/* ------------------------------------------------------------
+   A lista do que foi apagado, em /exclusao-de-dados/<codigo>.
+
+   Classe própria em vez de reaproveitar `.rc-lista`: aquela é da
+   revisão de perfil, e uma tela pública herdando estilo de uma tela de
+   operador amarra as duas — mexer numa mexeria na outra sem aviso.
+   ------------------------------------------------------------ */
+.excl-lista { margin: 0 0 14px; padding-left: 18px; }
+.excl-lista li { margin-bottom: 4px; line-height: 1.5; }

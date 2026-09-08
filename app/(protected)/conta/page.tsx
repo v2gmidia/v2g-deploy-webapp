@@ -128,7 +128,27 @@ export default async function ContaPage() {
 
       paginaAtual = conexao?.meta_page_id ?? null;
 
-      if (conexao?.status === "active") {
+      // ============================================================
+      // ERA `=== "active"`, E `active` NÃO EXISTE.
+      //
+      // A CHECK da 0005 permite exatamente cinco valores: `disconnected`,
+      // `connected`, `expiring`, `expired`, `revoked`. `active` não está
+      // entre eles, então esta condição era SEMPRE falsa — o seletor de
+      // página nunca carregava a lista, e a tela mostrava "nenhuma página
+      // disponível" para quem tinha conexão boa.
+      //
+      // Achado em 04/09/2026 ao conferir se a desautorização automática
+      // criaria o mesmo estado que o botão da `/conta`. A divergência
+      // estava do outro lado: a tela lia um estado que o banco não
+      // escreve.
+      //
+      // DÍVIDA REGISTRADA, e não consertada aqui: `/conectar/page.tsx:31`
+      // compara `=== "connected"` para o mesmo assunto. São duas telas
+      // decidindo sozinhas o que "a conexão serve" quer dizer, e nenhuma
+      // considera `expiring` — que tem token válido. O conserto é extrair
+      // o predicado, e ele não cabe num lote de conformidade com a Meta.
+      // ============================================================
+      if (conexao?.status === "connected") {
         try {
           const { data: token } = await admin.rpc("obter_token_meta", {
             p_business_id: business.id,
