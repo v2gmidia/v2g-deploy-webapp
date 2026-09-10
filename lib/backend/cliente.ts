@@ -125,9 +125,21 @@ async function chamar(
       headers: {
         "X-V2G-Token": cfg.token,
         Accept: "application/json",
-        ...(corpo !== undefined ? { "Content-Type": "application/json" } : {}),
+        // ============================================================
+        // COM `FormData`, O `Content-Type` NÃO SE ESCREVE À MÃO.
+        //
+        // Ele precisa carregar o `boundary`, que só o `fetch` sabe —
+        // escrever `multipart/form-data` sem boundary faz o outro lado
+        // receber um corpo que não consegue separar, e o sintoma é 422 com
+        // "campo obrigatório ausente" para um campo que foi mandado.
+        // ============================================================
+        ...(corpo !== undefined && !(corpo instanceof FormData)
+          ? { "Content-Type": "application/json" }
+          : {}),
       },
-      ...(corpo !== undefined ? { body: JSON.stringify(corpo) } : {}),
+      ...(corpo !== undefined
+        ? { body: corpo instanceof FormData ? corpo : JSON.stringify(corpo) }
+        : {}),
       // `AbortSignal.timeout` em vez de um AbortController à mão: ele
       // rejeita com `TimeoutError`, que dá para distinguir de um abort
       // provocado por outra coisa.
@@ -200,6 +212,23 @@ export async function enviar(
   opcoes: OpcoesChamada = {},
 ): Promise<Resultado<unknown>> {
   return chamar("POST", caminho, corpo, opcoes);
+}
+
+/**
+ * Uma chamada POST com ARQUIVO — `multipart/form-data`.
+ *
+ * Mesma normalização de erro do `enviar()`, e a mesma regra: função que
+ * cria recurso não se repete sozinha. Ver o bloco de `enviar()`.
+ *
+ * O timeout é maior por padrão porque quem chama está subindo foto de
+ * celular no 4G — o teto de tela mataria o upload legítimo.
+ */
+export async function enviarArquivos(
+  caminho: string,
+  corpo: FormData,
+  opcoes: OpcoesChamada = {},
+): Promise<Resultado<unknown>> {
+  return chamar("POST", caminho, corpo, { timeoutMs: 120_000, ...opcoes });
 }
 
 /**

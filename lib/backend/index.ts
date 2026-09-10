@@ -92,5 +92,20 @@ export {
   execucaoDoNegocio,
   gravarRespostaDoDono,
   registrarPerguntaApresentada,
+  perguntasPendentes,
   REGISTRA_PERGUNTA_APRESENTADA,
 } from "./dia-seguinte";
+
+/**
+ * O que o CLIENTE manda: fotos do negócio e criativo pronto.
+ *
+ * As duas rotas não são a mesma coisa — `/fotos` é matéria-prima do
+ * gerador, `/criativos-enviados` é a peça pronta. Ver o bloco do arquivo.
+ */
+export {
+  enviarFotosDoNegocio,
+  enviarCriativoPronto,
+  type ArquivoAceito,
+  type ResultadoDoEnvio,
+} from "./criativos-do-cliente";
+

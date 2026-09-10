@@ -1,11 +1,13 @@
 import "server-only";
 import { enviar, obter, TIMEOUTS } from "./cliente";
 import { falha, registrarErroBackend, type Resultado } from "./erros";
+import { validarPerguntasPendentes } from "@/lib/dia-seguinte/pendentes";
 import {
   validarConsolidado,
   validarConsolidadoDoNegocio,
   validarExecucaoDoNegocio,
 } from "@/lib/dia-seguinte/validar";
+import type { PerguntasPendentes } from "@/lib/dia-seguinte/pendentes";
 import type {
   Consolidado,
   ConsolidadoDoNegocio,
@@ -317,4 +319,47 @@ export async function registrarPerguntaApresentada(args: {
     { dia: args.dia, canal: CANAL_DA_PERGUNTA },
     { contexto: "pergunta-apresentada", timeoutMs: TETO_DE_TELA_MS },
   );
+}
+
+/**
+ * `GET /perguntas-pendentes` — de quem perguntar hoje.
+ *
+ * ============================================================
+ * ESTA ROTA NÃO É TELA DE OPERADOR. Decisão do Victor, 01/09/2026.
+ *
+ * Ela devolve TODOS os clientes que estão devendo resposta, e portanto
+ * não pode ser servida a um cliente logado — a lista tem o nome do
+ * negócio dos outros. Quem consome é um caminho nosso, do lado do
+ * servidor, e o que ele faz com a lista é decisão de produto que ainda
+ * está com o Victor (ver `docs/estado/perguntas-pendentes-os-tres-tons.md`).
+ *
+ * Enquanto essa decisão não vier, esta função existe e **nenhuma tela a
+ * chama** — é o consumo pronto, não o consumo ligado.
+ * ============================================================
+ *
+ * O parâmetro `em` é o dia da varredura. Omitido, o backend usa hoje.
+ */
+export async function perguntasPendentes(args: {
+  /** `YYYY-MM-DD`. Omitido = hoje, no fuso do backend. */
+  em?: string;
+} = {}): Promise<Resultado<PerguntasPendentes>> {
+  const resposta = await obter("/perguntas-pendentes", {
+    contexto: "perguntas-pendentes",
+    timeoutMs: TETO_DE_TELA_MS,
+    params: { em: args.em },
+  });
+
+  if (!resposta.ok) return resposta;
+
+  const validado = validarPerguntasPendentes(resposta.dados);
+  if (!validado) {
+    registrarErroBackend("perguntas-pendentes", {
+      metodo: "GET",
+      caminho: "/perguntas-pendentes",
+      categoria: "resposta_ilegivel",
+    });
+    return falha("resposta_ilegivel");
+  }
+
+  return { ok: true, dados: validado };
 }

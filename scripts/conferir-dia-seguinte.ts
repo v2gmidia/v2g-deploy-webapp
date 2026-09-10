@@ -55,6 +55,11 @@ import {
   DIAS_DE_MEMORIA,
 } from "../lib/dia-seguinte/dias-em-aberto.ts";
 import {
+  nivelEsperado,
+  validarPendente,
+  validarPerguntasPendentes,
+} from "../lib/dia-seguinte/pendentes.ts";
+import {
   centavosDeDigitos,
   centavosDoQueFoiDigitado,
   centavosNoCampo,
@@ -746,6 +751,72 @@ secao("3.7 os dias em aberto — por subtração de calendário");
     cabe("2026-08-30") && !(await pode("2026-08-30")),
     "e ela é MAIS FRACA: um dia já respondido cabe na janela mas não pode ser gravado",
   );
+}
+
+secao("3.8 quem está sem responder — GET /perguntas-pendentes");
+{
+  // ============================================================
+  // A ESCADA, E O TETO. Seis dias e noventa dias saem IGUAIS.
+  //
+  // O teto não é detalhe de implementação: é o que impede o produto de
+  // virar cobrança de dívida. Se um degrau novo aparecer acima de
+  // `oferta_de_ajuda`, esta seção fica vermelha.
+  // ============================================================
+  ok(nivelEsperado(0) === "pergunta", "dia 0 é `pergunta`");
+  ok(nivelEsperado(2) === "pergunta", "dia 2 ainda é `pergunta`");
+  ok(nivelEsperado(3) === "cobranca", "dia 3 vira `cobranca`");
+  ok(nivelEsperado(5) === "cobranca", "dia 5 ainda é `cobranca`");
+  ok(nivelEsperado(6) === "oferta_de_ajuda", "dia 6 vira `oferta_de_ajuda`");
+  ok(nivelEsperado(90) === "oferta_de_ajuda", "e dia 90 é O MESMO — a escada tem teto");
+
+  const cru = {
+    em: "2026-09-10",
+    pendentes: [
+      {
+        id_execucao: "e1",
+        nome_negocio: "Padaria",
+        nivel: "cobranca",
+        silencio_em_dias: 4,
+        ultima_resposta_em: "2026-09-06",
+      },
+      { id_execucao: "e2", nivel: "pergunta", silencio_em_dias: 1, ultima_resposta_em: null },
+    ],
+    considerados: 14,
+    filtro_de_dias_aplicado: true,
+  };
+
+  const v = validarPerguntasPendentes(cru)!;
+  ok(v !== null, "a varredura passa no validador");
+  ok(v.pendentes.length === 2, "com os dois pendentes");
+  ok(v.pendentes[1]!.nomeNegocio === null, "`nome_negocio` ausente vira null, não `undefined`");
+  ok(v.pendentes[1]!.ultimaRespostaEm === null, "quem nunca respondeu tem `ultimaRespostaEm` null");
+
+  // ============================================================
+  // `considerados` SEPARA "NINGUÉM DEVE" DE "NÃO OLHEI".
+  //
+  // Lista vazia com 14 considerados é notícia boa; lista vazia com 0
+  // considerados é a varredura não tendo achado ninguém para olhar. Sem o
+  // campo, os dois chegam como o mesmo silêncio — a mesma família do
+  // `null` não ser zero.
+  // ============================================================
+  const vazia = validarPerguntasPendentes({ em: "2026-09-10", pendentes: [], considerados: 14 })!;
+  ok(vazia.considerados === 14, "lista vazia com 14 considerados preserva o 14");
+  const nada = validarPerguntasPendentes({ em: "2026-09-10", pendentes: [] })!;
+  ok(nada.considerados === 0, "e sem o campo o padrão é 0 — que quer dizer outra coisa");
+
+  // Item torto não derruba a varredura das outras treze pessoas.
+  const comLixo = validarPerguntasPendentes({
+    em: "2026-09-10",
+    pendentes: [{ id_execucao: "ok", nivel: "pergunta", silencio_em_dias: 0 }, { lixo: true }],
+  })!;
+  ok(comLixo.pendentes.length === 1, "item ilegível é descartado, e o resto da lista sobrevive");
+
+  ok(validarPendente({ id_execucao: "x", nivel: "urgente", silencio_em_dias: 1 }) === null,
+    "nível fora dos três é recusado — não se inventa degrau");
+  ok(validarPendente({ nivel: "pergunta", silencio_em_dias: 1 }) === null,
+    "sem `id_execucao` é recusado: não há a quem perguntar");
+  ok(validarPerguntasPendentes({ pendentes: [] }) === null,
+    "sem `em` a varredura inteira é recusada — não se sabe de que dia ela fala");
 }
 
 // ---------------------------------------------------------------- rede
