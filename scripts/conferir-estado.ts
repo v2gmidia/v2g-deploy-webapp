@@ -21,9 +21,8 @@ import { resumirPendencias } from "../lib/cadastro/pendencias.ts";
 import type { Pendencia } from "../lib/cadastro/montar.ts";
 import {
   blocosDaTrilha,
-  concluidasPeloGasto,
+  concluidasPelaVeiculacao,
   estadoNaLista,
-  houveGastoMedido,
   montarEtapas,
   posicoesDaCadeia,
   DIAS_ATE_ADMITIR_NUMEROS,
@@ -35,6 +34,11 @@ import {
   andamentoDaExecucao,
   type ExecucaoDoCliente,
 } from "../lib/pipeline/relogios.ts";
+import {
+  houveGastoMedido,
+  veiculacaoDoNegocio,
+  type EstadoDeVeiculacao,
+} from "../lib/veiculacao/estado.ts";
 
 let falhas = 0;
 let testes = 0;
@@ -87,8 +91,13 @@ function base(): MedidaDoCliente {
     publicacaoFalhou: false,
     publicadaEm: null,
     temNumero: false,
-  execucaoDoBackend: null,
-  execucaoIlegivel: false,
+    execucaoDoBackend: null,
+    execucaoIlegivel: false,
+    // A BASE É "NUNCA FOI AO AR", e não `nao_sabemos`: ela representa
+    // quem nunca disparou, e para esse cliente a ausência de execução no
+    // backend É resposta. `nao_sabemos` é leitura que falhou, e tem
+    // seção própria na B.
+    veiculacao: "nunca_foi_ao_ar",
   };
 }
 
@@ -508,6 +517,9 @@ console.log("\nA. de onde a cadeia lê a execução — e o que ela diz sem cons
     status,
     andamento: "Precisamos das suas fotos para continuar",
     pedeAcao,
+    // `null` = a rota não mandou o campo. A cadeia não pode concluir nada
+    // sobre veiculação a partir disso — ver `lib/veiculacao/estado.ts`.
+    veiculacao: null,
     atualizadoEm: T0.toISOString(),
   });
 
@@ -591,7 +603,7 @@ console.log("\nA. de onde a cadeia lê a execução — e o que ela diz sem cons
   );
 }
 
-secao("B. a regra de evidência — gasto medido fecha `peca` e `no_ar`");
+secao("B. a regra de evidência — a VEICULAÇÃO fecha `peca` e `no_ar`");
 {
   // ============================================================
   // OS DOIS LADOS, COMO TODO CORTE DESTE ARQUIVO.
@@ -606,9 +618,10 @@ secao("B. a regra de evidência — gasto medido fecha `peca` e `no_ar`");
   // a mesma medida e o consolidado sem investimento, as duas etapas
   // continuam abertas.
   // ============================================================
-  const comoAV2G = (): MedidaDoCliente => {
+  const comoAV2G = (veiculacao: EstadoDeVeiculacao = "nunca_foi_ao_ar"): MedidaDoCliente => {
     const m = base();
     m.temNumero = true; // o consolidado tem dado
+    m.veiculacao = veiculacao;
     return m;
   };
 
@@ -624,27 +637,44 @@ secao("B. a regra de evidência — gasto medido fecha `peca` e `no_ar`");
   );
   ok(houveGastoMedido(comGasto), "os dois lados juntos: há evidência");
 
-  const cruas = montarEtapas(comoAV2G(), maisDias(1));
   const abertas = (es: Etapa[]) => es.filter((e) => !e.concluida).map((e) => e.id);
+
+  // A cadeia CRUA: `montarEtapas` já aplica a evidência por dentro, então
+  // "cru" aqui é a cadeia com `nunca_foi_ao_ar` — nenhuma etapa fechada
+  // pela veiculação. É o que a leitura local sozinha produzia para a V2G
+  // com R$ 10,25 gastos, e o motivo de a regra existir.
+  const cruas = montarEtapas(comoAV2G("nunca_foi_ao_ar"), maisDias(1));
 
   ok(
     abertas(cruas).join(",") === "peca,no_ar",
     `a cadeia local deixa peça e no ar abertas: [${abertas(cruas).join(", ")}]`,
   );
 
-  // ---- sem gasto: a leitura de sempre, intacta ----
-  const iguais = concluidasPeloGasto(cruas, semGasto);
+  // ---- nunca foi ao ar: a leitura de sempre, intacta ----
+  const iguais = concluidasPelaVeiculacao(cruas, "nunca_foi_ao_ar");
   ok(
     abertas(iguais).join(",") === "peca,no_ar",
-    "  fixture SEM gasto → peça e no ar continuam abertas",
+    "  `nunca_foi_ao_ar` → peça e no ar continuam abertas",
   );
   ok(
     iguais.every((e, i) => e === cruas[i]),
-    "  e sem gasto a função devolve as MESMAS etapas, sem copiar",
+    "  e sem evidência a função devolve as MESMAS etapas, sem copiar",
   );
 
-  // ---- com gasto: a cadeia inteira fecha ----
-  const provadas = concluidasPeloGasto(cruas, comGasto);
+  // ---- NÃO SABER NÃO FECHA NADA. É o caso que o gasto sozinho não tinha ----
+  ok(
+    abertas(concluidasPelaVeiculacao(cruas, "nao_sabemos")).join(",") === "peca,no_ar",
+    "  `nao_sabemos` NÃO fecha etapa nenhuma — ausência de leitura não é prova",
+  );
+
+  // ---- pausado FECHA, porque a etapa pergunta se CHEGOU ao ar ----
+  ok(
+    abertas(concluidasPelaVeiculacao(cruas, "ja_foi_ao_ar")).length === 0,
+    "  `ja_foi_ao_ar` fecha as duas — anúncio que rodou e parou chegou ao ar",
+  );
+
+  // ---- no ar: a cadeia inteira fecha ----
+  const provadas = concluidasPelaVeiculacao(cruas, "no_ar");
   ok(abertas(provadas).length === 0, "  fixture COM gasto → nenhuma etapa aberta");
   ok(
     provadas.every((e) => e.concluida),
@@ -653,19 +683,19 @@ secao("B. a regra de evidência — gasto medido fecha `peca` e `no_ar`");
 
   const por = (es: Etapa[], id: string) => es.find((e) => e.id === id)!;
   ok(
-    por(provadas, "peca").concluidaPeloGasto === true &&
-      por(provadas, "no_ar").concluidaPeloGasto === true,
-    "  as duas se declaram concluídas PELO GASTO",
+    por(provadas, "peca").concluidaPelaVeiculacao === true &&
+      por(provadas, "no_ar").concluidaPelaVeiculacao === true,
+    "  as duas se declaram concluídas PELA VEICULAÇÃO",
   );
   ok(
-    por(provadas, "cadastro").concluidaPeloGasto === undefined,
+    por(provadas, "cadastro").concluidaPelaVeiculacao === undefined,
     "  e quem já estava concluída por fonte própria NÃO se carimba",
   );
 
   // NADA DE INVENTAR DATA. A evidência é QUE aconteceu, não QUANDO.
   ok(
     por(provadas, "no_ar").desde === undefined,
-    "  o gasto não inventa data de publicação — `desde` fica como estava",
+    "  a evidência não inventa data de publicação — `desde` fica como estava",
   );
   ok(
     (["titulo", "corpo", "nome", "desde", "bola", "admitindo"] as const).every(
@@ -687,7 +717,7 @@ secao("B. a regra de evidência — gasto medido fecha `peca` e `no_ar`");
     noAr !== "Já está feito.",
     `  e a do no ar NÃO é o "Já está feito." seco: "${noAr}"`,
   );
-  ok(/investimento/i.test(noAr), "  ela aponta o investimento como prova");
+  ok(/facebook/i.test(noAr), "  ela aponta quem confirmou como prova");
   ok(
     estadoNaLista(por(provadas, "cadastro"), "feita") === "Já está feito.",
     "  enquanto a do cadastro segue sendo a frase de sempre",

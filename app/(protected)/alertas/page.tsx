@@ -1,5 +1,7 @@
 import { PixelMark } from "@/components/ui/PixelMark";
 import { createClient } from "@/lib/supabase/server";
+import { estadoDoCliente } from "@/lib/estado/cliente";
+import { esteveNoAr, estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 
 /**
  * Avisos — porte de `tela-08-alertas-desktop.html`.
@@ -33,16 +35,25 @@ export default async function AlertasPage() {
     .order("created_at", { ascending: false })
     .limit(10);
 
-  // "Nada pendente" tem dois significados muito diferentes: ninguém
-  // começou ainda, ou tudo está rodando e em ordem. A copy do estado
-  // vazio muda conforme o caso — dizer "seus anúncios ainda não estão
-  // no ar" para quem tem campanha rodando seria simplesmente falso.
-  const { count: campanhasNoAr } = await supabase
-    .from("campaigns")
-    .select("id", { count: "exact", head: true })
-    .not("published_at", "is", null);
-
-  const temCampanha = (campanhasNoAr ?? 0) > 0;
+  // ============================================================
+  // "NADA PENDENTE" TEM DOIS SIGNIFICADOS, E A FONTE ESTAVA VAZIA.
+  //
+  // Ninguém começou ainda, ou tudo está rodando e em ordem. Dizer "seus
+  // anúncios ainda não estão no ar" para quem tem campanha rodando seria
+  // simplesmente falso — e era exatamente o que acontecia.
+  //
+  // Esta tela contava `campaigns` com `published_at` preenchido. Medido
+  // em 11/09/2026: **`campaigns` tem ZERO linhas na tabela inteira**, não
+  // só nesta conta. Então `temCampanha` era `false` para todo mundo, para
+  // sempre, e a `/alertas` afirmava "Seus anúncios ainda não estão no ar"
+  // na mesma conta em que a `/vendas` afirmava "Seu anúncio está no ar".
+  // Duas telas do mesmo app, o mesmo minuto, respostas opostas.
+  //
+  // Agora vem de `estado.veiculacao` — a fonte única. Item B3.
+  // ============================================================
+  const estado = await estadoDoCliente(new Date());
+  const veiculacao = estado.veiculacao;
+  const temCampanha = esteveNoAr(veiculacao);
   const temPendencia = (pendentes?.length ?? 0) > 0;
   const temRegistro = (registradas?.length ?? 0) > 0;
 
@@ -100,10 +111,19 @@ export default async function AlertasPage() {
                   anúncios, uma cobrança que não passou — aparece nesta tela e também chega no
                   seu WhatsApp.
                 </p>
+                {/* A frase do ar vem do módulo; o que esta tela acrescenta
+                    é o que ELA sabe — que não há aviso pendente. Repare que
+                    são três casos e não dois: um anúncio que já rodou e
+                    parou não é "ainda não foi ao ar" nem "está rodando", e
+                    era essa a terceira frase que não existia em lugar
+                    nenhum do app. */}
                 <p className="eh-note">
-                  {temCampanha
-                    ? "Sua campanha está rodando e nada travou. Se algo precisar de você, aparece aqui antes de virar problema."
-                    : "Seus anúncios ainda não estão no ar, então não há o que avisar. Assim que a primeira campanha começar a rodar, é aqui que você acompanha."}
+                  {fraseDeVeiculacao(veiculacao, "manchete")}{" "}
+                  {estaNoArAgora(veiculacao)
+                    ? "Nada travou. Se algo precisar de você, aparece aqui antes de virar problema."
+                    : temCampanha
+                      ? "Enquanto ele estiver parado não há o que avisar. Se algo precisar de você quando ele voltar, aparece aqui."
+                      : "Então não há o que avisar. Assim que a primeira campanha começar a rodar, é aqui que você acompanha."}
                 </p>
               </div>
             )}
@@ -128,7 +148,7 @@ export default async function AlertasPage() {
                 <p className="hint" style={{ marginBottom: 0 }}>
                   {temCampanha
                     ? "A IA ainda não fez nenhum ajuste nesta campanha. Quando fizer — mudar o investimento de um anúncio para outro, pausar o que não está rendendo — vira uma linha aqui, com o motivo em português."
-                    : "A IA ainda não tomou nenhuma decisão porque não há campanha rodando. Quando houver, cada ajuste que ela fizer sozinha vira uma linha aqui, com o motivo em português."}
+                    : "A IA ainda não tomou nenhuma decisão, porque ainda não há campanha para ajustar. Quando houver, cada ajuste que ela fizer sozinha vira uma linha aqui, com o motivo em português."}
                 </p>
               </div>
             )}

@@ -27,6 +27,15 @@
 import type { ResumoDePendencias } from "@/lib/cadastro/pendencias";
 import type { ExecucaoDoCliente } from "@/lib/pipeline/relogios";
 import type { ExecucaoDoNegocio } from "@/lib/dia-seguinte/tipos";
+// Caminho RELATIVO e com extensão, ao contrário dos `import type` acima:
+// os conferidores rodam este arquivo direto do Node, sem bundler para
+// resolver o alias `@/`. Tipo é apagado na compilação e sobrevive ao
+// alias; valor, não. Mesma regra de `lib/dia-seguinte/` e `lib/nichos/`.
+import {
+  esteveNoAr,
+  fraseDeVeiculacao,
+  type EstadoDeVeiculacao,
+} from "../veiculacao/estado.ts";
 
 /**
  * De quem é a vez. TRÊS valores, não dois — e a diferença entre os dois
@@ -95,13 +104,13 @@ export interface Etapa {
   /** a gente passou do prazo e a etapa parou de explicar e admitiu */
   admitindo: boolean;
   /**
-   * Esta etapa fechou pela EVIDÊNCIA DO GASTO, e não pelo artefato local.
+   * Esta etapa fechou pela VEICULAÇÃO, e não pelo artefato local.
    *
-   * Só `concluidasPeloGasto()` liga isto, e existe para a lista poder
+   * Só `concluidasPelaVeiculacao()` liga isto, e existe para a lista poder
    * dizer de onde veio a conclusão em vez de fingir que o artefato
    * apareceu. Ver o bloco daquela função.
    */
-  concluidaPeloGasto?: boolean;
+  concluidaPelaVeiculacao?: boolean;
 }
 
 // ------------------------------------------------------------------ prazos
@@ -240,6 +249,22 @@ export interface MedidaDoCliente {
    * vez de escolher a frase mais otimista das duas.
    */
   execucaoIlegivel: boolean;
+  /**
+   * O anúncio está, ou esteve, no ar — **já resolvido**.
+   *
+   * ============================================================
+   * CHEGA PRONTO, E NÃO COMO OS SINAIS CRUS.
+   *
+   * A medida podia carregar `veiculacao` cru e o gasto, deixando a cadeia
+   * resolver. Não carrega, de propósito: seriam dois campos que só fazem
+   * sentido juntos, e o primeiro que lesse um sem o outro reabriria a
+   * segunda fonte que este lote fechou.
+   *
+   * Quem resolve é `veiculacaoDoNegocio()`, em `lib/veiculacao/estado.ts`,
+   * chamada uma vez por `./cliente.ts`. Aqui já é resposta.
+   * ============================================================
+   */
+  veiculacao: EstadoDeVeiculacao;
 }
 
 // ----------------------------------------------------------------- a cadeia
@@ -253,7 +278,7 @@ export interface MedidaDoCliente {
  * e é por isso que quem consome usa `proximo`, e não `etapas.filter(...)`.
  */
 export function montarEtapas(m: MedidaDoCliente, agora: Date): Etapa[] {
-  return [
+  const locais = [
     etapaCadastro(m),
     etapaConexao(m),
     etapaPeca(m, agora),
@@ -261,81 +286,87 @@ export function montarEtapas(m: MedidaDoCliente, agora: Date): Etapa[] {
     etapaNoAr(m, agora),
     etapaNumeros(m, agora),
   ];
+
+  // ============================================================
+  // A EVIDÊNCIA É APLICADA AQUI, E SÓ AQUI.
+  //
+  // Até 11/09/2026 quem chamava `concluidasPeloGasto()` era a `/inicio`,
+  // depois de receber as etapas — ou seja, a regra valia numa tela e não
+  // nas outras. A `/anuncios` lia `estado.proximo` da mesma função e
+  // recebia uma cadeia onde `no_ar` seguia aberta.
+  //
+  // Trazida para dentro de `montarEtapas`, ela vale para todo mundo que
+  // lê a cadeia, porque não há como ler a cadeia sem passar por aqui.
+  // A função continua exportada para o conferidor poder testá-la
+  // isolada, com os quatro estados na mão.
+  // ============================================================
+  return concluidasPelaVeiculacao(locais, m.veiculacao);
 }
 
 // ------------------------------------------------- a evidência do gasto
 
 /**
- * O que o consolidado do NEGÓCIO prova sobre o dinheiro.
- *
- * Magro de propósito: são os dois únicos campos que a regra abaixo lê, e
- * `ConsolidadoDoNegocio` satisfaz esta forma sem conversão nenhuma. Quem
- * chamar não precisa importar o contrato inteiro só para provar um gasto.
- */
-export interface GastoMedido {
-  temDadoDaPlataforma: boolean;
-  investiuCentavos: number | null;
-}
-
-/**
- * As etapas que o gasto medido fecha — e só elas.
+ * As etapas que a veiculação fecha — e só elas.
  *
  * `cadastro` e `conexao` não estão aqui porque já têm fonte que funciona
  * (o próprio `businesses` e `meta_connections`, os dois escritos pelo
  * webapp). `aprovacao` também não: ela fecha por verdade vazia hoje, e
- * carimbá-la de "provada pelo gasto" seria trocar um predicado frouxo por
- * uma afirmação forte sem nada atrás. `numeros` fecha por `temNumero`,
- * que já lê o mesmo consolidado — acrescentá-la seria dizer duas vezes.
+ * carimbá-la de "provada" seria trocar um predicado frouxo por uma
+ * afirmação forte sem nada atrás. `numeros` fecha por `temNumero`, que já
+ * lê o consolidado — acrescentá-la seria dizer duas vezes.
  */
-export const ETAPAS_PROVADAS_PELO_GASTO: readonly IdDeEtapa[] = ["peca", "no_ar"];
-
-/** Houve gasto medido na plataforma? Os dois lados, nunca um só. */
-export function houveGastoMedido(evidencia: GastoMedido | null): boolean {
-  return (
-    evidencia !== null &&
-    evidencia.temDadoDaPlataforma === true &&
-    (evidencia.investiuCentavos ?? 0) > 0
-  );
-}
+export const ETAPAS_PROVADAS_PELA_VEICULACAO: readonly IdDeEtapa[] = ["peca", "no_ar"];
 
 /**
- * A REGRA DE EVIDÊNCIA — dinheiro gasto na plataforma fecha `peca` e `no_ar`.
+ * A REGRA DE EVIDÊNCIA — e ela **não é mais desta casa**.
  *
  * ============================================================
- * POR QUE ISTO NÃO CONTRARIA A DECISÃO 13.
+ * O QUE MUDOU EM 11/09/2026, E POR QUÊ.
  *
- * A Decisão 13 (`docs/arquitetura.md`) diz que estado de PIPELINE não
- * decide etapa concluída — o artefato decide. Ela continua valendo, e
- * nada aqui lê `execucoes.status`.
+ * Esta função se chamava `concluidasPeloGasto` e tinha regra própria:
+ * `tem_dado_da_plataforma && investiu_centavos > 0` fecha `peca` e
+ * `no_ar`. A regra estava certa sobre o passado e **errada sobre o
+ * presente**, e a diferença apareceu na primeira conta real.
  *
- * O que esta regra usa é outra coisa: **a plataforma cobrou.** Gasto
- * medido é o artefato mais forte que existe para as duas etapas — o
- * Facebook não cobra por anúncio que não foi montado, e não cobra por
- * anúncio que não foi ao ar. Não é um sistema nosso afirmando que
- * terminou; é o terceiro que recebeu o dinheiro.
+ * Medido na V2G (`a85c37a9`), ao vivo: o anúncio gastou R$ 10,25 e a Meta
+ * o mantém em `PAUSED` — `veiculacao: "ja_foi_ao_ar"`. A regra do gasto
+ * fechava a etapa cujo nome é "O anúncio no ar", e a tela passava a ler
+ * como concluído um anúncio que estava parado. Dinheiro gasto é passado;
+ * ele prova que rodou, jamais que está rodando.
  *
- * O QUE ELA CONSERTA. As fontes locais das duas etapas são tabelas que
- * ninguém alimenta — `creatives` com `uso='campanha'` e `campaigns`
- * (`docs/buraco-creatives-campanhas-sem-dono.md`, medido em 11/09/2026:
- * `campaigns` tem ZERO linhas na tabela inteira). Com elas sozinhas,
- * `no_ar` nunca fecha para conta nenhuma — nem para quem já gastou. A V2G
- * lia a cadeia com `peca` e `no_ar` em aberto tendo R$ 10,25 gastos.
+ * Agora quem responde é `lib/veiculacao/estado.ts` —
+ * **a fonte única de "no ar" do produto**. O gasto não sumiu: virou o
+ * degrau 2 da precedência de lá, onde só pode concluir `ja_foi_ao_ar`.
+ * Aqui não sobrou regra nenhuma, e é esse o ponto.
+ *
+ * O QUE ELA CONTINUA CONSERTANDO. As fontes locais das duas etapas são
+ * tabelas que ninguém alimenta — `creatives` com `uso='campanha'` e
+ * `campaigns` (`docs/buraco-creatives-campanhas-sem-dono.md`, medido em
+ * 11/09/2026: `campaigns` tem ZERO linhas na tabela inteira). Sem esta
+ * função, `no_ar` nunca fecharia para conta nenhuma.
+ *
+ * POR QUE ISTO NÃO CONTRARIA A DECISÃO 13. A Decisão 13
+ * (`docs/arquitetura.md`) diz que estado de PIPELINE não decide etapa
+ * concluída — o artefato decide. Continua valendo, e nada aqui lê
+ * `execucoes.status`. `veiculacao` não é estado de pipeline: é o que a
+ * plataforma fez com o anúncio.
  *
  * O QUE ELA NÃO FAZ. Não inventa data: `desde` fica como estava, e a
- * etapa não passa a afirmar QUANDO foi publicada — só QUE foi. Sem gasto,
- * vale a leitura local de sempre, intacta; e nada aqui muda uma etapa que
- * já estava concluída.
+ * etapa não passa a afirmar QUANDO foi publicada — só QUE foi. E nada
+ * aqui muda uma etapa que já estava concluída.
  * ============================================================
  */
-export function concluidasPeloGasto(
+export function concluidasPelaVeiculacao(
   etapas: Etapa[],
-  evidencia: GastoMedido | null,
+  estado: EstadoDeVeiculacao,
 ): Etapa[] {
-  if (!houveGastoMedido(evidencia)) return etapas;
+  // `esteveNoAr` e não `estaNoArAgora`: a etapa pergunta se o anúncio
+  // CHEGOU ao ar, e um anúncio que rodou e parou chegou.
+  if (!esteveNoAr(estado)) return etapas;
   return etapas.map((etapa) =>
-    etapa.concluida || !ETAPAS_PROVADAS_PELO_GASTO.includes(etapa.id)
+    etapa.concluida || !ETAPAS_PROVADAS_PELA_VEICULACAO.includes(etapa.id)
       ? etapa
-      : { ...etapa, concluida: true, concluidaPeloGasto: true },
+      : { ...etapa, concluida: true, concluidaPelaVeiculacao: true },
   );
 }
 
@@ -659,7 +690,45 @@ function etapaAprovacao(m: MedidaDoCliente): Etapa {
   };
 }
 
+/**
+ * Etapa 5 — o anúncio no ar.
+ *
+ * ============================================================
+ * ELA NÃO ESCREVE MAIS A PRÓPRIA FRASE DE VEICULAÇÃO.
+ *
+ * O `titulo` "A gente está colocando seu anúncio no ar" é uma afirmação
+ * sobre veiculação — no negativo: diz que ele NÃO está no ar. Enquanto ela
+ * saía daqui, era a sexta fonte do app respondendo a mesma pergunta.
+ *
+ * Agora: a etapa fecha por `concluidasPelaVeiculacao`, e o único caso em
+ * que o texto pendente aparece com a veiculação indefinida —
+ * `nao_sabemos` — usa a frase do banco, que não afirma nem um lado nem o
+ * outro. Sem isso, uma leitura que falhou faria a tela dizer ao cliente
+ * que o anúncio dele não subiu.
+ * ============================================================
+ */
 function etapaNoAr(m: MedidaDoCliente, agora: Date): Etapa {
+  // Leitura indefinida não vira acusação. Vem antes do ramo da falha de
+  // publicação de propósito? Não: a falha é fato registrado em
+  // `campaigns.publish_state`, e fato vence não-saber.
+  if (!m.publicacaoFalhou && m.veiculacao === "nao_sabemos") {
+    return {
+      id: "no_ar",
+      concluida: false,
+      bola: "nos",
+      nome: "O anúncio no ar",
+      titulo: fraseDeVeiculacao("nao_sabemos", "manchete"),
+      corpo: fraseDeVeiculacao("nao_sabemos", "apoio"),
+      acao: null,
+      desde: m.campanhaCriadaEm ?? undefined,
+      admitindo: false,
+    };
+  }
+
+  return etapaNoArPorArtefatoLocal(m, agora);
+}
+
+function etapaNoArPorArtefatoLocal(m: MedidaDoCliente, agora: Date): Etapa {
   // A FALHA NÃO ESPERA O PRAZO. Os dois dias existem para não acusar a
   // gente de uma dívida que talvez não exista; aqui ela existe e está
   // registrada em `campaigns.publish_state`. Fazer o cliente esperar dois
@@ -838,11 +907,16 @@ export function estadoNaLista(etapa: Etapa, posicao: PosicaoNaCadeia): string {
     // A TRILHA DIZ DE ONDE VEIO A CONCLUSÃO quando ela não veio do
     // artefato local. "Já está feito." sozinho afirmaria que a peça e a
     // publicação estão registradas aqui, e elas não estão — quem prova é
-    // o dinheiro que a plataforma cobrou (ver `concluidasPeloGasto`).
+    // a veiculação que o Facebook reporta (ver `concluidasPelaVeiculacao`).
+    //
+    // A frase deixou de citar "o investimento que já saiu": o gasto virou
+    // um dos degraus da evidência, e não mais o único. Dizer "o Facebook
+    // confirmou" é verdade nos dois degraus — ele confirma tanto
+    // reportando a veiculação quanto cobrando.
     //
     // Sem data, de propósito: a evidência é QUE aconteceu, não QUANDO.
-    return etapa.concluidaPeloGasto
-      ? "Já está feito — o que prova é o investimento que já saiu."
+    return etapa.concluidaPelaVeiculacao
+      ? "Já está feito — o Facebook confirmou."
       : "Já está feito.";
   }
   if (posicao === "atual") return "É o que está acontecendo agora.";
@@ -854,4 +928,97 @@ export function estadoNaLista(etapa: Etapa, posicao: PosicaoNaCadeia): string {
     case "facebook":
       return "Ainda não chegou — vai depender do Facebook.";
   }
+}
+
+// ------------------------------------------------- as quatro fases
+
+/**
+ * As quatro fases do wireframe, sobre as SEIS etapas da cadeia.
+ *
+ * ============================================================
+ * AGRUPA, E NÃO PERDE NENHUMA. É a diferença entre resumir e mentir.
+ *
+ * O wireframe desenha "Você já concluiu 2 de 4 etapas" com quatro
+ * cartões — Preparar, Criar, Publicar, Otimizar. A cadeia real tem seis
+ * degraus, e os seis existem porque cada um tem dono diferente e
+ * bloqueio diferente (`QuemTemABola`).
+ *
+ * A saída fácil seria a tela mostrar quatro e esquecer duas. Isso
+ * quebraria a conta na primeira conversa de suporte: o cliente pergunta
+ * "e a aprovação?", e a tela não sabe do que ele está falando.
+ *
+ * Então as quatro fases são uma VISTA, e a lista de baixo continua
+ * mostrando as seis. Cada etapa pertence a exatamente uma fase, e
+ * `conferir:estado` trava a partição — nenhuma etapa órfã, nenhuma em
+ * duas fases.
+ * ============================================================
+ *
+ * MORA AQUI, e não no `page.tsx`, pela regra do módulo: quem nomeia
+ * degrau da cadeia é este arquivo. Uma tela que inventasse os próprios
+ * nomes seria a quinta fonte a falar da mesma coisa.
+ */
+export type EstadoDaFase = "feita" | "atual" | "travada";
+
+export interface Fase {
+  id: string;
+  nome: string;
+  /** as etapas da cadeia que esta fase cobre, na ordem */
+  etapas: IdDeEtapa[];
+  estado: EstadoDaFase;
+  /** o rótulo curto de estado, em caixa alta na tela */
+  rotulo: string;
+}
+
+/** A partição. Quatro fases, seis etapas, nenhuma sobrando. */
+const PARTICAO: { id: string; nome: string; etapas: IdDeEtapa[] }[] = [
+  { id: "preparar", nome: "Preparar", etapas: ["cadastro", "conexao"] },
+  { id: "criar", nome: "Criar", etapas: ["peca", "aprovacao"] },
+  { id: "publicar", nome: "Publicar", etapas: ["no_ar"] },
+  { id: "otimizar", nome: "Otimizar", etapas: ["numeros"] },
+];
+
+/** Toda etapa coberta pela partição — a base da trava do conferidor. */
+export const ETAPAS_NAS_FASES: readonly IdDeEtapa[] = PARTICAO.flatMap((f) => f.etapas);
+
+/**
+ * O rótulo curto de cada estado.
+ *
+ * `travada` é "Ainda não", e NÃO "Em breve" — que é o que o wireframe
+ * desenha. "Em breve" é promessa de prazo: ele afirma que a fase está
+ * próxima, e ninguém mediu isso. A conta da V2G ficou dezessete dias em
+ * `aguardando_fotos`; "em breve" ali seria mentira contada quatro vezes
+ * por semana. "Ainda não" diz a mesma coisa sem prometer quando.
+ */
+const ROTULO: Record<EstadoDaFase, string> = {
+  feita: "Concluído",
+  atual: "Em andamento",
+  travada: "Ainda não",
+};
+
+/**
+ * As quatro fases, com o estado de cada uma.
+ *
+ * Uma fase está `feita` quando TODAS as etapas dela fecharam — parcial
+ * não conta, porque "Criar: concluído" com a aprovação pendente é a
+ * mesma contradição que a lista tinha antes de ler posição em vez de
+ * `concluida`.
+ *
+ * `atual` é a fase que contém a etapa aberta mais antiga. Com `atual`
+ * nulo (cadeia inteira fechada) nenhuma fase é a atual, e as quatro
+ * saem `feita`.
+ */
+export function fasesDaCadeia(etapas: Etapa[], atual: Etapa | null): Fase[] {
+  const porId = new Map(etapas.map((e) => [e.id, e]));
+
+  return PARTICAO.map((f) => {
+    const minhas = f.etapas.map((id) => porId.get(id)).filter((e): e is Etapa => e !== undefined);
+    const temAtual = atual !== null && f.etapas.includes(atual.id);
+    const todasFeitas = minhas.length > 0 && minhas.every((e) => e.concluida);
+
+    // A ordem importa: uma fase que contém a etapa atual é `atual`
+    // mesmo que a outra etapa dela já esteja fechada.
+    const estado: EstadoDaFase = temAtual ? "atual" : todasFeitas ? "feita" : "travada";
+
+    return { id: f.id, nome: f.nome, etapas: f.etapas, estado, rotulo: ROTULO[estado] };
+  });
 }

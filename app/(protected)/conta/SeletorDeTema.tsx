@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { COOKIE_TEMA } from "@/app/layout";
+import { COOKIE_TEMA, temaDoCookie } from "@/app/layout";
 import { definirTemaAction } from "./tema-actions";
 
 /**
@@ -16,7 +16,10 @@ import { definirTemaAction } from "./tema-actions";
  * tema é aplicado pelo servidor no próximo HTML — sem piscar branco.
  */
 export async function SeletorDeTema() {
-  const atual = (await cookies()).get(COOKIE_TEMA)?.value ?? "sistema";
+  // `temaDoCookie` e não `?? "sistema"`: o cookie apagado volta como
+  // string VAZIA, e `??` não cai para o padrão em string vazia. Era o
+  // item #8 do QA — as três opções desmarcadas até recarregar.
+  const atual = temaDoCookie((await cookies()).get(COOKIE_TEMA)?.value);
 
   const opcoes = [
     { valor: "claro", rotulo: "Claro", desc: "Fundo branco, o dia inteiro." },

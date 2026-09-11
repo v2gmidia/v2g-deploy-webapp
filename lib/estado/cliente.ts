@@ -11,7 +11,7 @@ import type {
   ConsolidadoDoNegocio,
   ExecucaoDoNegocio,
 } from "@/lib/dia-seguinte/tipos";
-import { resumirPendencias } from "@/lib/cadastro/pendencias";
+import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
 import { execucaoDoCliente } from "@/lib/pipeline/execucao-do-cliente";
 import {
   COLUNAS_DO_JULGAMENTO,
@@ -24,6 +24,10 @@ import {
   type Etapa,
   type MedidaDoCliente,
 } from "./frases";
+import {
+  veiculacaoDoNegocio,
+  type EstadoDeVeiculacao,
+} from "@/lib/veiculacao/estado";
 
 /**
  * A resposta única para "o que falta pra sair anúncio?".
@@ -169,30 +173,118 @@ export interface EstadoDoCliente {
     execucao: ExecucaoDoNegocio | null;
     acumulado: ConsolidadoDoNegocio | null;
   };
+  /**
+   * O anúncio está, ou esteve, no ar.
+   *
+   * ============================================================
+   * É DAQUI QUE TODA TELA LÊ, E NENHUMA LÊ DE OUTRO LUGAR.
+   *
+   * Resolvido uma vez, por `veiculacaoDoNegocio()`, com os sinais na mão.
+   * A tela recebe o estado e pede a frase ao banco de frases — ela não
+   * compara `veiculacao === "no_ar"` e não escreve texto de veiculação.
+   *
+   * `pnpm conferir:veiculacao` §2 reprova o repositório se uma tela
+   * voltar a escrever a própria.
+   * ============================================================
+   */
+  veiculacao: EstadoDeVeiculacao;
 }
 
-const VAZIO: EstadoDoCliente = {
-  temNegocio: false,
-  negocioId: null,
-  etapas: [],
-  proximo: null,
-  melhoras: { fotos: 0, temLogo: false },
-  blocosDaTrilha: 0,
-  // SEM NEGÓCIO NÃO HÁ MEDIÇÃO — e ausência é `null`, não zero. Este
-  // literal era quatro zeros, e quatro zeros aqui são indistinguíveis de
-  // uma campanha que rodou e não gastou.
-  resultado: {
-    investidoCentavos: null,
-    moeda: null,
-    pessoas: null,
-    cliques: null,
-    impressoes: null,
-  },
-  campanhasNoAr: [],
-  verbaMensal: null,
-  temNumero: false,
-  diaSeguinte: { execucao: null, acumulado: null },
+/**
+ * O cadastro de quem ainda não tem negócio — tudo por fazer.
+ *
+ * Existe para `vazio()` não escrever pendência à mão: a primeira etapa
+ * abre porque `resumirPendencias` diria que o cadastro está vazio, e é a
+ * mesma frase que o cliente veria por caminho normal.
+ */
+const CADASTRO_INTOCADO: ResumoDePendencias = {
+  vazio: false,
+  titulo: "Conte pra gente sobre o seu negócio",
+  corpo: "São cinco perguntas rápidas — é delas que sai o seu primeiro anúncio.",
+  acao: { rotulo: "Começar", href: "/onboarding" },
+  nossaDivida: false,
+  itens: [],
+  quantosNaoSei: 0,
 };
+
+/**
+ * O estado de quem não tem negócio — e a cadeia NÃO vem vazia.
+ *
+ * ============================================================
+ * `etapas: []` ERA UM DEFEITO, e ele chegou a produção.
+ *
+ * Medido em 11/09/2026, na conta `v2g.midia@gmail.com`: a trilha do
+ * `/inicio` renderizou o cabeçalho "Onde seu anúncio está", o contador
+ * "0 de 0 etapas" e um `<ol>` sem um único `<li>` — um retângulo com
+ * borda e nada dentro. Item #1 do QA da `visual-v0`.
+ *
+ * A causa não estava na tela: as seis etapas de `montarEtapas()` são
+ * fixas, e nenhuma entrada honesta produz zero. Quem produzia era esta
+ * constante, que devolvia lista vazia por três caminhos — sem usuário,
+ * erro de leitura e negócio ausente.
+ *
+ * **O conserto é aqui, e não num `if` na `/inicio`**, pelo motivo de
+ * sempre: cinco telas leem esta cadeia, e defender só a que alguém viu
+ * quebrada deixa as outras quatro esperando a vez. `conferir:estado`
+ * trava as duas pontas — esta função e a família de listas vazias.
+ * ============================================================
+ *
+ * É função e não constante porque `montarEtapas` recebe `agora`, e o
+ * `agora` é parâmetro até o fim da cadeia — a mesma regra que torna os
+ * cortes de tempo testáveis.
+ */
+function vazio(agora: Date): EstadoDoCliente {
+  const etapas = montarEtapas(
+    {
+      temNegocio: false,
+      cadastro: CADASTRO_INTOCADO,
+      conexaoAtiva: false,
+      cadastroEnviadoEm: null,
+      execucao: null,
+      pecasProntas: 0,
+      pecasParaAprovar: 0,
+      campanhaCriadaEm: null,
+      publicacaoFalhou: false,
+      publicadaEm: null,
+      temNumero: false,
+      execucaoDoBackend: null,
+      execucaoIlegivel: false,
+      veiculacao: "nao_sabemos",
+    },
+    agora,
+  );
+
+  return {
+    temNegocio: false,
+    negocioId: null,
+    etapas,
+    // A primeira aberta, pela MESMA regra do caminho normal — e não
+    // `null`, que faria a tela perder o próximo passo justamente de quem
+    // ainda não deu o primeiro.
+    proximo: etapas.find((e) => !e.concluida) ?? null,
+    melhoras: { fotos: 0, temLogo: false },
+    blocosDaTrilha: 0,
+    // SEM NEGÓCIO NÃO HÁ MEDIÇÃO — e ausência é `null`, não zero. Este
+    // literal era quatro zeros, e quatro zeros aqui são indistinguíveis de
+    // uma campanha que rodou e não gastou.
+    resultado: {
+      investidoCentavos: null,
+      moeda: null,
+      pessoas: null,
+      cliques: null,
+      impressoes: null,
+    },
+    campanhasNoAr: [],
+    verbaMensal: null,
+    temNumero: false,
+    diaSeguinte: { execucao: null, acumulado: null },
+    // Sem negócio não há sinal nenhum — e o estado certo é "não
+    // sabemos", não "nunca foi ao ar". A diferença é a mesma de `null`
+    // contra `0`: uma é ausência de medição, a outra é uma afirmação
+    // sobre o anúncio dele. Ver `lib/veiculacao/estado.ts`.
+    veiculacao: "nao_sabemos",
+  };
+}
 
 /**
  * `agora` é PARÂMETRO, pelo mesmo motivo do `resumirPendencias`: é o que
@@ -203,7 +295,7 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return VAZIO;
+  if (!user) return vazio(agora);
 
   const { data: negocio, error } = await supabase
     .from("businesses")
@@ -221,11 +313,11 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
 
   if (error) {
     console.error("[estado] falha ao ler o negócio ::", error.message);
-    return VAZIO;
+    return vazio(agora);
   }
   // Sem negócio não há pendência de cadastro: há cadastro NENHUM, e são
   // coisas diferentes na tela. Ver `pendenciasDoCliente`.
-  if (!negocio) return VAZIO;
+  if (!negocio) return vazio(agora);
 
   const linha = negocio as unknown as NegocioParaCadastro & {
     cadastro_iniciado_em: string | null;
@@ -422,6 +514,19 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     // justamente o que falhou em 02/09. Se o backend respondeu, sabemos.
     // ============================================================
     execucaoIlegivel: !respExecucao.ok,
+    // ============================================================
+    // A ÚNICA CHAMADA DE `veiculacaoDoNegocio()` DO APP INTEIRO.
+    //
+    // Os três sinais chegam juntos aqui e em nenhum outro lugar: o campo
+    // do backend, o gasto do acumulado como reserva, e a marca de leitura
+    // ilegível. Resolver em qualquer outro ponto exigiria que aquele
+    // ponto tivesse os três — e quem tivesse só dois resolveria diferente.
+    // ============================================================
+    veiculacao: veiculacaoDoNegocio({
+      veiculacao: execucaoDoDiaSeguinte?.veiculacao,
+      gasto: acumulado,
+      execucaoIlegivel: !respExecucao.ok,
+    }),
   };
 
   const etapas = montarEtapas(medida, agora);
@@ -476,5 +581,6 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
         : Number(linha.monthly_budget),
     temNumero: medida.temNumero,
     diaSeguinte: { execucao: execucaoDoDiaSeguinte, acumulado },
+    veiculacao: medida.veiculacao,
   };
 }

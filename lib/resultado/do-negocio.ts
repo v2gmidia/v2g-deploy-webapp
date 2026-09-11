@@ -5,8 +5,8 @@ import {
   consolidadoDoNegocio,
   fichaDaExecucao,
 } from "@/lib/backend";
-import { resultadoParaTela } from "./ler.ts";
-import type { ResultadoParaTela } from "./tipos.ts";
+import { respostaDoDono, resultadoParaTela } from "./ler.ts";
+import type { RespostaDoDono, ResultadoParaTela } from "./tipos.ts";
 
 /**
  * O resultado do negócio, campanha por campanha.
@@ -112,6 +112,22 @@ export interface ResultadoDoNegocio {
    */
   moedasMisturadas: boolean;
   moedas: string[];
+  /**
+   * O que o DONO informou — uma vez, no nível do negócio. Item B2.
+   *
+   * ============================================================
+   * FICA FORA DE `campanhas[]`, E É O PONTO.
+   *
+   * Sai do topo do acumulado, que é a rota que resolve a regra do "não
+   * soma". Pendurado no card, o mesmo número dizia que uma campanha que
+   * nunca foi ao ar trouxe R$ 1.200,00 — ver o bloco de `RespostaDoDono`
+   * em `./tipos.ts`, com a medição das duas execuções da V2G.
+   * ============================================================
+   *
+   * `null` quando o backend não respondeu — a mesma distinção de sempre
+   * entre "não perguntamos ainda" e "não conseguimos ler".
+   */
+  doDono: RespostaDoDono | null;
 }
 
 const VAZIO: ResultadoDoNegocio = {
@@ -119,6 +135,7 @@ const VAZIO: ResultadoDoNegocio = {
   campanhas: [],
   moedasMisturadas: false,
   moedas: [],
+  doDono: null,
 };
 
 export async function resultadoDoNegocio(args: {
@@ -142,7 +159,13 @@ export async function resultadoDoNegocio(args: {
   const { porExecucao, moedas } = acumulado.dados;
 
   if (porExecucao.length === 0) {
-    return { estado: "sem-execucao", campanhas: [], moedasMisturadas: false, moedas: [] };
+    return {
+      estado: "sem-execucao",
+      campanhas: [],
+      moedasMisturadas: false,
+      moedas: [],
+      doDono: null,
+    };
   }
 
   // ---- 2. uma campanha por ficha — e as fichas são a lista autorizada ----
@@ -200,5 +223,9 @@ export async function resultadoDoNegocio(args: {
     campanhas: vivas,
     moedasMisturadas: moedas.length > 1,
     moedas,
+    // O ACUMULADO, e nunca uma das fichas. Ver `respostaDoDono` em
+    // `./ler.ts`: as duas rotas satisfazem o mesmo tipo, e quem passasse
+    // a da execução traria de volta o defeito que o B2 fechou.
+    doDono: respostaDoDono(acumulado.dados),
   };
 }

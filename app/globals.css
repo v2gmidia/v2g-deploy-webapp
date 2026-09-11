@@ -595,6 +595,41 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .pill.info { background: var(--ice-soft); color: var(--cobalt-ink); }
 .pill.off { background: rgb(var(--navy-rgb) / 0.07); color: var(--ink-mute); }
 
+/* ------------------------------------------------------------
+   A FORMA, o segundo eixo do selo. Item C5, 11/09/2026.
+
+   COLADO NO BLOCO BASE DE PROPOSITO, e nao numa secao nova no fim da
+   folha. Nao e estilo: e o defeito que o lote da fundacao passou
+   consertando — o `.side-support` estava declarado duas vezes com a
+   MESMA especificidade, a ~950 linhas de distancia, e a segunda vencia
+   calada havia meses. Selo com dois eixos e candidato natural a isso.
+   Quem vier mexer em `.pill.off` tem que ver o vizinho sem rolar.
+
+   `preenchido` e o que as cinco linhas de tom acima ja fazem, entao ele
+   nao redeclara nada — existe como classe so para o componente poder
+   escrever sempre um dos dois nomes, e para quem le o HTML ver o eixo.
+
+   O `::before` acompanha sozinho: ele pinta o ponto com `currentColor`,
+   e o contorno nao mexe em `color`.
+
+   A BORDA E `currentColor`, e ai mora a unica medida que precisou de
+   regua. Nao-texto pede 3:1 (WCAG 1.4.11), e a borda do `.off` fica em
+   `--ink-mute` sobre `--surface`: 4,52:1 medido no pior par do app em
+   docs/contraste.md §14. Passa com folga. Os outros quatro tons sao
+   tintas mais escuras que `--ink-mute`, entao passam por consequencia.
+
+   1.5px e nao 1px: e a mesma espessura do `.proof-card`, e em 1px a
+   borda em tom de texto some no `--plate` do tema escuro. */
+/* `.pill.preenchido` NAO tem regra, e e de proposito: o preenchimento ja
+   vem das cinco linhas de tom acima. Uma regra vazia aqui seria bloco
+   inerte, que e exatamente o que o `conferir:cascata` existe para caçar.
+   A classe continua sendo escrita no HTML pelo componente, para o eixo
+   ficar legivel em quem inspeciona a pagina. */
+.pill.contorno {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px currentColor;
+}
+
 /* ---------- card de prova (components/ui/ProofCard.tsx) ---------- */
 .proof-card {
   background: var(--ice-soft);
@@ -1117,7 +1152,9 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* O convite dos dias atrasados. CONVITE, nao cobranca: mesmo tamanho do
    texto tranquilo em volta, sem cor de alerta e sem numero grande. Quem
    nao tocar nao e lembrado de novo na mesma visita. */
-.pd-convite { display: inline-block; margin-top: 10px; font-size: var(--fs-corpo); color: var(--ink-mute); }
+/* C4 do QA: `flex` com `gap` separa a frase do botão. Era
+   `inline-block`, e o `<button>` ficava colado no nó de texto irmão. */
+.pd-convite { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; font-size: var(--fs-corpo); color: var(--ink-mute); }
 
 /* ---- seletor de nicho ---------------------------------------------------
    Os dez chips e o campo de busca abaixo deles. O espaco entre os dois e
@@ -1272,6 +1309,34 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .fallback-field input:focus,
 .city-row input:focus { border-color: var(--cobalt); outline: none; }
+
+/* ------------------------------------------------------------
+   O SIMBOLO DA MOEDA DENTRO DO CAMPO. Item B4, 11/09/2026.
+
+   Colado no bloco do `.fallback-field` de proposito — a regra do
+   `.side-support` declarado duas vezes a 950 linhas de distancia.
+
+   O simbolo e IRMAO do input no flex, nao um `position:absolute` por
+   cima dele. Absoluto exigiria `padding-left` casado no input, e os dois
+   numeros desandam junto quando a fonte muda — que e como campo de
+   dinheiro acaba com o simbolo em cima do primeiro digito. Como irmao,
+   o flex resolve sozinho.
+
+   `flex: 0 0 auto` porque o input tem `flex: 1` e comeria o simbolo.
+   ------------------------------------------------------------ */
+.campo-com-moeda { align-items: stretch; }
+.campo-com-moeda .campo-moeda {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding-inline: 11px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-micro);
+  background: rgb(var(--navy-rgb) / 0.04);
+  font-family: var(--body);
+  font-size: var(--fs-corpo);
+  color: var(--ink-mute);
+}
 .fallback-field input.shake,
 .city-row input.shake { animation: shakeit 0.3s ease; border-color: var(--crit); }
 @keyframes shakeit { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
@@ -1813,7 +1878,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 .support-block { border-radius: var(--raio-item); padding: 18px; margin: 0; font-size: var(--fs-corpo); }
 .support-block b { font-size: var(--fs-titulo); margin-bottom: 5px; }
-.support-block .wa { display: inline-block; margin-top: 8px; font-weight: 600; color: var(--cobalt-ink); text-decoration: none; }
+/* #11 e #12 do QA: `inline-flex` com altura mínima dá o alvo de 44px, e
+   a margem maior cria o espaço que faltava antes do "Chamar no
+   WhatsApp →" — o texto irmão terminava em "úteis." colado no link. */
+.support-block .wa { display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; font-weight: 600; color: var(--cobalt-ink); text-decoration: none; }
 
 /* ---------- sidebar: complementos das telas de app ---------- */
 /* SEM `color` AQUI, e isso e a correcao. Esta regra tem a mesma
@@ -3018,6 +3086,56 @@ code {
   .res-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* ------------------------------------------------------------
+   A LINHA DE VEICULACAO — a unica afirmacao de "no ar" da /anuncios.
+   Item B3/C6, 11/09/2026.
+
+   Mora no `.page-head`, e por isso herda o tamanho de corpo dele. O
+   apoio vem em `.hint-inline` na mesma linha, e nao num paragrafo
+   proprio: sao uma frase so partida em duas por quem a escreve
+   (`lib/veiculacao/estado.ts`), e separar em blocos faria parecer que a
+   segunda e um aviso a parte.
+
+   SEM COR DE JULGAMENTO. Nenhum dos quatro estados ganha verde ou
+   vermelho — "ja rodou e parou" nao e falha do cliente, e "no ar" nao e
+   conquista medida contra alvo nenhum. A mesma regra da pilula.
+   ------------------------------------------------------------ */
+.res-veiculacao {
+  margin: 10px 0 0;
+  font-size: var(--fs-corpo);
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.hint-inline {
+  color: var(--ink-mute);
+}
+
+/* ------------------------------------------------------------
+   O QUE O DONO CONTOU — o bloco do item B2.
+
+   Grade de DOIS, e nao a `.res-grid` de tres: sao dois numeros e sempre
+   serao dois. Reaproveitar a grade de tres deixaria uma celula vazia no
+   desktop, e celula vazia ao lado de numero parece numero que faltou.
+
+   Separado dos cards por uma linha, nao por um card: ele responde outra
+   pergunta ("o que VOCE contou"), e um card do mesmo peso dos de cima
+   convidaria a somar os tres.
+   ------------------------------------------------------------ */
+.res-do-dono {
+  margin-top: 26px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+/* DOIS EM TODA LARGURA. Especificidade 0,2,0 — ela vence o
+   `@media (min-width:900px) .res-grid { repeat(3) }` la de cima em
+   qualquer viewport, porque especificidade nao olha media query. Por
+   isso NAO existe um `@media` irmao aqui: ele seria inerte, e escrever
+   `@media` inerte perto da regra-base e a forma de defeito que o
+   `conferir:cascata` existe para pegar. */
+.res-do-dono .res-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .res-num {
   background: rgb(var(--navy-rgb) / 0.03);
   border: 1px solid var(--line);
@@ -3364,4 +3482,463 @@ code {
 /* Desktop é derivado: o único ganho é respiro entre as linhas. */
 @media (min-width: 900px) {
   .trilha-item { padding-bottom: 20px; }
+}
+
+/* ============================================================
+   O INÍCIO RECOMPOSTO — 11/09/2026
+
+   Não é troca de cor: é troca de COMPOSIÇÃO. Os tokens já tinham mudado
+   na Etapa 1, e a tela continuava sendo a do protótipo — `.page-head` +
+   faixa sangrada + `.dash-grid`. Repintar a barra lateral não recompõe
+   uma página.
+
+   O QUE MUDA, e é o que os wireframes ensinam:
+
+   1. O herói deixa de ser FAIXA SANGRADA e vira CARTÃO. A faixa
+      (`.hero-destaque`) sangra até a borda do canvas e ocupa a largura
+      toda; ela continua existindo para a `/vendas`, onde o assunto da
+      tela é UM número. Aqui o assunto são duas coisas ao mesmo tempo —
+      onde você está e o que fazer agora — e duas coisas lado a lado
+      pedem duas superfícies, não uma faixa com um botão no canto.
+
+   2. O próximo passo ganha cartão próprio, claro, à direita no desktop e
+      logo abaixo no celular. **Uma ação principal por tela**: é o único
+      `.cta` cheio destas duas telas.
+
+   3. O mobile é RECOMPOSTO, não espremido. As quatro fases viram 2x2 em
+      vez de encolherem até caber em quatro colunas de 70px, e a ordem de
+      leitura vira vertical: onde estou, o que faço, o que já ficou pronto.
+
+   Mobile primeiro. Toda regra `@media` desta seção vem DEPOIS da regra
+   base correspondente — o `conferir:cascata` reprova o contrário, e ele
+   está certo: media query não soma especificidade, então a regra escrita
+   antes da base nasce inerte.
+   ============================================================ */
+
+.inicio-topo {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+/* ---------- o cartão de onde-você-está ---------- */
+
+.ih {
+  background: var(--card-cobalt-bg);
+  color: var(--card-cobalt-ink);
+  border-radius: var(--raio-card);
+  padding: 26px 22px;
+  position: relative;
+  overflow: hidden;
+}
+/* O GRID PIXELADO, COM MODERAÇÃO.
+
+   Uma matriz de pontos que nasce no canto superior direito e morre antes
+   da metade do cartão. É estrutura da marca, não textura de fundo — e a
+   diferença está na máscara: sem ela o padrão cobriria a superfície
+   inteira e viraria ruído atrás do texto, que é exatamente o que o
+   DESIGN.md proíbe ("texturas como estrutura, nunca como ruído"). */
+.ih::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 1px 1px, rgb(var(--white-rgb) / 0.26) 1px, transparent 0);
+  background-size: 14px 14px;
+  -webkit-mask-image: linear-gradient(205deg, rgb(0 0 0 / 0.9) 0%, transparent 58%);
+  mask-image: linear-gradient(205deg, rgb(0 0 0 / 0.9) 0%, transparent 58%);
+  pointer-events: none;
+}
+.ih > * { position: relative; z-index: 1; }
+
+.ih .eyebrow {
+  color: rgb(var(--white-rgb) / 0.76);
+  display: block;
+  margin: 0 0 10px;
+}
+.ih h2 {
+  font-family: var(--display);
+  font-size: var(--fs-hero-frase);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0;
+  max-width: 18ch;
+}
+.ih-sub {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: rgb(var(--white-rgb) / 0.82);
+  margin: 12px 0 0;
+  max-width: 42ch;
+}
+/* O número das etapas é o único lima do cartão — ele marca AVANÇO, que é
+   o trabalho que a regra do lima reserva para ele. */
+.ih-sub b { color: var(--lime); font-weight: 700; }
+
+/* ---------- as quatro fases ---------- */
+
+.fases {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 20px;
+  list-style: none;
+  padding: 0;
+}
+.fase {
+  background: rgb(var(--white-rgb) / 0.12);
+  border: 1.5px solid rgb(var(--white-rgb) / 0.18);
+  border-radius: var(--raio-item);
+  padding: 11px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.fase b {
+  font-family: var(--display);
+  font-size: var(--fs-titulo);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.fase span {
+  font-size: var(--fs-legenda);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(var(--white-rgb) / 0.72);
+}
+.fase-marca {
+  width: 22px;
+  height: 22px;
+  border-radius: var(--raio-pilula);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  margin-bottom: 2px;
+  border: 1.5px solid rgb(var(--white-rgb) / 0.42);
+  flex: none;
+}
+/* concluída: lima cheio. É conquista REAL — a etapa aconteceu. */
+.fase.f-feita .fase-marca {
+  background: var(--lime);
+  color: var(--black);
+  border-color: var(--lime);
+}
+.fase.f-feita span { color: var(--lime); }
+/* EM ANDAMENTO: a superfície clara, e os tokens são de PAPEL.
+
+   ============================================================
+   ESTE BLOCO JÁ NASCEU ERRADO UMA VEZ, e o defeito é o do CLAUDE.md.
+
+   A primeira versão era `background: var(--white)` com
+   `b { color: var(--navy) }`. No tema claro ficou certo. No escuro,
+   `--navy` vale `#E9EFF8` — quase branco — e o cartão saiu com texto
+   branco sobre fundo branco. Ilegível, e pego na primeira captura.
+
+   `--white` e `--navy` são nomes de COR. `--plate` e `--plate-ink` são
+   nomes de PAPEL: placa escura e a tinta que vai sobre ela. Eles não
+   viram um ao outro entre os temas — é exatamente o que o `--navy`
+   servindo de fundo e de texto já custou uma vez.
+
+   Aqui a placa está invertida de propósito: o fundo é a TINTA
+   (`--plate-ink`, sempre clara) e o texto é a PLACA (`--plate`, sempre
+   escura). O par continua sendo um par; só trocou de lado.
+   ============================================================ */
+.fase.f-atual {
+  background: var(--plate-ink);
+  border-color: var(--plate-ink);
+}
+.fase.f-atual b { color: var(--plate); }
+.fase.f-atual span { color: var(--cobalt); }
+.fase.f-atual .fase-marca {
+  background: var(--cobalt);
+  color: var(--white);
+  border-color: var(--cobalt);
+}
+/* travada: recua, mas continua legível. Recuo aqui é opacidade de COR
+   declarada, não `opacity` no elemento: `opacity` derrubaria a borda e o
+   marcador junto, e o que se quer recuar é o texto. */
+.fase.f-travada { background: rgb(var(--white-rgb) / 0.06); }
+.fase.f-travada b { color: rgb(var(--white-rgb) / 0.74); }
+.fase.f-travada span { color: rgb(var(--white-rgb) / 0.6); }
+
+/* ---------- o cartão do próximo passo ---------- */
+
+.proximo {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-card);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+}
+.proximo .eyebrow { color: var(--cobalt); display: block; margin: 0 0 10px; }
+.proximo h3 {
+  font-family: var(--display);
+  font-size: var(--fs-tela);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  margin: 0 0 10px;
+  max-width: 22ch;
+}
+.proximo p {
+  font-size: var(--fs-corpo);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+  max-width: 46ch;
+}
+/* A ÚNICA ação cheia da tela. Se aparecer uma segunda, uma das duas está
+   sobrando — é a regra da ação única, e ela é o que faz esta funcionar. */
+.proximo .cta {
+  width: 100%;
+  min-height: 48px;
+  justify-content: center;
+}
+.proximo-nota {
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  margin: 12px 0 0;
+  line-height: 1.5;
+}
+
+/* ---------- as duas colunas de baixo ---------- */
+
+.inicio-cols {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: start;
+}
+.inicio-col {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+}
+
+/* ---------- os primeiros sinais (estado com dados) ---------- */
+
+.sinais {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.sinal {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-item);
+  padding: 14px;
+  min-width: 0;
+}
+.sinal .s-label {
+  display: block;
+  font-size: var(--fs-legenda);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+  margin-bottom: 6px;
+}
+.sinal .s-valor {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--fs-tela);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+/* AUSÊNCIA NÃO É NÚMERO, e por isso não tem o peso de um.
+
+   O "—" em 22px bold lê como um valor — pequeno, mas valor. Recuado para
+   18px e `--ink-mute`, ele lê como o que é: a marca de que ninguém mediu.
+   A linha de explicação ao lado é obrigatória, e quem a escreve é a tela
+   que chama, não este CSS. */
+.sinal.s-ausente .s-valor {
+  font-size: var(--fs-bloco);
+  color: var(--ink-mute);
+  font-weight: 500;
+}
+.sinal .s-nota {
+  display: block;
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  margin-top: 6px;
+  line-height: 1.45;
+}
+
+/* ---------- desktop: derivado, e só ---------- */
+
+@media (min-width: 900px) {
+  .inicio-topo {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 18px;
+  }
+  .ih { padding: 34px 32px; }
+  .fases { grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .proximo { padding: 26px; }
+  .inicio-cols { grid-template-columns: minmax(0, 1fr) 360px; gap: 22px; }
+  .sinais { grid-template-columns: repeat(4, 1fr); }
+}
+
+/* ============================================================
+   AS CORREÇÕES DO QA DA `visual-v0` — 11/09/2026
+
+   Rodada 1 em `docs/v2g-wireframes/qa-v2g-visual-v0-2026-09-11.md`.
+   Cada bloco abaixo cita o item que fecha. O que NÃO está aqui são os
+   itens 1 a 6, que tinham causa única — a conta sem `businesses` — e
+   foram fechados em `lib/estado/cliente.ts` e no redirecionamento para
+   a `/onboarding`.
+
+   Mobile primeiro, e cada `@media` depois da sua regra base. O
+   `conferir:cascata` reprova o contrário.
+   ============================================================ */
+
+/* ---------- #7 e #12: o link que não parecia botão ----------
+
+   `.cta.quiet` dentro do `.command-card` saía com fundo transparente,
+   `border-width: 0`, sem sublinhado, em cinza 15px — e o parágrafo logo
+   abaixo estava em 16px. **O texto de apoio era maior que a ação**, que
+   é a hierarquia exatamente invertida.
+
+   Não vira `.cta` cheio: o cheio desta tela é o "Seu próximo passo", e
+   dois botões cheios brigam. Vira botão de contorno — borda de verdade,
+   tinta de verdade, 44px de alvo — que é a segunda voz, e não a
+   terceira. */
+.command-card .cta {
+  min-height: 44px;
+  /* `--cobalt-ink` e NÃO `--cobalt`: o primeiro é "cobalto como TINTA" e
+     clareia no tema escuro (`#5C88FA`); o segundo é a cor de superfície e
+     lá vale `#0239C7`, azul escuro sobre card escuro. Medido na captura:
+     o botão sumia. É a mesma distinção que o `.hero-destaque` já pagou. */
+  border: 1.5px solid var(--cobalt-ink);
+  color: var(--cobalt-ink);
+  font-weight: 600;
+  width: 100%;
+  justify-content: center;
+}
+.command-card .cta:hover {
+  background: var(--ice-soft);
+}
+/* e a nota recua para o degrau de baixo da rampa, abaixo do botão */
+.command-card .note {
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  line-height: 1.5;
+  margin: 10px 0 0;
+}
+/* #12: "definir agora" / "mudar limite" também são alvo de toque */
+.command-card .limit a {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+}
+
+/* ---------- #11 e #12: "…2 horas úteis.Chamar no WhatsApp →" ----------
+
+   Faltava um espaço, e a causa não era o texto: o `<a>` é irmão do nó de
+   texto e `display: inline-block` não cria separação nenhuma quando o
+   JSX não deixa espaço em branco entre os dois.
+
+   `display: flex` no bloco resolve de vez — o link vira linha própria,
+   com margem declarada, e nenhuma futura edição do texto reabre o
+   defeito. De lambuja, o alvo passa de 144×21 para a linha inteira. */
+.trust.support-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+/* ---------- #12: "Sair", medido em 21×12 ---------- */
+.side-account .link-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ---------- #9, #13, #14 e #15: cabeçalho que não cabe ----------
+
+   Os três itens de aperto são o mesmo defeito: `.section-title` é um
+   `flex` de duas colunas com `justify-content: space-between`, e quando
+   o título e a nota lateral não cabem lado a lado, os dois quebram em
+   duas linhas cada e encostam.
+
+   A regra base passa a empilhar, e só a partir de 620px eles voltam a
+   dividir a linha. É o oposto do que estava: antes dividiam sempre e
+   quebravam quando não cabia. */
+.section-title {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.section-title h2 { min-width: 0; }
+.section-title .side-note { flex: none; }
+
+/* #9: o título do estado vazio quebrava em cinco linhas numa coluna
+   estreita. O card deixa de ser grade de duas colunas abaixo de 760px,
+   que é onde a coluna da esquerda ficava mais estreita que o título. */
+.empty-card { grid-template-columns: 1fr; }
+.empty-head { min-width: 0; overflow-wrap: break-word; }
+
+/* ---------- C1 e C4: o card da pergunta do dia ----------
+
+   Só estilo — o comportamento do `PerguntaDoDia` está congelado.
+
+   C1: o "Guardar" é o `.mini-send` dentro do `.pd-guardar`, e media
+   menos que 44px de altura. É o botão que fecha o único dado que só o
+   dono tem; ele não pode ser o menor alvo da tela.
+
+   C4: "Faltaram 3 dias antes desse. Preencher sexta-feira, 04/09" saía
+   como uma frase só, com o botão colado no texto e a data colada no
+   verbo. `.pd-convite` era `inline-block` com um nó de texto e um
+   `<button>` irmãos — sem espaço declarado entre eles.
+
+   Vira `flex` com `gap`: a frase de um lado, o botão do outro, com
+   contorno próprio. A data continua DENTRO do rótulo porque é ela que
+   diz de que dia se está falando — tirá-la deixaria "Preencher" sozinho,
+   e aí o botão é que ficaria ambíguo. O que ela ganha é moldura. */
+.fallback-field.pd-guardar .mini-send {
+  min-height: 44px;
+  padding-inline: 18px;
+}
+.pd-convite .botao-leve {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-selo);
+}
+.pd-convite .botao-leve:hover { border-color: var(--cobalt); }
+
+@media (min-width: 620px) {
+  .section-title { flex-wrap: nowrap; }
+  .empty-card { grid-template-columns: auto minmax(0, 1fr); }
+}
+
+/* ---------- a frase do nível, embaixo dos sinais ----------
+
+   Ela estava saindo com `.proximo-nota` — 11px, sem margem — encostada
+   no título da seção seguinte. Lida assim, parecia legenda do bloco de
+   baixo, e ela é a explicação do de cima.
+
+   É a única frase da tela autorizada a dizer se o resultado está bom ou
+   ruim (e hoje ela diz que ainda não dá para dizer). Merece o degrau de
+   corpo e um respiro que a separe do que vem depois. */
+/* 22px é a distância entre blocos de uma tela (padrao-visual.md §3). A
+   seção dos sinais é irmã solta — não está num contêiner com `gap` —,
+   então a distância é margem dela mesma. Sem isto, a frase do nível
+   encostava no título da seção de baixo e parecia legenda dele. */
+.sinais-bloco { margin-bottom: 22px; }
+
+.sinal-frase {
+  font-size: var(--fs-corpo);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 14px 0 0;
+  max-width: 72ch;
+  padding-left: 14px;
+  border-left: 2px solid var(--line);
 }

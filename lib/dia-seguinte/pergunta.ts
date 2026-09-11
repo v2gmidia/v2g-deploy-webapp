@@ -54,6 +54,32 @@ export const PERGUNTA_DE_RECEITA = "E quanto entrou com elas, mais ou menos?";
 export const PERGUNTA_GRAVADA = `${PERGUNTA_DE_VENDAS} ${PERGUNTA_DE_RECEITA}`;
 
 /**
+ * A moeda em que o dono responde. **SUPOSIÇÃO DECLARADA, não dado.**
+ *
+ * ============================================================
+ * ELA É UMA CONSTANTE PARA PODER SER ACHADA. ITEM B4.
+ *
+ * A resposta do dono não tem campo de moeda em lugar nenhum: nem no
+ * formulário, nem no `POST /execucoes/{id}/resposta-do-dono`, nem no
+ * consolidado que devolve `voltou_centavos`. Medido no `openapi.json` de
+ * produção em 11/09/2026.
+ *
+ * O produto é de PME brasileira e o campo é um input em reais, então
+ * real é verdade hoje. Mas é suposição — e uma suposição escrita como
+ * `"BRL"` literal em três lugares do `PerguntaDoDia.tsx` é uma suposição
+ * que ninguém encontra quando ela deixar de valer. **A Byond Colour já
+ * cobra em AUD no mesmo banco**, e no dia em que ela responder a
+ * pergunta diária, este é o símbolo que vai aparecer errado no campo.
+ *
+ * Com uma constante, `grep MOEDA_DA_RESPOSTA` devolve todos os pontos
+ * afetados, e o conserto é trocar o valor por um campo do contrato.
+ * Está na lista de pedidos ao backend em
+ * `docs/estado/veiculacao-uma-fonte-11-09.md` §0.
+ * ============================================================
+ */
+export const MOEDA_DA_RESPOSTA = "BRL";
+
+/**
  * Converte o que o dono digitou em reais para os centavos do contrato.
  *
  * ============================================================

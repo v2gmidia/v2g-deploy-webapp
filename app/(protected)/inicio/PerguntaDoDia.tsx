@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { diaPorExtenso, dinheiroDeCentavos } from "@/lib/formato";
+import { diaPorExtenso, dinheiro, dinheiroDeCentavos, simboloDaMoeda } from "@/lib/formato";
 import {
   centavosDeDigitos,
   centavosDoQueFoiDigitado,
   centavosNoCampo,
+  MOEDA_DA_RESPOSTA,
   PERGUNTA_DE_RECEITA,
   PERGUNTA_DE_VENDAS,
   vendasDoQueFoiDigitado,
@@ -352,7 +353,7 @@ export function PerguntaDoDia({
             está na lista de pedidos ao backend, junto com a conta em
             AUD que já existe no mesmo banco.
             ============================================================ */}
-        {dinheiroDeCentavos(salvo.receita!, "BRL")}.{" "}
+        {dinheiroDeCentavos(salvo.receita!, MOEDA_DA_RESPOSTA)}.{" "}
         {/* BOTÃO, não link — mas o mais leve que existe aqui. O resumo
             deixou de ser card justamente para não competir com a manchete;
             um botão de peso traria a competição de volta. Ver
@@ -406,10 +407,32 @@ export function PerguntaDoDia({
         </div>
 
         <p className="rc-abertura">{PERGUNTA_DE_RECEITA}</p>
-        <div className="fallback-field">
+        {/* ============================================================
+            O CAMPO DIZ EM QUE MOEDA ELE PERGUNTA. ITEM B4.
+
+            Era `1.600,00` seco, com o placeholder escrito à mão. Única
+            superfície de dinheiro do produto sem função de formato — e
+            num CAMPO a omissão pesa mais que numa leitura: o dono está
+            digitando o número que vira `voltou_centavos` no banco e que
+            a tela de resultado devolve com `R$` na frente.
+
+            O símbolo e o exemplo saem os dois de `lib/formato.ts`, do
+            mesmo `Intl` que escreve o resto do app. `MOEDA_DA_RESPOSTA`
+            é a suposição declarada logo acima — a resposta do dono não
+            tem campo de moeda em rota nenhuma.
+
+            `aria-hidden` no símbolo: o rótulo do campo já é a pergunta
+            inteira, e quem usa leitor de tela ouviria "R$" solto antes
+            dela sem saber a que se refere. O texto acessível continua
+            sendo o `<label>`.
+            ============================================================ */}
+        <div className="fallback-field campo-com-moeda">
           <label className="sr-only" htmlFor="pd-receita">
             {PERGUNTA_DE_RECEITA}
           </label>
+          <span className="campo-moeda" aria-hidden="true">
+            {simboloDaMoeda(MOEDA_DA_RESPOSTA)}
+          </span>
           <input
             id="pd-receita"
             type="text"
@@ -418,7 +441,7 @@ export function PerguntaDoDia({
             // digitar um que a máscara vai ignorar.
             inputMode="numeric"
             autoComplete="off"
-            placeholder="Ex: 1.600,00"
+            placeholder={`Ex: ${dinheiro(1600, MOEDA_DA_RESPOSTA)}`}
             value={receitaCentavos === null ? "" : centavosNoCampo(receitaCentavos)}
             disabled={enviando}
             // DIGITAR: cada dígito entra pela direita.

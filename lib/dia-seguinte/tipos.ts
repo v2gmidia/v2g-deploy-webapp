@@ -68,6 +68,30 @@ export interface ExecucaoDoNegocio {
    * dele.
    */
   pedeAcao: boolean;
+  /**
+   * O anúncio está, ou esteve, no ar. **CHAVE, e não texto de tela.**
+   *
+   * ============================================================
+   * É A ÚNICA FONTE DE "NO AR" DO PRODUTO, E SÓ ESTA ROTA A EXPÕE.
+   *
+   * Medido em 11/09/2026 contra o `openapi.json` de produção: `veiculacao`
+   * aparece em UM schema — `RespostaExecucaoDoCliente`, que é o corpo de
+   * `GET /negocios/{business_id}/execucao`. Não está em
+   * `RespostaConsolidado`, não está em `RespostaConsolidadoDoNegocio`, e
+   * não está em `LinhaDoNegocioPorExecucao`. **Não existe veiculação por
+   * campanha**, e é por isso que o selo por campanha não foi construído —
+   * ver `docs/estado/veiculacao-uma-fonte-11-09.md` §0.
+   *
+   * `string` e não união fechada, pelo mesmo motivo de `nivel`: o
+   * `openapi.json` declara `type: string` com default `sem_evidencia` e
+   * **sem enum**. Quem interpreta é `lib/veiculacao/estado.ts`, que
+   * declara o vocabulário conhecido e trata valor novo como "não
+   * sabemos" — nunca como "no ar".
+   *
+   * `null` quer dizer que o campo não veio. Não é "não foi ao ar".
+   * ============================================================
+   */
+  veiculacao: string | null;
   atualizadoEm: string;
 }
 

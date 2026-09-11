@@ -85,12 +85,28 @@ export function validarExecucaoDoNegocio(bruto: unknown): ExecucaoDoNegocio | nu
   const atualizadoEm = texto(o.atualizado_em);
   if (!atualizadoEm) return null;
 
+  // ============================================================
+  // `veiculacao` AUSENTE NÃO REPROVA O CORPO, E É DE PROPÓSITO.
+  //
+  // Ela subiu depois das outras (medida em produção em 11/09/2026) e tem
+  // default no schema. Exigir presença aqui faria a rota inteira virar
+  // `resposta_ilegivel` contra qualquer backend que ainda não tivesse o
+  // campo — derrubando `andamento` e `pede_acao`, que não têm nada a ver
+  // com isso. É a mesma cicatriz do `respondeu_hoje` vindo `null`
+  // legítimo e reprovando a pergunta diária inteira.
+  //
+  // Ausente vira `null`, e `lib/veiculacao/estado.ts` sabe o que fazer com
+  // `null`: não afirmar nada.
+  // ============================================================
+  const veiculacao = texto(o.veiculacao);
+
   return {
     idExecucao,
     businessId,
     status,
     andamento,
     pedeAcao: o.pede_acao,
+    veiculacao,
     atualizadoEm,
   };
 }

@@ -94,9 +94,12 @@ tela a consumia. Tom `off` nos três estados — ver §2.
 Todos por falta de fonte. A v0 **omite**; não desabilita, não mostra vazio, não
 escreve "em breve" — botão morto ensina que a função existe e está a um clique.
 
+> **Correção de 11/09, depois da entrega.** A primeira linha desta tabela
+> estava errada, e o erro custou um selo. Ver §5.
+
 | pedido | por quê não |
 |---|---|
-| selo "CAMPANHA NO AR", pílula verde "No ar" | `status_na_plataforma` não existe em rota nenhuma. A tela não sabe se está no ar ou pausada |
+| selo "CAMPANHA NO AR", pílula verde "No ar" | não existe veiculação **por campanha** — mas existe por NEGÓCIO, e eu omiti demais. Ver §5 |
 | "R$ 14,42 por conversa" | derivado. Proibido pelo contrato e por `conferir:resultado` §10 |
 | "↑ +34% vs. 30 dias anteriores" (4 cartões) | não há período anterior em rota nenhuma. Seriam quatro números inventados |
 | setas verde/vermelha | semáforo — opinião fingindo ser medida, sem CPL-alvo |
@@ -179,3 +182,56 @@ sessão e não foi criada por aqui — nem pela V1, que disse que não criaria. 
 sessões V2 (fundação) e V3 (esta) estão na mesma branch e na mesma árvore suja
 ao mesmo tempo. Enquanto ninguém commitar, o combinado é não escrever no mesmo
 arquivo em paralelo; `app/globals.css` foi entregue à V2 ao fim deste lote.
+
+---
+
+## §5 — O selo que eu apaguei apoiado numa premissa falsa
+
+Registrado depois da entrega, quando a sessão `webapp-8f` mediu e eu confirmei.
+
+O CONFLITO 1 do `IMPLEMENTATION-PLAN` afirma que `status_na_plataforma` "NÃO
+existe em nenhuma rota (medi hoje: 0 ocorrências no `openapi.json` de
+produção)". Eu aceitei e omiti o selo de veiculação da tela inteira. **A
+afirmação é falsa.** Leitura pura contra produção, 11/09/2026:
+
+```
+GET /negocios/a85c37a9-…/execucao?profile_id=…   → 200
+{
+  "status": "cadastro_completo",
+  "andamento": "Seu anúncio já rodou e está pausado no momento.
+                Seu gestor pode retomar quando fizer sentido.",
+  "pede_acao": false,
+  "status_na_plataforma": "PAUSED",
+  "veiculacao": "ja_foi_ao_ar",
+  "publicada_em": null
+}
+```
+
+O que é verdade é um recorte mais estreito, e ele precisa ficar escrito senão
+alguém constrói o selo no lugar errado: **não existe veiculação POR CAMPANHA.**
+Nem `RespostaConsolidado` nem `LinhaDoNegocioPorExecucao` trazem o campo, e essa
+rota devolve **uma** execução só, a mais recente. Selo no nível do NEGÓCIO era
+construível o tempo todo; selo por campanha, não.
+
+Então a ficha por campanha continua certa em não afirmar — ela desenha uma
+campanha por vez e não tem a informação. O que faltou foi a faixa de negócio.
+O comentário do componente em `app/(protected)/anuncios/page.tsx` foi corrigido
+para dar o motivo certo, e o arquivo passou para a `webapp-8f`.
+
+**A lição de processo, que é maior que o selo:** "não existe no `openapi.json`" e
+"o servidor não devolve" não são a mesma afirmação, e eu tratei como se fossem.
+Todo CONFLITO medido contra o documento merece uma remedição contra o
+**endpoint** antes de virar `OMITIR` no plano. A regra "quando o wireframe mostra
+algo sem fonte, a v0 OMITE" só é boa enquanto "sem fonte" for medido direito —
+senão ela apaga funcionalidade que existia.
+
+De brinde, o campo `andamento`: frase pronta, escrita pelo backend, no tom do
+produto, resolvendo "no ar vs. pausada" sem tradução local. É a mesma regra do
+`nivel_frase`, e está de graça para quem for construir a faixa.
+
+**O que muda no lote, e é de outra sessão.** A `webapp-8f` vai tirar
+"Vendas que você confirmou" e "Voltou em vendas" do card por campanha (o B2
+dela). Concordo, e o §0 item 2 deste documento é o argumento: o lado do dono
+veio inteiro da `98447192` enquanto a `aed42ce7` tem os dois nulos — a
+atribuição por campanha é artefato de a qual execução a pergunta do dia estava
+pendurada, não medição.

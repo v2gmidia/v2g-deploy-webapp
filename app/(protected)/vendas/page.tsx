@@ -4,6 +4,8 @@ import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { numero } from "@/lib/formato";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { resultadoDoNegocio } from "@/lib/resultado/do-negocio";
+import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
+import type { EstadoDeVeiculacao } from "@/lib/veiculacao/estado";
 
 /**
  * Vendas — quem chegou pelo anúncio.
@@ -57,9 +59,23 @@ export default async function VendasPage() {
       : null;
 
   const campanhas = resultado?.campanhas ?? [];
-  // "Foi ao ar" = existe campanha na plataforma. `sem-campanha` e rodada
-  // que nem chegou a montar uma.
-  const publicadas = campanhas.filter((c) => c.estado !== "sem-campanha");
+
+  // ============================================================
+  // "FOI AO AR" DEIXOU DE SER INFERÊNCIA DESTA TELA. ITEM B3.
+  //
+  // Era `campanhas.filter((c) => c.estado !== "sem-campanha")` — ou seja,
+  // esta tela deduzia veiculação a partir do `status` do pipeline, a
+  // mesma inferência que `lib/resultado/do-negocio.ts` declara, por
+  // escrito, incapaz de distinguir no ar de pausada.
+  //
+  // O estrago era concreto e estava em produção: na conta da V2G o
+  // anúncio rodou e a Meta o mantém em `PAUSED`, e esta tela dizia "Seu
+  // anúncio está no ar" — duas vezes — enquanto a `/alertas` dizia
+  // "Seus anúncios ainda não estão no ar" sobre a mesma conta.
+  //
+  // Agora vem de `estado.veiculacao`, que é a fonte única.
+  // ============================================================
+  const veiculacao = estado.veiculacao;
 
   // ============================================================
   // SOMA DE CONTAGEM, E SO DE CONTAGEM.
@@ -101,24 +117,34 @@ export default async function VendasPage() {
           </>
         ) : (
           <p className="hero-frase">
-            {publicadas.length === 0 ? (
-              <>
-                Ninguém chegou ainda porque{" "}
-                <span className="destaque">nenhum anúncio foi ao ar</span>.
-              </>
+            {/* ============================================================
+                A FRASE DE VEICULAÇÃO VEM DO BANCO DE FRASES, INTEIRA.
+
+                As três variações abaixo diferem no que esta tela tem a
+                dizer sobre CONTAGEM — que é o assunto dela. A parte sobre
+                o ar é sempre a mesma string, vinda de um lugar só, e é
+                por isso que ela não pode mais contradizer a `/alertas`.
+
+                O `<span className="destaque">` ficou só no pedaço de
+                contagem: destacar dentro da frase do módulo exigiria
+                fatiá-la aqui, e fatiar texto de outro dono é como uma
+                frase volta a ter dois autores.
+                ============================================================ */}
+            {!esteveNoAr(veiculacao) ? (
+              <>{fraseDeVeiculacao(veiculacao, "manchete")} Ninguém chegou por ele ainda.</>
             ) : conversas === null ? (
-              // A AFIRMAÇÃO QUE ESTA TELA NÃO PODE MAIS FAZER. Com o anúncio
-              // no ar e a medição não provada, "a primeira conversa ainda não
+              // A AFIRMAÇÃO QUE ESTA TELA NÃO PODE FAZER. Com o anúncio no
+              // ar e a medição não provada, "a primeira conversa ainda não
               // veio" é um zero que mente: pode ter vindo e ninguém estar
               // contando. Ver o bloco do topo do arquivo.
               <>
-                Seu anúncio está no ar. A gente{" "}
+                {fraseDeVeiculacao(veiculacao, "manchete")} A gente{" "}
                 <span className="destaque">ainda não consegue contar</span> quem chegou por ele.
               </>
             ) : (
               <>
-                Seu anúncio está no ar. A <span className="destaque">primeira conversa</span> ainda
-                não veio.
+                {fraseDeVeiculacao(veiculacao, "manchete")} A{" "}
+                <span className="destaque">primeira conversa</span> ainda não veio.
               </>
             )}
           </p>
@@ -131,10 +157,10 @@ export default async function VendasPage() {
 
       <div className="dash-grid">
         <div className="dash-main">
-          {publicadas.length === 0 ? (
+          {!esteveNoAr(veiculacao) ? (
             <NinguemChegouAinda />
           ) : conversas === null || conversas === 0 ? (
-            <NoArSemConversa aindaNaoConta={conversas === null} />
+            <NoArSemConversa aindaNaoConta={conversas === null} veiculacao={veiculacao} />
           ) : (
             <ConversasSemLista quantas={conversas} />
           )}
@@ -221,14 +247,25 @@ function NinguemChegouAinda() {
  * dono não pode executar sozinho.
  * ============================================================
  */
-function NoArSemConversa({ aindaNaoConta }: { aindaNaoConta: boolean }) {
+function NoArSemConversa({
+  aindaNaoConta,
+  veiculacao,
+}: {
+  aindaNaoConta: boolean;
+  veiculacao: EstadoDeVeiculacao;
+}) {
+  // A frase do ar vem do módulo; o que este componente escreve é o que
+  // ele sabe sobre CONTAGEM. Antes as duas estavam grudadas na mesma
+  // string — e era assim que "está no ar" sobrevivia a um anúncio pausado.
+  const noAr = fraseDeVeiculacao(veiculacao, "manchete");
+
   return (
     <section className="empty-card">
       <div className="empty-copy">
         {aindaNaoConta ? (
           <>
             <p className="empty-head">
-              Seu anúncio está no ar, e a contagem de quem chega ainda não está de pé.
+              {noAr} A contagem de quem chega ainda não está de pé.
             </p>
             <p className="empty-body">
               Falta terminar de configurar o que conta um contato vindo do anúncio. Enquanto
@@ -238,7 +275,7 @@ function NoArSemConversa({ aindaNaoConta }: { aindaNaoConta: boolean }) {
           </>
         ) : (
           <>
-            <p className="empty-head">Seu anúncio está no ar, e ainda não veio conversa.</p>
+            <p className="empty-head">{noAr} Ainda não veio conversa.</p>
             <p className="empty-body">
               Isso é normal nos primeiros dias: o Facebook leva um tempo até entender para quem
               vale a pena mostrar.

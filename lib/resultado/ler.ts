@@ -3,6 +3,7 @@ import type {
   BlocoDeMoeda,
   ConsolidadoBase,
   Moeda,
+  RespostaDoDono,
   ResultadoParaTela,
   ValorNaTela,
 } from "./tipos.ts";
@@ -163,8 +164,34 @@ function blocoDe(c: ConsolidadoBase, medido: boolean | null | undefined): BlocoD
     cliques: contagem(c.cliques),
     impressoes: contagem(c.impressoes),
     pessoas: pessoasSeForMedido(c.pessoasQueChegaram, medido),
-    vendas: contagem(c.vendas),
-    voltou: dinheiroOuAusente(c.voltouCentavos, moeda),
+  };
+}
+
+/**
+ * O que o dono informou, no nível do NEGÓCIO. Item B2.
+ *
+ * ============================================================
+ * RECEBE O CONSOLIDADO DO NEGÓCIO, E É ISSO QUE A ASSINATURA DIZ.
+ *
+ * O tipo é `ConsolidadoBase`, que as duas rotas satisfazem — então nada
+ * no TypeScript impede alguém de passar o de uma execução. O que impede
+ * é haver um chamador só, em `do-negocio.ts`, e ele passar o acumulado.
+ *
+ * A diferença não é acadêmica: passar o da execução traria de volta
+ * exatamente o número que saiu do card — `vendas: 22` pendurado numa
+ * rodada que nunca foi ao ar. Ver o bloco de `RespostaDoDono` em
+ * `./tipos.ts`.
+ * ============================================================
+ */
+export function respostaDoDono(acumulado: ConsolidadoBase): RespostaDoDono {
+  return {
+    moeda: acumulado.moeda,
+    vendas: contagem(acumulado.vendas),
+    voltou: dinheiroOuAusente(acumulado.voltouCentavos, acumulado.moeda),
+    // Os DOIS nulos, e não um `||`: `vendas: 0` é resposta ("não vendi
+    // nada"), e zero venda é sinal forte que não pode virar silêncio.
+    // Quem não respondeu nada tem os dois em `null`.
+    respondeu: acumulado.vendas !== null || acumulado.voltouCentavos !== null,
   };
 }
 

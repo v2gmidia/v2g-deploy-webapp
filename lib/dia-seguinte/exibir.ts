@@ -1,7 +1,7 @@
 // Extensão `.ts` explícita: o `conferir:dia-seguinte` importa este arquivo
 // direto do Node, sem bundler para resolver especificador sem extensão.
 // Mesma regra do resto de `lib/dia-seguinte/` e de `lib/nichos/`.
-import { dinheiro, dinheiroDeCentavos, type Moeda } from "../formato.ts";
+import { dinheiro, dinheiroDeCentavos, numero, type Moeda } from "../formato.ts";
 
 /**
  * Como um número que pode faltar aparece na tela.
@@ -52,9 +52,27 @@ export function dinheiroOuAusencia(centavos: number | null, moeda: Moeda | null)
   return centavos === null ? AINDA_NAO_SABEMOS : dinheiroDeCentavos(centavos, moeda);
 }
 
-/** Contagem, ou o recado de ausência. `0` é contagem, e aparece. */
+/**
+ * Contagem, ou o recado de ausência. `0` é contagem, e aparece.
+ *
+ * ============================================================
+ * ERA `String(valor)`, E ISSO ESCREVIA `1657` NA TELA DO DONO.
+ *
+ * Item B5 do QA de 11/09/2026. `String(1657)` devolve `"1657"`; o resto
+ * do app escreve `1.657`, porque passa por `numero()`. Duas grafias do
+ * mesmo número, na mesma tela, decididas por qual função a linha chamou.
+ *
+ * Quatro dígitos sem separador não parecem errados — parecem OUTRO
+ * número. `1657` e `1.657` levam o mesmo tempo para ler e dão
+ * confianças diferentes, e essa é a moeda desta tela.
+ *
+ * O conserto é aqui e não em quem chama: eram três telas chamando esta
+ * função, e consertar a que alguém viu deixaria as outras duas
+ * esperando a vez.
+ * ============================================================
+ */
 export function contagemOuAusencia(valor: number | null): string {
-  return valor === null ? AINDA_NAO_SABEMOS : String(valor);
+  return valor === null ? AINDA_NAO_SABEMOS : numero(valor);
 }
 
 /**

@@ -69,8 +69,14 @@ export function TrocarPagina({ paginas, atual }: Props) {
         ))}
       </div>
 
+      {/* "Os que já estão no ar" virou "os já publicados" em 11/09/2026.
+          Não era afirmação falsa — é uma condicional sobre quais anúncios
+          a troca alcança — mas dizer "no ar" aqui obriga o leitor a
+          decidir se ele TEM anúncio no ar, que é pergunta de outra tela e
+          cuja resposta esta não tem. "Já publicados" descreve o mesmo
+          conjunto sem afirmar nada sobre o estado de agora. */}
       <p className="hint">
-        A troca vale para os <b>próximos</b> anúncios. Os que já estão no ar continuam saindo de{" "}
+        A troca vale para os <b>próximos</b> anúncios. Os já publicados continuam saindo de{" "}
         {paginaAtual?.nome ?? "onde estão"} até serem refeitos.
       </p>
 

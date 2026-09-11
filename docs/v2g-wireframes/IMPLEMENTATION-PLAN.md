@@ -389,7 +389,7 @@ antes de desenhar qualquer bloco.
 
 | # | o wireframe mostra | o que existe | v0 |
 |---:|---|---|---|
-| 1 | selo "CAMPANHA NO AR" / "No ar" / "ANÚNCIO NO AR" — em **9 das 12 telas** | `status_na_plataforma` **não é exposto por rota nenhuma** (0 ocorrências no `openapi.json`); o coletor lê e descarta | **omitir** |
+| 1 | selo "CAMPANHA NO AR" / "No ar" / "ANÚNCIO NO AR" — em **9 das 12 telas** | **CORRIGIDO em 11/09, à noite — ver o aviso abaixo.** Existe fonte, e é por NEGÓCIO: `veiculacao` e `status_na_plataforma`, em `GET /negocios/{business_id}/execucao`. Não existe **por campanha** | selo **de negócio** pode ser construído; **por campanha, omitir** |
 | 2 | botão "Pausar campanha" | nenhuma rota de pausar nem de retomar | **omitir** — nem desabilitado |
 | 3 | "Custo por conversa R$ 14,42" — em 3 telas, uma delas como **número herói** | derivável (`investiu / contatos`), e **proibido**: sem CPL-alvo é opinião fingindo ser medida | **omitir** |
 | 4 | semáforo, cor de julgamento no estado | 8 dos 14 níveis são indeterminados, e as três campanhas reais saem `sem_alvo` | **pílula cinza para todos** |
@@ -409,6 +409,44 @@ antes de desenhar qualquer bloco.
 | 18 | "Leva cerca de 3 minutos" · "Próxima leitura: amanhã" · "Ativa desde hoje, 09:42" | promessa de prazo sem lastro. É o mesmo defeito do "48 horas" que **já está em produção** na `/anuncios` | **omitir** |
 | 19 | um total somando as campanhas | com `moedas.length > 1` o topo vem `null` e a quebra vem em `por_execucao` | **duas fichas**, uma por moeda, cada uma com o próprio nível |
 | 20 | `0` onde não há medição | `null` é primeira classe no contrato inteiro | **`—` mais uma linha explicando**, sempre |
+
+### Correção do conflito 1 — medida em 11/09/2026, à noite
+
+**O conflito 1 estava errado, e a tela de Resultados foi construída em cima
+dele.** A versão da tarde dizia que `status_na_plataforma` não é exposto por
+rota nenhuma, com "0 ocorrências no `openapi.json`" ao lado. Remedido contra o
+**endpoint**, com o token, leitura pura:
+
+```
+GET /negocios/a85c37a9-…/execucao?profile_id=f5188fd0-…
+→ status_na_plataforma  "PAUSED"
+  veiculacao            "ja_foi_ao_ar"
+  andamento             "Seu anúncio já rodou e está pausado no momento.
+                         Seu gestor pode retomar quando fizer sentido."
+```
+
+**E o `openapi.json` de hoje declara os dois campos** em
+`RespostaExecucaoDoCliente`. Ou seja: a medição da tarde não passou ao lado do
+grep — **os campos não existiam quando ela rodou, e subiram no mesmo dia.**
+A medição estava certa e envelheceu em horas.
+
+A lição de método é de quem achou o defeito, e vale escrita: *"não existe no
+openapi" e "o servidor não devolve" não são a mesma afirmação.* Conflito que
+vira **OMITIR** por ausência no documento merece uma remedição contra o
+endpoint antes de virar decisão de produto — porque o custo do erro é
+assimétrico: omitir o que existe apaga função silenciosamente, e ninguém
+reclama de uma coisa que nunca viu.
+
+**O que sobra de verdadeiro, e é o recorte que precisa ficar escrito: NÃO
+EXISTE VEICULAÇÃO POR CAMPANHA.** `RespostaConsolidado` e
+`LinhaDoNegocioPorExecucao` não trazem o campo, e `/negocios/{id}/execucao`
+devolve **uma** execução — a mais recente. Selo no nível do negócio é
+construível hoje; carimbar cada linha da lista com o estado do negócio seria
+afirmar de uma campanha o que se mediu de outra.
+
+E `andamento` já resolve "no ar vs. pausada" **em frase pronta, escrita pelo
+backend**, na mesma regra do `nivel_frase`. Quem for construir a faixa de
+veiculação começa por ele, não por um `if` sobre `status_na_plataforma`.
 
 ### A regra que fecha a seção
 

@@ -118,3 +118,62 @@ export function diaPorExtenso(dia: string): string {
   }).format(data);
   return `${semana}, ${String(d).padStart(2, "0")}/${String(mes).padStart(2, "0")}`;
 }
+
+/**
+ * A data curta, para CARIMBO — `2026-09-05` vira `05/09`.
+ *
+ * Irmã de `diaPorExtenso`, e a diferença entre as duas é a regra do
+ * `docs/padrao-visual.md` §8: data que o dono LÊ leva o dia da semana
+ * ("quantas vendas na quinta?"); data que ele CONFERE, não. Um rótulo de
+ * período ao lado de um número é conferência — "sexta-feira, 05/09 a
+ * domingo, 07/09" gasta uma linha inteira para dizer o que dois pares de
+ * dígitos dizem.
+ *
+ * `Date.UTC` + `timeZone: "UTC"` pelo mesmo motivo de `diaPorExtenso`:
+ * sem isso, `2026-09-05` no fuso de São Paulo vira 04/09.
+ */
+export function diaCurto(dia: string): string {
+  const p = dia.split("-").map(Number);
+  return new Date(Date.UTC(p[0] ?? 1970, (p[1] ?? 1) - 1, p[2] ?? 1)).toLocaleDateString("pt-BR", {
+    day: "2-digit",
+    month: "2-digit",
+    timeZone: "UTC",
+  });
+}
+
+/**
+ * O SÍMBOLO da moeda, sozinho — `"BRL"` vira `R$`.
+ *
+ * ============================================================
+ * EXISTE PARA O CAMPO DE DINHEIRO NÃO FICAR SEM MOEDA. ITEM B4.
+ *
+ * O campo de receita da pergunta diária mostrava `1.600,00`, seco, com
+ * `placeholder="Ex: 1.600,00"` escrito à mão. É a única superfície de
+ * dinheiro do produto que não passava por função de formato nenhuma — e
+ * a regra do B4 é que dinheiro sempre apareça com moeda, pela função.
+ *
+ * Num campo a omissão é pior que numa leitura, e é por isso que ela vale
+ * uma função: o dono está DIGITANDO, e o que ele digita vira
+ * `voltou_centavos` no banco. Um campo sem moeda pergunta "quanto?" sem
+ * dizer em quê — e a resposta dele é justamente o número que a tela de
+ * resultado vai mostrar de volta com `R$` na frente.
+ *
+ * SAI DO `Intl`, e não de uma tabela `{ BRL: "R$" }`. Tabela escrita à
+ * mão é a lista paralela de sempre: ela envelhece calada, e a primeira
+ * moeda que faltar vira string vazia sem ninguém saber. `formatToParts`
+ * pergunta ao mesmo mecanismo que `dinheiro()` usa para escrever — os
+ * dois não têm como divergir.
+ *
+ * `null` DEVOLVE STRING VAZIA, e é a mesma regra de `dinheiro()`: sem
+ * moeda declarada não se escreve símbolo. Quem chama não põe nada na
+ * frente do campo, em vez de pôr um `R$` chutado.
+ * ============================================================
+ */
+export function simboloDaMoeda(moeda: Moeda | null): string {
+  if (!moeda) return "";
+  const partes = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: moeda,
+  }).formatToParts(0);
+  return partes.find((p) => p.type === "currency")?.value ?? "";
+}

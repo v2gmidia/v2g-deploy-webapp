@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
+import { estadoDoCliente } from "@/lib/estado/cliente";
+import { estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 
 /**
  * "Um anúncio não passou."
@@ -10,10 +12,16 @@ import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
  * resultado. Tratar isso como incidente ensina o cliente a ter medo de
  * uma coisa que vai acontecer de novo no mês que vem.
  *
- * A informação que mais importa aparece primeiro e é tranquilizadora: os
- * OUTROS anúncios continuam no ar. Sem isso, o cliente presume que parou
- * tudo — que é a leitura natural de "seu anúncio foi reprovado" para
- * quem não conhece a plataforma.
+ * A informação que mais importa aparece primeiro e é tranquilizadora: o
+ * que já estava sendo exibido continua. Sem isso, o cliente presume que
+ * parou tudo — que é a leitura natural de "seu anúncio foi reprovado"
+ * para quem não conhece a plataforma.
+ *
+ * ESSA NOTÍCIA BOA NUNCA APARECEU, até 11/09/2026. Ela dependia de
+ * `campaigns.published_at`, e `campaigns` tem zero linhas na tabela
+ * inteira — o ramo do `else` rodava para todo mundo. Frase morta, não
+ * frase errada, que é o tipo que ninguém reporta. Ver o bloco da
+ * consulta.
  *
  * Nada aqui pede ação urgente do cliente: a IA refaz a peça e ela volta
  * na tela de aprovação. O que ele precisa é entender e seguir a vida.
@@ -21,7 +29,7 @@ import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
 export default async function ReprovadoPage() {
   const supabase = await createClient();
 
-  const [{ data: reprovados }, { data: campanhas }] = await Promise.all([
+  const [{ data: reprovados }, estado] = await Promise.all([
     // O mesmo filtro da /aprovar, pelo mesmo motivo: `creatives` guarda
     // logo e foto de identidade junto com peça de anúncio, e "reprovado"
     // só faz sentido para peça de anúncio vigente.
@@ -33,11 +41,26 @@ export default async function ReprovadoPage() {
     )
       .eq("status", "rejected")
       .order("created_at", { ascending: false }),
-    supabase.from("campaigns").select("id, name, published_at, status"),
+    // ============================================================
+    // A CONSULTA A `campaigns` SAIU. ITEM B3.
+    //
+    // Era `select(published_at)` e depois `filter(c => c.published_at
+    // !== null)` — e `campaigns` tem ZERO LINHAS na tabela inteira,
+    // medido em 11/09/2026. Ou seja: `noAr.length` era `0` para todo
+    // cliente, sempre, e esta tela NUNCA mostrou a notícia boa que o
+    // bloco de cima diz ser a razão de ela existir ("a informação que
+    // mais importa aparece primeiro e é tranquilizadora").
+    //
+    // Não era uma frase errada: era uma frase MORTA. O ramo do `else`
+    // rodava sempre, e ninguém percebeu porque ele também é verdadeiro.
+    //
+    // Agora vem de `estado.veiculacao`, a fonte única.
+    // ============================================================
+    estadoDoCliente(new Date()),
   ]);
 
   const lista = reprovados ?? [];
-  const noAr = (campanhas ?? []).filter((c) => c.published_at !== null);
+  const outrosNoAr = estaNoArAgora(estado.veiculacao);
 
   if (lista.length === 0) {
     return (
@@ -74,16 +97,18 @@ export default async function ReprovadoPage() {
           título acima: "parou tudo?". */}
       <section className="hero-destaque">
         <span className="eyebrow">O que continua</span>
-        {noAr.length > 0 ? (
+        {outrosNoAr ? (
           <>
-            <p className="hero-frase">
-              Seus outros anúncios <span className="destaque">seguem no ar</span>, normalmente.
-            </p>
+            {/* A frase vem do módulo. A CONTAGEM saiu junto com a consulta
+                a `campaigns`: dizer "você tem 3 anúncios rodando" exigiria
+                contar campanhas no ar, e nenhuma rota expõe veiculação por
+                campanha — é o mesmo pedido ao backend do selo da
+                `/anuncios`. Sem o número a frase continua fazendo o
+                trabalho dela, que é dizer que não parou tudo. */}
+            <p className="hero-frase">{fraseDeVeiculacao(estado.veiculacao, "manchete")}</p>
             <p className="hero-note">
-              {noAr.length === 1
-                ? "Você tem 1 anúncio rodando, e ele não foi afetado."
-                : `Você tem ${noAr.length} anúncios rodando, e nenhum deles foi afetado.`}{" "}
-              A reprovação vale só para a peça específica.
+              A reprovação vale só para a peça específica, e não afeta o que já está sendo
+              exibido.
             </p>
           </>
         ) : (

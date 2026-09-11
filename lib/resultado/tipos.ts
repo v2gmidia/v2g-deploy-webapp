@@ -75,6 +75,38 @@ export interface ValorNaTela {
  * é inventar dado de mercado.
  * ============================================================
  */
+/**
+ * ============================================================
+ * `vendas` E `voltou` SAÍRAM DAQUI EM 11/09/2026. ITEM B2.
+ *
+ * Este bloco é de UMA EXECUÇÃO, e os dois campos que saíram não são de
+ * execução nenhuma: são a resposta que o DONO deu sobre o negócio dele.
+ * Ele responde "quantas vendas ontem?" uma vez, sobre o mesmo fato do
+ * mundo — `lib/dia-seguinte/tipos.ts` já registrava isso por extenso
+ * ("a resposta do dono NÃO SOMA"), e a tela mostrava assim mesmo.
+ *
+ * A MEDIÇÃO QUE FECHOU O ASSUNTO, feita em 11/09 contra produção pela
+ * sessão V3 e confirmada pela V1:
+ *
+ *   execução 98447192  status "aguardando_fotos" · tem_dado_da_plataforma false
+ *                      vendas 22 · voltou_centavos 120000
+ *   execução aed42ce7  a ÚNICA com dado de plataforma (R$ 10,25)
+ *                      vendas null · voltou null
+ *
+ * O lado do dono veio INTEIRO pendurado na execução que nunca rodou, e a
+ * que rodou tem os dois nulos. Não é atribuição: é artefato de a qual
+ * execução a pergunta do dia estava amarrada quando o dono respondeu.
+ *
+ * Na tela isso produzia, no MESMO card, "Ainda não foi ao ar" e logo
+ * abaixo "Voltou em vendas — 1.200,00". Os dois rótulos estavam certos e
+ * a justaposição era falsa: ela convida a ler que aquela campanha trouxe
+ * mil e duzentos reais, e ela não trouxe nada, porque não rodou.
+ *
+ * Agora os dois vivem em `RespostaDoDono`, uma vez, no nível do NEGÓCIO —
+ * que é o nível em que a pergunta foi feita. `conferir:veiculacao` §4
+ * reprova o repositório se voltarem para cá.
+ * ============================================================
+ */
 export interface BlocoDeMoeda {
   /** `null` = a janela não tem uma moeda só. Escreve o número SEM símbolo. */
   moeda: Moeda | null;
@@ -83,8 +115,38 @@ export interface BlocoDeMoeda {
   impressoes: ValorNaTela;
   /** só aparece quando a plataforma PROVA que conta contato — ver `ler.ts`. */
   pessoas: ValorNaTela;
+}
+
+/**
+ * O que o DONO informou, no nível do negócio. Item B2.
+ *
+ * ============================================================
+ * UMA VEZ, E NO NÍVEL EM QUE A PERGUNTA FOI FEITA.
+ *
+ * A fonte é o topo de `GET /negocios/{id}/consolidado`, que é a rota que
+ * resolve a regra do "não soma": uma resposta por dia, execução mais
+ * recente vence (`lib/dia-seguinte/tipos.ts`). **O front não refaz essa
+ * conta** — e somar os cards seria refazê-la errado.
+ * ============================================================
+ *
+ * `moeda` é a do topo do consolidado do negócio. Com moedas misturadas
+ * ela vem `null`, e `voltou` sai sem símbolo — a mesma regra de sempre:
+ * sem moeda declarada não se escreve símbolo.
+ */
+export interface RespostaDoDono {
+  moeda: Moeda | null;
+  /** quantas viraram venda, como o dono contou */
   vendas: ValorNaTela;
+  /** quanto entrou, como o dono contou */
   voltou: ValorNaTela;
+  /**
+   * O dono respondeu alguma coisa na janela?
+   *
+   * `false` quando os DOIS vêm nulos — e aí a tela não desenha o bloco,
+   * em vez de desenhar dois travessões. Ausência de resposta não é um
+   * resultado a exibir: é uma pergunta que ainda não foi feita.
+   */
+  respondeu: boolean;
 }
 
 export interface ResultadoParaTela {

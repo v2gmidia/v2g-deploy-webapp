@@ -7,6 +7,7 @@ import { COLUNAS_DO_JULGAMENTO, foiReprovada } from "@/lib/criativos/peca";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
 import { resultadoDoNegocio } from "@/lib/resultado/do-negocio";
 import { diaPorExtenso } from "@/lib/formato";
+import { fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import type { CampanhaNaTela } from "@/lib/resultado/do-negocio";
 import type { ValorNaTela } from "@/lib/resultado/tipos";
 import type { Etapa } from "@/lib/estado/frases";
@@ -103,6 +104,26 @@ export default async function AnunciosPage() {
       <div className="page-head">
         <h1>Seus anúncios</h1>
         <p>Cada anúncio e o que ele produziu até agora.</p>
+        {/* ============================================================
+            A ÚNICA AFIRMAÇÃO DE VEICULAÇÃO DESTA TELA. ITENS B3 e C6.
+
+            No nível do NEGÓCIO, porque é o nível em que o backend
+            responde: `veiculacao` só existe em
+            `GET /negocios/{id}/execucao`. A frase vem do banco de frases
+            de `lib/veiculacao/estado.ts` — esta tela não escreve texto de
+            veiculação e não compara o estado com literal nenhum.
+
+            `nao_sabemos` também tem frase, e ela aparece: sumir com a
+            linha quando a leitura falha faria a tela ficar calada
+            exatamente no caso em que ela devia admitir. É a mesma regra
+            do `estado: "indisponivel"` logo abaixo.
+            ============================================================ */}
+        <p className="res-veiculacao">
+          {fraseDeVeiculacao(estado.veiculacao, "manchete")}{" "}
+          <span className="hint-inline">
+            {fraseDeVeiculacao(estado.veiculacao, "apoio")}
+          </span>
+        </p>
       </div>
 
       {reprovadas.length > 0 ? (
@@ -160,6 +181,38 @@ export default async function AnunciosPage() {
                   Seus anúncios cobram em moedas diferentes ({resultado.moedas.join(", ")}), então
                   eles aparecem separados. Somar um com o outro daria um número que não existe.
                 </p>
+              )}
+
+              {/* ============================================================
+                  A RESPOSTA DO DONO — UMA VEZ, E DEPOIS DOS CARDS. ITEM B2.
+
+                  DEPOIS e não antes, de propósito: os cards são o que a
+                  PLATAFORMA mediu, e este bloco é o que o DONO contou. Pôr
+                  a contagem dele no topo faria dela o assunto da tela, e o
+                  assunto é o anúncio.
+
+                  Uma vez porque a pergunta foi feita uma vez. Ele responde
+                  "quantas vendas ontem?" sobre o negócio dele, não sobre
+                  uma campanha — ver `lib/resultado/tipos.ts`, com a
+                  medição das duas execuções da V2G que fechou o assunto.
+                  ============================================================ */}
+              {resultado.doDono?.respondeu && (
+                <section className="res-do-dono">
+                  <div className="section-title">
+                    <h2>O que você contou</h2>
+                    <span className="st-note">
+                      Isto é o que você respondeu, não o que a plataforma mediu.
+                    </span>
+                  </div>
+                  <div className="res-grid">
+                    <Numero valor={resultado.doDono.vendas} rotulo="Vendas que você confirmou">
+                      <IconeCarrinho />
+                    </Numero>
+                    <Numero valor={resultado.doDono.voltou} rotulo="Voltou em vendas">
+                      <IconeSeta />
+                    </Numero>
+                  </div>
+                </section>
               )}
             </>
           )}
@@ -372,11 +425,60 @@ const IconeLampada = () => (
   </svg>
 );
 
-/** O que a pílula diz. CINZA SEMPRE — ver o bloco do topo do arquivo. */
+/**
+ * O que a pílula do card diz — e ela fala de NÚMEROS, nunca de ar.
+ *
+ * ============================================================
+ * "AINDA NÃO FOI AO AR" SAIU DAQUI EM 11/09/2026. ITEM C6.
+ *
+ * Era a única coisa nesta tela que afirmava veiculação, e ela afirmava a
+ * partir de `STATUS_COM_CAMPANHA` — uma inferência sobre o `status` do
+ * pipeline que o próprio `lib/resultado/do-negocio.ts` declara incapaz
+ * de distinguir no ar de pausada, por escrito, no bloco dela.
+ *
+ * O card não pode falar de ar porque **não existe veiculação por
+ * campanha** em rota nenhuma (medido contra o `openapi.json` de
+ * produção: `veiculacao` aparece em `RespostaExecucaoDoCliente` e em
+ * nenhum outro schema). Quem fala de ar nesta tela é a faixa do NEGÓCIO,
+ * uma vez, com `estado.veiculacao` — a fonte única.
+ *
+ * Os três rótulos agora dizem o que a ficha realmente sabe: se há
+ * campanha montada, e se vieram números dela. `sem-campanha` virou "Sem
+ * campanha montada" — que é exatamente o que `STATUS_COM_CAMPANHA`
+ * mede, sem pedir emprestada uma afirmação que ela não sustenta.
+ * ============================================================
+ *
+ * CINZA NOS TRÊS, SEMPRE — ver o bloco do topo do arquivo. A FORMA é que
+ * separa (item C5): contorno para o que ainda não produziu número,
+ * preenchido para o que produziu.
+ */
 const ROTULO_DO_ESTADO = {
-  "sem-campanha": "Ainda não foi ao ar",
+  "sem-campanha": "Sem campanha montada",
   "sem-dado": "Sem números ainda",
   "com-dado": "Com números",
+} as const;
+
+/**
+ * A FORMA DO SELO, por estado. Item C5.
+ *
+ * ============================================================
+ * TEXTO **E** FORMA, NUNCA COR DE JULGAMENTO.
+ *
+ * Os três selos já eram cinza — a tela nunca teve semáforo, e continua
+ * sem ter. O que faltava era o segundo eixo: três pílulas idênticas em
+ * cor e em forma, diferentes só na palavra, pedem leitura atenta para
+ * uma distinção que devia ser de relance.
+ *
+ * Preenchido = tem número. Contorno = ainda não tem. A forma carrega
+ * PRESENÇA de dado, que é fato, e não qualidade do resultado, que seria
+ * julgamento — um card "Com números" não está dizendo que os números são
+ * bons.
+ * ============================================================
+ */
+const FORMA_DO_ESTADO = {
+  "sem-campanha": "contorno",
+  "sem-dado": "contorno",
+  "com-dado": "preenchido",
 } as const;
 
 function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
@@ -393,11 +495,30 @@ function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
 
             O wireframe pinta "No ar" de verde. Verde aqui seria semáforo:
             afirma que está bom sem ninguém ter medido contra alvo nenhum.
-            E o pior — a tela NÃO SABE se a campanha está no ar ou pausada:
-            `status_na_plataforma` não existe em rota nenhuma. Ver o bloco
-            do topo deste arquivo.
+
+            E esta ficha não sabe se a campanha está no ar ou pausada —
+            mas **cuidado com o motivo**, porque ele mudou. Não é que
+            `status_na_plataforma` não exista: ele existe, e foi medido em
+            produção em 11/09/2026 na rota do NEGÓCIO:
+
+              GET /negocios/{id}/execucao
+              → status_na_plataforma "PAUSED", veiculacao "ja_foi_ao_ar",
+                e um `andamento` escrito pelo backend
+
+            O que não existe é veiculação POR CAMPANHA: nem o consolidado
+            do negócio nem a ficha da execução trazem o campo, e aquela
+            rota devolve UMA execução só. Como este componente desenha uma
+            campanha por vez, ele continua sem poder afirmar — e por isso
+            o rótulo dele deixou de falar de ar (ver `ROTULO_DO_ESTADO`).
+
+            Quem afirma é a faixa do NEGÓCIO no topo desta tela, com
+            `estado.veiculacao`. O pedido ao backend para destravar o selo
+            por campanha está em `docs/estado/veiculacao-uma-fonte-11-09.md`
+            §0.
             ============================================================ */}
-        <Pill tone="off">{ROTULO_DO_ESTADO[campanha.estado]}</Pill>
+        <Pill tone="off" forma={FORMA_DO_ESTADO[campanha.estado]}>
+          {ROTULO_DO_ESTADO[campanha.estado]}
+        </Pill>
       </div>
 
       {/* CANAL SÓ APARECE SE VIER. `canal_confirmado` é `null` nas duas
@@ -415,12 +536,24 @@ function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
       )}
 
       {/* ============================================================
-          SEIS NÚMEROS, E NENHUM DELES É DERIVADO.
+          QUATRO NÚMEROS, TODOS DA PLATAFORMA, NENHUM DERIVADO.
 
-          `vendas` e `voltou` já estavam no `BlocoDeMoeda` e nenhuma tela
-          os mostrava. O wireframe pede os dois ("Vendas confirmadas",
-          "Retorno") — então eles entram, vindos prontos da camada de
-          leitura, sem uma conta nova nesta tela.
+          ERAM SEIS ATÉ 11/09/2026. "Vendas que você confirmou" e "Voltou
+          em vendas" saíram daqui — item B2 — e o motivo está medido:
+
+            execução 98447192  nunca foi ao ar · vendas 22 · voltou 1.200,00
+            execução aed42ce7  a única que rodou · vendas null · voltou null
+
+          O lado do dono veio inteiro pendurado na rodada que não rodou.
+          Não é atribuição por campanha: é artefato de a qual execução a
+          pergunta do dia estava amarrada. E na tela produzia, no MESMO
+          card, "Ainda não foi ao ar" logo acima de "Voltou em vendas
+          1.200,00" — dois rótulos certos formando uma leitura falsa.
+
+          A resposta do dono é sobre o NEGÓCIO, e agora aparece uma vez
+          só, na faixa `RespostaDoDono` lá em cima. Ver o bloco de
+          `lib/resultado/tipos.ts`. `conferir:veiculacao` §4 reprova se
+          voltarem.
 
           O que o wireframe pede e NÃO entra: "R$ 14,42 por conversa"
           (derivado, proibido pelo contrato e por `conferir:resultado`
@@ -443,12 +576,6 @@ function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
         </Numero>
         <Numero valor={r.bloco.pessoas} rotulo="Pessoas que chegaram">
           <IconePessoas />
-        </Numero>
-        <Numero valor={r.bloco.vendas} rotulo="Vendas que você confirmou">
-          <IconeCarrinho />
-        </Numero>
-        <Numero valor={r.bloco.voltou} rotulo="Voltou em vendas">
-          <IconeSeta />
         </Numero>
       </div>
 

@@ -1,20 +1,18 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
-import { dinheiro, numero } from "@/lib/formato";
-import {
-  contagemOuAusencia,
-  dinheiroOuAusencia,
-  frasePorRealInvestido,
-} from "@/lib/dia-seguinte/exibir";
+import { diaCurto, dinheiro, numero } from "@/lib/formato";
+import { contagemOuAusencia, dinheiroOuAusencia } from "@/lib/dia-seguinte/exibir";
 import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { PerguntaDoDia } from "./PerguntaDoDia";
-import { estadoDoCliente } from "@/lib/estado/cliente";
+import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
+import { fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import {
-  concluidasPeloGasto,
   estadoNaLista,
+  fasesDaCadeia,
   posicoesDaCadeia,
   type Etapa,
 } from "@/lib/estado/frases";
@@ -116,15 +114,77 @@ function TrilhaDaExecucao({
 }
 
 export default async function InicioPage() {
+  // Ver o bloco do portão, logo abaixo: em produção esta constante é
+  // `false` por dobra de literal, e tudo que depende dela some com ela.
+  const fixture =
+    process.env.NODE_ENV !== "production" ? (process.env.V2G_FIXTURE_INICIO ?? null) : null;
+
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  // Sem fixture, sem sessão, sem tela — como sempre foi.
+  if (!user && !fixture) return null;
 
   // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
   const agora = new Date();
-  const estado = await estadoDoCliente(agora);
+  let estado: EstadoDoCliente | null = fixture ? null : await estadoDoCliente(agora);
+
+  // ============================================================
+  // O PORTÃO DAS FIXTURES — dois trincos, e nenhum deles sozinho abre.
+  //
+  // 1. `process.env.NODE_ENV !== "production"`. O Next troca esta
+  //    expressão pelo literal no build; em produção ela vira
+  //    `"production" !== "production"`, o bloco morre e o `import()`
+  //    morre junto — o módulo não entra no grafo. **O preview da Vercel
+  //    também roda com `NODE_ENV=production`**, então ele está fechado
+  //    pelo mesmo trinco que o ambiente de verdade.
+  // 2. `V2G_FIXTURE_INICIO`, que não existe em ambiente nenhum da Vercel.
+  //
+  // Um trinco só não bastaria: variável de ambiente se define no painel
+  // sem querer, e `NODE_ENV` alguém pode achar que sabe mexer. Os dois
+  // juntos exigem duas decisões erradas no mesmo dia.
+  //
+  // A PROVA não é este comentário. É o `grep` da sentinela no `.next/`
+  // depois do build — está escrita em `lib/dev/fixtures-inicio.ts`, e o
+  // `conferir:fixtures` reprova se o import estático aparecer.
+  // ============================================================
+  if (fixture) {
+    const { fixtureDoInicio } = await import("@/lib/dev/fixtures-inicio");
+    estado = fixtureDoInicio(fixture, agora);
+  }
+
+  // Nome de fixture desconhecido não cai no banco por baixo do pano: a
+  // tela some, e quem pediu descobre que errou o nome.
+  if (!estado) return null;
+
+  // ============================================================
+  // SEM NEGÓCIO NÃO É ESTADO DESTA TELA — é cliente que não fez o
+  // onboarding, e o lugar dele é lá.
+  //
+  // Medido em 11/09/2026: `v2g.midia@gmail.com` tem `profile` e ZERO
+  // linhas em `businesses`. O trigger `handle_new_user` cria o perfil e
+  // REIVINDICA um business por `claim_email` — não cria nenhum. Quem cria
+  // é `obterOuCriarBusiness()`, e ela só roda dentro da `/onboarding`.
+  // Como `auth/confirmar` manda para `/` e a `/` manda para cá, ninguém
+  // passava pela porta que cria o registro.
+  //
+  // POR QUE AQUI, e não no `proxy.ts` nem no `auth/confirmar`:
+  //
+  //   - aqui o dado JÁ ESTÁ NA MÃO. `estadoDoCliente()` acabou de ler
+  //     `businesses`; a checagem custa zero consulta nova.
+  //   - no `proxy.ts` custaria uma consulta ao banco em TODA requisição
+  //     protegida, para responder uma pergunta que só importa uma vez na
+  //     vida do cliente.
+  //   - no `auth/confirmar` pegaria só quem acabou de confirmar e-mail.
+  //     Quem já tem conta e nunca terminou o onboarding continuaria
+  //     caindo na tela vazia — que é exatamente o caso medido.
+  //
+  // O QUE ISTO NÃO COBRE, e fica dito: `/anuncios` e `/vendas` continuam
+  // mostrando o estado vazio para quem não tem negócio. Elas não estão no
+  // escopo deste lote.
+  // ============================================================
+  if (!estado.temNegocio) redirect("/onboarding");
 
   const { data: ultimaDecisao } = await supabase
     .from("decisions")
@@ -136,32 +196,26 @@ export default async function InicioPage() {
   const { resultado, temNumero } = estado;
 
   // ============================================================
-  // A REGRA DE EVIDÊNCIA — APLICADA AQUI, E SÓ AQUI.
+  // A CADEIA VEM PRONTA. A tela não aplica mais regra nenhuma sobre ela.
   //
-  // `estado.etapas` fecha `peca` e `no_ar` lendo `creatives` e
-  // `campaigns`, duas tabelas LOCAIS que o backend nunca escreve. Medido
-  // em 11/09/2026: `campaigns` tem ZERO linhas na tabela inteira, e a V2G
-  // (`a85c37a9`) não tem uma peça de `uso='campanha'` sequer — só logos.
-  // Ver `docs/buraco-creatives-campanhas-sem-dono.md`.
+  // Até 11/09 esta linha era `concluidasPeloGasto(estado.etapas, ...)` —
+  // a `/inicio` fechando `peca` e `no_ar` por conta própria, porque as
+  // duas liam `creatives` e `campaigns`, tabelas locais que o backend
+  // nunca escreve. Era recorte de UMA tela, e a `/anuncios` lia a mesma
+  // cadeia sem ele.
   //
-  // Enquanto isso o consolidado do backend, na MESMA conta, devolve
-  // `tem_dado_da_plataforma: true` e `investiu_centavos: 1025`. A trilha
-  // dizia que a peça não ficou pronta e o anúncio não subiu para quem já
-  // gastou R$ 10,25 e apareceu 1.657 vezes.
-  //
-  // A regra e o porquê de ela não contrariar a Decisão 13 estão em
-  // `concluidasPeloGasto()`. Aqui fica só o RECORTE: a correção é da
-  // `/inicio`, então `montarEtapas` não mudou e a `/anuncios` e a
-  // `/vendas` continuam lendo a cadeia local como sempre leram.
-  //
-  // Sem gasto isto é identidade: `houveGastoMedido` é falso e as etapas
-  // saem intactas. E no ramo `!temNumero` a regra nunca dispara —
-  // `investiuCentavos > 0` implica `temNumero`, por construção de
-  // `estadoDoCliente()`.
+  // A regra passou para dentro de `montarEtapas`, onde vale para todo
+  // mundo que lê a cadeia, e a fonte deixou de ser o gasto: agora é
+  // `veiculacao`, que o backend expõe. Ver `lib/veiculacao/estado.ts`.
   // ============================================================
   const acumulado = estado.diaSeguinte.acumulado;
-  const etapas = concluidasPeloGasto(estado.etapas, acumulado);
+  const etapas = estado.etapas;
   const proximo = etapas.find((e) => !e.concluida) ?? null;
+
+  // As quatro fases do wireframe, sobre as seis etapas da cadeia. Quem
+  // agrupa é `lib/estado/frases.ts` — a tela não decide o que é fase.
+  const fases = fasesDaCadeia(etapas, proximo);
+  const fasesFeitas = fases.filter((f) => f.estado === "feita").length;
 
   // ============================================================
   // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
@@ -303,28 +357,97 @@ export default async function InicioPage() {
     return (
       <>
         <FaixaReconectar />
-        <div className="page-head">
-          <h1>
-            {diaZero
-              ? "Seus anúncios estão no ar. Os números ainda não."
-              : "Sua primeira campanha ainda não está no ar."}
-          </h1>
-          <p>
-            {diaZero
-              ? "É assim que começa para todo mundo — e é o momento em que mais vale não mexer em nada."
-              : "Abaixo está o próximo passo, e de quem ele depende. Nesta ordem, sem pular etapa."}
-          </p>
-        </div>
 
-        {proximo && <HeroDaEtapa etapa={proximo} />}
+        {/* ============================================================
+            O TOPO SÃO DUAS SUPERFÍCIES, e a divisão é o desenho.
+
+            À esquerda, ONDE VOCÊ ESTÁ — cartão cobalto, as quatro fases.
+            À direita, O QUE FAZER AGORA — cartão claro, uma ação.
+
+            Elas não podem ser o mesmo bloco: a primeira é orientação e se
+            lê de relance; a segunda pede decisão. Juntas numa faixa só, a
+            ação vira detalhe do mapa, e a tela deixa de ter um próximo
+            passo para ter um resumo.
+
+            No celular viram duas linhas, nesta ordem — e é a ordem certa:
+            saber onde está antes de saber o que fazer.
+            ============================================================ */}
+        <div className="inicio-topo">
+          <section className="ih">
+            <span className="eyebrow">Sua campanha</span>
+            {/* ============================================================
+                A MANCHETE DE VEICULAÇÃO VEM DA FONTE ÚNICA. ITEM B3.
+
+                Era `diaZero ? "Seu anúncio já está no ar" : …`, e
+                `diaZero` é `proximo?.id === "numeros"` — a POSIÇÃO DA
+                CADEIA. Posição de cadeia não sabe o que a Meta fez com o
+                anúncio: na conta da V2G ela dizia "já está no ar" com o
+                anúncio em `PAUSED`, enquanto a `/alertas` dizia o
+                contrário sobre a mesma conta.
+
+                `diaZero` continua decidindo o resto do ramo — o bloco "o
+                que não fazer agora", a sub-linha —, que é o que ele de
+                fato sabe: que a cadeia chegou nos números. Só a frase
+                sobre o AR trocou de dono.
+                ============================================================ */}
+            <h2>
+              {diaZero
+                ? fraseDeVeiculacao(estado.veiculacao, "manchete")
+                : "Sua campanha está sendo preparada"}
+            </h2>
+            <p className="ih-sub">
+              Você já concluiu{" "}
+              <b>
+                {fasesFeitas} de {fases.length}
+              </b>{" "}
+              fases.
+            </p>
+
+            {/* As QUATRO fases, sobre as SEIS etapas — a lista de baixo
+                mostra as seis, e nenhuma se perde. Ver `fasesDaCadeia`. */}
+            <ol className="fases">
+              {fases.map((f, i) => (
+                <li className={`fase f-${f.estado}`} key={f.id}>
+                  <span className="fase-marca" aria-hidden="true">
+                    {f.estado === "feita" ? "✓" : f.estado === "atual" ? i + 1 : "•"}
+                  </span>
+                  <b>{f.nome}</b>
+                  <span>{f.rotulo}</span>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          {proximo && (
+            <section className="proximo">
+              <span className="eyebrow">Seu próximo passo</span>
+              <h3>{proximo.titulo}</h3>
+              <p>{proximo.corpo}</p>
+              {/* A ÚNICA ação cheia da tela. O rótulo e o destino vêm da
+                  etapa, que é quem sabe de quem é a bola — a tela não
+                  inventa botão para etapa que não é do cliente. */}
+              {proximo.acao ? (
+                <a className="cta" href={proximo.acao.href}>
+                  {proximo.acao.rotulo}
+                </a>
+              ) : (
+                <p className="proximo-nota">
+                  {proximo.bola === "facebook"
+                    ? "Agora é com o Facebook. Não precisa fazer nada — e mexer na campanha agora atrasaria."
+                    : "Agora é com a gente. Você não precisa fazer nada."}
+                </p>
+              )}
+            </section>
+          )}
+        </div>
 
         {/* Ver o bloco de `cardDaPergunta`: aqui NÃO é redundância. Sem o
             card nesta tela, o cliente nunca chegaria à outra para poder
             responder a primeira vez. */}
         {cardDaPergunta}
 
-        <div className="dash-grid">
-          <div className="dash-main">
+        <div className="inicio-cols">
+          <div className="inicio-col">
             {diaZero && (
               <>
                 <div
@@ -364,10 +487,10 @@ export default async function InicioPage() {
             <Melhoras fotos={estado.melhoras.fotos} />
           </div>
 
-          <aside className="dash-aside">
+          <div className="inicio-col">
             {diaZero ? <Noturno decisao={ultimaDecisao} /> : <Suporte />}
             <Comando verba={estado.verbaMensal} investido={null} />
-          </aside>
+          </div>
         </div>
       </>
     );
@@ -415,58 +538,168 @@ export default async function InicioPage() {
   // ele — fechar a cadeia e escrever os números — têm que sair da mesma
   // resposta, ou a trilha e o painel podem discordar.
   // ============================================================
-  const fraseDoRetorno = frasePorRealInvestido(
-    acumulado?.retornoPorReal ?? null,
-    acumulado?.moeda ?? null,
-  );
+  // ============================================================
+  // O PERÍODO É O QUE TEM DADO, não o que a gente pediu.
+  //
+  // `desde`/`ate` são a janela SOLICITADA — 30 dias. Escrever "12/08 a
+  // 10/09" ao lado de R$ 10,25 diz que a campanha rodou trinta dias
+  // gastando dez reais, o que é falso: ela tem gasto em três dias.
+  //
+  // A mesma decisão já existe em `ResultadoParaTela.periodoComDado`, na
+  // camada de leitura da `/anuncios`. Aqui é a versão curta, sobre o
+  // acumulado do negócio.
+  // ============================================================
+  const diasComGasto = (acumulado?.dias ?? []).filter((d) => d.investiuCentavos !== null);
+  const primeiroDia = diasComGasto[0]?.dia ?? null;
+  const ultimoDia = diasComGasto[diasComGasto.length - 1]?.dia ?? null;
+  const periodoMedido =
+    primeiroDia === null || ultimoDia === null
+      ? null
+      : primeiroDia === ultimoDia
+        ? `em ${diaCurto(primeiroDia)}`
+        : `${diaCurto(primeiroDia)} a ${diaCurto(ultimoDia)}`;
+
   const donoRespondeu =
     acumulado !== null && (acumulado.vendas !== null || acumulado.voltouCentavos !== null);
 
   return (
     <>
       <FaixaReconectar />
-      <div className="page-head">
-        <h1>Seu resultado essa semana</h1>
-        <p>
-          Primeiro a resposta que importa — valeu a pena? — só depois os números soltos e a
-          prestação de contas do que a IA fez por você.
-        </p>
+
+      {/* ============================================================
+          O MESMO TOPO DA OUTRA TELA — e a repetição é o desenho.
+
+          Cartão cobalto à esquerda, cartão claro à direita, quatro fases
+          no mesmo lugar. Quem passou três semanas em "preparando" e chega
+          aqui não deveria precisar reaprender onde as coisas ficam: a
+          tela muda de assunto, não de gramática.
+
+          O QUE MUDA: a manchete deixa de ser o estágio e passa a ser a
+          frase do backend sobre o que está acontecendo, e abaixo entram
+          os números. O que não muda é a estrutura.
+          ============================================================ */}
+      <div className="inicio-topo">
+        <section className="ih">
+          <span className="eyebrow">Sua campanha</span>
+          {/* A FRASE VEM DO BACKEND, INTEIRA.
+
+              `andamento` é escrito lá e chega pronto — a mesma regra do
+              `nivel_frase`. Se ela disser algo que a tela não esperava,
+              quem conserta é o backend: traduzir `status` aqui é o
+              defeito que `lib/resultado/nivel.ts` acabou de pagar, com
+              sete frases locais contra catorze níveis do contrato. */}
+          <h2>{andamentoDaExecucao ?? "Seu anúncio já rodou"}</h2>
+          <p className="ih-sub">
+            Você já concluiu{" "}
+            <b>
+              {fasesFeitas} de {fases.length}
+            </b>{" "}
+            fases.
+          </p>
+          <ol className="fases">
+            {fases.map((f, i) => (
+              <li className={`fase f-${f.estado}`} key={f.id}>
+                <span className="fase-marca" aria-hidden="true">
+                  {f.estado === "feita" ? "✓" : f.estado === "atual" ? i + 1 : "•"}
+                </span>
+                <b>{f.nome}</b>
+                <span>{f.rotulo}</span>
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        {proximo ? (
+          <section className="proximo">
+            <span className="eyebrow">Seu próximo passo</span>
+            <h3>{proximo.titulo}</h3>
+            <p>{proximo.corpo}</p>
+            {proximo.acao ? (
+              <a className="cta" href={proximo.acao.href}>
+                {proximo.acao.rotulo}
+              </a>
+            ) : (
+              <p className="proximo-nota">
+                {proximo.bola === "facebook"
+                  ? "Agora é com o Facebook. Não precisa fazer nada."
+                  : "Agora é com a gente. Você não precisa fazer nada."}
+              </p>
+            )}
+          </section>
+        ) : (
+          /* Cadeia fechada: o cartão continua ocupando o lugar, porque
+             "não há nada te esperando" é informação — e some-lo faria o
+             topo mudar de forma justamente na visita em que está tudo em
+             ordem. O que ele não tem é botão: não há ação a oferecer. */
+          <section className="proximo">
+            <span className="eyebrow">Seu próximo passo</span>
+            <h3>Nada está esperando por você</h3>
+            <p>
+              Todas as etapas do seu anúncio estão fechadas. Quando alguma coisa precisar de
+              você, ela aparece aqui primeiro.
+            </p>
+            <p className="proximo-nota">
+              A pergunta do dia continua sendo o que mais ajuda — é dela que sai a conta de
+              quanto voltou.
+            </p>
+          </section>
+        )}
       </div>
 
-      {/* A resposta que importa — "valeu a pena?" — é o maior elemento da
-          tela: faixa cobalto de ponta a ponta, valor em branco, rótulo em
-          lima. É o único lugar onde o lima aparece. */}
-      <section className="hero-destaque">
-        <span className="eyebrow">Em uma frase</span>
-        {conversas !== null && conversas > 0 ? (
-          <>
-            <NumeroQueConta valor={conversas} casas={0} className="hero-num" />
-            <p className="hero-legenda">
-              {conversas === 1 ? "pessoa começou" : "pessoas começaram"} uma conversa no seu
-              WhatsApp pelo anúncio
-            </p>
-          </>
-        ) : conversas === null ? (
-          // AFIRMAÇÃO QUE ESTA TELA NÃO PODE MAIS FAZER. "Ninguém começou
-          // conversa" é um zero que mente enquanto
-          // `pessoas_que_chegaram_medido` não for `true`: pode ter começado
-          // e ninguém estar contando. Ver `lib/resultado/ler.ts`.
-          <p className="hero-frase">
-            A gente ainda não consegue contar quem chegou pelo seu anúncio.
-          </p>
-        ) : (
-          <p className="hero-frase">Ninguém começou conversa pelo anúncio ainda.</p>
-        )}
-        <p className="hero-note">
-          Esse é o número de pessoas que clicaram no anúncio e abriram uma conversa com você no
-          WhatsApp. É o que o Facebook consegue medir. Quantas dessas viraram venda, quem sabe é
-          você — e é isso que a gente te pergunta todo dia.
-        </p>
+      {/* ============================================================
+          OS PRIMEIROS SINAIS — quatro números, e um deles é uma ausência.
+
+          `cliques` entra aqui por pedido do QA (item B6): ele já aparecia
+          na `/anuncios` e não no Início, e é o número que o dono entende
+          sem tradução nenhuma — "tantas pessoas clicaram".
+
+          `conversas` sai como ausência enquanto `pessoas_que_chegaram_medido`
+          não for `true`, e a rota do NEGÓCIO nem manda esse campo — por
+          isso é `null` sempre, hoje. A linha de explicação ao lado não é
+          decoração: sem ela, o "—" vira um número que faltou carregar.
+          ============================================================ */}
+      <section className="sinais-bloco">
+        <div className="section-title">
+          <h2>Os primeiros sinais</h2>
+          {periodoMedido && <span className="side-note">{periodoMedido}</span>}
+        </div>
+        <div className="sinais">
+          <div className="sinal">
+            <span className="s-label">Investido</span>
+            <span className="s-valor">
+              {dinheiroOuAusencia(resultado.investidoCentavos, resultado.moeda)}
+            </span>
+          </div>
+          <div className="sinal">
+            <span className="s-label">Pessoas que clicaram</span>
+            <span className="s-valor">{contagemOuAusencia(resultado.cliques)}</span>
+          </div>
+          <div className="sinal">
+            <span className="s-label">Vezes que apareceu</span>
+            <span className="s-valor">{contagemOuAusencia(resultado.impressoes)}</span>
+          </div>
+          <div className={`sinal${conversas === null ? " s-ausente" : ""}`}>
+            <span className="s-label">Conversas</span>
+            <span className="s-valor">{contagemOuAusencia(conversas)}</span>
+            {conversas === null && (
+              <span className="s-nota">
+                A contagem de quem chega pelo anúncio ainda não está de pé. Não quer dizer que
+                ninguém chegou.
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* A FRASE DO NÍVEL, COMO VEIO. Sem tradução, sem cor, sem nota.
+            Ela é a única coisa nesta tela autorizada a dizer se está bom
+            ou ruim — e hoje ela diz que ainda não dá para dizer. */}
+        {acumulado?.nivelFrase && <p className="sinal-frase">{acumulado.nivelFrase}</p>}
       </section>
 
       {/*
         O QUE O DONO RESPONDEU. Só aparece quando ele respondeu alguma
-        coisa — um bloco vazio prometendo número é pior que bloco nenhum.
+        coisa — um bloco vazio prometendo número é pior que bloco nenhum,
+        e é o item B7 do QA: seção sem item não renderiza título.
 
         `null` NUNCA vira R$ 0,00 aqui: `dinheiroOuAusencia` escreve
         "ainda não sabemos", porque dizer R$ 0,00 sobre o dinheiro do
@@ -475,144 +708,112 @@ export default async function InicioPage() {
       */}
       {cardDaPergunta}
 
-      {donoRespondeu && acumulado && (
-        <section className="rc-bloco">
-          <div className="section-title">
-            <h2>O que você me contou</h2>
-          </div>
-          <div className="card">
-            <div className="metrics">
-              <div className="metric">
-                <span className="m-label">Viraram venda</span>
-                <span className="m-value">{contagemOuAusencia(acumulado.vendas)}</span>
-                <span className="m-delta">do que você respondeu</span>
+      <div className="inicio-cols">
+        <div className="inicio-col">
+          {donoRespondeu && acumulado && (
+            <section>
+              <div className="section-title">
+                <h2>O que você me contou</h2>
               </div>
-              <div className="metric">
-                <span className="m-label">Voltou</span>
-                <span className="m-value">
-                  {dinheiroOuAusencia(acumulado.voltouCentavos, acumulado.moeda)}
-                </span>
-                <span className="m-delta">
-                  {acumulado.diasComOsDoisLados > 0
-                    ? `${acumulado.diasComOsDoisLados} dia(s) com os dois lados`
-                    : "ainda sem o lado da plataforma"}
-                </span>
-              </div>
-            </div>
-
-            {/* O retorno vem CALCULADO do backend. Se ele é nulo, falta um
-                lado ou o investimento é zero — e a tela não inventa a
-                conta. */}
-            {fraseDoRetorno && <p className="rc-abertura">{fraseDoRetorno}</p>}
-
-            {/* Enquanto o coletor da Meta estiver desligado, dizer isso é
-                melhor que deixar o cliente achar que a metade que falta é
-                culpa dele. */}
-            {!acumulado.temDadoDaPlataforma && (
-              <p className="rc-tranquilo">
-                O quanto foi investido ainda não chega automático — por isso a conta de
-                retorno fica incompleta por enquanto.
-              </p>
-            )}
-          </div>
-        </section>
-      )}
-
-      <div className="dash-grid">
-        <div className="dash-main">
-          <div className="metrics">
-            {/* ============================================================
-                OS TRÊS CARTÕES LEEM O CONSOLIDADO, NÃO A `metrics_daily`.
-
-                O que eles mostravam antes saía de `Number(m.spend ?? 0)`
-                sobre uma tabela de ZERO LINHAS — três "0" com cara de
-                medição. Agora `null` chega como `null` e vira o recado de
-                ausência, que tem tom próprio.
-
-                O RÓTULO DE "alcance" TAMBÉM MUDOU: era "Pessoas
-                alcançadas" lendo `impressions`. Impressão é quantas VEZES
-                o anúncio apareceu, e a mesma pessoa conta várias — dizer
-                "pessoas" inflava o número na cabeça do dono.
-                ============================================================ */}
-            <div className="metric">
-              {/* Era "Vendas geradas" lendo `conversions`. O dado sempre
-                  foi conversa; só o rótulo é que dizia venda. */}
-              <span className="m-label">Conversas iniciadas</span>
-              <span className="m-value">{contagemOuAusencia(conversas)}</span>
-              <span className="m-delta">no período do consolidado</span>
-            </div>
-            <div className="metric">
-              <span className="m-label">Investido</span>
-              <span className="m-value">
-                {dinheiroOuAusencia(resultado.investidoCentavos, resultado.moeda)}
-              </span>
-              <span className="m-delta">
-                {/* O TETO SÓ APARECE AO LADO DE DINHEIRO NA MESMA MOEDA.
-                    Comparar A$ 113,45 com um teto de R$ 500 seria uma
-                    conta que não existe. */}
-                {estado.verbaMensal === null
-                  ? "sem teto mensal definido"
-                  : resultado.moeda === "BRL" || resultado.moeda === null
-                    ? `de ${dinheiro(estado.verbaMensal, "BRL")} no mês`
-                    : "seu teto mensal é em reais, e esta conta cobra em outra moeda"}
-              </span>
-            </div>
-            <div className="metric">
-              <span className="m-label">Vezes que o anúncio apareceu</span>
-              <span className="m-value">{contagemOuAusencia(resultado.impressoes)}</span>
-              <span className="m-delta">no período do consolidado</span>
-            </div>
-          </div>
-
-          <section>
-            <div className="section-title">
-              <h2>Suas campanhas</h2>
-              <a href="/anuncios">Ver todas &rarr;</a>
-            </div>
-            <div className="campaign-list">
-              {estado.campanhasNoAr.map((c) => (
-                <div className="list-row" key={c.id}>
-                  {/* ============================================================
-                      O SELO DE "NO AR" SAIU, E NÃO VOLTA — §4, conflito 1.
-
-                      `status_na_plataforma` não é exposto por rota nenhuma:
-                      zero ocorrências no `openapi.json` de produção, e o
-                      coletor lê e descarta. O selo era, literalmente,
-                      `?? "No ar"` — um padrão de texto afirmando que a
-                      campanha está no ar sem nada que sustente a afirmação.
-
-                      Omitido, não desabilitado: selo apagado ensina que o
-                      estado existe e está a um passo de aparecer.
-                      ============================================================ */}
-                  <div className="lr-head">
-                    <span className="lr-title">{c.nome ?? "Campanha sem nome"}</span>
+              <div className="card">
+                <div className="metrics">
+                  <div className="metric">
+                    <span className="m-label">Viraram venda</span>
+                    <span className="m-value">{contagemOuAusencia(acumulado.vendas)}</span>
+                    <span className="m-delta">do que você respondeu</span>
+                  </div>
+                  <div className="metric">
+                    <span className="m-label">Voltou</span>
+                    <span className="m-value">
+                      {dinheiroOuAusencia(acumulado.voltouCentavos, acumulado.moeda)}
+                    </span>
+                    <span className="m-delta">
+                      {acumulado.diasComOsDoisLados > 0
+                        ? `${acumulado.diasComOsDoisLados} dia(s) com os dois lados`
+                        : "ainda sem o lado da plataforma"}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </section>
+
+                {/* ============================================================
+                    O "PRA CADA R$ 1,00 VOLTARAM R$ X" SAIU — item B1 do QA.
+
+                    O backend calcula e manda; o número de produção hoje é
+                    `117.07`, ou seja, "pra cada R$ 1,00 voltaram R$ 117,07".
+                    Ele está ARITMETICAMENTE CERTO e é uma mentira sobre o
+                    negócio: os dois lados nunca caíram no mesmo dia
+                    (`dias_com_os_dois_lados: 0`), então a conta divide a
+                    receita de agosto pelo investimento de setembro.
+
+                    Enquanto `diasComOsDoisLados` for zero, não há retorno
+                    para mostrar — e mostrar 117× para o dono é pior do que
+                    não mostrar retorno nenhum. `frasePorRealInvestido`
+                    continua existindo, sem chamador nesta tela.
+                    ============================================================ */}
+
+                {/* Enquanto o coletor da Meta estiver desligado, dizer isso é
+                    melhor que deixar o cliente achar que a metade que falta é
+                    culpa dele. */}
+                {!acumulado.temDadoDaPlataforma && (
+                  <p className="rc-tranquilo">
+                    O quanto foi investido ainda não chega automático — por isso a conta de
+                    retorno fica incompleta por enquanto.
+                  </p>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* SEÇÃO SEM ITEM NÃO RENDERIZA TÍTULO — item B7. Antes, uma
+              conta sem campanha ganhava o cabeçalho "Suas campanhas", o
+              link "Ver todas" e uma lista vazia embaixo. */}
+          {estado.campanhasNoAr.length > 0 && (
+            <section>
+              <div className="section-title">
+                <h2>Suas campanhas</h2>
+                <a href="/anuncios">Ver todas &rarr;</a>
+              </div>
+              <div className="campaign-list">
+                {estado.campanhasNoAr.map((c) => (
+                  <div className="list-row" key={c.id}>
+                    {/* ============================================================
+                        O SELO DE "NO AR" SAIU DAQUI, e a razão MUDOU hoje.
+
+                        Ele saiu porque `status_na_plataforma` não era exposto
+                        por rota nenhuma, e o selo era literalmente `?? "No ar"`.
+
+                        Em 11/09/2026 apareceu uma fonte: `veiculacao`, em
+                        `GET /negocios/{business_id}/execucao` — ver
+                        `lib/veiculacao/estado.ts`. Mas ela é POR NEGÓCIO, e
+                        esta lista é POR CAMPANHA: `LinhaDoNegocioPorExecucao`
+                        não traz o campo. Carimbar cada linha com o estado do
+                        negócio seria afirmar de uma campanha o que se mediu de
+                        outra.
+                        ============================================================ */}
+                    <div className="lr-head">
+                      <span className="lr-title">{c.nome ?? "Campanha sem nome"}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* A cadeia continua VISÍVEL depois que o número chega. Ela deixou
               de decidir o ramo (ver o bloco da condição), e sumir com ela
               aqui trocaria um erro por outro: a pessoa perderia de vista que
               ainda há etapa aberta justamente quando passa a ter o que
-              comemorar.
-
-              O `{proximo && ...}` que guardava isto SAIU junto com a regra
-              de evidência, e sair era obrigatório: com a cadeia fechada
-              pelo gasto, `proximo` vira `null` — e a guarda escondia a
-              trilha exatamente na conta em que ela passou a estar certa.
-              Cadeia completa é justamente o que vale a pena mostrar; com
-              `atual = null`, `posicoesDaCadeia` marca as seis como
-              "feita". */}
+              comemorar. */}
           <TrilhaDaExecucao
             etapas={etapas}
             atual={proximo}
             andamento={andamentoDaExecucao}
           />
+
+          <Melhoras fotos={estado.melhoras.fotos} />
         </div>
 
-        <aside className="dash-aside">
+        <div className="inicio-col">
           <Noturno decisao={ultimaDecisao} />
           {/* O investido só vai para o Comando quando ele é comparável
               com a verba, que é em reais. Em outra moeda, o card mostra
@@ -627,7 +828,7 @@ export default async function InicioPage() {
                 : null
             }
           />
-        </aside>
+        </div>
       </div>
     </>
   );

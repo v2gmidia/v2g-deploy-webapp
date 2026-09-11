@@ -53,20 +53,40 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) {
+  // ============================================================
+  // O TERCEIRO LUGAR DO MESMO PORTÃO — e ele estar aqui é a prova de que
+  // a defesa em profundidade funciona.
+  //
+  // O `proxy.ts` deixou a fixture passar; ESTE layout barrou mesmo assim,
+  // porque ele verifica por conta própria (Decisão 3). Quem escrever a
+  // quarta camada um dia vai esbarrar no mesmo lugar.
+  //
+  // Trincos idênticos aos dos outros dois: `NODE_ENV !== "production"`
+  // (dobrado para `false` no build, preview da Vercel incluído) e
+  // `V2G_FIXTURE_INICIO`, que só existe em `.env.development.local` —
+  // arquivo que o `next build` não abre.
+  //
+  // O shell renderiza com `user` nulo: a saudação fica sem nome e o
+  // avatar cai no "?", que é o comportamento que o próprio layout já
+  // tinha para perfil sem `full_name`.
+  // ============================================================
+  const fixtureDaTelaInicial =
+    process.env.NODE_ENV !== "production" && Boolean(process.env.V2G_FIXTURE_INICIO);
+
+  if (!user && !fixtureDaTelaInicial) {
     redirect("/entrar");
   }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name")
-    .eq("id", user.id)
+    .eq("id", user?.id ?? "")
     .maybeSingle();
 
   const { data: business } = await supabase
     .from("businesses")
     .select("name")
-    .eq("profile_id", user.id)
+    .eq("profile_id", user?.id ?? "")
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -77,7 +97,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   // olhando por cima do ombro dela.
   const nome = profile?.full_name?.trim() ?? "";
   const nomeNegocio = business?.name?.trim();
-  const inicial = (nomeNegocio || nome || user.email || "?").charAt(0).toUpperCase();
+  const inicial = (nomeNegocio || nome || user?.email || "?").charAt(0).toUpperCase();
 
   return (
     <div className="app-shell">
@@ -137,7 +157,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         <div className="side-account">
           <span className="avatar">{inicial}</span>
           <div className="who">
-            <b>{nomeNegocio || user.email}</b>
+            <b>{nomeNegocio || user?.email}</b>
             <form action={signOutAction}>
               <button type="submit" className="link-btn">
                 Sair
