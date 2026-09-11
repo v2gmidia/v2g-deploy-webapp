@@ -160,6 +160,66 @@ export interface ConsolidadoBase {
    */
   respondeuHoje: boolean | null;
   /**
+   * ISO 4217 da conta de anúncio: `BRL`, `AUD`.
+   *
+   * ============================================================
+   * `null` NÃO AUTORIZA ASSUMIR REAL. É a regra 1 do contrato do
+   * dashboard, e ela custou dinheiro de gente para ser escrita.
+   *
+   * "A$ 113,45" e "R$ 113,45" são o mesmo pixel e a diferença entre eles
+   * é um fator de câmbio. `moeda: null` quer dizer que a janela não tem
+   * uma moeda só — zero linhas, moedas misturadas, ou linha sem moeda
+   * gravada. Quem exibe escreve o número SEM símbolo, nunca com `R$`
+   * chutado. Ver `dinheiroDaMoeda()` em `lib/resultado/ler.ts`.
+   * ============================================================
+   *
+   * VEM NO TOPO, NUNCA POR DIA. Uma execução tem uma conta de anúncio, e
+   * uma conta tem uma moeda. Medido em 10/09/2026: `dias[]` não tem o
+   * campo, e um agrupamento por `dia.moeda` cai todo no grupo `null`.
+   */
+  moeda: string | null;
+  /**
+   * O degrau da escada, CRU. `sem_alvo`, `ok`, `gargalo`, ...
+   *
+   * ============================================================
+   * ISTO É CHAVE DE MÁQUINA. NÃO RENDERIZE, E NÃO TRADUZA.
+   *
+   * Quem escreve para o dono é o backend, em `nivelFrase`. O contrato é
+   * explícito: se a tradução morasse aqui, um nível novo nasceria sem
+   * frase e apareceria cru para o cliente — e foi o que quase aconteceu:
+   * `lib/resultado/nivel.ts` tinha sete frases próprias onde o contrato
+   * declara catorze níveis.
+   *
+   * Por isso é `string` e não união fechada: união fechada convida a um
+   * `switch` exaustivo, e o dia em que o backend acrescentar o décimo
+   * quinto nível esse `switch` fica sem caso. `lib/resultado/nivel.ts`
+   * declara o vocabulário conhecido para quem quiser ramificar — mas
+   * ramificar é opcional, e exibir a frase não é.
+   * ============================================================
+   *
+   * O NÍVEL É SEMPRE SOBRE 30 DIAS CANÔNICOS, e não sobre `desde`/`ate`.
+   * O recorte muda os NÚMEROS e não muda o nível — senão o dono faria o
+   * painel afirmar "pausamos sua campanha" mexendo num filtro.
+   */
+  nivel: string | null;
+  /**
+   * A frase do nível, escrita pelo backend para o dono ler.
+   *
+   * **Renderize como veio.** `null` quer dizer que não há o que dizer
+   * sobre o nível — e nesse caso a tela não escreve nada de nível, em vez
+   * de inventar um texto de degradação.
+   */
+  nivelFrase: string | null;
+  /**
+   * Cliques no anúncio, no recorte. `null` é "não sabemos".
+   *
+   * Soma sempre, inclusive entre moedas: clique é clique em qualquer
+   * moeda. É o dinheiro que não soma.
+   */
+  cliques: number | null;
+  /** Quantas vezes o anúncio apareceu. Mesma regra de soma do `cliques`. */
+  impressoes: number | null;
+  /**
    * O ECO do `dia_da_pergunta` que foi mandado no query.
    *
    * ============================================================
@@ -187,6 +247,60 @@ export interface ConsolidadoBase {
 /** `GET /execucoes/{id}/consolidado` — uma rodada do pipeline. */
 export interface Consolidado extends ConsolidadoBase {
   idExecucao: string;
+  /**
+   * A plataforma conta os contatos desta conta?
+   *
+   * ============================================================
+   * TRÊS ESTADOS, E É O CAMPO QUE SEPARA O ZERO VERDADEIRO DO ZERO
+   * QUE MENTE.
+   *
+   *   true   a medição funciona — houve contato registrado
+   *   null   NÃO DÁ PARA AFIRMAR — e é o caso do zero
+   *   false  a conta não tem ação de conversão que conte
+   *
+   * `pessoas_que_chegaram: 0` responde a duas perguntas opostas:
+   * "medimos, e ninguém chegou" (resultado RUIM) e "não há o que conte
+   * contato aqui" (resultado nenhum). Enquanto isto for `null`, a tela
+   * **não mostra o zero** — mostra a `nivelFrase` no lugar.
+   *
+   * A rota nunca devolve `false` hoje, e é deliberado do lado do
+   * backend: afirmar "não é medido" exigiria perguntar à plataforma, e
+   * uma tela não pode depender da API do Google estar de pé.
+   * ============================================================
+   *
+   * **Só a rota da EXECUÇÃO manda este campo.** Medido em 10/09/2026: a
+   * do negócio não tem, nem no topo nem no `porExecucao`. É por isso que
+   * a tela de resultado compõe por execução.
+   */
+  pessoasQueChegaramMedido: boolean | null;
+}
+
+/**
+ * Uma ficha de `por_execucao` — a quebra por campanha do acumulado.
+ *
+ * ============================================================
+ * ELA EXISTE PORQUE MOEDAS DIFERENTES NÃO SOMAM.
+ *
+ * Quando o negócio tem duas execuções em moedas diferentes, o topo do
+ * consolidado vem com `investiuCentavos: null`, `moeda: null` e `moedas`
+ * dizendo quais são — e é AQUI que o número de cada uma sobrevive. A
+ * tela vira duas fichas, nunca uma soma.
+ * ============================================================
+ *
+ * É DELIBERADAMENTE MAGRA: não tem nome, canal, status nem
+ * `pessoasQueChegaramMedido`. Quem precisa disso busca a execução por
+ * `idExecucao` — e a lista de ids desta ficha é a única lista que a
+ * sessão está autorizada a buscar. Ver `lib/resultado/do-negocio.ts`.
+ */
+export interface FichaDaExecucao {
+  idExecucao: string;
+  moeda: string | null;
+  investiuCentavos: number | null;
+  cliques: number | null;
+  impressoes: number | null;
+  pessoasQueChegaram: string | null;
+  nivel: string | null;
+  nivelFrase: string | null;
 }
 
 /**
@@ -219,6 +333,17 @@ export interface ConsolidadoDoNegocio extends ConsolidadoBase {
    * que fazer com isso, e o problema é nosso.
    */
   diasComRespostaDeMaisDeUmaExecucao: number;
+  /**
+   * As moedas que aparecem na janela. `[]` quando não há nenhuma.
+   *
+   * Mais de uma quer dizer que o topo NÃO SOMOU — `investiuCentavos`,
+   * `retornoPorReal` e `moeda` vêm `null` de propósito, e o número de
+   * cada campanha está em `porExecucao`. Somar exigiria taxa de câmbio, e
+   * taxa de câmbio no backend é inventar dado de mercado.
+   */
+  moedas: string[];
+  /** Uma ficha por execução do negócio. Ver `FichaDaExecucao`. */
+  porExecucao: FichaDaExecucao[];
 }
 
 /**

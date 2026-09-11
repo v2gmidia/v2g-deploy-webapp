@@ -43,7 +43,8 @@ import { estadoNaLista, posicoesDaCadeia, type Etapa } from "@/lib/estado/frases
  *    etapa `numeros`, e é o herói que o mostra quando é a vez do Facebook.
  *    O comportamento mais destrutivo do cliente ansioso é pausar tudo no
  *    dia 3, justamente quando o aprendizado ia terminar.
- * 3. Com número — o dashboard de verdade, de `metrics_daily`.
+ * 3. Com número — o dashboard de verdade, do CONSOLIDADO do backend.
+ *    (Era `metrics_daily`, que tem zero linhas. Trocado em 10/09/2026.)
  */
 
 /**
@@ -270,8 +271,24 @@ export default async function InicioPage() {
   // otimizada para CONVERSATIONS: o evento que o Meta conta e otimiza é
   // "alguém abriu conversa", e é só isso que a plataforma sabe. Se a
   // pessoa comprou depois, quem sabe é o dono do negócio, não o Meta.
-  const conversas = resultado.conversas;
-  const custoPorConversa = conversas > 0 ? resultado.investido / conversas : null;
+  //
+  // ============================================================
+  // O CUSTO POR CONVERSA SAIU DAQUI, E NÃO VOLTA.
+  //
+  // Eram duas linhas: `resultado.investido / conversas`, e o render
+  // `a {dinheiro(custoPorConversa ?? 0)} cada` — o `?? 0` fazendo
+  // "não sabemos" virar "a R$ 0,00 cada", na manchete, em letra grande.
+  //
+  // O contrato do dashboard proíbe o número em si, não só o `?? 0`: custo
+  // derivado é a porta de entrada para o dono comparar com um número que
+  // ouviu de alguém, e o produto compara com o CPL-alvo DELE — que não
+  // existe em nenhuma das campanhas reais (medido, 10/09/2026). Sem alvo,
+  // "R$ 0,16 por conversa" é uma opinião fingindo ser medida.
+  //
+  // Quem julga é o backend, em `nivelFrase`. `pnpm conferir:resultado` §10
+  // lê este arquivo e reprova se o cálculo voltar.
+  // ============================================================
+  const conversas = resultado.pessoas;
 
   // ============================================================
   // O ACUMULADO DO NEGÓCIO — o lado que a `metrics_daily` nunca terá.
@@ -287,7 +304,10 @@ export default async function InicioPage() {
   // execução esconderia a anterior.
   // ============================================================
   const acumulado = estado.diaSeguinte.acumulado;
-  const fraseDoRetorno = frasePorRealInvestido(acumulado?.retornoPorReal ?? null);
+  const fraseDoRetorno = frasePorRealInvestido(
+    acumulado?.retornoPorReal ?? null,
+    acumulado?.moeda ?? null,
+  );
   const donoRespondeu =
     acumulado !== null && (acumulado.vendas !== null || acumulado.voltouCentavos !== null);
 
@@ -307,15 +327,22 @@ export default async function InicioPage() {
           lima. É o único lugar onde o lima aparece. */}
       <section className="hero-destaque">
         <span className="eyebrow">Em uma frase</span>
-        {conversas > 0 ? (
+        {conversas !== null && conversas > 0 ? (
           <>
             <NumeroQueConta valor={conversas} casas={0} className="hero-num" />
             <p className="hero-legenda">
               {conversas === 1 ? "pessoa começou" : "pessoas começaram"} uma conversa no seu
               WhatsApp pelo anúncio
             </p>
-            <p className="hero-sub">a {dinheiro(custoPorConversa ?? 0)} cada</p>
           </>
+        ) : conversas === null ? (
+          // AFIRMAÇÃO QUE ESTA TELA NÃO PODE MAIS FAZER. "Ninguém começou
+          // conversa" é um zero que mente enquanto
+          // `pessoas_que_chegaram_medido` não for `true`: pode ter começado
+          // e ninguém estar contando. Ver `lib/resultado/ler.ts`.
+          <p className="hero-frase">
+            A gente ainda não consegue contar quem chegou pelo seu anúncio.
+          </p>
         ) : (
           <p className="hero-frase">Ninguém começou conversa pelo anúncio ainda.</p>
         )}
@@ -351,7 +378,9 @@ export default async function InicioPage() {
               </div>
               <div className="metric">
                 <span className="m-label">Voltou</span>
-                <span className="m-value">{dinheiroOuAusencia(acumulado.voltouCentavos)}</span>
+                <span className="m-value">
+                  {dinheiroOuAusencia(acumulado.voltouCentavos, acumulado.moeda)}
+                </span>
                 <span className="m-delta">
                   {acumulado.diasComOsDoisLados > 0
                     ? `${acumulado.diasComOsDoisLados} dia(s) com os dois lados`
@@ -381,26 +410,46 @@ export default async function InicioPage() {
       <div className="dash-grid">
         <div className="dash-main">
           <div className="metrics">
+            {/* ============================================================
+                OS TRÊS CARTÕES LEEM O CONSOLIDADO, NÃO A `metrics_daily`.
+
+                O que eles mostravam antes saía de `Number(m.spend ?? 0)`
+                sobre uma tabela de ZERO LINHAS — três "0" com cara de
+                medição. Agora `null` chega como `null` e vira o recado de
+                ausência, que tem tom próprio.
+
+                O RÓTULO DE "alcance" TAMBÉM MUDOU: era "Pessoas
+                alcançadas" lendo `impressions`. Impressão é quantas VEZES
+                o anúncio apareceu, e a mesma pessoa conta várias — dizer
+                "pessoas" inflava o número na cabeça do dono.
+                ============================================================ */}
             <div className="metric">
               {/* Era "Vendas geradas" lendo `conversions`. O dado sempre
                   foi conversa; só o rótulo é que dizia venda. */}
               <span className="m-label">Conversas iniciadas</span>
-              <span className="m-value">{numero(conversas)}</span>
-              <span className="m-delta">nos últimos 7 dias</span>
+              <span className="m-value">{contagemOuAusencia(conversas)}</span>
+              <span className="m-delta">no período do consolidado</span>
             </div>
             <div className="metric">
               <span className="m-label">Investido</span>
-              <span className="m-value">{dinheiro(resultado.investido)}</span>
+              <span className="m-value">
+                {dinheiroOuAusencia(resultado.investidoCentavos, resultado.moeda)}
+              </span>
               <span className="m-delta">
-                {estado.verbaMensal !== null
-                  ? `de ${dinheiro(estado.verbaMensal)} no mês`
-                  : "sem teto mensal definido"}
+                {/* O TETO SÓ APARECE AO LADO DE DINHEIRO NA MESMA MOEDA.
+                    Comparar A$ 113,45 com um teto de R$ 500 seria uma
+                    conta que não existe. */}
+                {estado.verbaMensal === null
+                  ? "sem teto mensal definido"
+                  : resultado.moeda === "BRL" || resultado.moeda === null
+                    ? `de ${dinheiro(estado.verbaMensal, "BRL")} no mês`
+                    : "seu teto mensal é em reais, e esta conta cobra em outra moeda"}
               </span>
             </div>
             <div className="metric">
-              <span className="m-label">Pessoas alcançadas</span>
-              <span className="m-value">{numero(resultado.alcance)}</span>
-              <span className="m-delta">nos últimos 7 dias</span>
+              <span className="m-label">Vezes que o anúncio apareceu</span>
+              <span className="m-value">{contagemOuAusencia(resultado.impressoes)}</span>
+              <span className="m-delta">no período do consolidado</span>
             </div>
           </div>
 
@@ -424,7 +473,19 @@ export default async function InicioPage() {
 
         <aside className="dash-aside">
           <Noturno decisao={ultimaDecisao} />
-          <Comando verba={estado.verbaMensal} investido={resultado.investido} />
+          {/* O investido só vai para o Comando quando ele é comparável
+              com a verba, que é em reais. Em outra moeda, o card mostra
+              só o teto. */}
+          <Comando
+            verba={estado.verbaMensal}
+            investido={
+              resultado.moeda === null || resultado.moeda === "BRL"
+                ? resultado.investidoCentavos === null
+                  ? null
+                  : resultado.investidoCentavos / 100
+                : null
+            }
+          />
         </aside>
       </div>
     </>
@@ -509,11 +570,13 @@ function Comando({ verba, investido }: { verba: number | null; investido: number
     <section className="command-card">
       <b className="title">Você está no comando</b>
       <p className="limit">
+        {/* `"BRL"` nos dois: a verba é o que o cliente digitou em reais, e
+            quem chama só passa `investido` quando ele é da mesma moeda. */}
         {verba === null
           ? "Você ainda não definiu um teto mensal. "
           : investido !== null
-            ? `${dinheiro(investido)} de ${dinheiro(verba)} investidos este mês · `
-            : `Seu teto do mês é ${dinheiro(verba)}. `}
+            ? `${dinheiro(investido, "BRL")} de ${dinheiro(verba, "BRL")} investidos este mês · `
+            : `Seu teto do mês é ${dinheiro(verba, "BRL")}. `}
         <a href="/verba">{verba === null ? "definir agora" : "mudar limite"}</a>
       </p>
       <a className="cta quiet" href="https://wa.me/5521936182176" target="_blank" rel="noopener">

@@ -57,10 +57,10 @@ export default async function VerbaPage() {
         <span className="eyebrow">Seu limite no mês</span>
         {teto !== null ? (
           <>
-            <p className="hero-num">{dinheiro(teto)}</p>
+            <p className="hero-num">{dinheiro(teto, "BRL")}</p>
             <p className="hero-legenda">é o teto que você definiu</p>
             <p className="hero-sub">
-              dá mais ou menos {dinheiro(diario ?? 0)} por dia de anúncio
+              dá mais ou menos {dinheiro(diario ?? 0, "BRL")} por dia de anúncio
             </p>
           </>
         ) : (

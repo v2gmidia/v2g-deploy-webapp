@@ -127,9 +127,9 @@ export async function definirVerbaAction(
   if (piso === null && valor < PISO_MENSAL_DA_CASA) {
     return {
       erro:
-        `Com ${dinheiro(valor)} por mês o anúncio fica em ${dinheiro(valor / DIAS)} por dia, e ` +
-        `nesse valor ele não roda. Nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA)} por mês — ` +
-        `uns ${dinheiro(PISO_MENSAL_DA_CASA / DIAS)} por dia. Esse mínimo é nosso: o do Facebook ` +
+        `Com ${dinheiro(valor, "BRL")} por mês o anúncio fica em ${dinheiro(valor / DIAS, "BRL")} por dia, e ` +
+        `nesse valor ele não roda. Nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA, "BRL")} por mês — ` +
+        `uns ${dinheiro(PISO_MENSAL_DA_CASA / DIAS, "BRL")} por dia. Esse mínimo é nosso: o do Facebook ` +
         `pode ser maior, muda de conta para conta, e a gente confere na hora de publicar.`,
     };
   }
@@ -162,7 +162,7 @@ export async function definirVerbaAction(
   // que foi guardado, quanto dá por dia, e de quem é a próxima palavra.
   return {
     ok:
-      `Guardado: ${dinheiro(valor)} por mês, uns ${dinheiro(valor / DIAS)} por dia. ` +
+      `Guardado: ${dinheiro(valor, "BRL")} por mês, uns ${dinheiro(valor / DIAS, "BRL")} por dia. ` +
       (piso === null
         ? "O Facebook tem um mínimo por dia que muda de conta para conta — a gente confere na hora de publicar e te avisa se não alcançar."
         : "Esse valor passa do mínimo que o Facebook pede na sua conta."),

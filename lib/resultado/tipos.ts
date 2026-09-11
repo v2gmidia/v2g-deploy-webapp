@@ -1,59 +1,41 @@
-import type { Nivel } from "./nivel.ts";
+import type { ConsolidadoBase } from "../dia-seguinte/tipos.ts";
 
 /**
  * O resultado de campanha, como a tela precisa dele.
  *
  * ============================================================
- * TRÊS CAMPOS AINDA NÃO EXISTEM NA API. Medido em 10/09/2026:
+ * OS CAMPOS CHEGARAM. Medido em 10/09/2026 contra produção:
  *
- *   GET /negocios/{id}/consolidado   dia: dia, investiu_centavos,
- *   GET /execucoes/{id}/consolidado       pessoas_que_chegaram,
- *                                         viraram_venda, voltou_centavos
+ *   GET /execucoes/{id}/consolidado
+ *     moeda "BRL" · nivel "sem_alvo" · nivel_frase "Ainda não definimos…"
+ *     cliques 64 · impressoes 1657 · pessoas_que_chegaram_medido null
  *
- * Nem `moeda`, nem `nivel`, nem `cliques`. O backend está acrescentando.
+ *   GET /negocios/{id}/consolidado
+ *     os mesmos, mais moedas[] e por_execucao[]
  *
- * Por isso os três são **opcionais no tipo** — e não é frouxidão: é o que
- * permite a camada existir hoje e não mudar quando eles chegarem. Um tipo
- * que os exigisse obrigaria a inventar valor, e inventar moeda é como se
- * mostra "R$ 113,45" para uma conta que cobra em dólar australiano.
+ * Até essa medição este arquivo declarava `moeda`, `nivel` e `cliques`
+ * como opcionais, com o comentário "AINDA NÃO VEM" em cada um. Era
+ * verdade quando foi escrito e deixou de ser — e enquanto foi lido como
+ * verdade, ninguém foi atrás de por que a tela não tinha símbolo de
+ * moeda.
+ *
+ * **Agora eles são obrigatórios no tipo, e `null` é o valor de ausência.**
+ * `campo?: T` e `campo: T | null` parecem a mesma coisa e não são: o
+ * primeiro deixa quem monta o objeto esquecer o campo, o segundo obriga a
+ * dizer que não sabe.
  * ============================================================
+ *
+ * A FORMA CRUA NÃO MORA MAIS AQUI. `ConsolidadoBase` de
+ * `lib/dia-seguinte/tipos.ts` é a forma que a rota devolve, validada por
+ * `lib/dia-seguinte/validar.ts`. Havia uma cópia paralela (`ConsolidadoCru`,
+ * `LinhaCrua`) que ninguém alimentava com resposta de verdade — e foi
+ * justamente ela que deixou passar "a moeda vem por dia", que a API nunca
+ * fez.
  */
+export type { ConsolidadoBase };
 
 /** O código ISO da moeda, como o backend manda. `BRL`, `AUD`. */
 export type Moeda = string;
-
-/** Uma linha de dia, do jeito que a rota devolve. */
-export interface LinhaCrua {
-  dia: string;
-  investiuCentavos: number | null;
-  pessoasQueChegaram: string | null;
-  viraramVenda: number | null;
-  voltouCentavos: number | null;
-  /** AINDA NÃO VEM. Por linha, porque uma execução tem uma moeda só. */
-  moeda?: Moeda | null;
-  /** AINDA NÃO VEM. */
-  cliques?: number | null;
-}
-
-/** O corpo das duas rotas de consolidado, no que elas têm em comum. */
-export interface ConsolidadoCru {
-  desde: string;
-  ate: string;
-  dias: LinhaCrua[];
-  investiuCentavos: number | null;
-  voltouCentavos: number | null;
-  pessoasQueChegaram: string | null;
-  vendas: number | null;
-  retornoPorReal: string | null;
-  diasComOsDoisLados: number;
-  temDadoDaPlataforma: boolean;
-  /** AINDA NÃO VEM. Ver `lib/resultado/nivel.ts`. */
-  nivel?: Nivel | null;
-  /** AINDA NÃO VEM. */
-  moeda?: Moeda | null;
-  /** AINDA NÃO VEM. */
-  cliques?: number | null;
-}
 
 /**
  * Um número do jeito que ele aparece na tela.
@@ -74,41 +56,82 @@ export interface ValorNaTela {
 }
 
 /**
- * Um bloco de uma moeda só.
+ * Os números de UMA moeda só.
  *
  * ============================================================
- * UM BLOCO POR MOEDA, E NUNCA SE SOMA ENTRE ELES.
+ * UM BLOCO, UMA MOEDA, E NUNCA SE SOMA ENTRE ELES.
  *
- * Decisão do Victor, 10/09/2026: quando houver moedas diferentes, são
- * DUAS telas. O backend mediu que a rota do NEGÓCIO soma moedas — o que
- * transforma R$ 73,25 + A$ 113,45 em um número que não existe.
+ * A moeda vem do TOPO do consolidado, porque uma execução tem uma conta
+ * de anúncio e uma conta tem uma moeda. Até 10/09/2026 esta camada
+ * agrupava por `dia.moeda` — um campo que a API **nunca** preencheu — e o
+ * resultado era um grupo só, com `moeda: null`, somando tudo. O
+ * `moedasMisturadas` que devia acusar a mistura ficava `false` para
+ * sempre, porque o mapa tinha uma chave só.
  *
- * Esta camada nunca soma. Ela agrupa, e quando sobra mais de um grupo,
- * `moedasMisturadas` fica `true` e quem monta a tela decide como separar.
+ * Quem tem duas moedas é o NEGÓCIO, e o backend já resolve: o topo vem
+ * com `investiuCentavos: null` e `moeda: null` de propósito, e cada
+ * campanha vira uma ficha em `porExecucao`. **A tela vira duas fichas,
+ * nunca uma soma.** Somar exigiria taxa de câmbio, e taxa de câmbio aqui
+ * é inventar dado de mercado.
  * ============================================================
  */
 export interface BlocoDeMoeda {
-  /** `null` quando o backend ainda não manda a moeda. */
+  /** `null` = a janela não tem uma moeda só. Escreve o número SEM símbolo. */
   moeda: Moeda | null;
   investido: ValorNaTela;
   cliques: ValorNaTela;
+  impressoes: ValorNaTela;
+  /** só aparece quando a plataforma PROVA que conta contato — ver `ler.ts`. */
   pessoas: ValorNaTela;
   vendas: ValorNaTela;
   voltou: ValorNaTela;
-  /** Quantos dias deste bloco. */
-  dias: number;
 }
 
 export interface ResultadoParaTela {
-  /** A manchete e o corpo. Nunca uma nota, nunca um semáforo. */
-  titulo: string;
-  corpo: string;
-  bola: "cliente" | "nossa" | "ninguem";
-  /** O nível veio do backend, ou é a frase de degradação? */
-  nivelVeio: boolean;
-  blocos: BlocoDeMoeda[];
-  /** Mais de uma moeda no mesmo recorte. Quem monta a tela SEPARA. */
-  moedasMisturadas: boolean;
-  /** O recorte pedido — não o que decidiu o nível. */
+  /**
+   * O slug cru, para quem quiser ramificar. **Não renderize.**
+   * `null` quer dizer que o backend não mandou nível.
+   */
+  nivel: string | null;
+  /**
+   * A frase do backend, **como veio**.
+   *
+   * `null` = a tela não escreve NADA de nível. Não existe frase de
+   * degradação escrita aqui: inventar uma seria a tradução local voltando
+   * pela porta dos fundos.
+   */
+  nivelFrase: string | null;
+  /**
+   * O slug está no vocabulário de `nivel.ts`?
+   *
+   * É diagnóstico nosso — serve para o log dizer "chegou nível novo".
+   * **Não decide o que a tela mostra**: nível desconhecido com frase
+   * mostra a frase.
+   */
+  nivelConhecido: boolean;
+  bloco: BlocoDeMoeda;
+  /**
+   * Quantas pessoas chegaram, como NÚMERO — e `null` quando não dá para
+   * afirmar.
+   *
+   * Passa pela mesma trava do `bloco.pessoas`: só tem valor quando
+   * `pessoas_que_chegaram_medido === true`. Existe porque contagem SOMA
+   * entre campanhas (pessoa é pessoa em qualquer moeda) e quem soma
+   * precisa de número, não de texto formatado. Dinheiro não tem um irmão
+   * assim de propósito: somar dinheiro é o que não se pode fazer.
+   */
+  pessoasQueChegaram: number | null;
+  /** o recorte PEDIDO — não o que decidiu o nível */
   periodo: { desde: string; ate: string };
+  /**
+   * Primeiro e último dia com gasto conhecido. `null` quando nenhum dia
+   * tem. É isto que a tela mostra como "período da campanha": `desde`/`ate`
+   * são a janela que a gente pediu, e dizer que a campanha rodou 30 dias
+   * porque pedimos 30 dias seria afirmar coisa que ninguém mediu.
+   */
+  periodoComDado: { desde: string; ate: string } | null;
+  /** quantos dias têm gasto conhecido */
+  diasComGasto: number;
+  /** houve alguma métrica da plataforma no período */
+  temDadoDaPlataforma: boolean;
 }

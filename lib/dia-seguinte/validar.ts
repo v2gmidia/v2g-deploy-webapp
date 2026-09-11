@@ -4,6 +4,7 @@ import type {
   ConsolidadoDoNegocio,
   DiaDoConsolidado,
   ExecucaoDoNegocio,
+  FichaDaExecucao,
 } from "./tipos";
 
 /**
@@ -190,14 +191,37 @@ function validarNucleo(o: Record<string, unknown>): ConsolidadoBase | null {
   // O eco e o par dele. Os DOIS aceitam `null` — ver `diaDaPergunta` em
   // `./tipos.ts` para as três combinações e o que cada uma significa.
   // Ausentes NÃO reprovam: são campos novos (01/09/2026), e um backend
-  // mais velho continua legível. É a única frouxidão deste validador, e
-  // ela é deliberada — reprovar aqui derrubaria a leitura inteira por um
-  // campo que a tela sabe viver sem.
+  // mais velho continua legível. É a mesma frouxidão deliberada que o
+  // bloco dos cinco campos novos usa logo abaixo — reprovar aqui
+  // derrubaria a leitura inteira por um campo que a tela sabe viver sem.
   const diaDaPergunta =
     typeof o.dia_da_pergunta === "string" && DIA.test(o.dia_da_pergunta)
       ? o.dia_da_pergunta
       : null;
   const respondeuNoDia = typeof o.respondeu_no_dia === "boolean" ? o.respondeu_no_dia : null;
+
+  // ============================================================
+  // A LEITURA, E NÃO O DESCARTE. Medido em 10/09/2026 contra produção:
+  // `moeda`, `nivel`, `nivel_frase`, `cliques` e `impressoes` chegam nas
+  // DUAS rotas de consolidado.
+  //
+  // Até 10/09 este literal era lista branca e nada avisava: campo
+  // desconhecido não reprova, não loga, e `resposta_ilegivel` só dispara
+  // quando o validador devolve `null`. Os cinco chegavam e morriam aqui,
+  // em silêncio, e a tela mostrava o dinheiro do cliente sem símbolo de
+  // moeda e sem a única frase que o contrato autoriza exibir.
+  //
+  // AUSENTES NÃO REPROVAM — mesma frouxidão deliberada do
+  // `dia_da_pergunta` logo acima: backend mais velho continua legível, e
+  // a tela sabe viver com `null`. TIPO ERRADO REPROVA, porque aí o
+  // contrato mudou e ninguém percebeu.
+  // ============================================================
+  const moeda = texto(o.moeda);
+  const nivel = texto(o.nivel);
+  const nivelFrase = texto(o.nivel_frase);
+  const cliques = inteiroOuNulo(o.cliques);
+  const impressoes = inteiroOuNulo(o.impressoes);
+  if (cliques === undefined || impressoes === undefined) return null;
 
   return {
     desde,
@@ -213,6 +237,51 @@ function validarNucleo(o: Record<string, unknown>): ConsolidadoBase | null {
     respondeuHoje: o.respondeu_hoje as boolean | null,
     diaDaPergunta,
     respondeuNoDia,
+    moeda,
+    nivel,
+    nivelFrase,
+    cliques,
+    impressoes,
+  };
+}
+
+/**
+ * Uma ficha de `por_execucao`.
+ *
+ * TUDO OU NADA, como `validarDia`: ficha malformada reprova o
+ * consolidado inteiro em vez de sumir da lista. Uma campanha que some da
+ * lista sem virar erro é uma tela que mostra dois cards onde o negócio
+ * tem três, e ninguém descobre.
+ */
+function validarFicha(bruto: unknown): FichaDaExecucao | null {
+  if (typeof bruto !== "object" || bruto === null) return null;
+  const o = bruto as Record<string, unknown>;
+
+  const idExecucao = texto(o.id_execucao);
+  if (!idExecucao) return null;
+
+  const investiuCentavos = inteiroOuNulo(o.investiu_centavos);
+  const cliques = inteiroOuNulo(o.cliques);
+  const impressoes = inteiroOuNulo(o.impressoes);
+  const pessoasQueChegaram = decimalOuNulo(o.pessoas_que_chegaram);
+  if (
+    investiuCentavos === undefined ||
+    cliques === undefined ||
+    impressoes === undefined ||
+    pessoasQueChegaram === undefined
+  ) {
+    return null;
+  }
+
+  return {
+    idExecucao,
+    moeda: texto(o.moeda),
+    investiuCentavos,
+    cliques,
+    impressoes,
+    pessoasQueChegaram,
+    nivel: texto(o.nivel),
+    nivelFrase: texto(o.nivel_frase),
   };
 }
 
@@ -227,7 +296,19 @@ export function validarConsolidado(bruto: unknown): Consolidado | null {
   const nucleo = validarNucleo(o);
   if (!nucleo) return null;
 
-  return { ...nucleo, idExecucao };
+  // ============================================================
+  // TRÊS ESTADOS, E O `undefined` NÃO PODE VIRAR `false`.
+  //
+  // `false` afirma "esta conta não conta contato"; ausente é "o backend
+  // não falou disso". Um `?? false` aqui esconderia como "não medimos"
+  // uma campanha que mede e não converteu — que é o resultado ruim que o
+  // dono mais precisa ver. Ver o bloco do campo em `./tipos.ts`.
+  // ============================================================
+  const medido = o.pessoas_que_chegaram_medido;
+  if (medido !== undefined && medido !== null && typeof medido !== "boolean") return null;
+  const pessoasQueChegaramMedido = typeof medido === "boolean" ? medido : null;
+
+  return { ...nucleo, idExecucao, pessoasQueChegaramMedido };
 }
 
 /**
@@ -261,5 +342,43 @@ export function validarConsolidadoDoNegocio(bruto: unknown): ConsolidadoDoNegoci
     return null;
   }
 
-  return { ...nucleo, businessId, execucoesSomadas, diasComRespostaDeMaisDeUmaExecucao };
+  // ============================================================
+  // `moedas` E `por_execucao` SÃO O QUE EXECUTA "NUNCA SOME MOEDAS".
+  //
+  // Com duas moedas na janela, o topo vem com `investiuCentavos: null` e
+  // `moeda: null` DE PROPÓSITO, e o número de cada campanha só existe
+  // aqui. Descartar estes dois deixava a regra sem os dados que a
+  // cumprem — e a tela sem como mostrar as duas fichas.
+  //
+  // Ausentes viram lista vazia (backend mais velho); presentes e
+  // malformados reprovam, como `dias`.
+  // ============================================================
+  const moedas: string[] = [];
+  if (o.moedas !== undefined && o.moedas !== null) {
+    if (!Array.isArray(o.moedas)) return null;
+    for (const m of o.moedas) {
+      const codigo = texto(m);
+      if (!codigo) return null;
+      moedas.push(codigo);
+    }
+  }
+
+  const porExecucao: FichaDaExecucao[] = [];
+  if (o.por_execucao !== undefined && o.por_execucao !== null) {
+    if (!Array.isArray(o.por_execucao)) return null;
+    for (const item of o.por_execucao) {
+      const ficha = validarFicha(item);
+      if (!ficha) return null;
+      porExecucao.push(ficha);
+    }
+  }
+
+  return {
+    ...nucleo,
+    businessId,
+    execucoesSomadas,
+    diasComRespostaDeMaisDeUmaExecucao,
+    moedas,
+    porExecucao,
+  };
 }

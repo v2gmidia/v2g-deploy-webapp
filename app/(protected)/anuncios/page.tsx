@@ -1,13 +1,16 @@
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
-import { dinheiro, numero } from "@/lib/formato";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { COLUNAS_DO_JULGAMENTO, foiReprovada } from "@/lib/criativos/peca";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
+import { resultadoDoNegocio } from "@/lib/resultado/do-negocio";
+import { diaPorExtenso } from "@/lib/formato";
+import type { CampanhaNaTela } from "@/lib/resultado/do-negocio";
+import type { ValorNaTela } from "@/lib/resultado/tipos";
 import type { Etapa } from "@/lib/estado/frases";
 
 /**
- * Seus anúncios — a fusão de `/campanhas` e `/criativos`.
+ * Seus anúncios — e, desde 10/09/2026, **a tela de resultado**.
  *
  * POR QUE FUNDIR: o cliente não separa a campanha do criativo. Para ele,
  * "meu anúncio" é a foto e o dinheiro por trás dela, juntos. Ter dois
@@ -16,105 +19,80 @@ import type { Etapa } from "@/lib/estado/frases";
  * duas coisas em momentos diferentes; o dono da pizzaria olha o anúncio e
  * pergunta "está rendendo?".
  *
- * A tela mantém as duas leituras, mas numa hierarquia só: o anúncio no
- * topo, com o número que ele produziu, e a foto como parte dele.
+ * ============================================================
+ * A FONTE É A API DO BACKEND. `metrics_daily` SAIU.
  *
- * ESTADO VAZIO COMO CAMINHO PRINCIPAL: sem anúncio nenhum, a tela explica
- * o que falta para o primeiro existir, em vez de mostrar lista vazia.
+ * Até 10/09/2026 os números desta tela vinham de `metrics_daily`, com
+ * `Number(m.spend ?? 0)` somando — e essa tabela tem ZERO LINHAS. Cada
+ * `?? 0` transformava "não sabemos" em "R$ 0,00 investido", que é uma
+ * afirmação sobre o dinheiro do cliente, e falsa.
+ *
+ * Agora quem responde é `lib/resultado/do-negocio.ts`, que lê
+ * `GET /negocios/{id}/consolidado` e, para cada ficha de `porExecucao`,
+ * `GET /execucoes/{id}/consolidado`. **A ordem é a segurança** — ver o
+ * bloco daquele arquivo.
+ * ============================================================
  *
  * ============================================================
- * O "O QUE FALTA" NÃO É ESCRITO AQUI — vem de `estadoDoCliente()`.
+ * O QUE ESTA TELA NÃO MOSTRA MAIS, E POR QUÊ.
  *
- * Até 20/08/2026 esta tela AFIRMAVA, sem consultar nada: a frase "Falta a
- * IA conhecer o negócio" estava escrita dentro do ramo "não existe
- * campanha" e não lia o cadastro em lugar nenhum. Numa conta com os seis
- * obrigatórios preenchidos e a execução já criada, ela era simplesmente
- * falsa — e não havia leitura para corrigir, só uma frase.
+ *   "R$ X por conversa"   custo derivado. O contrato do dashboard proíbe:
+ *                         é a porta de entrada para o dono comparar com um
+ *                         número que ouviu de alguém, e o produto compara
+ *                         com o CPL-alvo DELE, que ainda não existe.
  *
- * A outra metade do defeito era a contagem: `pecas.length` contava TODA
- * linha de `creatives`, inclusive `uso = 'logo'` e inclusive arquivada.
- * Numa conta cujas duas linhas eram logos (uma removida), esta tela dizia
- * "você já tem 2 fotos guardadas" enquanto a `/conta` dizia "nenhuma foto
- * ainda". As duas liam a mesma tabela.
+ *   "os primeiros números  promessa de prazo. Ninguém aqui mede quando a
+ *    aparecem em até 48    plataforma entrega — e o contrato é explícito:
+ *    horas"                nada de prazo, desculpa, ou ação que o dono não
+ *                         possa executar sozinho.
+ *
+ *   pílula verde/vermelha  semáforo. Sem CPL-alvo, cor é opinião fingindo
+ *                         ser medida. A pílula aqui é `off` — cinza — para
+ *                         TODOS os estados, sempre.
+ *
+ * `pnpm conferir:resultado` §10 lê este arquivo e reprova se voltarem.
  * ============================================================
  */
 export default async function AnunciosPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // A resposta para "o que falta" vem pronta e é a MESMA que o `/inicio` e
   // a trilha do onboarding leem. O que muda daqui para lá é o
   // enquadramento, não o fato — ver docs/estado-do-cliente.md §3.
   const estado = await estadoDoCliente(new Date());
 
-  const [{ data: campanhas }, { data: criativos }] = await Promise.all([
-    supabase
-      .from("campaigns")
-      .select("id, name, status, meta_status, published_at, publish_state, publish_error, created_at")
-      .order("created_at", { ascending: false }),
+  const { data: criativos } = await supabase
+    .from("creatives")
     // `COLUNAS_DO_JULGAMENTO` traz `uso, status, arquivado_em` — sem
     // `arquivado_em` no select, o `foiReprovada` lá embaixo vira regra
-    // inerte em silêncio (ele estoura em vez de mentir, mas o lugar de
-    // não deixar acontecer é aqui).
-    supabase
-      .from("creatives")
-      .select(
-        `id, campaign_id, file_name, vision_description, meta_status, created_at, ${COLUNAS_DO_JULGAMENTO}`,
-      )
-      .order("created_at", { ascending: false }),
-  ]);
+    // inerte em silêncio.
+    .select(`id, campaign_id, file_name, ${COLUNAS_DO_JULGAMENTO}`)
+    .order("created_at", { ascending: false });
 
-  const lista = campanhas ?? [];
   const pecas = criativos ?? [];
 
-  if (lista.length === 0) {
+  const resultado =
+    user && estado.negocioId
+      ? await resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id })
+      : null;
+
+  // ============================================================
+  // "NÃO TEM CAMPANHA" E "O BACKEND ESTÁ FORA" SÃO TELAS DIFERENTES.
+  //
+  // Confundir os dois faria a tela dizer a um cliente pagante que ele não
+  // tem anúncio nenhum porque um servidor piscou. É a mesma família da
+  // `/inicio` degradando calada, que este repositório já pagou.
+  // ============================================================
+  if (resultado === null || resultado.estado === "sem-execucao") {
     return <SemAnuncioNenhum proximo={estado.proximo} fotos={estado.melhoras.fotos} />;
   }
 
-  const { data: metricas } = await supabase
-    .from("metrics_daily")
-    .select("campaign_id, spend, conversions");
-
-  const porCampanha = new Map<string, { investido: number; conversas: number }>();
-  for (const m of metricas ?? []) {
-    if (!m.campaign_id) continue;
-    const atual = porCampanha.get(m.campaign_id) ?? { investido: 0, conversas: 0 };
-    atual.investido += Number(m.spend ?? 0);
-    // `conversions` guarda conversa iniciada, não venda. Ver a nota em
-    // app/(protected)/inicio/page.tsx.
-    atual.conversas += Number(m.conversions ?? 0);
-    porCampanha.set(m.campaign_id, atual);
-  }
-
-  const pecasPorCampanha = new Map<string, typeof pecas>();
-  for (const p of pecas) {
-    if (!p.campaign_id) continue;
-    pecasPorCampanha.set(p.campaign_id, [...(pecasPorCampanha.get(p.campaign_id) ?? []), p]);
-  }
-
-  // Quem precisa de você vem antes de quem já está rodando.
-  const esperando = lista.filter((c) => c.published_at === null);
-  const noAr = lista.filter((c) => c.published_at !== null);
-
-  // FAIXA CONDICIONAL. O conteúdo normal desta tela é uma lista, e lista
-  // não grita — faixa permanente aqui viraria moldura decorativa. Ela só
-  // aparece quando alguma coisa espera o cliente AGORA.
-  // Ver docs/padrao-visual.md §5.
-  //
-  // O QUE SOBROU DE LOCAL AQUI: só a peça reprovada pela revisão do
-  // Facebook. Ela é evento de LINHA — aconteceu com uma peça, tem rota
-  // própria, e não é elo da cadeia: a campanha pode seguir no ar com as
-  // outras peças.
-  //
-  // O que era calculado aqui e não é mais: "publicação falhou" e "peça
-  // esperando aprovação". As duas viraram elo da cadeia
-  // (`lib/estado/frases.ts`), porque as duas respondem à pergunta "o que
-  // falta pra sair anúncio?" — e essa pergunta tem um dono só.
-  //
   // O `foiReprovada` no lugar do `p.status === "rejected"` escrito à mão:
-  // o que segurava esta linha era coincidência, não filtro. Logo nasce
-  // `draft` e nunca fica `rejected`, então ela não vazava — mas peça de
-  // campanha ARQUIVADA e reprovada vazava, e continuaria aparecendo em
-  // "precisa de você" para sempre. Ver docs/lote-leitura-de-peca.md §5.1.
+  // peça de campanha ARQUIVADA e reprovada vazava e continuaria aparecendo
+  // em "precisa de você" para sempre. Ver docs/lote-leitura-de-peca.md §5.1.
   const reprovadas = pecas.filter(foiReprovada);
 
   return (
@@ -122,10 +100,7 @@ export default async function AnunciosPage() {
       <FaixaReconectar />
       <div className="page-head">
         <h1>Seus anúncios</h1>
-        <p>
-          Cada anúncio com a foto que ele usa e o que ele produziu até agora. Primeiro os que
-          esperam alguma coisa de você.
-        </p>
+        <p>Cada anúncio e o que ele produziu até agora.</p>
       </div>
 
       {reprovadas.length > 0 ? (
@@ -150,72 +125,52 @@ export default async function AnunciosPage() {
 
       <div className="dash-grid">
         <div className="dash-main">
-          {esperando.length > 0 && (
-            <section>
-              <div className="section-title">
-                <h2>
-                  <span className="grp-dot wait" />
-                  Esperando você
-                </h2>
-                <span className="grp-count">
-                  {esperando.length} {esperando.length === 1 ? "anúncio" : "anúncios"}
-                </span>
-              </div>
-              <div className="campaign-list">
-                {esperando.map((c) => (
-                  <Linha
-                    key={c.id}
-                    campanha={c}
-                    numeros={porCampanha.get(c.id)}
-                    pecas={pecasPorCampanha.get(c.id) ?? []}
-                  />
-                ))}
-              </div>
+          {resultado.estado === "indisponivel" ? (
+            <section className="card">
+              <p className="hint">
+                Não conseguimos buscar os números dos seus anúncios agora. Eles não sumiram — é
+                a nossa conexão com o Facebook que não respondeu. Tente de novo daqui a pouco.
+              </p>
             </section>
-          )}
+          ) : (
+            <>
+              {/* ============================================================
+                  UM CARD POR CAMPANHA, E É ISSO QUE IMPEDE A SOMA ENTRE
+                  MOEDAS.
 
-          {noAr.length > 0 && (
-            <section>
-              <div className="section-title">
-                <h2>
-                  <span className="grp-dot live" />
-                  No ar
-                </h2>
-                <span className="grp-count">
-                  {noAr.length} {noAr.length === 1 ? "anúncio" : "anúncios"}
-                </span>
-              </div>
-              <div className="campaign-list">
-                {noAr.map((c) => (
-                  <Linha
-                    key={c.id}
-                    campanha={c}
-                    numeros={porCampanha.get(c.id)}
-                    pecas={pecasPorCampanha.get(c.id) ?? []}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
+                  Cada card carrega a própria moeda, vinda do topo do
+                  consolidado daquela execução. Não existe totalizador nesta
+                  tela — e por isso não existe o lugar onde R$ 73,25 e
+                  A$ 113,45 virariam um número que não existe.
+                  ============================================================ */}
+              <section>
+                <div className="section-title">
+                  <h2>Seus anúncios</h2>
+                  <span className="grp-count">
+                    {resultado.campanhas.length}{" "}
+                    {resultado.campanhas.length === 1 ? "anúncio" : "anúncios"}
+                  </span>
+                </div>
+                <div className="campaign-list">
+                  {resultado.campanhas.map((c) => (
+                    <Campanha key={c.idExecucao} campanha={c} />
+                  ))}
+                </div>
+              </section>
 
-          {/* O aviso de peça reprovada subiu para a faixa condicional lá
-              em cima. Ele era um segundo bloco de destaque no meio da
-              lista, competindo com ela — e a regra é uma coisa gritando
-              por tela. A rota /reprovado continua alcançável pelo botão
-              da faixa. */}
+              {resultado.moedasMisturadas && (
+                <p className="hint">
+                  Seus anúncios cobram em moedas diferentes ({resultado.moedas.join(", ")}), então
+                  eles aparecem separados. Somar um com o outro daria um número que não existe.
+                </p>
+              )}
+            </>
+          )}
 
           {/* SÓ peça de anúncio. O filtro por `uso` é o conserto: sem ele,
               esta seção listava o logo do cliente sob o título "Fotos
-              guardadas" — e era a mesma contagem crua que fazia a tela
-              dizer "você já tem 2 fotos". As fotos do cliente moram na
-              `/conta`, e é lá que elas são contadas. */}
-          <PecasSemAnuncio
-            pecas={pecas.filter(
-              (p) =>
-                p.uso === "campanha" &&
-                (!p.campaign_id || !lista.some((c) => c.id === p.campaign_id)),
-            )}
-          />
+              guardadas". As fotos do cliente moram na `/conta`. */}
+          <PecasSemAnuncio pecas={pecas.filter((p) => p.uso === "campanha" && !p.campaign_id)} />
         </div>
 
         <aside className="dash-aside">
@@ -233,104 +188,106 @@ export default async function AnunciosPage() {
   );
 }
 
-interface LinhaProps {
-  campanha: {
-    id: string;
-    name: string | null;
-    status: string;
-    meta_status: string | null;
-    published_at: string | null;
-    publish_state: string;
-    publish_error: string | null;
-  };
-  numeros?: { investido: number; conversas: number };
-  pecas: Array<{ id: string; file_name: string | null; status: string }>;
+/**
+ * Um número da campanha.
+ *
+ * ============================================================
+ * PRESENTE É NÚMERO GRANDE; AUSENTE É TEXTO MIÚDO. E A DIFERENÇA VEM DO
+ * CAMPO `ausente`, NUNCA DE COMPARAR O TEXTO.
+ *
+ * `.lr-nums b` já é o número de display desta folha de estilo, e texto
+ * sem `<b>` já é miúdo e apagado. Então a distinção de TOM que o contrato
+ * pede — "ausência é cinza e discreta, zero é um número como qualquer
+ * outro" — sai sem uma linha de CSS nova.
+ *
+ * Uma tela que comparasse `texto === "ainda não sabemos"` para descobrir
+ * isso quebraria no dia em que a frase mudasse.
+ * ============================================================
+ */
+function Numero({ valor, rotulo }: { valor: ValorNaTela; rotulo: string }) {
+  if (valor.ausente) {
+    return (
+      <span>
+        {rotulo} — {valor.texto}
+      </span>
+    );
+  }
+  return (
+    <span>
+      <b>{valor.texto}</b> {rotulo}
+    </span>
+  );
 }
 
-function Linha({ campanha, numeros, pecas }: LinhaProps) {
-  const custoPorConversa =
-    numeros && numeros.conversas > 0 ? numeros.investido / numeros.conversas : null;
+/** O que a pílula diz. CINZA SEMPRE — ver o bloco do topo do arquivo. */
+const ROTULO_DO_ESTADO = {
+  "sem-campanha": "Ainda não foi ao ar",
+  "sem-dado": "Sem números ainda",
+  "com-dado": "Com números",
+} as const;
+
+function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
+  const { resultado: r } = campanha;
 
   return (
     <div className="list-row">
       <div className="lr-head">
-        <span className="lr-title">{campanha.name ?? "Anúncio sem nome"}</span>
-        <span className={`pill ${campanha.published_at ? "ok" : "off"}`}>
-          {rotuloDoStatus(campanha)}
-        </span>
+        {/* `nome` vindo `null` não vira "Anúncio sem nome": inventar rótulo
+            para ausência é o mesmo defeito de inventar zero para ausência. */}
+        {campanha.nome && <span className="lr-title">{campanha.nome}</span>}
+        <span className="pill off">{ROTULO_DO_ESTADO[campanha.estado]}</span>
       </div>
 
-      {/* A publicação que falhou não some: sem isto, o cliente vê um
-          anúncio parado e nenhuma explicação. */}
-      {campanha.publish_state === "failed" && campanha.publish_error && (
-        <p className="lr-erro">{campanha.publish_error}</p>
-      )}
-
-      {numeros && numeros.investido > 0 ? (
-        <div className="lr-nums">
-          <span>
-            <b>{numero(numeros.conversas)}</b>{" "}
-            {numeros.conversas === 1 ? "conversa" : "conversas"}
-          </span>
-          {custoPorConversa !== null && (
-            <span>
-              <b>{dinheiro(custoPorConversa)}</b> por conversa
-            </span>
-          )}
-          <span>
-            <b>{dinheiro(numeros.investido)}</b> investido
-          </span>
-        </div>
-      ) : (
-        <div className="lr-nums">
-          <span>
-            {campanha.published_at
-              ? "No ar há pouco tempo — os primeiros números aparecem em até 48 horas."
-              : "Ainda não foi ao ar, então não há número para mostrar."}
-          </span>
-        </div>
-      )}
-
-      {pecas.length > 0 && (
-        <p className="lr-pecas">
-          {pecas.length === 1 ? "Foto: " : "Fotos: "}
-          {pecas.map((p) => p.file_name ?? "sem nome").join(", ")}
+      {/* CANAL SÓ APARECE SE VIER. `canal_confirmado` é `null` nas duas
+          execuções da V2G, medido em 10/09/2026 — e `null` não vira
+          "Facebook" por palpite. Está na lista de pedidos ao backend. */}
+      {(campanha.canal || r.periodoComDado) && (
+        <p className="lr-fresh">
+          {campanha.canal}
+          {campanha.canal && r.periodoComDado ? " · " : ""}
+          {r.periodoComDado &&
+            (r.periodoComDado.desde === r.periodoComDado.ate
+              ? diaPorExtenso(r.periodoComDado.desde)
+              : `${diaPorExtenso(r.periodoComDado.desde)} a ${diaPorExtenso(r.periodoComDado.ate)}`)}
         </p>
       )}
+
+      <div className="lr-nums">
+        <Numero valor={r.bloco.investido} rotulo="investido" />
+        <Numero valor={r.bloco.cliques} rotulo="cliques" />
+        <Numero valor={r.bloco.impressoes} rotulo="vezes que apareceu" />
+        <Numero valor={r.bloco.pessoas} rotulo="pessoas que chegaram" />
+      </div>
+
+      {/* ============================================================
+          A FRASE É DO BACKEND, INTEIRA.
+
+          Esta tela não traduz o nível e não tem tabela de frase nenhuma.
+          `nivelFrase` vindo `null` não vira frase de degradação escrita
+          aqui — vira silêncio, que é honesto. Ver `lib/resultado/nivel.ts`.
+          ============================================================ */}
+      {r.nivelFrase && <p className="lr-pecas">{r.nivelFrase}</p>}
     </div>
   );
-}
-
-function rotuloDoStatus(c: {
-  status: string;
-  meta_status: string | null;
-  published_at: string | null;
-  publish_state: string;
-}): string {
-  if (c.publish_state === "failed") return "Não conseguimos publicar";
-  if (c.publish_state === "publishing") return "Publicando…";
-  if (c.meta_status) return c.meta_status;
-  if (c.published_at) return "No ar";
-  if (c.status === "draft") return "Aguardando sua aprovação";
-  return c.status;
 }
 
 /**
  * Peças de anúncio que existem e ainda não pertencem a nenhum anúncio.
  *
- * Só aparece quando existem. Uma seção vazia permanente diria ao cliente
- * que falta alguma coisa quando não falta.
+ * ============================================================
+ * ELA NÃO SE LIGA MAIS À CAMPANHA, e a perda está dita aqui.
  *
- * O NOME MUDOU DE "Fotos guardadas" e a mudança é o conserto: as linhas que
- * apareciam aqui incluíam o logo e a identidade visual, que não são peça de
- * anúncio nenhuma. Quem conta foto do cliente é o `estadoDoCliente`, com
- * `uso = 'identidade'`, e quem as mostra é a `/conta`.
+ * `creatives.campaign_id` aponta para `campaigns.id`, do banco do webapp.
+ * A campanha que esta tela mostra agora é a EXECUÇÃO do backend, com id
+ * de outro espaço. Não há chave que ligue as duas — então a foto que
+ * aparecia dentro do card do anúncio não tem mais onde aparecer.
+ *
+ * Ligar as duas exigiria o backend devolver o `campaign_id` local na
+ * ficha da execução. **Está na lista de pedidos.** Até lá, a seção
+ * abaixo é a única que fala de peça, e ela não afirma vínculo nenhum.
+ * ============================================================
  */
-function PecasSemAnuncio({
-  pecas,
-}: {
-  pecas: Array<{ id: string; file_name: string | null }>;
-}) {
+function PecasSemAnuncio({ pecas }: { pecas: Array<{ id: string; file_name: string | null }> }) {
   if (pecas.length === 0) return null;
   return (
     <section>
@@ -354,13 +311,7 @@ function PecasSemAnuncio({
   );
 }
 
-function SemAnuncioNenhum({
-  proximo,
-  fotos,
-}: {
-  proximo: Etapa | null;
-  fotos: number;
-}) {
+function SemAnuncioNenhum({ proximo, fotos }: { proximo: Etapa | null; fotos: number }) {
   return (
     <>
       <FaixaReconectar />
@@ -383,9 +334,7 @@ function SemAnuncioNenhum({
 
               {/* O ENQUADRAMENTO É DAQUI; O FATO VEM DO ESTADO. A tela diz
                   por que o anúncio não existe — e quem sabe por quê é a
-                  cadeia, não esta função. Antes havia aqui uma frase fixa
-                  ("Falta a IA conhecer o negócio") que não consultava
-                  nada e mentia para todo cliente com cadastro completo. */}
+                  cadeia, não esta função. */}
               {proximo ? (
                 <>
                   <p className="empty-body">{proximo.titulo}</p>

@@ -95,7 +95,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     custo:
       "De cada R$ 100 que entra numa venda, quanto sobra depois de pagar o que você gastou pra entregar?",
     lucro: estado.margem
-      ? `Dessa sobra de ${dinheiro(estado.margem)}, quanto você quer que fique no seu bolso?`
+      ? `Dessa sobra de ${dinheiro(estado.margem, "BRL")}, quanto você quer que fique no seu bolso?`
       : "Quanto você quer que fique no seu bolso a cada venda?",
   };
 
@@ -132,7 +132,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   que a IA está usando. */}
               <b>
                 {leitura.estado === "respondida"
-                  ? dinheiro(leitura.valor)
+                  ? dinheiro(leitura.valor, "BRL")
                   : "Você não soube — a gente resolve na conversa."}
               </b>
               {leitura.estado === "respondida" && quando && (
@@ -181,8 +181,8 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
             <>
               <p className="hero-phrase">
                 {atual === "custo"
-                  ? `Então cada venda de ${dinheiro(estado.ticket ?? 0)} te custa uns ${dinheiro(aConfirmar.calculado ?? 0)} pra entregar, e sobram ${dinheiro((estado.ticket ?? 0) - (aConfirmar.calculado ?? 0))}.`
-                  : `Então ficam ${dinheiro(aConfirmar.calculado ?? 0)} com você a cada venda, e a IA pode gastar até ${dinheiro((estado.margem ?? 0) - (aConfirmar.calculado ?? 0))} pra trazer esse cliente.`}
+                  ? `Então cada venda de ${dinheiro(estado.ticket ?? 0, "BRL")} te custa uns ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} pra entregar, e sobram ${dinheiro((estado.ticket ?? 0) - (aConfirmar.calculado ?? 0), "BRL")}.`
+                  : `Então ficam ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} com você a cada venda, e a IA pode gastar até ${dinheiro((estado.margem ?? 0) - (aConfirmar.calculado ?? 0), "BRL")} pra trazer esse cliente.`}
               </p>
 
               {ajustando === atual ? (
@@ -322,7 +322,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       {estado.ticket !== null && (
                         <span className="chip-valor">
                           {" "}
-                          ({dinheiro((estado.ticket * o.sobraPct) / 100)})
+                          ({dinheiro((estado.ticket * o.sobraPct) / 100, "BRL")})
                         </span>
                       )}
                     </button>
@@ -352,7 +352,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       {estado.margem !== null && (
                         <span className="chip-valor">
                           {" "}
-                          (fica {dinheiro(estado.margem * o.fracaoQueFica)})
+                          (fica {dinheiro(estado.margem * o.fracaoQueFica, "BRL")})
                         </span>
                       )}
                     </button>

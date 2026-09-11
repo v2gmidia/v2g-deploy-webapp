@@ -88,8 +88,8 @@ export function converterValor(campo: CampoDoCliente, bruto: string): Convertido
           return {
             ok: false,
             mensagem:
-              `Com esse valor o anúncio não roda. Nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA)} ` +
-              `por mês — uns ${dinheiro(PISO_MENSAL_DA_CASA / DIAS)} por dia. O mínimo do ` +
+              `Com esse valor o anúncio não roda. Nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA, "BRL")} ` +
+              `por mês — uns ${dinheiro(PISO_MENSAL_DA_CASA / DIAS, "BRL")} por dia. O mínimo do ` +
               `Facebook é outro, muda de conta para conta, e a gente confere na hora de publicar.`,
           };
         }

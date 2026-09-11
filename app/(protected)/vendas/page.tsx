@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { NumeroQueConta } from "@/components/ui/NumeroQueConta";
 import { numero } from "@/lib/formato";
+import { estadoDoCliente } from "@/lib/estado/cliente";
+import { resultadoDoNegocio } from "@/lib/resultado/do-negocio";
 
 /**
  * Vendas — quem chegou pelo anúncio.
@@ -24,17 +26,54 @@ import { numero } from "@/lib/formato";
  * WhatsApp Business, que é outro produto, outro App Review e outro lote.
  * Um botão "abrir conversa" que não abre nada seria repetir a mentira que
  * a migração do onboarding matou.
+ *
+ * ============================================================
+ * A FONTE SAIU DA `metrics_daily` EM 10/09/2026.
+ *
+ * Ela lia `conversions` com `Number(m.conversions ?? 0)`, de uma tabela
+ * com ZERO LINHAS, e o `?? 0` fazia "não sabemos" virar "ninguém
+ * chegou" — que esta tela então afirmava na manchete, em letra grande.
+ *
+ * Agora a contagem vem de `pessoas_que_chegaram` do consolidado, e ela
+ * passa pela trava de `pessoas_que_chegaram_medido`: **enquanto a
+ * plataforma não PROVAR que conta contato, o número é `null` e a tela diz
+ * que não sabe** em vez de dizer que foi zero. Ver `lib/resultado/ler.ts`.
+ *
+ * Consequência hoje, e ela é correta: `medido` vem `null` nas campanhas
+ * reais, então esta tela não afirma mais "ninguém chegou". Ela diz que a
+ * medição ainda não está de pé.
+ * ============================================================
  */
 export default async function VendasPage() {
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const [{ data: campanhas }, { data: metricas }] = await Promise.all([
-    supabase.from("campaigns").select("id, published_at, publish_state"),
-    supabase.from("metrics_daily").select("conversions, date"),
-  ]);
+  const estado = await estadoDoCliente(new Date());
+  const resultado =
+    user && estado.negocioId
+      ? await resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id })
+      : null;
 
-  const publicadas = (campanhas ?? []).filter((c) => c.published_at !== null);
-  const conversas = (metricas ?? []).reduce((s, m) => s + Number(m.conversions ?? 0), 0);
+  const campanhas = resultado?.campanhas ?? [];
+  // "Foi ao ar" = existe campanha na plataforma. `sem-campanha` e rodada
+  // que nem chegou a montar uma.
+  const publicadas = campanhas.filter((c) => c.estado !== "sem-campanha");
+
+  // ============================================================
+  // SOMA DE CONTAGEM, E SO DE CONTAGEM.
+  //
+  // Pessoa e pessoa em qualquer moeda, entao isto pode somar entre
+  // campanhas - ao contrario do dinheiro, que nunca soma entre moedas.
+  //
+  // `null` quando NENHUMA campanha tem medicao provada, e `null` aqui e
+  // "nao sabemos", nunca "zero".
+  // ============================================================
+  const medidas = campanhas
+    .map((c) => c.resultado.pessoasQueChegaram)
+    .filter((n): n is number => n !== null);
+  const conversas = medidas.length === 0 ? null : medidas.reduce((a, b) => a + b, 0);
 
   return (
     <>
@@ -52,7 +91,7 @@ export default async function VendasPage() {
           é a única coisa útil a dizer. Ver docs/padrao-visual.md §5. */}
       <section className="hero-destaque">
         <span className="eyebrow">Chegaram até você</span>
-        {conversas > 0 ? (
+        {conversas !== null && conversas > 0 ? (
           <>
             <NumeroQueConta valor={conversas} casas={0} className="hero-num" />
             <p className="hero-legenda">
@@ -66,6 +105,15 @@ export default async function VendasPage() {
               <>
                 Ninguém chegou ainda porque{" "}
                 <span className="destaque">nenhum anúncio foi ao ar</span>.
+              </>
+            ) : conversas === null ? (
+              // A AFIRMAÇÃO QUE ESTA TELA NÃO PODE MAIS FAZER. Com o anúncio
+              // no ar e a medição não provada, "a primeira conversa ainda não
+              // veio" é um zero que mente: pode ter vindo e ninguém estar
+              // contando. Ver o bloco do topo do arquivo.
+              <>
+                Seu anúncio está no ar. A gente{" "}
+                <span className="destaque">ainda não consegue contar</span> quem chegou por ele.
               </>
             ) : (
               <>
@@ -85,8 +133,8 @@ export default async function VendasPage() {
         <div className="dash-main">
           {publicadas.length === 0 ? (
             <NinguemChegouAinda />
-          ) : conversas === 0 ? (
-            <NoArSemConversa />
+          ) : conversas === null || conversas === 0 ? (
+            <NoArSemConversa aindaNaoConta={conversas === null} />
           ) : (
             <ConversasSemLista quantas={conversas} />
           )}
@@ -157,19 +205,49 @@ function NinguemChegouAinda() {
   );
 }
 
-/** Estado 2: no ar, mas ainda sem conversa. */
-function NoArSemConversa() {
+/**
+ * Estado 2: no ar, e sem conversa para mostrar.
+ *
+ * ============================================================
+ * DUAS CAUSAS OPOSTAS, E A TELA NÃO PODE DIZER A ERRADA.
+ *
+ *   medido = true, contagem 0   veio zero, e é um resultado
+ *   medido != true              não dá para afirmar que veio zero
+ *
+ * A PROMESSA DE 48 HORAS SAIU. Ela dizia "as primeiras conversas costumam
+ * aparecer em até 48 horas" — prazo que ninguém aqui mede, para um evento
+ * que a gente nem consegue contar ainda. O contrato do dashboard é
+ * explícito sobre o que não acrescentar: prazo, desculpa, ou ação que o
+ * dono não pode executar sozinho.
+ * ============================================================
+ */
+function NoArSemConversa({ aindaNaoConta }: { aindaNaoConta: boolean }) {
   return (
     <section className="empty-card">
       <div className="empty-copy">
-        <p className="empty-head">Seu anúncio está no ar, e ainda não veio conversa.</p>
-        <p className="empty-body">
-          Isso é normal nos primeiros dias: o Facebook leva um tempo até entender para quem vale
-          a pena mostrar. As primeiras conversas costumam aparecer em até 48 horas.
-        </p>
-        <p className="empty-note">
-          Quando a primeira chegar, ela aparece aqui e a gente te avisa.
-        </p>
+        {aindaNaoConta ? (
+          <>
+            <p className="empty-head">
+              Seu anúncio está no ar, e a contagem de quem chega ainda não está de pé.
+            </p>
+            <p className="empty-body">
+              Falta terminar de configurar o que conta um contato vindo do anúncio. Enquanto
+              isso, a gente prefere não dizer um número — dizer zero seria afirmar que ninguém
+              chegou, e a gente não sabe disso. É trabalho nosso, e já está em andamento.
+            </p>
+          </>
+        ) : (
+          <>
+            <p className="empty-head">Seu anúncio está no ar, e ainda não veio conversa.</p>
+            <p className="empty-body">
+              Isso é normal nos primeiros dias: o Facebook leva um tempo até entender para quem
+              vale a pena mostrar.
+            </p>
+            <p className="empty-note">
+              Quando a primeira chegar, ela aparece aqui e a gente te avisa.
+            </p>
+          </>
+        )}
       </div>
     </section>
   );
@@ -178,7 +256,8 @@ function NoArSemConversa() {
 /**
  * Estado 3: houve conversa, mas a lista de pessoas não existe.
  *
- * O número é real e vem de `metrics_daily`. O que falta é o nome de cada
+ * O número é real e vem de `pessoas_que_chegaram` do consolidado, já
+ * travado por `pessoas_que_chegaram_medido`. O que falta é o nome de cada
  * uma — e isso a tela diz, em vez de inventar linhas.
  */
 function ConversasSemLista({ quantas }: { quantas: number }) {

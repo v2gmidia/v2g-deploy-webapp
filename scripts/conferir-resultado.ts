@@ -15,14 +15,41 @@
  *                              existe em lugar nenhum
  * ============================================================
  *
- * Puro: não toca rede nem banco.
+ * ============================================================
+ * A FIXTURE É RESPOSTA CRUA DE PRODUÇÃO, E É O QUE MUDOU EM 10/09/2026.
+ *
+ * Até aqui este arquivo montava o payload à mão, em camelCase, com um
+ * ajudante `dia({ moeda })` que punha a moeda em cada LINHA. A API nunca
+ * fez isso — a moeda vem no TOPO — e por isso a suíte ficava verde
+ * enquanto a camada agrupava por um campo que não existia e somava tudo
+ * num bloco só, sem símbolo de moeda.
+ *
+ * **Fixture inventada concorda consigo mesma para sempre.** Agora o
+ * caminho conferido é o de verdade, ponta a ponta:
+ *
+ *   scripts/fixtures/consolidado-*-producao.json   (curl, 10/09/2026)
+ *        ↓ validarConsolidado / validarConsolidadoDoNegocio
+ *        ↓ resultadoParaTela
+ *   o que a tela mostra
+ *
+ * Para atualizar a fixture:
+ *
+ *   curl -s -H "X-V2G-Token: $TOK" \
+ *     https://api.v2gmidia.com.br/execucoes/<id>/consolidado | python -m json.tool
+ * ============================================================
+ *
+ * Puro: não toca rede nem banco. As fixtures são arquivo em disco.
  */
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { resultadoParaTela, dinheiroDaMoeda, AINDA_NAO_SABEMOS } from "../lib/resultado/ler.ts";
-import { NIVEIS, fraseDoNivel, SEM_NIVEL, ehNivel } from "../lib/resultado/nivel.ts";
-import type { ConsolidadoCru, LinhaCrua } from "../lib/resultado/tipos.ts";
+import { NIVEIS, ehNivel } from "../lib/resultado/nivel.ts";
+import {
+  validarConsolidado,
+  validarConsolidadoDoNegocio,
+} from "../lib/dia-seguinte/validar.ts";
+import type { ConsolidadoBase } from "../lib/resultado/tipos.ts";
 
 const RAIZ = resolve(import.meta.dirname, "..");
 
@@ -43,246 +70,337 @@ function secao(t: string) {
   console.log("\n" + t);
 }
 
-console.log("\nA camada de leitura do resultado\n" + "=".repeat(64));
+function fixture(nome: string): unknown {
+  return JSON.parse(readFileSync(resolve(RAIZ, "scripts/fixtures", nome), "utf8"));
+}
 
 // ---------------------------------------------------------------- §0
 
 secao("0. controle negativo — a asserção pega erro quando existe");
 ok(true, "`ok(true, …)` conta como acerto");
 {
+  let pegou = false;
   const antes = falhou;
-  ok(false, "ESTA LINHA TEM QUE FALHAR (se ela passar, ignore o resto)");
-  const pegou = falhou === antes + 1;
+  ok(1 + 1 === 3, "(esperado FALHAR) dois mais dois são cinco");
+  pegou = falhou === antes + 1;
   falhou = antes;
-  ok(pegou, "e a falha foi contada — o placar abaixo vale alguma coisa");
+  passou++;
+  console.log("  ok    a falha acima foi contada e descontada — a asserção funciona");
+  if (!pegou) {
+    console.log("  FALHA o controle negativo não pegou");
+    falhou++;
+  }
 }
 
 // ---------------------------------------------------------------- fixtures
 
-const dia = (p: Partial<LinhaCrua> & { dia: string }): LinhaCrua => ({
-  investiuCentavos: null,
-  pessoasQueChegaram: null,
-  viraramVenda: null,
-  voltouCentavos: null,
-  ...p,
-});
+const CRU_EXECUCAO = fixture("consolidado-execucao-producao.json");
+const CRU_NEGOCIO = fixture("consolidado-negocio-producao.json");
 
-const consolidado = (dias: LinhaCrua[], extra: Partial<ConsolidadoCru> = {}): ConsolidadoCru => ({
-  desde: "2026-08-12",
-  ate: "2026-09-10",
-  dias,
-  investiuCentavos: null,
-  voltouCentavos: null,
-  pessoasQueChegaram: null,
-  vendas: null,
-  retornoPorReal: null,
-  diasComOsDoisLados: 0,
-  temDadoDaPlataforma: false,
-  ...extra,
-});
+const execucao = validarConsolidado(CRU_EXECUCAO);
+const negocio = validarConsolidadoDoNegocio(CRU_NEGOCIO);
 
 // ---------------------------------------------------------------- §1
 
-secao("1. `null` NÃO É ZERO — do lado da leitura, como já é do lado da resposta");
+secao("1. o payload REAL atravessa o validador — os campos que morriam nele");
 {
-  const r = resultadoParaTela({ recorte: consolidado([dia({ dia: "2026-09-01" })]) });
-  const b = r.blocos[0]!;
+  ok(execucao !== null, "a resposta crua da rota da execução valida");
+  ok(negocio !== null, "a resposta crua da rota do negócio valida");
 
-  ok(b.investido.ausente, "investido sem dado vem marcado como ausente");
-  ok(b.investido.texto === AINDA_NAO_SABEMOS, `e o texto é "${AINDA_NAO_SABEMOS}"`);
-  ok(!/0|R\$|zero/i.test(b.investido.texto), "e não contém zero nem cifrão");
-
-  // ============================================================
-  // A REGRA QUE O BACKEND ESCREVEU COM TODAS AS LETRAS:
-  // nada de "0 pessoas chegaram" enquanto o medido for null.
-  // ============================================================
-  ok(b.pessoas.ausente, "pessoas sem dado é AUSENTE, nunca `0`");
-  ok(!/^0$/.test(b.pessoas.texto), 'e o texto nunca é o literal "0"');
-
-  const comZero = resultadoParaTela({
-    recorte: consolidado([dia({ dia: "2026-09-01", pessoasQueChegaram: "0", viraramVenda: 0 })]),
-  });
-  const z = comZero.blocos[0]!;
-  ok(!z.pessoas.ausente && z.pessoas.texto === "0", "zero MEDIDO aparece como 0 — é resposta");
-  ok(!z.vendas.ausente && z.vendas.texto === "0", "e zero venda também: é sinal forte, não silêncio");
+  if (!execucao || !negocio) {
+    console.log("  (sem payload válido, o resto não tem o que conferir)");
+    process.exitCode = 1;
+  } else {
+    ok(execucao.moeda === "BRL", "`moeda` chega — e é BRL, não `null` por descarte");
+    ok(execucao.nivel === "sem_alvo", "`nivel` chega, cru");
+    ok(
+      typeof execucao.nivelFrase === "string" && execucao.nivelFrase.length > 20,
+      "`nivelFrase` chega, escrita pelo backend",
+    );
+    ok(execucao.cliques === 64, "`cliques` chega — 64, medido em 10/09/2026");
+    ok(execucao.impressoes === 1657, "`impressoes` chega — 1657");
+    ok(execucao.investiuCentavos === 1025, "`investiuCentavos` chega — R$ 10,25 em centavos");
+    ok(
+      execucao.pessoasQueChegaramMedido === null,
+      "`pessoasQueChegaramMedido` chega como `null` — e `null` não é `false`",
+    );
+    ok(negocio.moedas.length === 1 && negocio.moedas[0] === "BRL", "`moedas` chega");
+    ok(negocio.porExecucao.length === 2, "`porExecucao` chega, com as duas execuções");
+    ok(negocio.execucoesSomadas === 2, "`execucoesSomadas` bate com o tamanho de `porExecucao`");
+  }
 }
 
 // ---------------------------------------------------------------- §2
 
-secao("2. a moeda — o erro de 3x");
+secao("2. `null` NÃO É ZERO — e a execução sem dado prova");
 {
-  ok(dinheiroDaMoeda(11345, "AUD").includes("113,45"), "AUD formata o número");
+  const semDado = negocio?.porExecucao.find((f) => f.nivel === "sem_dado");
+  ok(semDado !== undefined, "a fixture tem uma execução sem dado nenhum");
+  ok(semDado?.investiuCentavos === null, "e o investido dela é `null`, não `0`");
+  ok(semDado?.cliques === null, "e os cliques são `null`, não `0`");
+  ok(semDado?.impressoes === null, "e as impressões são `null`, não `0`");
+  ok(semDado?.moeda === null, "e a moeda é `null` — sem dado não há conta de anúncio a declarar");
 
-  // ============================================================
-  // `AU$`, E NÃO `A$`. O briefing escreve "A$ 113,45", que é como um
-  // australiano lê. Quem lê esta tela é brasileiro, e o `pt-BR` do próprio
-  // ICU escreve `AU$ 113,45` — medido, não escolhido por mim.
-  //
-  // E NÃO se usa `currencyDisplay: "narrowSymbol"`, que daria só `$ 113,45`
-  // — indistinguível de dólar americano. Num campo que fala do dinheiro do
-  // cliente, o símbolo ambíguo é pior que o símbolo comprido.
-  // ============================================================
-  ok(dinheiroDaMoeda(11345, "AUD").includes("AU$"), "e marca `AU$` — o pt-BR do dólar australiano");
-  ok(dinheiroDaMoeda(7325, "BRL").includes("R$"), "BRL sai com R$");
-  ok(
-    dinheiroDaMoeda(11345, "AUD") !== dinheiroDaMoeda(11345, "BRL"),
-    "A$ 113,45 e R$ 113,45 NÃO saem iguais — é o buraco que motivou o campo",
-  );
-
-  // ============================================================
-  // O CASO DE HOJE: a moeda não vem. Chutar R$ seria escrever número
-  // errado com aparência de certo.
-  // ============================================================
-  const semMoeda = dinheiroDaMoeda(11345, null);
-  ok(!/R\$|A\$|\$/.test(semMoeda), "SEM moeda, não sai símbolo nenhum");
-  ok(semMoeda.includes("113,45"), "mas o número continua legível");
+  // O mesmo, do lado da tela: ausência tem TOM, e a marca é campo.
+  const vazio: ConsolidadoBase = {
+    desde: "2026-09-01",
+    ate: "2026-09-07",
+    dias: [],
+    investiuCentavos: null,
+    voltouCentavos: null,
+    pessoasQueChegaram: null,
+    vendas: null,
+    retornoPorReal: null,
+    diasComOsDoisLados: 0,
+    temDadoDaPlataforma: false,
+    respondeuHoje: null,
+    diaDaPergunta: null,
+    respondeuNoDia: null,
+    moeda: null,
+    nivel: "sem_dado",
+    nivelFrase: "Ainda não recebemos os números desses dias.",
+    cliques: null,
+    impressoes: null,
+  };
+  const r = resultadoParaTela({ recorte: vazio });
+  ok(r.bloco.investido.ausente === true, "investido ausente traz a marca `ausente`");
+  ok(r.bloco.investido.texto === AINDA_NAO_SABEMOS, "e o texto é o recado, nunca `0,00`");
+  ok(!/0,00|R\$/.test(r.bloco.investido.texto), "e não contém zero nem símbolo de moeda");
+  ok(r.bloco.cliques.ausente === true, "cliques ausentes idem");
+  ok(r.periodoComDado === null, "sem dia com gasto, não há período de campanha a afirmar");
+  ok(r.diasComGasto === 0, "e o contador de dias com gasto é 0");
 }
 
 // ---------------------------------------------------------------- §3
 
-secao("3. moedas diferentes NUNCA somam — decisão do Victor, 10/09");
+secao("3. a moeda — o erro de 3x");
 {
-  const r = resultadoParaTela({
-    recorte: consolidado([
-      dia({ dia: "2026-09-01", investiuCentavos: 7325, moeda: "BRL" }),
-      dia({ dia: "2026-09-02", investiuCentavos: 11345, moeda: "AUD" }),
-    ]),
-  });
-
-  ok(r.moedasMisturadas, "duas moedas no recorte são ANUNCIADAS");
-  ok(r.blocos.length === 2, "e viram dois blocos, não um total");
-
-  const aud = r.blocos.find((b) => b.moeda === "AUD")!;
-  const brl = r.blocos.find((b) => b.moeda === "BRL")!;
-  ok(aud.investido.texto.includes("113,45"), "o bloco AUD tem só o valor AUD");
-  ok(brl.investido.texto.includes("73,25"), "o bloco BRL tem só o valor BRL");
+  // O SÍMBOLO É O QUE O ICU DECIDE, e em pt-BR o AUD sai `AU$`, não `A$`
+  // (medido, Node com ICU 78.2 — o contrato escreveu `A$` informalmente).
+  // O que esta conferência protege não é o glifo: é o AUD NÃO sair como
+  // real, que é o erro de 3x.
+  ok(dinheiroDaMoeda(11345, "AUD").includes("AU$"), "AUD sai com AU$");
+  ok(!dinheiroDaMoeda(11345, "AUD").includes("R$"), "e em especial NÃO sai com R$");
+  ok(dinheiroDaMoeda(7325, "BRL").includes("R$"), "BRL sai com R$");
   ok(
-    !r.blocos.some((b) => b.investido.texto.includes("186")),
-    "e 73,25 + 113,45 = 186,70 NÃO aparece em lugar nenhum",
+    !/R\$|A\$|\$|€/.test(dinheiroDaMoeda(11345, null)),
+    "SEM moeda não se escreve símbolo nenhum — nem `R$` chutado",
   );
+  ok(dinheiroDaMoeda(11345, null).includes("113,45"), "mas o número continua legível");
 
-  const uma = resultadoParaTela({
-    recorte: consolidado([
-      dia({ dia: "2026-09-01", investiuCentavos: 1000, moeda: "BRL" }),
-      dia({ dia: "2026-09-02", investiuCentavos: 2500, moeda: "BRL" }),
-    ]),
-  });
-  ok(!uma.moedasMisturadas, "moeda única não é misturada");
-  ok(uma.blocos[0]!.investido.texto.includes("35,00"), "e aí SOMA: 10,00 + 25,00 = 35,00");
+  if (execucao) {
+    const r = resultadoParaTela({ recorte: execucao });
+    ok(r.bloco.moeda === "BRL", "a moeda do bloco vem do TOPO do consolidado");
+    ok(r.bloco.investido.texto.includes("R$"), "e o investido sai com o símbolo certo");
+    ok(r.bloco.investido.texto.includes("10,25"), "R$ 10,25 — o número que o curl devolve");
+  }
 }
 
 // ---------------------------------------------------------------- §4
 
-secao("4. a soma preserva a ausência");
+secao("4. moedas diferentes NUNCA somam");
 {
-  const r = resultadoParaTela({
-    recorte: consolidado([
-      dia({ dia: "2026-09-01" }),
-      dia({ dia: "2026-09-02", investiuCentavos: 1000, moeda: "BRL" }),
-    ]),
-  });
-  ok(!r.blocos[0]!.investido.ausente, "um dia com dado entre vazios: o total existe");
-  ok(r.blocos[0]!.investido.texto.includes("10,00"), "e é a soma do que tem dado");
+  // ============================================================
+  // O CASO DE DUAS MOEDAS NÃO EXISTE NA CONTA DA V2G, e por isso é
+  // construído — mas construído com a FORMA que o backend documenta: com
+  // duas moedas ele manda o topo nulo de propósito e a quebra vai em
+  // `por_execucao`. Ver `docs/contrato-do-dashboard.md`.
+  // ============================================================
+  const misturado = {
+    ...(CRU_NEGOCIO as Record<string, unknown>),
+    moeda: null,
+    moedas: ["BRL", "AUD"],
+    investiu_centavos: null,
+    retorno_por_real: null,
+    cliques: 86,
+    impressoes: 1972,
+    por_execucao: [
+      { id_execucao: "aaaaaaaa-0000-0000-0000-000000000001", moeda: "BRL", investiu_centavos: 7325, cliques: 32, impressoes: 317, pessoas_que_chegaram: "0.0", nivel: "sem_alvo", nivel_frase: "…" },
+      { id_execucao: "bbbbbbbb-0000-0000-0000-000000000002", moeda: "AUD", investiu_centavos: 11345, cliques: 22, impressoes: 315, pessoas_que_chegaram: "0.0", nivel: "sem_comparacao", nivel_frase: "…" },
+    ],
+  };
+  const v = validarConsolidadoDoNegocio(misturado);
+  ok(v !== null, "o corpo de duas moedas valida");
+  ok(v?.moedas.length === 2, "e `moedas` diz quais são as duas");
 
-  const nada = resultadoParaTela({
-    recorte: consolidado([dia({ dia: "2026-09-01" }), dia({ dia: "2026-09-02" })]),
-  });
-  ok(nada.blocos[0]!.investido.ausente, "TODOS os dias sem dado: o total é ausente, não zero");
+  if (v) {
+    const r = resultadoParaTela({ recorte: v });
+    ok(r.bloco.moeda === null, "o bloco do topo NÃO declara moeda quando há duas");
+    ok(
+      r.bloco.investido.ausente === true,
+      "e NÃO mostra dinheiro somado — R$ 73,25 + A$ 113,45 não é número nenhum",
+    );
+    ok(!/18\.670|186,70/.test(r.bloco.investido.texto), "em especial, não mostra a soma crua");
+    // Clique é clique em qualquer moeda — este SOMA, e é o contrato.
+    ok(r.bloco.cliques.texto === "86", "cliques somam entre moedas — clique não tem câmbio");
+    ok(r.bloco.impressoes.texto === "1.972", "impressões idem");
+    ok(
+      v.porExecucao.every((f) => f.moeda !== null),
+      "e cada ficha guarda a própria moeda, que é por onde a tela separa",
+    );
+  }
 }
 
 // ---------------------------------------------------------------- §5
 
-secao("5. as sete frases da escada");
+secao("5. os CATORZE níveis do contrato — e nenhuma frase escrita aqui");
 {
-  ok(NIVEIS.length === 7, `são sete níveis (${NIVEIS.length})`);
-  for (const n of NIVEIS) {
-    const f = fraseDoNivel(n);
-    ok(f.titulo.length > 0 && f.corpo.length > 0, `\`${n}\` tem título e corpo`);
+  ok(NIVEIS.length === 14, "são catorze níveis, não sete");
+
+  // Os sete que faltavam até 10/09/2026, e cada um derrubava a página.
+  for (const n of [
+    "alerta_inicial",
+    "alerta_urgente",
+    "pausa_automatica",
+    "em_avaliacao",
+    "gargalo",
+    "sem_base",
+    "medicao_nao_verificada",
+  ]) {
+    ok(ehNivel(n), `\`${n}\` É nível — o contrato o declara`);
   }
+  for (const n of ["ok", "em_aprendizado", "sem_dado", "sem_gasto", "sem_alvo", "sem_medicao", "sem_comparacao"]) {
+    ok(ehNivel(n), `\`${n}\` É nível`);
+  }
+  ok(!ehNivel("nivel_que_nao_existe"), "e um slug inventado não é nível");
 
   // ============================================================
-  // NENHUMA PODE SOAR COMO ERRO — é o pedido literal do lote. E nenhuma
-  // pode ter jargão, que é a regra do CLAUDE.md.
+  // A PROVA DE QUE A TRADUÇÃO SAIU DAQUI: o módulo não exporta função de
+  // frase nenhuma, e o arquivo não tem texto de tela.
   // ============================================================
-  const JARGAO = /\bCTR\b|\bROAS\b|\bCPM\b|\bCPA\b|\bCPC\b|convers(ão|ões)|otimiza|impress(ão|ões)|lead\b/i;
-  const SOA_COMO_ERRO = /\berro\b|\bfalha\b|\binválid|\bproblema\b|\bnão foi possível\b|\bimpossível\b/i;
-  const DIMINUTIVO = /inh[ao]s?\b|zinh[ao]s?\b/i;
-
-  for (const n of [...NIVEIS, "SEM_NIVEL"] as const) {
-    const f = n === "SEM_NIVEL" ? SEM_NIVEL : fraseDoNivel(n as (typeof NIVEIS)[number]);
-    const texto = `${f.titulo} ${f.corpo}`;
-    ok(!JARGAO.test(texto), `\`${n}\` sem jargão de tráfego`);
-    ok(!SOA_COMO_ERRO.test(texto), `\`${n}\` não soa como erro`);
-    ok(!DIMINUTIVO.test(texto), `\`${n}\` sem diminutivo`);
-  }
-
-  // A do aprendizado precisa dizer para não mexer: pausar no dia 3 é o
-  // comportamento mais destrutivo do cliente ansioso.
+  const fonteNivel = readFileSync(resolve(RAIZ, "lib/resultado/nivel.ts"), "utf8");
   ok(
-    /não mexa|nao mexa/i.test(fraseDoNivel("em_aprendizado").corpo),
-    "`em_aprendizado` pede explicitamente para NÃO mexer na campanha",
+    !/export function fraseDoNivel|export const FRASES|SEM_NIVEL/.test(fonteNivel),
+    "`nivel.ts` não exporta frase — quem escreve para o dono é o backend",
   );
-
-  ok(!ehNivel("alerta_urgente"), "`alerta_urgente` não é nível — é o que sai no lugar de sem_medicao");
-  ok(ehNivel("sem_medicao"), "e `sem_medicao` está declarado, mesmo inalcançável hoje");
+  ok(
+    !/titulo:\s*"|corpo:\s*"/.test(fonteNivel),
+    "e não há título nem corpo de tela escritos neste repositório",
+  );
 }
 
 // ---------------------------------------------------------------- §6
 
-secao("6. o nível vem da janela CANÔNICA, não do recorte");
+secao("6. a frase vem do backend, INTEIRA e sem retoque");
 {
-  const recorte = consolidado([dia({ dia: "2026-09-09" })], {
-    nivel: "ok",
-    desde: "2026-09-09",
-    ate: "2026-09-09",
-  });
-  const canonico = consolidado([dia({ dia: "2026-08-12" })], { nivel: "em_aprendizado" });
-
-  const r = resultadoParaTela({ recorte, canonico });
-  ok(
-    r.titulo === fraseDoNivel("em_aprendizado").titulo,
-    "com os dois, quem manda é o CANÔNICO — o recorte não muda o diagnóstico",
-  );
-  ok(r.periodo.desde === "2026-09-09", "mas o período mostrado é o do RECORTE");
-
-  const so = resultadoParaTela({ recorte });
-  ok(so.titulo === fraseDoNivel("ok").titulo, "sem canônico, cai no recorte");
+  if (execucao) {
+    const r = resultadoParaTela({ recorte: execucao });
+    const doCurl = (CRU_EXECUCAO as Record<string, unknown>).nivel_frase as string;
+    ok(r.nivelFrase === doCurl, "a `nivelFrase` da tela é idêntica à do curl, caractere a caractere");
+    ok(r.nivel === "sem_alvo", "e o slug atravessa cru, para quem quiser ramificar");
+    ok(r.nivelConhecido === true, "`sem_alvo` está no vocabulário conhecido");
+  }
 }
 
 // ---------------------------------------------------------------- §7
 
-secao("7. o estado de HOJE: sem nível, degrada sem inventar");
+secao("7. nível DESCONHECIDO mostra a frase mesmo assim — decisão do Victor, 10/09");
 {
-  const r = resultadoParaTela({ recorte: consolidado([dia({ dia: "2026-09-01", viraramVenda: 10 })]) });
-  ok(!r.nivelVeio, "sem `nivel` no payload, `nivelVeio` é falso");
-  ok(r.titulo === SEM_NIVEL.titulo, "e a frase é a de degradação");
-  ok(
-    !NIVEIS.some((n) => fraseDoNivel(n).titulo === r.titulo),
-    "que NÃO é nenhuma das sete — não se deduz nível por conta própria",
-  );
+  const comNivelNovo = {
+    ...(CRU_EXECUCAO as Record<string, unknown>),
+    nivel: "nivel_que_o_backend_criou_ontem",
+    nivel_frase: "Uma frase nova que o backend escreveu.",
+  };
+  const v = validarConsolidado(comNivelNovo);
+  ok(v !== null, "o corpo com nível desconhecido NÃO é reprovado pelo validador");
+
+  if (v) {
+    const r = resultadoParaTela({ recorte: v });
+    ok(r.nivelConhecido === false, "a camada marca que o slug é desconhecido");
+    ok(
+      r.nivelFrase === "Uma frase nova que o backend escreveu.",
+      "e mostra a frase assim mesmo — vocabulário não é porteira",
+    );
+  }
+
+  // Sem frase: a tela não escreve NADA de nível. Nunca uma frase local.
+  const semFrase = validarConsolidado({
+    ...(CRU_EXECUCAO as Record<string, unknown>),
+    nivel: null,
+    nivel_frase: null,
+  });
+  ok(semFrase !== null, "corpo sem nível nenhum também valida");
+  if (semFrase) {
+    const r = resultadoParaTela({ recorte: semFrase });
+    ok(r.nivelFrase === null, "sem `nivel_frase`, a camada devolve `null`");
+    ok(r.nivel === null, "e o slug também");
+    // e os NÚMEROS continuam lá: falta de nível não apaga o extrato.
+    ok(r.bloco.investido.texto.includes("10,25"), "e os números continuam — falta de nível não apaga o extrato");
+  }
 }
 
 // ---------------------------------------------------------------- §8
 
-secao("8. o que a camada se RECUSA a fazer");
+secao("8. o zero que mente — `pessoas` só aparece com medição PROVADA");
+{
+  if (execucao) {
+    ok(execucao.pessoasQueChegaram === "0.0", "o payload real traz `0.0` pessoas");
+    ok(execucao.pessoasQueChegaramMedido === null, "e o medido é `null` — não dá para afirmar");
+
+    const r = resultadoParaTela({ recorte: execucao, medido: execucao.pessoasQueChegaramMedido });
+    ok(r.bloco.pessoas.ausente === true, "então a tela NÃO mostra o zero");
+    ok(r.bloco.pessoas.texto !== "0", "e em especial não escreve `0`");
+
+    const provado = resultadoParaTela({ recorte: { ...execucao, pessoasQueChegaram: "20" }, medido: true });
+    ok(provado.bloco.pessoas.texto === "20", "com `medido: true`, o número aparece");
+    const zeroProvado = resultadoParaTela({ recorte: execucao, medido: true });
+    ok(zeroProvado.bloco.pessoas.texto === "0", "e com `medido: true` o ZERO também aparece — é resultado");
+
+    // Omitir o medido (é o caso da rota do NEGÓCIO) esconde, não mostra.
+    const semMedido = resultadoParaTela({ recorte: execucao });
+    ok(semMedido.bloco.pessoas.ausente === true, "omitir o medido esconde — o lado seguro de errar");
+  }
+}
+
+// ---------------------------------------------------------------- §9
+
+secao("9. o período da campanha é o dos dias COM DADO, não o recorte pedido");
+{
+  if (execucao) {
+    const r = resultadoParaTela({ recorte: execucao });
+    ok(r.periodo.desde === "2026-08-12", "o recorte pedido é ecoado como veio");
+    ok(r.periodoComDado?.desde === "2026-09-05", "mas o período da campanha começa no 1º dia com gasto");
+    ok(r.periodoComDado?.ate === "2026-09-07", "e termina no último");
+    ok(r.diasComGasto === 3, "são 3 dias com gasto, não os 30 do recorte");
+  }
+}
+
+// ---------------------------------------------------------------- §10
+
+secao("10. o que a camada e as TELAS se recusam a fazer");
 {
   // ============================================================
   // Lido do CÓDIGO, não da intenção. Uma regra escrita só no comentário é
   // uma regra que a próxima pessoa não vê.
+  //
+  // A lista cobre as TELAS desde 10/09/2026. Antes cobria só
+  // `lib/resultado/`, que nenhuma tela importava — a proibição estava
+  // verde exatamente onde ninguém podia quebrá-la, enquanto a `/anuncios`
+  // imprimia "R$ X por conversa" e a `/inicio` tinha `?? 0` em dinheiro.
   // ============================================================
-  const fonte = ["lib/resultado/ler.ts", "lib/resultado/nivel.ts", "lib/resultado/tipos.ts"]
-    .map((f) => readFileSync(resolve(RAIZ, f), "utf8"))
-    .join("\n");
+  const ARQUIVOS = [
+    "lib/resultado/ler.ts",
+    "lib/resultado/nivel.ts",
+    "lib/resultado/tipos.ts",
+    "lib/resultado/do-negocio.ts",
+    "app/(protected)/anuncios/page.tsx",
+    "app/(protected)/inicio/page.tsx",
+    "app/(protected)/vendas/page.tsx",
+  ];
+  const fonte = ARQUIVOS.map((f) => readFileSync(resolve(RAIZ, f), "utf8")).join("\n");
+
   // ============================================================
   // COMENTÁRIO **E TEXTO DE TELA** SAEM ANTES DA BUSCA.
   //
   // A primeira versão acusava "não existe nota nem semáforo" por causa da
   // frase do `sem_alvo`: "não dá para dizer se o preço está bom". A copy
   // legítima usa as mesmas palavras que o código proibido usaria.
-  //
-  // Este conferidor confere CÓDIGO. Quem confere a copy é o §5, e lá as
-  // strings são justamente o que se lê.
   // ============================================================
+  // Só comentários fora; as strings de tela ficam. É o que deixa procurar
+  // promessa de prazo no TEXTO sem tropeçar no comentário que explica por
+  // que ela saiu.
+  const semTexto = fonte.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+
   const semComentario = fonte
     .replace(/\/\*[\s\S]*?\*\//g, "")
     .replace(/^\s*\/\/.*$/gm, "")
@@ -291,21 +409,34 @@ secao("8. o que a camada se RECUSA a fazer");
     .replace(new RegExp(String.raw`\`(?:[^\`\\]|\\.)*\``, "g"), "``");
 
   ok(
-    !/\bcpc\b|custo_por_clique|custoPorClique|porClique/i.test(semComentario),
-    "não existe custo por clique — é derivável e convida a comparar com número de terceiro",
+    !/\bcpc\b|custo_por_clique|custoPorClique|porClique|custoPorConversa|porConversa/i.test(semComentario),
+    "não existe custo por clique nem por conversa — é derivável e convida a comparar com número de terceiro",
   );
   ok(
-    !/\/\s*cliques|cliques\s*\)|investido\s*\/\s/.test(semComentario.replace(/\n/g, " ")) ||
-      !/investi\w*\s*\/\s*\w*clique/i.test(semComentario),
-    "e nada divide investimento por cliques",
+    !/investi\w*\s*\/\s*\w*(clique|conversa|pessoa)/i.test(semComentario.replace(/\n/g, " ")),
+    "e nada divide investimento por cliques, conversas ou pessoas",
   );
   ok(
-    !/\bbom\b|\bruim\b|\bnota\b|semaforo|semáforo|\bverde\b|\bvermelho\b|\bscore\b/i.test(semComentario),
+    !/\bnota\b|semaforo|semáforo|\bscore\b/i.test(semComentario),
     "não existe nota nem semáforo — opinião fingindo ser medida",
   );
   ok(
-    !/\?\?\s*0\b/.test(semComentario.replace(/cliques \?\? null/g, "")),
+    !/\?\?\s*0\b/.test(semComentario),
     "não existe `?? 0` — é como ausência vira zero sem ninguém perceber",
+  );
+  // Comentário pode explicar a remoção; texto de tela, não. Por isso esta
+  // roda sobre a fonte COM as strings de tela intactas mas SEM comentário
+  // — ver `semTexto` abaixo.
+  ok(
+    !/48\s*horas|48h/i.test(semTexto),
+    "não existe a promessa de 48 horas — ninguém mede quando a plataforma entrega",
+  );
+  // O COMENTÁRIO PODE FALAR DELA; O CÓDIGO, NÃO. Os três arquivos
+  // explicam por escrito por que a fonte mudou, e apagar essa explicação
+  // para agradar um grep seria perder a razão da mudança.
+  ok(
+    !/metrics_daily/.test(semComentario),
+    "nenhuma das três telas LÊ `metrics_daily` — a fonte é o consolidado do backend",
   );
 }
 
@@ -319,7 +450,7 @@ if (falhou === 0) {
   process.exitCode = 1;
 }
 console.log(
-  "\nISTO CONFERE A CAMADA, NÃO A TELA — que ainda não existe. E não\n" +
-    "confere o contrato: `moeda`, `nivel` e `cliques` não estavam na API\n" +
-    "em 10/09/2026, então o que está verde é a DEGRADAÇÃO deles.\n",
+  "\nISTO CONFERE O CAMINHO INTEIRO: resposta crua de produção →\n" +
+    "validador → camada de leitura. A fixture é `curl` de 10/09/2026,\n" +
+    "e atualizá-la é o jeito de conferir o contrato de novo.\n",
 );

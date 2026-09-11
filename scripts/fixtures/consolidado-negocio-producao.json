@@ -1,0 +1,84 @@
+{
+    "business_id": "a85c37a9-df57-4829-985b-41bc306f8537",
+    "desde": "2026-08-12",
+    "ate": "2026-09-10",
+    "moeda": "BRL",
+    "moedas": [
+        "BRL"
+    ],
+    "por_execucao": [
+        {
+            "id_execucao": "aed42ce7-b1cd-49f8-9509-eb772aacb31a",
+            "moeda": "BRL",
+            "investiu_centavos": 1025,
+            "cliques": 64,
+            "impressoes": 1657,
+            "pessoas_que_chegaram": "0.0",
+            "nivel": "sem_alvo",
+            "nivel_frase": "Ainda não definimos juntos quanto vale a pena pagar por cada pessoa que chega. Sem esse número não dá para dizer se está bom ou ruim."
+        },
+        {
+            "id_execucao": "98447192-3968-4fb1-8062-b14d6a8751ae",
+            "moeda": null,
+            "investiu_centavos": null,
+            "cliques": null,
+            "impressoes": null,
+            "pessoas_que_chegaram": null,
+            "nivel": "sem_dado",
+            "nivel_frase": "Ainda não recebemos os números desses dias. Assim que a plataforma enviar, eles aparecem aqui."
+        }
+    ],
+    "nivel": "sem_alvo",
+    "nivel_frase": "Ainda não definimos juntos quanto vale a pena pagar por cada pessoa que chega. Sem esse número não dá para dizer se está bom ou ruim.",
+    "cliques": 64,
+    "impressoes": 1657,
+    "dias": [
+        {
+            "dia": "2026-08-31",
+            "investiu_centavos": null,
+            "pessoas_que_chegaram": null,
+            "viraram_venda": 10,
+            "voltou_centavos": 20000
+        },
+        {
+            "dia": "2026-09-01",
+            "investiu_centavos": null,
+            "pessoas_que_chegaram": null,
+            "viraram_venda": 12,
+            "voltou_centavos": 100000
+        },
+        {
+            "dia": "2026-09-05",
+            "investiu_centavos": 531,
+            "pessoas_que_chegaram": "0.0",
+            "viraram_venda": null,
+            "voltou_centavos": null
+        },
+        {
+            "dia": "2026-09-06",
+            "investiu_centavos": 462,
+            "pessoas_que_chegaram": "0.0",
+            "viraram_venda": null,
+            "voltou_centavos": null
+        },
+        {
+            "dia": "2026-09-07",
+            "investiu_centavos": 32,
+            "pessoas_que_chegaram": "0.0",
+            "viraram_venda": null,
+            "voltou_centavos": null
+        }
+    ],
+    "investiu_centavos": 1025,
+    "voltou_centavos": 120000,
+    "pessoas_que_chegaram": "0.0",
+    "vendas": 22,
+    "retorno_por_real": "117.07",
+    "dias_com_os_dois_lados": 0,
+    "tem_dado_da_plataforma": true,
+    "respondeu_hoje": false,
+    "dia_da_pergunta": null,
+    "respondeu_no_dia": null,
+    "execucoes_somadas": 2,
+    "dias_com_resposta_de_mais_de_uma_execucao": 0
+}

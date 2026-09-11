@@ -508,7 +508,7 @@ export function montarCadastro(negocio: NegocioParaCadastro): Cadastro {
       "abaixo_do_piso",
       "/verba",
       undefined,
-      `sua verba está em ${dinheiro(verba)} por mês e nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA)}`,
+      `sua verba está em ${dinheiro(verba, "BRL")} por mês e nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA, "BRL")}`,
     );
   }
 

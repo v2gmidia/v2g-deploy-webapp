@@ -82,11 +82,42 @@ const CONEXAO_VIVA: readonly string[] = ["connected", "expiring"];
 /** Janela dos números do painel. Mesma dos 7 dias que o `/inicio` já usava. */
 const DIAS_DE_JANELA = 7;
 
+/**
+ * O que a plataforma mediu no período do consolidado.
+ *
+ * ============================================================
+ * ERA `metrics_daily`, COM QUATRO `?? 0` EM CIMA DE UMA TABELA VAZIA.
+ *
+ * Os quatro campos eram `number`, semeados em zero e somados com
+ * `Number(m.spend ?? 0)`. A tabela tem ZERO LINHAS (medido em
+ * 01/09/2026 e de novo em 10/09), então o resultado era sempre
+ * `{0, 0, 0, 0}` — e a `/inicio` escrevia "R$ 0,00 investido" para um
+ * negócio que gastou R$ 10,25.
+ *
+ * Agora são anuláveis, e `null` é "não sabemos". A diferença entre
+ * `null` e `0` é o que separa "o coletor não mandou nada" de "a campanha
+ * não gastou" — e as duas frases falam do dinheiro do cliente.
+ *
+ * E ganhou `moeda`: a tabela antiga não tinha sequer a COLUNA, então
+ * somava reais com dólares australianos sem nenhuma dimensão que
+ * acusasse. Ver `docs/contrato-do-dashboard.md`.
+ * ============================================================
+ */
 export interface ResultadoDaSemana {
-  investido: number;
-  conversas: number;
-  receita: number;
-  alcance: number;
+  /** centavos inteiros, na `moeda`. `null` é "não sabemos". */
+  investidoCentavos: number | null;
+  /** ISO 4217. `null` NÃO autoriza assumir real. */
+  moeda: string | null;
+  /**
+   * Quantas pessoas chegaram — já travado por
+   * `pessoas_que_chegaram_medido`. Como a rota do NEGÓCIO não manda esse
+   * campo, isto é `null` hoje, sempre. É o lado seguro de errar: o
+   * contrato proíbe mostrar o zero enquanto a medição não estiver
+   * provada.
+   */
+  pessoas: number | null;
+  cliques: number | null;
+  impressoes: number | null;
 }
 
 export interface CampanhaNoAr {
@@ -147,7 +178,16 @@ const VAZIO: EstadoDoCliente = {
   proximo: null,
   melhoras: { fotos: 0, temLogo: false },
   blocosDaTrilha: 0,
-  resultado: { investido: 0, conversas: 0, receita: 0, alcance: 0 },
+  // SEM NEGÓCIO NÃO HÁ MEDIÇÃO — e ausência é `null`, não zero. Este
+  // literal era quatro zeros, e quatro zeros aqui são indistinguíveis de
+  // uma campanha que rodou e não gastou.
+  resultado: {
+    investidoCentavos: null,
+    moeda: null,
+    pessoas: null,
+    cliques: null,
+    impressoes: null,
+  },
   campanhasNoAr: [],
   verbaMensal: null,
   temNumero: false,
@@ -195,13 +235,8 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   desde.setDate(desde.getDate() - DIAS_DE_JANELA);
   const desdeISO = desde.toISOString().slice(0, 10);
 
-  const [
-    { data: conexao },
-    { data: criativos },
-    { data: campanhas },
-    { data: metricas },
-    execucao,
-  ] = await Promise.all([
+  const [{ data: conexao }, { data: criativos }, { data: campanhas }, execucao] =
+    await Promise.all([
     supabase.from("meta_connections").select("status").maybeSingle(),
     // O `is("arquivado_em", null)` fica NO SQL, e não some para o
     // predicado: as três contagens abaixo (foto de identidade, logo
@@ -217,12 +252,6 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
       .from("campaigns")
       .select("id, name, meta_status, created_at, published_at, publish_state")
       .order("created_at", { ascending: false }),
-    // `date` é `date` no banco, então a comparação é por string ISO de
-    // data — sem hora, sem fuso no meio.
-    supabase
-      .from("metrics_daily")
-      .select("spend, conversions, revenue, impressions")
-      .gte("date", desdeISO),
     // A ÚNICA leitura fora da RLS, e ela entra AQUI dentro de propósito.
     //
     // O desenho previa uma sexta ida sequencial, porque ela depende do
@@ -260,19 +289,6 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   const listaDeCampanhas = campanhas ?? [];
   const noAr = listaDeCampanhas.filter((c) => c.published_at !== null);
   const esperandoPublicacao = listaDeCampanhas.filter((c) => c.published_at === null);
-
-  const resultado = (metricas ?? []).reduce<ResultadoDaSemana>(
-    (acc, m) => ({
-      investido: acc.investido + Number(m.spend ?? 0),
-      // `conversions` guarda o evento otimizado da campanha, que é conversa
-      // iniciada — não venda. O nome da coluna é genérico; o significado,
-      // não.
-      conversas: acc.conversas + Number(m.conversions ?? 0),
-      receita: acc.receita + Number(m.revenue ?? 0),
-      alcance: acc.alcance + Number(m.impressions ?? 0),
-    }),
-    { investido: 0, conversas: 0, receita: 0, alcance: 0 },
-  );
 
   const cadastro = montarCadastro(linha);
   const resumo = resumirPendencias(
@@ -346,16 +362,35 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   // ============================================================
   // A `/inicio` PASSA A TER NÚMERO QUANDO O ACUMULADO TEM.
   //
-  // Até aqui `temNumero` era `metrics_daily.spend > 0`, e essa tabela tem
-  // ZERO LINHAS (medido em 01/09/2026) — a tela de resultado era
-  // inalcançável. O acumulado do backend é quem traz número agora, e ele
-  // traz o lado do DONO, que a `metrics_daily` nunca vai ter.
+  // Até 01/09 `temNumero` era `metrics_daily.spend > 0`, e essa tabela tem
+  // ZERO LINHAS — a tela de resultado era inalcançável. O acumulado do
+  // backend é quem traz número agora, e ele traz os dois lados: o do DONO
+  // e, desde o vínculo de 10/09/2026, o da PLATAFORMA.
   //
-  // O `||` mantém a fonte antiga viva em vez de arrancá-la: se um dia a
-  // `metrics_daily` receber linha, ela continua contando. As duas fontes
-  // convivendo é dívida registrada em `docs/decisoes.md` — não é o
-  // desenho final.
+  // A DÍVIDA FOI PAGA EM 10/09/2026: a `metrics_daily` saiu de vez.
+  // Enquanto as duas fontes conviviam, `resultado.investido > 0` nunca
+  // era verdade (tabela vazia) e o `||` só servia de promessa. Agora a
+  // única fonte é o acumulado — e ele traz os DOIS lados, o do dono e o
+  // da plataforma.
   // ============================================================
+  // ============================================================
+  // O RESULTADO VEM DO ACUMULADO DO NEGÓCIO, QUE JÁ ESTÁ NA MÃO.
+  //
+  // `pessoas` fica `null` de propósito: a rota do NEGÓCIO não manda
+  // `pessoas_que_chegaram_medido`, e sem essa prova o contrato proíbe
+  // mostrar a contagem — "0 pessoas chegaram" responde tanto a "medimos e
+  // ninguém veio" quanto a "não há o que conte contato aqui". Quem tem o
+  // campo é a rota da EXECUÇÃO, e quem a lê é `lib/resultado/do-negocio.ts`.
+  // Está na lista de pedidos ao backend.
+  // ============================================================
+  const resultado: ResultadoDaSemana = {
+    investidoCentavos: acumulado?.investiuCentavos ?? null,
+    moeda: acumulado?.moeda ?? null,
+    pessoas: null,
+    cliques: acumulado?.cliques ?? null,
+    impressoes: acumulado?.impressoes ?? null,
+  };
+
   const acumuladoTemNumero =
     acumulado !== null &&
     (acumulado.investiuCentavos !== null ||
@@ -373,7 +408,7 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     campanhaCriadaEm: esperandoPublicacao[0]?.created_at ?? null,
     publicacaoFalhou: listaDeCampanhas.some((c) => c.publish_state === "failed"),
     publicadaEm: noAr[noAr.length - 1]?.published_at ?? null,
-    temNumero: resultado.investido > 0 || acumuladoTemNumero,
+    temNumero: acumuladoTemNumero,
     execucaoDoBackend: execucaoDoDiaSeguinte,
     // ============================================================
     // ILEGÍVEL É NÃO SABER, E NÃO "NÃO TEM".

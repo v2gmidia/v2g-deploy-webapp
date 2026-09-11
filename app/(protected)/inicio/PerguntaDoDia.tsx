@@ -338,7 +338,21 @@ export function PerguntaDoDia({
         {/* O período está no rótulo de propósito: a tela de resultado
             mostra o ACUMULADO, e este número é de um dia só. */}
         Ontem você respondeu: {salvo.vendas}{" "}
-        {salvo.vendas === 1 ? "venda" : "vendas"}, {dinheiroDeCentavos(salvo.receita!)}.{" "}
+        {salvo.vendas === 1 ? "venda" : "vendas"},{" "}
+        {/* ============================================================
+            `"BRL"` LITERAL, E É UMA SUPOSIÇÃO DECLARADA.
+
+            Isto é o que o DONO digitou, e a resposta do dono não tem
+            campo de moeda em lugar nenhum: nem no formulário, nem no
+            `POST /execucoes/{id}/resposta-do-dono`, nem no consolidado
+            que devolve `voltou_centavos`.
+
+            O produto é de PME brasileira e o campo é um input em reais,
+            então real é verdade hoje. Mas é suposição, não dado — e
+            está na lista de pedidos ao backend, junto com a conta em
+            AUD que já existe no mesmo banco.
+            ============================================================ */}
+        {dinheiroDeCentavos(salvo.receita!, "BRL")}.{" "}
         {/* BOTÃO, não link — mas o mais leve que existe aqui. O resumo
             deixou de ser card justamente para não competir com a manchete;
             um botão de peso traria a competição de volta. Ver

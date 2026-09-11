@@ -1,7 +1,7 @@
 // Extensão `.ts` explícita: o `conferir:dia-seguinte` importa este arquivo
 // direto do Node, sem bundler para resolver especificador sem extensão.
 // Mesma regra do resto de `lib/dia-seguinte/` e de `lib/nichos/`.
-import { dinheiro, dinheiroDeCentavos } from "../formato.ts";
+import { dinheiro, dinheiroDeCentavos, type Moeda } from "../formato.ts";
 
 /**
  * Como um número que pode faltar aparece na tela.
@@ -33,9 +33,23 @@ import { dinheiro, dinheiroDeCentavos } from "../formato.ts";
  */
 export const AINDA_NAO_SABEMOS = "ainda não sabemos";
 
-/** Dinheiro em centavos, ou o recado de ausência. */
-export function dinheiroOuAusencia(centavos: number | null): string {
-  return centavos === null ? AINDA_NAO_SABEMOS : dinheiroDeCentavos(centavos);
+/**
+ * Dinheiro em centavos, ou o recado de ausência.
+ *
+ * ============================================================
+ * A MOEDA VEM DO CONSOLIDADO, E `null` SAI SEM SÍMBOLO.
+ *
+ * Até 10/09/2026 isto chamava um `dinheiroDeCentavos` com `"BRL"` cravado
+ * lá dentro. Com a Byond cobrando em AUD no mesmo banco, era um erro de
+ * fator de câmbio — ver o bloco de `lib/formato.ts`.
+ *
+ * Quem chama passa `consolidado.moeda`, que o backend manda no TOPO da
+ * resposta. Ele vindo `null` não autoriza assumir real: o número sai sem
+ * símbolo e quem lê a tela vê que a moeda não está declarada.
+ * ============================================================
+ */
+export function dinheiroOuAusencia(centavos: number | null, moeda: Moeda | null): string {
+  return centavos === null ? AINDA_NAO_SABEMOS : dinheiroDeCentavos(centavos, moeda);
 }
 
 /** Contagem, ou o recado de ausência. `0` é contagem, e aparece. */
@@ -60,9 +74,20 @@ export function contagemOuAusencia(valor: number | null): string {
  * Sem jargão: nada de "ROAS". A frase é a que o dono usa — "para cada R$ 1
  * que você colocou, voltaram R$ X".
  */
-export function frasePorRealInvestido(retornoPorReal: string | null): string | null {
+export function frasePorRealInvestido(
+  retornoPorReal: string | null,
+  moeda: Moeda | null,
+): string | null {
   if (retornoPorReal === null) return null;
   const n = Number(retornoPorReal);
   if (!Number.isFinite(n)) return null;
-  return `Pra cada R$ 1 que você colocou, voltaram ${dinheiro(n)}`;
+  // ============================================================
+  // OS DOIS LADOS DA FRASE USAM A MESMA MOEDA, e o `R$ 1` era literal.
+  //
+  // A razão é adimensional — "voltaram 2,40 para cada 1 investido" vale
+  // em qualquer moeda. O que NÃO vale é escrever `R$` nos dois lados de
+  // uma conta australiana. Sem moeda declarada, os dois lados saem sem
+  // símbolo, e a frase continua verdadeira.
+  // ============================================================
+  return `Pra cada ${dinheiro(1, moeda)} que você colocou, voltaram ${dinheiro(n, moeda)}`;
 }

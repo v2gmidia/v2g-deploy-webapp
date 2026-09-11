@@ -27,10 +27,12 @@ export {
   type Resultado,
 } from "./erros";
 export {
+  fichaDaExecucao,
   formatarConfianca,
   listarEmRevisao,
   type ConfiancaDeAgente,
   type ExecucaoEmRevisao,
+  type FichaDeExecucao,
 } from "./execucoes";
 
 /**

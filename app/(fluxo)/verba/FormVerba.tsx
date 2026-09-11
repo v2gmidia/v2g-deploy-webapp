@@ -42,7 +42,7 @@ export function FormVerba({ atual }: { atual: number | null }) {
       <p className="hint">
         {porDia !== null ? (
           <>
-            Dá mais ou menos <b>{dinheiro(porDia)} por dia</b> de anúncio. Esse dinheiro vai
+            Dá mais ou menos <b>{dinheiro(porDia, "BRL")} por dia</b> de anúncio. Esse dinheiro vai
             inteiro para o Facebook — a mensalidade da V2G é a outra cobrança, e vem separada.
           </>
         ) : (
@@ -64,8 +64,8 @@ export function FormVerba({ atual }: { atual: number | null }) {
           dá para consultar depois da conexão, e continua sem número
           inventado neste repositório — ver `./limites`. */}
       <p className="empty-note">
-        Nosso mínimo é {dinheiro(PISO_MENSAL_DA_CASA)} por mês, uns{" "}
-        {dinheiro(PISO_MENSAL_DA_CASA / DIAS)} por dia — abaixo disso o anúncio não roda. O
+        Nosso mínimo é {dinheiro(PISO_MENSAL_DA_CASA, "BRL")} por mês, uns{" "}
+        {dinheiro(PISO_MENSAL_DA_CASA / DIAS, "BRL")} por dia — abaixo disso o anúncio não roda. O
         Facebook tem um mínimo próprio, que muda de conta para conta e pode ser maior que o nosso:
         a gente confere na hora de publicar e avisa se o seu limite não alcançar.
       </p>

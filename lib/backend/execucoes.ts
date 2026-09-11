@@ -16,16 +16,20 @@ import { falha, registrarErroBackend, type Resultado } from "./erros";
  *   id_execucao, cliente_id, status, nicho, requer_revisao,
  *   motivos_revisao, confianca_minima, resultados, aprovacoes
  *
- * 1. NÃO EXISTE NOME DE NEGÓCIO. Nem aqui nem em `GET /execucoes/{id}`,
- *    que devolve o mesmo schema. O que existe é o nome da CAMPANHA
- *    gerada, dentro de `resultados["estruturar-campanha"]`, e só em
- *    algumas execuções. São coisas diferentes e a tela não pode
- *    apresentar uma como a outra.
+ * 1. ~~NÃO EXISTE NOME DE NEGÓCIO~~ — **VENCIDO. Medido em 10/09/2026:**
+ *    `RespostaExecucao` passou de nove para DEZESSETE campos e agora tem
+ *    `nome_negocio`, `criado_em`, `atualizado_em`, `canal_confirmado`,
+ *    `google_customer_id`, `tagueamento_possivel`, `explicacao_revisao` e
+ *    `motivos_estruturados`.
  *
- * 2. NÃO EXISTE NENHUM CAMPO DE TEMPO. Sem `criado_em`, sem
- *    `atualizado_em`. Não dá para dizer há quanto tempo a execução está
- *    parada — nem estimar. O briefing do backend lista `criado_em` na
- *    tabela `execucoes`, mas o endpoint não o expõe.
+ *    O que **continua** verdadeiro é a distinção: `nome_negocio` é o nome
+ *    do NEGÓCIO daquela rodada, e o nome da CAMPANHA gerada mora em
+ *    `resultados["estruturar-campanha"]`, só em algumas execuções. São
+ *    coisas diferentes e a tela não pode apresentar uma como a outra —
+ *    ver `fichaDaExecucao()` no fim deste arquivo.
+ *
+ * 2. ~~NÃO EXISTE NENHUM CAMPO DE TEMPO~~ — **VENCIDO na mesma medição.**
+ *    `criado_em` e `atualizado_em` estão no schema publicado.
  *
  * 3. `cliente_id` VEIO NULO NAS 29 EXECUÇÕES da fila real. O campo
  *    existe no schema; o dado, não.
@@ -196,4 +200,94 @@ export async function listarEmRevisao(): Promise<Resultado<ExecucaoEmRevisao[]>>
   }
 
   return { ok: true, dados: validadas };
+}
+
+/**
+ * `GET /execucoes/{id_execucao}` — a identificação de UMA rodada.
+ *
+ * ============================================================
+ * ESTA ROTA NÃO TEM `profile_id`. O ID VEM DE DENTRO, NUNCA DA URL.
+ *
+ * `/negocios/{id}/consolidado` e `/negocios/{id}/execucao` conferem o dono
+ * (perfil errado devolve 404, medido em 10/09/2026). **Esta aqui não
+ * confere nada**: quem tem o `X-V2G-Token` — e o servidor do Next tem —
+ * lê qualquer execução de qualquer cliente.
+ *
+ * Por isso o único chamador legítimo é `lib/resultado/do-negocio.ts`, que
+ * só pergunta por id que veio do `porExecucao` do consolidado do negócio
+ * da sessão — e esse consolidado JÁ passou pelo `profile_id`. A lista é a
+ * autorização.
+ *
+ * **Nunca chame isto com id de `searchParams`, de `params` de rota ou de
+ * formulário.** Um id na URL viraria "troque o uuid e veja a campanha do
+ * vizinho". `pnpm conferir:campanha-da-sessao` trava isso.
+ * ============================================================
+ *
+ * O QUE ELA DÁ, e o que não dá — medido em 10/09/2026 nas duas execuções
+ * da V2G:
+ *
+ *   nome_negocio       "TESTE-DADOS-REAIS (V2G)" · "V2G"
+ *   status             "cadastro_completo" · "aguardando_fotos"
+ *   canal_confirmado   `null` nas duas — o campo existe, o dado não
+ */
+export interface FichaDeExecucao {
+  idExecucao: string;
+  /**
+   * O nome do NEGÓCIO daquela rodada, que é o que o backend guarda.
+   *
+   * **Não é o nome da campanha na plataforma.** Esse não existe em rota
+   * nenhuma — o que há é `resultados["estruturar-campanha"].nome`, que é o
+   * nome que a IA propôs, não o que está no Gerenciador de Anúncios.
+   */
+  nomeNegocio: string | null;
+  /** chave para ramificar. NÃO renderize — ver `lib/dia-seguinte/tipos.ts`. */
+  status: string | null;
+  /**
+   * `meta` ou `google`. **`null` nas duas execuções da V2G, medido.**
+   *
+   * `null` não vira "meta" por palpite: a tela não escreve canal nenhum.
+   */
+  canal: string | null;
+}
+
+export async function fichaDaExecucao(args: {
+  /** **de `porExecucao`, nunca de URL.** Ver o bloco acima. */
+  idExecucao: string;
+}): Promise<Resultado<FichaDeExecucao>> {
+  const resposta = await obter(`/execucoes/${encodeURIComponent(args.idExecucao)}`, {
+    contexto: "ficha-da-execucao",
+    timeoutMs: TIMEOUTS.rapido,
+  });
+  if (!resposta.ok) return resposta;
+
+  const bruto = resposta.dados;
+  if (typeof bruto !== "object" || bruto === null) {
+    registrarErroBackend("ficha-da-execucao", {
+      metodo: "GET",
+      caminho: "/execucoes/{id}",
+      categoria: "resposta_ilegivel",
+    });
+    return falha("resposta_ilegivel");
+  }
+  const o = bruto as Record<string, unknown>;
+
+  const idExecucao = texto(o.id_execucao);
+  if (!idExecucao) {
+    registrarErroBackend("ficha-da-execucao", {
+      metodo: "GET",
+      caminho: "/execucoes/{id}",
+      categoria: "resposta_ilegivel",
+    });
+    return falha("resposta_ilegivel");
+  }
+
+  return {
+    ok: true,
+    dados: {
+      idExecucao,
+      nomeNegocio: texto(o.nome_negocio),
+      status: texto(o.status),
+      canal: texto(o.canal_confirmado),
+    },
+  };
 }

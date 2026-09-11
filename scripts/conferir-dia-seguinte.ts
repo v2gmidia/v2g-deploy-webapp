@@ -522,9 +522,15 @@ secao("3.3 que dia é ONTEM — no fuso de São Paulo, não no do servidor");
 
 secao("3.2 dinheiro em centavos");
 {
-  ok(dinheiroDeCentavos(160000).includes("1.600,00"), "160000 centavos → R$ 1.600,00");
-  ok(dinheiroDeCentavos(0).includes("0,00"), "zero centavos → R$ 0,00 (zero é valor)");
-  ok(dinheiroDeCentavos(1).includes("0,01"), "um centavo não some no arredondamento");
+  ok(dinheiroDeCentavos(160000, "BRL").includes("1.600,00"), "160000 centavos → R$ 1.600,00");
+  ok(dinheiroDeCentavos(0, "BRL").includes("0,00"), "zero centavos → R$ 0,00 (zero é valor)");
+  ok(dinheiroDeCentavos(1, "BRL").includes("0,01"), "um centavo não some no arredondamento");
+  // A moeda é parâmetro desde 10/09/2026 — ver `lib/formato.ts`.
+  ok(dinheiroDeCentavos(11345, "AUD").includes("AU$"), "AUD sai com AU$, não com R$");
+  ok(
+    !/R\$|A\$/.test(dinheiroDeCentavos(11345, null)),
+    "sem moeda declarada não sai símbolo nenhum",
+  );
 }
 
 secao("3.4 na tela — `null` NUNCA vira R$ 0,00");
@@ -535,18 +541,23 @@ secao("3.4 na tela — `null` NUNCA vira R$ 0,00");
   // desligado". Mostrar R$ 0,00 diz ao dono que a campanha dele não gastou
   // nada — afirmação sobre o dinheiro dele, e falsa.
   // ============================================================
-  ok(dinheiroOuAusencia(null) === AINDA_NAO_SABEMOS, "dinheiro nulo NÃO vira R$ 0,00");
-  ok(dinheiroOuAusencia(0).includes("0,00"), "mas zero de verdade aparece como R$ 0,00");
-  ok(dinheiroOuAusencia(34000).includes("340,00"), "e o valor aparece convertido de centavos");
+  ok(
+    dinheiroOuAusencia(null, "BRL") === AINDA_NAO_SABEMOS,
+    "dinheiro nulo NÃO vira R$ 0,00",
+  );
+  ok(dinheiroOuAusencia(0, "BRL").includes("0,00"), "mas zero de verdade aparece como R$ 0,00");
+  ok(dinheiroOuAusencia(34000, "BRL").includes("340,00"), "e o valor aparece convertido de centavos");
+  // Moeda ausente NÃO vira real — ver `lib/formato.ts`.
+  ok(!/R\$/.test(dinheiroOuAusencia(34000, null)), "e sem moeda declarada não sai R$");
 
   ok(contagemOuAusencia(null) === AINDA_NAO_SABEMOS, "contagem nula NÃO vira 0");
   ok(contagemOuAusencia(0) === "0", "zero venda aparece como 0 — é sinal forte, não silêncio");
   ok(contagemOuAusencia(3) === "3", "e a contagem aparece");
 
   // O retorno vem CALCULADO. Esta função veste de frase e não divide nada.
-  ok(frasePorRealInvestido(null) === null, "retorno nulo não vira frase");
-  ok(frasePorRealInvestido("nao-e-numero") === null, "retorno ilegível não vira frase");
-  const f = frasePorRealInvestido("4.71");
+  ok(frasePorRealInvestido(null, "BRL") === null, "retorno nulo não vira frase");
+  ok(frasePorRealInvestido("nao-e-numero", "BRL") === null, "retorno ilegível não vira frase");
+  const f = frasePorRealInvestido("4.71", "BRL");
   ok(f !== null && f.includes("4,71"), `"4.71" vira "${f}"`);
   ok(f !== null && !/ROAS|retorno sobre/i.test(f), "e a frase não tem jargão de tráfego");
 }

@@ -1,8 +1,7 @@
-import { fraseDoNivel, SEM_NIVEL, type Nivel } from "./nivel.ts";
+import { ehNivel } from "./nivel.ts";
 import type {
   BlocoDeMoeda,
-  ConsolidadoCru,
-  LinhaCrua,
+  ConsolidadoBase,
   Moeda,
   ResultadoParaTela,
   ValorNaTela,
@@ -15,30 +14,32 @@ import type {
  * ELA EXISTE PARA A TELA NÃO DECIDIR NADA.
  *
  * Quem decide o que "não sabemos" quer dizer, o que se soma e o que não
- * se soma, e qual frase o nível vira — é aqui. A tela recebe texto pronto
- * e uma marca de ausência, e a única escolha que sobra para ela é visual.
+ * se soma — é aqui. A tela recebe texto pronto e uma marca de ausência, e
+ * a única escolha que sobra para ela é visual.
  *
- * O motivo é o mesmo do `lib/estado/frases.ts`: quando cinco telas leem a
- * mesma resposta e cada uma decide sozinha o que aquilo significa, elas
- * divergem — e já divergiram neste repositório.
+ * O que ela NÃO decide mais: o que o nível significa. Isso é do backend, e
+ * chega pronto em `nivelFrase`.
  * ============================================================
  *
  * ============================================================
- * O QUE ESTA CAMADA SE RECUSA A FAZER, e o backend foi explícito:
+ * O QUE ESTA CAMADA SE RECUSA A FAZER, e o contrato foi explícito:
  *
  *   nota ou semáforo     opinião fingindo ser medida. Não existe função
  *                        aqui que devolva "bom" ou "ruim"
  *   custo por clique     é derivável, e é a porta para o dono comparar
  *                        com um número que ouviu de alguém. Não se calcula
- *   "0 pessoas chegaram" enquanto o medido for `null`. Ausência não vira
- *                        zero em lugar nenhum
+ *   custo por conversa   idem, e o produto compara com o CPL-alvo dele,
+ *                        que ainda não existe
+ *   "0 pessoas chegaram" enquanto o medido não for `true`. Ausência não
+ *                        vira zero em lugar nenhum
+ *   somar moedas         sem taxa de câmbio não dá, e taxa de câmbio aqui
+ *                        seria inventar dado de mercado
  *
- * As três estão conferidas em `pnpm conferir:resultado`. Se alguém
- * acrescentar qualquer uma, o conferidor fica vermelho.
+ * Todas estão conferidas em `pnpm conferir:resultado`.
  * ============================================================
  */
 
-/** O que se escreve no lugar do número que não existe. Mesma palavra do `lib/dia-seguinte/exibir.ts`. */
+/** O que se escreve no lugar do número que não existe. */
 export const AINDA_NAO_SABEMOS = "ainda não sabemos";
 
 /** Ausência: cinza, discreta, e nunca um número. */
@@ -52,14 +53,13 @@ const presente = (texto: string): ValorNaTela => ({ texto, ausente: false });
  * ============================================================
  * SEM MOEDA, NÃO SE ESCREVE SÍMBOLO. NENHUM.
  *
- * "A$ 113,45" e "R$ 113,45" são o mesmo número numa tela sem moeda, e a
- * diferença entre os dois é de mais de três para um. A Byond cobra em
- * dólar australiano.
+ * "A$ 113,45" e "R$ 113,45" são o mesmo pixel, e a diferença entre os
+ * dois é de mais de três para um. A Byond cobra em dólar australiano.
  *
- * Enquanto o backend não manda `moeda`, o valor sai **sem símbolo** e
- * quem monta a tela sabe, pelo `moeda: null` do bloco, que precisa dizer
- * que a moeda ainda não é conhecida. Chutar `R$` seria escrever um número
- * errado com aparência de certo — que é pior que não escrever.
+ * Com `moeda: null` o valor sai **sem símbolo**, e quem monta a tela sabe,
+ * pelo `moeda` do bloco, que a moeda não é conhecida. Chutar `R$` seria
+ * escrever um número errado com aparência de certo — que é pior que não
+ * escrever.
  * ============================================================
  */
 export function dinheiroDaMoeda(centavos: number, moeda: Moeda | null): string {
@@ -83,7 +83,7 @@ export function dinheiroDaMoeda(centavos: number, moeda: Moeda | null): string {
 /**
  * O `Decimal` que a Meta manda como string.
  *
- * Continua string até aqui — converter antes jogaria fora precisão que a
+ * Continua string até aqui — converter antes jogaria fora a precisão que a
  * atribuição por modelo da Meta usa. Aqui é a hora de exibir, então é a
  * hora de converter.
  */
@@ -91,8 +91,6 @@ function pessoasComoTexto(bruto: string | null): ValorNaTela {
   if (bruto === null) return ausente();
   const n = Number(bruto);
   if (!Number.isFinite(n)) return ausente();
-  // `0` É CONTAGEM e aparece — mas só quando o backend disse zero. A
-  // regra "nunca 0 pessoas enquanto for null" está no `=== null` acima.
   const arredondado = Math.round(n * 100) / 100;
   return presente(arredondado.toLocaleString("pt-BR"));
 }
@@ -106,105 +104,127 @@ function dinheiroOuAusente(centavos: number | null, moeda: Moeda | null): ValorN
 }
 
 /**
- * Soma que preserva a ausência.
+ * Quantas pessoas chegaram — **ou o silêncio, que é o padrão de hoje**.
  *
  * ============================================================
- * `null + 5` NÃO É `5`. Se um dia não sabemos, o total não sabe.
+ * O ZERO QUE MENTE, E QUEM O SEPARA DO ZERO QUE INFORMA.
  *
- * A tentação é `(a ?? 0) + (b ?? 0)`, e ela transforma sete dias sem dado
- * e um dia com R$ 10 em "você investiu R$ 10 no mês" — uma afirmação
- * sobre o dinheiro do cliente, e falsa.
+ * `pessoas_que_chegaram: 0` responde a duas perguntas opostas:
  *
- * Aqui: se TODOS os dias são `null`, o total é `null`. Se pelo menos um
- * tem número, o total é a soma dos que têm — e quem monta a tela sabe,
- * pelo `diasComDado`, que o total é parcial.
+ *   "medimos, e ninguém chegou"        → 0, e é um resultado RUIM
+ *   "não há o que conte contato aqui"  → 0, e não é resultado nenhum
+ *
+ * Quem separa é `pessoas_que_chegaram_medido`, e ele só vira `true` quando
+ * houve conversão registrada — conversão registrada **prova** que a
+ * medição funciona. Medido em 10/09/2026: vem `null` nas três campanhas
+ * com dinheiro real, e vai continuar vindo até alguém converter.
+ *
+ * Então a regra é `=== true`, e não `!== false`: enquanto não houver
+ * prova, a tela mostra a `nivelFrase` no lugar do número.
  * ============================================================
  */
-function somaPreservandoAusencia(valores: (number | null)[]): number | null {
-  const comDado = valores.filter((v): v is number => v !== null);
-  return comDado.length === 0 ? null : comDado.reduce((a, b) => a + b, 0);
+function pessoasSeForMedido(
+  bruto: string | null,
+  medido: boolean | null | undefined,
+): ValorNaTela {
+  return medido === true ? pessoasComoTexto(bruto) : ausente();
+}
+
+/** O mesmo, como número. Mesma trava — ver `pessoasSeForMedido`. */
+function pessoasComoNumero(
+  bruto: string | null,
+  medido: boolean | null | undefined,
+): number | null {
+  if (medido !== true || bruto === null) return null;
+  const n = Number(bruto);
+  return Number.isFinite(n) ? n : null;
 }
 
 /**
- * Agrupa as linhas por moeda.
+ * O bloco da moeda do consolidado.
  *
- * Linha sem moeda cai num grupo `null` — que é onde TODAS caem hoje,
- * porque o campo ainda não vem.
+ * ============================================================
+ * OS TOTAIS SÃO OS DO TOPO, E NÃO A SOMA DOS DIAS.
+ *
+ * O backend já soma, e a tela tem que bater com ele: o critério de aceite
+ * deste lote é a função devolver os MESMOS números que o `curl` devolve.
+ * Ressomar os dias aqui criaria uma segunda definição de "quanto
+ * investiu" — e a divergência só apareceria quando alguém comparasse a
+ * tela com o log, que é o defeito mais caro de achar que existe.
+ * ============================================================
  */
-function porMoeda(dias: LinhaCrua[]): Map<Moeda | null, LinhaCrua[]> {
-  const grupos = new Map<Moeda | null, LinhaCrua[]>();
-  for (const d of dias) {
-    const chave = d.moeda ?? null;
-    grupos.set(chave, [...(grupos.get(chave) ?? []), d]);
-  }
-  return grupos;
-}
-
-function blocoDe(moeda: Moeda | null, dias: LinhaCrua[]): BlocoDeMoeda {
+function blocoDe(c: ConsolidadoBase, medido: boolean | null | undefined): BlocoDeMoeda {
+  const moeda = c.moeda;
   return {
     moeda,
-    investido: dinheiroOuAusente(
-      somaPreservandoAusencia(dias.map((d) => d.investiuCentavos)),
-      moeda,
-    ),
-    cliques: contagem(somaPreservandoAusencia(dias.map((d) => d.cliques ?? null))),
-    pessoas: pessoasComoTexto(
-      dias.some((d) => d.pessoasQueChegaram !== null)
-        ? String(
-            dias.reduce((soma, d) => soma + (d.pessoasQueChegaram ? Number(d.pessoasQueChegaram) : 0), 0),
-          )
-        : null,
-    ),
-    vendas: contagem(somaPreservandoAusencia(dias.map((d) => d.viraramVenda))),
-    voltou: dinheiroOuAusente(somaPreservandoAusencia(dias.map((d) => d.voltouCentavos)), moeda),
-    dias: dias.length,
+    investido: dinheiroOuAusente(c.investiuCentavos, moeda),
+    // `cliques` e `impressoes` somam sempre, inclusive entre moedas:
+    // clique é clique em qualquer moeda. É o dinheiro que não soma.
+    cliques: contagem(c.cliques),
+    impressoes: contagem(c.impressoes),
+    pessoas: pessoasSeForMedido(c.pessoasQueChegaram, medido),
+    vendas: contagem(c.vendas),
+    voltou: dinheiroOuAusente(c.voltouCentavos, moeda),
   };
+}
+
+/** Os dias com gasto conhecido, em ordem. `dias[]` já vem ordenado. */
+function diasComGasto(c: ConsolidadoBase): string[] {
+  return c.dias.filter((d) => d.investiuCentavos !== null).map((d) => d.dia);
 }
 
 /**
  * O resultado, pronto para a tela.
  *
  * ============================================================
- * DOIS ARGUMENTOS SEPARADOS, E É O QUE IMPEDE O BURACO DA JANELA.
+ * O NÍVEL É SEMPRE SOBRE 30 DIAS CANÔNICOS — e quem garante é o BACKEND.
  *
- * `recorte` é o que o usuário pediu ver. `canonico` é a janela fixa de 30
- * dias, e é DELE que o nível sai.
+ * Decisão do Gabriel, 10/09/2026, registrada no contrato: o recorte que a
+ * tela pede (`desde`/`ate`) muda os NÚMEROS — `investiu`, `cliques`,
+ * `impressoes`, `dias[]` — e **não muda o `nivel` nem a `nivel_frase`**,
+ * que respondem sempre sobre a mesma janela do coletor.
  *
- * O backend mediu que o nível depende da janela: com um seletor de
- * período, o dono conseguiria fazer a tela dizer "pausamos sua campanha"
- * só mexendo no zoom. Separar os dois na assinatura é o que torna esse
- * erro impossível de cometer sem perceber — quem quiser o nível do
- * recorte tem que passar o recorte duas vezes, de propósito.
+ * O motivo, medido pelo backend: com 90 dias de dado, o recorte de 06 a 10
+ * saía `pausa_automatica` e o recorte padrão saía `sem_base`. E a frase de
+ * `pausa_automatica` afirma "Pausamos a campanha" — com um seletor de
+ * período, o dono conseguiria fazer o painel afirmar que pausamos a
+ * campanha dele mexendo num filtro.
  *
- * Quando `canonico` não vem, o nível é o do recorte E a tela avisa que
- * ainda não sabe interpretar — nunca o contrário.
+ * `canonico` continua na assinatura como cinto e suspensório: se um dia a
+ * garantia do backend cair, quem tiver a janela canônica na mão passa ela
+ * aqui e o nível sai de lá. Quem não passa recebe o nível do recorte, que
+ * hoje é a mesma coisa.
  * ============================================================
  */
 export function resultadoParaTela(args: {
   /** o que o usuário pediu ver */
-  recorte: ConsolidadoCru;
-  /** a janela canônica de 30 dias, de onde o nível sai */
-  canonico?: ConsolidadoCru | null;
+  recorte: ConsolidadoBase;
+  /**
+   * `pessoas_que_chegaram_medido`. **Só a rota da EXECUÇÃO manda.** Quem lê
+   * o consolidado do NEGÓCIO não tem esse campo e deve omitir — e a omissão
+   * esconde o número, que é o lado seguro de errar.
+   */
+  medido?: boolean | null;
+  /** a janela canônica de 30 dias, se quem chama a tiver */
+  canonico?: ConsolidadoBase | null;
 }): ResultadoParaTela {
   const { recorte } = args;
-  const nivelBruto: Nivel | null | undefined = (args.canonico ?? recorte).nivel;
+  const fonteDoNivel = args.canonico ?? recorte;
 
-  const frase = nivelBruto ? fraseDoNivel(nivelBruto) : SEM_NIVEL;
-
-  const grupos = porMoeda(recorte.dias);
-  const blocos = [...grupos.entries()]
-    .map(([moeda, dias]) => blocoDe(moeda, dias))
-    // Ordem estável: a moeda conhecida antes da desconhecida, e depois
-    // alfabética. Sem isto a tela trocaria de ordem entre carregamentos.
-    .sort((a, b) => (a.moeda ?? "zzz").localeCompare(b.moeda ?? "zzz"));
+  const comGasto = diasComGasto(recorte);
 
   return {
-    titulo: frase.titulo,
-    corpo: frase.corpo,
-    bola: frase.bola,
-    nivelVeio: Boolean(nivelBruto),
-    blocos: blocos.length > 0 ? blocos : [blocoDe(recorte.moeda ?? null, [])],
-    moedasMisturadas: grupos.size > 1,
+    nivel: fonteDoNivel.nivel,
+    nivelFrase: fonteDoNivel.nivelFrase,
+    nivelConhecido: ehNivel(fonteDoNivel.nivel),
+    bloco: blocoDe(recorte, args.medido),
+    pessoasQueChegaram: pessoasComoNumero(recorte.pessoasQueChegaram, args.medido),
     periodo: { desde: recorte.desde, ate: recorte.ate },
+    periodoComDado:
+      comGasto.length === 0
+        ? null
+        : { desde: comGasto[0]!, ate: comGasto[comGasto.length - 1]! },
+    diasComGasto: comGasto.length,
+    temDadoDaPlataforma: recorte.temDadoDaPlataforma,
   };
 }

@@ -1,0 +1,44 @@
+{
+    "id_execucao": "aed42ce7-b1cd-49f8-9509-eb772aacb31a",
+    "desde": "2026-08-12",
+    "ate": "2026-09-10",
+    "dias": [
+        {
+            "dia": "2026-09-05",
+            "investiu_centavos": 531,
+            "pessoas_que_chegaram": "0.0",
+            "viraram_venda": null,
+            "voltou_centavos": null
+        },
+        {
+            "dia": "2026-09-06",
+            "investiu_centavos": 462,
+            "pessoas_que_chegaram": "0.0",
+            "viraram_venda": null,
+            "voltou_centavos": null
+        },
+        {
+            "dia": "2026-09-07",
+            "investiu_centavos": 32,
+            "pessoas_que_chegaram": "0.0",
+            "viraram_venda": null,
+            "voltou_centavos": null
+        }
+    ],
+    "investiu_centavos": 1025,
+    "voltou_centavos": null,
+    "pessoas_que_chegaram": "0.0",
+    "vendas": null,
+    "retorno_por_real": null,
+    "dias_com_os_dois_lados": 0,
+    "respondeu_hoje": false,
+    "dia_da_pergunta": null,
+    "respondeu_no_dia": null,
+    "tem_dado_da_plataforma": true,
+    "moeda": "BRL",
+    "nivel": "sem_alvo",
+    "nivel_frase": "Ainda não definimos juntos quanto vale a pena pagar por cada pessoa que chega. Sem esse número não dá para dizer se está bom ou ruim.",
+    "cliques": 64,
+    "impressoes": 1657,
+    "pessoas_que_chegaram_medido": null
+}

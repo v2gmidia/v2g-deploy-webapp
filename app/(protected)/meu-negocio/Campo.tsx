@@ -130,11 +130,11 @@ function Valor({ campo }: { campo: CampoNaTela }) {
     const par = campo.valor as { de: unknown; ate: unknown };
     const de = Number(par.de);
     const ate = Number(par.ate);
-    if (!Number.isFinite(de)) return <>{Number.isFinite(ate) ? dinheiro(ate) : "—"}</>;
-    if (!Number.isFinite(ate) || de === ate) return <>{dinheiro(de)}</>;
+    if (!Number.isFinite(de)) return <>{Number.isFinite(ate) ? dinheiro(ate, "BRL") : "—"}</>;
+    if (!Number.isFinite(ate) || de === ate) return <>{dinheiro(de, "BRL")}</>;
     return (
       <>
-        de {dinheiro(de)} a {dinheiro(ate)}
+        de {dinheiro(de, "BRL")} a {dinheiro(ate, "BRL")}
       </>
     );
   }
@@ -154,7 +154,7 @@ function Valor({ campo }: { campo: CampoNaTela }) {
     );
   }
 
-  if (campo.dinheiro && typeof campo.valor === "number") return <>{dinheiro(campo.valor)}</>;
+  if (campo.dinheiro && typeof campo.valor === "number") return <>{dinheiro(campo.valor, "BRL")}</>;
   if (typeof campo.valor === "boolean") return <>{campo.valor ? "sim" : "não"}</>;
   return <>{String(campo.valor)}</>;
 }

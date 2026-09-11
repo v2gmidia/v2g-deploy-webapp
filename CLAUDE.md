@@ -56,6 +56,17 @@ pnpm conferir:criativos
 pnpm conferir:cascata
 pnpm conferir:migrations
 pnpm conferir:lista-branca
+pnpm conferir:dia-seguinte
+pnpm conferir:identidade      # id da requisição endereçando linha
+pnpm conferir:resultado       # a camada de leitura do dashboard
+pnpm conferir:envio           # o que o cliente pode subir
+pnpm conferir:signed-request
+pnpm conferir:apresentada
+
+# FORA da suíte, de propósito — dependem de rede ou não dão veredito:
+pnpm conferir:admin              # quem depende do cliente admin
+pnpm conferir:rota-apresentada   # o contrato, contra produção
+pnpm diagnostico:card
 
 pnpm db:migrate           # supabase db push
 ```
@@ -79,6 +90,10 @@ São ~45 documentos. **Não leia todos.** Escolha pelo assunto:
   camada `lib/dados/` que ele desenha nunca foi construída; quem faz esse
   papel é `lib/backend/`. Vale pela §0, que registra um briefing que
   contradizia o repositório inteiro.
+- `docs/o-que-o-webapp-consome.md` — **as 6 rotas de 49 que o webapp
+  consome**, as 4 escritas sem consumidor, as 39 ignoradas com dono, e o
+  que cada tela mostra. Leia antes de assumir que alguma tela mostra
+  resultado de campanha: **nenhuma mostra**
 - `docs/backend-integracao.md` — como o app fala com o backend
 - `docs/schema-consolidado.md` — o schema do banco
 - `docs/disparo-pipeline.md` — o disparo do pipeline ponta a ponta

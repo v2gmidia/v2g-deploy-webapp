@@ -10,12 +10,44 @@
  * honesta: pode faltar venda aqui, nunca sobrar. Na dúvida,
  * arredondamos pra baixo". Arredondar para cima transformaria essa
  * frase em mentira na terceira casa decimal.
+ *
+ * ============================================================
+ * A MOEDA É PARÂMETRO OBRIGATÓRIO, E É POR ISSO QUE 31 CHAMADAS MUDARAM.
+ *
+ * Até 10/09/2026 `dinheiro()` tinha `currency: "BRL"` cravado, e era a
+ * única função de dinheiro que as telas vivas usavam. Com a Byond Colour
+ * cobrando em dólar australiano no mesmo banco, isso é um erro de fator
+ * de câmbio esperando o primeiro cliente estrangeiro: "A$ 113,45" e
+ * "R$ 113,45" são o mesmo pixel e a diferença entre eles é de mais de
+ * três para um.
+ *
+ * Podia ter virado parâmetro opcional com `"BRL"` de padrão. Não virou,
+ * de propósito: padrão é o que ninguém revisa, e o chamador que herdasse
+ * o padrão errado não apareceria em lugar nenhum. **Obrigatório força
+ * cada chamada a declarar de que moeda está falando** — e as que falam de
+ * dinheiro que o próprio cliente digitou em reais (verba, ticket médio)
+ * passam `"BRL"` porque é verdade, não porque é o padrão.
+ *
+ * `null` sai SEM SÍMBOLO. É a regra que já valia em
+ * `lib/resultado/ler.ts::dinheiroDaMoeda` e agora vale aqui: sem saber a
+ * moeda, escrever um símbolo é escrever um número errado com aparência
+ * de certo.
+ * ============================================================
  */
 
-export function dinheiro(valor: number): string {
+/** O código ISO da moeda, como o backend manda. `BRL`, `AUD`. */
+export type Moeda = string;
+
+export function dinheiro(valor: number, moeda: Moeda | null): string {
+  if (!moeda) {
+    return valor.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }
   return valor.toLocaleString("pt-BR", {
     style: "currency",
-    currency: "BRL",
+    currency: moeda,
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
@@ -47,8 +79,8 @@ export function retornoPorReal(receita: number, investido: number): number | nul
  * "não sabemos" e "não gastou nada" são coisas diferentes, e a tela que
  * as confunde mente sobre o dinheiro do cliente.
  */
-export function dinheiroDeCentavos(centavos: number): string {
-  return dinheiro(centavos / 100);
+export function dinheiroDeCentavos(centavos: number, moeda: Moeda | null): string {
+  return dinheiro(centavos / 100, moeda);
 }
 
 /**
