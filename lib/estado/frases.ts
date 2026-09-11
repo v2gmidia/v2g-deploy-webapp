@@ -94,6 +94,14 @@ export interface Etapa {
   desde?: string;
   /** a gente passou do prazo e a etapa parou de explicar e admitiu */
   admitindo: boolean;
+  /**
+   * Esta etapa fechou pela EVIDÊNCIA DO GASTO, e não pelo artefato local.
+   *
+   * Só `concluidasPeloGasto()` liga isto, e existe para a lista poder
+   * dizer de onde veio a conclusão em vez de fingir que o artefato
+   * apareceu. Ver o bloco daquela função.
+   */
+  concluidaPeloGasto?: boolean;
 }
 
 // ------------------------------------------------------------------ prazos
@@ -253,6 +261,82 @@ export function montarEtapas(m: MedidaDoCliente, agora: Date): Etapa[] {
     etapaNoAr(m, agora),
     etapaNumeros(m, agora),
   ];
+}
+
+// ------------------------------------------------- a evidência do gasto
+
+/**
+ * O que o consolidado do NEGÓCIO prova sobre o dinheiro.
+ *
+ * Magro de propósito: são os dois únicos campos que a regra abaixo lê, e
+ * `ConsolidadoDoNegocio` satisfaz esta forma sem conversão nenhuma. Quem
+ * chamar não precisa importar o contrato inteiro só para provar um gasto.
+ */
+export interface GastoMedido {
+  temDadoDaPlataforma: boolean;
+  investiuCentavos: number | null;
+}
+
+/**
+ * As etapas que o gasto medido fecha — e só elas.
+ *
+ * `cadastro` e `conexao` não estão aqui porque já têm fonte que funciona
+ * (o próprio `businesses` e `meta_connections`, os dois escritos pelo
+ * webapp). `aprovacao` também não: ela fecha por verdade vazia hoje, e
+ * carimbá-la de "provada pelo gasto" seria trocar um predicado frouxo por
+ * uma afirmação forte sem nada atrás. `numeros` fecha por `temNumero`,
+ * que já lê o mesmo consolidado — acrescentá-la seria dizer duas vezes.
+ */
+export const ETAPAS_PROVADAS_PELO_GASTO: readonly IdDeEtapa[] = ["peca", "no_ar"];
+
+/** Houve gasto medido na plataforma? Os dois lados, nunca um só. */
+export function houveGastoMedido(evidencia: GastoMedido | null): boolean {
+  return (
+    evidencia !== null &&
+    evidencia.temDadoDaPlataforma === true &&
+    (evidencia.investiuCentavos ?? 0) > 0
+  );
+}
+
+/**
+ * A REGRA DE EVIDÊNCIA — dinheiro gasto na plataforma fecha `peca` e `no_ar`.
+ *
+ * ============================================================
+ * POR QUE ISTO NÃO CONTRARIA A DECISÃO 13.
+ *
+ * A Decisão 13 (`docs/arquitetura.md`) diz que estado de PIPELINE não
+ * decide etapa concluída — o artefato decide. Ela continua valendo, e
+ * nada aqui lê `execucoes.status`.
+ *
+ * O que esta regra usa é outra coisa: **a plataforma cobrou.** Gasto
+ * medido é o artefato mais forte que existe para as duas etapas — o
+ * Facebook não cobra por anúncio que não foi montado, e não cobra por
+ * anúncio que não foi ao ar. Não é um sistema nosso afirmando que
+ * terminou; é o terceiro que recebeu o dinheiro.
+ *
+ * O QUE ELA CONSERTA. As fontes locais das duas etapas são tabelas que
+ * ninguém alimenta — `creatives` com `uso='campanha'` e `campaigns`
+ * (`docs/buraco-creatives-campanhas-sem-dono.md`, medido em 11/09/2026:
+ * `campaigns` tem ZERO linhas na tabela inteira). Com elas sozinhas,
+ * `no_ar` nunca fecha para conta nenhuma — nem para quem já gastou. A V2G
+ * lia a cadeia com `peca` e `no_ar` em aberto tendo R$ 10,25 gastos.
+ *
+ * O QUE ELA NÃO FAZ. Não inventa data: `desde` fica como estava, e a
+ * etapa não passa a afirmar QUANDO foi publicada — só QUE foi. Sem gasto,
+ * vale a leitura local de sempre, intacta; e nada aqui muda uma etapa que
+ * já estava concluída.
+ * ============================================================
+ */
+export function concluidasPeloGasto(
+  etapas: Etapa[],
+  evidencia: GastoMedido | null,
+): Etapa[] {
+  if (!houveGastoMedido(evidencia)) return etapas;
+  return etapas.map((etapa) =>
+    etapa.concluida || !ETAPAS_PROVADAS_PELO_GASTO.includes(etapa.id)
+      ? etapa
+      : { ...etapa, concluida: true, concluidaPeloGasto: true },
+  );
 }
 
 /**
@@ -750,7 +834,17 @@ export function posicoesDaCadeia(
  * ser mapa em vez de enfeite.
  */
 export function estadoNaLista(etapa: Etapa, posicao: PosicaoNaCadeia): string {
-  if (posicao === "feita") return "Já está feito.";
+  if (posicao === "feita") {
+    // A TRILHA DIZ DE ONDE VEIO A CONCLUSÃO quando ela não veio do
+    // artefato local. "Já está feito." sozinho afirmaria que a peça e a
+    // publicação estão registradas aqui, e elas não estão — quem prova é
+    // o dinheiro que a plataforma cobrou (ver `concluidasPeloGasto`).
+    //
+    // Sem data, de propósito: a evidência é QUE aconteceu, não QUANDO.
+    return etapa.concluidaPeloGasto
+      ? "Já está feito — o que prova é o investimento que já saiu."
+      : "Já está feito.";
+  }
   if (posicao === "atual") return "É o que está acontecendo agora.";
   switch (etapa.bola) {
     case "cliente":

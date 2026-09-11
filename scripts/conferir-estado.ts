@@ -21,7 +21,9 @@ import { resumirPendencias } from "../lib/cadastro/pendencias.ts";
 import type { Pendencia } from "../lib/cadastro/montar.ts";
 import {
   blocosDaTrilha,
+  concluidasPeloGasto,
   estadoNaLista,
+  houveGastoMedido,
   montarEtapas,
   posicoesDaCadeia,
   DIAS_ATE_ADMITIR_NUMEROS,
@@ -586,6 +588,113 @@ console.log("\nA. de onde a cadeia lê a execução — e o que ela diz sem cons
   ok(
     /a gente está montando/i.test(peca(semExecucao).titulo),
     "404 (não há execução) continua com a frase de sempre",
+  );
+}
+
+secao("B. a regra de evidência — gasto medido fecha `peca` e `no_ar`");
+{
+  // ============================================================
+  // OS DOIS LADOS, COMO TODO CORTE DESTE ARQUIVO.
+  //
+  // A base aqui é a CONTA REAL da V2G medida em 11/09/2026: cadastro
+  // fechado, conta conectada, ZERO peça de `uso='campanha'` e ZERO linha
+  // em `campaigns` — e, no backend, `tem_dado_da_plataforma: true` com
+  // `investiu_centavos: 1025`. A cadeia local sozinha deixava `peca` e
+  // `no_ar` em aberto para quem já tinha gastado.
+  //
+  // O lado sem gasto é o que prova que a regra é ADIÇÃO e não troca: com
+  // a mesma medida e o consolidado sem investimento, as duas etapas
+  // continuam abertas.
+  // ============================================================
+  const comoAV2G = (): MedidaDoCliente => {
+    const m = base();
+    m.temNumero = true; // o consolidado tem dado
+    return m;
+  };
+
+  const semGasto = { temDadoDaPlataforma: true, investiuCentavos: 0 };
+  const comGasto = { temDadoDaPlataforma: true, investiuCentavos: 1025 };
+  const soDoDono = { temDadoDaPlataforma: false, investiuCentavos: 120000 };
+
+  ok(!houveGastoMedido(null), "sem consolidado não há evidência");
+  ok(!houveGastoMedido(semGasto), "com dado da plataforma e zero investido, não há");
+  ok(
+    !houveGastoMedido(soDoDono),
+    "e só o lado do DONO não prova gasto — os dois campos, ou nenhum",
+  );
+  ok(houveGastoMedido(comGasto), "os dois lados juntos: há evidência");
+
+  const cruas = montarEtapas(comoAV2G(), maisDias(1));
+  const abertas = (es: Etapa[]) => es.filter((e) => !e.concluida).map((e) => e.id);
+
+  ok(
+    abertas(cruas).join(",") === "peca,no_ar",
+    `a cadeia local deixa peça e no ar abertas: [${abertas(cruas).join(", ")}]`,
+  );
+
+  // ---- sem gasto: a leitura de sempre, intacta ----
+  const iguais = concluidasPeloGasto(cruas, semGasto);
+  ok(
+    abertas(iguais).join(",") === "peca,no_ar",
+    "  fixture SEM gasto → peça e no ar continuam abertas",
+  );
+  ok(
+    iguais.every((e, i) => e === cruas[i]),
+    "  e sem gasto a função devolve as MESMAS etapas, sem copiar",
+  );
+
+  // ---- com gasto: a cadeia inteira fecha ----
+  const provadas = concluidasPeloGasto(cruas, comGasto);
+  ok(abertas(provadas).length === 0, "  fixture COM gasto → nenhuma etapa aberta");
+  ok(
+    provadas.every((e) => e.concluida),
+    "  a cadeia sai [x] cadastro [x] conexao [x] peca [x] aprovacao [x] no_ar [x] numeros",
+  );
+
+  const por = (es: Etapa[], id: string) => es.find((e) => e.id === id)!;
+  ok(
+    por(provadas, "peca").concluidaPeloGasto === true &&
+      por(provadas, "no_ar").concluidaPeloGasto === true,
+    "  as duas se declaram concluídas PELO GASTO",
+  );
+  ok(
+    por(provadas, "cadastro").concluidaPeloGasto === undefined,
+    "  e quem já estava concluída por fonte própria NÃO se carimba",
+  );
+
+  // NADA DE INVENTAR DATA. A evidência é QUE aconteceu, não QUANDO.
+  ok(
+    por(provadas, "no_ar").desde === undefined,
+    "  o gasto não inventa data de publicação — `desde` fica como estava",
+  );
+  ok(
+    (["titulo", "corpo", "nome", "desde", "bola", "admitindo"] as const).every(
+      (campo) =>
+        por(provadas, "no_ar")[campo] === por(cruas, "no_ar")[campo] &&
+        por(provadas, "peca")[campo] === por(cruas, "peca")[campo],
+    ),
+    "  e a regra NÃO reescreve o texto das duas: só `concluida` muda",
+  );
+
+  // ---- a trilha diz de onde veio a conclusão ----
+  const linhas = posicoesDaCadeia(provadas, null);
+  ok(
+    linhas.every((l) => l.posicao === "feita"),
+    "com a cadeia fechada, as seis linhas da trilha são 'feita'",
+  );
+  const noAr = estadoNaLista(por(provadas, "no_ar"), "feita");
+  ok(
+    noAr !== "Já está feito.",
+    `  e a do no ar NÃO é o "Já está feito." seco: "${noAr}"`,
+  );
+  ok(/investimento/i.test(noAr), "  ela aponta o investimento como prova");
+  ok(
+    estadoNaLista(por(provadas, "cadastro"), "feita") === "Já está feito.",
+    "  enquanto a do cadastro segue sendo a frase de sempre",
+  );
+  ok(
+    !/CTR|ROAS|CPM|impress|creative|campaign/i.test(noAr),
+    "  e sem jargão de tráfego nem nome de tabela",
   );
 }
 

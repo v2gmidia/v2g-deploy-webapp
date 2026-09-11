@@ -12,7 +12,12 @@ import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { PerguntaDoDia } from "./PerguntaDoDia";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
-import { estadoNaLista, posicoesDaCadeia, type Etapa } from "@/lib/estado/frases";
+import {
+  concluidasPeloGasto,
+  estadoNaLista,
+  posicoesDaCadeia,
+  type Etapa,
+} from "@/lib/estado/frases";
 
 /**
  * Início / dashboard — porte de `tela-05-dashboard-desktop.html`.
@@ -128,7 +133,35 @@ export default async function InicioPage() {
     .limit(1)
     .maybeSingle();
 
-  const { proximo, resultado, temNumero } = estado;
+  const { resultado, temNumero } = estado;
+
+  // ============================================================
+  // A REGRA DE EVIDÊNCIA — APLICADA AQUI, E SÓ AQUI.
+  //
+  // `estado.etapas` fecha `peca` e `no_ar` lendo `creatives` e
+  // `campaigns`, duas tabelas LOCAIS que o backend nunca escreve. Medido
+  // em 11/09/2026: `campaigns` tem ZERO linhas na tabela inteira, e a V2G
+  // (`a85c37a9`) não tem uma peça de `uso='campanha'` sequer — só logos.
+  // Ver `docs/buraco-creatives-campanhas-sem-dono.md`.
+  //
+  // Enquanto isso o consolidado do backend, na MESMA conta, devolve
+  // `tem_dado_da_plataforma: true` e `investiu_centavos: 1025`. A trilha
+  // dizia que a peça não ficou pronta e o anúncio não subiu para quem já
+  // gastou R$ 10,25 e apareceu 1.657 vezes.
+  //
+  // A regra e o porquê de ela não contrariar a Decisão 13 estão em
+  // `concluidasPeloGasto()`. Aqui fica só o RECORTE: a correção é da
+  // `/inicio`, então `montarEtapas` não mudou e a `/anuncios` e a
+  // `/vendas` continuam lendo a cadeia local como sempre leram.
+  //
+  // Sem gasto isto é identidade: `houveGastoMedido` é falso e as etapas
+  // saem intactas. E no ramo `!temNumero` a regra nunca dispara —
+  // `investiuCentavos > 0` implica `temNumero`, por construção de
+  // `estadoDoCliente()`.
+  // ============================================================
+  const acumulado = estado.diaSeguinte.acumulado;
+  const etapas = concluidasPeloGasto(estado.etapas, acumulado);
+  const proximo = etapas.find((e) => !e.concluida) ?? null;
 
   // ============================================================
   // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
@@ -323,7 +356,7 @@ export default async function InicioPage() {
             )}
 
             <TrilhaDaExecucao
-              etapas={estado.etapas}
+              etapas={etapas}
               atual={proximo}
               andamento={andamentoDaExecucao}
             />
@@ -376,8 +409,12 @@ export default async function InicioPage() {
   // É por NEGÓCIO, e não por execução, de propósito: esta tela diz "quanto
   // eu já investi e quanto voltou", e com duas rodadas a versão por
   // execução esconderia a anterior.
+  //
+  // `acumulado` já está declarado lá em cima, no bloco da regra de
+  // evidência: é a MESMA leitura, e as duas coisas que esta tela faz com
+  // ele — fechar a cadeia e escrever os números — têm que sair da mesma
+  // resposta, ou a trilha e o painel podem discordar.
   // ============================================================
-  const acumulado = estado.diaSeguinte.acumulado;
   const fraseDoRetorno = frasePorRealInvestido(
     acumulado?.retornoPorReal ?? null,
     acumulado?.moeda ?? null,
@@ -559,14 +596,20 @@ export default async function InicioPage() {
               de decidir o ramo (ver o bloco da condição), e sumir com ela
               aqui trocaria um erro por outro: a pessoa perderia de vista que
               ainda há etapa aberta justamente quando passa a ter o que
-              comemorar. */}
-          {proximo && (
-            <TrilhaDaExecucao
-              etapas={estado.etapas}
-              atual={proximo}
-              andamento={andamentoDaExecucao}
-            />
-          )}
+              comemorar.
+
+              O `{proximo && ...}` que guardava isto SAIU junto com a regra
+              de evidência, e sair era obrigatório: com a cadeia fechada
+              pelo gasto, `proximo` vira `null` — e a guarda escondia a
+              trilha exatamente na conta em que ela passou a estar certa.
+              Cadeia completa é justamente o que vale a pena mostrar; com
+              `atual = null`, `posicoesDaCadeia` marca as seis como
+              "feita". */}
+          <TrilhaDaExecucao
+            etapas={etapas}
+            atual={proximo}
+            andamento={andamentoDaExecucao}
+          />
         </div>
 
         <aside className="dash-aside">
