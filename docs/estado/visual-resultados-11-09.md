@@ -43,6 +43,21 @@ diferentes.** Uma tela que tratasse "ausente" como uma coisa só apagaria essa
 distinção. É por isso que cada card carrega os seis números com o rótulo dizendo
 de quem é cada um, em vez de um totalizador.
 
+> **Itens 2 e 3 FECHADOS em 11/09, pela sessão `webapp-8f` (lote "uma fonte só
+> para no ar").** Os dois `<Numero>` de `vendas` e `voltou` saíram do card por
+> campanha e viraram um bloco "O que você contou" no nível do NEGÓCIO, com a
+> moeda do topo do acumulado. Some a justaposição do item 2 e some, por
+> consequência, o número sem símbolo do item 3. Eu tinha escrito "se incomodar,
+> o conserto é de produto, não de código" — era de código, e a correção dela é
+> melhor que o meu diagnóstico: o que faltava não era o rótulo dizer de quem é
+> o NÚMERO (isso já estava), era o rótulo dizer de quem é o NÍVEL.
+>
+> O item 1 segue aberto: `STATUS_COM_CAMPANHA` não mudou e a discordância entre
+> a inferência do front e o `nivel` do backend continua de pé. O que mudou foi
+> só a palavra do rótulo — `"sem-campanha"` lê "Sem campanha montada" em vez de
+> "Ainda não foi ao ar", porque a inferência mede campanha MONTADA e nunca
+> mediu ar. Quem afirma veiculação agora é a faixa do negócio.
+
 **3. `voltou` de `98447192` sai sem símbolo de moeda.** `"moeda": null` naquela
 execução, e `dinheiroDaMoeda` se recusa a chutar `R$` — comportamento correto e
 já documentado. Na tela lê-se `1.200,00`, seco.

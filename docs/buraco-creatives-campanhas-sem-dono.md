@@ -16,10 +16,19 @@ negócio (`a0328fb8`) e vieram da importação do Oregon. A conta da V2G
 com `investiu_centavos: 1025` no consolidado do backend, ou seja, a cadeia
 local dizia que a peça não ficou pronta e o anúncio não subiu para quem já
 tinha gastado R$ 10,25. É por isso que a `/inicio` aplica a regra de
-evidência de `concluidasPeloGasto()` em `lib/estado/frases.ts`: gasto medido
-fecha `peca` e `no_ar`. **A regra é remendo da leitura, não conserto da
-fonte** — enquanto ninguém alimentar essas tabelas, toda conta sem gasto
-continua com as duas etapas presas em aberto.
+evidência de `concluidasPelaVeiculacao()` em `lib/estado/frases.ts`, aplicada
+por dentro de `montarEtapas()` e portanto valendo em toda tela: veiculação
+comprovada fecha `peca` e `no_ar`. **A regra é remendo da leitura, não
+conserto da fonte** — enquanto ninguém alimentar essas tabelas, toda conta
+sem evidência de veiculação continua com as duas etapas presas em aberto, e
+`nao_sabemos` (leitura que falhou) não fecha nada, de propósito.
+
+> Corrigido em 11/09/2026, tarde: quando este parágrafo foi escrito a regra
+> chamava `concluidasPeloGasto()`, era aplicada só na `/inicio`, e o gasto
+> medido era a única prova. Passou a ter dois degraus — o campo `veiculacao`
+> de `GET /negocios/{id}/execucao` como autoridade, e o gasto como reserva
+> que só prova o PASSADO (`ja_foi_ao_ar`), nunca que está no ar agora. Nada
+> disso muda o achado acima: as duas tabelas seguem sem quem as alimente.
 
 O comando que mede, contra o banco de produção:
 
