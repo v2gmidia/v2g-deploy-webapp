@@ -46,6 +46,26 @@ const IcoConta = () => (
  *
  * Telas de FLUXO (uma tarefa por vez, sem fuga) não moram aqui — vão
  * para o grupo `(fluxo)`, que exige sessão mas não tem sidebar.
+ *
+ * ============================================================
+ * CORREÇÃO DE UM COMENTÁRIO QUE ESTEVE AQUI — 11/09/2026.
+ *
+ * Entre 72bb099 e hoje havia neste lugar um portão de fixture, e o
+ * comentário dele dizia: "o `proxy.ts` deixou a fixture passar; ESTE
+ * layout barrou mesmo assim", oferecido como prova de que a defesa em
+ * profundidade funcionava.
+ *
+ * NÃO BARRAVA. O portão estava escrito aqui também, com os mesmos dois
+ * trincos — e um `if` que não roda não barra nada. As duas camadas
+ * tinham o mesmo buraco no mesmo lugar, que é o oposto de defesa em
+ * profundidade: camada repetida com a exceção repetida junto é uma
+ * camada só, escrita duas vezes.
+ *
+ * Os dois portões saíram. O que sobrou é o da própria
+ * `app/(protected)/inicio/page.tsx`, e ele não decide quem entra: decide
+ * o que a página LÊ depois que a sessão já foi exigida — aqui e no
+ * proxy. Ver docs/estado/inicio-recomposto-11-09.md §3.
+ * ============================================================
  */
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -53,40 +73,20 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     data: { user },
   } = await supabase.auth.getUser();
 
-  // ============================================================
-  // O TERCEIRO LUGAR DO MESMO PORTÃO — e ele estar aqui é a prova de que
-  // a defesa em profundidade funciona.
-  //
-  // O `proxy.ts` deixou a fixture passar; ESTE layout barrou mesmo assim,
-  // porque ele verifica por conta própria (Decisão 3). Quem escrever a
-  // quarta camada um dia vai esbarrar no mesmo lugar.
-  //
-  // Trincos idênticos aos dos outros dois: `NODE_ENV !== "production"`
-  // (dobrado para `false` no build, preview da Vercel incluído) e
-  // `V2G_FIXTURE_INICIO`, que só existe em `.env.development.local` —
-  // arquivo que o `next build` não abre.
-  //
-  // O shell renderiza com `user` nulo: a saudação fica sem nome e o
-  // avatar cai no "?", que é o comportamento que o próprio layout já
-  // tinha para perfil sem `full_name`.
-  // ============================================================
-  const fixtureDaTelaInicial =
-    process.env.NODE_ENV !== "production" && Boolean(process.env.V2G_FIXTURE_INICIO);
-
-  if (!user && !fixtureDaTelaInicial) {
+  if (!user) {
     redirect("/entrar");
   }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name")
-    .eq("id", user?.id ?? "")
+    .eq("id", user.id)
     .maybeSingle();
 
   const { data: business } = await supabase
     .from("businesses")
     .select("name")
-    .eq("profile_id", user?.id ?? "")
+    .eq("profile_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -97,7 +97,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   // olhando por cima do ombro dela.
   const nome = profile?.full_name?.trim() ?? "";
   const nomeNegocio = business?.name?.trim();
-  const inicial = (nomeNegocio || nome || user?.email || "?").charAt(0).toUpperCase();
+  const inicial = (nomeNegocio || nome || user.email || "?").charAt(0).toUpperCase();
 
   return (
     <div className="app-shell">
@@ -157,7 +157,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
         <div className="side-account">
           <span className="avatar">{inicial}</span>
           <div className="who">
-            <b>{nomeNegocio || user?.email}</b>
+            <b>{nomeNegocio || user.email}</b>
             <form action={signOutAction}>
               <button type="submit" className="link-btn">
                 Sair

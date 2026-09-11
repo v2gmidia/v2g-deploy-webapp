@@ -67,30 +67,31 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const escolhido = temaDoCookie((await cookies()).get(COOKIE_TEMA)?.value);
 
   // ============================================================
-  // O TEMA FORÇADO — só desenvolvimento, mesmo portão duplo da fixture.
+  // O TEMA FORÇADO POR VARIÁVEL SAIU DAQUI — 11/09/2026.
   //
-  // Existe para a PROVA VISUAL ser reproduzível. Sem ele, o tema de uma
-  // captura depende do `prefers-color-scheme` da máquina que capturou —
-  // e o Chrome headless ignora as flags de esquema de cor, medido em
-  // 11/09/2026: claro e escuro saíram com o mesmo tamanho em bytes.
+  // Entre 72bb099 e hoje, uma variável de ambiente decidia o tema deste
+  // layout (o nome dela está no diff daquele commit e em
+  // docs/estado/inicio-recomposto-11-09.md — aqui ele não pode mais ser
+  // escrito, e é o `conferir:portao` que não deixa).
   //
-  // Uma captura que depende do sistema operacional de quem rodou não é
-  // prova: ela não se repete na máquina do lado. Com a variável, as duas
-  // versões do tema saem do mesmo comando, e a diferença entre elas é a
-  // única coisa que mudou.
+  // Este é o layout RAIZ: aquilo valia para o site inteiro, `/` e
+  // `/entrar` inclusive — a maior superfície dos três portões de fixture,
+  // guardando a menor necessidade, que era tirar oito capturas.
   //
-  // Trincos idênticos aos de `V2G_FIXTURE_INICIO`: `NODE_ENV` dobrado
-  // para literal no build, e uma variável que só existe em
-  // `.env.development.local` — arquivo que o `next build` não abre.
+  // Saiu sem perder nada, porque o que ele fazia já existia sem ele: o
+  // tema vem de um cookie (`v2g_tema`), e esse cookie é `httpOnly: false`
+  // (ver `app/(protected)/conta/tema-actions.ts`). Quem automatiza a
+  // captura já precisa escrever o cookie de sessão — escreve este junto:
+  //
+  //     curl -b "v2g_tema=escuro" ...        # ou Network.setCookie, no CDP
+  //
+  // E o resultado é MAIS fiel que o da variável: o caminho da captura
+  // passa a ser o mesmo caminho do cliente que escolheu o tema na
+  // `/conta`, em vez de um ramo que só existe em desenvolvimento.
   // ============================================================
-  const forcado =
-    process.env.NODE_ENV !== "production"
-      ? temaDoCookie(process.env.V2G_FIXTURE_TEMA)
-      : "sistema";
 
   // "sistema" NÃO vira atributo — quem decide é o `prefers-color-scheme`.
-  const efetivo = forcado === "sistema" ? escolhido : forcado;
-  const tema = efetivo === "sistema" ? null : efetivo;
+  const tema = escolhido === "sistema" ? null : escolhido;
 
   return (
     <html lang="pt-BR" className={archivo.variable} data-tema={tema ?? undefined}>

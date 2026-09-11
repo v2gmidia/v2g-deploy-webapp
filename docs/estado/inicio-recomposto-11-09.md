@@ -161,6 +161,12 @@ acidente, e acerto por acidente é o que faz o próximo leitor errar de novo.
 
 ## §3 A prova visual, e o que ela custou
 
+> **CORRIGIDO em 11/09/2026, à noite — capturar mudou de preço.** Os portões
+> de fixture do `proxy.ts`, do `app/(protected)/layout.tsx` e do layout raiz
+> (o tema forçado) saíram: capturar agora exige **login de verdade no dev** e
+> **o cookie de sessão na automação**, com `v2g_tema=claro|escuro` ao lado. A
+> `V2G_FIXTURE_INICIO` continua, e só decide o que a `/inicio` lê.
+
 As oito capturas estão em `docs/estado/capturas-inicio-11-09/`.
 
 **O `--screenshot` do Chrome mente em largura de celular.**
@@ -202,6 +208,13 @@ página. No aparelho ela fica no rodapé.
 ---
 
 ## §4 O portão das fixtures — como está bloqueado
+
+> **CORRIGIDO em 11/09/2026, à noite.** O que este parágrafo chama de
+> "portão em três lugares, porque a proteção é em três camadas" era o
+> contrário: a MESMA exceção copiada para dentro das três camadas. E a
+> frase "liberei o proxy e o layout barrou mesmo assim" não descreve o
+> código que foi commitado — nele o layout tinha o mesmo portão e não
+> barrava nada. Sobrou o portão da própria `/inicio`; ver a §3 acima.
 
 Três trincos, e nenhum sozinho abre:
 

@@ -152,39 +152,7 @@ export async function proxy(request: NextRequest) {
   // por `redirecionar` mesmo assim: um caminho que não precisa mas segue
   // a mesma regra é mais barato de manter que a exceção que alguém tem
   // de lembrar por que existe.
-  // ============================================================
-  // O PORTÃO DAS FIXTURES DA `/inicio` — o MESMO trinco duplo do
-  // `app/(protected)/inicio/page.tsx`, e pelo mesmo motivo mecânico.
-  //
-  // Sem isto não há prova visual: a tela que precisa ser fotografada é a
-  // de quem TEM sessão, e a fixture sozinha não vence a primeira camada.
-  //
-  // TRÊS COISAS QUE ESTREITAM O BURACO, e cada uma existe por si:
-  //
-  //   1. `NODE_ENV !== "production"` — o Next troca pelo literal no
-  //      build, a condição vira falsa constante, e o bloco não é emitido.
-  //      **O preview da Vercel roda com `NODE_ENV=production`**, então
-  //      está fechado pelo mesmo trinco do ambiente de verdade.
-  //   2. `V2G_FIXTURE_INICIO`, que não existe em ambiente nenhum da
-  //      Vercel — e mora num `.env.development.local`, arquivo que o
-  //      `next build` sequer abre.
-  //   3. `pathname === "/inicio"`, exato. Não é prefixo: `/inicio/x` não
-  //      passa, e nenhuma outra rota protegida passa. As telas de
-  //      operador continuam fechadas inclusive aqui — o papel é checado
-  //      depois, e `obterPapel(null)` é `null`.
-  //
-  // Isto NÃO cria sessão: `user` continua nulo daqui para a frente. O que
-  // ele libera é uma tela que, sem negócio real na mão, não lê nada.
-  //
-  // A PROVA é grep no `.next/` depois do build — a sentinela do módulo de
-  // fixture e o nome da variável não aparecem em `.js` nenhum.
-  // ============================================================
-  const fixtureDaTelaInicial =
-    process.env.NODE_ENV !== "production" &&
-    Boolean(process.env.V2G_FIXTURE_INICIO) &&
-    pathname === "/inicio";
-
-  if (isProtected && !user && !fixtureDaTelaInicial) {
+  if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/entrar";
     redirectUrl.searchParams.set("next", pathname);
