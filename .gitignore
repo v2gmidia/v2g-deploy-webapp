@@ -36,6 +36,15 @@ Thumbs.db
 # Cache de dedupe do hook — estado de sessão, não configuração.
 .impeccable/hook.cache.json
 
+# Wireframes do handoff de 10/09/2026 (docs/v2g-wireframes/).
+# São 44 PNGs, 61 MB, gerados por IA e usados como REFERÊNCIA VISUAL —
+# nenhum deles é fonte de verdade sobre dado, medida ou funcionalidade
+# (docs/v2g-wireframes/IMPLEMENTATION-PLAN.md §2). 61 MB entram no
+# histórico do git para sempre e saem de lá nunca; a informação que
+# sobrevive a eles são os .md, que continuam versionados.
+# Os arquivos continuam no disco — decisão do Victor, 11/09/2026.
+docs/v2g-wireframes/*.png
+
 # Saída dos acompanhamentos de execução (scripts/acompanhar-execucao.ts).
 # Carrega o texto que os agentes escreveram sobre um negócio real — dado de
 # cliente, não artefato de código. O relatório que interessa vive em

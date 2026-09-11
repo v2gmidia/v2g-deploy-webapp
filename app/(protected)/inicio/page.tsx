@@ -68,24 +68,43 @@ import { estadoNaLista, posicoesDaCadeia, type Etapa } from "@/lib/estado/frases
  *    quem decide é a POSIÇÃO em relação à atual.
  * ============================================================
  */
-function RestoDoCaminho({ etapas, atual }: { etapas: Etapa[]; atual: Etapa }) {
-  const outras = posicoesDaCadeia(etapas, atual).filter((p) => p.posicao !== "atual");
-  if (outras.length === 0) return null;
+function TrilhaDaExecucao({
+  etapas,
+  atual,
+  andamento,
+}: {
+  etapas: Etapa[];
+  atual: Etapa | null;
+  andamento: string | null;
+}) {
+  const posicoes = posicoesDaCadeia(etapas, atual);
+  const feitas = posicoes.filter((p) => p.posicao === "feita").length;
 
   return (
-    <section>
+    <section className="trilha">
       <div className="section-title">
-        <h2>O resto do caminho</h2>
+        <h2>Onde seu anúncio está</h2>
+        <span className="side-note">
+          {feitas} de {etapas.length} etapas
+        </span>
       </div>
-      <div className="card acct-list">
-        {outras.map(({ etapa, posicao }) => (
-          <div className="acct-row" key={etapa.id}>
-            <span className="ar-text">
-              <b>{etapa.nome}</b>
-              <span>{estadoNaLista(etapa, posicao)}</span>
-            </span>
-          </div>
-        ))}
+      <div className="card">
+        {/* A frase do backend encabeça a trilha: é a única linha aqui que
+            sabe o que o pipeline está fazendo AGORA. As seis abaixo são a
+            cadeia local, que sabe a ordem. */}
+        {andamento && <p className="trilha-andamento">{andamento}</p>}
+
+        <ol className="trilha-lista">
+          {posicoes.map(({ etapa, posicao }) => (
+            <li className={`trilha-item e-${posicao}`} key={etapa.id}>
+              <span className="trilha-marca" aria-hidden="true" />
+              <span className="trilha-texto">
+                <b>{etapa.nome}</b>
+                <span>{estadoNaLista(etapa, posicao)}</span>
+              </span>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
@@ -143,6 +162,20 @@ export default async function InicioPage() {
   // Sem execução não há card (a condição de baixo), logo não há atrasado a
   // oferecer — e o `idExecucao` da chave só existe aqui dentro.
   const execucaoDoDia = estado.diaSeguinte.execucao;
+
+  // ============================================================
+  // A FRASE DO ANDAMENTO É DO BACKEND, E A TELA NÃO A REESCREVE.
+  //
+  // `lib/dia-seguinte/tipos.ts` guarda o contrato por extenso: "não use
+  // `status` para montar texto de tela". O `status` serve para ramificar;
+  // quem escreve para o dono é o backend, do mesmo jeito que faz com
+  // `nivel_frase`. Traduzir os nove `EstadoExecucao` aqui recriaria o
+  // defeito que `lib/resultado/nivel.ts` acabou de corrigir — sete frases
+  // próprias contra catorze níveis, e as que faltavam derrubavam a página.
+  //
+  // Medido em 11/09 na V2G: "Tudo anotado. Começando a montar seu anúncio".
+  // ============================================================
+  const andamentoDaExecucao = execucaoDoDia?.andamento ?? null;
   const atrasados = execucaoDoDia
     ? await diasAtrasados({
         idExecucao: execucaoDoDia.idExecucao,
@@ -190,8 +223,45 @@ export default async function InicioPage() {
       />
     ) : null;
 
-  // ---------- ainda falta alguma coisa: o herói é a próxima etapa ----------
-  if (proximo || !temNumero) {
+  // ============================================================
+  // QUEM DECIDE O RAMO É `temNumero`, SOZINHO. O `proximo ||` SAIU.
+  //
+  // Ele estava aqui desde que a tela tinha dois corpos, e parecia inofensivo:
+  // "se ainda falta etapa, mostre o que falta". Só que `proximo` NÃO fala do
+  // mesmo assunto que `temNumero`. Ele sai de `montarEtapas`, que lê duas
+  // tabelas LOCAIS do Supabase — `creatives` e `campaigns` — enquanto o
+  // dinheiro vem do backend, que nunca escreve nessas duas.
+  //
+  // MEDIDO EM 11/09/2026, na conta da V2G (`a85c37a9`):
+  //
+  //   backend  aed42ce7 · status=cadastro_completo · tem_dado_da_plataforma=true
+  //            R$ 10,25 investidos · 64 cliques · 1.657 impressões
+  //   local    creatives ativos = 1, e é um LOGO (uso='campanha' = 0)
+  //            campaigns = 0 linhas — na tabela inteira, não só nesta conta
+  //
+  //   → proximo = 'peca'  ·  temNumero = true  →  caía no ramo "preparando"
+  //
+  // Uma conta que gastou, foi clicada 64 vezes e apareceu 1.657 vezes lia
+  // "sua primeira campanha ainda não está no ar". E como `campaigns` tem zero
+  // linha no total, `publicadaEm` é `null` para TODA conta: com o `proximo ||`
+  // no lugar, o ramo de resultado era inalcançável para todo mundo — código
+  // morto em produção, não um caso da V2G.
+  //
+  // O §5 do `docs/v2g-wireframes/IMPLEMENTATION-PLAN.md` já dizia qual é o
+  // interruptor: *"o único interruptor honesto entre os dois ramos é
+  // `tem_dado_da_plataforma` — mais o `temNumero` de `estadoDoCliente()`"*.
+  // `proximo` não aparece lá. Decidido pelo Victor em 11/09, após a medição.
+  //
+  // A CADEIA NÃO SE PERDE: ela deixa de decidir o ramo e passa a aparecer
+  // DENTRO dos dois, como trilha — ver `TrilhaDaExecucao`. Etapa aberta com
+  // número na mão é informação, não motivo para esconder o número.
+  //
+  // `proximo` é não-nulo aqui por construção: `etapaNumeros.concluida` é o
+  // próprio `temNumero`, então `!temNumero` garante que ao menos ela está
+  // aberta. As guardas de baixo ficam porque quem lê não deve precisar
+  // reconstruir essa prova.
+  // ============================================================
+  if (!temNumero) {
     // O bloco "não mexa na campanha" só existe quando há campanha para
     // mexer e a espera é do Facebook. Antes disso ele assustaria sem
     // motivo.
@@ -252,7 +322,11 @@ export default async function InicioPage() {
               </>
             )}
 
-            {proximo && <RestoDoCaminho etapas={estado.etapas} atual={proximo} />}
+            <TrilhaDaExecucao
+              etapas={estado.etapas}
+              atual={proximo}
+              andamento={andamentoDaExecucao}
+            />
 
             <Melhoras fotos={estado.melhoras.fotos} />
           </div>
@@ -461,14 +535,38 @@ export default async function InicioPage() {
             <div className="campaign-list">
               {estado.campanhasNoAr.map((c) => (
                 <div className="list-row" key={c.id}>
+                  {/* ============================================================
+                      O SELO DE "NO AR" SAIU, E NÃO VOLTA — §4, conflito 1.
+
+                      `status_na_plataforma` não é exposto por rota nenhuma:
+                      zero ocorrências no `openapi.json` de produção, e o
+                      coletor lê e descarta. O selo era, literalmente,
+                      `?? "No ar"` — um padrão de texto afirmando que a
+                      campanha está no ar sem nada que sustente a afirmação.
+
+                      Omitido, não desabilitado: selo apagado ensina que o
+                      estado existe e está a um passo de aparecer.
+                      ============================================================ */}
                   <div className="lr-head">
                     <span className="lr-title">{c.nome ?? "Campanha sem nome"}</span>
-                    <span className="pill ok">{c.metaStatus ?? "No ar"}</span>
                   </div>
                 </div>
               ))}
             </div>
           </section>
+
+          {/* A cadeia continua VISÍVEL depois que o número chega. Ela deixou
+              de decidir o ramo (ver o bloco da condição), e sumir com ela
+              aqui trocaria um erro por outro: a pessoa perderia de vista que
+              ainda há etapa aberta justamente quando passa a ter o que
+              comemorar. */}
+          {proximo && (
+            <TrilhaDaExecucao
+              etapas={estado.etapas}
+              atual={proximo}
+              andamento={andamentoDaExecucao}
+            />
+          )}
         </div>
 
         <aside className="dash-aside">

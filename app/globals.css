@@ -144,6 +144,32 @@
   --sangria: 34px;
 
   /* ------------------------------------------------------------
+     RAIO — seis degraus.
+
+     Estes tokens NÃO redesenham nada: cada valor é o que já estava
+     escrito no arquivo, e os literais já tinham convergido sozinhos
+     nestes seis. Dar nome é o que impede o sétimo de aparecer — um
+     `13px` digitado no meio de 21 `12px` não é decisão, é digitação,
+     e é invisível até alguém comparar dois cards lado a lado.
+
+     Ver docs/v2g-wireframes/IMPLEMENTATION-PLAN.md §2 "Raio".
+
+     TRÊS EXCEÇÕES CONTINUAM LITERAIS, e é de propósito:
+     `.auth-card` (14px), `.empty-card` (14px) e `.rev-item` (14px).
+     O plano isenta o primeiro; os outros dois são cards que deveriam
+     ser `--raio-card`, mas trocar 14px por 12px MUDA a aparência, e
+     esta etapa renomeia sem redesenhar. Virar token é decisão de
+     produto, não de tokenização — registrada como pendência.
+     O `3px` do `.rev-etiqueta` e os `50%` de avatar não são degraus.
+     ------------------------------------------------------------ */
+  --raio-card: 12px;      /* card padrão */
+  --raio-item: 10px;      /* item de lista, bloco de nav */
+  --raio-interno: 8px;    /* elemento dentro de card */
+  --raio-selo: 6px;       /* selo, aviso */
+  --raio-micro: 4px;      /* campo, marcador */
+  --raio-pilula: 999px;   /* pílula */
+
+  /* ------------------------------------------------------------
      CAMADA SEMÂNTICA — o que sustenta os dois temas.
 
      Regra: componente NUNCA usa `--cobalt` ou `--navy` para pintar
@@ -155,11 +181,34 @@
   --canvas: var(--offwhite);
   --surface-2: #FFFFFF;        /* card sobre card, campo dentro de card */
 
-  /* A sidebar é COBALTO, não branca — dos mockups aprovados. Ela tem
-     tokens próprios porque é a única região do app com fundo escuro no
-     tema claro: herdar `--ink` ali daria texto navy sobre azul. */
-  --sidebar-bg: var(--cobalt);
-  --sidebar-ink: rgb(255 255 255 / 0.78);
+  /* A sidebar é a PLACA ESCURA, não o cobalto — mudou em 11/09/2026.
+     Ela tem tokens próprios porque é a única região do app com fundo
+     escuro no tema claro: herdar `--ink` ali daria texto navy sobre
+     fundo escuro.
+
+     POR QUE DEIXOU DE SER COBALTO. O wireframe desenha a barra lateral
+     escura, e é a única coisa que aquelas imagens provam sobre cor —
+     pixel de imagem gerada por IA não é fonte de tom, então o valor NÃO
+     saiu de lá (o amostrado, `#001624`, foi descartado). Usa `--plate`,
+     que já existe, já é escuro nos dois temas e já tem par de tinta:
+     inventar um hex novo criaria uma nona cor escura para um trabalho
+     que quatro já fazem. Ver IMPLEMENTATION-PLAN.md §2 "Cores".
+
+     O GANHO É MEDIDO, não estético — todo par melhora:
+       `--sidebar-ink`         5,07 → 9,74
+       `--sidebar-ink-strong`  7,38 → 16,79
+       item ativo              5,48 → 10,53
+     E libera o cobalto para o papel que ele tem no resto do sistema:
+     ação, seleção, progresso. Uma sidebar cobalto inteira competia com
+     a faixa do herói, que é a coisa que deve gritar na tela.
+
+     O TEMA ESCURO NÃO MUDA: lá `--sidebar-bg` já é `#080E1A`, cravado
+     nos dois blocos duplicados. Esta linha só vale no tema claro. */
+  --sidebar-bg: var(--plate);
+  /* Ancorado em `--plate-ink`, não em branco literal: a tinta da barra
+     passa a ser a tinta da placa, e as duas andam juntas se a placa
+     mudar. 9,74:1 sobre `--plate`. */
+  --sidebar-ink: rgb(var(--plate-ink-rgb) / 0.78);
   --sidebar-ink-strong: #FFFFFF;
   --sidebar-active-bg: rgb(255 255 255 / 0.15);
   --sidebar-line: rgb(255 255 255 / 0.16);
@@ -455,7 +504,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-titulo);
   font-family: var(--body);
   color: var(--ink);
-  border-radius: 4px;
+  border-radius: var(--raio-micro);
 }
 .field input::placeholder { color: var(--ink-mute); }
 .field input:focus { border-color: var(--cobalt); outline: none; }
@@ -465,7 +514,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .form-error {
   background: var(--crit-soft);
   color: var(--crit);
-  border-radius: 6px;
+  border-radius: var(--raio-selo);
   padding: 11px 13px;
   font-size: var(--fs-corpo);
   line-height: 1.5;
@@ -475,7 +524,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
   color: var(--ink);
-  border-radius: 6px;
+  border-radius: var(--raio-selo);
   padding: 13px 14px;
   font-size: var(--fs-corpo);
   line-height: 1.55;
@@ -489,7 +538,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--cobalt);
   color: var(--white);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--raio-micro);
   padding: 14px 16px;
   font-family: var(--display);
   font-weight: 700;
@@ -536,7 +585,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   text-transform: uppercase;
   font-weight: 700;
   padding: 4px 9px;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   white-space: nowrap;
 }
 .pill::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
@@ -550,7 +599,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .proof-card {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 20px;
 }
 .proof-card b.title {
@@ -623,7 +672,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   text-decoration: none;
   border: 1.5px solid var(--line);
   background: var(--surface);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   padding: 9px 15px;
 }
 .auth-top .auth-help:hover { border-color: var(--cobalt); }
@@ -698,7 +747,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 @media (max-width: 620px) {
   .auth-top, .auth-wrap { padding-left: 18px; padding-right: 18px; }
-  .auth-card { padding: 22px 20px; border-radius: 12px; }
+  .auth-card { padding: 22px 20px; border-radius: var(--raio-card); }
   .auth-h { font-size: var(--fs-tela); }
 }
 
@@ -711,8 +760,10 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   grid-template-columns: var(--sidebar-w) 1fr;
   min-height: 100vh;
 }
-/* Sidebar COBALTO, dos mockups aprovados. Sem borda: a mudança de cor já
-   separa da tela, e uma linha ali marcaria a emenda. */
+/* Sidebar na PLACA ESCURA (`--sidebar-bg`, hoje `--plate`). Sem borda:
+   a mudança de cor já separa da tela, e uma linha ali marcaria a emenda.
+   A regra não nomeia a cor de propósito — quem decide o tom é o token,
+   e foi por ele que a barra deixou de ser cobalto em 11/09/2026. */
 .sidebar {
   position: sticky;
   top: 0;
@@ -730,18 +781,19 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: center;
   gap: 12px;
   padding: 11px 12px;
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   text-decoration: none;
   color: var(--sidebar-ink);
   font-family: var(--display);
   font-size: var(--fs-titulo);
   font-weight: 700;
   position: relative;
-  border-radius: 10px;
+  border-radius: var(--raio-item);
 }
 .nav-item:hover { background: rgb(255 255 255 / 0.08); color: var(--sidebar-ink-strong); }
 /* Item ativo é uma PÍLULA cheia, não uma barrinha na borda — é o que o
-   mockup faz, e sobre fundo cobalto uma barrinha lateral sumiria. */
+   mockup faz, e sobre o fundo escuro da barra uma barrinha lateral
+   sumiria. */
 .nav-item.active {
   background: var(--sidebar-active-bg);
   color: var(--sidebar-ink-strong);
@@ -752,7 +804,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: center;
   gap: 10px;
   padding: 9px 10px;
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   border: 1.5px solid var(--line);
 }
 .side-account .avatar {
@@ -778,26 +830,41 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .sidebar .link-btn { color: var(--sidebar-ink); }
 .sidebar .link-btn:hover { color: var(--sidebar-ink-strong); }
 .sidebar :focus-visible { outline-color: var(--sidebar-ink-strong); }
-/* ...menos dentro do card de suporte. O anel branco funciona sobre o
-   cobalto da sidebar, mas o card ali dentro e claro, e branco sobre ele
-   dava 1,11:1 em 9 telas. Cobalto de tinta da 6,64 no claro e 4,92 no
+/* ...menos dentro do card de suporte, que é CLARO. O anel branco
+   funciona sobre o fundo escuro da barra, mas branco sobre o card dava
+   1,11:1 em 9 telas. Cobalto de tinta da 6,64 no claro e 4,92 no
    escuro. Ver docs/contraste.md §7.
 
-   NOTA: isto vale para o card como ele RENDERIZA hoje (`--ice-soft`). A
-   regra de vidro logo abaixo esta inerte — ver docs/contraste.md §13. Se
-   algum dia o vidro passar a vencer, este anel precisa voltar a ser
-   branco. */
+   A NOTA QUE ESTAVA AQUI SAIU, e com ela o motivo: ela avisava que o
+   anel precisaria voltar a ser branco "se algum dia o vidro passar a
+   vencer". O vidro não existe mais — ver a decisão logo abaixo. O
+   condicional virou incondicional, e o 6,64 é o número definitivo. */
 .side-support :focus-visible { outline-color: var(--cobalt-ink); }
 
-/* O bloco de suporte deixa de ser um card gelo e vira vidro sobre o
-   cobalto — o card claro ali dentro brigaria com a faixa do herói pela
-   atenção, e a regra da tela é uma coisa gritando por vez. */
-.side-support {
-  background: rgb(255 255 255 / 0.10);
-  border-color: var(--sidebar-line);
-}
-.side-support b { color: var(--sidebar-ink-strong); }
-.side-support p { color: var(--sidebar-ink); }
+/* ============================================================
+   O CARD DE SUPORTE É CLARO. Pendência de 21/08/2026, fechada em
+   11/09/2026 — `docs/decisoes.md`, "card de vidro sobre cobalto ou
+   card claro?".
+
+   ELA NÃO ERA UMA ESCOLHA DE DESENHO, ERA CÓDIGO MORTO. `.side-support`
+   estava declarado DUAS vezes com a mesma especificidade: aqui como
+   vidro, e ~950 linhas adiante como card gelo. A segunda vencia sempre.
+   O card claro não é a opção que ganhou uma discussão — é o que as 9
+   telas já renderizavam desde o primeiro dia. As três regras de vidro
+   (`background`, `b`, `p`) eram as três inertes que o
+   `conferir:cascata` acusava a cada rodada, e que
+   `docs/regra-inerte.md` §6 e `docs/estado/pilares-10-09.md` §0.5
+   mapearam. Apagá-las não muda um pixel: muda o arquivo parar de
+   descrever um desenho que não acontece.
+
+   E o argumento original do vidro ("o card claro brigaria com a faixa
+   do herói pela atenção") deixou de valer por conta própria: a barra
+   agora é `--plate`, escura, e o card claro ali dentro não compete com
+   o cobalto da faixa — está noutra região e noutro tom.
+
+   A regra que VALE está junto das outras do card, na seção do shell.
+   Uma declaração só, no lugar onde se procura por ela.
+   ============================================================ */
 /* O botão de ajuda é LIMA, como o "Upgrade" do mockup: é a única ação
    permanente da sidebar, e o lima só aparece uma vez por região. */
 .side-support .cta.ghost {
@@ -906,7 +973,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
     content: "";
     position: absolute;
     inset: 4px 6px;
-    border-radius: 10px;
+    border-radius: var(--raio-item);
     background: var(--sidebar-active-bg);
     z-index: -1;
   }
@@ -953,7 +1020,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .bubble {
   max-width: 78%;
   padding: 11px 13px;
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   font-size: var(--fs-corpo);
   line-height: 1.5;
 }
@@ -979,7 +1046,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: 1.5px solid var(--cobalt);
   color: var(--cobalt-ink);
   background: var(--surface);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
 }
 .chip-opt:hover:not([disabled]) { background: rgb(var(--cobalt-rgb) / 0.07); }
 .chip-opt[disabled] { opacity: 0.4; cursor: default; }
@@ -1028,7 +1095,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 5px 10px;
   margin-left: 6px;
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--surface);
   color: var(--ink-mute);
   vertical-align: baseline;
@@ -1138,7 +1205,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .pendencia-bloco {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 18px 18px 16px;
   margin-bottom: 22px;
 }
@@ -1167,7 +1234,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: start;
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 14px 16px;
 }
 .espera-quem b { display: block; font-family: var(--display); font-size: var(--fs-titulo); }
@@ -1196,7 +1263,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   flex: 1;
   width: 100%;
   border: 1.5px solid var(--line);
-  border-radius: 4px;
+  border-radius: var(--raio-micro);
   padding: 11px 12px;
   font-size: var(--fs-corpo);
   font-family: var(--body);
@@ -1214,7 +1281,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--cobalt);
   color: var(--white);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--raio-micro);
   padding: 0 16px;
   font-family: var(--display);
   font-weight: 700;
@@ -1245,7 +1312,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .trust {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: 6px;
+  border-radius: var(--raio-selo);
   padding: 14px;
   font-size: var(--fs-corpo);
   line-height: 1.6;
@@ -1305,7 +1372,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .mark-plate {
   background: var(--plate);
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   padding: 12px 13px;
   flex: none;
   display: flex;
@@ -1393,7 +1460,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-swap {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 16px 18px;
 }
 .ec-swap-label {
@@ -1466,7 +1533,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--plate-ink);
   background: var(--plate);
   padding: 14px 26px;
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   box-shadow: 0 18px 36px -14px rgb(var(--navy-rgb) / 0.55);
   opacity: 0;
   pointer-events: none;
@@ -1485,7 +1552,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-corpo);
   line-height: 1.45;
   padding: 13px 17px;
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   box-shadow: 0 18px 36px -16px rgb(var(--navy-rgb) / 0.6);
   max-width: 320px;
   opacity: 0;
@@ -1558,7 +1625,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 16px 18px;
 }
 /* Titulo de card no aside. A classe era aplicada em tres lugares e NAO
@@ -1582,7 +1649,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-titulo);
   font-family: var(--body);
   color: var(--ink);
-  border-radius: 4px;
+  border-radius: var(--raio-micro);
 }
 .field select:focus { border-color: var(--cobalt); outline: none; }
 .field input:disabled, .field select:disabled { background: rgb(var(--navy-rgb) / 0.04); color: var(--ink-mute); }
@@ -1592,7 +1659,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--surface);
   border: 1.5px solid var(--line);
   border-left: 4px solid var(--cobalt);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 16px 18px;
 }
 .alert-card.warn { border-left-color: var(--warn); }
@@ -1617,7 +1684,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--lime); color: var(--black);
   font-family: var(--display); font-weight: 700; font-size: var(--fs-legenda);
   letter-spacing: 0.03em;
-  padding: 6px 11px; border-radius: 6px;
+  padding: 6px 11px; border-radius: var(--raio-selo);
 }
 
 .badge {
@@ -1640,7 +1707,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .empty-hero {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 38px 30px 32px;
   text-align: center;
 }
@@ -1698,7 +1765,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 18px;
   background: var(--surface);
   border: 1.5px solid var(--ice);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   display: flex; flex-direction: column; gap: 12px;
 }
 .empty-list li, .tips-list li {
@@ -1707,7 +1774,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .empty-list li b { color: var(--ink); font-weight: 600; }
 
-.tips-card { background: var(--surface); border: 1.5px solid var(--line); border-radius: 12px; padding: 16px 18px; }
+.tips-card { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--raio-card); padding: 16px 18px; }
 .tips-title { font-family: var(--display); font-weight: 700; font-size: var(--fs-corpo); color: var(--navy); margin: 0 0 10px; }
 .tips-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .tick {
@@ -1722,7 +1789,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    diferença é de cor e de seta, não de superfície. */
 .acct-row.destaque .ar-text b { color: var(--cobalt-ink); }
 .acct-row.destaque svg { color: var(--cobalt-ink); }
-.acct-list .acct-row.destaque { background: rgb(var(--cobalt-rgb) / 0.04); border-radius: 8px; padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
+.acct-list .acct-row.destaque { background: rgb(var(--cobalt-rgb) / 0.04); border-radius: var(--raio-interno); padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
 
 /* ---------- lista da assinatura: todas as linhas com o mesmo peso ---------- */
 .acct-list { padding: 4px 16px; }
@@ -1744,7 +1811,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ar-text b { font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo); color: var(--cobalt-ink); }
 .ar-text span { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.45; }
 
-.support-block { border-radius: 10px; padding: 18px; margin: 0; font-size: var(--fs-corpo); }
+.support-block { border-radius: var(--raio-item); padding: 18px; margin: 0; font-size: var(--fs-corpo); }
 .support-block b { font-size: var(--fs-titulo); margin-bottom: 5px; }
 .support-block .wa { display: inline-block; margin-top: 8px; font-weight: 600; color: var(--cobalt-ink); text-decoration: none; }
 
@@ -1769,7 +1836,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .side-support {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 13px;
   margin-bottom: 12px;
 }
@@ -1801,7 +1868,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   text-decoration: none;
   border: 1.5px solid var(--line);
   background: var(--surface);
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   /* 11px em cima e embaixo põem o alvo em 44px de altura, o piso do iOS —
      a `.auth-help` de `(fluxo)`, com 9px, mede 41px e fica abaixo dele. */
   padding: 11px 15px;
@@ -1930,7 +1997,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 26px 26px 22px;
 }
 .hero-card .eyebrow { margin: 0 0 12px; }
@@ -1986,7 +2053,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .list-row {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 15px 17px;
 }
 .list-row .lr-head { display: flex; align-items: center; gap: 8px; }
@@ -2018,7 +2085,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background-image: radial-gradient(rgb(var(--ice-rgb) / 0.12) 1px, transparent 1px);
   background-size: 16px 16px;
   color: var(--plate-ink);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 20px;
 }
 .navy-card p { font-size: var(--fs-corpo); line-height: 1.55; color: rgb(var(--plate-ink-rgb) / 0.82); margin: 8px 0 0; }
@@ -2069,7 +2136,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .command-card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 20px;
 }
 .command-card b.title { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); display: block; margin-bottom: 6px; }
@@ -2081,7 +2148,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-corpo);
   letter-spacing: 0.04em;
   padding: 9px 15px;
-  border-radius: 4px;
+  border-radius: var(--raio-micro);
   border: 1.5px solid var(--line);
   background: var(--surface);
   color: var(--ink-soft);
@@ -2099,7 +2166,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .mission-slot {
   border: 1.5px dashed var(--ice);
   background: var(--ice-soft);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 20px 22px;
 }
 .mission-slot .ms-tag {
@@ -2121,7 +2188,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .escolha-item {
   display: flex; align-items: flex-start; gap: 11px;
   border: 1.5px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 13px 15px;
   cursor: pointer;
   background: var(--surface);
@@ -2138,7 +2205,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    importante quanto o que ele mostra. */
 .escolhido {
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 14px 16px;
   background: var(--surface);
 }
@@ -2156,7 +2223,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   flex: none;
   width: 30px;
   height: 30px;
-  border-radius: 999px;
+  border-radius: var(--raio-pilula);
   background: var(--cobalt);
   color: var(--white);
   font-family: var(--display);
@@ -2202,7 +2269,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    ver as duas juntas é o que faz entender que são separadas. */
 .duas-cobrancas { display: grid; gap: 14px; grid-template-columns: 1fr; }
 @media (min-width: 720px) { .duas-cobrancas { grid-template-columns: 1fr 1fr; } }
-.cobranca { border: 1px solid var(--line); border-radius: 12px; padding: 16px; background: var(--surface); }
+.cobranca { border: 1px solid var(--line); border-radius: var(--raio-card); padding: 16px; background: var(--surface); }
 /* `b.title`, e não `b` — ver a nota da família em `.fail-block`. Aqui a
    regra por tag transformava a palavra "inteiro", no meio da frase "vai
    inteiro para o Facebook", num bloco navy de 15px. */
@@ -2217,7 +2284,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .tema-opcao {
   text-align: left;
   border: 1.5px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   background: var(--surface);
   padding: 14px;
   display: flex;
@@ -2231,9 +2298,9 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* A miniatura: duas faixas — fundo e superfície — com um ponto de acento
    em cada. Suficiente para reconhecer o tema sem desenhar uma tela
    inteira em 60 pixels. */
-.tema-amostra { display: flex; height: 44px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line); }
+.tema-amostra { display: flex; height: 44px; border-radius: var(--raio-interno); overflow: hidden; border: 1px solid var(--line); }
 .tema-amostra > span { flex: 1; display: grid; place-items: center; }
-.tema-amostra i { width: 14px; height: 14px; border-radius: 4px; display: block; }
+.tema-amostra i { width: 14px; height: 14px; border-radius: var(--raio-micro); display: block; }
 
 /* Erro de publicação na linha do anúncio. Vermelho contido: é
    informação, não alarme — nada foi gasto. */
@@ -2242,7 +2309,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   line-height: 1.5;
   color: var(--crit);
   background: var(--crit-soft);
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   padding: 8px 10px;
   margin: 8px 0 0;
 }
@@ -2256,7 +2323,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
   background: var(--crit-soft);
   border: 1.5px solid var(--crit);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 16px 20px;
   margin-bottom: 22px;
 }
@@ -2335,7 +2402,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .fail-block {
   background: var(--crit-soft);
   border: 1.5px solid var(--crit);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 16px 18px;
   margin-bottom: 16px;
 }
@@ -2412,7 +2479,7 @@ code {
   font-family: ui-monospace, "Cascadia Mono", "Consolas", monospace;
   font-size: var(--fs-code);
   background: rgb(var(--navy-rgb) / 0.06);
-  border-radius: 4px;
+  border-radius: var(--raio-micro);
   padding: 1px 5px;
 }
 
@@ -2420,7 +2487,7 @@ code {
 .diag-lista li {
   border: 1.5px solid var(--line);
   border-left-width: 3px;
-  border-radius: 6px;
+  border-radius: var(--raio-selo);
   padding: 10px 12px;
   background: var(--surface);
 }
@@ -2439,7 +2506,7 @@ code {
   font-size: var(--fs-legenda);
   line-height: 1.5;
   background: rgb(var(--navy-rgb) / 0.06);
-  border-radius: 6px;
+  border-radius: var(--raio-selo);
   padding: 10px;
   margin: 8px 0 0;
   overflow-x: auto;
@@ -2486,7 +2553,7 @@ code {
 .rev-erro {
   background: var(--crit-soft);
   color: var(--crit);
-  border-radius: 12px;
+  border-radius: var(--raio-card);
   padding: 12px 14px;
   font-size: var(--fs-corpo);
   line-height: 1.5;
@@ -2543,7 +2610,7 @@ code {
 .rev-diverge { display: grid; gap: 10px; }
 .rev-duas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .rev-opcao {
-  border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+  border: 1px solid var(--line); border-radius: var(--raio-item); padding: 10px;
   display: grid; gap: 8px; align-content: start;
 }
 .rev-dica { margin: 0; font-size: var(--fs-corpo); color: var(--ink-mute); line-height: 1.5; }
@@ -2557,14 +2624,14 @@ code {
 .rev-corrigir { display: flex !important; gap: 6px; flex: 1 1 220px; }
 .rev-corrigir input, .rev-corrigir textarea {
   flex: 1; min-width: 120px;
-  border: 1px solid var(--line); border-radius: 8px;
+  border: 1px solid var(--line); border-radius: var(--raio-interno);
   padding: 6px 9px; font: inherit; font-size: var(--fs-corpo);
   background: var(--canvas); color: var(--ink);
 }
 .rev-quem { font-size: var(--fs-legenda); color: var(--ink-mute); }
 
 .btn-linha {
-  border: 1px solid var(--line); border-radius: 8px;
+  border: 1px solid var(--line); border-radius: var(--raio-interno);
   padding: 6px 12px; font: inherit; font-size: var(--fs-corpo); font-weight: 500;
   background: var(--surface); color: var(--ink); cursor: pointer;
 }
@@ -2583,14 +2650,14 @@ code {
 
 .rev-aplicar { margin-top: 28px; }
 .rev-previa { display: grid; gap: 8px; margin-bottom: 14px; }
-.rev-plinha { border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.rev-plinha { border: 1px solid var(--line); border-radius: var(--raio-card); padding: 12px 14px; }
 .rev-plinha.bloqueia { border-color: var(--crit); }
 .rev-phead { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
 .rev-pvalores { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 .rev-bloqueio {
   background: var(--crit-soft); color: var(--crit);
-  border-radius: 12px; padding: 12px 14px;
+  border-radius: var(--raio-card); padding: 12px 14px;
   font-size: var(--fs-corpo); line-height: 1.55; max-width: 78ch;
 }
 .rev-aplicar-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -2613,7 +2680,7 @@ code {
    um erro que aconteceu. */
 .id-aviso {
   background: var(--warn-soft);
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   padding: 12px 14px;
   margin-bottom: 16px;
 }
@@ -2628,7 +2695,7 @@ code {
   /* Nasce colado no formulário que o gerou, não no topo da seção. */
   margin: 10px 0 0;
   padding: 10px 12px;
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   background: var(--good-soft);
   color: var(--good);
 }
@@ -2647,7 +2714,7 @@ code {
    funcionou. Feito com gradiente em token, sem imagem e sem cor literal. */
 .id-logo img {
   width: 96px; height: 96px; object-fit: contain;
-  border: 1.5px solid var(--line); border-radius: 10px; padding: 8px;
+  border: 1.5px solid var(--line); border-radius: var(--raio-item); padding: 8px;
   background-color: var(--surface);
   background-image:
     linear-gradient(45deg, var(--line) 25%, transparent 25%),
@@ -2663,7 +2730,7 @@ code {
 .id-galeria li { display: grid; gap: 6px; justify-items: start; }
 .id-galeria img {
   width: 100%; aspect-ratio: 1; object-fit: cover;
-  border: 1.5px solid var(--line); border-radius: 10px;
+  border: 1.5px solid var(--line); border-radius: var(--raio-item);
 }
 
 .id-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -2692,7 +2759,7 @@ code {
   color: var(--ink);
   background: var(--surface-2);
   border: 1.5px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   padding: 7px 14px;
   margin-right: 10px;
   cursor: pointer;
@@ -2801,7 +2868,7 @@ code {
 .rc-editor textarea {
   width: 100%;
   border: 1.5px solid var(--line);
-  border-radius: 8px;
+  border-radius: var(--raio-interno);
   padding: 8px 10px;
   font: inherit;
   font-size: var(--fs-corpo);
@@ -2850,7 +2917,7 @@ code {
 .rc-nao-sabemos {
   margin-top: 10px;
   padding: 14px 18px;
-  border-radius: 10px;
+  border-radius: var(--raio-item);
   background: rgb(var(--navy-rgb) / 0.04);
 }
 .rc-nao-sabemos > b {
@@ -2894,3 +2961,407 @@ code {
    ------------------------------------------------------------ */
 .excl-lista { margin: 0 0 14px; padding-left: 18px; }
 .excl-lista li { margin-bottom: 4px; line-height: 1.5; }
+
+
+/* ============================================================
+   RESULTADOS — a ficha de campanha da /anuncios.
+
+   O visual saiu de `v2g-dashboard-resultados-*` e
+   `v2g-resultados-nao-medidos-*`. O que NÃO saiu de lá está registrado
+   em docs/estado/ como CONFLITO: selo "no ar", custo por conversa,
+   variação contra os 30 dias anteriores, gráfico de conversas por dia,
+   miniatura do criativo dentro do card e sino de notificação. Todos
+   pedem dado que nenhuma rota devolve — e a v0 OMITE o que não tem
+   fonte, em vez de desabilitar ou escrever "em breve". Botão morto
+   ensina que a função existe e está a um clique.
+
+   Por que classe nova em vez de esticar `.list-row`: a `.list-row` é
+   linha de lista curta, usada em quatro telas. O que o wireframe pede
+   aqui é uma FICHA — grade de números, bloco de nível, tom próprio
+   para ausência. Esticar a `.list-row` mudaria as outras quatro sem
+   ninguém pedir.
+   ============================================================ */
+.res-lista { display: flex; flex-direction: column; gap: 14px; }
+
+.res-ficha {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-card);
+  padding: 18px 18px 20px;
+}
+.res-ficha-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.res-ficha-titulo {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-titulo);
+  color: var(--navy);
+  flex: 1;
+  min-width: 0;
+}
+.res-periodo { font-size: var(--fs-legenda); color: var(--ink-mute); margin: 9px 0 0; }
+
+/* ------------------------------------------------------------
+   A GRADE. Duas colunas no celular (390px), três no desktop.
+
+   Duas e não uma: o número de métrica é curto, e uma coluna só faria a
+   ficha rolar meia tela para dizer seis coisas. Três e não quatro no
+   desktop: com quatro, "o anúncio apareceu N vezes" quebra em três
+   linhas no rótulo.
+   ------------------------------------------------------------ */
+.res-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+@media (min-width: 900px) {
+  .res-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+.res-num {
+  background: rgb(var(--navy-rgb) / 0.03);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-card);
+  padding: 13px 14px;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  min-width: 0;
+}
+.res-num-ico {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: rgb(var(--cobalt-rgb) / 0.10);
+  color: var(--cobalt-ink);
+  display: grid; place-items: center;
+  flex: none;
+}
+.res-num-corpo { min-width: 0; }
+.res-num-rotulo {
+  display: block;
+  font-size: var(--fs-legenda);
+  line-height: 1.35;
+  color: var(--ink-soft);
+  margin-bottom: 5px;
+}
+.res-num-valor {
+  display: block;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-tela);
+  line-height: 1.05;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------
+   AUSÊNCIA TEM TOM PRÓPRIO, E O TOM VEM DO CAMPO `ausente`.
+
+   O travessão é o do wireframe `resultados-nao-medidos`: o número que
+   não existe ocupa o mesmo lugar do número que existe, no mesmo
+   tamanho, em cinza — e leva embaixo uma linha dizendo por quê. Zero
+   continua sendo um número como qualquer outro, em tinta cheia.
+
+   Escrever "0" aqui responderia "medimos, e deu zero" a uma pergunta
+   que ninguém mediu.
+   ------------------------------------------------------------ */
+.res-num.vazio .res-num-valor { color: var(--ink-mute); }
+.res-num.vazio .res-num-ico {
+  background: rgb(var(--navy-rgb) / 0.06);
+  color: var(--ink-mute);
+}
+.res-num-vazio-nota {
+  display: block;
+  margin-top: 6px;
+  font-size: var(--fs-legenda);
+  line-height: 1.4;
+  color: var(--ink-mute);
+}
+
+/* ------------------------------------------------------------
+   NO CELULAR O ÍCONE SOBE, E O TEXTO GANHA A LARGURA INTEIRA.
+
+   Com o ícone à esquerda em 390px sobra pouco mais de 100px para o
+   rótulo: "Vendas que você confirmou" virava três linhas e cada card
+   da grade ficava de uma altura. Empilhado, o rótulo usa o card
+   inteiro e quebra em duas linhas no pior caso.
+   ------------------------------------------------------------ */
+@media (max-width: 560px) {
+  .res-num { flex-direction: column; gap: 9px; }
+  .res-num-corpo { width: 100%; }
+}
+
+/* ------------------------------------------------------------
+   O BLOCO DO NÍVEL. A frase é do backend, inteira, sem tradução.
+   Fundo de gelo para separar do que é número medido: é leitura, não
+   medição.
+   ------------------------------------------------------------ */
+.res-nivel {
+  margin-top: 15px;
+  background: var(--ice-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-card);
+  padding: 13px 15px;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+.res-nivel svg { color: var(--cobalt-ink); flex: none; margin-top: 1px; }
+.res-nivel p {
+  margin: 0;
+  font-size: var(--fs-corpo);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+
+/* ------------------------------------------------------------
+   O ESTADO EM QUE O BACKEND NÃO RESPONDEU.
+
+   Wireframe `v2g-dashboard-falha-*`. A palavra "erro" não aparece: o
+   dono não cometeu erro nenhum e não tem o que consertar. O que ele
+   precisa saber é que a campanha dele não mudou por causa disso.
+
+   Ficou de fora do wireframe: "Última atualização: hoje, 09:40" (nada
+   registra esse instante), "Ver campanha" (não há rota) e a pílula
+   "No ar" (não há status de plataforma em rota nenhuma).
+   ------------------------------------------------------------ */
+.res-falha {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-card);
+  padding: 38px 22px 30px;
+  text-align: center;
+}
+.res-falha-ico {
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  background: var(--warn-soft);
+  color: var(--warn);
+  display: grid; place-items: center;
+  margin: 0 auto 18px;
+}
+.res-falha h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-tela);
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  color: var(--navy);
+  margin: 0 0 6px;
+  text-wrap: balance;
+}
+.res-falha .res-falha-sub {
+  font-family: var(--display);
+  font-size: var(--fs-titulo);
+  color: var(--cobalt-ink);
+  margin: 0 0 14px;
+}
+.res-falha p {
+  font-size: var(--fs-corpo);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0 auto;
+  max-width: 46ch;
+}
+.res-falha-nota {
+  margin-top: 22px;
+  background: var(--warn-soft);
+  border-radius: var(--raio-card);
+  padding: 14px 16px;
+  text-align: left;
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+}
+.res-falha-nota svg { color: var(--warn); flex: none; margin-top: 1px; }
+.res-falha-nota b {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  color: var(--navy);
+  margin-bottom: 3px;
+}
+.res-falha-nota p { font-size: var(--fs-corpo); line-height: 1.55; max-width: none; }
+
+/* ------------------------------------------------------------
+   CARREGANDO. Wireframe `v2g-dashboard-carregando-*`.
+
+   O esqueleto tem a FORMA da ficha que vai chegar — mesma altura,
+   mesma grade — para a página não pular quando o dado entra. Sem
+   texto: "carregando..." em cima de um esqueleto é dizer duas vezes a
+   mesma coisa.
+
+   `prefers-reduced-motion` desliga o brilho: movimento perpétuo na
+   periferia da tela é exatamente o que a preferência pede para parar.
+   ------------------------------------------------------------ */
+@keyframes res-brilho {
+  0% { opacity: 0.55; }
+  50% { opacity: 1; }
+  100% { opacity: 0.55; }
+}
+.res-esqueleto { animation: res-brilho 1.5s ease-in-out infinite; }
+.res-barra {
+  background: rgb(var(--navy-rgb) / 0.08);
+  border-radius: var(--raio-selo);
+  height: 12px;
+}
+.res-esqueleto .res-num { background: rgb(var(--navy-rgb) / 0.03); }
+.res-esqueleto .res-num-ico { background: rgb(var(--navy-rgb) / 0.06); }
+@media (prefers-reduced-motion: reduce) {
+  .res-esqueleto { animation: none; opacity: 0.8; }
+}
+
+
+/* ======================================================================
+   A TRILHA DA EXECUÇÃO — /inicio, os dois ramos
+   ======================================================================
+
+   Etapa 3 do `docs/v2g-wireframes/IMPLEMENTATION-PLAN.md`. Substitui a
+   lista `.acct-list` que fazia as vezes de "o resto do caminho".
+
+   TRÊS COISAS QUE ESTE BLOCO NÃO TEM, e cada ausência é uma regra:
+
+   1. **Não há barra de porcentagem.** O que a cadeia sabe é ORDINAL — a
+      pessoa está na etapa 3 de 6 — e desenhar uma barra em 50% afirma uma
+      precisão que não existe: as seis etapas não duram o mesmo tanto, e
+      duas delas dependem do Facebook. O plano chama isso de progresso
+      inventado, e reprova.
+
+   2. **Não há cor de julgamento.** Nada de verde/amarelo/vermelho: §4,
+      conflito 4. O marcador diz POSIÇÃO (feita, atual, ainda não), não
+      opinião sobre a posição.
+
+   3. **Não há prazo.** Nenhum "leva X minutos" nem "amanhã" — §4,
+      conflito 18. Ninguém mede quando a plataforma entrega.
+
+   O estado vem de `posicoesDaCadeia()`, nunca de `etapa.concluida`: uma
+   etapa depois da atual não aconteceu, e o predicado dela é verdade vazia
+   (ver o bloco em `lib/estado/frases.ts`).
+*/
+
+.trilha-andamento {
+  margin: 0 0 18px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.trilha-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.trilha-item {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  gap: 12px;
+  padding: 0 0 18px;
+  position: relative;
+}
+
+.trilha-item:last-child { padding-bottom: 0; }
+
+/* O fio que liga um marcador ao seguinte. Fica ATRÁS do marcador
+   (z-index), senão ele atravessa o círculo vazado das etapas futuras. */
+.trilha-item:not(:last-child)::before {
+  content: "";
+  position: absolute;
+  left: 8.25px;
+  top: 20px;
+  bottom: 2px;
+  width: 1.5px;
+  background: var(--line);
+}
+
+.trilha-marca {
+  position: relative;
+  z-index: 1;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-pilula);
+  background: var(--surface);
+}
+
+/* feita — cobalto cheio, com a marca de conferido desenhada na borda de
+   um pseudo-elemento (sem SVG, sem fonte de ícone). */
+.trilha-item.e-feita .trilha-marca {
+  background: var(--cobalt);
+  border-color: var(--cobalt);
+}
+.trilha-item.e-feita .trilha-marca::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 2.5px;
+  width: 4px;
+  height: 8px;
+  /* ============================================================
+     A TINTA AQUI É `--card-cobalt-ink`, E NÃO `--cobalt-ink`.
+
+     Escrevi `--cobalt-ink` primeiro e a marca de conferido SUMIU no tema
+     claro — cobalto desenhado sobre cobalto. Pego na captura de 1280px em
+     11/09; no tema escuro ela aparecia, porque lá o token vale `#5C88FA`.
+
+     O motivo é o nome: no tema claro `--cobalt-ink: var(--cobalt)`, ou
+     seja, ele quer dizer "tinta COR de cobalto", não "tinta que vai SOBRE
+     cobalto". Quem diz a segunda coisa é `--card-cobalt-ink` (`#FFFFFF` no
+     claro, `#E9EFF8` no escuro), que é o par de `--card-cobalt-bg`.
+
+     É o defeito do `--navy` que o CLAUDE.md registra — um token nomeado
+     pela cor servindo de fundo e de texto — reaparecendo com outro nome.
+     ============================================================ */
+  border: solid var(--card-cobalt-ink);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+/* atual — anel cobalto com miolo cheio. É a única linha que ganha peso. */
+.trilha-item.e-atual .trilha-marca {
+  border-color: var(--cobalt);
+  border-width: 2px;
+}
+.trilha-item.e-atual .trilha-marca::after {
+  content: "";
+  position: absolute;
+  inset: 3px;
+  border-radius: var(--raio-pilula);
+  background: var(--cobalt);
+}
+
+.trilha-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+.trilha-texto b {
+  font-size: var(--fs-titulo);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.trilha-texto span {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--ink-mute);
+}
+
+.trilha-item.e-atual .trilha-texto b { color: var(--cobalt); }
+
+/* ainda não chegou: recua sem sumir. Some seria encolher a lista a cada
+   visita e tirar a sensação de ter andado. */
+.trilha-item.e-ainda_nao .trilha-texto b {
+  font-weight: 500;
+  color: var(--ink-mute);
+}
+
+/* Desktop é derivado: o único ganho é respiro entre as linhas. */
+@media (min-width: 900px) {
+  .trilha-item { padding-bottom: 20px; }
+}

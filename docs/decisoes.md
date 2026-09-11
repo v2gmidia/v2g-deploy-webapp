@@ -38,13 +38,71 @@ na seção de baixo.
 - [ ] **`origem_criativo` está cravado em `lib/cadastro/montar.ts`.** Trocar por
       valor vindo do payload exige acrescentar pergunta ao onboarding, o que é
       mudança de produto. — levantado em 22/08
-- [ ] **`.side-support`: card de vidro sobre cobalto ou card claro?** Muda
-      aparência em 9 telas e bloqueia uma linha do `conferir:cascata`. —
-      levantado em 21/08
 
 ---
 
 ## Decididas
+
+### 2026-09-11 — Os wireframes do handoff: o que entra no v0 e o que não entra
+**Contexto:** o ChatGPT entregou 44 PNGs + 7 documentos descrevendo um destino de
+produto. O plano medido está em `docs/v2g-wireframes/IMPLEMENTATION-PLAN.md`, com
+**20 conflitos** entre o que a imagem mostra e o que o backend tem. Seis decisões
+do Victor no mesmo dia.
+
+**1. Os PNGs não são versionados.** `docs/v2g-wireframes/*.png` entra no
+`.gitignore`; os arquivos continuam no disco.
+*Por quê:* 61 MB entram no histórico do git para sempre e saem de lá nunca. O que
+sobrevive dos wireframes são os `.md` e o plano — a imagem é consulta, e consulta
+de uma vez. Nenhum PNG chegou a ser rastreado, então não há `git rm --cached`.
+
+**2. A barra lateral vira escura (`--plate`), e o `.side-support` vira card
+claro.** Fecha a pendência aberta em 21/08.
+*Por quê o card claro:* **o contraste desse ramo já foi custeado.**
+`docs/contraste.md` §9.2 item *e* mediu o anel de foco do `.side-support` sobre
+`--ice-soft` e resolveu com `--cobalt-ink` — 1,11 → 6,64. Escolher o card de
+vidro sobre cobalto jogaria fora uma medição feita e pediria outra.
+
+**3. A navegação NÃO muda.** Valem os cinco itens atuais — Início, Vendas,
+Anúncios, Avisos, Conta — e a decisão do lote QA-1, escrita em
+`app/(protected)/layout.tsx:70-108`. Sem "Campanhas", sem "Resultados" como item,
+sem "Negócio" na lateral.
+*Por quê:* cinco é **teto**, não meta — são cinco células de 64px em 320px, e o
+wireframe desenha seis mais um botão central. E "Campanhas" e "Criativos" viraram
+"Anúncios" de propósito: o cliente não separa a campanha do criativo. O wireframe
+traz de volta um raciocínio de gestor de tráfego que o QA-1 tirou da interface.
+**Consequência:** a Etapa 1 do plano vira só CSS — tokens de raio, sidebar
+escura, `.side-support` claro. (`/criativos` já está em `PROTECTED_PREFIXES`;
+medido, nada a fazer.)
+
+**4. O detalhe por campanha (`/anuncios/[idExecucao]`) vai para "Depois".** A
+trava `conferir:campanha-da-sessao` §3 **fica como está**.
+*Por quê:* a rota exigiria trocar uma proibição estrutural (`params` e
+`searchParams` banidos em arquivo que chame `resultadoDoNegocio()`) por uma regra
+condicional. É barato de escrever e caro de manter — e, com uma campanha por
+cliente, o detalhe não resolve nada que a ficha dentro da `/anuncios` já não
+resolva. **O desenho da regra nova está registrado no §3.2 do plano** para quando
+houver mais de uma campanha.
+
+**5. As órfãs ficam como estão.** `7fcfc505` (FLEETLINK, R$ 93,20) e `3de135e4`
+(Byond Colour, A$ 113,45) continuam com `business_id: null`.
+*Por quê:* **a regra das duas moedas é provada por fixture**, não por dado vivo.
+Ligar as duas à mão para ter um caso de AUD na tela seria gastar escrita em banco
+real para provar o que `conferir:resultado` §4 já prova. Isto **não** é o
+problema resolvido: nenhuma rota da API escreve `business_id` numa execução
+existente, e todo cliente que entrar por script vai continuar precisando de
+`UPDATE` à mão (`docs/estado/tela-de-resultado-10-09.md` §0.1).
+
+**6. O veredito do criativo nomeia o que é: uma checagem das regras de anúncio.
+A tela NUNCA diz que a peça "presta" com base só no gate.**
+*Por quê, e é o ponto que só aparece no primeiro uso real:* **uma imagem chapada
+passa no gate.** O gate responde "isto viola política da Meta?", não "isto
+vende?" — um fundo cinza sem texto, sem produto e sem chamada passa com louvor. O
+cliente que subisse essa peça e lesse "aprovado" teria recebido do produto
+exatamente a informação errada. O "presta" vem do avaliador do backend, que
+depende do banco de referências e não existe. Até lá, **aprovado quer dizer *pode
+subir*, não *está bom***.
+
+---
 
 ### 2026-09-01 — O merge por campo NÃO é antecipado no front
 **Aviso do backend:** o `POST /resposta-do-dono` vai passar a fazer **merge

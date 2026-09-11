@@ -1,5 +1,7 @@
+import type { ReactNode } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
+import { Pill } from "@/components/ui/Pill";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { COLUNAS_DO_JULGAMENTO, foiReprovada } from "@/lib/criativos/peca";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
@@ -126,12 +128,7 @@ export default async function AnunciosPage() {
       <div className="dash-grid">
         <div className="dash-main">
           {resultado.estado === "indisponivel" ? (
-            <section className="card">
-              <p className="hint">
-                Não conseguimos buscar os números dos seus anúncios agora. Eles não sumiram — é
-                a nossa conexão com o Facebook que não respondeu. Tente de novo daqui a pouco.
-              </p>
-            </section>
+            <BackendNaoRespondeu />
           ) : (
             <>
               {/* ============================================================
@@ -151,7 +148,7 @@ export default async function AnunciosPage() {
                     {resultado.campanhas.length === 1 ? "anúncio" : "anúncios"}
                   </span>
                 </div>
-                <div className="campaign-list">
+                <div className="res-lista">
                   {resultado.campanhas.map((c) => (
                     <Campanha key={c.idExecucao} campanha={c} />
                   ))}
@@ -192,32 +189,188 @@ export default async function AnunciosPage() {
  * Um número da campanha.
  *
  * ============================================================
- * PRESENTE É NÚMERO GRANDE; AUSENTE É TEXTO MIÚDO. E A DIFERENÇA VEM DO
- * CAMPO `ausente`, NUNCA DE COMPARAR O TEXTO.
+ * PRESENTE É NÚMERO GRANDE; AUSENTE É TRAVESSÃO CINZA COM UMA LINHA
+ * EXPLICANDO. E A DIFERENÇA VEM DO CAMPO `ausente`, NUNCA DE COMPARAR
+ * O TEXTO.
  *
- * `.lr-nums b` já é o número de display desta folha de estilo, e texto
- * sem `<b>` já é miúdo e apagado. Então a distinção de TOM que o contrato
- * pede — "ausência é cinza e discreta, zero é um número como qualquer
- * outro" — sai sem uma linha de CSS nova.
+ * O travessão é do wireframe `resultados-nao-medidos`: o número que não
+ * existe ocupa o MESMO lugar e o MESMO tamanho do número que existe, em
+ * cinza, e leva embaixo o motivo. Antes desta etapa a ausência saía como
+ * "investido — ainda não sabemos" numa linha corrida, do tamanho do
+ * texto de apoio: honesto, mas o dono lia a ficha inteira sem perceber
+ * que faltava alguma coisa.
+ *
+ * `valor.texto` continua sendo quem escreve o motivo — a camada de
+ * leitura é dona dessa frase. Esta tela não a reescreve; só a coloca
+ * embaixo do travessão em vez de no meio da linha.
  *
  * Uma tela que comparasse `texto === "ainda não sabemos"` para descobrir
  * isso quebraria no dia em que a frase mudasse.
  * ============================================================
  */
-function Numero({ valor, rotulo }: { valor: ValorNaTela; rotulo: string }) {
-  if (valor.ausente) {
-    return (
-      <span>
-        {rotulo} — {valor.texto}
-      </span>
-    );
-  }
+function Numero({
+  valor,
+  rotulo,
+  children,
+}: {
+  valor: ValorNaTela;
+  rotulo: string;
+  children: ReactNode;
+}) {
   return (
-    <span>
-      <b>{valor.texto}</b> {rotulo}
-    </span>
+    <div className={valor.ausente ? "res-num vazio" : "res-num"}>
+      <span className="res-num-ico" aria-hidden="true">
+        {children}
+      </span>
+      <span className="res-num-corpo">
+        <span className="res-num-rotulo">{rotulo}</span>
+        {valor.ausente ? (
+          <>
+            {/* O travessão é decoração: quem lê por leitor de tela ouve a
+                frase inteira, não um traço solto. */}
+            <span className="res-num-valor" aria-hidden="true">
+              &mdash;
+            </span>
+            <span className="res-num-vazio-nota">{valor.texto}</span>
+          </>
+        ) : (
+          <span className="res-num-valor">{valor.texto}</span>
+        )}
+      </span>
+    </div>
   );
 }
+
+/**
+ * O backend não respondeu — e isso NÃO é "você não tem anúncio".
+ *
+ * ============================================================
+ * A PALAVRA "ERRO" NÃO APARECE, E NÃO É DELICADEZA.
+ *
+ * O dono não cometeu erro nenhum e não tem o que consertar. Dizer
+ * "erro" faria ele procurar culpa — a dele, provavelmente — numa tela
+ * onde a única informação útil é que a CAMPANHA dele não mudou por
+ * causa disso.
+ *
+ * O wireframe `v2g-dashboard-falha-*` traz mais três coisas que não
+ * entraram, por não terem fonte:
+ *
+ *   "Última atualização: hoje, 09:40"  nada registra esse instante
+ *   "Ver campanha"                     não existe rota de detalhe ainda
+ *   pílula verde "No ar"               não existe status de plataforma
+ *
+ * Botão que não leva a lugar nenhum ensina que a função existe e está a
+ * um clique. Então a v0 omite, em vez de desabilitar.
+ * ============================================================
+ */
+function BackendNaoRespondeu() {
+  return (
+    <section className="res-falha">
+      <div className="res-falha-ico" aria-hidden="true">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+          <path d="M2 8.5a15 15 0 0 1 20 0" />
+          <path d="M5 12a11 11 0 0 1 10.5-1.7" />
+          <path d="M8.5 15.5a6 6 0 0 1 4-1.3" />
+          <circle cx="12" cy="19.5" r="0.6" fill="currentColor" stroke="none" />
+          <path d="M19 13v4" />
+          <circle cx="19" cy="20" r="0.6" fill="currentColor" stroke="none" />
+        </svg>
+      </div>
+      <h2>Não conseguimos atualizar seus resultados agora.</h2>
+      <p className="res-falha-sub">Sua campanha não mudou por causa disso.</p>
+      <p>
+        Os números vêm do Facebook, e ele não respondeu desta vez. Seus anúncios continuam
+        exatamente como estavam, e nada do que você já aprovou foi desfeito.
+      </p>
+
+      <div className="res-falha-nota">
+        <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+          <circle cx="10" cy="10" r="7.5" />
+          <path d="M10 6.5v4" strokeLinecap="round" />
+          <circle cx="10" cy="13.5" r="0.6" fill="currentColor" stroke="none" />
+        </svg>
+        <div>
+          <b>Por que isso acontece</b>
+          {/* Sem promessa de prazo: ninguém aqui mede quando o Facebook
+              volta. O "em até 48 horas" que já custou caro em produção
+              nasceu de uma frase gentil exatamente deste formato. */}
+          <p>
+            Às vezes o Facebook demora para responder. Quando a conexão voltar, seus números
+            aparecem aqui de novo sozinhos — você não precisa fazer nada.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ------------------------------------------------------------
+   Os ícones da grade. Ficam aqui, e não em `components/ui`, porque
+   são desta grade: cada um nomeia UM número desta tela. Virar
+   componente compartilhado convidaria a usar "carrinho" para outra
+   coisa em outra tela, e aí o ícone deixa de significar.
+   ------------------------------------------------------------ */
+const traco = {
+  viewBox: "0 0 20 20",
+  fill: "none",
+  stroke: "currentColor",
+  strokeWidth: 1.6,
+  strokeLinecap: "round" as const,
+  strokeLinejoin: "round" as const,
+  width: 17,
+  height: 17,
+};
+
+const IconeCarteira = () => (
+  <svg {...traco}>
+    <path d="M2.5 6.5A1.5 1.5 0 0 1 4 5h11.5A1.5 1.5 0 0 1 17 6.5v8A1.5 1.5 0 0 1 15.5 16H4a1.5 1.5 0 0 1-1.5-1.5z" />
+    <path d="M13 10.5h2.5" />
+  </svg>
+);
+
+const IconeToque = () => (
+  <svg {...traco}>
+    <path d="M6 3.5 13.5 10 10 11l-1.5 3.5z" />
+  </svg>
+);
+
+const IconeOlho = () => (
+  <svg {...traco}>
+    <path d="M1.8 10S4.6 5 10 5s8.2 5 8.2 5-2.8 5-8.2 5-8.2-5-8.2-5z" />
+    <circle cx="10" cy="10" r="2.2" />
+  </svg>
+);
+
+const IconePessoas = () => (
+  <svg {...traco}>
+    <circle cx="7.5" cy="7" r="2.6" />
+    <path d="M2.8 16c0-2.4 2.1-4 4.7-4s4.7 1.6 4.7 4" />
+    <path d="M13.5 5.2a2.6 2.6 0 0 1 0 4.6" />
+    <path d="M14.8 12.4c1.5.5 2.5 1.8 2.5 3.6" />
+  </svg>
+);
+
+const IconeCarrinho = () => (
+  <svg {...traco}>
+    <path d="M2 3h2l1.7 8.4a1.3 1.3 0 0 0 1.3 1.1h6.6a1.3 1.3 0 0 0 1.3-1L17 6H5" />
+    <circle cx="7.5" cy="16" r="1.1" />
+    <circle cx="14" cy="16" r="1.1" />
+  </svg>
+);
+
+const IconeSeta = () => (
+  <svg {...traco}>
+    <path d="M4 13.5 8.5 9l3 3L16 7" />
+    <path d="M12.5 6.8H16v3.4" />
+  </svg>
+);
+
+const IconeLampada = () => (
+  <svg {...traco} width="18" height="18">
+    <path d="M7.2 13.2a4.6 4.6 0 1 1 5.6 0c-.5.4-.8 1-.8 1.6H8c0-.6-.3-1.2-.8-1.6z" />
+    <path d="M8.3 17h3.4" />
+  </svg>
+);
 
 /** O que a pílula diz. CINZA SEMPRE — ver o bloco do topo do arquivo. */
 const ROTULO_DO_ESTADO = {
@@ -230,19 +383,28 @@ function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
   const { resultado: r } = campanha;
 
   return (
-    <div className="list-row">
-      <div className="lr-head">
+    <article className="res-ficha">
+      <div className="res-ficha-head">
         {/* `nome` vindo `null` não vira "Anúncio sem nome": inventar rótulo
             para ausência é o mesmo defeito de inventar zero para ausência. */}
-        {campanha.nome && <span className="lr-title">{campanha.nome}</span>}
-        <span className="pill off">{ROTULO_DO_ESTADO[campanha.estado]}</span>
+        {campanha.nome && <span className="res-ficha-titulo">{campanha.nome}</span>}
+        {/* ============================================================
+            A PÍLULA É CINZA NOS TRÊS ESTADOS, SEMPRE.
+
+            O wireframe pinta "No ar" de verde. Verde aqui seria semáforo:
+            afirma que está bom sem ninguém ter medido contra alvo nenhum.
+            E o pior — a tela NÃO SABE se a campanha está no ar ou pausada:
+            `status_na_plataforma` não existe em rota nenhuma. Ver o bloco
+            do topo deste arquivo.
+            ============================================================ */}
+        <Pill tone="off">{ROTULO_DO_ESTADO[campanha.estado]}</Pill>
       </div>
 
       {/* CANAL SÓ APARECE SE VIER. `canal_confirmado` é `null` nas duas
           execuções da V2G, medido em 10/09/2026 — e `null` não vira
           "Facebook" por palpite. Está na lista de pedidos ao backend. */}
       {(campanha.canal || r.periodoComDado) && (
-        <p className="lr-fresh">
+        <p className="res-periodo">
           {campanha.canal}
           {campanha.canal && r.periodoComDado ? " · " : ""}
           {r.periodoComDado &&
@@ -252,11 +414,42 @@ function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
         </p>
       )}
 
-      <div className="lr-nums">
-        <Numero valor={r.bloco.investido} rotulo="investido" />
-        <Numero valor={r.bloco.cliques} rotulo="cliques" />
-        <Numero valor={r.bloco.impressoes} rotulo="vezes que apareceu" />
-        <Numero valor={r.bloco.pessoas} rotulo="pessoas que chegaram" />
+      {/* ============================================================
+          SEIS NÚMEROS, E NENHUM DELES É DERIVADO.
+
+          `vendas` e `voltou` já estavam no `BlocoDeMoeda` e nenhuma tela
+          os mostrava. O wireframe pede os dois ("Vendas confirmadas",
+          "Retorno") — então eles entram, vindos prontos da camada de
+          leitura, sem uma conta nova nesta tela.
+
+          O que o wireframe pede e NÃO entra: "R$ 14,42 por conversa"
+          (derivado, proibido pelo contrato e por `conferir:resultado`
+          §10) e "↑ +34% vs. 30 dias anteriores" (não existe período
+          anterior em rota nenhuma — seriam quatro números inventados).
+
+          "Pessoas alcançadas" virou "o anúncio apareceu N vezes":
+          `impressoes` conta APARIÇÕES, não pessoas. A mesma impressão
+          pode ser a mesma pessoa dez vezes.
+          ============================================================ */}
+      <div className="res-grid">
+        <Numero valor={r.bloco.investido} rotulo="Investido na Meta">
+          <IconeCarteira />
+        </Numero>
+        <Numero valor={r.bloco.cliques} rotulo="Cliques no anúncio">
+          <IconeToque />
+        </Numero>
+        <Numero valor={r.bloco.impressoes} rotulo="O anúncio apareceu">
+          <IconeOlho />
+        </Numero>
+        <Numero valor={r.bloco.pessoas} rotulo="Pessoas que chegaram">
+          <IconePessoas />
+        </Numero>
+        <Numero valor={r.bloco.vendas} rotulo="Vendas que você confirmou">
+          <IconeCarrinho />
+        </Numero>
+        <Numero valor={r.bloco.voltou} rotulo="Voltou em vendas">
+          <IconeSeta />
+        </Numero>
       </div>
 
       {/* ============================================================
@@ -266,8 +459,13 @@ function Campanha({ campanha }: { campanha: CampanhaNaTela }) {
           `nivelFrase` vindo `null` não vira frase de degradação escrita
           aqui — vira silêncio, que é honesto. Ver `lib/resultado/nivel.ts`.
           ============================================================ */}
-      {r.nivelFrase && <p className="lr-pecas">{r.nivelFrase}</p>}
-    </div>
+      {r.nivelFrase && (
+        <div className="res-nivel">
+          <IconeLampada />
+          <p>{r.nivelFrase}</p>
+        </div>
+      )}
+    </article>
   );
 }
 
