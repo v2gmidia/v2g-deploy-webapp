@@ -32,6 +32,21 @@ mostre o próximo passo como ação do cliente"*, e **nenhuma conta real está n
 estado hoje** — exercitei por fixture, com autorização do Victor. Decidir: o
 plano é corrigido, ou o item do aceite passa a ser explicitamente "por fixture"?
 
+> **RESOLVIDO EM PARTE em 11/09/2026 — refere-se ao item 3, logo abaixo**
+> (não ao item 2, acima). Pela sessão `webapp-8f`,
+> `veiculacao-uma-fonte-11-09.md`. O que morreu do item 3: *"as duas
+> etapas seguem sem fonte capaz de fechá-las"*. Existe fonte —
+> `veiculacao`, de `GET /negocios/{id}/execucao` — e `montarEtapas()`
+> agora a aplica por dentro, então vale para toda tela, não só a
+> `/inicio`. Na V2G a cadeia fecha as seis.
+>
+> **O que NÃO morreu, e é a metade que importa:** `creatives` e
+> `campaigns` continuam sem quem as alimente. A regra é remendo da
+> LEITURA, não conserto da fonte — conta sem evidência de veiculação, e
+> conta resolvida como `nao_sabemos`, seguem com as duas etapas presas em
+> aberto. A pergunta "quem decide se elas passam a ler o backend" foi
+> respondida; "quem escreve nessas tabelas" não.
+
 **3. O defeito de família continua aberto — eu tratei só o sintoma.** `proximo`
 sai de `montarEtapas()`, que decide duas das seis etapas lendo tabelas **locais**
 do Supabase, enquanto o pipeline que faz o trabalho é o **backend**, que nunca

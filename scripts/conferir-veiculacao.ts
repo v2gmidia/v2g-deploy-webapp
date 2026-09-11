@@ -484,6 +484,35 @@ secao("5. B4 — dinheiro com moeda, pela função de formato");
   );
 }
 
+secao("6. vocabulario novo do backend nao passa em silencio");
+{
+  // ============================================================
+  // O RISCO QUE A §1 NAO COBRE, E ELE TEM NOME.
+  //
+  // A §1 prova que valor desconhecido vira `nao_sabemos` — o lado seguro.
+  // Mas errar para o lado seguro EM SILENCIO e como o
+  // `STATUS_COM_CAMPANHA` virou inferencia permanente: a tela nao quebra,
+  // ninguem reporta, e a adivinhacao vira fato por decurso de prazo.
+  //
+  // `veiculacao` e `string` SEM ENUM no contrato, entao o vocabulario e,
+  // em parte, adivinhado — `no_ar` nunca foi observado ao vivo. A trava e
+  // que a resolucao unica registre o valor novo.
+  // ============================================================
+  const cliente = readFileSync(join(RAIZ, "lib/estado/cliente.ts"), "utf8");
+  ok(
+    /ehVeiculacaoConhecida\(/.test(cliente),
+    "a resolucao unica confere o valor contra o vocabulario declarado",
+  );
+  ok(
+    /\[veiculacao\] valor fora do vocabul/.test(cliente),
+    "  e registra no log quando ele e novo — valor novo nao emudece a tela em silencio",
+  );
+  ok(
+    /console\.warn\(\s*"\[veiculacao\]/.test(cliente),
+    "  em `warn`, nao em `error`: e diagnostico nosso, nao falha do cliente",
+  );
+}
+
 console.log(
   `\n${falhas === 0 ? "TUDO CERTO" : `${falhas} FALHA(S)`} — ${testes} conferências`,
 );

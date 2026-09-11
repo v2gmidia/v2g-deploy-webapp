@@ -25,7 +25,9 @@ import {
   type MedidaDoCliente,
 } from "./frases";
 import {
+  ehVeiculacaoConhecida,
   veiculacaoDoNegocio,
+  VEICULACAO_CONHECIDA,
   type EstadoDeVeiculacao,
 } from "@/lib/veiculacao/estado";
 
@@ -558,6 +560,43 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
         backendPedeAcao: true,
         etapaLocal: proximaEtapa?.id ?? "nenhuma",
         bolaLocal: proximaEtapa?.bola ?? "nenhuma",
+      }),
+    );
+  }
+
+  // ============================================================
+  // VOCABULÁRIO NOVO DE `veiculacao` VAI PARA O LOG.
+  //
+  // O `openapi.json` declara `veiculacao` como `string` SEM ENUM, então o
+  // vocabulário que `lib/veiculacao/estado.ts` conhece é, em parte,
+  // adivinhado: `sem_evidencia` e `ja_foi_ao_ar` foram medidos ao vivo;
+  // `no_ar` é o complemento óbvio do par e nunca foi observado.
+  //
+  // A tela erra para o lado seguro — valor desconhecido vira
+  // `nao_sabemos`, nunca "no ar". Mas esse acerto tem um custo que só
+  // aparece depois: um valor novo **emudece a tela em vez de quebrá-la**,
+  // e tela muda ninguém reporta. Sem esta linha, o dia em que o backend
+  // acrescentar `encerrada` seria o dia em que todo cliente nesse estado
+  // passaria a ler "não conseguimos conferir" — para sempre, em silêncio.
+  //
+  // Log, e não tela: o cliente não tem o que fazer com isso, e a frase de
+  // `nao_sabemos` já é honesta. Quem precisa saber somos nós.
+  //
+  // É a mesma família do `nivelConhecido` de `lib/resultado/tipos.ts` —
+  // diagnóstico nosso, que não decide o que a tela mostra.
+  // ============================================================
+  if (
+    execucaoDoDiaSeguinte?.veiculacao != null &&
+    !ehVeiculacaoConhecida(execucaoDoDiaSeguinte.veiculacao)
+  ) {
+    console.warn(
+      "[veiculacao] valor fora do vocabulário conhecido ::",
+      JSON.stringify({
+        negocio: linha.id,
+        execucao: execucaoDoDiaSeguinte.idExecucao,
+        recebido: execucaoDoDiaSeguinte.veiculacao,
+        conhecidos: VEICULACAO_CONHECIDA,
+        resolvidoComo: medida.veiculacao,
       }),
     );
   }
