@@ -69,8 +69,36 @@ const secao = (t: string) => console.log("\n" + t);
 const PREFIXO = ["V2G", "FIXTURE"].join("_") + "_";
 const PADRAO = new RegExp(PREFIXO + "[A-Z0-9_]+", "g");
 
-/** Os dois únicos lugares onde nomear a fixture é permitido. */
-const PERMITIDOS = ["app/(protected)/inicio/", "lib/dev/"];
+/**
+ * Os lugares onde nomear a fixture é permitido.
+ *
+ * ============================================================
+ * A LISTA PODE CRESCER; O CRITÉRIO NÃO.
+ *
+ * Ela ganhou `/criativos/` em 11/09, quando a análise de peça precisou
+ * dos próprios cinco desenhos. E crescer aqui é diferente de crescer no
+ * `proxy.ts`: o que dá dentes a esta regra não é o tamanho da lista, é
+ * **o que está fora dela**.
+ *
+ * O critério, escrito por extenso porque a lista sozinha não o carrega:
+ *
+ *   Só entra arquivo que roda DEPOIS da checagem de sessão.
+ *
+ * `page.tsx` dentro de `(protected)` roda depois das duas — o `proxy.ts`
+ * já barrou, e o `layout.tsx` do grupo barrou de novo. Um portão ali só
+ * consegue mudar o que a página LÊ. `proxy.ts`, `layout.tsx` e o layout
+ * raiz rodam ANTES, e um portão neles muda QUEM ENTRA — que é o buraco
+ * que este arquivo existe para fechar.
+ *
+ * A §4 abaixo trava o critério: nenhum caminho desta lista pode ser um
+ * layout, um proxy ou um middleware, por mais que alguém queira.
+ * ============================================================
+ */
+const PERMITIDOS = [
+  "app/(protected)/inicio/",
+  "app/(protected)/criativos/",
+  "lib/dev/",
+];
 
 /** Onde o Next procura código — é este o alcance da regra. */
 const ARVORES = ["app", "lib", "components"];
@@ -140,7 +168,7 @@ secao("2. controle positivo — o padrão acha onde DEVE achar");
 }
 
 // ------------------------------------------------------------------
-secao("3. a regra — fora de `/inicio` e `lib/dev/`, ninguém nomeia a fixture");
+secao("3. a regra — fora dos permitidos, ninguém nomeia a fixture");
 {
   const infratores = arquivos
     .filter((f) => !permitido(f))
@@ -153,9 +181,33 @@ secao("3. a regra — fora de `/inicio` e `lib/dev/`, ninguém nomeia a fixture"
 
   ok(
     infratores.length === 0,
-    `nenhum arquivo compilado fora de ${PERMITIDOS.join(" e ")} menciona \`${PREFIXO}*\`` +
+    `nenhum arquivo compilado fora de ${PERMITIDOS.join(", ")} menciona \`${PREFIXO}*\`` +
       (infratores.length ? ` (achei ${infratores.length})` : ""),
   );
+}
+
+// ------------------------------------------------------------------
+secao("4. o critério da lista — nada que rode ANTES da sessão entra nela");
+{
+  // Esta é a trava que sobrevive à lista crescer. `PERMITIDOS` vai ganhar
+  // entradas conforme outras telas precisarem de fixture, e tudo bem —
+  // desde que nenhuma delas seja uma camada que decide QUEM ENTRA.
+  const proibidos = PERMITIDOS.filter((p) =>
+    /layout|proxy|middleware/i.test(p) || p === "app/" || p === "app/(protected)/",
+  );
+  for (const p of proibidos) console.log(`         ${p} roda antes da checagem de sessão`);
+  ok(
+    proibidos.length === 0,
+    "nenhum caminho permitido é layout, proxy ou middleware",
+  );
+
+  // E cada permitido de `app/` tem que ser uma PASTA DE ROTA, não a raiz
+  // de um grupo: liberar `app/(protected)/` inteiro devolveria o layout
+  // do grupo para dentro da lista por tabela.
+  const largos = PERMITIDOS.filter(
+    (p) => p.startsWith("app/") && p.split("/").filter(Boolean).length < 3,
+  );
+  ok(largos.length === 0, "  e nenhum deles é a raiz de um grupo de rotas");
 }
 
 console.log("\n" + "=".repeat(64));

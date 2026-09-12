@@ -107,6 +107,8 @@ export {
 export {
   enviarFotosDoNegocio,
   enviarCriativoPronto,
+  analisarCriativoPronto,
+  type AnaliseDaPeca,
   type ArquivoAceito,
   type ResultadoDoEnvio,
 } from "./criativos-do-cliente";

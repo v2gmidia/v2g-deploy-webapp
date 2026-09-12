@@ -4025,3 +4025,227 @@ code {
   align-items: center;
   min-height: 44px;
 }
+
+/* ============================================================
+   ANALISAR UMA PEÇA PRONTA — /criativos, 11/09/2026
+
+   PREFIXO `analise-`, e NÃO `peca-`: `.peca-titulo` já existe desde o
+   lote da `/aprovar`, onde "peça" quer dizer a peça QUE A IA FEZ e está
+   esperando o sim do cliente. Aqui "peça" é a que o cliente já tem e
+   quer conferir. Mesma palavra, dois assuntos — e o `conferir:cascata`
+   pegou a colisão pelo lado que dói: minha regra deixou a da `/aprovar`
+   inerte.
+
+   Mesmo sistema das telas novas: cartão claro sobre o canvas, raio por
+   token, uma ação por vez. Mobile primeiro; o desktop só ganha respiro.
+
+   SEM NOTA, SEM ESTRELA, SEM SEMÁFORO. Os três estilos de veredito
+   abaixo não são verde/amarelo/vermelho: `v-fraco` usa a mesma tinta
+   dos outros e se diferencia pela BORDA e pelo selo. A pessoa mandou a
+   peça do negócio dela e não errou nada — pintar de vermelho é
+   reprovação, e o que a tela faz é avisar antes.
+   ============================================================ */
+
+.analise { display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------- o alvo de envio ---------- */
+
+.analise-envio {
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-card);
+  padding: 20px;
+}
+
+/* O `<label>` inteiro é o alvo — não um botão dentro dele. Num celular,
+   a área grande é o que faz a diferença entre acertar e errar. */
+.analise-alvo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  padding: 30px 18px;
+  min-height: 44px;
+  border: 1.5px dashed var(--line);
+  border-radius: var(--raio-item);
+  cursor: pointer;
+  background: var(--ice-soft);
+}
+.analise-alvo:hover { border-color: var(--cobalt-ink); }
+/* O foco aparece no rótulo, porque o `<input>` é `.sr-only` — sem isto,
+   quem navega por teclado não vê onde está. */
+#analise-arquivo:focus-visible + .analise-alvo,
+.analise-alvo:focus-within {
+  outline: 2px solid var(--cobalt-ink);
+  outline-offset: 2px;
+}
+.analise-alvo b {
+  font-family: var(--display);
+  font-size: var(--fs-titulo);
+  color: var(--ink);
+}
+.analise-alvo span { font-size: var(--fs-corpo); color: var(--ink-soft); max-width: 34ch; }
+.analise-icone { width: 30px; height: 30px; color: var(--cobalt-ink); }
+.analise-icone svg { width: 100%; height: 100%; }
+
+/* input desabilitado: o alvo recua e para de convidar */
+#analise-arquivo:disabled + .analise-alvo { opacity: 0.55; cursor: not-allowed; }
+
+/* ---------- a recusa, e a espera ---------- */
+
+.analise-recusa {
+  margin: 14px 0 0;
+  font-size: var(--fs-corpo);
+  line-height: 1.55;
+  color: var(--ink);
+  background: var(--warn-soft);
+  border-left: 2px solid var(--warn);
+  border-radius: var(--raio-selo);
+  padding: 12px 14px;
+}
+.analise-recusa b { display: block; font-size: var(--fs-legenda); color: var(--ink-mute); margin-bottom: 4px; }
+
+.analise-espera {
+  margin: 14px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--fs-corpo);
+  line-height: 1.55;
+  color: var(--ink-soft);
+}
+/* Um ponto que pulsa, e NÃO uma barra que anda.
+
+   Barra de progresso aqui seria promessa: ela sugere que existe uma
+   fração conhecida do trabalho, e não existe — a chamada leva o que
+   levar. O pulso diz "está acontecendo" sem dizer quanto falta. */
+.analise-pulso {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: var(--raio-pilula);
+  background: var(--cobalt-ink);
+  animation: analise-pulsa 1.4s ease-in-out infinite;
+}
+@keyframes analise-pulsa {
+  0%, 100% { opacity: 0.25; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1); }
+}
+
+/* ---------- o resultado ---------- */
+
+.analise-saida { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+
+.analise-cartao {
+  width: 100%;
+  background: var(--surface);
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-card);
+  padding: 20px;
+}
+.analise-selo {
+  display: inline-block;
+  font-size: var(--fs-legenda);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  padding: 4px 9px;
+  border-radius: var(--raio-selo);
+  margin-bottom: 10px;
+}
+.analise-titulo {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--fs-tela);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 8px;
+  max-width: 26ch;
+}
+.analise-apoio {
+  font-size: var(--fs-corpo);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin: 0;
+  max-width: 52ch;
+}
+.analise-motivos {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+.analise-motivos li {
+  font-size: var(--fs-corpo);
+  line-height: 1.55;
+  color: var(--ink);
+  padding-left: 18px;
+  position: relative;
+  max-width: 60ch;
+}
+.analise-motivos li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: var(--raio-pilula);
+  background: var(--ink-mute);
+}
+
+/* Os quatro estilos. A diferença é BORDA e SELO, nunca a tinta do
+   texto — texto colorido por julgamento é o semáforo entrando pela
+   porta dos fundos. */
+.analise-cartao.v-bom { border-color: var(--good); }
+.analise-cartao.v-bom .analise-selo { background: var(--good-soft); color: var(--good); }
+
+.analise-cartao.v-ajuste { border-color: var(--warn); }
+.analise-cartao.v-ajuste .analise-selo { background: var(--warn-soft); color: var(--warn); }
+
+/* `v-fraco` usa a MESMA família do ajuste, um degrau acima. Não usa
+   `--crit`: crítico é o que quebrou, e nada quebrou aqui. */
+.analise-cartao.v-fraco { border-color: var(--ink-mute); }
+.analise-cartao.v-fraco .analise-selo { background: var(--ice-soft); color: var(--ink); }
+
+.analise-cartao.v-neutro { border-color: var(--line); }
+.analise-cartao.v-neutro .analise-selo { background: var(--ice-soft); color: var(--ink-soft); }
+
+.analise-arquivo-nome { font-size: var(--fs-legenda); color: var(--ink-mute); margin: 0; }
+.analise-recado {
+  font-size: var(--fs-corpo);
+  line-height: 1.6;
+  color: var(--ink);
+  margin: 0;
+  max-width: 56ch;
+}
+.analise-saida .cta { min-height: 44px; }
+
+.analise-aviso {
+  font-size: var(--fs-corpo);
+  line-height: 1.6;
+  color: var(--ink-soft);
+  background: var(--ice-soft);
+  border-radius: var(--raio-item);
+  padding: 14px 16px;
+  margin: 0 0 14px;
+  max-width: 68ch;
+}
+.analise-rodape {
+  font-size: var(--fs-legenda);
+  color: var(--ink-mute);
+  margin: 18px 0 0;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  .analise-envio { padding: 26px; }
+  .analise-alvo { padding: 40px 24px; }
+  .analise-cartao { padding: 26px; }
+}

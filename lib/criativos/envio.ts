@@ -32,19 +32,38 @@
 /** O lado menor da imagem, em pixels. Abaixo disso o backend recusa. */
 export const LADO_MINIMO_PX = 1024;
 
-/** O que o `<input type="file">` aceita. Vídeo fica de fora. */
-export const ACEITOS_NO_INPUT = "image/jpeg,image/png,image/webp";
+/**
+ * O que o `<input type="file">` aceita. Vídeo fica de fora — e WEBP também.
+ *
+ * ============================================================
+ * WEBP SAIU EM 11/09/2026, E A RAZÃO NÃO É NOSSA: A META NÃO ACEITA.
+ *
+ * Ele passava porque é o que sai de muito celular Android, e do nosso
+ * lado abre sem problema. Mas a peça não para aqui: ela vira anúncio, e
+ * a Meta recusa WEBP no criativo.
+ *
+ * Aceitar aqui para recusar três telas adiante é a pior das ordens —
+ * a pessoa sobe, espera, e leva a recusa depois de achar que deu certo.
+ * Melhor recusar no seletor de arquivo, onde ela ainda tem a foto na
+ * mão e pode escolher outra.
+ * ============================================================
+ */
+export const ACEITOS_NO_INPUT = "image/jpeg,image/png";
 
 /** Extensão → tipo esperado. É o que permite pegar o `.jpg` que é `.png`. */
 const TIPO_POR_EXTENSAO: Record<string, string> = {
   jpg: "image/jpeg",
   jpeg: "image/jpeg",
   png: "image/png",
+  // `webp` continua MAPEADO de propósito: sem isto, um `.webp` cairia em
+  // `formato` — "não conseguimos abrir" —, que é falso e não diz o que
+  // fazer. Mapeado, ele chega ao motivo próprio, com o texto certo.
   webp: "image/webp",
 };
 
 export type MotivoDaRecusa =
   | "video"
+  | "webp"
   | "formato"
   | "extensao_nao_bate"
   | "pequena_demais"
@@ -71,8 +90,12 @@ export interface Recusa {
 const TEXTOS: Record<MotivoDaRecusa, string> = {
   video:
     "Por enquanto a gente só consegue usar foto — vídeo ainda não. Escolha uma imagem do seu negócio.",
+  // Não diz "não aceitamos": quem não aceita é o Facebook, e a pessoa
+  // não tem como saber disso. Diz o que fazer — e "salvar como JPG" é
+  // coisa que o celular dela faz sozinho ao compartilhar a foto.
+  webp: "Esse formato o Facebook não aceita em anúncio. Mande a mesma foto em JPG ou PNG.",
   formato:
-    "Esse tipo de arquivo a gente não consegue abrir. Vale JPG, PNG ou WEBP — que é o que sai do celular.",
+    "Esse tipo de arquivo a gente não consegue abrir. Vale JPG ou PNG — que é o que sai do celular.",
   extensao_nao_bate:
     "Esse arquivo parece ter sido renomeado e a gente não consegue abrir. Tente mandar a foto original.",
   pequena_demais:
@@ -98,6 +121,10 @@ export function conferirAntesDeLer(args: {
   // Vídeo primeiro, e com texto próprio: é o caso que a pessoa mais tenta,
   // e "formato não aceito" para um vídeo esconde o que ela precisa saber.
   if (tipo.startsWith("video/")) return recusar("video");
+
+  // WEBP tem motivo próprio, antes do mapa de extensão, para o texto
+  // falar do Facebook em vez de dizer que não conseguimos abrir.
+  if (tipo === "image/webp" || nome.toLowerCase().endsWith(".webp")) return recusar("webp");
 
   const ext = nome.split(".").pop()?.toLowerCase() ?? "";
   const esperado = TIPO_POR_EXTENSAO[ext];

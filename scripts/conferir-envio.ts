@@ -60,9 +60,30 @@ secao("1. o caminho feliz");
     conferirAntesDeLer({ nome: "a.png", tipo: "image/png", tamanhoBytes: 1 }) === null,
     "PNG passa",
   );
+  {
+    // ============================================================
+    // WEBP DEIXOU DE PASSAR EM 11/09/2026 — e a trava inverteu.
+    //
+    // Ela dizia "WEBP passa — é o que sai de muito celular Android". O
+    // fato continua verdadeiro; o que mudou é que a peça vira anúncio, e
+    // a Meta não aceita WEBP no criativo.
+    //
+    // O motivo é PRÓPRIO, e não `formato`: o texto de `formato` diz que
+    // a gente não consegue abrir o arquivo, o que é falso — a gente abre.
+    // Quem não aceita é o Facebook, e a saída é outra.
+    // ============================================================
+    const r = conferirAntesDeLer({ nome: "a.webp", tipo: "image/webp", tamanhoBytes: 1 });
+    ok(r !== null, "WEBP é recusado — a Meta não aceita em anúncio");
+    ok(r?.motivo === "webp", "  e com motivo próprio, não `formato`");
+    ok(/JPG|PNG/i.test(r?.texto ?? ""), "  o texto diz o que mandar no lugar");
+    ok(!/erro|inválid|falhou/i.test(r?.texto ?? ""), "  e não culpa quem mandou");
+    // o `.webp` renomeado para `.jpg` continua caindo na trava da extensão
+    const renomeado = conferirAntesDeLer({ nome: "a.jpg", tipo: "image/webp", tamanhoBytes: 1 });
+    ok(renomeado?.motivo === "webp", "  `.jpg` que é WEBP por dentro também é pego");
+  }
   ok(
-    conferirAntesDeLer({ nome: "a.webp", tipo: "image/webp", tamanhoBytes: 1 }) === null,
-    "WEBP passa — é o que sai de muito celular Android",
+    !/webp/i.test(ACEITOS_NO_INPUT),
+    "e o `accept` do input não oferece WEBP",
   );
   ok(
     conferirDimensoes({ nome: "a.jpg", largura: 1080, altura: 1920 }) === null,
