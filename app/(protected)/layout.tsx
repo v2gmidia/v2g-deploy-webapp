@@ -17,6 +17,14 @@ const IcoVendas = () => (
     <path d="M17 9.5c0 3-3.1 5.5-7 5.5-.8 0-1.6-.1-2.3-.3L3 16l1.1-2.7C3.4 12.4 3 11 3 9.5 3 6.5 6.1 4 10 4s7 2.5 7 5.5z" />
   </svg>
 );
+/** Criativos: uma imagem. É a peça que o dono mexe toda semana. */
+const IcoCriativos = () => (
+  <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+    <rect x="3" y="4" width="14" height="12" rx="2" />
+    <circle cx="7.5" cy="8.5" r="1.3" />
+    <path d="M3.5 13.5 8 10l3 2.5 2.5-2 3 3" />
+  </svg>
+);
 const IcoAnuncios = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
     <path d="M3 8v4h3l8 4V4L6 8H3z" />
@@ -121,6 +129,24 @@ export default async function ProtectedLayout({ children }: { children: React.Re
               dinheiro por trás dela, junto. Dois itens para isso era
               raciocínio de gestor de tráfego vazando na interface.
 
+              VENDAS SAIU E CRIATIVOS ENTROU — 12/09/2026, e a troca é de
+              lugar, não de quantidade: continuam cinco.
+
+              `/vendas` existe para a pergunta do dia, que está congelada, e
+              a pergunta já vive num card do `/inicio`. Não há CRM atrás
+              dela: a tela não mostra cliente, negociação nem histórico de
+              venda, porque nada disso existe no produto. Um item de barra
+              para uma tela nesse estado gasta uma das cinco células na
+              coisa que o dono abre uma vez e não volta.
+
+              Criativo é o oposto: é o que ele mexe toda semana, e a
+              `/criativos` deixou de ser uma tarefa para ser a casa de três
+              blocos — analisar peça pronta, ver as peças, criar peça nova.
+              Casa é lugar, e lugar é o que merece item de barra.
+
+              **`/vendas` NÃO foi apagada.** A rota continua no ar e nenhuma
+              URL quebra; ela só saiu da barra. Ver docs/decisoes.md.
+
               Onboarding e Combinados NÃO entram: são passos únicos, não
               lugares. Quando pendentes, aparecem como tarefa no Início —
               que é o que aquela tela já faz. Item de menu para passo
@@ -130,8 +156,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
           <NavItem href="/inicio" icone={<IcoInicio />}>
             Início
           </NavItem>
-          <NavItem href="/vendas" icone={<IcoVendas />}>
-            Vendas
+          <NavItem href="/criativos" icone={<IcoCriativos />}>
+            Criativos
           </NavItem>
           <NavItem href="/anuncios" icone={<IcoAnuncios />}>
             Anúncios
