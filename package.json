@@ -29,13 +29,14 @@
     "conferir:rota-apresentada": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs --conditions=react-server --env-file-if-exists=.env.local scripts/conferir-rota-apresentada.ts",
     "diagnostico:card": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/diagnostico-card-da-pergunta.ts",
     "conferir:admin": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-admin.ts",
-    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte && pnpm conferir:apresentada && pnpm conferir:signed-request && pnpm conferir:identidade && pnpm conferir:veiculacao && pnpm conferir:resultado && pnpm conferir:campanha-da-sessao && pnpm conferir:envio && pnpm conferir:inicio && pnpm conferir:portao",
+    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte && pnpm conferir:apresentada && pnpm conferir:signed-request && pnpm conferir:identidade && pnpm conferir:veiculacao && pnpm conferir:resultado && pnpm conferir:campanha-da-sessao && pnpm conferir:envio && pnpm conferir:inicio && pnpm conferir:analise && pnpm conferir:portao",
     "medir:peca": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/medir-peca.mjs",
     "db:migrate": "supabase db push",
     "db:studio": "supabase start",
     "conferir:campanha-da-sessao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-campanha-da-sessao.ts",
     "conferir:inicio": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs scripts/conferir-inicio.ts",
-    "conferir:portao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-portao-de-fixture.ts"
+    "conferir:portao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-portao-de-fixture.ts",
+    "conferir:analise": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs scripts/conferir-analise.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",

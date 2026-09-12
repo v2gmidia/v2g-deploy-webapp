@@ -29,8 +29,19 @@
  * SEM `server-only`: a validação roda no navegador, que é o ponto.
  */
 
+import { TETO_DO_NAVEGADOR_BYTES, TETO_DO_NAVEGADOR_MB } from "./limites.mjs";
+
 /** O lado menor da imagem, em pixels. Abaixo disso o backend recusa. */
 export const LADO_MINIMO_PX = 1024;
+
+/**
+ * O teto de tamanho — **derivado, nunca digitado aqui**.
+ *
+ * Reexportado para a tela poder escrever o número sem importar dois
+ * módulos. Quem manda é `./limites.mjs`, que também alimenta o
+ * `bodySizeLimit` do `next.config.mjs`.
+ */
+export { TETO_DO_NAVEGADOR_BYTES, TETO_DO_NAVEGADOR_MB };
 
 /**
  * O que o `<input type="file">` aceita. Vídeo fica de fora — e WEBP também.
@@ -64,6 +75,7 @@ const TIPO_POR_EXTENSAO: Record<string, string> = {
 export type MotivoDaRecusa =
   | "video"
   | "webp"
+  | "grande_demais"
   | "formato"
   | "extensao_nao_bate"
   | "pequena_demais"
@@ -94,6 +106,10 @@ const TEXTOS: Record<MotivoDaRecusa, string> = {
   // não tem como saber disso. Diz o que fazer — e "salvar como JPG" é
   // coisa que o celular dela faz sozinho ao compartilhar a foto.
   webp: "Esse formato o Facebook não aceita em anúncio. Mande a mesma foto em JPG ou PNG.",
+  // Diz o TETO, e não "arquivo grande demais" — sem o número a pessoa
+  // não sabe o quanto reduzir, e tenta de novo no escuro. E não fala em
+  // "limite do servidor": o que ela precisa saber é o que fazer.
+  grande_demais: `Essa imagem é maior que ${TETO_DO_NAVEGADOR_MB} MB, que é o máximo que a gente consegue receber de uma vez. Mande em tamanho menor.`,
   formato:
     "Esse tipo de arquivo a gente não consegue abrir. Vale JPG ou PNG — que é o que sai do celular.",
   extensao_nao_bate:
@@ -118,6 +134,7 @@ export function conferirAntesDeLer(args: {
 
   if (tamanhoBytes <= 0) return recusar("vazio");
 
+
   // Vídeo primeiro, e com texto próprio: é o caso que a pessoa mais tenta,
   // e "formato não aceito" para um vídeo esconde o que ela precisa saber.
   if (tipo.startsWith("video/")) return recusar("video");
@@ -125,6 +142,25 @@ export function conferirAntesDeLer(args: {
   // WEBP tem motivo próprio, antes do mapa de extensão, para o texto
   // falar do Facebook em vez de dizer que não conseguimos abrir.
   if (tipo === "image/webp" || nome.toLowerCase().endsWith(".webp")) return recusar("webp");
+
+  // ============================================================
+  // O TETO DE TAMANHO — E ELE VEM DEPOIS DO FORMATO, DE PROPÓSITO.
+  //
+  // Pego pelo `conferir:envio` quando estava antes: um vídeo de 50 MB
+  // saía como "maior que 9 MB, mande em tamanho menor". É conselho
+  // errado — reduzir o vídeo não resolve nada, porque vídeo não entra
+  // em tamanho nenhum. O mesmo vale para WEBP.
+  //
+  // A ordem é a da utilidade do recado: primeiro o que a pessoa não
+  // pode consertar reduzindo (vídeo, WEBP), depois o que ela pode.
+  //
+  // Isto existe porque o Next recusa o corpo da Server Action acima do
+  // `bodySizeLimit`, e a recusa DELE acontece no framework: a promessa
+  // rejeita e não há `{ok:false}` para a tela mostrar. Foi a causa do
+  // defeito de 12/09. Aqui é o único lugar onde a recusa custa zero —
+  // a pessoa ainda está com a foto na mão e não gastou 4G nenhum.
+  // ============================================================
+  if (tamanhoBytes > TETO_DO_NAVEGADOR_BYTES) return recusar("grande_demais");
 
   const ext = nome.split(".").pop()?.toLowerCase() ?? "";
   const esperado = TIPO_POR_EXTENSAO[ext];

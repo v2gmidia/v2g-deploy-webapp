@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AnaliseDaPeca } from "@/lib/backend";
 import { ACEITOS_NO_INPUT, conferirArquivo, type Recusa } from "@/lib/criativos/envio";
+import { TETO_DA_ESPERA_MS } from "@/lib/criativos/limites.mjs";
 import { apresentarVeredito } from "@/lib/criativos/veredito";
 import { analisarPecaAction, type ResultadoDaAnalise } from "./actions";
 
@@ -21,6 +22,38 @@ import { analisarPecaAction, type ResultadoDaAnalise } from "./actions";
  * menor que 1024 e arquivo vazio. Nada disso é reimplementado aqui.
  * ============================================================
  */
+/**
+ * A ÚLTIMA PORTA: a promessa que não resolve NEM rejeita.
+ *
+ * ============================================================
+ * NÃO DÁ PARA ABORTAR UMA SERVER ACTION, E ISSO PRECISA ESTAR DITO.
+ *
+ * O `fetch` de uma Server Action é montado pelo React, não por nós —
+ * não há como passar um `signal`. O que este teto faz é parar de
+ * ESPERAR, não parar o trabalho: o servidor segue até o fim, e a
+ * análise que estava em curso é concluída e descartada.
+ *
+ * É a escolha certa mesmo assim. O caso que ele cobre é a conexão que
+ * some sem fechar — no celular, trocar de Wi-Fi para 4G faz exatamente
+ * isso — e aí a promessa fica pendente para sempre. Sem este teto, o
+ * `finally` de cima nunca roda.
+ *
+ * `AbortSignal.timeout` em vez de `setTimeout`: ele já limpa o relógio
+ * sozinho quando a corrida termina, e não deixa timer pendurado.
+ * ============================================================
+ */
+class EsperaEstourou extends Error {}
+
+function comTetoDeEspera<T>(promessa: Promise<T>): Promise<T> {
+  const sinal = AbortSignal.timeout(TETO_DA_ESPERA_MS);
+  return Promise.race([
+    promessa,
+    new Promise<never>((_, rejeitar) => {
+      sinal.addEventListener("abort", () => rejeitar(new EsperaEstourou()), { once: true });
+    }),
+  ]);
+}
+
 type Fase =
   | { nome: "parado" }
   | { nome: "recusado"; recusa: Recusa }
@@ -97,11 +130,48 @@ export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
 
     setAceito(arquivo);
 
+    // ============================================================
+    // NENHUM CAMINHO DAQUI SAI MANTENDO "analisando". É O CONSERTO.
+    //
+    // O defeito de 12/09 era esta função sem `try`: o `await` rejeitava,
+    // a linha seguinte não rodava, e a tela girava para sempre dizendo
+    // "dá para esperar aqui".
+    //
+    // O gatilho foi o teto de 1 MB do Next, que já está fechado na
+    // camada de cima — **mas o defeito não era o teto.** Era não haver
+    // caminho de erro: perda de rede no meio do upload, aba suspensa
+    // pelo iOS, 500 do próprio framework, tudo rejeitava igual.
+    //
+    // Por isso o terminal está no `finally`, e não no `catch`: `finally`
+    // roda nos três desfechos, e é a única forma de a garantia não
+    // depender de alguém ter previsto a falha certa.
+    // ============================================================
     setFase({ nome: "analisando" });
-    const dados = new FormData();
-    dados.append("arquivos", arquivo);
-    const resultado = await analisarPecaAction(dados);
-    setFase({ nome: "pronto", resultado });
+
+    let resultado: ResultadoDaAnalise = {
+      ok: false,
+      recado:
+        "A gente não conseguiu terminar de olhar sua imagem agora. Tente de novo em um instante.",
+    };
+
+    try {
+      const dados = new FormData();
+      dados.append("arquivos", arquivo);
+      resultado = await comTetoDeEspera(analisarPecaAction(dados));
+    } catch (motivo) {
+      // O que o dono lê depende do que dá para fazer a respeito, e há
+      // dois casos com saídas diferentes. Nenhum deles usa a palavra
+      // "erro": ela mandou a foto do próprio negócio e não errou nada.
+      resultado = {
+        ok: false,
+        recado:
+          motivo instanceof EsperaEstourou
+            ? "A análise está demorando mais do que o normal e a gente parou de esperar. Sua imagem não foi publicada nem alterada — tente de novo."
+            : "A gente não conseguiu terminar de olhar sua imagem agora. Se ela for muito grande, mande em tamanho menor; se não, tente de novo em um instante.",
+      };
+    } finally {
+      setFase({ nome: "pronto", resultado });
+    }
   }
 
   function recomecar() {

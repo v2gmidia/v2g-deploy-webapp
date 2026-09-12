@@ -37,8 +37,8 @@ export async function analisarPecaAction(dados: FormData): Promise<ResultadoDaAn
     return { ok: false, recado: "Escolha uma imagem para a gente analisar." };
   }
 
-  const estado = await estadoDoCliente(new Date());
-  const idExecucao = estado.diaSeguinte.execucao?.idExecucao ?? null;
+  const estado = await estadoDoCliente(new Date()).catch(() => null);
+  const idExecucao = estado?.diaSeguinte.execucao?.idExecucao ?? null;
 
   if (!idExecucao) {
     // Não é falha: é a conta ainda não ter uma campanha em montagem. A
@@ -51,14 +51,38 @@ export async function analisarPecaAction(dados: FormData): Promise<ResultadoDaAn
     };
   }
 
-  const resposta = await analisarCriativoPronto({ idExecucao, arquivos });
+  // ============================================================
+  // A ACTION NÃO LANÇA. NUNCA.
+  //
+  // `analisarCriativoPronto` já devolve `Resultado` em vez de lançar —
+  // `chamar()` tem `catch` e converte exceção em `falha(categoria)`. Mas
+  // o resto desta função pode lançar por fora disso: `estadoDoCliente()`
+  // fala com o Supabase, e um Server Component que lança devolve erro de
+  // framework para o cliente, que é a rejeição que deixava a tela presa.
+  //
+  // O `try` aqui é a segunda linha de defesa. A primeira é o `finally`
+  // da tela, e as duas existem porque uma promessa pendente não tem
+  // dono: quem a criou não sabe que ela morreu.
+  // ============================================================
+  try {
+    const resposta = await analisarCriativoPronto({ idExecucao, arquivos });
 
-  if (!resposta.ok) {
-    // A categoria não vai para a tela: ela é diagnóstico nosso, e
-    // "nao_autorizado" não diz nada ao dono. O recado é um só, e não
-    // usa a palavra "erro".
-    return { ok: false, recado: MENSAGEM_GENERICA_BACKEND };
+    if (!resposta.ok) {
+      // A categoria não vai para a tela: ela é diagnóstico nosso, e
+      // "nao_autorizado" não diz nada ao dono. O recado é um só, e não
+      // usa a palavra "erro".
+      return { ok: false, recado: MENSAGEM_GENERICA_BACKEND };
+    }
+
+    return { ok: true, analise: resposta.dados };
+  } catch {
+    // Sem detalhe e sem categoria: o que chega aqui é o inesperado, e
+    // inesperado não tem texto útil para o dono. O que ele precisa saber
+    // é que a imagem dele está intacta e que dá para tentar de novo.
+    return {
+      ok: false,
+      recado:
+        "A gente não conseguiu terminar de olhar sua imagem agora. Ela não foi publicada nem alterada — tente de novo em um instante.",
+    };
   }
-
-  return { ok: true, analise: resposta.dados };
 }
