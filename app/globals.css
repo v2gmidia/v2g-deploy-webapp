@@ -4319,3 +4319,179 @@ code {
   .analise-alvo { padding: 40px 24px; }
   .analise-cartao { padding: 26px; }
 }
+
+/* ============================================================
+   A CASA DO CRIATIVO — os tres blocos da /criativos. 12/09/2026.
+
+   Mobile primeiro, porque o produto e usado no celular e a barra
+   inferior vive abaixo de 900px (docs/navegacao-mobile.md). Tudo aqui
+   nasce para 390px e cresce; nada depende de largura para funcionar.
+
+   ALVOS: o unico clicavel novo e o `.casa-indice a`, e ele tem 44px de
+   altura minima pelo `min-height`, nao por padding somado — padding
+   depende do `line-height` herdado, e `min-height` nao.
+   ============================================================ */
+.casa-indice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 26px;
+}
+.casa-indice a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-pilula);
+  background: var(--surface);
+  color: var(--navy);
+  font-size: var(--fs-legenda);
+  font-weight: 600;
+  text-decoration: none;
+}
+.casa-indice a:hover {
+  border-color: var(--cobalt);
+  color: var(--cobalt);
+}
+.casa-indice a:focus-visible {
+  outline: 2px solid var(--cobalt);
+  outline-offset: 2px;
+}
+
+.casa-bloco {
+  margin: 0 0 38px;
+  /* `scroll-margin-top` existe porque o alvo da ancora fica embaixo da
+     `.topbar` fixa — sem ele o titulo do bloco some sob o cabecalho e o
+     dono acha que o link nao funcionou. */
+  scroll-margin-top: 84px;
+}
+.casa-bloco:last-child { margin-bottom: 8px; }
+.casa-bloco-head { margin: 0 0 16px; }
+.casa-bloco-head p {
+  font-size: var(--fs-corpo);
+  color: var(--ink-soft);
+  margin: 6px 0 0;
+  max-width: 62ch;
+  line-height: 1.55;
+}
+
+/* ── Bloco 2: o vazio medido ───────────────────────────────────────── */
+.casa-vazio {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  background: var(--ice-soft);
+  border: 1.5px solid var(--ice);
+  border-radius: 14px;
+  padding: 22px 20px;
+}
+.casa-vazio-ico {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1.5px solid var(--ice);
+  color: var(--cobalt);
+}
+.casa-vazio-ico svg { width: 22px; height: 22px; }
+.casa-vazio-texto { min-width: 0; }
+.casa-vazio-texto b {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.casa-vazio-texto p {
+  font-size: var(--fs-legenda);
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin: 0 0 8px;
+  max-width: 60ch;
+}
+.casa-vazio-nota { color: var(--ink-mute) !important; }
+
+/* ── Bloco 3: o desenho sem funcao ─────────────────────────────────── */
+.casa-obra {
+  background: var(--card-lime-bg);
+  border: 1.5px solid var(--lime);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: var(--fs-legenda);
+  color: var(--navy);
+  line-height: 1.55;
+  margin: 0 0 16px;
+  max-width: 66ch;
+}
+.casa-obra b { font-family: var(--display); }
+
+/* A borda tracejada e o unico sinal visual de "isto nao e um controle".
+   Cor solida com sombra leria como cartao clicavel, e o briefing proibe
+   exatamente o que parece funcionar e nao faz nada. */
+.casa-desenho {
+  border: 1.5px dashed var(--line);
+  border-radius: 14px;
+  padding: 22px 18px;
+  background: var(--surface);
+}
+.casa-passos { list-style: none; margin: 0; padding: 0; display: grid; gap: 20px; }
+.casa-passos > li { display: flex; gap: 14px; align-items: flex-start; }
+.casa-passo-num {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--raio-pilula);
+  background: var(--ice);
+  color: var(--navy);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-legenda);
+  display: grid;
+  place-items: center;
+}
+.casa-passo-texto { min-width: 0; }
+.casa-passo-texto b {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  color: var(--navy);
+  margin-bottom: 4px;
+}
+.casa-passo-texto span {
+  display: block;
+  font-size: var(--fs-legenda);
+  color: var(--ink-soft);
+  line-height: 1.55;
+  max-width: 58ch;
+}
+
+.casa-volta {
+  margin-top: 22px;
+  padding-top: 20px;
+  border-top: 1.5px solid var(--line);
+}
+.casa-volta b {
+  display: block;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.casa-volta p {
+  font-size: var(--fs-legenda);
+  color: var(--ink-soft);
+  line-height: 1.55;
+  margin: 0 0 8px;
+  max-width: 60ch;
+}
+.casa-volta-nota { color: var(--ink-mute) !important; margin-bottom: 0 !important; }
+
+@media (min-width: 900px) {
+  .casa-bloco { margin-bottom: 46px; }
+  .casa-vazio { padding: 26px 24px; }
+  .casa-desenho { padding: 28px 26px; }
+}

@@ -43,6 +43,39 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-12 — `Vendas` sai da barra, `Criativos` entra
+**Decisão:** trocar o item `/vendas` por `/criativos` na barra de navegação.
+Continuam **cinco** itens — Início, Criativos, Anúncios, Avisos, Conta —, que
+é o teto do QA-1 (cinco células de 64px na menor tela que a gente atende,
+`docs/navegacao-mobile.md`).
+
+**Por quê.** `/vendas` existe para a pergunta do dia, que está **congelada**, e
+a pergunta já vive num card do `/inicio`. **Não há CRM atrás dela**: a tela não
+mostra cliente, negociação nem histórico de venda, porque nada disso existe no
+produto. Um item de barra para uma tela nesse estado gasta uma das cinco
+células na coisa que o dono abre uma vez e não volta.
+
+Criativo é o oposto: é o que ele mexe **toda semana**. E a `/criativos` deixou
+de ser uma tarefa para virar a casa de três blocos — analisar peça pronta, ver
+as peças, criar peça nova. Casa é lugar; lugar é o que merece item de barra.
+
+**`/vendas` NÃO foi apagada.** A rota continua no ar e nenhuma URL quebra: ela
+só saiu da barra. Medido em `pnpm build` — 32 rotas, `/vendas` entre elas — e
+com `curl`, que devolve `307 -> /entrar?next=%2Fvendas`.
+
+**Descartado:** apagar a rota (quebraria link salvo e o histórico de quem já
+abriu) e virar seis itens (a barra inferior não cabe).
+
+**O que isto contradiz, e está corrigido:** o docstring da
+`app/(protected)/criativos/page.tsx` dizia *"é uma tarefa, não um lugar de
+navegação — por isso não vira item de menu"*. Estava certo enquanto a página
+era uma tarefa só. O texto foi reescrito no mesmo commit, não apagado.
+
+**Registro:** `app/(protected)/layout.tsx` (o item e o `IcoCriativos`),
+`app/(protected)/criativos/page.tsx` (os três blocos),
+`docs/criativos-casa-do-criativo.md` (o que falta no backend e a condição de
+remoção do bloco 3).
+
 ### 2026-09-11 — Os wireframes do handoff: o que entra no v0 e o que não entra
 **Contexto:** o ChatGPT entregou 44 PNGs + 7 documentos descrevendo um destino de
 produto. O plano medido está em `docs/v2g-wireframes/IMPLEMENTATION-PLAN.md`, com

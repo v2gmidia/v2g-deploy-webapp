@@ -11,12 +11,10 @@ const IcoInicio = () => (
     <path d="M5 8.5V16h10V8.5" />
   </svg>
 );
-/** Vendas: uma conversa. É por onde o cliente chega. */
-const IcoVendas = () => (
-  <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-    <path d="M17 9.5c0 3-3.1 5.5-7 5.5-.8 0-1.6-.1-2.3-.3L3 16l1.1-2.7C3.4 12.4 3 11 3 9.5 3 6.5 6.1 4 10 4s7 2.5 7 5.5z" />
-  </svg>
-);
+/* `IcoVendas` saiu junto com o item da barra, em 12/09/2026. O ícone era
+   usado só aqui, e componente que ninguém renderiza é código que envelhece
+   sem ninguém notar. A rota `/vendas` continua no ar; se ela voltar para a
+   barra, o ícone volta com ela — está no histórico do git. */
 /** Criativos: uma imagem. É a peça que o dono mexe toda semana. */
 const IcoCriativos = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
