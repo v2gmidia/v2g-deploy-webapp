@@ -81,15 +81,28 @@ function TrilhaDaExecucao({
   andamento: string | null;
 }) {
   const posicoes = posicoesDaCadeia(etapas, atual);
-  const feitas = posicoes.filter((p) => p.posicao === "feita").length;
 
   return (
     <section className="trilha">
+      {/* ============================================================
+          UM CONTADOR SÓ NA TELA — itens N1 e N3 do QA.
+
+          Havia dois, e eles contavam coisas diferentes com palavras
+          parecidas: o herói dizia "1 de 4 fases" e esta seção, três
+          blocos abaixo, "2 de 6 etapas". Quem lê não tem como saber que
+          são a mesma caminhada medida em duas réguas — a leitura natural
+          é que alguma das duas está errada.
+
+          Quem fica com o contador é o HERÓI, porque é lá que ele responde
+          a pergunta "quanto falta". Aqui embaixo a lista responde outra:
+          "o que já está pronto". Lista não precisa de placar.
+
+          VOCABULÁRIO: a tela inteira diz **etapas**. As quatro do herói
+          são etapas; as seis daqui são etapas. "Fase" saiu — era palavra
+          nova para uma coisa que o cliente já tinha nome.
+          ============================================================ */}
       <div className="section-title">
-        <h2>Onde seu anúncio está</h2>
-        <span className="side-note">
-          {feitas} de {etapas.length} etapas
-        </span>
+        <h2>O que já está pronto</h2>
       </div>
       <div className="card">
         {/* A frase do backend encabeça a trilha: é a única linha aqui que
@@ -400,7 +413,7 @@ export default async function InicioPage() {
               <b>
                 {fasesFeitas} de {fases.length}
               </b>{" "}
-              fases.
+              etapas.
             </p>
 
             {/* As QUATRO fases, sobre as SEIS etapas — a lista de baixo
@@ -581,20 +594,31 @@ export default async function InicioPage() {
       <div className="inicio-topo">
         <section className="ih">
           <span className="eyebrow">Sua campanha</span>
-          {/* A FRASE VEM DO BACKEND, INTEIRA.
+          {/* ============================================================
+              UMA REDAÇÃO SÓ PARA VEICULAÇÃO — item N7 do QA.
 
-              `andamento` é escrito lá e chega pronto — a mesma regra do
-              `nivel_frase`. Se ela disser algo que a tela não esperava,
-              quem conserta é o backend: traduzir `status` aqui é o
-              defeito que `lib/resultado/nivel.ts` acabou de pagar, com
-              sete frases locais contra catorze níveis do contrato. */}
-          <h2>{andamentoDaExecucao ?? "Seu anúncio já rodou"}</h2>
+              Esta manchete vinha do `andamento` do backend, e ele escreve
+              "Seu anúncio já rodou e **está pausado no momento**". A
+              `lib/veiculacao` escreve "já rodou e **não está no ar
+              agora**". As duas falam do mesmo fato, com palavras
+              diferentes, e conviviam — às vezes na mesma tela.
+
+              Não é questão de qual frase é melhor: é que veiculação tem
+              UMA fonte, e `andamento` não é ela. `andamento` descreve o
+              estágio do PIPELINE; quando ele fala do ar, está invadindo
+              assunto de outro módulo.
+
+              O `andamento` não foi descartado do produto — ele continua
+              sendo a frase do pipeline. O que saiu daqui é o uso dele
+              como manchete de veiculação.
+              ============================================================ */}
+          <h2>{fraseDeVeiculacao(estado.veiculacao, "manchete")}</h2>
           <p className="ih-sub">
             Você já concluiu{" "}
             <b>
               {fasesFeitas} de {fases.length}
             </b>{" "}
-            fases.
+            etapas.
           </p>
           <ol className="fases">
             {fases.map((f, i) => (
@@ -874,7 +898,7 @@ function Melhoras({ fotos }: { fotos: number }) {
         <a className="acct-row" href="/expectativas">
           <span className="ar-text">
             <b>Ler os combinados</b>
-            <span>Os 4 acordos, antes de qualquer cobrança. Leva 2 minutos.</span>
+            <span>Os 4 acordos, antes de qualquer cobrança.</span>
           </span>
           <Seta />
         </a>

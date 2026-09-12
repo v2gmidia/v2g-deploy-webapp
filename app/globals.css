@@ -561,7 +561,19 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    dois temas. Ver docs/contraste.md §7 e §14. */
 .cta.ghost:hover,
 .cta.quiet:hover { background: rgb(var(--cobalt-rgb) / 0.08); }
-.cta:disabled { background: var(--ink-mute); cursor: not-allowed; }
+/* N5 do QA: "Usar esta página" media 3,42:1 no escuro. `--ink-mute` é
+   tinta de apoio, e usá-la como FUNDO de botão põe o texto branco do
+   `.cta` contra um cinza médio — no escuro, 3,42:1.
+
+   É o mesmo erro de papel do N4, de outro lado: token de TINTA servindo
+   de superfície. Trocado por um par declarado — superfície morta e
+   tinta apagada. */
+.cta:disabled {
+  background: var(--ice-soft);
+  border-color: var(--line);
+  color: var(--ink-mute);
+  cursor: not-allowed;
+}
 .cta.ghost {
   background: transparent;
   color: var(--cobalt-ink);
@@ -769,6 +781,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: none;
   border: none;
   padding: 0;
+  /* D2: alvo de toque. `inline-flex` para a altura valer num <button>
+     que nasceu parecendo link. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   font-family: var(--display);
   font-size: var(--fs-corpo);
   font-weight: 700;
@@ -1099,8 +1116,16 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   margin: 0 0 6px;
 }
 
+/* D2 do QA, prioridade declarada: os dois "não sei" da pergunta do dia.
+   São a saída honesta de quem não tem o número, e mediam menos que o
+   botão que grava um palpite. `inline-flex` + `min-height` porque
+   `padding` em elemento `inline` cresce a caixa pintada e NÃO cresce a
+   área clicável. */
 .text-fallback {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 6px;
   background: none;
   border: none;
   padding: 0;
@@ -1881,7 +1906,12 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 /* #11 e #12 do QA: `inline-flex` com altura mínima dá o alvo de 44px, e
    a margem maior cria o espaço que faltava antes do "Chamar no
    WhatsApp →" — o texto irmão terminava em "úteis." colado no link. */
-.support-block .wa { display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; font-weight: 600; color: var(--cobalt-ink); text-decoration: none; }
+/* D1/D2 do QA: o seletor era `.support-block .wa`, e as telas de
+   `(fluxo)` (`/sem-instagram`, `/whatsapp-business`) usam `.wa` SOLTO —
+   nelas o link não tinha regra nenhuma, então não tinha nem o espaço
+   nem o alvo. A correção do lote anterior consertou 5 telas de 7 e eu
+   não medi as outras duas. Agora é o elemento, não o contexto. */
+.wa { display: inline-flex; align-items: center; min-height: 44px; margin-top: 10px; font-weight: 600; color: var(--cobalt-ink); text-decoration: none; }
 
 /* ---------- sidebar: complementos das telas de app ---------- */
 /* SEM `color` AQUI, e isso e a correcao. Esta regra tem a mesma
@@ -2193,7 +2223,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding-top: 12px;
   border-top: 1px dashed var(--line);
 }
-.card.noturno .nc-foot a { color: var(--cobalt-ink); font-weight: 600; text-decoration: none; }
+.card.noturno .nc-foot a { display: inline-flex; align-items: center; min-height: 44px; color: var(--cobalt-ink); font-weight: 600; text-decoration: none; }
 .card.noturno .chip-lime {
   margin-top: 12px;
   background: transparent;
@@ -3606,6 +3636,8 @@ code {
   font-size: var(--fs-legenda);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  /* 0.72 → 4,53:1 sobre o cobalto. É o piso, e está declarado aqui para
+     ninguém "suavizar" de volta para 0.6 sem medir. */
   color: rgb(var(--white-rgb) / 0.72);
 }
 .fase-marca {
@@ -3661,9 +3693,28 @@ code {
 /* travada: recua, mas continua legível. Recuo aqui é opacidade de COR
    declarada, não `opacity` no elemento: `opacity` derrubaria a borda e o
    marcador junto, e o que se quer recuar é o texto. */
+/* ============================================================
+   OS RECUOS DA FASE TRAVADA SÃO MEDIDOS, NÃO ESTIMADOS.
+
+   `0.6` no rótulo dava **3,58:1** sobre o cobalto no tema claro — abaixo
+   do mínimo, e pego na medição desta rodada. O recuo estava certo como
+   ideia e errado como número: "mais apagado que o resto" tem um piso, e
+   o piso é 4,5:1.
+
+   Calibrado sobre `--card-cobalt-bg` (`#0743DC` no claro, que é o pior
+   dos dois temas — no escuro o fundo é `#0B1A38` e sobra folga):
+
+     0.60 → 3,58   reprovava
+     0.72 → 4,53   passa raspando
+     0.80 → 5,25   o rótulo, com margem
+     0.86 → 5,84   o nome da fase
+
+   O nome fica mais forte que o rótulo de propósito: é ele que diz QUAL
+   etapa é, e o rótulo só diz que ela não começou.
+   ============================================================ */
 .fase.f-travada { background: rgb(var(--white-rgb) / 0.06); }
-.fase.f-travada b { color: rgb(var(--white-rgb) / 0.74); }
-.fase.f-travada span { color: rgb(var(--white-rgb) / 0.6); }
+.fase.f-travada b { color: rgb(var(--white-rgb) / 0.86); }
+.fase.f-travada span { color: rgb(var(--white-rgb) / 0.8); }
 
 /* ---------- o cartão do próximo passo ---------- */
 
@@ -3675,7 +3726,28 @@ code {
   display: flex;
   flex-direction: column;
 }
-.proximo .eyebrow { color: var(--cobalt); display: block; margin: 0 0 10px; }
+/* ---------- N4: "SEU PRÓXIMO PASSO" a 2,1:1 no escuro ----------
+
+   ============================================================
+   TERCEIRA VEZ HOJE QUE ESTE PADRÃO APARECE, E ELE TEM NOME.
+
+   Três vezes, três seletores, uma causa só:
+
+     .fase.f-atual b      `--navy`    branco sobre branco no escuro
+     .command-card .cta   `--cobalt`  azul escuro sobre card escuro
+     .proximo .eyebrow    `--cobalt`  2,1:1
+
+   Todas usaram token de COR onde o papel pedia token de TINTA.
+   `--cobalt` é "a cor cobalto", e existe para ser SUPERFÍCIE: no escuro
+   vale `#0239C7`, que é o azul de um fundo. `--cobalt-ink` é "cobalto
+   como tinta" e clareia para `#5C88FA`, porque tinta se afasta do fundo
+   em vez de acompanhá-lo.
+
+   A regra, para não haver quarta vez: **se o token vem depois de
+   `color:`, ele termina em `-ink`.** A exceção são as superfícies que
+   declaram o próprio par (`--card-cobalt-bg` / `--card-cobalt-ink`).
+   ============================================================ */
+.proximo .eyebrow { color: var(--cobalt-ink); display: block; margin: 0 0 10px; }
 .proximo h3 {
   font-family: var(--display);
   font-size: var(--fs-tela);
@@ -3857,8 +3929,10 @@ code {
 /* ---------- #12: "Sair", medido em 21×12 ---------- */
 .side-account .link-btn {
   min-height: 44px;
-  display: inline-flex;
-  align-items: center;
+  /* A largura era o que faltava: um alvo de 44 de altura por 21 de
+     largura continua sendo um alvo de 21. */
+  min-width: 44px;
+  justify-content: flex-start;
 }
 
 /* ---------- #9, #13, #14 e #15: cabeçalho que não cabe ----------
@@ -3941,4 +4015,13 @@ code {
   max-width: 72ch;
   padding-left: 14px;
   border-left: 2px solid var(--line);
+}
+
+
+
+/* D2: "Trocar minha senha" mora num `.note` dentro de `.field`. */
+.field .note a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }

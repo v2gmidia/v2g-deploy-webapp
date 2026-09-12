@@ -717,7 +717,28 @@ secao("B. a regra de evidência — a VEICULAÇÃO fecha `peca` e `no_ar`");
     noAr !== "Já está feito.",
     `  e a do no ar NÃO é o "Já está feito." seco: "${noAr}"`,
   );
-  ok(/facebook/i.test(noAr), "  ela aponta quem confirmou como prova");
+  // ============================================================
+  // A TRAVA MUDOU DE ALVO EM 11/09 — item N2 do QA.
+  //
+  // Ela exigia a palavra "facebook" na frase, e a frase era "Já está
+  // feito — o Facebook confirmou.". A FONTE continua a mesma (a
+  // veiculação que o backend reporta); o que mudou é que o dono não
+  // pensa em plataforma que confirma — citar o Facebook ali era jargão
+  // de operação vazando para a tela.
+  //
+  // O que a trava protege é o que sempre protegeu: que a linha do "no
+  // ar" NÃO seja o "Já está feito." seco, porque a peça e a publicação
+  // não estão registradas aqui. Agora ela confere o FATO declarado — que
+  // o anúncio rodou —, e não o nome de quem contou.
+  // ============================================================
+  ok(
+    /rodar|rodou/i.test(noAr),
+    `  ela diz o fato — que o anúncio chegou a rodar: "${noAr}"`,
+  );
+  ok(
+    !/facebook|plataforma|status/i.test(noAr),
+    "  e não cita a plataforma: é linguagem do dono, não da operação",
+  );
   ok(
     estadoNaLista(por(provadas, "cadastro"), "feita") === "Já está feito.",
     "  enquanto a do cadastro segue sendo a frase de sempre",

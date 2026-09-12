@@ -909,14 +909,24 @@ export function estadoNaLista(etapa: Etapa, posicao: PosicaoNaCadeia): string {
     // publicação estão registradas aqui, e elas não estão — quem prova é
     // a veiculação que o Facebook reporta (ver `concluidasPelaVeiculacao`).
     //
-    // A frase deixou de citar "o investimento que já saiu": o gasto virou
-    // um dos degraus da evidência, e não mais o único. Dizer "o Facebook
-    // confirmou" é verdade nos dois degraus — ele confirma tanto
-    // reportando a veiculação quanto cobrando.
+    // ============================================================
+    // A FONTE É O BACKEND; O TEXTO É DO DONO. Item N2 do QA.
+    //
+    // A frase era "Já está feito — o Facebook confirmou.". A fonte está
+    // certa e o texto estava errado: **o dono não pensa em plataforma que
+    // confirma.** "O Facebook confirmou" pede que ele saiba que existe um
+    // sistema de terceiro reportando coisas sobre a campanha dele, e é
+    // jargão de operação vazando para a tela — a mesma família do "custo
+    // por conversa" e do "status_na_plataforma".
+    //
+    // "O anúncio chegou a rodar" diz o MESMO fato — houve veiculação — na
+    // única linguagem que o dono já tem. E diz a coisa certa sobre o
+    // tempo: chegou a rodar, e não necessariamente está rodando agora.
     //
     // Sem data, de propósito: a evidência é QUE aconteceu, não QUANDO.
+    // ============================================================
     return etapa.concluidaPelaVeiculacao
-      ? "Já está feito — o Facebook confirmou."
+      ? "Já está feito — o anúncio chegou a rodar."
       : "Já está feito.";
   }
   if (posicao === "atual") return "É o que está acontecendo agora.";

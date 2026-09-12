@@ -163,7 +163,11 @@ export default async function AnunciosPage() {
                   ============================================================ */}
               <section>
                 <div className="section-title">
-                  <h2>Seus anúncios</h2>
+                  {/* N6 do QA: era "Seus anúncios" de novo, igual ao
+                      `<h1>` três blocos acima. Título repetido não
+                      organiza nada — ensina o olho a pular. Este bloco é
+                      a lista em si, então ele diz o que a lista mostra. */}
+                  <h2>O que cada um produziu</h2>
                   <span className="grp-count">
                     {resultado.campanhas.length}{" "}
                     {resultado.campanhas.length === 1 ? "anúncio" : "anúncios"}
