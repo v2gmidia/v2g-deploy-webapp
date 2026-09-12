@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { AnaliseDaPeca } from "@/lib/backend";
 import { ACEITOS_NO_INPUT, conferirArquivo, type Recusa } from "@/lib/criativos/envio";
 import { apresentarVeredito } from "@/lib/criativos/veredito";
@@ -30,7 +30,54 @@ type Fase =
 export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
   const [fase, setFase] = useState<Fase>({ nome: "parado" });
   const [nomeDoArquivo, setNomeDoArquivo] = useState<string | null>(null);
+  const [aceito, setAceito] = useState<File | null>(null);
+  const [previa, setPrevia] = useState<string | null>(null);
+  const [demorando, setDemorando] = useState(false);
   const campo = useRef<HTMLInputElement>(null);
+
+  /**
+   * A MINIATURA DO QUE SUBIU.
+   *
+   * Existe para responder a pergunta que a pessoa faz sozinha enquanto
+   * espera: "subiu a foto certa?". Sem ela, o único sinal do arquivo é o
+   * nome — e no celular o nome é `IMG_20260912_0032.jpg`, que não
+   * responde nada.
+   *
+   * A URL é criada aqui e REVOGADA pela função de limpeza deste mesmo
+   * efeito. Ficar preso ao arquivo escolhido (e não criar a URL dentro
+   * do `onChange`) é o que garante que trocar de imagem, recomeçar ou
+   * sair da tela não deixem `blob:` pendurado na memória do navegador.
+   */
+  useEffect(() => {
+    if (!aceito) {
+      setPrevia(null);
+      return;
+    }
+    const url = URL.createObjectURL(aceito);
+    setPrevia(url);
+    return () => URL.revokeObjectURL(url);
+  }, [aceito]);
+
+  /**
+   * A SEGUNDA LINHA, DEPOIS DE ~20 SEGUNDOS.
+   *
+   * Não é prazo e não é contagem: é o reconhecimento de que a espera
+   * passou do normal, que é o momento em que a pessoa começa a achar
+   * que travou. Medido em produção: a análise leva ~8s, então 20s já é
+   * fora da curva.
+   *
+   * Não diz quantos minutos faltam porque **ninguém sabe** — o backend
+   * não devolve estimativa. Número aqui seria invenção, da mesma
+   * família das "48 horas" que já saíram do produto.
+   */
+  useEffect(() => {
+    if (fase.nome !== "analisando") {
+      setDemorando(false);
+      return;
+    }
+    const relogio = setTimeout(() => setDemorando(true), 20_000);
+    return () => clearTimeout(relogio);
+  }, [fase.nome]);
 
   async function escolheu(e: React.ChangeEvent<HTMLInputElement>) {
     const arquivo = e.target.files?.[0];
@@ -40,11 +87,15 @@ export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
     const recusa = await conferirArquivo(arquivo);
     if (recusa) {
       // O campo é limpo: deixar o nome do arquivo recusado ali sugere
-      // que ele ainda vai ser enviado.
+      // que ele ainda vai ser enviado. A miniatura sai junto, pelo mesmo
+      // motivo: imagem na tela é sinal de que ela foi aceita.
       if (campo.current) campo.current.value = "";
+      setAceito(null);
       setFase({ nome: "recusado", recusa });
       return;
     }
+
+    setAceito(arquivo);
 
     setFase({ nome: "analisando" });
     const dados = new FormData();
@@ -56,6 +107,7 @@ export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
   function recomecar() {
     if (campo.current) campo.current.value = "";
     setNomeDoArquivo(null);
+    setAceito(null);
     setFase({ nome: "parado" });
   }
 
@@ -100,13 +152,40 @@ export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
               falsa é a promessa mais cara: quando ela chega no fim e
               nada acontece, a pessoa acha que travou.
 
-              Diz o que está acontecendo, no presente, e pronto.
+              O QUE MUDOU EM 12/09, e por quê. Medido em produção, no
+              celular: durante os ~8s a tela não dava sinal de vida e
+              parecia travada. Havia um ponto pulsando, mas 10px mudando
+              de opacidade ao lado de uma frase não é lido como
+              atividade — o olho está no texto. Três coisas entraram:
+              o anel que gira (movimento contínuo, e movimento que NÃO
+              sugere fração cumprida), a miniatura do arquivo, e a
+              segunda linha depois de ~20s.
+
+              Continua sem porcentagem e sem barra que preenche: o
+              backend não devolve progresso, e número inventado aqui é
+              a mesma família do "48 horas" que saiu do produto.
               ============================================================ */}
           {fase.nome === "analisando" && (
-            <p className="analise-espera" role="status">
-              <span className="analise-pulso" aria-hidden="true" />
-              Olhando sua imagem. Dá para esperar aqui — quando terminar, aparece nesta tela.
-            </p>
+            <div className="analise-andamento">
+              {previa && (
+                <img
+                  className="analise-previa"
+                  src={previa}
+                  alt="A imagem que você mandou para análise"
+                />
+              )}
+              <span className="analise-girando" aria-hidden="true" />
+              <div className="analise-dizeres" role="status">
+                <p className="analise-espera">
+                  Olhando sua imagem. Dá para esperar aqui — quando terminar, aparece nesta tela.
+                </p>
+                {demorando && (
+                  <p className="analise-demora">
+                    Às vezes demora um pouco mais. Pode deixar esta tela aberta.
+                  </p>
+                )}
+              </div>
+            </div>
           )}
         </div>
       )}

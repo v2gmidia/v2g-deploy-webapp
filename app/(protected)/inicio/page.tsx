@@ -888,6 +888,29 @@ function Melhoras({ fotos }: { fotos: number }) {
           </span>
           <Seta />
         </a>
+        {/* ============================================================
+            A ÚNICA PORTA PARA A /criativos NO INÍCIO — item do QA de
+            11/09/2026: a tela existia e NÃO tinha como chegar nela pelo
+            app. Nenhum menu, nenhum link, nenhuma tela apontando. O dono
+            teria que digitar a URL, o que não acontece no celular.
+
+            Aqui e não no herói de propósito: analisar peça pronta é
+            tarefa de quem JÁ TEM a peça, e a ação principal da tela
+            continua sendo a etapa aberta. Esta lista é o lugar do
+            "se você quiser" — e é a mesma decisão que o docstring da
+            /criativos registra ao recusar virar item de menu (os cinco
+            do QA-1 continuam cinco).
+            ============================================================ */}
+        <a className="acct-row" href="/criativos">
+          <span className="ar-text">
+            <b>Conferir uma peça que você já tem</b>
+            <span>
+              Se alguém já fez um anúncio para você, a gente diz se ele serve — antes de você
+              gastar com ele.
+            </span>
+          </span>
+          <Seta />
+        </a>
         <a className="acct-row" href="/meu-negocio">
           <span className="ar-text">
             <b>Conferir o que a gente entendeu do seu negócio</b>

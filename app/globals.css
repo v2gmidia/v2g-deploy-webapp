@@ -4074,9 +4074,15 @@ code {
 }
 .analise-alvo:hover { border-color: var(--cobalt-ink); }
 /* O foco aparece no rótulo, porque o `<input>` é `.sr-only` — sem isto,
-   quem navega por teclado não vê onde está. */
-#analise-arquivo:focus-visible + .analise-alvo,
-.analise-alvo:focus-within {
+   quem navega por teclado não vê onde está.
+
+   `:has()` E NÃO `+`, e isto foi um DEFEITO, não preferência. A regra
+   era `#analise-arquivo:focus-visible + .analise-alvo`, e o irmão
+   adjacente exige que o alvo venha DEPOIS do input. No JSX o `<label>`
+   vem ANTES: a regra nunca casou, e quem navegava por teclado não via
+   foco nenhum. Mesma família do `.side-support` declarado duas vezes —
+   regra que existe, parece aplicada, e não é. Medido em 12/09. */
+.analise-envio:has(#analise-arquivo:focus-visible) .analise-alvo {
   outline: 2px solid var(--cobalt-ink);
   outline-offset: 2px;
 }
@@ -4089,8 +4095,18 @@ code {
 .analise-icone { width: 30px; height: 30px; color: var(--cobalt-ink); }
 .analise-icone svg { width: 100%; height: 100%; }
 
-/* input desabilitado: o alvo recua e para de convidar */
-#analise-arquivo:disabled + .analise-alvo { opacity: 0.55; cursor: not-allowed; }
+/* Input desabilitado: o alvo recua e para de convidar.
+
+   O MESMO DEFEITO DE IRMÃO ADJACENTE ESTAVA AQUI, e este custava mais
+   caro que o do foco: durante a análise o input JÁ era desabilitado,
+   mas o alvo continuava com cara de clicável. A pessoa tocava, nada
+   acontecia — porque tocar num `<label>` de input desabilitado não faz
+   nada —, e a conclusão era "travou". Metade do sintoma de 12/09 era
+   isto, não a falta de indicador. */
+.analise-envio:has(#analise-arquivo:disabled) .analise-alvo {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 
 /* ---------- a recusa, e a espera ---------- */
 
@@ -4106,31 +4122,85 @@ code {
 }
 .analise-recusa b { display: block; font-size: var(--fs-legenda); color: var(--ink-mute); margin-bottom: 4px; }
 
-.analise-espera {
+/* A linha da espera: miniatura à esquerda, dizeres à direita. */
+.analise-andamento {
   margin: 14px 0 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+}
+/* A MINIATURA DO ARQUIVO — prova de que subiu o que a pessoa queria.
+   Quadrada e recortada (`cover`) de propósito: o que ela responde é
+   "é essa foto?", e para isso o enquadramento exato não importa. */
+.analise-previa {
+  width: 56px;
+  height: 56px;
+  flex: none;
+  object-fit: cover;
+  border-radius: var(--raio-interno);
+  border: 1.5px solid var(--line);
+}
+.analise-dizeres { min-width: 0; }
+/* O anel é IRMÃO dos dizeres, não filho do primeiro parágrafo. Dentro
+   do `<p>` ele empurrava só a linha de cima, e a segunda linha (a dos
+   ~20s) nascia desalinhada da primeira. Fora, as duas alinham e o anel
+   centra no bloco inteiro. */
+.analise-espera {
+  margin: 0;
   font-size: var(--fs-corpo);
   line-height: 1.55;
   color: var(--ink-soft);
 }
-/* Um ponto que pulsa, e NÃO uma barra que anda.
+/* UM ANEL QUE GIRA, E NÃO UMA BARRA QUE PREENCHE.
 
-   Barra de progresso aqui seria promessa: ela sugere que existe uma
-   fração conhecida do trabalho, e não existe — a chamada leva o que
-   levar. O pulso diz "está acontecendo" sem dizer quanto falta. */
-.analise-pulso {
-  width: 10px;
-  height: 10px;
+   A diferença não é de gosto. Barra sugere fração conhecida do
+   trabalho, e não existe fração: a chamada leva o que levar, e o
+   backend não devolve estimativa. Anel que gira diz "está acontecendo"
+   sem dizer quanto falta — ele nunca chega ao fim, e é essa a verdade.
+
+   POR QUE NÃO O PULSO QUE ESTAVA AQUI. Era um ponto de 10px trocando
+   de opacidade. Existia, animava, e ainda assim a tela foi medida em
+   produção como travada: ao lado de uma frase, um ponto pequeno
+   mudando de brilho não é lido como atividade, porque o olho está no
+   texto. Rotação contínua é.
+
+   A pista usa `--navy-rgb` e não o cobalto: no tema escuro esse canal
+   vira claro, então a pista acompanha o tema sozinha. No cobalto a
+   0.25 ela sumiria no fundo escuro. */
+.analise-girando {
+  width: 16px;
+  height: 16px;
   flex: none;
   border-radius: var(--raio-pilula);
-  background: var(--cobalt-ink);
-  animation: analise-pulsa 1.4s ease-in-out infinite;
+  border: 2px solid rgb(var(--navy-rgb) / 0.18);
+  border-top-color: var(--cobalt-ink);
+  animation: analise-gira 0.8s linear infinite;
 }
-@keyframes analise-pulsa {
-  0%, 100% { opacity: 0.25; transform: scale(0.8); }
-  50% { opacity: 1; transform: scale(1); }
+@keyframes analise-gira {
+  to { transform: rotate(360deg); }
+}
+/* A segunda linha, depois de ~20s. Mais apagada que a primeira: ela
+   acrescenta, não corrige. Nenhum número — nem de minutos, nem de
+   porcentagem. */
+.analise-demora {
+  margin: 6px 0 0;
+  font-size: var(--fs-legenda);
+  line-height: 1.5;
+  color: var(--ink-mute);
+}
+/* Quem pediu menos movimento continua precisando saber que está vivo.
+   A rotação sai; uma respiração de opacidade fica. Opacidade não
+   desloca nada na tela, que é o que a preferência pede para parar. */
+@media (prefers-reduced-motion: reduce) {
+  .analise-girando {
+    border-color: rgb(var(--navy-rgb) / 0.18);
+    border-top-color: var(--cobalt-ink);
+    animation: analise-respira 1.6s ease-in-out infinite;
+  }
+}
+@keyframes analise-respira {
+  0%, 100% { opacity: 0.35; }
+  50% { opacity: 1; }
 }
 
 /* ---------- o resultado ---------- */

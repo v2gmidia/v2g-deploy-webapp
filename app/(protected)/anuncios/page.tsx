@@ -225,6 +225,8 @@ export default async function AnunciosPage() {
               esta seção listava o logo do cliente sob o título "Fotos
               guardadas". As fotos do cliente moram na `/conta`. */}
           <PecasSemAnuncio pecas={pecas.filter((p) => p.uso === "campanha" && !p.campaign_id)} />
+
+          <PecaPronta />
         </div>
 
         <aside className="dash-aside">
@@ -640,6 +642,67 @@ function PecasSemAnuncio({ pecas }: { pecas: Array<{ id: string; file_name: stri
   );
 }
 
+/**
+ * A porta para a /criativos — item do QA de 11/09/2026.
+ *
+ * ============================================================
+ * A TELA EXISTIA E NÃO TINHA COMO CHEGAR NELA.
+ *
+ * `/criativos` não estava em menu nenhum e nenhuma tela apontava para
+ * ela: o dono teria que digitar a URL, o que não acontece no celular. O
+ * passo 6 do teste de produto não passava por falta de UM link.
+ *
+ * Fica AQUI porque aqui é onde o dono procuraria — esta é a tela das
+ * peças dele. E fica **fora da barra de baixo** de propósito: a decisão
+ * do QA-1 é de cinco itens no teto, e o próprio docstring da /criativos
+ * recusa virar item de menu (é tarefa, não lugar).
+ *
+ * Uma função usada nos DOIS ramos da tela, e não o mesmo JSX escrito duas
+ * vezes: cópia à mão envelhece de um dos lados.
+ * ============================================================
+ */
+function PecaPronta() {
+  return (
+    <section>
+      <div className="section-title">
+        <h2>Tem uma peça pronta?</h2>
+      </div>
+      <div className="card acct-list">
+        <a className="acct-row" href="/criativos">
+          <span className="ar-text">
+            <b>Conferir se ela serve para anunciar</b>
+            <span>
+              Você manda a imagem que já tem; a gente responde antes de você gastar com ela.
+            </span>
+          </span>
+          <SetaLinha />
+        </a>
+      </div>
+    </section>
+  );
+}
+
+/**
+ * A mesma seta das listas da /inicio e da /conta.
+ *
+ * `IconeSeta`, neste arquivo, é a de TENDÊNCIA do card de vendas — outra
+ * coisa, apesar do nome. Por isso esta tem nome próprio em vez de
+ * reaproveitar aquela.
+ */
+const SetaLinha = () => (
+  <svg
+    viewBox="0 0 14 14"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M5 3l4 4-4 4" />
+  </svg>
+);
+
 function SemAnuncioNenhum({ proximo, fotos }: { proximo: Etapa | null; fotos: number }) {
   return (
     <>
@@ -710,6 +773,8 @@ function SemAnuncioNenhum({ proximo, fotos }: { proximo: Etapa | null; fotos: nu
               </li>
             </ul>
           </section>
+
+          <PecaPronta />
         </div>
 
         <aside className="dash-aside">
