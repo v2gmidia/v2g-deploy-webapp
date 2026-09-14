@@ -144,49 +144,186 @@ e depois. Essa regra não foi tocada.
 
 ---
 
-## Raio: proposta de três tokens — NÃO APLICADA
+## Raio: três tokens — APLICADA
 
-Lote 2a, 14/09/2026. Os três números abaixo esperam aprovação do Victor.
-Nenhum `border-radius` do código mudou.
+Aplicada em 14/09/2026, a partir da proposta do lote 2a, com uma mudança
+decidida pelo Victor: `--raio-controle` saiu de 4px para **8px**. Com 4px, o
+raio quase não aparece num botão de 44px. E 18 das 66 linhas de botão (a
+família `btn-linha`) já usavam 8px.
 
-### O que existe hoje
+### Os valores finais
 
-Nos controles medidos (as tabelas de `docs/botoes.md`):
 ```
-$ grep -E "^\| [0-9]+ \| \`.*\| B[0-9]+ \|$" docs/botoes.md | awk -F'|' '{gsub(/^ +| +$/,"",$8); print $8}' | sort | uniq -c | sort -rn
-19 4px · 18 8px · 13 0 · 12 999px · 2 12px · 1 6px · 1 50%
-$ grep -E "^\| [0-9]+ \| \`.*\| C[0-9]+ \|$" docs/botoes.md | awk -F'|' '{gsub(/^ +| +$/,"",$8); print $8}' | sort | uniq -c | sort -rn
-22 4px · 7 8px · 6 0
+$ grep -nE "^\s*--raio-[a-z]+:" app/globals.css
+168:  --raio-controle: 8px;   /* botão, campo, item de lista e de nav */
+169:  --raio-cartao: 12px;    /* card, caixa, bloco */
+170:  --raio-card: 12px;      /* card padrão */
+171:  --raio-item: 10px;      /* item de lista, bloco de nav */
+172:  --raio-interno: 8px;    /* elemento dentro de card */
+173:  --raio-selo: 6px;       /* selo, aviso */
+174:  --raio-micro: 4px;      /* campo, marcador */
+175:  --raio-pilula: 999px;   /* pílula */
 ```
-Os primeiros 66 valores são das linhas de botão; os outros 35, dos campos
-visíveis.
 
-No CSS inteiro:
-```
-$ grep -oE "border-radius:\s*[^;]+" app/globals.css | sed -E 's/\s+/ /g' | sort | uniq -c | sort -rn
-25 var(--raio-card) · 23 var(--raio-item) · 13 var(--raio-pilula) · 13 var(--raio-interno) · 10 var(--raio-selo) · 9 var(--raio-micro) · 7 50% · 5 14px · 1 cada: 3px, 12px, 10px, 0
-```
-Tokens de hoje: `--raio-card` 12px, `--raio-item` 10px, `--raio-interno`
-8px, `--raio-selo` 6px, `--raio-micro` 4px e `--raio-pilula` 999px.
-
-### A proposta
-
-| Token | Valor | Justificativa (uma linha) |
+| Token | Valor | Para que serve |
 |---|---|---|
-| `--raio-controle` | **4px** | É o raio de 41 dos 101 controles medidos (19 botões + 22 campos), contra 25 em 8px. |
-| `--raio-cartao` | **12px** | Já é o `--raio-card`, o token de raio mais lido do CSS (25 declarações), e é o do `tema-opcao`, o único controle em forma de cartão. |
-| `--raio-pilula` | **999px** | Já existe com esse nome e valor (13 declarações) e é o raio de 12 chips. |
+| `--raio-controle` | **8px** | botão, campo, item de lista e item de navegação |
+| `--raio-cartao` | **12px** | card, caixa e bloco |
+| `--raio-pilula` | **999px** | chip, pílula e marcador redondo (já existia com esse nome e valor) |
 
-O `50%` do `ec-back` fica fora da escala: é botão redondo.
+Os três tokens só existem no `:root`. Nenhum bloco de tema escuro redefine
+raio, porque o raio não muda com o tema.
 
-### O que mudaria se aprovada (para decidir, não aplicado)
+```
+javascript_tool → getComputedStyle(document.documentElement).getPropertyValue('--raio-*'), 375px, /entrar
+{ "controle": "8px", "cartao": "12px", "pilula": "999px" }
+```
 
-- **Controles em 8px que iriam para 4px:** `btn-linha` (18 linhas de botão)
-  e os campos C3 e C7 (7).
-- **Controle em 6px que iria para 4px:** o `botao-leve` do `.pd-convite`
-  (B18, 1 linha).
-- **Controles com raio 0:** 13 botões e 6 campos. São link, texto ou nativo,
-  sem fundo nem borda, então o raio não aparece. Ficam de fora.
-- **Fora dos controles**, a proposta não diz para onde vão: `--raio-item`
-  (10px, 23 declarações), `--raio-selo` (6px, 10), os `14px` literais (5) e
-  o `3px` (1). É assunto de cartão e lista, não de controle.
+### Para onde foi cada declaração
+
+Antes da troca, `app/globals.css` tinha 111 declarações de raio. O script
+listou cada uma com linha, valor e seletor, e depois trocou uma por uma
+exigindo que o texto aparecesse exatamente uma vez na linha:
+```
+$ node raio-patch.cjs   (scratchpad; lê o inventário de 111 declarações e aplica o mapa)
+4px → controle 6 · 4px → fica 3 · 6px → controle 1 · 6px → fica 9 · 8px → controle 6 · 8px → fica 7
+10px → controle 24 · 12px → cartao 26 · 14px → cartao 5 · 999px → pilula 13 · 50% → fica 7 · 3px → fica 3 · 0 → fica 1
+por destino: controle 37 · cartao 31 · pilula 13 · fica 30
+```
+
+| Valor antigo | Existiam | → controle | → cartão | → pílula | Ficou como estava |
+|---|---:|---:|---:|---:|---:|
+| 0 | 1 | | | | 1 |
+| 3px | 3 | | | | 3 |
+| 4px | 9 | 6 | | | 3 |
+| 6px | 10 | 1 | | | 9 |
+| 8px | 13 | 6 | | | 7 |
+| 10px | 24 | 24 | | | |
+| 12px | 26 | | 26 | | |
+| 14px | 5 | | 5 | | |
+| 999px | 13 | | | 13 | |
+| 50% | 7 | | | | 7 |
+| **Total** | **111** | **37** | **31** | **13** | **30** |
+
+Quem foi para cada token:
+
+- **controle, 37 declarações:**
+  - 6 de 4px: `.field input`, `.cta`, `.fallback-field input` e
+    `.city-row input`, `.mini-send`, `.field select`, `.btn-sm`;
+  - 6 de 8px: `.btn-linha`, `.rev-corrigir input, textarea`,
+    `.rc-editor input, textarea`, `.id-arquivo::file-selector-button`,
+    `.acct-list .acct-row.destaque`, e o `var(--raio-interno)` do
+    `.nav-item`, que a declaração seguinte da mesma regra já sobrescrevia;
+  - 1 de 6px: `.pd-convite .botao-leve`;
+  - 24 de 10px, por decisão do Victor, que colocou item de lista e de nav em
+    controle: `.nav-item`, `.nav-item.active::before` (≤900px),
+    `.side-account`, `.side-support`, `.support-block`, `.bubble`,
+    `.espera-row`, `.ec-swap`, `.card`, `.alert-card`, `.empty-list`,
+    `.list-row`, `.escolha-item`, `.fail-block`, `.rev-opcao`, `.id-aviso`,
+    `.id-logo img`, `.id-galeria img`, `.rc-nao-sabemos`, `.fase`, `.sinal`,
+    `.analise-alvo`, `.analise-aviso` e o literal `10px` do
+    `.casa-vazio-ico`.
+- **cartão, 31 declarações:** os 25 `var(--raio-card)` e o literal `12px` do
+  `.casa-obra`. Mais os 5 literais de `14px`: `.auth-card`, `.empty-card`,
+  `.rev-item`, `.casa-vazio` e `.casa-desenho`.
+- **pílula, 13 declarações:** já liam `var(--raio-pilula)`. O nome e o valor
+  não mudaram, e nenhuma linha foi editada.
+
+### O que ficou fora da escala, por decisão
+
+Estas 30 declarações não mudaram. O Victor decidiu cada grupo antes da edição.
+
+- **Selos, avisos e peças pequenas que não são controle (19):**
+  - `--raio-selo` 6px: `.form-error`, `.form-notice`, `.trust`,
+    `.chip-lime`, `.diag-lista li`, `.diag-json`, `.res-barra`,
+    `.analise-recusa`, `.analise-selo`;
+  - `--raio-micro` 4px: `.campo-com-moeda .campo-moeda`, `.tema-amostra i`,
+    `code`;
+  - `--raio-interno` 8px: `.mark-plate`, `.ec-badge`, `.toast`,
+    `.tema-amostra`, `.lr-erro`, `.id-recado`, `.analise-previa`.
+- **Círculos em `50%` (7):** o `.ec-back` e mais seis peças quadradas:
+  `.pill::before`, `.side-account .avatar`, `.empty-ico`, `.grp-dot`,
+  `.res-num-ico` e `.res-falha-ico`.
+- **Literais (4):** `3px` na ponta da `.bubble.ai`, na da `.bubble.user` e
+  no `.tick`; `0` no `.nav-item` da barra inferior (≤900px).
+
+### Tokens antigos
+
+Por decisão, continuam definidos. Dois ficaram sem leitor:
+```
+$ grep -oE "var\(--raio-[a-z]+\)" app/globals.css | sort | uniq -c
+     31 var(--raio-cartao)
+     37 var(--raio-controle)
+      7 var(--raio-interno)
+      3 var(--raio-micro)
+     13 var(--raio-pilula)
+      9 var(--raio-selo)
+```
+`--raio-card` e `--raio-item` não aparecem na saída, porque têm 0 leitores.
+`--raio-interno`, `--raio-selo` e `--raio-micro` ainda são lidos pelas 19
+declarações que ficaram fora da escala.
+
+Fora do `globals.css`, nenhum arquivo de `app`, `components`, `lib` ou
+`scripts` lê `--raio-*`, e nenhum JSX tem `borderRadius`. Os tokens só são
+citados em documentos.
+
+### Antes e depois nos controles, em 375px
+
+Os controles foram montados na cadeia de ancestrais real
+(`docs/botoes.md` §0), dentro de `http://localhost:3000/entrar`, em 375×812
+e tema claro. A mesma medição rodou antes e depois da edição.
+
+| Aparência | Antes | Depois | Comando |
+|---|---|---|---|
+| B1 `chip-opt` | 999px | 999px | `getComputedStyle(el).border*Radius`, 4 cantos |
+| B2 `btn-linha` | 8px | 8px | idem |
+| B3 `btn-linha fraco` | 8px | 8px | idem |
+| B4 `text-fallback` | 0px | 0px | idem |
+| B5 `cta` | 4px | **8px** | idem |
+| B6 `btn-linha forte` | 8px | 8px | idem |
+| B7 `mini-send` (fallback) | 4px | **8px** | idem |
+| B8 `cta ghost` | 4px | **8px** | idem |
+| B9 `cta` desabilitado | 4px | **8px** | idem |
+| B10 `acct-row` | 0px | 0px | idem |
+| B11 `botao-leve` | 999px | 999px | idem |
+| B12 `link-btn` (auth-foot) | 0px | 0px | idem |
+| B13 `ec-back` | 50% | 50% | idem |
+| B14 `ec-doubt` | 0px | 0px | idem |
+| B15 `cta quiet` | 4px | **8px** | idem |
+| B16 `tema-opcao picked` | 12px | 12px | idem |
+| B17 `tema-opcao` | 12px | 12px | idem |
+| B18 `botao-leve` (pd-convite) | 6px | **8px** | idem |
+| B19 `mini-send` (pd-guardar) | 4px | **8px** | idem |
+| B20 `link-btn` (sidebar) | 0px | 0px | idem |
+| B21 `btn-texto` | 0px | 0px | idem |
+| B22 `chip-opt picked` | 999px | 999px | idem |
+
+| Campo | Antes | Depois | Comando |
+|---|---|---|---|
+| C1 `.field input` | 4px | **8px** | `getComputedStyle(el).border*Radius`, 4 cantos |
+| C2 `.fallback-field input` / `.city-row input` | 4px | **8px** | idem |
+| C3 `.rc-editor input, textarea` | 8px | 8px | idem |
+| C4 `input[type=radio]` | 0px | 0px | idem |
+| C5 `.field input` desabilitado | 4px | **8px** | idem |
+| C6 `input[type=file].id-arquivo` | 0px | 0px | idem |
+| C7 `.rev-corrigir input, textarea` | 8px | 8px | idem |
+| C8 `input[type=file].sr-only` | 0px | 0px | idem |
+
+Por linha:
+```
+javascript_tool → antes, 66 linhas de botão e 35 campos, 375px
+botões: 4px 19 · 8px 18 · 0px 13 · 999px 12 · 12px 2 · 6px 1 · 50% 1
+campos: 4px 22 · 8px 7 · 0px 6
+javascript_tool → depois, mesma montagem
+botões: 8px 38 · 0px 13 · 999px 12 · 12px 2 · 50% 1
+campos: 8px 29 · 0px 6
+```
+Mudaram 20 linhas de botão (19 de 4px e 1 de 6px) e 22 campos. Todas foram
+para 8px. Os 4 cantos saíram iguais em todas as 101 leituras.
+
+**O que isto não mede:**
+
+- **Os 29 contêineres que mudaram de valor**, os 24 de 10px para 8px e os 5
+  de 14px para 12px. Não foram montados no navegador. A mudança está no CSS
+  e nas contagens acima; o raio computado deles fica "não medido".
+- **Rotas com sessão:** não abertas.

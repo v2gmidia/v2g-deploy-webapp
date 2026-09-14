@@ -162,6 +162,11 @@
      produto, não de tokenização — registrada como pendência.
      O `3px` do `.rev-etiqueta` e os `50%` de avatar não são degraus.
      ------------------------------------------------------------ */
+  /* Raio — escala de três (14/09/2026, lote raio): controle, cartão, pílula.
+     --raio-pilula já existia com esse nome e valor. Os antigos abaixo
+     continuam definidos; quem ficou fora da escala ainda lê alguns. */
+  --raio-controle: 8px;   /* botão, campo, item de lista e de nav */
+  --raio-cartao: 12px;    /* card, caixa, bloco */
   --raio-card: 12px;      /* card padrão */
   --raio-item: 10px;      /* item de lista, bloco de nav */
   --raio-interno: 8px;    /* elemento dentro de card */
@@ -552,7 +557,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-titulo);
   font-family: var(--body);
   color: var(--ink);
-  border-radius: var(--raio-micro);
+  border-radius: var(--raio-controle);
 }
 .field input::placeholder { color: var(--ink-mute); }
 .field input:focus { border-color: var(--cobalt); outline: none; }
@@ -586,7 +591,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--cobalt);
   color: var(--white);
   border: none;
-  border-radius: var(--raio-micro);
+  border-radius: var(--raio-controle);
   padding: 14px 16px;
   font-family: var(--display);
   font-weight: 700;
@@ -694,7 +699,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .proof-card {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 20px;
 }
 .proof-card b.title {
@@ -774,7 +779,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .auth-card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--raio-cartao);
   padding: 30px;
   /* A faixa cobalto que vive aqui dentro sangra até a borda DO CARD, não
      até a do canvas. Ver a nota de `--sangria` no `:root`. */
@@ -858,7 +863,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 @media (max-width: 620px) {
   .auth-top, .auth-wrap { padding-left: 18px; padding-right: 18px; }
-  .auth-card { padding: 22px 20px; border-radius: var(--raio-card); }
+  .auth-card { padding: 22px 20px; border-radius: var(--raio-cartao); }
   .auth-h { font-size: var(--fs-tela); }
 }
 
@@ -892,14 +897,14 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: center;
   gap: 12px;
   padding: 11px 12px;
-  border-radius: var(--raio-interno);
+  border-radius: var(--raio-controle);
   text-decoration: none;
   color: var(--sidebar-ink);
   font-family: var(--display);
   font-size: var(--fs-titulo);
   font-weight: 700;
   position: relative;
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
 }
 .nav-item:hover { background: rgb(255 255 255 / 0.08); color: var(--texto-sobre-escuro); }
 /* Item ativo é uma PÍLULA cheia, não uma barrinha na borda — é o que o
@@ -915,7 +920,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: center;
   gap: 10px;
   padding: 9px 10px;
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   border: 1.5px solid var(--line);
 }
 .side-account .avatar {
@@ -1083,7 +1088,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
     content: "";
     position: absolute;
     inset: 4px 6px;
-    border-radius: var(--raio-item);
+    border-radius: var(--raio-controle);
     background: var(--sidebar-active-bg);
     z-index: -1;
   }
@@ -1130,7 +1135,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .bubble {
   max-width: 78%;
   padding: 11px 13px;
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   font-size: var(--fs-corpo);
   line-height: 1.5;
 }
@@ -1325,7 +1330,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .pendencia-bloco {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 18px 18px 16px;
   margin-bottom: 22px;
 }
@@ -1354,7 +1359,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   align-items: start;
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 14px 16px;
 }
 .espera-quem b { display: block; font-family: var(--display); font-size: var(--fs-titulo); }
@@ -1383,7 +1388,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   flex: 1;
   width: 100%;
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-micro);
+  border-radius: var(--raio-controle);
   padding: 11px 12px;
   font-size: var(--fs-corpo);
   font-family: var(--body);
@@ -1429,7 +1434,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--cobalt);
   color: var(--white);
   border: none;
-  border-radius: var(--raio-micro);
+  border-radius: var(--raio-controle);
   padding: 0 16px;
   font-family: var(--display);
   font-weight: 700;
@@ -1608,7 +1613,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-swap {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 16px 18px;
 }
 .ec-swap-label {
@@ -1773,7 +1778,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 16px 18px;
 }
 /* Titulo de card no aside. A classe era aplicada em tres lugares e NAO
@@ -1797,7 +1802,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-titulo);
   font-family: var(--body);
   color: var(--ink);
-  border-radius: var(--raio-micro);
+  border-radius: var(--raio-controle);
 }
 .field select:focus { border-color: var(--cobalt); outline: none; }
 .field input:disabled, .field select:disabled { background: rgb(var(--navy-rgb) / 0.04); color: var(--ink-mute); }
@@ -1807,7 +1812,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--surface);
   border: 1.5px solid var(--line);
   border-left: 4px solid var(--cobalt);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 16px 18px;
 }
 .alert-card.warn { border-left-color: var(--warn); }
@@ -1855,7 +1860,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .empty-hero {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 38px 30px 32px;
   text-align: center;
 }
@@ -1882,7 +1887,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .empty-card {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: 14px;
+  border-radius: var(--raio-cartao);
   padding: 34px 32px;
   display: grid;
   grid-template-columns: 72px minmax(0, 1fr) 300px;
@@ -1913,7 +1918,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 18px;
   background: var(--surface);
   border: 1.5px solid var(--ice);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   display: flex; flex-direction: column; gap: 12px;
 }
 .empty-list li, .tips-list li {
@@ -1922,7 +1927,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .empty-list li b { color: var(--ink); font-weight: 600; }
 
-.tips-card { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--raio-card); padding: 16px 18px; }
+.tips-card { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--raio-cartao); padding: 16px 18px; }
 .tips-title { font-family: var(--display); font-weight: 700; font-size: var(--fs-corpo); color: var(--navy); margin: 0 0 10px; }
 .tips-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
 .tick {
@@ -1937,7 +1942,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    diferença é de cor e de seta, não de superfície. */
 .acct-row.destaque .ar-text b { color: var(--cobalt-ink); }
 .acct-row.destaque svg { color: var(--cobalt-ink); }
-.acct-list .acct-row.destaque { background: rgb(var(--cobalt-rgb) / 0.04); border-radius: var(--raio-interno); padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
+.acct-list .acct-row.destaque { background: rgb(var(--cobalt-rgb) / 0.04); border-radius: var(--raio-controle); padding-left: 12px; padding-right: 12px; margin: 4px -12px; }
 
 /* ---------- lista da assinatura: todas as linhas com o mesmo peso ---------- */
 .acct-list { padding: 4px 16px; }
@@ -1959,7 +1964,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ar-text b { font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo); color: var(--cobalt-ink); }
 .ar-text span { font-size: var(--fs-corpo); color: var(--ink-soft); line-height: 1.45; }
 
-.support-block { border-radius: var(--raio-item); padding: 18px; margin: 0; font-size: var(--fs-corpo); }
+.support-block { border-radius: var(--raio-controle); padding: 18px; margin: 0; font-size: var(--fs-corpo); }
 .support-block b { font-size: var(--fs-titulo); margin-bottom: 5px; }
 /* #11 e #12 do QA: `inline-flex` com altura mínima dá o alvo de 44px, e
    a margem maior cria o espaço que faltava antes do "Chamar no
@@ -1992,7 +1997,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .side-support {
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 13px;
   margin-bottom: 12px;
 }
@@ -2153,7 +2158,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .hero-card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 26px 26px 22px;
 }
 .hero-card .eyebrow { margin: 0 0 12px; }
@@ -2209,7 +2214,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .list-row {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 15px 17px;
 }
 .list-row .lr-head { display: flex; align-items: center; gap: 8px; }
@@ -2241,7 +2246,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background-image: radial-gradient(rgb(var(--ice-rgb) / 0.12) 1px, transparent 1px);
   background-size: 16px 16px;
   color: var(--plate-ink);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 20px;
 }
 .navy-card p { font-size: var(--fs-corpo); line-height: 1.55; color: rgb(var(--plate-ink-rgb) / 0.82); margin: 8px 0 0; }
@@ -2292,7 +2297,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .command-card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 20px;
 }
 .command-card b.title { font-family: var(--display); font-size: var(--fs-titulo); color: var(--navy); display: block; margin-bottom: 6px; }
@@ -2304,7 +2309,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-size: var(--fs-corpo);
   letter-spacing: 0.04em;
   padding: 9px 15px;
-  border-radius: var(--raio-micro);
+  border-radius: var(--raio-controle);
   border: 1.5px solid var(--line);
   background: var(--surface);
   color: var(--ink-soft);
@@ -2322,7 +2327,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .mission-slot {
   border: 1.5px dashed var(--ice);
   background: var(--ice-soft);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 20px 22px;
 }
 .mission-slot .ms-tag {
@@ -2344,7 +2349,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .escolha-item {
   display: flex; align-items: flex-start; gap: 11px;
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 13px 15px;
   cursor: pointer;
   background: var(--surface);
@@ -2361,7 +2366,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    importante quanto o que ele mostra. */
 .escolhido {
   border: 1px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 14px 16px;
   background: var(--surface);
 }
@@ -2425,7 +2430,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    ver as duas juntas é o que faz entender que são separadas. */
 .duas-cobrancas { display: grid; gap: 14px; grid-template-columns: 1fr; }
 @media (min-width: 720px) { .duas-cobrancas { grid-template-columns: 1fr 1fr; } }
-.cobranca { border: 1px solid var(--line); border-radius: var(--raio-card); padding: 16px; background: var(--surface); }
+.cobranca { border: 1px solid var(--line); border-radius: var(--raio-cartao); padding: 16px; background: var(--surface); }
 /* `b.title`, e não `b` — ver a nota da família em `.fail-block`. Aqui a
    regra por tag transformava a palavra "inteiro", no meio da frase "vai
    inteiro para o Facebook", num bloco navy de 15px. */
@@ -2440,7 +2445,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .tema-opcao {
   text-align: left;
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   background: var(--surface);
   padding: 14px;
   display: flex;
@@ -2479,7 +2484,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
   background: var(--crit-soft);
   border: 1.5px solid var(--crit);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 16px 20px;
   margin-bottom: 22px;
 }
@@ -2558,7 +2563,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .fail-block {
   background: var(--crit-soft);
   border: 1.5px solid var(--crit);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 16px 18px;
   margin-bottom: 16px;
 }
@@ -2709,7 +2714,7 @@ code {
 .rev-erro {
   background: var(--crit-soft);
   color: var(--crit);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 12px 14px;
   font-size: var(--fs-corpo);
   line-height: 1.5;
@@ -2728,7 +2733,7 @@ code {
 .rev-item {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: var(--raio-cartao);
   padding: 14px 16px;
 }
 /* Item decidido recua visualmente, mas NÃO some: o operador precisa
@@ -2766,7 +2771,7 @@ code {
 .rev-diverge { display: grid; gap: 10px; }
 .rev-duas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .rev-opcao {
-  border: 1px solid var(--line); border-radius: var(--raio-item); padding: 10px;
+  border: 1px solid var(--line); border-radius: var(--raio-controle); padding: 10px;
   display: grid; gap: 8px; align-content: start;
 }
 .rev-dica { margin: 0; font-size: var(--fs-corpo); color: var(--ink-mute); line-height: 1.5; }
@@ -2780,14 +2785,14 @@ code {
 .rev-corrigir { display: flex !important; gap: 6px; flex: 1 1 220px; }
 .rev-corrigir input, .rev-corrigir textarea {
   flex: 1; min-width: 120px;
-  border: 1px solid var(--line); border-radius: var(--raio-interno);
+  border: 1px solid var(--line); border-radius: var(--raio-controle);
   padding: 6px 9px; font: inherit; font-size: var(--fs-corpo);
   background: var(--canvas); color: var(--ink);
 }
 .rev-quem { font-size: var(--fs-legenda); color: var(--ink-mute); }
 
 .btn-linha {
-  border: 1px solid var(--line); border-radius: var(--raio-interno);
+  border: 1px solid var(--line); border-radius: var(--raio-controle);
   padding: 6px 12px; font: inherit; font-size: var(--fs-corpo); font-weight: 500;
   background: var(--surface); color: var(--ink); cursor: pointer;
 }
@@ -2806,14 +2811,14 @@ code {
 
 .rev-aplicar { margin-top: 28px; }
 .rev-previa { display: grid; gap: 8px; margin-bottom: 14px; }
-.rev-plinha { border: 1px solid var(--line); border-radius: var(--raio-card); padding: 12px 14px; }
+.rev-plinha { border: 1px solid var(--line); border-radius: var(--raio-cartao); padding: 12px 14px; }
 .rev-plinha.bloqueia { border-color: var(--crit); }
 .rev-phead { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 8px; flex-wrap: wrap; }
 .rev-pvalores { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 .rev-bloqueio {
   background: var(--crit-soft); color: var(--crit);
-  border-radius: var(--raio-card); padding: 12px 14px;
+  border-radius: var(--raio-cartao); padding: 12px 14px;
   font-size: var(--fs-corpo); line-height: 1.55; max-width: 78ch;
 }
 .rev-aplicar-form { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -2836,7 +2841,7 @@ code {
    um erro que aconteceu. */
 .id-aviso {
   background: var(--warn-soft);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 12px 14px;
   margin-bottom: 16px;
 }
@@ -2870,7 +2875,7 @@ code {
    funcionou. Feito com gradiente em token, sem imagem e sem cor literal. */
 .id-logo img {
   width: 96px; height: 96px; object-fit: contain;
-  border: 1.5px solid var(--line); border-radius: var(--raio-item); padding: 8px;
+  border: 1.5px solid var(--line); border-radius: var(--raio-controle); padding: 8px;
   background-color: var(--surface);
   background-image:
     linear-gradient(45deg, var(--line) 25%, transparent 25%),
@@ -2886,7 +2891,7 @@ code {
 .id-galeria li { display: grid; gap: 6px; justify-items: start; }
 .id-galeria img {
   width: 100%; aspect-ratio: 1; object-fit: cover;
-  border: 1.5px solid var(--line); border-radius: var(--raio-item);
+  border: 1.5px solid var(--line); border-radius: var(--raio-controle);
 }
 
 .id-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -2915,7 +2920,7 @@ code {
   color: var(--ink);
   background: var(--surface-2);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-interno);
+  border-radius: var(--raio-controle);
   padding: 7px 14px;
   margin-right: 10px;
   cursor: pointer;
@@ -3024,7 +3029,7 @@ code {
 .rc-editor textarea {
   width: 100%;
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-interno);
+  border-radius: var(--raio-controle);
   padding: 8px 10px;
   font: inherit;
   font-size: var(--fs-corpo);
@@ -3073,7 +3078,7 @@ code {
 .rc-nao-sabemos {
   margin-top: 10px;
   padding: 14px 18px;
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   background: rgb(var(--navy-rgb) / 0.04);
 }
 .rc-nao-sabemos > b {
@@ -3142,7 +3147,7 @@ code {
 .res-ficha {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 18px 18px 20px;
 }
 .res-ficha-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -3227,7 +3232,7 @@ code {
 .res-num {
   background: rgb(var(--navy-rgb) / 0.03);
   border: 1px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 13px 14px;
   display: flex;
   gap: 11px;
@@ -3306,7 +3311,7 @@ code {
   margin-top: 15px;
   background: var(--ice-soft);
   border: 1px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 13px 15px;
   display: flex;
   gap: 11px;
@@ -3334,7 +3339,7 @@ code {
 .res-falha {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 38px 22px 30px;
   text-align: center;
 }
@@ -3372,7 +3377,7 @@ code {
 .res-falha-nota {
   margin-top: 22px;
   background: var(--warn-soft);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 14px 16px;
   text-align: left;
   display: flex;
@@ -3615,7 +3620,7 @@ code {
 .ih {
   background: var(--card-cobalt-bg);
   color: var(--card-cobalt-ink);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 26px 22px;
   position: relative;
   overflow: hidden;
@@ -3677,7 +3682,7 @@ code {
 .fase {
   background: rgb(var(--white-rgb) / 0.12);
   border: 1.5px solid rgb(var(--white-rgb) / 0.18);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 11px 12px;
   display: flex;
   flex-direction: column;
@@ -3779,7 +3784,7 @@ code {
 .proximo {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -3862,7 +3867,7 @@ code {
 .sinal {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 14px;
   min-width: 0;
 }
@@ -4041,7 +4046,7 @@ code {
   min-height: 44px;
   padding: 0 14px;
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-selo);
+  border-radius: var(--raio-controle);
 }
 .pd-convite .botao-leve:hover { border-color: var(--cobalt); }
 
@@ -4111,7 +4116,7 @@ code {
 .analise-envio {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 20px;
 }
 
@@ -4126,7 +4131,7 @@ code {
   padding: 30px 18px;
   min-height: 44px;
   border: 1.5px dashed var(--line);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   cursor: pointer;
   background: var(--ice-soft);
 }
@@ -4269,7 +4274,7 @@ code {
   width: 100%;
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-radius: var(--raio-card);
+  border-radius: var(--raio-cartao);
   padding: 20px;
 }
 .analise-selo {
@@ -4360,7 +4365,7 @@ code {
   line-height: 1.6;
   color: var(--ink-soft);
   background: var(--ice-soft);
-  border-radius: var(--raio-item);
+  border-radius: var(--raio-controle);
   padding: 14px 16px;
   margin: 0 0 14px;
   max-width: 68ch;
@@ -4441,7 +4446,7 @@ code {
   align-items: flex-start;
   background: var(--ice-soft);
   border: 1.5px solid var(--ice);
-  border-radius: 14px;
+  border-radius: var(--raio-cartao);
   padding: 22px 20px;
 }
 .casa-vazio-ico {
@@ -4450,7 +4455,7 @@ code {
   height: 40px;
   display: grid;
   place-items: center;
-  border-radius: 10px;
+  border-radius: var(--raio-controle);
   background: var(--surface);
   border: 1.5px solid var(--ice);
   color: var(--cobalt);
@@ -4477,7 +4482,7 @@ code {
 .casa-obra {
   background: var(--card-lime-bg);
   border: 1.5px solid var(--lime);
-  border-radius: 12px;
+  border-radius: var(--raio-cartao);
   padding: 14px 16px;
   font-size: var(--fs-legenda);
   color: var(--navy);
@@ -4492,7 +4497,7 @@ code {
    exatamente o que parece funcionar e nao faz nada. */
 .casa-desenho {
   border: 1.5px dashed var(--line);
-  border-radius: 14px;
+  border-radius: var(--raio-cartao);
   padding: 22px 18px;
   background: var(--surface);
 }
