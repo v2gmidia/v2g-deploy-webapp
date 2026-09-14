@@ -6,9 +6,16 @@ import "./globals.css";
 // Substitui a Bahnschrift do protótipo original (exclusiva do Windows,
 // não embutida) — ver docs/arquitetura.md, Decisão 6. Auto-hospedada
 // pelo Next.js no build: sem chamada de rede em runtime.
+//
+// SEM `weight` DE PROPÓSITO — 14/09/2026. O Archivo é fonte variável, e
+// com `weight: ["500", "700"]` o Google já entregava o MESMO arquivo para
+// os dois pesos (medido: uma URL só, 34.940 bytes no latin). O que o
+// `weight` fazia era só DECLARAR duas faces, 500 e 700 — e todo
+// `font-weight: 400` ou `600` do CSS caía na face mais próxima em vez do
+// peso pedido. Sem `weight`, a face declara `100 900`: mesmo arquivo,
+// mesmos bytes, e todo peso que o CSS pede existe.
 const archivo = Archivo({
   subsets: ["latin"],
-  weight: ["500", "700"],
   variable: "--font-archivo",
   display: "swap",
 });

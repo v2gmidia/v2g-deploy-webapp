@@ -233,6 +233,34 @@
   --plate-ink-rgb: 241 246 247;
 
   /* ------------------------------------------------------------
+     PAPÉIS — a segunda camada de tokens. 14/09/2026.
+
+     Tudo acima é PALETA: diz qual é a cor. Esta camada diz PARA QUE a
+     cor serve. Existe por causa de um defeito que já quebrou o tema
+     escuro: `--navy` faz papel de fundo e de texto ao mesmo tempo, e no
+     escuro ele inverte — quem o usa como fundo clareia junto com o texto.
+
+     No claro, cada papel aponta para a paleta. No escuro ele é
+     redefinido pelo VALOR nos dois blocos de lá, sem passar pelo nome da
+     paleta: quem decide o tom de cada tema é o papel, não a cor.
+
+     Hoje só o casco lê daqui — o topo e a barra de navegação de
+     `app/(protected)/layout.tsx`. As telas continuam na paleta; trocar
+     os usos delas é lote futuro. Tabela: docs/tokens.md.
+
+     `--fundo-topo` ainda não tem leitor: o `.topbar` não declara fundo,
+     ele mostra o da página. O valor é o que aparece lá hoje.
+     ------------------------------------------------------------ */
+  --fundo-pagina: var(--offwhite);
+  --fundo-superficie: var(--surface);
+  --fundo-topo: var(--offwhite);
+  --fundo-barra: var(--plate);
+  --texto-forte: var(--navy);
+  --texto-fraco: var(--ink-soft);
+  --linha-divisoria: var(--line);
+  --texto-sobre-escuro: var(--white);
+
+  /* ------------------------------------------------------------
      ESCALA TIPOGRÁFICA — seis degraus.
 
      Antes daqui eram 23 tamanhos distintos em incrementos de meio
@@ -347,6 +375,16 @@
     --card-cobalt-ink: #E9EFF8;
     --card-lime-bg: #1B2110;
     --card-lime-ink: var(--lime);
+
+    /* Papéis — ver a camada no `:root`. Valor, não nome de paleta. */
+    --fundo-pagina: #050A13;
+    --fundo-superficie: #0C1523;
+    --fundo-topo: #050A13;
+    --fundo-barra: #080E1A;
+    --texto-forte: #E9EFF8;
+    --texto-fraco: #9FB0C6;
+    --linha-divisoria: #1C2840;
+    --texto-sobre-escuro: #FFFFFF;
   }
 }
 
