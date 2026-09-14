@@ -3,6 +3,9 @@ import { Chat } from "./Chat";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { listarNichos } from "@/lib/backend";
 import { Trilha } from "./Trilha";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/onboarding");
 
 /**
  * Onboarding — porte de `tela-03-onboarding-desktop.html`.

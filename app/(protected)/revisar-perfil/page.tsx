@@ -8,6 +8,7 @@ import {
   type Pendencia,
 } from "@/lib/cadastro/montar";
 import { DIAS_ATE_TROCAR_DE_DONO } from "@/lib/cadastro/pendencias";
+import { tituloDaAba } from "@/lib/titulos";
 
 /**
  * Quem está esperando — TELA DE OPERADOR.
@@ -34,7 +35,7 @@ import { DIAS_ATE_TROCAR_DE_DONO } from "@/lib/cadastro/pendencias";
  * que é o dado.
  */
 
-export const metadata = { title: "Quem está esperando — V2G" };
+export const metadata = tituloDaAba("/revisar-perfil");
 export const dynamic = "force-dynamic";
 
 interface Espera {

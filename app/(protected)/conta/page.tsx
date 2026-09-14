@@ -8,6 +8,9 @@ import { Identidade } from "./Identidade";
 import { listarIdentidade } from "@/lib/identidade/armazenar";
 import { SeletorDeTema } from "./SeletorDeTema";
 import { signOutAction } from "../actions";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/conta");
 
 /**
  * Sua conta — porte de `tela-09-conta-desktop.html`.

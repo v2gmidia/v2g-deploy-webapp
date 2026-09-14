@@ -1,5 +1,6 @@
 import { carregarPerfilDoCliente } from "@/lib/perfil/revisao-cliente";
 import { Campo } from "./Campo";
+import { tituloDaAba } from "@/lib/titulos";
 
 /**
  * O que a gente entendeu do seu negócio.
@@ -19,7 +20,7 @@ import { Campo } from "./Campo";
  * `.grp-count` nos títulos. Ver §6.
  */
 
-export const metadata = { title: "Seu negócio — V2G" };
+export const metadata = tituloDaAba("/meu-negocio");
 export const dynamic = "force-dynamic";
 
 export default async function MeuNegocioPage() {

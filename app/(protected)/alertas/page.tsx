@@ -2,6 +2,9 @@ import { PixelMark } from "@/components/ui/PixelMark";
 import { createClient } from "@/lib/supabase/server";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { esteveNoAr, estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/alertas");
 
 /**
  * Avisos — porte de `tela-08-alertas-desktop.html`.

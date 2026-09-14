@@ -3,6 +3,9 @@ import { dinheiro } from "@/lib/formato";
 import { raioValido } from "@/lib/meta/geo";
 import { cidadeParaTela, estadoDoAlcance } from "@/lib/verba/alcance";
 import { FormVerba } from "./FormVerba";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/verba");
 
 /**
  * Verba e cartão.

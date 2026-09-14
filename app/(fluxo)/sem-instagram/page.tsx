@@ -1,3 +1,7 @@
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/sem-instagram");
+
 /**
  * "Sua conta do Instagram precisa ser profissional."
  *

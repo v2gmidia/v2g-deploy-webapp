@@ -3,6 +3,9 @@ import { Analisar } from "./Analisar";
 import { AmostraDeVereditos } from "./Amostra";
 import { MinhasPecas } from "./MinhasPecas";
 import { CriarPeca } from "./CriarPeca";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/criativos");
 
 /**
  * A CASA DO CRIATIVO — três blocos numa página. Pilar 3 e 4 do produto.

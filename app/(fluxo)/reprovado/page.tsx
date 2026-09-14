@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/reprovado");
 
 /**
  * "Um anúncio não passou."

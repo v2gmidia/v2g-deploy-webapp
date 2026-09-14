@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/whatsapp-business");
 
 /**
  * "Seu WhatsApp precisa ser o Business."

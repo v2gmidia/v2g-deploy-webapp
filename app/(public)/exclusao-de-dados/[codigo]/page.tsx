@@ -1,4 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/exclusao-de-dados/[codigo]");
 
 /**
  * `/exclusao-de-dados/<codigo>` — o estado de um pedido de exclusão.

@@ -9,6 +9,7 @@ import {
 } from "@/lib/backend";
 import { vigiarExecucoes, type Vigilancia as VigilanciaDados } from "@/lib/pipeline/vigilancia";
 import { MINUTOS_ATE_DEMORANDO, MINUTOS_ATE_PARADA } from "@/lib/pipeline/relogios";
+import { tituloDaAba } from "@/lib/titulos";
 
 /**
  * Fila de revisão — TELA DE OPERADOR, não de cliente.
@@ -30,7 +31,7 @@ import { MINUTOS_ATE_DEMORANDO, MINUTOS_ATE_PARADA } from "@/lib/pipeline/relogi
  * Meta nem no banco. Dá para recarregar quantas vezes quiser.
  */
 
-export const metadata = { title: "Fila de revisão — V2G" };
+export const metadata = tituloDaAba("/saude-meta");
 
 // Sem cache: uma tela de diagnóstico que mostra estado velho é pior que
 // nenhuma tela, porque o operador decide sobre o passado.

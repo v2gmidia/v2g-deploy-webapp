@@ -11,6 +11,9 @@ import { fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import type { CampanhaNaTela } from "@/lib/resultado/do-negocio";
 import type { ValorNaTela } from "@/lib/resultado/tipos";
 import type { Etapa } from "@/lib/estado/frases";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/anuncios");
 
 /**
  * Seus anúncios — e, desde 10/09/2026, **a tela de resultado**.

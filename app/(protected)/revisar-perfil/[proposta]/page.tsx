@@ -9,6 +9,7 @@ import {
   type Previa,
 } from "@/lib/agentes/revisao";
 import { aplicarAction, decidirAction, reabrirAction } from "./actions";
+import { tituloDaAba } from "@/lib/titulos";
 
 /**
  * Revisão da proposta — TELA DE OPERADOR.
@@ -25,7 +26,7 @@ import { aplicarAction, decidirAction, reabrirAction } from "./actions";
  * proxy não as cobre).
  */
 
-export const metadata = { title: "Revisar perfil — V2G" };
+export const metadata = tituloDaAba("/revisar-perfil/[proposta]");
 export const dynamic = "force-dynamic";
 
 export default async function RevisarPerfilPage({

@@ -1,4 +1,7 @@
 import { Combinados } from "./Combinados";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/expectativas");
 
 /**
  * Alinhamento de expectativas — porte de

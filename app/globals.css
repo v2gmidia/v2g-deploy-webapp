@@ -440,6 +440,16 @@
   --card-cobalt-ink: #E9EFF8;
   --card-lime-bg: #1B2110;
   --card-lime-ink: var(--lime);
+
+  /* Papéis — ver a camada no `:root`. Valor, não nome de paleta. */
+  --fundo-pagina: #050A13;
+  --fundo-superficie: #0C1523;
+  --fundo-topo: #050A13;
+  --fundo-barra: #080E1A;
+  --texto-forte: #E9EFF8;
+  --texto-fraco: #9FB0C6;
+  --linha-divisoria: #1C2840;
+  --texto-sobre-escuro: #FFFFFF;
 }
 
 /* Diz ao navegador em qual tema pintar barra de rolagem, campos nativos
@@ -815,6 +825,17 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--ink-mute);
   text-align: center;
 }
+/* O LINK SOLTO DO RODAPÉ É ALVO DE TOQUE — 14/09/2026.
+   `← Voltar para o login` (/recuperar), `← Pedir novo link` (/redefinir)
+   e `Esqueci minha senha` (/entrar, modo login) eram `<a>` inline: o
+   alvo tinha a altura da linha, 17px em 375px. Mesma receita do
+   `.link-btn` logo abaixo — `inline-flex` para a altura valer, 44px
+   de piso. Na família, não na tela: os três moram no `.auth-foot`. */
+.auth-foot a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
 .link-btn {
   background: none;
   border: none;
@@ -850,7 +871,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   grid-template-columns: var(--sidebar-w) 1fr;
   min-height: 100vh;
 }
-/* Sidebar na PLACA ESCURA (`--sidebar-bg`, hoje `--plate`). Sem borda:
+/* Sidebar na PLACA ESCURA (`--fundo-barra`, que no claro aponta para `--plate`). Sem borda:
    a mudança de cor já separa da tela, e uma linha ali marcaria a emenda.
    A regra não nomeia a cor de propósito — quem decide o tom é o token,
    e foi por ele que a barra deixou de ser cobalto em 11/09/2026. */
@@ -861,7 +882,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--sidebar-bg);
+  background: var(--fundo-barra);
   padding: 22px 16px 18px;
 }
 .side-brand { padding: 4px 8px 22px; }
@@ -880,13 +901,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   position: relative;
   border-radius: var(--raio-item);
 }
-.nav-item:hover { background: rgb(255 255 255 / 0.08); color: var(--sidebar-ink-strong); }
+.nav-item:hover { background: rgb(255 255 255 / 0.08); color: var(--texto-sobre-escuro); }
 /* Item ativo é uma PÍLULA cheia, não uma barrinha na borda — é o que o
    mockup faz, e sobre o fundo escuro da barra uma barrinha lateral
    sumiria. */
 .nav-item.active {
   background: var(--sidebar-active-bg);
-  color: var(--sidebar-ink-strong);
+  color: var(--texto-sobre-escuro);
 }
 .side-spacer { flex: 1; }
 .side-account {
@@ -900,11 +921,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .side-account .avatar {
   width: 34px; height: 34px; flex: none;
   border-radius: 50%;
-  background: rgb(255 255 255 / 0.16); color: var(--sidebar-ink-strong);
+  background: rgb(255 255 255 / 0.16); color: var(--texto-sobre-escuro);
   display: flex; align-items: center; justify-content: center;
   font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo);
 }
-.side-account .who b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--sidebar-ink-strong); }
+.side-account .who b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--texto-sobre-escuro); }
 .side-account .who span,
 .side-account .who .link-btn { font-size: var(--fs-legenda); color: var(--sidebar-ink); }
 
@@ -915,11 +936,11 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .sidebar { border-right: 0; }
 .side-account { border-color: var(--sidebar-line); }
 .nav-eyebrow { color: var(--sidebar-ink); }
-.side-brand .wm { color: var(--sidebar-ink-strong); }
+.side-brand .wm { color: var(--texto-sobre-escuro); }
 .side-brand .wm small { color: var(--sidebar-ink); }
 .sidebar .link-btn { color: var(--sidebar-ink); }
-.sidebar .link-btn:hover { color: var(--sidebar-ink-strong); }
-.sidebar :focus-visible { outline-color: var(--sidebar-ink-strong); }
+.sidebar .link-btn:hover { color: var(--texto-sobre-escuro); }
+.sidebar :focus-visible { outline-color: var(--texto-sobre-escuro); }
 /* ...menos dentro do card de suporte, que é CLARO. O anel branco
    funciona sobre o fundo escuro da barra, mas branco sobre o card dava
    1,11:1 em 9 telas. Cobalto de tinta da 6,64 no claro e 4,92 no
@@ -973,9 +994,9 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   display: flex;
   align-items: center;
   padding: 18px 34px;
-  border-bottom: 1.5px solid var(--line);
+  border-bottom: 1.5px solid var(--linha-divisoria);
 }
-.topbar .hi { font-family: var(--display); font-weight: 700; font-size: var(--fs-bloco); color: var(--navy); }
+.topbar .hi { font-family: var(--display); font-weight: 700; font-size: var(--fs-bloco); color: var(--texto-forte); }
 .canvas { flex: 1; padding: 30px 34px 56px; max-width: var(--shell-max); width: 100%; }
 
 /* ------------------------------------------------------------
@@ -1976,13 +1997,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 13px;
   margin-bottom: 12px;
 }
-.side-support b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--navy); margin-bottom: 3px; }
-.side-support p { font-size: var(--fs-legenda); line-height: 1.5; color: var(--ink-soft); margin: 0 0 9px; }
+.side-support b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--texto-forte); margin-bottom: 3px; }
+.side-support p { font-size: var(--fs-legenda); line-height: 1.5; color: var(--texto-fraco); margin: 0 0 9px; }
 .side-support .cta { padding: 9px 12px; font-size: var(--fs-corpo); }
 
 /* ---------- topbar com saudação ---------- */
-.greet .sub { font-size: var(--fs-corpo); color: var(--ink-soft); margin-top: 3px; }
-.greet .sub b { color: var(--navy); font-weight: 600; }
+.greet .sub { font-size: var(--fs-corpo); color: var(--texto-fraco); margin-top: 3px; }
+.greet .sub b { color: var(--texto-forte); font-weight: 600; }
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 
 /* Ajuda no topo das telas de app — SÓ abaixo de 900px, onde o card
@@ -2002,8 +2023,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-weight: 700;
   color: var(--cobalt-ink);
   text-decoration: none;
-  border: 1.5px solid var(--line);
-  background: var(--surface);
+  border: 1.5px solid var(--linha-divisoria);
+  background: var(--fundo-superficie);
   border-radius: var(--raio-pilula);
   /* 11px em cima e embaixo põem o alvo em 44px de altura, o piso do iOS —
      a `.auth-help` de `(fluxo)`, com 9px, mede 41px e fica abaixo dele. */

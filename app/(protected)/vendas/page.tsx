@@ -6,6 +6,9 @@ import { estadoDoCliente } from "@/lib/estado/cliente";
 import { resultadoDoNegocio } from "@/lib/resultado/do-negocio";
 import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import type { EstadoDeVeiculacao } from "@/lib/veiculacao/estado";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/vendas");
 
 /**
  * Vendas — quem chegou pelo anúncio.

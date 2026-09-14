@@ -1,6 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { ERROS_DE_CALLBACK } from "@/lib/meta/erros";
 import { ESCOPOS } from "@/lib/meta/oauth";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/conectar");
 
 /**
  * Preparação para o consentimento do Meta.

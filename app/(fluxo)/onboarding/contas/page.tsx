@@ -2,6 +2,9 @@ import { carregarContasAction } from "./actions";
 import { Contas } from "./Contas";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { Trilha } from "../Trilha";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/onboarding/contas");
 
 /**
  * Bloco 2 do onboarding — as contas.

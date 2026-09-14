@@ -3,6 +3,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { listarContasDeAnuncio, listarPaginas } from "@/lib/meta/graph";
 import { diagnosticar, registrarErroMeta } from "@/lib/meta/erros";
 import { FormularioEscolha } from "./Formulario";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/conectar/escolher");
 
 /**
  * Escolha da conta de anúncio.

@@ -1,5 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/aprovar");
 
 /**
  * Aprovar a oferta e o anúncio.

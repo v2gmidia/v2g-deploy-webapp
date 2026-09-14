@@ -16,6 +16,9 @@ import {
   posicoesDaCadeia,
   type Etapa,
 } from "@/lib/estado/frases";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/inicio");
 
 /**
  * Início / dashboard — porte de `tela-05-dashboard-desktop.html`.

@@ -1,6 +1,9 @@
 import { ProofCard } from "@/components/ui/ProofCard";
 import { createClient } from "@/lib/supabase/server";
 import { RedefinirForm } from "./Form";
+import { tituloDaAba } from "@/lib/titulos";
+
+export const metadata = tituloDaAba("/redefinir");
 
 interface RedefinirPageProps {
   searchParams: Promise<{ erro?: string }>;
