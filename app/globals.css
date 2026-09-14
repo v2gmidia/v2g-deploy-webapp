@@ -926,8 +926,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo);
 }
 .side-account .who b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--texto-sobre-escuro); }
-.side-account .who span,
-.side-account .who .link-btn { font-size: var(--fs-legenda); color: var(--sidebar-ink); }
+.side-account .who span { font-size: var(--fs-legenda); color: var(--sidebar-ink); }
 
 /* ---------- tudo que vive DENTRO da sidebar cobalto ----------
    Estas regras existem porque a sidebar é a única região com fundo
@@ -1189,7 +1188,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border: none;
   padding: 0;
   margin: 10px 0 0;
-  font-size: var(--fs-legenda);
+  font-size: var(--fs-corpo);
   color: var(--ink-mute);
   text-decoration: underline;
 }
@@ -1209,7 +1208,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
    e a tinta so aparece no hover. O peso vem da BORDA, nao da cor. */
 .botao-leve {
   font-family: var(--display);
-  font-size: var(--fs-legenda);
+  font-size: var(--fs-corpo);
   line-height: 1;
   padding: 5px 10px;
   margin-left: 6px;
@@ -3061,7 +3060,7 @@ code {
   background: none;
   padding: 0;
   font: inherit;
-  font-size: var(--fs-legenda);
+  font-size: var(--fs-corpo);
   color: var(--cobalt-ink);
   text-decoration: underline;
   cursor: pointer;
@@ -4554,3 +4553,118 @@ code {
   .casa-vazio { padding: 26px 24px; }
   .casa-desenho { padding: 28px 26px; }
 }
+
+/* ============================================================
+   ALVO DE TOQUE — lote 2a, 14/09/2026. Tabela em docs/botoes.md §4.
+
+   Cada tipo de controle chega aos 44px de um jeito, e a CLASSE diz qual.
+   Controle novo que não couber em A, B ou C não ganha exceção aqui:
+   volta para decisão.
+
+   A — alvo em bloco: o controle vive sozinho na linha, e a altura sobe de
+       verdade. Lista de classes abaixo; também atinge os <a class="cta">
+       (26 no JSX, 3 cresceram: medido, nenhum quebrou a linha).
+   B — alvo em texto corrido (.alvo-em-texto): o desenho não muda. A área
+       de toque cresce por um pseudo-elemento absoluto, fora do fluxo —
+       a linha do parágrafo não cresce.
+   C — alvo redondo (.alvo-redondo): 44×44 empurrava a linha do .ec-top
+       de 49 para 63px (medido). O círculo fica em 30px; a área invisível
+       é 44×44, centrada.
+   ============================================================ */
+.cta,
+.chip-opt,
+.btn-linha,
+.mini-send,
+.botao-leve,
+.link-btn,
+.text-fallback,
+.ec-doubt { min-height: 44px; }
+
+.alvo-em-texto,
+.alvo-redondo { position: relative; }
+/* Depois do grupo A de propósito: o "Corrigir" é .botao-leve e mora no meio
+   de uma frase — a altura visível dele não sobe. */
+.alvo-em-texto { min-height: 0; }
+/* A ÁREA NUNCA É MAIOR QUE O VÃO LIVRE. Sem vizinho clicável perto, ela é
+   centrada: 22px para cada lado do centro, 44px no total. Com vizinho perto,
+   o controle declara até onde a área vai, por --alvo-topo e --alvo-base (o
+   `top` e o `bottom` do pseudo-elemento), medidos com 4px de folga do
+   vizinho.
+
+   A FOLGA É DE 5px, E NÃO DE 4, POR UM MOTIVO MEDIDO: com a área a 4,0px
+   do vizinho, o ponto 4px acima dela cai na última linha de pixel do
+   vizinho, e o navegador conta essa linha como DENTRO — `elementFromPoint`
+   devolveu o botão de cima em 1280px. Com 5px, o ponto a 4px fica fora.
+   Os valores e a prova de cada um: docs/botoes.md §4.2. */
+.alvo-em-texto::after,
+.alvo-redondo::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: var(--alvo-topo, calc(50% - 22px));
+  bottom: var(--alvo-base, calc(50% - 22px));
+}
+.alvo-em-texto::after { width: 100%; }
+.alvo-redondo::after { width: 44px; }
+
+/* "deixe em branco" (Campo.tsx): o "salvar" e o "deixa como estava" ficam
+   10px acima dele em 320, 375 e 1280px. A área sobe 5px (10 − 5 de folga) e
+   desce o que falta para 44: `calc(100% - 39px)` é a altura do botão menos
+   39, então a extensão para baixo é 39 − altura, e o total dá 5 + 39 = 44.
+   O próximo clicável abaixo ("contar agora", do campo seguinte) fica a
+   102,5px ou mais. */
+.btn-texto.alvo-em-texto { --alvo-topo: -5px; --alvo-base: calc(100% - 39px); }
+
+/* "Corrigir" (PerguntaDoDia.tsx): em 375px, o "Preencher …" do Convite quebra
+   para a linha de baixo e fica 10px abaixo dele. Os valores contam da borda
+   INTERNA — o botão tem 1px de borda —, então, medida na caixa com borda, a
+   área desce 4px e sobe 15px: 44 no total, a 6px do "Preencher". Acima do
+   parágrafo, o clicável mais perto é o .cta do .proximo, a 30px da área. */
+.botao-leve.alvo-em-texto { --alvo-topo: calc(100% - 39px); --alvo-base: -5px; }
+
+/* Campo de texto: 48px, não 44. Campo se mira, se toca, se corrige e se
+   digita dentro. Radio, checkbox e file ficam fora: o alvo do radio é o
+   <label> que o envolve (mede 64,8px), e o file é lote 2b.
+   `input:not([type])` não é exceção: é o input sem type, que o navegador
+   trata como texto (Contas.tsx:193 e :271). */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="password"],
+input[type="number"],
+input[type="search"],
+input[type="url"],
+input:not([type]),
+select,
+textarea { min-height: 48px; }
+
+/* ============================================================
+   FAMÍLIA DOS CONTROLES — lote 2a, 14/09/2026.
+
+   Todo controle com texto usa --display (Archivo): button, os input de
+   texto, select e textarea — o campo não fica em fonte diferente do botão
+   ao lado. Radio, checkbox e file ficam fora: não têm texto próprio.
+
+   POR QUE :is(). O :is() tem a especificidade do seu argumento mais
+   forte — aqui (0,1,1), do input[type=…]. É o que faz a regra valer por
+   cima de `.btn-linha { font: inherit }` e `.field input { font-family:
+   var(--body) }` sem apagar aquelas declarações. Apagar o `font: inherit`
+   levaria junto o line-height herdado, e este lote muda só a família.
+
+   O TEXTO CORRIDO NÃO MUDA: continua em --body, pilha de sistema. Divisão
+   provisória, pendente do lote de tipografia (docs/tipografia-pendente.md).
+   ============================================================ */
+:is(
+  button,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
+  input:not([type]),
+  select,
+  textarea
+) { font-family: var(--display); }

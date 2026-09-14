@@ -332,7 +332,7 @@ function Editor({
               um botão `valor=""` aqui seria clicado e não apagaria nada. */}
           <button
             type="submit"
-            className="btn-texto"
+            className="btn-texto alvo-em-texto"
             name="acao"
             value="esvaziar"
             disabled={salvando}

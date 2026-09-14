@@ -358,7 +358,7 @@ export function PerguntaDoDia({
             deixou de ser card justamente para não competir com a manchete;
             um botão de peso traria a competição de volta. Ver
             `.botao-leve` no `globals.css`. */}
-        <button className="botao-leve" type="button" onClick={() => setCorrigindo(true)}>
+        <button className="botao-leve alvo-em-texto" type="button" onClick={() => setCorrigindo(true)}>
           Corrigir
         </button>
         <Convite />

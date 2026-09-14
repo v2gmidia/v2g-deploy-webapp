@@ -525,3 +525,355 @@ process.stdout.write(JSON.stringify(itens, null, 1));
 ```
 
 </details>
+
+---
+
+# Lote 2a — 14/09/2026: o que mudou nos controles
+
+As medidas abaixo seguem o método do §0: montagem na cadeia de ancestrais,
+com os irmãos da linha, em `http://localhost:3000/entrar`, 375×812, tema
+claro.
+
+- **Antes:** `window.__A`, medido antes de qualquer edição do lote.
+- **Depois:** medido com o CSS novo carregado; cada script confere que as
+  regras novas estão nas folhas antes de medir.
+- **Área de toque, primeira passada:** varrida com `document.elementFromPoint`
+  a partir do centro, em passos de 0,5px. Os valores vêm com +0,5.
+- **Área de toque, provas dos grupos B e C:** calculada pelo `top`, `bottom` e
+  `width` computados do `::after`, descontando a borda do botão. Testada com
+  `elementFromPoint` nas bordas esquerda, centro e direita da área.
+- **Área de toque antes do lote:** era a caixa visível. As classes
+  `.alvo-em-texto` e `.alvo-redondo` foram criadas neste lote.
+
+## 4. As 22 aparências: grupo, altura visível e área de toque
+
+```
+javascript_tool → para cada uma das 66 linhas: getBoundingClientRect (antes: window.__A; depois: CSS novo) + área de toque; agrupado por aparência
+```
+
+| Aparência | Classe | Linhas | Grupo | Altura visível antes → depois | Área de toque antes → depois (L × A) |
+|---|---|---:|---|---|---|
+| B1 | `chip-opt` | 9 | A | 34 → 44 | caixa (34) → 64,5–129 × 44,5 |
+| B2 | `btn-linha` | 7 | A | 31 → 44 (48 → 48 em `revisar-perfil/[proposta]:319`, ao lado de textarea) | caixa (31) → 59,5–100,5 × 44,5 (e 68,5 × 48,5) |
+| B3 | `btn-linha fraco` | 6 | A | 31 → 44 | caixa (31) → 64,5–136 × 44,5 |
+| B4 | `text-fallback` | 6 | A | 44 → 44 | caixa (44) → 42,5–127 × 44,5 |
+| B5 | `cta` | 5 | A | 44 → 44 | caixa (44) → 243,5–339,5 × 44–44,5 |
+| B6 | `btn-linha forte` | 5 | A | 31 → 44 | caixa (31) → 59,5–115 × 44,5 |
+| B7 | `mini-send` em `.fallback-field` | 5 | A | 41 → 48 (o campo ao lado foi a 48 e o botão acompanha) | caixa (41) → 45,5 × 48,5 |
+| B8 | `cta ghost` | 4 | A | 46 → 46 | caixa (46) → 154,5–339,5 × 46,5 |
+| B9 | `cta` disabled | 3 | A | 44 → 44 | caixa (44) → 297,5 × 44,5 |
+| B10 | `acct-row` | 2 | nenhum (já passa de 44) | 68,8 / 86,7 → iguais | caixa → 305,5 × 68,5 / 305,5 × 87,5 |
+| B11 | `botao-leve` | 2 | **B** em `PerguntaDoDia.tsx:361` ("Corrigir", dentro da frase) · **A** em `:503` ("Voltar para ontem", sozinho no parágrafo) | 23 → 25 (B) · 23 → 44 (A) | caixa (23) → **62,9 × 44** (B: 15px acima, 4px abaixo) · 124 × 44,5 (A) |
+| B12 | `link-btn` em `.auth-foot` | 2 | A | 44 → 44 | caixa (44) → 55–84,5 × 44,5 |
+| B13 | `ec-back` | 1 | **C** | 30 → 30 (círculo, `border-radius: 50%`) | caixa (30 × 30) → **44 × 44** (7px de cada lado) |
+| B14 | `ec-doubt` | 1 | A | 34 → 44 | caixa (34) → 297,5 × 44,5 |
+| B15 | `cta quiet` | 1 | A | 32 → 44 | caixa (32) → 297,5 × 44,5 |
+| B16 | `tema-opcao picked` | 1 | nenhum (já passa de 44) | 122,8 → 122,8 | caixa → 339,5 × 119,5 |
+| B17 | `tema-opcao` | 1 | nenhum (já passa de 44) | 122,8 → 122,8 | caixa → 339,5 × 119,5 |
+| B18 | `botao-leve` em `.pd-convite` | 1 | A | 44 → 44 | caixa (44) → 122 × 44,5 |
+| B19 | `mini-send` em `.pd-guardar` | 1 | A | 44 → 44 | caixa (44) → 87,5 × 44,5 |
+| B20 | `link-btn` na sidebar | 1 | A | escondido em 375px · em 1280px: 44 → 44 | em 1280px: 44 × 44 → 44 × 44 |
+| B21 | `btn-texto` | 1 | **B** | 15,9 → 18,8 (texto 11 → 13px) | caixa (15,9) → **94,8 × 44** (5px acima, 20,2px abaixo) |
+| B22 | `chip-opt picked` | 1 | A | 34 → 44 | caixa (34) → 64,5 × 44,5 |
+
+As regras estão no fim de `app/globals.css`, na seção "ALVO DE TOQUE".
+
+- **A:** `min-height: 44px` pela classe (`.cta`, `.chip-opt`, `.btn-linha`,
+  `.mini-send`, `.botao-leve`, `.link-btn`, `.text-fallback`, `.ec-doubt`).
+- **B:** `.alvo-em-texto`, uma área invisível no `::after`, limitada ao vão
+  livre.
+- **C:** `.alvo-redondo`, a mesma área invisível, com 44 × 44.
+
+### 4.1 Grupo C, `ec-back`: por que não cresceu de verdade
+
+```
+javascript_tool → .ec-back com width/height 44px simulado, dentro do .ec-top real, 375px
+linha .ec-top: 49 → 63 · rótulo .ec-label: x 81 → 95 · .ec-progress: y 49 → 56
+```
+O botão de 44×44 empurrava a linha. Por isso ficou o círculo de 30px com a
+área invisível de 44×44. Prova final no §4.3.
+
+### 4.2 Grupo B: a primeira versão falhou, e como ficou
+
+**Primeira versão: área centrada de 44px.** O "deixe em branco" roubava
+toque dos botões de cima:
+```
+javascript_tool → faixa da área invisível contra as caixas de .rc-acoes; elementFromPoint a cada 0,5px, 375px
+sobreposição: 2,6px × 43,8px ("salvar") e 43px ("deixa como estava") · de y 162,0 a 165,0, quem recebe o toque: btn-texto
+```
+
+**Decisão do Victor:** a área não pode passar do vão livre, com 4px de folga
+dos vizinhos clicáveis para cima e para baixo. Se a área ficar abaixo de
+30px, o assunto vai para o lote 2b.
+
+**O vão medido, com a vizinhança real remontada:**
+
+- B21: o `form.rc-editor` inteiro e o `.rc-campo` seguinte da lista.
+- B11: o `.inicio-topo` com o `.cta` do `.proximo` acima, e o `Convite`.
+- C: o `.ec-top` e o `.ec-steps` com o `.ec-nav` abaixo.
+
+```
+javascript_tool → clicável mais perto acima e abaixo (sobreposição horizontal com a caixa), vão até ele, área possível com 4px de folga e teto de 44px
+```
+
+| Controle | Largura | Clicável acima (vão) | Clicável abaixo (vão) | Área possível |
+|---|---|---|---|---|
+| B21 | 320 · 375 · 1280 | "salvar" / "deixa como estava" (10px) | "contar agora" (102,5 · 102,5 · 140,9px) | 44 |
+| B11 com Convite | 375 | nenhum dentro do parágrafo | "Preencher …" (10px) | 44 |
+| B11 com Convite | 320 · 1280 | nenhum dentro do parágrafo | "Preencher …" (38,2px) | 44 |
+| B11 sem Convite | 320 · 375 · 1280 | nenhum | nenhum | 44 |
+| C `ec-back` | 375 | nenhum | "Próximo" (157,7px) | 44 |
+
+O B21 alcança 44px. Não chegou perto dos 30px.
+
+**Como ficou no CSS:**
+
+- Sem vizinho perto, a área é centrada.
+- Com vizinho perto, o controle declara `--alvo-topo` e `--alvo-base`, o `top`
+  e o `bottom` do `::after`:
+  ```css
+  .btn-texto.alvo-em-texto  { --alvo-topo: -5px; --alvo-base: calc(100% - 39px); }
+  .botao-leve.alvo-em-texto { --alvo-topo: calc(100% - 39px); --alvo-base: -5px; }
+  ```
+  `calc(100% - 39px)` dá uma extensão de 39 menos a altura do botão. Somada aos
+  5px do outro lado, a área dá 44px com qualquer altura de botão.
+- **A folga ficou em 5px, e não em 4.** Com a área a 4,0px do vizinho, o ponto
+  4px acima dela caiu na última linha de pixel do "deixa como estava", e o
+  navegador contou esse ponto como dentro do vizinho (1280px, B21). Com 5px, o
+  ponto a 4px fica fora.
+- **O B11 tem borda de 1px**, e os valores contam da borda interna. Medida na
+  caixa com borda, a área do "Corrigir" sobe 15px e desce 4px, a 6px do
+  "Preencher" em 375px.
+
+### 4.3 Prova final dos três
+
+```
+javascript_tool → __prova3: área = caixa ± borda ± top/bottom computados do ::after; elementFromPoint no topo (+0,5), meio, base (−0,5), 4px acima e 4px abaixo da área, cada um na borda esquerda (+1), centro e borda direita (−1). Esperado: o próprio dentro; não clicável fora
+```
+
+| Caso | Largura | Caixa | Área (acima / abaixo da caixa) | Vão até clicável acima / abaixo da área | Pontos com falha |
+|---|---|---|---|---|---:|
+| B21 "deixe em branco" | 375 | 94,8 × 18,8 | 94,8 × 44 (5 / 20,2) | "salvar" 5 / "contar agora" 82,3 | 0 de 15 |
+| B21 | 320 | 94,8 × 18,8 | 94,8 × 44 (5 / 20,2) | "salvar" 5 / "contar agora" 82,3 | 0 de 15 |
+| B21 | 1280 | 94,8 × 18,8 | 94,8 × 44 (5 / 20,2) | "deixa como estava" 5 / "contar agora" 120,7 | 0 de 15 |
+| B11 "Corrigir", com Convite | 375 | 64,9 × 25 (borda 1px) | 62,9 × 44 (15 / 4) | "Ver a peça" 30 / "Preencher …" 6 | 0 de 15 |
+| B11, com Convite | 320 | 64,9 × 25 | 62,9 × 44 (15 / 4) | "Ver a peça" 50,1 / "Preencher …" 34,1 | 0 de 15 |
+| B11, com Convite | 1280 | 64,9 × 25 | 62,9 × 44 (15 / 4) | nenhum / "Preencher …" 34,1 | 0 de 15 |
+| B11, sem Convite | 375 | 64,9 × 25 | 62,9 × 44 (15 / 4) | "Ver a peça" 30 / nenhum | 0 de 15 |
+| B11, sem Convite | 320 | 64,9 × 25 | 62,9 × 44 (15 / 4) | "Ver a peça" 50,1 / nenhum | 0 de 15 |
+| B11, sem Convite | 1280 | 64,9 × 25 | 62,9 × 44 (15 / 4) | nenhum / nenhum | 0 de 15 |
+| C `ec-back` | 375 | 30 × 30 | 44 × 44 (7 / 7) | nenhum / "Próximo" 150,7 | 0 de 15 |
+| C `ec-back` | 320 | 30 × 30 | 44 × 44 (7 / 7) | nenhum / "Próximo" 150,7 | 0 de 15 |
+| C `ec-back` | 1280 | 30 × 30 | 44 × 44 (7 / 7) | nenhum / "Próximo" 415 | 0 de 15 |
+
+A saída completa em 375px, ponto a ponto:
+
+**B21:**
+```
+topo      227   → o próprio · o próprio · o próprio
+meio      248,5 → o próprio · o próprio · o próprio
+base      270   → o próprio · o próprio · o próprio
+4px acima 222,5 → não clicável (form.rc-editor) nas três
+4px abaixo 274,5 → não clicável (div.rc-campo) nas três
+```
+**B11, com Convite:**
+```
+topo      218,3 → o próprio · o próprio · o próprio
+meio      239,8 → o próprio · o próprio · o próprio
+base      261,3 → o próprio · o próprio · o próprio
+4px acima 213,8 → não clicável (div.canvas) nas três
+4px abaixo 265,8 → não clicável (p.rc-tranquilo) nas três
+```
+**C, `ec-back`:**
+```
+topo      34,5 → o próprio · o próprio · o próprio
+meio      56   → o próprio · o próprio · o próprio
+base      77,5 → o próprio · o próprio · o próprio
+4px acima 30   → não clicável (section.auth-card) nas três
+4px abaixo 82  → não clicável (div.ec-top no centro e à direita; section.auth-card à esquerda)
+```
+
+A altura do parágrafo não muda com a área:
+```
+javascript_tool → altura do parágrafo com a área e com ::after { display: none }
+"Corrigir":        antes do lote (11px) 23 · agora com a área 25 · sem a área 25
+"deixe em branco": antes do lote (11px) 15,9 · agora com a área 34,8 · sem a área 34,8 (a frase quebrou em 2 linhas com 13px, o que é aceito)
+```
+
+**O que esta prova não cobre:**
+
+- **É montagem.** O que fica fora do componente, na página real com sessão,
+  foi remontado a partir do JSX lido: o `.inicio-topo` na `/inicio` e o
+  `.rc-campo` seguinte na `/meu-negocio`.
+- **Os valores do "Corrigir" dependem de onde o texto quebra.** A quebra
+  muda com os valores respondidos. Foram medidos os textos da montagem, em
+  três larguras.
+
+## 5. Campos
+
+### 5.1 Altura: 48px para campo de texto
+
+```
+javascript_tool → os 35 campos visíveis, antes (CSS do lote 1) e com a regra de 48px: altura do campo, da linha e dos botões vizinhos
+```
+
+| Campo | Antes | Depois | Linha onde vive | Botão vizinho |
+|---|---|---|---|---|
+| C2, `.fallback-field` / `.city-row` (`Chat.tsx:159`, `:240` · `Contas.tsx:193`, `:271` · `SeletorDeNicho.tsx:130`, `:220`) | 41 | 48 | 41 → 48 | `mini-send` 41 → 48, crescem juntos |
+| C2, `PerguntaDoDia.tsx:389` e `:436` | 54 | 54 | 54 | `text-fallback` 44 |
+| C3, `rc-faixa` (`Campo.tsx:276`, `:286`) | 35 | 48 | 53 → 66 | — |
+| C3, input do editor (`Campo.tsx:306`) | 35 | 48 | 84 → 110 (inclui o `.rc-acoes` a 44) | o `.rc-acoes` fica em outra linha |
+| C3, textarea (`Campo.tsx:296`, `:304`) | 57 | 57 | — | — |
+| C7, input do `rev-corrigir` (`revisar-perfil/[proposta]:312`) | 31 | 48 | 31 → 48 | `btn-linha` 31 → 48, crescem juntos |
+| C7, textarea do `rev-corrigir` (`:305`) | 48 | 48 | 48 | `btn-linha` 48 |
+| C1 e C5, `.field input` (12 + 2 campos) | 46 | 48 | +2px | — |
+
+Nenhuma linha quebrou.
+
+### 5.2 Rádios: o alvo é o rótulo
+
+```
+node → campos-v2.json: type radio|checkbox, e se o contexto do input começa por <label>
+radio/checkbox: 3 · checkbox: 0 · envolvidos por <label>: 3
+javascript_tool → getBoundingClientRect do <label> e elementFromPoint no topo e na base, 375px
+```
+
+| Rádio | Associação | Caixinha | Rótulo (área clicável) | Clique no topo / na base do rótulo |
+|---|---|---|---|---|
+| `conectar/escolher/Formulario.tsx:82` | envolvimento (`<label class="escolha-item">` em volta) | 13 × 13 | 297 × 64,8 | rótulo / rótulo |
+| `conectar/escolher/Formulario.tsx:127` | envolvimento | 13 × 13 | 297 × 64,8 | rótulo / rótulo |
+| `conta/TrocarPagina.tsx:55` | envolvimento | 13 × 13 | 339 × 64,8 | não varrido |
+
+Os três rótulos já passam de 44px, então **nenhuma regra foi aplicada**. Não
+há rádio sem rótulo associado.
+
+### 5.3 Input de arquivo: fora deste lote
+
+Ficam como estão, como item do lote 2b:
+
+- `conta/Identidade.tsx:93` (`.id-arquivo`);
+- `conta/Identidade.tsx:159` (`.id-arquivo`);
+- `criativos/Analisar.tsx:200` (`.sr-only`, com o `<label class="analise-alvo">`
+  como alvo visível).
+
+O pedido citava "n3 e n4" do `docs/varredura-visual.md`, e a varredura não
+tem esses nomes:
+```
+$ grep -nE "\bn[34]\b" docs/varredura-visual.md
+(vazio)
+```
+
+### 5.4 Tamanho da fonte dentro dos campos (só medida)
+
+```
+javascript_tool → fontSize computado dos 35 campos visíveis, 375px
+valores: 13px, 13.3333px, 15px · abaixo de 16px: 35 de 35
+```
+
+| Tamanho | Campos |
+|---|---|
+| 15px | `verba/FormVerba.tsx:30` · `conta/Formularios.tsx:26`, `:36`, `:54`, `:62` · `entrar/page.tsx:48`, `:59`, `:75`, `:86`, `:119`, `:130` · `recuperar/page.tsx:30` · `redefinir/Form.tsx:17`, `:29` |
+| 13px | `onboarding/Chat.tsx:159`, `:240` · `onboarding/contas/Contas.tsx:193`, `:271` · `conta/Identidade.tsx:93`, `:159` · `inicio/PerguntaDoDia.tsx:389`, `:436` · `meu-negocio/Campo.tsx:276`, `:286`, `:296`, `:304`, `:306` · `revisar-perfil/[proposta]/page.tsx:305`, `:312` · `SeletorDeNicho.tsx:130`, `:220` |
+| 13,33px | `conectar/escolher/Formulario.tsx:82`, `:127` · `conta/TrocarPagina.tsx:55` · `criativos/Analisar.tsx:200` |
+
+Não consertado.
+
+## 6. Piso de 13px no texto dos controles
+
+A mudança foi por classe:
+
+- `.text-fallback`, `.botao-leve` e `.btn-texto` trocaram `var(--fs-legenda)`
+  por `var(--fs-corpo)`;
+- o `.link-btn` saiu do seletor de contexto `.side-account .who …`, que o
+  prendia em 11px.
+
+```
+javascript_tool → fontSize das 66 linhas antes (window.__A) e depois
+B4 11 → 13 · B11 11 → 13 · B18 11 → 13 · B20 11 → 13 · B21 11 → 13
+escala de tamanho que sobrou nos botões: 15px, 13.3333px, 13px
+```
+O `13.3333px` é o tamanho padrão do Chromium para `<button>`. Aparece em
+B10, B13, B16 e B17, que não declaram `font-size`. **Item do lote 2b.**
+
+O B20, na barra lateral, medido no lugar certo:
+```
+javascript_tool → .side-account montada em 1280×800, antes e depois
+fonte 11 → 13px · botão 44×44 → 44×44 · bloco .who 58 → 58 · .side-account 78 → 78
+```
+A barra inferior de cinco itens não é afetada: a regra do rótulo dela
+(`.nav-item`) não foi tocada.
+```
+javascript_tool → .nav-item span, 375px: fontSize e scrollWidth > clientWidth
+Início, Criativos, Anúncios, Avisos, Conta: 11px, nenhum cortado
+```
+
+### 6.1 Contraste dos cinco que subiram (só medida)
+
+```
+javascript_tool → razão WCAG da cor do texto contra a composição dos background-color dos ancestrais da montagem, data-tema claro e escuro
+```
+
+| Aparência | Claro | Escuro |
+|---|---|---|
+| B4 `text-fallback` | 5,59:1 (#5A6977 sobre #FEFEFE) | 5,35:1 (#7D8CA1 sobre #0C1523) |
+| B11 `botao-leve` | 5,59:1 | 5,35:1 |
+| B18 `botao-leve` em `.pd-convite` | 5,59:1 | 5,35:1 |
+| B20 `link-btn` na sidebar | 9,77:1 (rgba(241,246,247,.78) sobre #111E2F) | 7,56:1 (rgba(233,239,248,.66) sobre #080E1A) |
+| B21 `btn-texto` | 7,32:1 (#0743DC sobre #FEFEFE) | 5,54:1 (#5C88FA sobre #0C1523) |
+
+Nenhum abaixo de 4,5:1. Um fundo de imagem na página real **não foi
+medido**.
+
+## 7. Família: Archivo nos controles
+
+```
+javascript_tool → fontFamily das 66 linhas de botão e dos 35 campos, CSS novo, 375px
+101 medidos · Archivo: 95 · fora: 6
+```
+Os 6 fora estão excluídos por decisão, porque não têm texto próprio:
+
+- **Rádios, em Arial:** `conectar/escolher/Formulario.tsx:82` e `:127`,
+  `conta/TrocarPagina.tsx:55`.
+- **Arquivo, em Segoe UI:** `conta/Identidade.tsx:93` e `:159`.
+- **Arquivo, em Arial:** `criativos/Analisar.tsx:200` (`.sr-only`,
+  invisível).
+
+Largura das 10 aparências que trocaram de família:
+```
+javascript_tool → scrollWidth/clientWidth, largura do texto (Range), altura do controle e da linha; antes e com a regra de família simulada, 375px
+transborda depois: nenhuma · linha que quebrou: nenhuma · peso, tamanho e line-height: iguais nas 10
+```
+Com o Archivo, o `btn-linha` e o `ec-doubt` ficaram mais baixos, porque a
+métrica de linha dele é outra. O grupo A levou os dois de volta a 44:
+```
+btn-linha 31 → 28 (só família) · ec-doubt 34 → 28 (só família)
+```
+
+## 8. Links com classe do grupo A
+
+A regra lê a classe, então também atinge os `<a class="cta">`:
+```
+node extrair-controles-v3.cjs links → 81 <a> no JSX · 26 com classe do grupo A (todos .cta)
+javascript_tool → os 26 montados, com e sem min-height:44px, 375px
+```
+Mudaram 3, sem quebrar a linha:
+
+- `onboarding/Trilha.tsx:172` e `:175` (`cta quiet`): 36 → 44, bloco
+  80 → 96;
+- `components/ui/FaixaReconectar.tsx:62`: 36 → 44, faixa 71,5 → 78, texto
+  vizinho recentralizado.
+
+O `layout.tsx:176` (`cta ghost`, no cartão de suporte da barra lateral) fica
+escondido em 375px. Medido em 1280×800:
+```
+javascript_tool → .side-support montado, com e sem o grupo A
+link 34 → 44 · cartão .side-support 121 → 131
+```
+
+## 9. A rota `/`
+
+```
+javascript_tool → http://localhost:3000/, CSS novo
+controles nativos: 0 · elementos que casam com a regra de família ou de campo: 0 · com classe dos grupos A/B/C: 0
+```
+Nenhuma regra deste lote casa com elemento da `/`.

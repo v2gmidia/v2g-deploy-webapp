@@ -45,7 +45,7 @@ export function Combinados() {
     <section className="auth-card ec-card">
       <div className="ec-top">
         <button
-          className="ec-back"
+          className="ec-back alvo-redondo"
           type="button"
           aria-label="Voltar"
           onClick={() => ir(i - 1)}

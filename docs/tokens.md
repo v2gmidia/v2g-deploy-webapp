@@ -29,6 +29,15 @@ No escuro o valor é escrito direto, sem passar pelo nome da paleta. Os
 valores escuros são os mesmos que os tokens de paleta correspondentes já
 tinham nesses blocos.
 
+## Famílias de fonte
+
+| Token | Valor | Para que serve |
+|---|---|---|
+| `--display` | `var(--font-archivo), system-ui, sans-serif` | Archivo, a fonte da marca. Títulos, e desde o lote 2a todos os controles: `button`, os `input` de texto, `select` e `textarea`. |
+| `--body` | `"Segoe UI", system-ui, -apple-system, Roboto, sans-serif` | pilha de sistema, usada no texto corrido; controles usam --display (Archivo). Divisão provisória, pendente do lote de tipografia. |
+
+O que já foi medido sobre `--body` está em `docs/tipografia-pendente.md`.
+
 ## Quem lê cada papel hoje
 
 Só o casco de `app/(protected)/layout.tsx`, ou seja, as regras CSS do topo e
@@ -132,3 +141,52 @@ e depois. Essa regra não foi tocada.
   de fora da montagem não foi comparado.
 - **Hover e foco:** não medidos.
 - **Rotas com sessão:** não abertas.
+
+---
+
+## Raio: proposta de três tokens — NÃO APLICADA
+
+Lote 2a, 14/09/2026. Os três números abaixo esperam aprovação do Victor.
+Nenhum `border-radius` do código mudou.
+
+### O que existe hoje
+
+Nos controles medidos (as tabelas de `docs/botoes.md`):
+```
+$ grep -E "^\| [0-9]+ \| \`.*\| B[0-9]+ \|$" docs/botoes.md | awk -F'|' '{gsub(/^ +| +$/,"",$8); print $8}' | sort | uniq -c | sort -rn
+19 4px · 18 8px · 13 0 · 12 999px · 2 12px · 1 6px · 1 50%
+$ grep -E "^\| [0-9]+ \| \`.*\| C[0-9]+ \|$" docs/botoes.md | awk -F'|' '{gsub(/^ +| +$/,"",$8); print $8}' | sort | uniq -c | sort -rn
+22 4px · 7 8px · 6 0
+```
+Os primeiros 66 valores são das linhas de botão; os outros 35, dos campos
+visíveis.
+
+No CSS inteiro:
+```
+$ grep -oE "border-radius:\s*[^;]+" app/globals.css | sed -E 's/\s+/ /g' | sort | uniq -c | sort -rn
+25 var(--raio-card) · 23 var(--raio-item) · 13 var(--raio-pilula) · 13 var(--raio-interno) · 10 var(--raio-selo) · 9 var(--raio-micro) · 7 50% · 5 14px · 1 cada: 3px, 12px, 10px, 0
+```
+Tokens de hoje: `--raio-card` 12px, `--raio-item` 10px, `--raio-interno`
+8px, `--raio-selo` 6px, `--raio-micro` 4px e `--raio-pilula` 999px.
+
+### A proposta
+
+| Token | Valor | Justificativa (uma linha) |
+|---|---|---|
+| `--raio-controle` | **4px** | É o raio de 41 dos 101 controles medidos (19 botões + 22 campos), contra 25 em 8px. |
+| `--raio-cartao` | **12px** | Já é o `--raio-card`, o token de raio mais lido do CSS (25 declarações), e é o do `tema-opcao`, o único controle em forma de cartão. |
+| `--raio-pilula` | **999px** | Já existe com esse nome e valor (13 declarações) e é o raio de 12 chips. |
+
+O `50%` do `ec-back` fica fora da escala: é botão redondo.
+
+### O que mudaria se aprovada (para decidir, não aplicado)
+
+- **Controles em 8px que iriam para 4px:** `btn-linha` (18 linhas de botão)
+  e os campos C3 e C7 (7).
+- **Controle em 6px que iria para 4px:** o `botao-leve` do `.pd-convite`
+  (B18, 1 linha).
+- **Controles com raio 0:** 13 botões e 6 campos. São link, texto ou nativo,
+  sem fundo nem borda, então o raio não aparece. Ficam de fora.
+- **Fora dos controles**, a proposta não diz para onde vão: `--raio-item`
+  (10px, 23 declarações), `--raio-selo` (6px, 10), os `14px` literais (5) e
+  o `3px` (1). É assunto de cartão e lista, não de controle.
