@@ -141,7 +141,7 @@ export const PERGUNTAS: Pergunta[] = [
       { echo: "Cidade + região", rotulo: "Cidade + região" },
     ],
     fallbackLabel: "Onde seus clientes estão",
-    fallbackPlaceholder: "Onde seus clientes ficam?",
+    fallbackPlaceholder: "Onde estão seus clientes",
   },
 ];
 

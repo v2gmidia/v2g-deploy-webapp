@@ -8,15 +8,21 @@ Nada foi commitado.
 
 ---
 
-## 0. O que depende de decisão humana
+## 0. O que dependia de decisão humana — resolvido, os dois textos aplicados
 
-1. **"Falar com uma pessoa" não cabe numa linha no formato dos itens de
-   navegação.** O rótulo mede 170,1px e o item tem 164px para o texto, então
-   passa 6,1px e quebra em duas linhas (§1). A regra de tamanho é a mesma
-   para os seis itens; consertar só em CSS tiraria o item do formato
-   aprovado. **O rótulo não foi mexido:** o texto é seu.
-2. **O placeholder `perguntas.ts:144`, "Onde estão seus clientes?", passa
-   5,3px** (§2).
+As duas pendências desta seção foram resolvidas com texto do Victor, no mesmo dia. Nada mais depende de decisão humana neste documento.
+
+Medido em 16px Archivo na `/entrar`, contra o espaço de cada lugar da §1 e da §2 (o CSS não mudou desde aquela medição):
+```
+javascript_tool → canvas.measureText com a família computada do campo; peso 700 no item da barra (o do .nav-item), 400 no placeholder
+```
+
+| Onde | Texto aplicado | Largura final | Espaço | Folga |
+|---|---|---:|---:|---:|
+| Item da barra lateral (`app/(protected)/layout.tsx`) | "Falar com alguém" | 134,3 | 164 | **29,7** — uma linha |
+| Placeholder da pergunta 4 (`onboarding/perguntas.ts:144`) | "Onde estão seus clientes" | 178,0 | 182 | **4,0** |
+
+Os textos que passaram antes, para o histórico: "Falar com uma pessoa" (170,1, passava 6,1 e quebrava em duas linhas); "Onde estão seus clientes?" (187,3, passava 5,3); "Onde ficam seus clientes?" e "Onde seus clientes ficam?" (186,7 cada, passavam 4,7). As tabelas da §1 e da §2 abaixo são o retrato de antes das duas trocas.
 
 ---
 
