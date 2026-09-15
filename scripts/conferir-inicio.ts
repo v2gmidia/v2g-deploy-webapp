@@ -212,7 +212,9 @@ secao("4. `fasesDaCadeia` — quatro sempre, e o estado certo");
 // ------------------------------------------------------------------
 secao("5. B7 — seção sem item não renderiza título");
 {
-  const inicio = fonte("app/(protected)/inicio/page.tsx");
+  // Desde 15/09/2026 o desenho da /inicio mora em TelaDoInicio.tsx; a
+  // page.tsx só busca. A regra é sobre o desenho, então lê o desenho.
+  const inicio = fonte("app/(protected)/inicio/TelaDoInicio.tsx");
 
   // A lista de campanhas é o caso medido: ela ganhava cabeçalho e link
   // "Ver todas" com zero linhas embaixo.

@@ -385,6 +385,7 @@ secao("10. o que a camada e as TELAS se recusam a fazer");
     "lib/resultado/do-negocio.ts",
     "app/(protected)/anuncios/page.tsx",
     "app/(protected)/inicio/page.tsx",
+    "app/(protected)/inicio/TelaDoInicio.tsx",
     "app/(protected)/vendas/page.tsx",
   ];
   const fonte = ARQUIVOS.map((f) => readFileSync(resolve(RAIZ, f), "utf8")).join("\n");
