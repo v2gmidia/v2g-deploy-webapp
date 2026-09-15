@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>V2G — amostra visual v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cobalt:#0743DC; --lime:#E8FC65; --navy:#111E2F;
+    --offwhite:#F1F6F7; --ice:#B0E9FD; --surface:#FFFFFF;
+    --line:#DCE5E9; --ink:#111E2F; --ink-soft:#4A5D70; --ink-mute:#7D8CA1;
+    --fraca:#EDF2F5;
+    --raio-controle:12px; --raio-cartao:16px; --raio-atalho:18px; --raio-pilula:999px;
+    --alt-principal:54px; --alt-controle:44px; --alt-campo:48px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#E7EDF0;color:var(--ink);font-family:Archivo,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .pagina{max-width:1280px;margin:0 auto;padding:36px 20px 80px}
+  .intro{max-width:66ch;margin-bottom:12px}
+  .intro h1{font-size:30px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px;line-height:1.1}
+  .intro p{font-size:15px;color:var(--ink-soft);margin:0 0 8px;line-height:1.5}
+  .colunas{display:flex;gap:40px;flex-wrap:wrap;align-items:flex-start;margin-top:28px}
+  .par{display:flex;gap:26px;flex-wrap:wrap}
+  .comlegenda{width:375px}
+  .legenda{font-size:13px;font-weight:700;color:var(--ink-soft);margin:0 0 10px;padding-left:4px}
+  .legenda b{display:block;font-size:15px;color:var(--navy);font-weight:800;margin-bottom:2px}
+
+  .fone{width:375px;background:var(--offwhite);border-radius:34px;border:9px solid #0B1624;overflow:hidden;box-shadow:0 22px 50px rgba(17,30,47,.26)}
+  .topo{background:var(--navy);padding:16px 18px 18px;color:#EAF2F6}
+  .marca{display:flex;align-items:center;gap:9px;margin-bottom:14px}
+  .blocos{display:grid;grid-template-columns:repeat(3,6px);gap:2px}
+  .blocos i{display:block;width:6px;height:6px;background:var(--cobalt)}
+  .blocos i:nth-child(odd){background:var(--lime)}
+  .marca span{font-weight:800;font-size:13px;letter-spacing:.04em}
+  .ola{font-size:20px;font-weight:800;letter-spacing:-.02em;margin:0 0 10px}
+  .momento{display:block;background:var(--lime);color:var(--navy);font-size:13px;font-weight:700;line-height:1.35;padding:9px 13px;border-radius:var(--raio-controle)}
+
+  .trilha{display:flex;gap:5px;margin-top:12px;align-items:center}
+  .et{flex:1}
+  .bolha{height:5px;border-radius:999px;background:rgba(234,242,246,.22);margin-bottom:6px}
+  .et.feita .bolha{background:var(--lime)}
+  .et.agora .bolha{background:var(--lime)}
+  .et span{font-size:11px;color:rgba(234,242,246,.62);font-weight:500;display:block;line-height:1.2}
+  .et.agora span{color:#EAF2F6;font-weight:700}
+
+  .corpo{padding:16px 16px 0}
+  .cartao{background:var(--surface);border-radius:var(--raio-cartao);padding:16px;margin-bottom:14px}
+  .rot{font-size:13px;color:var(--ink-soft);margin:0 0 4px;font-weight:500}
+  .numerao{font-size:38px;font-weight:800;letter-spacing:-.03em;line-height:1;margin:0}
+  .numerao.vazio{color:var(--ink-mute)}
+  .fonte{font-size:12px;color:var(--ink-mute);margin:7px 0 0;line-height:1.4}
+  .rodape{margin-top:14px;border-top:1px solid var(--line);padding-top:13px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+  .rodape .k{font-size:13px;color:var(--ink-soft);font-weight:500;margin:0}
+  .rodape .v{font-size:19px;font-weight:700;letter-spacing:-.02em;margin:2px 0 0}
+  .razao{background:var(--fraca);border-radius:var(--raio-controle);padding:11px 13px;margin-top:13px;font-size:13.5px;font-weight:600;color:var(--navy);line-height:1.35}
+
+  .secao{font-size:19px;font-weight:800;letter-spacing:-.02em;margin:22px 2px 12px}
+  .atalhos{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}
+  .at{background:var(--surface);border-radius:var(--raio-atalho);padding:13px 5px 11px;text-align:center;border:0;cursor:pointer;font-family:inherit;position:relative}
+  .at .ic{width:38px;height:38px;border-radius:12px;background:var(--ice);margin:0 auto 8px;display:grid;place-items:center}
+  .at.destaque .ic{background:var(--cobalt)}
+  .at svg{width:20px;height:20px}
+  .at b{display:block;font-size:12px;font-weight:600;color:var(--navy);line-height:1.25}
+  .at small{display:block;font-size:11px;color:var(--ink-mute);font-weight:600;margin-top:3px}
+
+  .pergunta{background:var(--navy);color:#EAF2F6;border-radius:var(--raio-cartao);padding:18px 16px}
+  .pergunta h3{font-size:17px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em;line-height:1.3}
+  .pergunta p{font-size:13px;color:#9FB3C4;margin:0 0 14px;line-height:1.4}
+  .campo{width:100%;height:var(--alt-campo);border-radius:var(--raio-controle);border:0;background:#FFF;padding:0 14px;font-family:inherit;font-size:16px;font-weight:600;color:var(--navy);margin-bottom:10px}
+  .campo::placeholder{color:var(--ink-mute);font-weight:500}
+  .principal{width:100%;height:var(--alt-principal);border:0;border-radius:var(--raio-controle);background:var(--cobalt);color:#fff;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer}
+  .discreta{width:100%;height:var(--alt-controle);border:0;background:none;color:#9FB3C4;font-family:inherit;font-size:14px;font-weight:600;margin-top:4px;cursor:pointer}
+
+  .feed{background:var(--surface);border-radius:var(--raio-cartao);padding:4px 16px}
+  .ev{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+  .ev:last-child{border-bottom:0}
+  .ev .pt{width:34px;height:34px;border-radius:50%;background:var(--fraca);display:grid;place-items:center;flex:0 0 34px}
+  .ev svg{width:16px;height:16px}
+  .ev .tx{flex:1}
+  .ev .tx b{display:block;font-size:14px;font-weight:600;line-height:1.3}
+  .ev .tx span{font-size:12.5px;color:var(--ink-mute)}
+  .ev .dt{font-size:12px;color:var(--ink-mute);white-space:nowrap;padding-top:2px}
+
+  .linha{width:100%;min-height:56px;display:flex;align-items:center;gap:12px;background:var(--surface);border:0;border-radius:var(--raio-cartao);padding:0 16px;margin-bottom:9px;cursor:pointer;font-family:inherit;text-align:left}
+  .linha b{flex:1;font-size:15px;font-weight:600}
+  .linha .cv{color:var(--ink-mute);font-size:18px}
+
+  .barra{display:grid;grid-template-columns:repeat(5,1fr);background:var(--surface);border-top:1px solid var(--line);padding:9px 0 16px;margin-top:20px}
+  .nav{text-align:center;border:0;background:none;font-family:inherit;cursor:pointer;padding:4px 0}
+  .nav .ic{display:block;margin:0 auto 4px}
+  .nav svg{width:21px;height:21px}
+  .nav span{font-size:11px;font-weight:600;color:var(--ink-mute)}
+  .nav.on span{color:var(--cobalt)}
+
+  .painel{flex:1;min-width:360px}
+  .bloco{background:var(--surface);border-radius:var(--raio-cartao);padding:20px;margin-bottom:14px}
+  .bloco h2{font-size:17px;font-weight:800;margin:0 0 3px;letter-spacing:-.01em}
+  .bloco p{font-size:13.5px;color:var(--ink-soft);margin:0 0 12px;line-height:1.5;max-width:60ch}
+  .bloco ul{margin:0;padding-left:18px;font-size:13.5px;color:var(--ink-soft);line-height:1.7}
+  .bloco code{background:var(--fraca);padding:1px 5px;border-radius:5px;font-size:12.5px}
+  .decidir{border-left:5px solid var(--lime)}
+  @media (max-width:900px){.fone,.comlegenda{width:100%;max-width:375px}.painel{min-width:0;width:100%}}
+</style>
+
+<div class="pagina">
+  <div class="intro">
+    <h1>Amostra v2 — o resultado como herói</h1>
+    <p>Corrigido com o seu retorno: o número principal deixou de ser o gasto, a trilha encolheu e subiu para o topo, “nova peça” saiu dos atalhos e a pergunta do dia some depois de respondida.</p>
+    <p>As duas telas são a mesma tela em dois momentos. É isso que o dono vê antes e depois de responder.</p>
+  </div>
+
+  <div class="par">
+
+    <!-- ============ SEMANA 1 ============ -->
+    <div class="comlegenda">
+      <p class="legenda"><b>Momento 1 — ele ainda não respondeu</b>Nada foi vendido? Ninguém sabe. O herói é travessão, não zero.</p>
+      <div class="fone">
+        <div class="topo">
+          <div class="marca"><div class="blocos"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span>V2G</span></div>
+          <p class="ola">Olá, Piligrin</p>
+          <span class="momento">Seu anúncio entrou no ar ontem. A Meta ainda está achando quem tem mais cara de cliente.</span>
+          <div class="trilha">
+            <div class="et feita"><div class="bolha"></div><span>Negócio</span></div>
+            <div class="et feita"><div class="bolha"></div><span>Oferta</span></div>
+            <div class="et feita"><div class="bolha"></div><span>Peça</span></div>
+            <div class="et agora"><div class="bolha"></div><span>No ar</span></div>
+          </div>
+        </div>
+
+        <div class="corpo">
+          <div class="cartao">
+            <p class="rot">Vendas dos últimos 7 dias</p>
+            <p class="numerao vazio">—</p>
+            <p class="fonte">Esse número vem de você. Responda a pergunta do dia e ele aparece aqui.</p>
+            <div class="rodape">
+              <div>
+                <p class="k">Investido</p>
+                <p class="v">R$ 10,25</p>
+              </div>
+              <div style="text-align:right">
+                <p class="k">Aparições</p>
+                <p class="v">1.657</p>
+              </div>
+            </div>
+          </div>
+
+          <p class="secao">Pergunta do dia</p>
+          <div class="pergunta">
+            <h3>Quanto você vendeu ontem?</h3>
+            <p>É assim que a V2G descobre o que o anúncio está trazendo de verdade.</p>
+            <input class="campo" placeholder="R$ 0,00" inputmode="numeric">
+            <button class="principal">Guardar resposta</button>
+            <button class="discreta">Não vendi nada ontem</button>
+          </div>
+
+          <p class="secao">Atalhos</p>
+          <div class="atalhos">
+            <button class="at">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>
+              <b>Anúncios</b>
+            </button>
+            <button class="at">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
+              <b>Avisos</b>
+            </button>
+            <button class="at">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg></span>
+              <b>Negócio</b>
+            </button>
+            <button class="at destaque">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+              <b>Subir foto</b>
+              <small>1 de 3</small>
+            </button>
+          </div>
+        </div>
+
+        <div class="barra">
+          <button class="nav on"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg></span><span>Início</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 15 3-4 3 3 2-2 2 3"/></svg></span><span>Criativos</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span><span>Anúncios</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span><span>Avisos</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><span>Conta</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ DEPOIS ============ -->
+    <div class="comlegenda">
+      <p class="legenda"><b>Momento 2 — ele respondeu a semana toda</b>A trilha sumiu, a pergunta do dia sumiu, o herói é o retorno.</p>
+      <div class="fone">
+        <div class="topo">
+          <div class="marca"><div class="blocos"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><span>V2G</span></div>
+          <p class="ola">Olá, Piligrin</p>
+          <span class="momento">Sua melhor peça é a da promoção de quarta. Ela trouxe o dobro de cliques das outras.</span>
+        </div>
+
+        <div class="corpo">
+          <div class="cartao">
+            <p class="rot">Vendas dos últimos 7 dias</p>
+            <p class="numerao">R$ 1.840</p>
+            <p class="fonte">Você informou. Última resposta ontem, 21h.</p>
+            <div class="rodape">
+              <div>
+                <p class="k">Investido</p>
+                <p class="v">R$ 412,00</p>
+              </div>
+              <div style="text-align:right">
+                <p class="k">Aparições</p>
+                <p class="v">1.657</p>
+              </div>
+            </div>
+            <div class="razao">Cada R$ 1 investido virou R$ 4,46 em venda registrada.</div>
+          </div>
+
+          <p class="secao">O que aconteceu</p>
+          <div class="feed">
+            <div class="ev">
+              <span class="pt"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+              <span class="tx"><b>Você registrou R$ 340 em vendas</b><span>Resposta da pergunta do dia</span></span>
+              <span class="dt">ontem</span>
+            </div>
+            <div class="ev">
+              <span class="pt"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 15 3-4 3 3 2-2 2 3"/></svg></span>
+              <span class="tx"><b>Peça nova entrou na campanha</b><span>A foto que você subiu na terça</span></span>
+              <span class="dt">2 dias</span>
+            </div>
+            <div class="ev">
+              <span class="pt"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>
+              <span class="tx"><b>A verba do dia passou de R$ 8 para R$ 12</b><span>A peça de quarta estava rendendo mais</span></span>
+              <span class="dt">4 dias</span>
+            </div>
+          </div>
+
+          <p class="secao">Atalhos</p>
+          <div class="atalhos">
+            <button class="at">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>
+              <b>Anúncios</b>
+            </button>
+            <button class="at">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span>
+              <b>Avisos</b>
+              <small>2 novos</small>
+            </button>
+            <button class="at">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg></span>
+              <b>Negócio</b>
+            </button>
+            <button class="at destaque">
+              <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12" r="3.2"/></svg></span>
+              <b>Subir foto</b>
+              <small>3 de 3</small>
+            </button>
+          </div>
+
+          <p class="secao">Sua conta</p>
+          <button class="linha"><b>Meu negócio</b><span class="cv">›</span></button>
+          <button class="linha"><b>Assinatura e pagamento</b><span class="cv">›</span></button>
+        </div>
+
+        <div class="barra">
+          <button class="nav on"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#0743DC" stroke-width="2" stroke-linecap="round"><path d="M3 20V9l9-5 9 5v11"/><path d="M9 20v-6h6v6"/></svg></span><span>Início</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 15 3-4 3 3 2-2 2 3"/></svg></span><span>Criativos</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span><span>Anúncios</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></span><span>Avisos</span></button>
+          <button class="nav"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="#7D8CA1" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></svg></span><span>Conta</span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ PAINEL ============ -->
+    <div class="painel">
+      <div class="bloco">
+        <h2>O que eu mudei do v1</h2>
+        <ul>
+          <li>O herói virou <b>venda registrada</b>. O investido desceu para linha de apoio, ao lado de aparições.</li>
+          <li>A trilha caiu de 6 para <b>4 etapas</b> — só as que têm fonte de dado — e subiu para dentro do topo escuro. Some quando a campanha entra no ar.</li>
+          <li><b>Nova peça saiu dos atalhos.</b> No lugar entrou <code>Subir foto</code>, com a conta da semana. Ele alimenta o banco de imagem, não cria campanha.</li>
+          <li>A pergunta do dia <b>some</b> depois de respondida, e o lugar dela passa a ser o feed do que aconteceu.</li>
+          <li>Entrou <code>O que aconteceu</code>, no modelo de “Últimas atividades” do Mercado Pago e do PicPay.</li>
+        </ul>
+      </div>
+
+      <div class="bloco decidir">
+        <h2>Três decisões que são suas e do Gabriel</h2>
+        <p><b>1. A razão “cada R$ 1 virou R$ 4,46”.</b> É o número que o dono vai repetir para a esposa, para o contador e para o amigo dono da loja ao lado. E ele é feito com <i>dado declarado</i> dividido por <i>dado medido</i>. Se o dono esquecer de responder três dias, a razão despenca e a V2G parece ruim sem ter piorado nada. Manter, esconder, ou só mostrar com uma semana cheia de resposta?</p>
+        <p><b>2. A pergunta do dia vira obrigatória?</b> Sem ela não existe herói. Se ela é o motor do produto, ela não pode ser um cartão que o dono rola para baixo.</p>
+        <p><b>3. Quem escreveu o número.</b> A regra <code>n1</code> diz que todo campo mostra quem escreveu e quando. Aqui isso virou a linha “Você informou. Última resposta ontem, 21h.” Confere se é assim que vocês querem dizer isso.</p>
+      </div>
+
+      <div class="bloco">
+        <h2>O que ainda não sei desenhar</h2>
+        <p>Você disse que “onde você está” é um aviso que some. Mas não sei o que aparece nesse espaço do topo <i>depois</i> que a trilha some. No momento 2 eu deixei só a frase do momento, e o topo ficou mais curto. Se você quiser algo fixo ali, me diz o quê — e de onde vem o dado.</p>
+        <p>Também não desenhei o estado “o dono parou de responder por 5 dias”. O herói volta a ser travessão? Vira uma média antiga? Isso decide se o app parece quebrado ou honesto quando ele some por uma semana.</p>
+      </div>
+    </div>
+  </div>
+</div>
