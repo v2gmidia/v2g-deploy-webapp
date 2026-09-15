@@ -41,6 +41,12 @@ const IcoConta = () => (
     <path d="M4 16.5a6 6 0 0 1 12 0" />
   </svg>
 );
+/** Falar com uma pessoa: o balão do `.topbar-help`, no traço dos outros cinco. */
+const IcoConversa = () => (
+  <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+    <path d="M10 3a7 7 0 0 0-6 10.6L3 17l3.5-1A7 7 0 1 0 10 3z" />
+  </svg>
+);
 
 /**
  * Layout do grupo de rotas de APP — visual `.app-shell` (sidebar +
@@ -170,13 +176,23 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
         <div className="side-spacer" />
 
-        <div className="side-support">
-          <b>Fala com gente de verdade</b>
-          <p>Sem robô. Resposta em até 2 horas úteis, no WhatsApp.</p>
-          <a className="cta ghost" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-            Falar com uma pessoa
-          </a>
-        </div>
+        {/* FALAR COM UMA PESSOA É DESTINO, NÃO CARTÃO — 15/09/2026, lote 2b.
+            Mesmo formato dos cinco itens de cima (ícone + rótulo), porque é um
+            lugar para onde se vai. O "Sair" logo abaixo é o único link de
+            texto da barra: é encerramento, não destino.
+
+            Era o cartão `.side-support` com um botão lima dentro. Com o botão
+            no tamanho do papel, o rótulo quebrava em duas linhas nos 220px do
+            cartão, e o botão disputava espaço com o próprio texto do cartão.
+            Desfaz o item 2 da decisão de 11/09 — ver docs/decisoes.md.
+
+            Some abaixo de 900px, junto com o resto do que é da coluna: ali a
+            barra vira a inferior de cinco células, e um sexto item quebra o
+            teto. No celular o caminho é o `.topbar-help`, no topo. */}
+        <a className="nav-item side-falar" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
+          <IcoConversa />
+          <span>Falar com uma pessoa</span>
+        </a>
 
         <div className="side-account">
           <span className="avatar">{inicial}</span>

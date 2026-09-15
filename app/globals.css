@@ -984,53 +984,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .sidebar .link-btn { color: var(--texto-discreto-sobre-placa); }
 .sidebar .link-btn:hover { color: var(--texto-sobre-escuro); }
 .sidebar :focus-visible { outline-color: var(--texto-sobre-escuro); }
-/* ...menos dentro do card de suporte, que é CLARO. O anel branco
-   funciona sobre o fundo escuro da barra, mas branco sobre o card dava
-   1,11:1 em 9 telas. Cobalto de tinta da 6,64 no claro e 4,92 no
-   escuro. Ver docs/contraste.md §7.
 
-   A NOTA QUE ESTAVA AQUI SAIU, e com ela o motivo: ela avisava que o
-   anel precisaria voltar a ser branco "se algum dia o vidro passar a
-   vencer". O vidro não existe mais — ver a decisão logo abaixo. O
-   condicional virou incondicional, e o 6,64 é o número definitivo. */
-.side-support :focus-visible { outline-color: var(--cobalt-ink); }
-
-/* ============================================================
-   O CARD DE SUPORTE É CLARO. Pendência de 21/08/2026, fechada em
-   11/09/2026 — `docs/decisoes.md`, "card de vidro sobre cobalto ou
-   card claro?".
-
-   ELA NÃO ERA UMA ESCOLHA DE DESENHO, ERA CÓDIGO MORTO. `.side-support`
-   estava declarado DUAS vezes com a mesma especificidade: aqui como
-   vidro, e ~950 linhas adiante como card gelo. A segunda vencia sempre.
-   O card claro não é a opção que ganhou uma discussão — é o que as 9
-   telas já renderizavam desde o primeiro dia. As três regras de vidro
-   (`background`, `b`, `p`) eram as três inertes que o
-   `conferir:cascata` acusava a cada rodada, e que
-   `docs/regra-inerte.md` §6 e `docs/estado/pilares-10-09.md` §0.5
-   mapearam. Apagá-las não muda um pixel: muda o arquivo parar de
-   descrever um desenho que não acontece.
-
-   E o argumento original do vidro ("o card claro brigaria com a faixa
-   do herói pela atenção") deixou de valer por conta própria: a barra
-   agora é `--plate`, escura, e o card claro ali dentro não compete com
-   o cobalto da faixa — está noutra região e noutro tom.
-
-   A regra que VALE está junto das outras do card, na seção do shell.
-   Uma declaração só, no lugar onde se procura por ela.
-   ============================================================ */
-/* O botão de ajuda é LIMA, como o "Upgrade" do mockup: é a única ação
-   permanente da sidebar, e o lima só aparece uma vez por região. */
-.side-support .cta.ghost {
-  background: var(--lime);
-  /* `--black`, não `--navy`: no tema escuro o navy VIRA CLARO (ele é o
-     token de texto), e texto claro sobre lima some. O `--black` é o
-     único tom que continua escuro nos dois temas — é exatamente para
-     isto que ele foi reservado no sistema. */
-  color: var(--black);
-  border-color: transparent;
-}
-.side-support .cta.ghost:hover { background: var(--ice); }
+/* O CARTÃO DE SUPORTE DA BARRA SAIU — 15/09/2026, lote 2b. "Falar com uma
+   pessoa" virou item de linha (`.nav-item.side-falar`, no layout), no
+   formato dos outros destinos da barra. Com o cartão foram o botão lima,
+   o anel de foco próprio dele e as regras de título e parágrafo. O
+   histórico da decisão de 11/09 que o tornou claro está em
+   docs/decisoes.md, e é essa decisão que esta mudança desfaz. */
 
 .main { min-width: 0; display: flex; flex-direction: column; }
 .topbar {
@@ -1080,13 +1040,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   }
 
   /* O que era da coluna e não cabe numa barra de cinco itens. Cada um
-     tem casa nova, e está escrito qual: o card de suporte virou o link
-     da `.topbar` (logo abaixo); o bloco de conta e o "Sair" viraram a
+     tem casa nova, e está escrito qual: o "Falar com uma pessoa" da
+     coluna virou o link da `.topbar` (logo abaixo); o bloco de conta e o "Sair" viraram a
      seção "Esta conta" da `/conta`. Esconder sem repor é o defeito que
      este lote conserta — repeti-lo em escala menor seria o mesmo erro. */
   .side-brand,
   .side-spacer,
-  .side-support,
+  .side-falar,
   .side-account,
   .nav-eyebrow { display: none; }
 
@@ -2031,16 +1991,6 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   padding: 0 12px 8px;
 }
 .nav-item .ico { width: 20px; height: 20px; flex: none; }
-.side-support {
-  background: var(--ice-soft);
-  border: 1.5px solid var(--ice);
-  border-radius: var(--raio-controle);
-  padding: 13px;
-  margin-bottom: 12px;
-}
-.side-support b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--texto-forte); margin-bottom: 3px; }
-.side-support p { font-size: var(--fs-legenda); line-height: 1.5; color: var(--texto-fraco); margin: 0 0 9px; }
-.side-support .cta { padding: 9px 12px; font-size: var(--fs-corpo); }
 
 /* ---------- topbar com saudação ---------- */
 .greet .sub { font-size: var(--fs-corpo); color: var(--texto-fraco); margin-top: 3px; }
@@ -4704,7 +4654,7 @@ textarea { min-height: 48px; }
    especificidade das regras antigas (0,1,0 ou 0,2,0), e é a ORDEM que
    faz o papel vencer. Regra de CONTEXTO mais específica continua
    vencendo, e isso é desejado: .hero-destaque .cta (branco na faixa),
-   .side-support .cta (lima), .alvo-em-texto (controle dentro de frase).
+   .alvo-em-texto (controle dentro de frase).
 
    A ALTURA MÍNIMA NÃO ENTRA NA DISCRETA NEM NA ESCOLHA. Os 44px delas
    vêm do grupo A do lote 2a. Repetir aqui, depois do .alvo-em-texto

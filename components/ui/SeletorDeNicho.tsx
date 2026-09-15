@@ -63,7 +63,7 @@ export function SeletorDeNicho({
   placeholder = "Busque ou escreva",
   rotuloDoCampo = "Busque o seu negócio",
   rotuloOutro = "Outro",
-  placeholderLivre = "O que seu negócio vende?",
+  placeholderLivre = "O que você vende?",
   rotuloLivre = "Como você descreveria seu negócio",
 }: SeletorDeNichoProps) {
   const [consulta, setConsulta] = useState("");

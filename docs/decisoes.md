@@ -43,13 +43,6 @@ na seção de baixo.
 - [ ] **Escala de espaço (4/8/12/16/24/32).** Proposta em `docs/tokens.md`.
       Mexe em 340 de 469 valores e vira lote próprio, depois do 2b. — 15/09
 - [ ] **`tema-opcao` como variação "escolha-cartão".** Fora do 2b. — 15/09
-- [ ] **"Falar com uma pessoa" sai do cartão e vira item de linha da barra
-      lateral — decidido, esperando aprovação do diff de `.tsx`.** Não dá só
-      em CSS: é preciso apagar o `.side-support` e criar a linha no
-      `app/(protected)/layout.tsx`. O diff proposto está em
-      `docs/estado/visual-controles-3-15-09.md` §1. A barra NÃO tem item
-      "Ajuda": o fim dela é só o `.side-account`, com o "Sair" como link de
-      texto. — 15/09
 
 - [ ] **Trava de completude do cadastro: 6 campos ou 11?** O app conta 6, o
       backend exige 11 no modo `gerar`. Subir para 11 pode barrar cliente que
@@ -61,6 +54,28 @@ na seção de baixo.
 ---
 
 ## Decididas
+
+### 2026-09-15 — "Falar com uma pessoa" vira item da barra; DESFAZ o item 2 de 11/09
+**Decisão do Victor, no chat, aprovando o diff de
+`docs/estado/visual-controles-3-15-09.md` §1.**
+
+**O que muda.** O cartão `.side-support` sai da barra lateral. "Falar com
+uma pessoa" vira item de linha no fim da barra, logo acima do bloco da
+conta, **no formato dos itens de navegação** (ícone + rótulo).
+
+**Por que o formato dos itens, e não o do "Sair".** "Falar com uma pessoa"
+é **destino**, igual aos outros cinco. "Sair" é **encerramento**, e por
+isso é o único link de texto da barra.
+
+**Por que desfaz o item 2 de 11/09** ("o `.side-support` vira card
+claro"). O cartão fazia o rótulo quebrar em duas linhas no espaço de
+220px, e o botão brigava por espaço com o conteúdo do próprio cartão. A
+decisão de 11/09 respondia outra pergunta, qual cartão, vidro ou claro,
+e respondeu bem. Esta decide que não há cartão.
+
+**Abaixo de 900px o item some.** Um sexto item quebra a barra inferior de
+cinco células, e no celular o acesso continua no topo da tela (o
+`.topbar-help`).
 
 ### 2026-09-15 — Lote 2b, fechamento: as bordas que ficam, os placeholders, o botão lima
 **Decisões do Victor, no chat, sobre `docs/botoes.md` §13.**

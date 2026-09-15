@@ -109,7 +109,7 @@ export const PERGUNTAS: Pergunta[] = [
     /** o rótulo do chip que abre o texto livre, no fim dos dez */
     chipAbreTexto: "Outro",
     fallbackLabel: "Como você descreveria seu negócio",
-    fallbackPlaceholder: "O que seu negócio vende?",
+    fallbackPlaceholder: "O que você vende?",
   },
   {
     id: "descricao",
@@ -119,7 +119,7 @@ export const PERGUNTAS: Pergunta[] = [
     opcoes: [],
     soTexto: true,
     fallbackLabel: "O que você vende ou faz",
-    fallbackPlaceholder: "Ex: bolo e salgado feitos no dia",
+    fallbackPlaceholder: "Ex: bolo e salgado do dia",
     // O schema do backend exige 10 caracteres (`descricao_livre`,
     // `minLength: 10`). O recado NÃO cita o número: contar caractere na
     // tela é linguagem de formulário, e o piso útil é bem maior que o piso
@@ -141,7 +141,7 @@ export const PERGUNTAS: Pergunta[] = [
       { echo: "Cidade + região", rotulo: "Cidade + região" },
     ],
     fallbackLabel: "Onde seus clientes estão",
-    fallbackPlaceholder: "Onde seus clientes estão?",
+    fallbackPlaceholder: "Onde estão seus clientes?",
   },
 ];
 
