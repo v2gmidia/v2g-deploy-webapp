@@ -191,7 +191,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
             teto. No celular o caminho é o `.topbar-help`, no topo. */}
         <a className="nav-item side-falar" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
           <IcoConversa />
-          <span>Falar com uma pessoa</span>
+          <span>Falar com alguém</span>
         </a>
 
         <div className="side-account">
