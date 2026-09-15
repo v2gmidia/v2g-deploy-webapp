@@ -18,7 +18,7 @@ export function RedefinirForm() {
             id="senha-nova"
             name="senha"
             type="password"
-            placeholder="Pelo menos 8 caracteres, com letras e números"
+            placeholder="8 caracteres, com letra e número"
             autoComplete="new-password"
             minLength={8}
             required

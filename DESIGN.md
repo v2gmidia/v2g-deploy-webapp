@@ -9,6 +9,7 @@ colors:
   cobalt-dark: "#0532A5"
   crit: "#AD3E38"
   crit-soft: "#F9E4E2"
+  fundo-controle: "rgb(var(--navy-rgb) / 0.06)"
   good: "#237644"
   good-soft: "#E2F3E8"
   ice: "#B0E9FD"
@@ -43,6 +44,7 @@ colors:
   crit-escuro: "#E8756D"
   crit-soft-escuro: "#2C1210"
   fundo-barra-escuro: "#080E1A"
+  fundo-controle-escuro: "rgb(210 224 240 / 0.06)"
   fundo-pagina-escuro: "#050A13"
   fundo-superficie-escuro: "#0C1523"
   fundo-topo-escuro: "#050A13"
@@ -64,6 +66,8 @@ colors:
   sidebar-line-escuro: "rgb(233 239 248 / 0.10)"
   surface-escuro: "#0C1523"
   surface-2-escuro: "#111C2E"
+  texto-discreto-escuro: "#7D8CA1"
+  texto-discreto-sobre-placa-escuro: "rgb(233 239 248 / 0.66)"
   texto-forte-escuro: "#E9EFF8"
   texto-fraco-escuro: "#9FB0C6"
   texto-sobre-escuro-escuro: "#FFFFFF"
@@ -79,12 +83,12 @@ typography:
   monoLegado:
     fontFamily: "Consolas, SFMono-Regular, Courier New, monospace"
   scale:
-    legenda: "11px"
-    corpo: "13px"
-    titulo: "15px"
-    bloco: "18px"
-    tela: "22px"
-    destaque: "26px"
+    legenda: "12px"
+    corpo: "14px"
+    titulo: "16px"
+    bloco: "20px"
+    tela: "24px"
+    destaque: "30px"
 ---
 # Sistema visual da V2G
 

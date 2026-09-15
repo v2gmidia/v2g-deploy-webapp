@@ -1076,3 +1076,314 @@ javascript_tool → injetar(':is(input[type=text|email|tel|password|number|searc
 Os 7 campos que não são de texto (radio e file) ficam fora da regra de
 propósito, como no lote 2a. As duas `textarea` da `/meu-negocio` crescem 9px
 porque a altura delas é em linhas.
+
+## 12. Lote 2b aplicado — 15/09/2026
+
+Os papéis e o campo em 16px entraram no `globals.css` depois da escala de
+seis degraus (`docs/tokens.md`, "Escala de texto: lote 2b"), com as decisões
+do Victor sobre o §10 (`docs/decisoes.md`, 15/09).
+
+A regra está no fim do `globals.css`, no bloco "PAPÉIS DOS CONTROLES".
+
+```
+javascript_tool → /entrar recarregada; confere que a folha tem .papel-principal-48; __bancada.rodar claro e escuro; para cada linha, o papel esperado × o computado (fundo, cor, peso, tamanho, altura, raio)
+folhaTemPapeis: true · linhas que não batem: 2 (explicadas no §12.2)
+```
+
+### 12.1 Por papel
+
+| Papel | Aparências | Linhas | Altura | Contraste claro | Contraste escuro |
+|---|---|---:|---|---|---|
+| **principal** | B5 · B6, menos o `Campo.tsx:232` | 9 | 54 (uma em 45,6 — §12.2) | 7,38 | 8,70 |
+| principal desabilitada | B9 | 3 | 54, com 16px | 5,07 | 4,75 |
+| **principal em 48** | B7 · B19 | **6** | 48 | 7,38 | 8,70 |
+| **secundária** | B8 · B2, menos o `Campo.tsx:232` · B12 | 12 | 54 (48 no `.rev-corrigir`) | 6,50 em cartão / 6,03 em página | 4,89 / 5,45 |
+| **discreta** | B4 · B21 · B14 · B15 · B3 | 15 | 44 (20,3 no "deixe em branco", dentro da frase) | 5,59 / 5,18 | 5,35 / 5,79 |
+| discreta sobre a placa | B20 | 1 | oculto em 375px | 9,77 | 7,56 |
+| **escolha** | B1 · B11 · B18 · o `btn-linha` não marcado do `Campo.tsx:232` | 13 | 44 (24 no "Corrigir", dentro da frase) | 6,27 em cartão / 5,81 em página | 7,31 / 8,14 |
+| escolha marcada | B22 · o `btn-linha forte` do `Campo.tsx:232` | 2 | 44 | 7,38 | 8,70 |
+| fora | B10 · B16 · B17 · B13 `ec-back` | 5 | sem mudança de papel | — | — |
+
+Somam 66 linhas.
+
+**Como cada decisão ficou:**
+
+- **B6 foi separado por estrutura.** O `Campo.tsx:232` é o único
+  `.btn-linha` dentro de `.rc-editor .rc-acoes form`:
+  ```
+  $ grep -rn "rc-editor\|rc-acoes" app components --include=*.tsx
+  Campo.tsx:77 div.rc-acoes · :226 div.rc-editor · :227 div.rc-acoes · :269 form.rc-editor · :315 div.rc-acoes
+  ```
+  Os outros quatro `forte` ficam fora desse caminho: `Campo.tsx:100`
+  (sem `.rc-editor`), `:316` (o botão é filho direto do `.rc-acoes`) e
+  `revisar-perfil/[proposta]:293` e `:431`. Medido:
+
+  | Linha | Papel | Fundo | Cor | Altura | Raio |
+  |---|---|---|---|---|---|
+  | `Campo.tsx:100` "tá certo" | principal | #0743DC | #FFFFFF | 54 | 12px |
+  | `Campo.tsx:232` opção atual | escolha marcada | #0743DC | #FFFFFF | 44 | 999px |
+  | `Campo.tsx:232` outra opção | escolha | `--fundo-controle` | #485A6B | 44 | 999px |
+  | `Campo.tsx:316` "salvar" | principal | #0743DC | #FFFFFF | 54 | 12px |
+  | `revisar-perfil/[proposta]:293` "aceitar" | principal | #0743DC | #FFFFFF | 54 | 12px |
+  | `revisar-perfil/[proposta]:431` "aplicar ao perfil" | principal | #0743DC | #FFFFFF | 54 | 12px |
+
+  **A distinção depende do `<form>` em volta de cada opção.** Se ele sair
+  do JSX, a opção volta a ser secundária, ou principal se for a atual. Está
+  escrito no comentário da regra.
+- **A principal em 48 pega 6 linhas:**
+  - os 5 `.mini-send` ao lado de campo: `Chat.tsx:255`, `Contas.tsx:207`,
+    `:285` e `SeletorDeNicho.tsx:146`, `:238`;
+  - o "Guardar" da pergunta do dia (`PerguntaDoDia.tsx:483`).
+
+  O "Guardar" fica sozinho numa linha, e mesmo assim entrou aqui, e não na
+  de 54. O comentário do Victor de 01/09 logo acima dele diz "respiro, e não
+  um botão maior". A regra de contexto dele
+  (`.fallback-field.pd-guardar .mini-send`) passou de 44px para
+  `var(--alt-campo)`.
+- **O "Entrar" do rodapé do `/entrar` é secundária.** No modo cadastro, ele é
+  o único caminho para quem já tem conta. O outro clicável da tela é a marca,
+  que leva à própria `/entrar`. O "Criar conta" do modo login usa a mesma
+  classe (`.auth-foot .link-btn`) e é a única volta ao cadastro; foi junto.
+  Como discreta ele teria 5,59:1; como secundária mede 6,50:1. Na página
+  real:
+  ```
+  javascript_tool → iframe /entrar, 375px: .auth-foot e o .link-btn dentro dele
+  auth-foot h 69.8 · "→ Entrar" 98.3×54.0 fundo rgba(17,30,47,0.06) cor rgb(7,67,220) 700 16px · na mesma linha do texto "Já tenho conta"
+  ```
+- **Escolha, texto não marcado.** "O tom do corpo, e não navy" virou
+  `--texto-fraco` (#485A6B no claro, #9FB0C6 no escuro), o tom dos
+  parágrafos de apoio (`.auth-sub`, `.hint`). O `--ink` do `body` é
+  #111E2F, que é o próprio navy; por isso ele não serviu.
+- **O desabilitado vence a principal.** O bloco `:disabled` vem depois dela,
+  com especificidade igual ou maior. O B9 fica em 54px e 16px, com fundo
+  `--ice-soft` e cor `--ink-mute`. O `.mini-send:disabled` passou do
+  `--ink-mute` como fundo, que era o erro de papel do N5, para esse mesmo
+  par.
+- **`ec-back` não mudou:** círculo de 30px com área invisível de 44.
+
+### 12.2 As duas linhas que não bateram
+
+1. **`aprovar/page.tsx:151`, `cta ghost` com `disabled` fixo:** saiu com
+   texto `--ink-mute`. É o estado desabilitado da secundária, e a conferência
+   é que não previa esse caso. Mede 4,97:1 no claro e 4,72:1 no escuro;
+   componente inativo é isento pela WCAG 1.4.3.
+2. **`criativos/Analisar.tsx:318`, `cta` "Escolher outra imagem":** 45,6px, e
+   não 54. **Não é defeito da regra nova: uma regra de contexto anterior
+   vence** por especificidade:
+   ```
+   $ grep -n "\.analise-saida \.cta" app/globals.css
+   4400:.analise-saida .cta { min-height: 44px; }
+   ```
+
+   **Não mexi.** Há mais regras de contexto do mesmo tipo, que deixam a
+   principal menor que o papel:
+
+   | Linha | Regra | O que faz |
+   |---:|---|---|
+   | 4400 | `.analise-saida .cta` | `min-height: 44px` |
+   | 3872 | `.proximo .cta` | `min-height: 48px` |
+   | 3988 | `.command-card .cta` | `min-height: 44px`, cor e hover próprios |
+   | 1592 | `.proof-actions .cta` | fundo `--surface`, `--fs-corpo`, padding menor |
+   | 2045 | `.side-support .cta` | `--fs-corpo`, padding menor (e lima no `.ghost`) |
+   | 2532 | `.faixa-reconectar .cta` | `--fs-corpo`, padding menor |
+
+   As três primeiras parecem ser piso de toque de lotes anteriores, que
+   agora ficaria abaixo do papel. As três últimas parecem compactas de
+   propósito. **Decisão pendente.** O `.hero-destaque .cta`, branco na faixa,
+   fica como está, de propósito.
+
+### 12.3 Campos em 16px, aplicado
+
+```
+javascript_tool → fontSize e altura dos 35 campos, montagem, CSS real
+C1 16px h 48 · C2 16px h 48 · C3 16px h 48 / 65,6 · C5 16px h 48 · C7 16px h 48 / 48,8
+C4 13,33px (radio) · C6 14px (file) · C8 13,33px (file escondido) — fora da regra, de propósito
+```
+Na página real, os 5 campos com texto das rotas públicas saem em 16px, e
+todos os placeholders cabem, **menos um**:
+```
+javascript_tool → iframe /entrar, /recuperar, /redefinir: fontSize de cada input e largura do placeholder contra o espaço livre
+```
+
+**Os placeholders, respondendo ao pedido:**
+
+| Campo | Texto | Largura em 16px / espaço | Cabe |
+|---|---|---|---|
+| `Contas.tsx:193` | "O valor certo, em reais" (hoje) | 158,3 / 129 | **não** |
+| `Contas.tsx:193` | "Valor em reais" (proposto) | 100,0 / 129 | **sim** — simulado; o `.tsx` NÃO foi editado |
+| `redefinir/Form.tsx:17` | "Pelo menos 8 caracteres, com letras e números" | 334,7 / 270 | **não** (já não cabia em 15px) |
+
+O espaço do `Contas.tsx:193` caiu de 139 para 129 porque o `mini-send` ao
+lado passou a 16px.
+
+**Os 10 sem texto fixo no código:**
+
+| Campo | De onde vem o texto | Texto | Largura / espaço | Cabe |
+|---|---|---|---|---|
+| `onboarding/Chat.tsx:240` | `p.fallbackPlaceholder`, de `onboarding/perguntas.ts` | `:70` "O nome do seu negócio" | 167,6 / 183 | sim |
+| | | `:112` "Como você descreveria seu negócio em poucas palavras?" | 410,9 / 183 | **não** |
+| | | `:122` "Ex: bolos e salgados feitos no dia, pra festa e pro dia a dia" | 403,6 / 183 | **não** |
+| | | `:144` "Conte com suas palavras onde seus clientes estão" | 356,7 / 183 | **não** |
+| `SeletorDeNicho.tsx:130` | prop `placeholderLivre`: `Chat.tsx:186` passa `p.fallbackPlaceholder`; padrão em `SeletorDeNicho.tsx:66` | "Como você descreveria seu negócio em poucas palavras?" | 410,9 / 196 | **não** |
+| `SeletorDeNicho.tsx:220` | prop `placeholder`; ninguém passa, vale o padrão de `SeletorDeNicho.tsx:63` | "Busque ou escreva do seu jeito" | 219,7 / 196 | **não** |
+| `conta/Formularios.tsx:26` | sem placeholder: `defaultValue={props.nome}` | — | — | — |
+| `conta/Formularios.tsx:54` | sem placeholder: e-mail desabilitado, `defaultValue={props.email}` | — | — | — |
+| `conta/Formularios.tsx:62` | sem placeholder: senha desabilitada, `defaultValue="••••••••"` | — | — | — |
+| `meu-negocio/Campo.tsx:276`, `:286`, `:304`, `:306` | sem placeholder: `defaultValue` com o valor salvo | — | — | — |
+
+```
+$ grep -rn "fallbackPlaceholder" app lib components --include=*.ts --include=*.tsx
+$ grep -n "placeholder" components/ui/SeletorDeNicho.tsx
+javascript_tool → cada texto no campo montado com o mini-send ao lado, 16px; canvas.measureText contra clientWidth − padding
+```
+
+Cinco dos seis textos dinâmicos não cabem em 16px. Os quatro de
+`perguntas.ts` também não cabiam em 13px, quando não eram medidos: são
+frases, e não dicas curtas.
+
+## 13. Lote 2b, terceira rodada — 15/09/2026
+
+Decisões do Victor sobre o §12 (`docs/decisoes.md`, 15/09, "terceira rodada").
+
+### 13.1 O "Guardar" volta para 54, e o que sobra em cada altura
+
+```
+javascript_tool → /entrar 375px, __bancada.rodar claro; família principal = B5, B9, B7, B19 e B6 menos o Campo.tsx:232
+```
+
+| Altura | Linhas | Quais |
+|---|---:|---|
+| **54px** | **13** | B5 ×5 (`Combinados.tsx:128`, `:133` · `Contas.tsx:218` · `FormVerba.tsx:57` · `Analisar.tsx:318`) · B9 ×3, desabilitados (`aprovar/page.tsx:148` · `Contas.tsx:401` · `verba/page.tsx:126`) · B19, o "Guardar" (`PerguntaDoDia.tsx:483`) · B6 ×4 (`Campo.tsx:100`, `:316` · `revisar-perfil/[proposta]:293`, `:431`) |
+| **48px** | **5** | B7, colados em campo: `Chat.tsx:255` · `Contas.tsx:207`, `:285` · `SeletorDeNicho.tsx:146`, `:238` |
+
+A regra de contexto do "Guardar" (`.fallback-field.pd-guardar .mini-send`)
+passou a ler `--alt-principal`.
+
+### 13.2 As seis regras de contexto
+
+**Só três delas reduziam a principal.** As outras três estavam em botões de
+outro papel, e cada uma foi alinhada ao **seu** papel:
+
+- `.command-card .cta` e `.proof-actions .cta` estão em `cta quiet`, que é
+  discreta;
+- `.side-support .cta` está em `cta ghost`, que é secundária.
+
+Antes e depois, montados na cadeia real com os filhos, em iframe da
+`/entrar` com o CSS real. A barra lateral foi medida em 1280px, porque só
+aparece acima de 900px:
+```
+javascript_tool → para cada contexto: caixa do bloco, e de cada .cta: largura×altura, min-height, fontSize/peso, padding, fundo, cor, borda, linhas do rótulo, se cai abaixo do irmão; antes da edição (__CTX_ANTES) e depois
+```
+
+| Regra | Tela | Botão | Papel | Antes | Depois | Layout |
+|---|---|---|---|---|---|---|
+| `.analise-saida .cta`, **removida** | `/criativos` | "Escolher outra imagem" (`Analisar.tsx:318`) | principal | 324×45,6, `min-height` 44 | 324×**54** | bloco 239,7 → 248,1; nada vaza |
+| `.proximo .cta`, sai o `min-height: 48px` | `/inicio` (`page.tsx:438`, `:640`) | a ação do "Seu próximo passo" | principal | 278,4×48 | 278,4×**54** | bloco 195,1 → 201,1; nada vaza |
+| `.faixa-reconectar .cta`, saem o `padding: 11px 18px` e o `--fs-corpo` | `/inicio`, `/anuncios`, `/vendas` | "Reconectar" | principal | 116,5×54, 14px, padding 11/18 | **124**×54, **16px**, padding 14/16 | faixa 87,6 → 87,6 com texto curto, e 165,2 → 165,2 com texto longo (o real tem ~130 caracteres): o botão já descia sozinho para a linha de baixo, e continua; nada vaza |
+| `.command-card .cta`, saem contorno, cor, peso, `min-height` e hover | `/inicio` (`page.tsx:962`) | "Falar com uma pessoa" (`cta quiet`) | discreta | 282,4×44, 14px/600, sem borda, cinza | igual | nenhuma mudança visível: o contorno já não pintava desde o §12 |
+| `.proof-actions .cta`, **removidas** as duas regras | `/onboarding/contas` e `/onboarding` (`Trilha.tsx:171`) | "Salvar e continuar depois", "Falar com um humano" (`cta quiet`) | discreta | 282,4×44, padding 11px 12px | 282,4×44, padding 8px 0 | bloco 96 → 96 |
+| `.side-support .cta`, **NÃO alinhada** | barra lateral, ≥900px (`layout.tsx:173`) | "Falar com uma pessoa" (`cta ghost`, lima) | secundária | 192,4×54, 16px, padding 9px 12px, **rótulo em 2 linhas** | não mexido | **PAROU** — ver abaixo |
+
+**Por que a `.side-support` parou.** O cartão de suporte tem 220px de
+largura em 1280px. Com a secundária em 16px (§12), "Falar com uma pessoa"
+**já quebra em duas linhas** dentro do botão. Alinhar ao papel troca o
+`padding: 9px 12px` pelo 14px 16px da `.cta`: sobram 8px a menos para o
+texto, o rótulo continua em duas linhas e o botão fica mais alto. É o caso
+"cresce e quebra o layout". As saídas:
+
+- (a) rótulo mais curto, que é texto e não CSS;
+- (b) a barra lateral tem uma secundária compacta declarada;
+- (c) o botão sai do cartão.
+
+Não escolhi nenhuma.
+
+### 13.3 Cartão sem borda
+
+Aplicado com escopo `.canvas`, que só existe no casco de
+`app/(protected)/layout.tsx:235`. **Por isso vale para as 11 telas do casco,
+e não só para as 7 da decisão:** o CSS não separa tela por tela. As três a
+mais são `/conta`, `/meu-negocio` e `/revisar-perfil` (a lista).
+
+**Correção da lista de telas.** A "`/expectativas`" das 7 telas é do grupo
+`(fluxo)`, com o cartão dentro do `.auth-card`. Ela entrou na lista por erro
+meu no relatório anterior. Ficou de fora, como as outras de cadastro. A
+sétima tela é o esqueleto de carregamento da `/anuncios`.
+
+```
+javascript_tool → cada uso de cartão do cartoes.json com raiz em (protected), montado na cadeia real; borda por lado = style ≠ none, largura > 0 e cor com alfa > 0
+```
+
+| Tela | Sem borda | Ainda com borda | Mistura? |
+|---|---|---|---|
+| `/inicio` | `.card` ×5, `.proximo` ×3, `.sinal` ×5, `.list-row`, `.command-card` | — | **não** |
+| `/anuncios` | `.res-num` ×2, `.res-falha`, `.res-ficha`, `.res-nivel`, `.card` ×2, `.tips-card` | — | **não** |
+| `/anuncios` (carregando) | `.res-ficha`, `.res-num` | — | **não** |
+| `/alertas` | `.empty-hero`, `.card` ×3 | `.alert-card`, só a borda esquerda (severidade) | sim |
+| `/criativos` | `.analise-cartao.v-neutro` ×2, `.analise-envio` | `.analise-cartao` com veredito ×2 (a cor é o veredito) · `.casa-desenho` (tracejado: "isto é um desenho") | sim |
+| `/revisar-perfil/[proposta]` | `.rev-item` ×2 | `.rev-opcao` ×2 e `.rev-plinha` ×2 (sem fundo: sem borda, somem) · `.diag-lista.critica`, só a esquerda | sim |
+| `/saude-meta` | `.card` ×2, `.list-row` | `.diag-lista.critica` ×2, só a esquerda | sim |
+| `/conta` (fora das 7) | `.card` ×12 | `.escolhido`, `.escolha-item` ×2, dentro de `.card` (branco sobre branco) | sim |
+| `/meu-negocio` (fora das 7) | `.card` ×2 | — | não |
+| `/revisar-perfil` (fora das 7) | `.empty-hero`, `.espera-row` | — | não |
+
+**Sobram quatro das 7 com os dois tipos juntos.** Em todas, a borda que
+ficou carrega significado:
+- severidade: a esquerda do `.alert-card` e do `.diag-lista`;
+- veredito: a cor do `.analise-cartao`;
+- desenho: o tracejado da `.casa-desenho`;
+- o cartão sem fundo, que some sem borda: `.rev-opcao` e `.rev-plinha`.
+
+A caixa não mudou de tamanho em nenhum: a regra é `border-color:
+transparent`, e não `border: 0`.
+
+### 13.4 Placeholders, depois da edição
+
+A exceção autorizada foi só para a string do placeholder, em dois
+arquivos, e nenhum outro markup mudou:
+```
+$ git diff -U0 "app/(fluxo)/onboarding/contas/Contas.tsx" "app/(public)/redefinir/Form.tsx" | grep "^[-+] "
+-                    placeholder="O valor certo, em reais"
++                    placeholder="Valor em reais"
+-            placeholder="Pelo menos 8 caracteres, com letras e números"
++            placeholder="8 caracteres, com letra e número"
+javascript_tool → cada texto no campo montado na cadeia real, 375px, CSS real (16px); canvas.measureText contra clientWidth − padding
+```
+
+| Campo | Texto | Largura / espaço | Cabe |
+|---|---|---|---|
+| `Contas.tsx:193` | "Valor em reais" | 100,0 / 129 | **sim**, sobram 29,0 |
+| `redefinir/Form.tsx:17` | "8 caracteres, com letra e número" | 230,9 / 270 | **sim**, sobram 39,1 |
+
+**Os textos para o Victor encurtar:**
+
+| Onde está o texto | Onde aparece | Texto | Largura / espaço | Falta |
+|---|---|---|---|---|
+| `onboarding/perguntas.ts:70` | `Chat.tsx:240` | "O nome do seu negócio" | 167,6 / 183 | cabe |
+| `onboarding/perguntas.ts:112` | `Chat.tsx:240` e `SeletorDeNicho.tsx:130` (via `Chat.tsx:186`) | "Como você descreveria seu negócio em poucas palavras?" | 410,9 / 183 (196 no seletor) | 227,9 |
+| `onboarding/perguntas.ts:122` | `Chat.tsx:240` | "Ex: bolos e salgados feitos no dia, pra festa e pro dia a dia" | 403,6 / 183 | 220,6 |
+| `onboarding/perguntas.ts:144` | `Chat.tsx:240` | "Conte com suas palavras onde seus clientes estão" | 356,7 / 183 | 173,7 |
+| `components/ui/SeletorDeNicho.tsx:66` | padrão do `placeholderLivre` | "Como você descreveria seu negócio em poucas palavras?" | 410,9 / 196 | 214,9 |
+| `components/ui/SeletorDeNicho.tsx:63` | padrão do `placeholder` da busca (`:220`) | "Busque ou escreva do seu jeito" | 219,7 / 196 | 23,7 |
+
+Os espaços contam o `mini-send` ao lado, em 16px. O rótulo usado na medição
+do seletor foi "Usar", que é amostra; o rótulo real não foi lido.
+
+### 13.5 A trava do `Campo.tsx:232`
+
+`pnpm conferir:escolha-de-campo` (`scripts/conferir-escolha-de-campo.ts`)
+entrou no fim da cadeia do `pnpm conferir`. Ela lê o JSX pelo compilador
+do TypeScript e confere quatro coisas:
+
+1. o seletor está no `globals.css`;
+2. a busca acha os `btn-linha` do `Campo.tsx` (controle positivo);
+3. o botão de opção fica dentro de `form` < `.rc-acoes` < `.rc-editor`;
+4. nenhum outro `btn-linha` do app casa com essa cadeia (controle negativo).
+
+```
+$ pnpm conferir:escolha-de-campo
+TUDO CERTO — 9/9 conferências
+$ (numa cópia com o <form> das opções trocado por <div>) node scripts/conferir-escolha-de-campo.ts; echo $?
+  FALHA   e ele está dentro de form, dentro de .rc-acoes, dentro de .rc-editor — senão deixa de ser ESCOLHA e vira principal/secundária
+TEM FALHA — 8/9 conferências
+1
+```

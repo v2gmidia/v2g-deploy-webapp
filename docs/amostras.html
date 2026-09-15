@@ -12,16 +12,15 @@
 
   ELA LÊ O CSS REAL: o <link> abaixo é o app/globals.css do repositório.
   Nenhuma cor, tamanho, raio ou borda do app foi copiado para cá. Quando o
-  globals.css muda, esta página muda junto — é assim que ela serve para
-  julgar o antes e o depois de cada lote.
+  globals.css muda, esta página muda junto.
 
-  AS DUAS EXCEÇÕES, e só elas:
-  1. `--font-archivo`. No app quem define essa variável é o next/font
-     (app/layout.tsx), não o CSS. Sem ela a página sairia em system-ui e
-     você julgaria a fonte errada. Por isso a Archivo é carregada aqui.
-  2. O "depois" do cartão (item 4) é `border-color: transparent`, a regra
-     que está PROPOSTA e não aplicada. É uma palavra-chave, não um valor
-     copiado do app. Some daqui quando a regra entrar no globals.css.
+  A ÚNICA EXCEÇÃO: `--font-archivo`. No app quem define essa variável é o
+  next/font (app/layout.tsx), não o CSS. Sem ela a página sairia em
+  system-ui e você julgaria a fonte errada. Por isso a Archivo é carregada
+  aqui.
+
+  O "depois" do cartão não copia regra nenhuma: ele mora dentro de um
+  .canvas, que é o escopo em que o cartão sem borda vale no app.
 
   O CSS próprio desta página é só de arrumação (grade, espaço entre as
   amostras, rótulos) e usa tokens para cor.
@@ -36,7 +35,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../app/globals.css">
 <style>
-  /* Exceção 1 — ver o comentário do topo. */
+  /* A exceção — ver o comentário do topo. */
   :root { --font-archivo: "Archivo"; }
 
   /* Arrumação da página. Nada daqui é aparência de controle. */
@@ -51,17 +50,18 @@
   .quadro .amostras { padding: var(--sangria); padding-bottom: 48px; }
   .amostras section { margin-bottom: 40px; }
   .amostras h2 { font-family: var(--display); color: var(--ink); margin: 0 0 4px; }
+  .amostras h3 { font-family: var(--display); color: var(--ink); margin: 24px 0 10px; }
+  .amostras h3 small { display: block; color: var(--ink-mute); font-weight: 400; }
   .amostras .de-onde { color: var(--ink-mute); margin: 0 0 14px; }
   .linha-amostra { display: grid; grid-template-columns: 96px 1fr; gap: 10px 12px; align-items: center; margin-bottom: 14px; }
   .linha-amostra > .rotulo { color: var(--ink-soft); font-family: var(--display); }
   .linha-amostra > .rotulo small { display: block; color: var(--ink-mute); }
   .lado-a-lado { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .lado-a-lado > div > .rotulo { color: var(--ink-soft); margin-bottom: 6px; font-family: var(--display); }
-  .placa { background: var(--plate); padding: 12px; }
+  .fileira { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  /* o .canvas do app traz padding e altura próprios; aqui ele só marca o escopo */
+  .amostras .canvas { padding: 0; min-height: 0; }
   #percorrer { margin-bottom: 24px; }
-
-  /* Exceção 2 — a proposta do item 4, simulada. Ver o comentário do topo. */
-  .cartao-depois > * { border-color: transparent; }
 </style>
 </head>
 <body>
@@ -81,41 +81,49 @@
 
   <section class="papeis">
     <h2>Os cinco papéis</h2>
-    <p class="de-onde">Enquanto o mapeamento do item 1 não for aprovado, cada papel mostra as classes de hoje que vão ler aquele papel. Aprovado, esta mesma seção passa a mostrar o papel novo, sem mexer nesta página.</p>
+    <p class="de-onde">Aplicados. Em cada papel, primeiro a classe nova (<code>.papel-*</code>), depois as classes de hoje que leem aquele papel.</p>
 
-    <h3>Principal <small>← .cta (B5), .mini-send (B7, B19)</small></h3>
-    <div class="linha-amostra"><span class="rotulo">normal</span><div><button type="button" class="cta">Pode ir ao ar</button></div></div>
-    <div class="linha-amostra"><span class="rotulo">desabilitado<small>é o B9, fora do mapeamento</small></span><div><button type="button" class="cta" disabled>Pode ir ao ar</button></div></div>
+    <h3>Principal <small>.papel-principal ← .cta, .btn-linha.forte, o "Guardar"</small></h3>
+    <div class="linha-amostra"><span class="rotulo">classe nova</span><div><button type="button" class="papel-principal">Pode ir ao ar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">.cta</span><div><button type="button" class="cta">Pode ir ao ar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">desabilitado<small>B9: o desabilitado vence</small></span><div><button type="button" class="cta" disabled>Pode ir ao ar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">.btn-linha forte</span><div class="rc-acoes"><button type="button" class="btn-linha forte">tá certo</button><button type="button" class="btn-linha">não é isso</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">"Guardar"<small>pergunta do dia, sozinho</small></span><div class="fallback-field pd-guardar"><button type="button" class="mini-send">Guardar resposta</button></div></div>
+
+    <h3>Principal em 48 <small>.papel-principal-48 ← .mini-send colado em campo</small></h3>
     <div class="linha-amostra"><span class="rotulo">ao lado de campo</span><div class="fallback-field"><input type="text" placeholder="Sua cidade"><button type="button" class="mini-send">Enviar</button></div></div>
-    <div class="linha-amostra"><span class="rotulo">sozinho</span><div class="fallback-field pd-guardar"><button type="button" class="mini-send">Guardar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">desabilitado</span><div class="fallback-field"><input type="text" placeholder="Sua cidade" disabled><button type="button" class="mini-send" disabled>Enviar</button></div></div>
 
-    <h3>Secundária <small>← .cta.ghost (B8), .btn-linha (B2, B6)</small></h3>
-    <div class="linha-amostra"><span class="rotulo">normal</span><div><button type="button" class="cta ghost">Quero mudar alguma coisa</button></div></div>
+    <h3>Secundária <small>.papel-secundaria ← .cta.ghost, .btn-linha, .auth-foot .link-btn</small></h3>
+    <div class="linha-amostra"><span class="rotulo">classe nova</span><div><button type="button" class="papel-secundaria">Quero mudar alguma coisa</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">.cta ghost</span><div><button type="button" class="cta ghost">Quero mudar alguma coisa</button></div></div>
     <div class="linha-amostra"><span class="rotulo">desabilitado</span><div><button type="button" class="cta ghost" disabled>Quero mudar alguma coisa</button></div></div>
-    <div class="linha-amostra"><span class="rotulo">btn-linha</span><div class="rc-acoes"><button type="button" class="btn-linha">Corrigir</button><button type="button" class="btn-linha forte">Salvar</button><button type="button" class="btn-linha" disabled>Desabilitado</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">rodapé do /entrar<small>única saída do modo</small></span><div class="auth-foot">Já tenho conta <button type="button" class="link-btn">&rarr; Entrar</button></div></div>
 
-    <h3>Discreta <small>← .text-fallback, .btn-texto, .ec-doubt, .cta.quiet, .btn-linha.fraco, .link-btn</small></h3>
-    <div class="linha-amostra"><span class="rotulo">text-fallback</span><div><button type="button" class="text-fallback">Não sei agora</button></div></div>
-    <div class="linha-amostra"><span class="rotulo">btn-texto</span><div><button type="button" class="btn-texto">deixe em branco</button></div></div>
+    <h3>Discreta <small>.papel-discreta ← .text-fallback, .btn-texto, .ec-doubt, .cta.quiet, .btn-linha.fraco, .link-btn</small></h3>
+    <div class="linha-amostra"><span class="rotulo">classe nova</span><div><button type="button" class="papel-discreta">Pular por enquanto</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">text-fallback</span><div><button type="button" class="text-fallback">não sei</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">btn-texto<small>dentro da frase</small></span><p class="rc-apagar">Ou <button type="button" class="btn-texto alvo-em-texto">deixe em branco</button> — a gente para de usar isso no anúncio.</p></div>
     <div class="linha-amostra"><span class="rotulo">ec-doubt</span><div><button type="button" class="ec-doubt">Ficou alguma dúvida?</button></div></div>
     <div class="linha-amostra"><span class="rotulo">cta quiet</span><div><button type="button" class="cta quiet">Voltar</button></div></div>
-    <div class="linha-amostra"><span class="rotulo">btn-linha fraco</span><div class="rc-acoes"><button type="button" class="btn-linha fraco">Deixa como estava</button><button type="button" class="btn-linha fraco" disabled>Desabilitado</button></div></div>
-    <div class="linha-amostra"><span class="rotulo">link-btn<small>no rodapé do cartão</small></span><div class="auth-foot">Já tem conta? <button type="button" class="link-btn">Entrar</button></div></div>
-    <p class="de-onde">O <code>.link-btn</code> da barra lateral (B20) só aparece acima de 900px e não cabe neste quadro.</p>
+    <div class="linha-amostra"><span class="rotulo">btn-linha fraco</span><div class="rc-acoes"><button type="button" class="btn-linha fraco">deixa como estava</button><button type="button" class="btn-linha fraco" disabled>desabilitado</button></div></div>
+    <p class="de-onde">O <code>.link-btn</code> da barra lateral (B20) e o botão lima do cartão de suporte só aparecem acima de 900px e não cabem neste quadro.</p>
 
-    <h3>Escolha <small>← .chip-opt (B1, B22), .botao-leve (B11, B18)</small></h3>
+    <h3>Escolha <small>.papel-escolha (.marcada) ← .chip-opt, .botao-leve, opções de campo fechado</small></h3>
+    <div class="linha-amostra"><span class="rotulo">classe nova</span><div class="fileira"><button type="button" class="papel-escolha">Dentista</button><button type="button" class="papel-escolha marcada">Padaria</button></div></div>
     <div class="linha-amostra"><span class="rotulo">chip-opt</span><div class="chips-row"><button type="button" class="chip-opt">Dentista</button><button type="button" class="chip-opt picked">Padaria</button><button type="button" class="chip-opt" disabled>Desabilitado</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">campo fechado<small>Campo.tsx:232</small></span><div class="rc-editor"><div class="rc-acoes"><form><button type="button" class="btn-linha forte">sim</button></form><form><button type="button" class="btn-linha">não</button></form><button type="button" class="btn-linha fraco">deixa como estava</button></div></div></div>
     <div class="linha-amostra"><span class="rotulo">botao-leve</span><div><button type="button" class="botao-leve">Voltar para ontem</button></div></div>
     <div class="linha-amostra"><span class="rotulo">no convite</span><div class="pd-convite">Faltaram 3 dias. <button type="button" class="botao-leve">Preencher sexta-feira</button></div></div>
 
-    <h3>Ícone <small>← .ec-back (B13)</small></h3>
-    <div class="linha-amostra"><span class="rotulo">normal</span><div class="ec-top"><button type="button" class="ec-back alvo-redondo" aria-label="Voltar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg></button><span class="ec-label">Combinados</span></div></div>
-    <div class="linha-amostra"><span class="rotulo">desabilitado</span><div class="ec-top"><button type="button" class="ec-back alvo-redondo" aria-label="Voltar" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg></button><span class="ec-label">Combinados</span></div></div>
+    <h3>Ícone <small>.papel-icone · o .ec-back fica como está</small></h3>
+    <div class="linha-amostra"><span class="rotulo">classe nova</span><div><button type="button" class="papel-icone" aria-label="Avisos"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6Z"/><path d="M10 19a2 2 0 0 0 4 0"/></svg></button></div></div>
+    <div class="linha-amostra"><span class="rotulo">ec-back<small>30px, área de 44</small></span><div class="ec-top"><button type="button" class="ec-back alvo-redondo" aria-label="Voltar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg></button><span class="ec-label">Combinados</span></div></div>
   </section>
 
   <section class="campos">
     <h2>Campos</h2>
-    <p class="de-onde">Texto, select e textarea, com a regra de hoje. O item 2 (16px) ainda não foi aplicado.</p>
+    <p class="de-onde">Texto, select e textarea, em 16px.</p>
     <div class="field"><label for="a-nome">Nome</label><input id="a-nome" type="text" placeholder="Como você gosta de ser chamado?"></div>
     <div class="field"><label for="a-email">E-mail, desabilitado</label><input id="a-email" type="email" value="voce@seunegocio.com.br" disabled></div>
     <div class="field"><label for="a-sel">Select</label><select id="a-sel"><option>Clínica odontológica</option><option>Padaria</option></select></div>
@@ -123,18 +131,17 @@
   </section>
 
   <section class="cartoes">
-    <h2>Cartão, antes e depois da borda sair</h2>
-    <p class="de-onde">O "depois" é a proposta do item 4, que ainda não está no globals.css.</p>
+    <h2>Cartão, com e sem borda</h2>
+    <p class="de-onde">À esquerda, o cartão como fica no cadastro, dentro do <code>.auth-card</code> e fora do casco. À direita, o mesmo cartão dentro do <code>.canvas</code>, onde a borda saiu.</p>
     <div class="lado-a-lado">
-      <div><div class="rotulo">antes</div><div class="tips-card"><b class="tips-title">Três fotos por semana</b><ul class="tips-list"><li>Dão material novo para a V2G testar.</li></ul></div></div>
-      <div class="cartao-depois-bloco"><div class="rotulo">depois</div><div class="cartao-depois"><div class="tips-card"><b class="tips-title">Três fotos por semana</b><ul class="tips-list"><li>Dão material novo para a V2G testar.</li></ul></div></div></div>
+      <div><div class="rotulo">fora do casco</div><div class="tips-card"><b class="tips-title">Três fotos por semana</b><ul class="tips-list"><li>Dão material novo para a V2G testar.</li></ul></div></div>
+      <div><div class="rotulo">no casco</div><div class="canvas"><div class="tips-card"><b class="tips-title">Três fotos por semana</b><ul class="tips-list"><li>Dão material novo para a V2G testar.</li></ul></div></div></div>
     </div>
   </section>
 
   <section class="fora">
-    <h2>Os quatro que ficaram de fora</h2>
-    <p class="de-onde">B9, B10, B16 e B17. Aparência de hoje.</p>
-    <div class="linha-amostra"><span class="rotulo">B9<small>cta desabilitado</small></span><div><button type="button" class="cta" disabled>Pode ir ao ar</button></div></div>
+    <h2>Os que ficaram de fora</h2>
+    <p class="de-onde">B10 e B16/B17. Aparência de hoje. O B9 entrou na principal e está lá em cima.</p>
     <div class="linha-amostra"><span class="rotulo">B10<small>acct-row desabilitada</small></span><div class="acct-list"><button type="button" class="acct-row" aria-disabled="true" disabled><span class="ar-text"><b>Trocar a forma de pagamento</b><span>Em breve por aqui</span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></div>
     <div class="linha-amostra"><span class="rotulo">B16 e B17<small>tema-opcao</small></span><div class="tema-opcoes">
       <button type="button" class="tema-opcao picked"><span class="tema-amostra"><span></span><span></span></span><b>Claro</b><span>Fundo claro o dia todo</span></button>
@@ -154,6 +161,8 @@
     const avisar = () => parent.postMessage({ amostras: tema, altura: document.documentElement.scrollHeight }, "*");
     addEventListener("load", avisar);
     new ResizeObserver(avisar).observe(document.body);
+    // Os <form> das amostras não enviam nada.
+    document.addEventListener("submit", (e) => e.preventDefault());
     // Foco visível, controle por controle, sem precisar de teclado.
     document.getElementById("percorrer").addEventListener("click", async () => {
       const alvos = [...document.querySelectorAll(".papeis button:not(#percorrer):not([disabled]), .campos input:not([disabled]), .campos select, .campos textarea")];

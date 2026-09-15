@@ -421,7 +421,86 @@ Mudaram 40 linhas de botão e 29 campos.
 
 ---
 
-## PROPOSTA — escala de texto, lote 2b, 15/09/2026 — NÃO APLICADA
+## Escala de texto: lote 2b — APLICADA
+
+Aplicada em 15/09/2026, com seis degraus: **12 · 14 · 16 · 20 · 24 · 30**.
+O Victor recusou a proposta de cinco, que está logo abaixo e fica registrada:
+juntar título de tela e título de bloco custava hierarquia. Os seis nomes
+continuaram os mesmos, e só os valores mudaram. Os papéis dos controles e o
+campo em 16px foram aplicados **depois** da escala, lendo dela.
+
+```
+$ grep -nE "^\s*--fs-(legenda|corpo|titulo|bloco|tela|destaque):" app/globals.css
+--fs-legenda: 12px · --fs-corpo: 14px · --fs-titulo: 16px · --fs-bloco: 20px · --fs-tela: 24px · --fs-destaque: 30px
+$ node scripts/gerar-design-md.mjs
+escala: 6 degraus (12px, 14px, 16px, 20px, 24px, 30px)
+```
+
+| Token | Antes | Depois | Declarações que leem (globals.css) |
+|---|---|---|---:|
+| `--fs-legenda` | 11px | **12px** | 73 |
+| `--fs-corpo` | 13px | **14px** | 112 |
+| `--fs-titulo` | 15px | **16px** | 39 |
+| `--fs-bloco` | 18px | **20px** | 7 |
+| `--fs-tela` | 22px | **24px** | 10 |
+| `--fs-destaque` | 26px | **30px** | 3 |
+
+A contagem de leitores é a do `node -e` da proposta abaixo. Os papéis dos
+controles e o campo acrescentaram leitores de `--fs-corpo` e
+`--fs-titulo`.
+
+### O detector passa
+
+```
+$ node .claude/skills/impeccable/scripts/detect.mjs --json app/globals.css
+7 achados: side-tab ×4 · layout-transition · codex-grid-background · design-system-color (rgb(0 0 0 / 0.9))
+```
+São os mesmos 7 de antes do lote, e nenhum é de tamanho. O teste de dois
+lados, num arquivo temporário apagado em seguida:
+```
+$ node .claude/skills/impeccable/scripts/detect.mjs --json app/__t2b/t.css   (.a 14px · .b 16px · .c 13px · .d 15px)
+2 achados: font-size: 13px is off the DESIGN.md type ramp · font-size: 15px is off the DESIGN.md type ramp
+```
+A rampa nova aceita 14 e 16 e reprova os valores velhos.
+
+### Antes e depois nas rotas públicas, 375px
+
+A escala nova é a do CSS real; a velha foi injetada por cima, e os dois
+lados foram comparados elemento a elemento pelo índice.
+```
+javascript_tool → por rota, iframe 375×812: fontSize, número de linhas do texto, scrollWidth > clientWidth, altura da página; CSS real × :root{--fs-*: valores velhos}
+```
+
+| Rota | Elementos que mudaram de tamanho | Mudaram de número de linhas | Passaram a transbordar | Página vaza |
+|---|---:|---|---:|---|
+| `/` | 0 | 0 | 0 | não |
+| `/entrar` | 14 | 0 | 0 | não (altura 953 → 974) |
+| `/recuperar` | 9 | 1: o `p` "Nunca dizemos se um e-mail está ou não…", 3 → 4 | 0 | não |
+| `/redefinir` | 7 | 1: o `h1.auth-h` "Este link não é mais válido.", 1 → 2 | 0 | não |
+| `/exclusao-de-dados/x` | 2 | 0 | 0 | não |
+
+A `/` não muda: o `lp.css` escreve tamanho em px e não lê `--fs-*`.
+```
+$ grep -rn "var(--fs-" app components --include=*.tsx "app/(marketing)/lp.css"
+(vazio)
+```
+
+**Não medido:** as 21 rotas com sessão.
+
+### Os três tokens de papel e a escala de espaço
+
+- Os três tokens de papel da proposta mais abaixo (`--fundo-controle`,
+  `--texto-discreto`, `--texto-discreto-sobre-placa`) foram **aprovados e
+  aplicados** com os valores de lá.
+- Entraram também três alturas: `--alt-principal` 54px, `--alt-campo` 48px
+  e `--alt-controle` 44px.
+- A medição com eles aplicados está em `docs/botoes.md` §12.
+- **A escala de espaço continua NÃO aplicada.** Por decisão do Victor, vira
+  lote próprio.
+
+---
+
+## PROPOSTA — escala de texto, lote 2b, 15/09/2026 — SUBSTITUÍDA pela de seis degraus acima
 
 Nada abaixo está no `globals.css`. Os números são para aprovar.
 

@@ -194,7 +194,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     id="ajuste"
                     autoFocus
                     inputMode="decimal"
-                    placeholder="O valor certo, em reais"
+                    placeholder="Valor em reais"
                     value={rascunho}
                     onChange={(e) => setRascunho(e.target.value)}
                     onKeyDown={(e) => {

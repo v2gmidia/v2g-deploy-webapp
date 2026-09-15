@@ -32,6 +32,32 @@ na seção de baixo.
       decidir até onde voltar; (b) o disparador cobre, e a tela continua só
       de ontem — mas o furo dura enquanto ele não existir. — levantado em 01/09
 
+- [ ] **Linha desabilitada sem fonte de dado na `/conta` (B10, `acct-row`).**
+      `conta/page.tsx:369` e `:376` mostram uma função que não tem endpoint,
+      desabilitada. Isso contraria a regra de omitir em vez de desabilitar.
+      Item de produto, anotado pelo Victor em 15/09.
+- [ ] **Cartão branco dentro de `.auth-card` branco.** Nas telas do
+      `(fluxo)`, o cartão de dentro só se separa pela borda. É decisão de
+      layout, não de borda; vira item próprio. A lista das telas está em
+      `docs/estado/visual-controles-2-15-09.md` §0.1. — 15/09
+- [ ] **Escala de espaço (4/8/12/16/24/32).** Proposta em `docs/tokens.md`.
+      Mexe em 340 de 469 valores e vira lote próprio, depois do 2b. — 15/09
+- [ ] **`tema-opcao` como variação "escolha-cartão".** Fora do 2b. — 15/09
+- [ ] **O botão lima do cartão de suporte da barra lateral não cabe na
+      secundária.** "Falar com uma pessoa" já quebra em duas linhas no cartão
+      de 220px, e alinhar ao papel o deixaria mais alto. Saídas: rótulo mais
+      curto, uma secundária compacta declarada para a barra, ou o botão sair
+      do cartão. `docs/botoes.md` §13.2. — 15/09
+- [ ] **Seis placeholders esperam texto mais curto do Victor.** Cinco não
+      cabem em 16px: `onboarding/perguntas.ts:112`, `:122`, `:144` e
+      `SeletorDeNicho.tsx:63`, `:66`. O `:70` cabe, com 15px de folga. As
+      larguras estão em `docs/botoes.md` §13.4. — 15/09
+- [ ] **Bordas que ficaram por significado, em 4 das 7 telas:** a esquerda
+      do `.alert-card` e do `.diag-lista`, o veredito do `.analise-cartao`, o
+      tracejado da `.casa-desenho`, e o `.rev-opcao`/`.rev-plinha`, que não
+      têm fundo. Se o desenho quiser tirar também, cada um pede outro sinal
+      no lugar da borda. `docs/botoes.md` §13.3. — 15/09
+
 - [ ] **Trava de completude do cadastro: 6 campos ou 11?** O app conta 6, o
       backend exige 11 no modo `gerar`. Subir para 11 pode barrar cliente que
       hoje passa. — levantado em 22/08
@@ -42,6 +68,80 @@ na seção de baixo.
 ---
 
 ## Decididas
+
+### 2026-09-15 — Lote 2b: escala, papéis dos controles, campo, cartão
+**Decisões do Victor, no chat, sobre a proposta do lote 2b**
+(`docs/estado/visual-controles-15-09.md`).
+
+**1. Escala de texto: seis degraus, 12 · 14 · 16 · 20 · 24 · 30.** A
+proposta de cinco foi recusada: juntar título de tela e título de bloco
+custava hierarquia, e o teto de cinco era chute. A escala entra primeiro,
+com o `DESIGN.md` regerado e o detector passando; os papéis e o campo em
+16px vêm depois, lendo dela.
+
+**2. A escala de espaço NÃO entra no 2b.** Mexe em 340 de 469 valores, mais
+que tudo o que foi feito até aqui. Vira lote próprio, depois de ele olhar o
+2b.
+
+**3. Os papéis:**
+- **B6 `btn-linha forte` é principal**, porque é a ação mais forte da
+  linha. Em `Campo.tsx:232` ele marca a opção que está valendo, e aí é
+  **escolha marcada**. Os dois usos são tratados separados.
+- **O mini-send fica em 48px**, a altura do campo ao lado: botão colado em
+  campo tem a altura do campo. É uma variação da principal.
+- **Os três links viram discreta.** A exceção é o "Entrar" do rodapé do
+  `/entrar`: se ele for a única saída da tela, é secundária.
+- **O `ec-back` fica como está:** círculo de 30px com área invisível de
+  44×44. Não empurra o topo.
+- **Escolha:** marcada é cobalto cheio com texto branco. Não marcada é
+  fundo cinza claro com texto no tom do corpo, **não navy**. Peso 600,
+  14px.
+- **B9 entra na principal** (54px, 16px), mas a regra do desabilitado
+  **vence** a da principal: fica o fundo e a cor de desabilitado.
+- **B10 `acct-row` fica fora.** Anotado como item de produto: é função sem
+  fonte de dado aparecendo desabilitada, e isso contraria a regra de omitir
+  em vez de desabilitar.
+- **B16 e B17 `tema-opcao` ficam fora.** Viram depois a variação
+  "escolha-cartão".
+- **Discreta aprovada:** `--ink-mute` no claro (5,59:1) e `--sidebar-ink`
+  na barra escura (9,77:1).
+
+**4. Campo em 16px: aplicar.** `Contas.tsx:193` encurta para "Valor em
+reais". O `redefinir/Form.tsx:17` volta para ele encurtar.
+
+**5. Cartão sem borda: só nos 13 seletores que ficam sobre o fundo cinza.**
+Os 16 de branco sobre branco NÃO entram. Antes de aplicar, ele quer a lista
+das telas que ficariam com cartão com e sem borda lado a lado. O caso do
+`.auth-card`, cartão branco sobre fundo branco, é decisão de layout e não de
+borda: vira item próprio.
+
+### 2026-09-15 — Lote 2b, terceira rodada: Guardar, contexto do `.cta`, cartão, placeholder, trava
+**Decisões do Victor, no chat, sobre `docs/botoes.md` §12.**
+
+1. **"Guardar" volta para 54px.** O comentário de 01/09 no
+   `PerguntaDoDia.tsx` é anterior ao desenho aprovado e falava de respiro, não
+   de altura. No desenho, "Guardar resposta" é a principal de largura cheia:
+   dela sai o número principal da `/inicio`. Os 5 `.mini-send` colados em
+   campo continuam em 48.
+2. **As regras de contexto que reduzem um papel se alinham ao papel.** "Se
+   seis lugares reduzem a principal, o papel não vale nada." Se alguma
+   quebrar o layout ao crescer, para e mostra. *Medido depois:* só três das
+   seis eram principal; as outras foram alinhadas ao próprio papel; a
+   `.side-support` parou (`botoes.md` §13.2).
+3. **Cartão sem borda nas telas de fora do cadastro.** As 5 telas de
+   cadastro ficam como estão: lá o cartão está dentro do `.auth-card`, branco
+   sobre branco, e isso vira o item "cartão sobre fundo branco", que é de
+   layout. *Correção de lista:* a `/expectativas` citada entre as 7 é de
+   cadastro e ficou de fora (`botoes.md` §13.3).
+4. **Exceção pontual à regra "nenhum `.tsx`": só a string do placeholder.**
+   `Contas.tsx:193` → "Valor em reais"; `redefinir/Form.tsx:17` → "8
+   caracteres, com letra e número". Os textos de `perguntas.ts` e do
+   `SeletorDeNicho.tsx` voltam para ele encurtar.
+5. **A escolha do `Campo.tsx:232` precisa de trava na suíte, não de
+   comentário.** Feita: `pnpm conferir:escolha-de-campo`.
+6. **As duas linhas que passaram a quebrar com a escala nova estão
+   aceitas:** o parágrafo da `/recuperar` e o título da `/redefinir`. "Texto
+   maior que quebra é melhor que texto pequeno que cabe."
 
 ### 2026-09-12 — `Vendas` sai da barra, `Criativos` entra
 **Decisão:** trocar o item `/vendas` por `/criativos` na barra de navegação.

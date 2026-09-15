@@ -184,6 +184,14 @@
   --raio-micro: 4px;      /* campo, marcador */
   --raio-pilula: 999px;   /* pílula */
 
+  /* Alturas dos controles — lote 2b, 15/09/2026. Três, e cada uma com
+     motivo: 54 é a principal e a secundária; 48 é o campo, e o botão colado
+     num campo acompanha a altura dele (decisão do Victor); 44 é o piso de
+     toque da discreta e da escolha. */
+  --alt-principal: 54px;
+  --alt-campo: 48px;
+  --alt-controle: 44px;
+
   /* ------------------------------------------------------------
      CAMADA SEMÂNTICA — o que sustenta os dois temas.
 
@@ -275,6 +283,15 @@
   --linha-divisoria: var(--line);
   --texto-sobre-escuro: var(--white);
 
+  /* Papéis dos controles — lote 2b, 15/09/2026. docs/tokens.md.
+     --fundo-controle é o "cinza claro" da secundária e da escolha: o mesmo
+     tingimento que o .ec-back já usava, translúcido, e por isso acompanha o
+     fundo onde cai. A discreta tem DOIS tokens porque nenhum cinza passa de
+     4,5:1 sobre fundo claro e sobre a placa escura ao mesmo tempo. */
+  --fundo-controle: rgb(var(--navy-rgb) / 0.06);
+  --texto-discreto: var(--ink-mute);
+  --texto-discreto-sobre-placa: var(--sidebar-ink);
+
   /* ------------------------------------------------------------
      ESCALA TIPOGRÁFICA — seis degraus.
 
@@ -291,15 +308,21 @@
      passa. Seis é o máximo que sobrevive a essa regra dentro da
      amplitude que o app usa.
 
-     A âncora é --fs-corpo: 13px era o valor mais usado do arquivo,
-     em 32 declarações, e não se mexe no que já é maioria.
-     ------------------------------------------------------------ */
-  --fs-legenda: 11px;    /* etiqueta em caixa alta, nota, timestamp */
-  --fs-corpo: 13px;      /* texto corrido e apoio — a âncora */
-  --fs-titulo: 15px;     /* título de item, rótulo forte, campo */
-  --fs-bloco: 18px;      /* título de bloco, saudação, selo */
-  --fs-tela: 22px;       /* título de tela, número de métrica */
-  --fs-destaque: 26px;   /* o título maior — /entrar e .page-head h1 */
+     A âncora era --fs-corpo em 13px, o valor mais usado do arquivo.
+
+     15/09/2026, lote 2b: a escala inteira subiu, com os mesmos seis nomes.
+     12 · 14 · 16 · 20 · 24 · 30, decisão do Victor, que recusou a proposta
+     de cinco degraus: juntar título de tela e título de bloco custava
+     hierarquia. 16 é o piso contra o zoom do Safari no campo e o tamanho da
+     principal; 14 é a discreta e a escolha; a legenda sai de 11 para 12 por
+     um público de 40+. Todo degrau continua a 2px ou mais do vizinho.
+     Antes e depois: docs/tokens.md, "Escala de texto: lote 2b". */
+  --fs-legenda: 12px;    /* etiqueta em caixa alta, nota, timestamp */
+  --fs-corpo: 14px;      /* texto corrido e apoio; discreta e escolha */
+  --fs-titulo: 16px;     /* título de item, rótulo forte, campo, principal */
+  --fs-bloco: 20px;      /* título de bloco, saudação, selo */
+  --fs-tela: 24px;       /* título de tela, número de métrica */
+  --fs-destaque: 30px;   /* o título maior — /entrar e .page-head h1 */
 
   /* Faixa de display do herói. NÃO entra na rampa: é fluida de
      propósito, porque precisa encolher em 375px sem estourar a
@@ -400,6 +423,9 @@
     --texto-fraco: #9FB0C6;
     --linha-divisoria: #1C2840;
     --texto-sobre-escuro: #FFFFFF;
+    --fundo-controle: rgb(210 224 240 / 0.06);
+    --texto-discreto: #7D8CA1;
+    --texto-discreto-sobre-placa: rgb(233 239 248 / 0.66);
   }
 }
 
@@ -465,6 +491,9 @@
   --texto-fraco: #9FB0C6;
   --linha-divisoria: #1C2840;
   --texto-sobre-escuro: #FFFFFF;
+  --fundo-controle: rgb(210 224 240 / 0.06);
+  --texto-discreto: #7D8CA1;
+  --texto-discreto-sobre-placa: rgb(233 239 248 / 0.66);
 }
 
 /* Diz ao navegador em qual tema pintar barra de rolagem, campos nativos
@@ -952,7 +981,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .nav-eyebrow { color: var(--sidebar-ink); }
 .side-brand .wm { color: var(--texto-sobre-escuro); }
 .side-brand .wm small { color: var(--sidebar-ink); }
-.sidebar .link-btn { color: var(--sidebar-ink); }
+.sidebar .link-btn { color: var(--texto-discreto-sobre-placa); }
 .sidebar .link-btn:hover { color: var(--texto-sobre-escuro); }
 .sidebar :focus-visible { outline-color: var(--texto-sobre-escuro); }
 /* ...menos dentro do card de suporte, que é CLARO. O anel branco
@@ -1560,8 +1589,6 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .proof-list li b { color: var(--ink); font-weight: 600; }
 .proof-actions { display: flex; flex-direction: column; gap: 8px; }
-.proof-actions .cta { background: var(--surface); padding: 11px 12px; font-size: var(--fs-corpo); }
-.proof-actions .cta:hover { border-color: var(--cobalt); color: var(--cobalt-ink); }
 
 /* ============================================================
    TELA DE EXPECTATIVAS (ec-*) — do <style> local de
@@ -2500,7 +2527,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .faixa-reconectar b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--crit); display: block; }
 .faixa-reconectar span { font-size: var(--fs-corpo); line-height: 1.5; color: var(--ink); display: block; margin-top: 2px; }
-.faixa-reconectar .cta { margin-left: auto; width: auto; flex: none; padding: 11px 18px; font-size: var(--fs-corpo); }
+.faixa-reconectar .cta { margin-left: auto; width: auto; flex: none; }
 
 /* ============================================================
    ESCADA — passos verticais
@@ -3842,7 +3869,6 @@ code {
    sobrando — é a regra da ação única, e ela é o que faz esta funcionar. */
 .proximo .cta {
   width: 100%;
-  min-height: 48px;
   justify-content: center;
 }
 .proximo-nota {
@@ -3945,31 +3971,12 @@ code {
    `conferir:cascata` reprova o contrário.
    ============================================================ */
 
-/* ---------- #7 e #12: o link que não parecia botão ----------
-
-   `.cta.quiet` dentro do `.command-card` saía com fundo transparente,
-   `border-width: 0`, sem sublinhado, em cinza 15px — e o parágrafo logo
-   abaixo estava em 16px. **O texto de apoio era maior que a ação**, que
-   é a hierarquia exatamente invertida.
-
-   Não vira `.cta` cheio: o cheio desta tela é o "Seu próximo passo", e
-   dois botões cheios brigam. Vira botão de contorno — borda de verdade,
-   tinta de verdade, 44px de alvo — que é a segunda voz, e não a
-   terceira. */
+/* "Falar com uma pessoa" do "Você está no comando" é `cta quiet`: papel
+   DISCRETA desde o lote 2b (15/09/2026). O contorno cobalto que morava aqui
+   deixou de pintar quando a discreta entrou, e saiu. Fica só a largura. */
 .command-card .cta {
-  min-height: 44px;
-  /* `--cobalt-ink` e NÃO `--cobalt`: o primeiro é "cobalto como TINTA" e
-     clareia no tema escuro (`#5C88FA`); o segundo é a cor de superfície e
-     lá vale `#0239C7`, azul escuro sobre card escuro. Medido na captura:
-     o botão sumia. É a mesma distinção que o `.hero-destaque` já pagou. */
-  border: 1.5px solid var(--cobalt-ink);
-  color: var(--cobalt-ink);
-  font-weight: 600;
   width: 100%;
   justify-content: center;
-}
-.command-card .cta:hover {
-  background: var(--ice-soft);
 }
 /* e a nota recua para o degrau de baixo da rampa, abaixo do botão */
 .command-card .note {
@@ -4049,7 +4056,7 @@ code {
    diz de que dia se está falando — tirá-la deixaria "Preencher" sozinho,
    e aí o botão é que ficaria ambíguo. O que ela ganha é moldura. */
 .fallback-field.pd-guardar .mini-send {
-  min-height: 44px;
+  min-height: var(--alt-principal);
   padding-inline: 18px;
 }
 .pd-convite .botao-leve {
@@ -4368,7 +4375,6 @@ code {
   margin: 0;
   max-width: 56ch;
 }
-.analise-saida .cta { min-height: 44px; }
 
 .analise-aviso {
   font-size: var(--fs-corpo);
@@ -4685,3 +4691,208 @@ textarea { min-height: 48px; }
   select,
   textarea
 ) { font-family: var(--display); }
+
+/* ============================================================
+   PAPÉIS DOS CONTROLES — lote 2b, 15/09/2026.
+   Tabela antes/depois: docs/botoes.md §12. Decisões: docs/decisoes.md.
+
+   Cinco papéis. As classes que já existem no JSX passam a ler cada um
+   por seletor, e nenhum .tsx mudou. As classes .papel-* existem para
+   markup novo usar direto.
+
+   NO FIM DO ARQUIVO DE PROPÓSITO. A maioria dos seletores tem a mesma
+   especificidade das regras antigas (0,1,0 ou 0,2,0), e é a ORDEM que
+   faz o papel vencer. Regra de CONTEXTO mais específica continua
+   vencendo, e isso é desejado: .hero-destaque .cta (branco na faixa),
+   .side-support .cta (lima), .alvo-em-texto (controle dentro de frase).
+
+   A ALTURA MÍNIMA NÃO ENTRA NA DISCRETA NEM NA ESCOLHA. Os 44px delas
+   vêm do grupo A do lote 2a. Repetir aqui, depois do .alvo-em-texto
+   { min-height: 0 }, faria o "deixe em branco" e o "Corrigir" crescerem
+   no meio da frase.
+   ============================================================ */
+
+/* PRINCIPAL — 54px, cobalto, branco, 700, 16px.
+   .btn-linha.forte é principal: é a ação mais forte da linha. A exceção
+   é o Campo.tsx:232, tratado na escolha. */
+.papel-principal,
+.cta,
+.btn-linha.forte,
+.mini-send {
+  min-height: var(--alt-principal);
+  background: var(--cobalt);
+  color: var(--white);
+  border: 0;
+  border-radius: var(--raio-controle);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-titulo);
+}
+.papel-principal:hover:not(:disabled),
+.btn-linha.forte:hover:not(:disabled) { background: var(--cobalt-dark); }
+
+/* PRINCIPAL EM 48 — o botão colado num campo tem a altura do campo.
+   São os 5 .mini-send ao lado de campo. O "Guardar" da pergunta do dia
+   também é .mini-send, mas fica sozinho e é a principal da tela: a regra
+   de contexto dele (.fallback-field.pd-guardar .mini-send) lê 54. */
+.papel-principal-48,
+.mini-send { min-height: var(--alt-campo); }
+
+/* O DESABILITADO VENCE A PRINCIPAL. Fica com a altura e o tamanho dela,
+   e com o fundo e a cor de desabilitado. Na simulação, uma regra mais
+   específica que o :disabled deixou o botão com cara de habilitado —
+   por isso este bloco vem DEPOIS e com especificidade igual ou maior
+   que cada seletor da principal. */
+.papel-principal:disabled,
+.cta:disabled,
+.btn-linha.forte:disabled,
+.mini-send:disabled {
+  background: var(--ice-soft);
+  color: var(--ink-mute);
+  cursor: not-allowed;
+}
+
+/* SECUNDÁRIA — 54px, cinza claro, cobalto, 700, 16px.
+   .auth-foot .link-btn é o "Entrar" e o "Criar conta" do /entrar: cada um
+   é a única saída do seu modo da tela, e por isso não é discreta. */
+.papel-secundaria,
+.cta.ghost,
+.btn-linha,
+.auth-foot .link-btn {
+  min-height: var(--alt-principal);
+  background: var(--fundo-controle);
+  color: var(--cobalt-ink);
+  border: 0;
+  border-radius: var(--raio-controle);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-titulo);
+}
+.auth-foot .link-btn { padding: 0 16px; }
+.auth-foot .link-btn:hover { text-decoration: none; background: rgb(var(--cobalt-rgb) / 0.08); }
+/* Colado num campo, acompanha o campo — mesma regra do mini-send. */
+.rev-corrigir .btn-linha { min-height: var(--alt-campo); }
+.papel-secundaria:disabled,
+.cta.ghost:disabled,
+.btn-linha:disabled { color: var(--ink-mute); cursor: not-allowed; }
+
+/* DISCRETA — sem fundo, cinza, 600, 14px. */
+.papel-discreta,
+.text-fallback,
+.btn-texto,
+.ec-doubt,
+.cta.quiet,
+.btn-linha.fraco,
+.link-btn {
+  background: none;
+  border: 0;
+  color: var(--texto-discreto);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-corpo);
+}
+.papel-discreta,
+.cta.quiet,
+.btn-linha.fraco { min-height: var(--alt-controle); }
+
+/* ESCOLHA — pílula, cinza claro, texto no tom do corpo (não navy), 600,
+   14px. Marcada: cobalto cheio, texto branco.
+   O Campo.tsx:232 — as opções de um campo fechado da /meu-negocio — é
+   escolha, e é o único .btn-linha dentro de .rc-editor .rc-acoes form
+   (medido). O forte ali marca a opção que está valendo. É distinção por
+   ESTRUTURA: se o <form> em volta de cada opção sair do JSX, a opção
+   volta a ser principal ou secundária. */
+.papel-escolha,
+.chip-opt,
+.botao-leve,
+.pd-convite .botao-leve,
+.rc-editor .rc-acoes form .btn-linha {
+  background: var(--fundo-controle);
+  color: var(--texto-fraco);
+  border: 0;
+  border-radius: var(--raio-pilula);
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: var(--fs-corpo);
+}
+.papel-escolha,
+.rc-editor .rc-acoes form .btn-linha { min-height: var(--alt-controle); padding: 0 16px; }
+.papel-escolha.marcada,
+.chip-opt.picked,
+.rc-editor .rc-acoes form .btn-linha.forte { background: var(--cobalt); color: var(--white); }
+
+/* ÍCONE — 44×44, redondo, cinza claro. O .ec-back NÃO lê daqui: fica o
+   círculo de 30px com área invisível de 44 do lote 2a, para não empurrar
+   o topo (decisão do Victor). */
+.papel-icone {
+  width: var(--alt-controle);
+  height: var(--alt-controle);
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: var(--fundo-controle);
+  color: var(--texto-forte);
+}
+
+/* CAMPO EM 16px — lote 2b. Abaixo de 16px o Safari do iPhone dá zoom ao
+   focar. A mesma lista da regra de família, sem o button. Especificidade
+   (0,1,1), igual à de .field input e .rc-editor input: vence pela ordem. */
+:is(
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="url"],
+  input:not([type]),
+  select,
+  textarea
+) { font-size: var(--fs-titulo); }
+
+/* ============================================================
+   CARTÃO SEM BORDA — lote 2b, 15/09/2026. docs/decisoes.md.
+
+   Sobre o fundo cinza da página, o cartão branco se separa sozinho
+   (1,08:1, o mesmo grau do desenho aprovado) e a borda é sobra.
+
+   ESCOPO: .canvas, que só existe no casco de app/(protected)/layout.tsx.
+   Nas telas de cadastro e nas públicas o cartão vive dentro do
+   .auth-card, branco sobre branco, e lá a borda é a única coisa que o
+   separa — ficam de fora de propósito (vira o item "cartão sobre fundo
+   branco", que é layout). O CSS não separa tela por tela: esta regra vale
+   para as 11 telas do casco, não só para as 7 da decisão.
+
+   FICAM COM BORDA, porque nelas a borda carrega significado:
+   .analise-cartao.v-bom/.v-ajuste/.v-fraco (a cor da borda é o veredito),
+   .casa-desenho (o tracejado diz "isto é um desenho, não clica"),
+   .rev-opcao e .rev-plinha (sem fundo: sem borda, somem), .escolhido e
+   .escolha-item (branco sobre branco dentro de outro cartão).
+   .alert-card e .diag-lista li perdem três lados e mantêm a borda
+   esquerda, que é severidade.
+
+   border-color, e não border: 0 — a caixa não muda de tamanho.
+   ============================================================ */
+.canvas :is(
+  .card,
+  .empty-hero,
+  .tips-card,
+  .list-row,
+  .command-card,
+  .proximo,
+  .sinal,
+  .res-ficha,
+  .res-falha,
+  .res-num,
+  .res-nivel,
+  .analise-envio,
+  .analise-cartao.v-neutro,
+  .rev-item,
+  .espera-row
+) { border-color: transparent; }
+.canvas :is(.alert-card, .diag-lista li) {
+  border-top-color: transparent;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+}
