@@ -120,7 +120,13 @@
      por Archivo via next/font — ver docs/arquitetura.md, Decisão 6.
      As variáveis são as mesmas; next/font injeta a font-family real. */
   --display: var(--font-archivo), system-ui, sans-serif;
-  --body: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  /* 15/09/2026, lote 2b: o texto corrido passa a começar por Archivo.
+     Antes era só a pilha de sistema — Segoe UI no Windows, outra fonte em
+     cada aparelho — e ninguém tinha escolhido isso. A pilha continua atrás,
+     como reserva. Alcança a rota `/` (o lp.css lê --body), com autorização
+     do Victor. Medido nas 5 rotas públicas em 375px: nenhuma linha passou a
+     quebrar, nada passou a transbordar. docs/tipografia-pendente.md §6. */
+  --body: var(--font-archivo), "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
 
   --sidebar-w: 252px;
   /* Altura da barra de navegação do celular — ver docs/navegacao-mobile.md.
@@ -164,9 +170,13 @@
      ------------------------------------------------------------ */
   /* Raio — escala de três (14/09/2026, lote raio): controle, cartão, pílula.
      --raio-pilula já existia com esse nome e valor. Os antigos abaixo
-     continuam definidos; quem ficou fora da escala ainda lê alguns. */
-  --raio-controle: 8px;   /* botão, campo, item de lista e de nav */
-  --raio-cartao: 12px;    /* card, caixa, bloco */
+     continuam definidos; quem ficou fora da escala ainda lê alguns.
+     15/09/2026, lote 2b: controle 8 → 12 e cartão 12 → 16. Contra as
+     referências que o Victor mandou (Mercado Pago, PicPay, Nubank,
+     Santander, Contabilizei), 8 e 12 ficaram quadrados demais.
+     Antes e depois: docs/tokens.md, "Raio: lote 2b". */
+  --raio-controle: 12px;  /* botão, campo, item de lista e de nav */
+  --raio-cartao: 16px;    /* card, caixa, bloco */
   --raio-card: 12px;      /* card padrão */
   --raio-item: 10px;      /* item de lista, bloco de nav */
   --raio-interno: 8px;    /* elemento dentro de card */
@@ -4657,8 +4667,10 @@ textarea { min-height: 48px; }
    var(--body) }` sem apagar aquelas declarações. Apagar o `font: inherit`
    levaria junto o line-height herdado, e este lote muda só a família.
 
-   O TEXTO CORRIDO NÃO MUDA: continua em --body, pilha de sistema. Divisão
-   provisória, pendente do lote de tipografia (docs/tipografia-pendente.md).
+   O texto corrido lê --body, que desde o lote 2b (15/09/2026) também começa
+   por Archivo. Esta regra continua porque os controles não herdam do body:
+   `.field input` e outros declaram --body direto, e o padrão do navegador
+   para <button> não herda (docs/tipografia-pendente.md §6).
    ============================================================ */
 :is(
   button,

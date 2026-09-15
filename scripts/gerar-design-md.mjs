@@ -54,7 +54,7 @@ linhas.push(
   "  display:",
   '    fontFamily: "Archivo, system-ui, sans-serif"',
   "  body:",
-  '    fontFamily: "Segoe UI, system-ui, -apple-system, Roboto, sans-serif"',
+  '    fontFamily: "Archivo, Segoe UI, system-ui, -apple-system, Roboto, sans-serif"',
   "  mono:",
   '    fontFamily: "ui-monospace, Cascadia Mono, Consolas, monospace"',
   "  monoLegado:",

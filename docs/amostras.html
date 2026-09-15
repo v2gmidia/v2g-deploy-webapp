@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>V2G — folha de amostras dos controles</title>
+<!--
+  FOLHA DE AMOSTRAS — lote 2b, 15/09/2026.
+
+  Existe para o Victor abrir no navegador e julgar os controles sem login.
+  Abra direto do disco: docs/amostras.html (duplo clique basta).
+
+  ELA LÊ O CSS REAL: o <link> abaixo é o app/globals.css do repositório.
+  Nenhuma cor, tamanho, raio ou borda do app foi copiado para cá. Quando o
+  globals.css muda, esta página muda junto — é assim que ela serve para
+  julgar o antes e o depois de cada lote.
+
+  AS DUAS EXCEÇÕES, e só elas:
+  1. `--font-archivo`. No app quem define essa variável é o next/font
+     (app/layout.tsx), não o CSS. Sem ela a página sairia em system-ui e
+     você julgaria a fonte errada. Por isso a Archivo é carregada aqui.
+  2. O "depois" do cartão (item 4) é `border-color: transparent`, a regra
+     que está PROPOSTA e não aplicada. É uma palavra-chave, não um valor
+     copiado do app. Some daqui quando a regra entrar no globals.css.
+
+  O CSS próprio desta página é só de arrumação (grade, espaço entre as
+  amostras, rótulos) e usa tokens para cor.
+
+  TEMA CLARO E ESCURO NA MESMA PÁGINA: os tokens de tema moram em
+  `:root[data-tema=…]`, então um pedaço da página não consegue ter um tema
+  diferente do resto. A página se abre duas vezes dentro de si mesma, em
+  dois quadros: #claro e #escuro.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@100..900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../app/globals.css">
+<style>
+  /* Exceção 1 — ver o comentário do topo. */
+  :root { --font-archivo: "Archivo"; }
+
+  /* Arrumação da página. Nada daqui é aparência de controle. */
+  body.moldura { padding: 16px; }
+  .moldura .quadros { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  .moldura .quadros figure { margin: 0; flex: 1 1 360px; max-width: 460px; }
+  .moldura .quadros figcaption { font-family: var(--display); color: var(--ink-soft); margin-bottom: 6px; }
+  .moldura iframe { width: 100%; border: 0; display: block; }
+  .moldura .aviso { color: var(--ink-soft); max-width: 70ch; }
+  .moldura .amostras, .quadro .topo-moldura { display: none; }
+
+  .quadro .amostras { padding: var(--sangria); padding-bottom: 48px; }
+  .amostras section { margin-bottom: 40px; }
+  .amostras h2 { font-family: var(--display); color: var(--ink); margin: 0 0 4px; }
+  .amostras .de-onde { color: var(--ink-mute); margin: 0 0 14px; }
+  .linha-amostra { display: grid; grid-template-columns: 96px 1fr; gap: 10px 12px; align-items: center; margin-bottom: 14px; }
+  .linha-amostra > .rotulo { color: var(--ink-soft); font-family: var(--display); }
+  .linha-amostra > .rotulo small { display: block; color: var(--ink-mute); }
+  .lado-a-lado { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .lado-a-lado > div > .rotulo { color: var(--ink-soft); margin-bottom: 6px; font-family: var(--display); }
+  .placa { background: var(--plate); padding: 12px; }
+  #percorrer { margin-bottom: 24px; }
+
+  /* Exceção 2 — a proposta do item 4, simulada. Ver o comentário do topo. */
+  .cartao-depois > * { border-color: transparent; }
+</style>
+</head>
+<body>
+
+<!-- ============ A MOLDURA: aparece quando a página é aberta direto ============ -->
+<div class="topo-moldura">
+  <p class="aviso">Folha de amostras do lote 2b. Tudo abaixo lê o <code>app/globals.css</code> de verdade, nos dois temas. Para ver o foco, clique em "percorrer o foco" dentro de cada quadro, ou use Tab.</p>
+  <div class="quadros">
+    <figure><figcaption>Tema claro</figcaption><iframe title="Amostras no tema claro" src="amostras.html#claro"></iframe></figure>
+    <figure><figcaption>Tema escuro</figcaption><iframe title="Amostras no tema escuro" src="amostras.html#escuro"></iframe></figure>
+  </div>
+</div>
+
+<!-- ============ O QUADRO: o conteúdo, em um tema ============ -->
+<main class="amostras">
+  <button type="button" class="cta quiet" id="percorrer">percorrer o foco</button>
+
+  <section class="papeis">
+    <h2>Os cinco papéis</h2>
+    <p class="de-onde">Enquanto o mapeamento do item 1 não for aprovado, cada papel mostra as classes de hoje que vão ler aquele papel. Aprovado, esta mesma seção passa a mostrar o papel novo, sem mexer nesta página.</p>
+
+    <h3>Principal <small>← .cta (B5), .mini-send (B7, B19)</small></h3>
+    <div class="linha-amostra"><span class="rotulo">normal</span><div><button type="button" class="cta">Pode ir ao ar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">desabilitado<small>é o B9, fora do mapeamento</small></span><div><button type="button" class="cta" disabled>Pode ir ao ar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">ao lado de campo</span><div class="fallback-field"><input type="text" placeholder="Sua cidade"><button type="button" class="mini-send">Enviar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">sozinho</span><div class="fallback-field pd-guardar"><button type="button" class="mini-send">Guardar</button></div></div>
+
+    <h3>Secundária <small>← .cta.ghost (B8), .btn-linha (B2, B6)</small></h3>
+    <div class="linha-amostra"><span class="rotulo">normal</span><div><button type="button" class="cta ghost">Quero mudar alguma coisa</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">desabilitado</span><div><button type="button" class="cta ghost" disabled>Quero mudar alguma coisa</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">btn-linha</span><div class="rc-acoes"><button type="button" class="btn-linha">Corrigir</button><button type="button" class="btn-linha forte">Salvar</button><button type="button" class="btn-linha" disabled>Desabilitado</button></div></div>
+
+    <h3>Discreta <small>← .text-fallback, .btn-texto, .ec-doubt, .cta.quiet, .btn-linha.fraco, .link-btn</small></h3>
+    <div class="linha-amostra"><span class="rotulo">text-fallback</span><div><button type="button" class="text-fallback">Não sei agora</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">btn-texto</span><div><button type="button" class="btn-texto">deixe em branco</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">ec-doubt</span><div><button type="button" class="ec-doubt">Ficou alguma dúvida?</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">cta quiet</span><div><button type="button" class="cta quiet">Voltar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">btn-linha fraco</span><div class="rc-acoes"><button type="button" class="btn-linha fraco">Deixa como estava</button><button type="button" class="btn-linha fraco" disabled>Desabilitado</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">link-btn<small>no rodapé do cartão</small></span><div class="auth-foot">Já tem conta? <button type="button" class="link-btn">Entrar</button></div></div>
+    <p class="de-onde">O <code>.link-btn</code> da barra lateral (B20) só aparece acima de 900px e não cabe neste quadro.</p>
+
+    <h3>Escolha <small>← .chip-opt (B1, B22), .botao-leve (B11, B18)</small></h3>
+    <div class="linha-amostra"><span class="rotulo">chip-opt</span><div class="chips-row"><button type="button" class="chip-opt">Dentista</button><button type="button" class="chip-opt picked">Padaria</button><button type="button" class="chip-opt" disabled>Desabilitado</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">botao-leve</span><div><button type="button" class="botao-leve">Voltar para ontem</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">no convite</span><div class="pd-convite">Faltaram 3 dias. <button type="button" class="botao-leve">Preencher sexta-feira</button></div></div>
+
+    <h3>Ícone <small>← .ec-back (B13)</small></h3>
+    <div class="linha-amostra"><span class="rotulo">normal</span><div class="ec-top"><button type="button" class="ec-back alvo-redondo" aria-label="Voltar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg></button><span class="ec-label">Combinados</span></div></div>
+    <div class="linha-amostra"><span class="rotulo">desabilitado</span><div class="ec-top"><button type="button" class="ec-back alvo-redondo" aria-label="Voltar" disabled><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg></button><span class="ec-label">Combinados</span></div></div>
+  </section>
+
+  <section class="campos">
+    <h2>Campos</h2>
+    <p class="de-onde">Texto, select e textarea, com a regra de hoje. O item 2 (16px) ainda não foi aplicado.</p>
+    <div class="field"><label for="a-nome">Nome</label><input id="a-nome" type="text" placeholder="Como você gosta de ser chamado?"></div>
+    <div class="field"><label for="a-email">E-mail, desabilitado</label><input id="a-email" type="email" value="voce@seunegocio.com.br" disabled></div>
+    <div class="field"><label for="a-sel">Select</label><select id="a-sel"><option>Clínica odontológica</option><option>Padaria</option></select></div>
+    <div class="rc-editor"><textarea rows="3" placeholder="uma coisa por linha"></textarea></div>
+  </section>
+
+  <section class="cartoes">
+    <h2>Cartão, antes e depois da borda sair</h2>
+    <p class="de-onde">O "depois" é a proposta do item 4, que ainda não está no globals.css.</p>
+    <div class="lado-a-lado">
+      <div><div class="rotulo">antes</div><div class="tips-card"><b class="tips-title">Três fotos por semana</b><ul class="tips-list"><li>Dão material novo para a V2G testar.</li></ul></div></div>
+      <div class="cartao-depois-bloco"><div class="rotulo">depois</div><div class="cartao-depois"><div class="tips-card"><b class="tips-title">Três fotos por semana</b><ul class="tips-list"><li>Dão material novo para a V2G testar.</li></ul></div></div></div>
+    </div>
+  </section>
+
+  <section class="fora">
+    <h2>Os quatro que ficaram de fora</h2>
+    <p class="de-onde">B9, B10, B16 e B17. Aparência de hoje.</p>
+    <div class="linha-amostra"><span class="rotulo">B9<small>cta desabilitado</small></span><div><button type="button" class="cta" disabled>Pode ir ao ar</button></div></div>
+    <div class="linha-amostra"><span class="rotulo">B10<small>acct-row desabilitada</small></span><div class="acct-list"><button type="button" class="acct-row" aria-disabled="true" disabled><span class="ar-text"><b>Trocar a forma de pagamento</b><span>Em breve por aqui</span></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div></div>
+    <div class="linha-amostra"><span class="rotulo">B16 e B17<small>tema-opcao</small></span><div class="tema-opcoes">
+      <button type="button" class="tema-opcao picked"><span class="tema-amostra"><span></span><span></span></span><b>Claro</b><span>Fundo claro o dia todo</span></button>
+      <button type="button" class="tema-opcao"><span class="tema-amostra"><span></span><span></span></span><b>Escuro</b><span>Fundo escuro o dia todo</span></button>
+    </div></div>
+    <p class="de-onde">A miniatura do tema-opcao fica vazia aqui: no app ela é pintada com cor escrita direto no <code>SeletorDeTema.tsx</code>, e copiar essas cores para cá quebraria a regra desta página.</p>
+  </section>
+</main>
+
+<script>
+  // Moldura ou quadro? Dentro do quadro, o tema vem do #hash.
+  const tema = location.hash.slice(1);
+  if (tema === "claro" || tema === "escuro") {
+    document.documentElement.setAttribute("data-tema", tema);
+    document.body.classList.add("quadro");
+    // Diz à moldura a altura do conteúdo, para o quadro não ter rolagem própria.
+    const avisar = () => parent.postMessage({ amostras: tema, altura: document.documentElement.scrollHeight }, "*");
+    addEventListener("load", avisar);
+    new ResizeObserver(avisar).observe(document.body);
+    // Foco visível, controle por controle, sem precisar de teclado.
+    document.getElementById("percorrer").addEventListener("click", async () => {
+      const alvos = [...document.querySelectorAll(".papeis button:not(#percorrer):not([disabled]), .campos input:not([disabled]), .campos select, .campos textarea")];
+      for (const a of alvos) { a.focus({ focusVisible: true }); a.scrollIntoView({ block: "center" }); await new Promise((r) => setTimeout(r, 700)); }
+      document.activeElement.blur();
+    });
+  } else {
+    document.body.classList.add("moldura");
+    addEventListener("message", (e) => {
+      if (!e.data || !e.data.amostras) return;
+      const f = document.querySelector(`iframe[src$="#${e.data.amostras}"]`);
+      if (f) f.style.height = e.data.altura + "px";
+    });
+  }
+</script>
+</body>
+</html>

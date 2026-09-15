@@ -74,3 +74,58 @@ javascript_tool → fontSize computado dos 35 campos visíveis, montados na cade
 Os 35 campos visíveis estão abaixo de 16px. Abaixo de 16px, o Safari do
 iPhone aplica zoom ao focar o campo. A lista, campo a campo, está em
 `docs/botoes.md` §5.
+
+## 6. Lote 2b, 15/09/2026: `--body` começa por Archivo — APLICADO
+
+```
+$ grep -nE "^\s*--body:" app/globals.css
+--body: var(--font-archivo), "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+```
+A pilha de sistema continua atrás, como reserva. A mudança alcança a rota
+`/` (§2), com autorização do Victor. O repositório `../lp` não foi tocado.
+
+`DESIGN.md` foi regerado. As famílias não são lidas do CSS pelo script: estão
+escritas nele (`scripts/gerar-design-md.mjs`), e a linha do `body` foi
+trocada lá antes de regerar.
+
+### 6.1 Antes e depois, rotas públicas, 375px
+
+Primeiro por simulação (a regra injetada numa cópia da página dentro de um
+`iframe` de 375px), depois pela página real com o CSS do disco, fazendo a
+conta ao contrário: injetando o valor velho e comparando elemento a elemento
+pelo índice.
+```
+javascript_tool → por rota, iframe 375×812: elementos com nó de texto próprio e visíveis; fontFamily computada, número de linhas (tops distintos dos getClientRects do texto), scrollWidth > clientWidth; com e sem a regra
+```
+
+| Rota | Elementos com texto visíveis | Liam `--body` antes | Mudaram de família | Mudaram de número de linhas | Passaram a transbordar | Página vaza na horizontal |
+|---|---:|---:|---:|---:|---:|---|
+| `/` | 124 | 54 | 54 | 0 | 0 | não → não |
+| `/entrar` | 14 | 5 | 5 | 0 | 0 | não → não |
+| `/recuperar` | 9 | 4 | 4 | 0 | 0 | não → não |
+| `/redefinir` | 7 | 4 | 4 | 0 | 0 | não → não |
+| `/exclusao-de-dados/x` | 4 | 3 | 3 | 0 | 0 | não → não |
+
+Os números da página real batem com os da simulação nas cinco rotas.
+
+Os "elementos com texto" daqui (124 na `/`) são menos que os da §3 (148),
+porque agora só entram os visíveis e o `<script>` fica de fora.
+
+Por tag, na `/`: `p` 21 · `span` 9 · `div` 8 · `a` 5 · `b` 4 · `li` 4 ·
+`mark` 2 · `small` 1.
+
+**O peso não é problema.** O `app/layout.tsx` pede Archivo em 500 e 700, e o
+texto corrido é 400. Medido: a fonte que chega é variável e cobre o eixo
+inteiro.
+```
+javascript_tool → [...document.fonts].filter(f => /archivo/i.test(f.family)).map(f => f.weight + " " + f.status)
+"100 900 normal loaded"
+```
+
+### 6.2 O que não foi medido
+
+- **As 21 rotas com sessão**, pelo motivo da §4. Pelo CSS, tudo o que herda
+  `--body` lá passa a Archivo pelo mesmo mecanismo.
+- **Aparelho real.** Navegador de desktop com a tela emulada em 375px.
+- **Quebra de linha com o texto real do banco.** As rotas públicas não têm
+  dado dinâmico. Nas com sessão, o texto da montagem não é o do cliente.

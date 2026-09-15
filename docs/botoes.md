@@ -877,3 +877,202 @@ javascript_tool → http://localhost:3000/, CSS novo
 controles nativos: 0 · elementos que casam com a regra de família ou de campo: 0 · com classe dos grupos A/B/C: 0
 ```
 Nenhuma regra deste lote casa com elemento da `/`.
+
+---
+
+# Lote 2b — 15/09/2026: os cinco papéis e o campo em 16px
+
+**Proposta e medição. Nada deste bloco foi aplicado ao `globals.css`.**
+
+Método do §0, com dois acréscimos:
+
+- **Simulação:** a regra proposta foi injetada num `<style>` no fim do
+  `<head>` da `/entrar` e retirada depois de medir. O arquivo simulado
+  ficou fora do repositório. As regras estão reproduzidas no §10.4.
+- **Contraste:** a tinta foi comparada com o fundo composto: o fundo do
+  próprio controle sobre o de todos os ancestrais. O `opacity` de ancestral
+  não entra.
+
+```
+node extrair-controles.cjs botoes|campos   (o script do §3, recriado a partir deste arquivo)
+javascript_tool → __bancada.rodar({tema}) antes; injetar(proposta); rodar claro e escuro; remover; agrupar por aparência
+botoes JSX: 64 | sem Button.tsx: 63 | linhas de variante: 66 · campos JSX: 71 | hidden: 36 | visiveis: 35
+linhas cuja classe não confere com a aparência do §1.1: 0
+```
+
+**Um artefato da medição, dito para não parecer mudança.** A borda sai
+`0.8px` em todas as leituras. O CSS declara `1.5px` e `1px`; na tela emulada
+o navegador arredonda a borda para pixel de tela. As tabelas abaixo usam o
+valor declarado.
+
+## 10. Item 1 — o mapeamento, antes de aplicar
+
+### 10.1 O que muda em cada uma das 22
+
+Antes = CSS de agora, já com o raio do item 3. Depois = com o mapeamento
+simulado. Célula vazia = não muda.
+
+| Ap. | Classe | Linhas | Papel | Altura | Fundo | Cor | Borda | Raio | Peso | Tamanho | Contraste claro | Contraste escuro |
+|---|---|---:|---|---|---|---|---|---|---|---|---|---|
+| B5 | `cta` | 5 | principal | 44 → **54** | | | | | | 15 → **16** | 7,38 | 8,70 |
+| B7 | `mini-send` ao lado de campo | 5 | principal | 48 → **54** ¹ | | | | | | 13 → **16** | 7,38 | 8,70 |
+| B19 | `mini-send` em `.pd-guardar` | 1 | principal | 44 → 44 ² | | | | | | 13 → **16** | 7,38 | 8,70 |
+| B8 | `cta ghost` | 4 | secundária | 46 → **54** | transparente → `--fundo-controle` | | 1.5px cobalto → 0 | | | 15 → **16** | 7,32 / 6,77 → 6,50 / 6,03 | 5,54 / 6,00 → 4,89 / 5,45 |
+| B2 | `btn-linha` | 7 | secundária | 44 → **54** | #FEFEFE → `--fundo-controle` | #111E2F → **cobalto** | 1px `--line` → 0 | | 500 → **700** | 13 → **16** | 16,65 → 6,50 / 6,03 | 15,84 → 4,89 / 5,45 |
+| B6 | `btn-linha forte` | 5 | secundária ³ | 44 → **54** | **#111E2F → `--fundo-controle`** | #F1F6F7 → cobalto | | | 500 → **700** | 13 → **16** | 15,41 → 6,50 / 6,03 | 15,41 → 4,89 / 5,45 |
+| B4 | `text-fallback` | 6 | discreta | | | | | | 400 → **600** | 13 → **14** | 5,59 | 5,35 |
+| B21 | `btn-texto` | 1 | discreta | 18,9 → 20,3 ⁴ | | **cobalto → #5A6977** ⁵ | | | 400 → **600** | 13 → **14** | 7,32 → 5,59 | 5,54 → 5,35 |
+| B14 | `ec-doubt` | 1 | discreta | | | **cobalto → #5A6977** ⁵ | | | | 13 → **14** | 7,32 → 5,59 | 5,54 → 5,35 |
+| B15 | `cta quiet` | 1 | discreta | | | #485A6B → #5A6977 | | | | 15 → **14** | 7,06 → 5,59 | 8,28 → 5,35 |
+| B3 | `btn-linha fraco` | 6 | discreta | | #FEFEFE → transparente | | 1px `--line` → 0 | | 500 → **600** | 13 → **14** | 5,59 → 5,59 / 5,18 | 5,35 → 5,35 / 5,79 |
+| B12 | `link-btn` em `.auth-foot` | 2 | discreta | | | **cobalto → #5A6977** ⁵ | | | 700 → 600 | 13 → **14** | 7,32 → 5,59 | 5,54 → 5,35 |
+| B20 | `link-btn` na barra lateral | 1 | discreta, sobre placa | oculto em 375px | | | | | 700 → 600 | 13 → **14** | 9,77 | 7,56 |
+| B1 | `chip-opt` | 9 | escolha | | #FEFEFE → `--fundo-controle` | cobalto → #111E2F ⁶ | 1.5px cobalto → 0 | | 400 → **600** ⁶ | 13 → **14** ⁶ | 7,32 → 14,80 | 5,54 → 13,98 |
+| B22 | `chip-opt picked` | 1 | escolha, marcada | | | | 1.5px cobalto → 0 | | 400 → **600** | 13 → **14** | 7,38 | 8,70 |
+| B11 | `botao-leve` | 2 | escolha | 25 → 24 no "Corrigir" ⁴ · 44 no outro | #FEFEFE → `--fundo-controle` | #5A6977 → #111E2F | 1px `--line` → 0 | | 400 → **600** | 13 → **14** | 5,59 → 13,71 / 14,80 | 5,35 → 15,57 / 13,98 |
+| B18 | `botao-leve` em `.pd-convite` | 1 | escolha | | #FEFEFE → `--fundo-controle` | #5A6977 → #111E2F | 1.5px `--line` → 0 | **12px → 999px** | 400 → **600** | 13 → **14** | 5,59 → 13,71 | 5,35 → 15,57 |
+| B13 | `ec-back` | 1 | ícone | **30×30 → 44×44** ⁷ | navy 6% → `--fundo-controle` (mesmo tom) | | | | | | 14,80 | 13,98 |
+| B9 | `cta` desabilitado | 3 | **fora** ⁸ | | | | | | | | 5,07 | 4,75 |
+| B10 | `acct-row` desabilitada | 2 | **fora** | | | | | | | | | |
+| B16 | `tema-opcao picked` | 1 | **fora** | | | | | | | | | |
+| B17 | `tema-opcao` | 1 | **fora** | | | | | | | | | |
+
+Onde há dois valores separados por `/`, a aparência vive em dois fundos: o
+primeiro é o cartão, o segundo é a página.
+
+**As notas são os casos para decidir.** Nenhum foi resolvido sozinho:
+
+1. **B7: o campo ao lado cresce junto.** Com o botão em 54, a linha
+   `.fallback-field` estica o `<input>` de 48 para 54 em 7 campos:
+   `Chat.tsx:240` · `Contas.tsx:193`, `:271` · `PerguntaDoDia.tsx:389`,
+   `:436` · `SeletorDeNicho.tsx:130`, `:220`. As saídas: o mini-send fica em
+   48, a altura do campo, e deixa de ser uma principal "cheia"; ou o campo
+   vai a 54.
+2. **B19: a regra de contexto vence.** O `.fallback-field.pd-guardar
+   .mini-send` declara `min-height: 44px` com especificidade maior, e a
+   simulação não chegou nele. Se o B19 é principal, essa regra precisa entrar
+   no mapeamento. A leitura "antes" deu 48 porque a montagem pôs um `<input>`
+   irmão que o "Guardar" não tem. O lote 2a mediu 44 (§4).
+3. **B6: `forte` hoje é a ação mais forte da linha, e marca a opção atual.**
+   Em `Campo.tsx:232` o `forte` diz qual das opções está valendo e o
+   `btn-linha` comum é a outra. Como secundária, as duas ficam iguais e a
+   tela perde o estado. Nas outras quatro linhas (`Campo.tsx:100`, `:316` ·
+   `revisar-perfil/[proposta]:292`, `:430`), a ação escura vira cinza-claro,
+   com o mesmo peso da vizinha. Pergunta: o B6 é principal? E o
+   `Campo.tsx:232` é escolha?
+4. **B21 e o "Corrigir" do B11 moram dentro de uma frase.** Ficam fora do
+   `min-height` e mantêm a área de toque invisível do lote 2a (grupo B). A
+   pílula de 44px não aparece neles.
+5. **Três links viram cinza.** "deixe em branco" (B21), "Ficou alguma
+   dúvida?" (B14) e "Entrar" / "Criar conta" no rodapé do `/entrar` (B12)
+   eram cobalto. Como discreta, perdem a cara de link. É o que o papel diz,
+   mas o B12 é o caminho de quem já tem conta.
+6. **A escolha não tem cor, peso nem tamanho de texto no desenho.** Nenhum
+   dos dois HTML de `docs/desenho/` tem chip. Usei `--texto-forte`, 600 e
+   14px, e isso é palpite meu: confirme ou troque.
+7. **B13: 44×44 visível empurra o topo.** O lote 2a mediu: a linha `.ec-top`
+   vai de 49 para 63 e o rótulo desloca 14px (§4.1). Por isso lá ficou o
+   círculo de 30px com área invisível de 44. Não foi remedido aqui.
+8. **B9: um defeito da minha simulação, e ele ensina uma coisa.** Com a
+   regra `.cta:not(.ghost):not(.quiet)` (especificidade 0,3,0), o botão
+   desabilitado herdou o cobalto e passou a parecer habilitado (5,07 → 7,38).
+   O `.cta:disabled` (0,2,0) perdeu. **A regra de verdade precisa deixar o
+   desabilitado vencer.** E, mesmo fora do mapeamento, o B9 é um `.cta`: a
+   altura de 54 e o 16px vão chegar nele, a não ser que a regra exclua
+   `:disabled`. Só que um botão que desabilita enquanto envia
+   (`disabled={enviando}`) encolheria no clique.
+
+### 10.2 Os quatro que ficaram de fora
+
+| Ap. | Onde | O que é |
+|---|---|---|
+| **B9** `cta` desabilitado | `aprovar/page.tsx:145` · `onboarding/contas/Contas.tsx:401` · `verba/page.tsx:123` | O botão principal com `disabled` fixo no código: a ação existe mas ainda não pode ser feita. Fundo `--ice-soft`, texto `--ink-mute`, 5,07:1 no claro e 4,75:1 no escuro (isento pela WCAG 1.4.3, mas legível). É o estado desabilitado da principal, e é o candidato natural a virar esse estado dela. |
+| **B10** `acct-row` desabilitada | `conta/page.tsx:369` e `:376` | Linha de lista da `/conta` para ação ainda sem endpoint, com `aria-disabled` e `opacity: 0.72`. Não é botão de ação: é item de lista. Na montagem saiu com a cor e o 13,33px do navegador, porque a regra `.acct-list .acct-row` precisa do `.acct-list` em volta e a cadeia do extrator não o tem. **A aparência real dela não foi medida.** |
+| **B16** `tema-opcao picked` e **B17** `tema-opcao` | `conta/SeletorDeTema.tsx:34` | Os três cartões do seletor de tema (claro, escuro, sistema), com a miniatura do tema, o nome e uma frase. O marcado tem borda cobalto e anel. É uma escolha, mas com forma de cartão (79px de altura em 375px) e não de pílula. Raio `--raio-cartao`. O próprio `<button>` sai com 13,33px e `#000000` do navegador, e os filhos `b` e `span` declaram tamanho e cor. |
+
+### 10.3 Contraste da discreta
+
+Está em `docs/tokens.md`, "PROPOSTA — três tokens de papel para os
+controles": a tabela dos candidatos contra os dez fundos, e por que são dois
+tokens.
+
+### 10.4 A regra simulada
+
+Os tamanhos são literais **só na simulação**: no `globals.css` eles
+dependem da escala do item 6 (o detector reprova 14px e 16px hoje).
+
+```css
+:root { --fundo-controle: rgb(var(--navy-rgb) / 0.06); --texto-discreto: var(--ink-mute); --texto-discreto-sobre-placa: var(--sidebar-ink); }
+.cta:not(.ghost):not(.quiet), .mini-send { min-height: 54px; background: var(--cobalt); color: var(--white); border: 0; border-radius: var(--raio-controle); font-family: var(--display); font-weight: 700; font-size: 16px; }
+.cta.ghost, .btn-linha:not(.fraco) { min-height: 54px; background: var(--fundo-controle); color: var(--cobalt-ink); border: 0; border-radius: var(--raio-controle); font-family: var(--display); font-weight: 700; font-size: 16px; }
+.text-fallback, .btn-texto, .ec-doubt, .cta.quiet, .btn-linha.fraco, .link-btn { min-height: 44px; background: none; border: 0; color: var(--texto-discreto); font-family: var(--display); font-weight: 600; font-size: 14px; }
+.sidebar .link-btn { color: var(--texto-discreto-sobre-placa); }
+.btn-texto.alvo-em-texto { min-height: 0; }
+.chip-opt, .botao-leve, .pd-convite .botao-leve { min-height: 44px; background: var(--fundo-controle); color: var(--texto-forte); border: 0; border-radius: var(--raio-pilula); font-family: var(--display); font-weight: 600; font-size: 14px; }
+.chip-opt.picked { background: var(--cobalt); color: var(--white); }
+.botao-leve.alvo-em-texto { min-height: 0; }
+.ec-back { width: 44px; height: 44px; border-radius: 50%; background: var(--fundo-controle); border: 0; }
+```
+
+## 11. Item 2 — campo em 16px, antes de aplicar
+
+**Não aplicado.** 16px está fora da escala, e o detector reprova. Depende do
+item 6.
+
+Simulado com a regra injetada:
+```
+javascript_tool → injetar(':is(input[type=text|email|tel|password|number|search|url], input:not([type]), select, textarea){font-size:16px !important}'); medir os 35 campos; placeholder: largura do texto por canvas.measureText com a fonte computada, contra clientWidth − padding
+```
+
+| # | Campo | Ap. | Tamanho | Altura | Placeholder | Texto (px) | Espaço livre (px) | Cabe antes → depois |
+|---:|---|---|---|---|---|---|---:|---|
+| 1 | `conectar/escolher/Formulario.tsx:82` | C4 radio | 13,33 → 13,33 | 13 | — | — | — | — |
+| 2 | `conectar/escolher/Formulario.tsx:127` | C4 radio | 13,33 → 13,33 | 13 | — | — | — | — |
+| 3 | `onboarding/Chat.tsx:159` | C2 | 13 → 16 | 48 | Sua cidade | 64,5 → 79,4 | 272 | sim → sim |
+| 4 | `onboarding/Chat.tsx:240` | C2 | 13 → 16 | 48 | não literal | — | — | não medido |
+| 5 | `onboarding/contas/Contas.tsx:193` | C2 | 13 → 16 | 48 | O valor certo, em reais | 128,6 → **158,3** | 139 | sim → **NÃO** |
+| 6 | `onboarding/contas/Contas.tsx:271` | C2 | 13 → 16 | 48 | Ex: 80 | 36,9 → 45,5 | 139 | sim → sim |
+| 7 | `verba/FormVerba.tsx:30` | C1 | 15 → 16 | 48 | Ex: 600 | 51,2 → 54,6 | 228 | sim → sim |
+| 8 | `conta/Formularios.tsx:26` | C1 | 15 → 16 | 48 | não literal | — | — | não medido |
+| 9 | `conta/Formularios.tsx:36` | C1 | 15 → 16 | 48 | (11) 91234-5678 | 111,5 → 118,9 | 270 | sim → sim |
+| 10 | `conta/Formularios.tsx:54` | C5 | 15 → 16 | 48 | não literal | — | — | não medido |
+| 11 | `conta/Formularios.tsx:62` | C5 | 15 → 16 | 48 | não literal | — | — | não medido |
+| 12 | `conta/Identidade.tsx:93` | C6 file | 13 → 13 | 220 | — | — | — | — |
+| 13 | `conta/Identidade.tsx:159` | C6 file | 13 → 13 | 220 | — | — | — | — |
+| 14 | `conta/TrocarPagina.tsx:55` | C4 radio | 13,33 → 13,33 | 13 | — | — | — | — |
+| 15 | `criativos/Analisar.tsx:200` | C8 file | 13,33 → 13,33 | 1 | — | — | — | — |
+| 16 | `inicio/PerguntaDoDia.tsx:389` | C2 | 13 → 16 | 48 | Ex: 3 | 29,5 → 36,3 | 196 | sim → sim |
+| 17 | `inicio/PerguntaDoDia.tsx:436` | C2 | 13 → 16 | 48 | Ex: ? | 29,5 → 36,4 | 196 | sim → sim |
+| 18 | `meu-negocio/Campo.tsx:276` | C3 | 13 → 16 | 48 | não literal | — | — | não medido |
+| 19 | `meu-negocio/Campo.tsx:286` | C3 | 13 → 16 | 48 | não literal | — | — | não medido |
+| 20 | `meu-negocio/Campo.tsx:296` | C3 textarea | 13 → 16 | **56,6 → 65,6** | uma coisa por linha | 111,2 → 136,8 | 280 | sim → sim |
+| 21 | `meu-negocio/Campo.tsx:304` | C3 textarea | 13 → 16 | **56,6 → 65,6** | não literal | — | — | não medido |
+| 22 | `meu-negocio/Campo.tsx:306` | C3 | 13 → 16 | 48 | não literal | — | — | não medido |
+| 23 | `revisar-perfil/[proposta]/page.tsx:305` | C7 textarea | 13 → 16 | 48 → 48,8 | um por linha | 70,6 → 86,9 | 320 | sim → sim |
+| 24 | `revisar-perfil/[proposta]/page.tsx:312` | C7 | 13 → 16 | 48 | sim ou não | 62,7 → 77,2 | 320 | sim → sim |
+| 25 | `entrar/page.tsx:48` | C1 | 15 → 16 | 48 | Como você gosta de ser chamado? | 234,6 → 250,2 | 270 | sim → sim |
+| 26 | `entrar/page.tsx:59` | C1 | 15 → 16 | 48 | (11) 91234-5678 | 111,5 → 118,9 | 270 | sim → sim |
+| 27 | `entrar/page.tsx:75` | C1 | 15 → 16 | 48 | voce@seunegocio.com.br | 175,7 → 187,4 | 270 | sim → sim |
+| 28 | `entrar/page.tsx:86` | C1 | 15 → 16 | 48 | Pelo menos 6 caracteres | 163,9 → 174,8 | 270 | sim → sim |
+| 29 | `entrar/page.tsx:119` | C1 | 15 → 16 | 48 | voce@seunegocio.com.br | 175,7 → 187,4 | 270 | sim → sim |
+| 30 | `entrar/page.tsx:130` | C1 | 15 → 16 | 48 | Sua senha | 70,8 → 75,5 | 270 | sim → sim |
+| 31 | `recuperar/page.tsx:30` | C1 | 15 → 16 | 48 | voce@seunegocio.com.br | 175,7 → 187,4 | 270 | sim → sim |
+| 32 | `redefinir/Form.tsx:17` | C1 | 15 → 16 | 48 | Pelo menos 8 caracteres, com letras e números | 313,8 → **334,7** | 270 | **NÃO → NÃO** |
+| 33 | `redefinir/Form.tsx:29` | C1 | 15 → 16 | 48 | Repita a senha | 98,9 → 105,5 | 270 | sim → sim |
+| 34 | `SeletorDeNicho.tsx:130` | C2 | 13 → 16 | 48 | não literal | — | — | não medido |
+| 35 | `SeletorDeNicho.tsx:220` | C2 | 13 → 16 | 48 | não literal | — | — | não medido |
+
+**O resultado, em três linhas:**
+
+- **Passa a transbordar: um.** `Contas.tsx:193`, "O valor certo, em
+  reais", 158,3px num espaço de 139. A medida é com o `mini-send` ao lado,
+  que é onde o campo vive.
+- **Já transbordava e continua: um.** `redefinir/Form.tsx:17`, "Pelo menos 8
+  caracteres, com letras e números", 313,8px em 270 hoje, a 15px. Não é
+  deste lote, mas estava escondido.
+- **Dez campos têm placeholder que não é texto fixo no código**, e o
+  transbordamento deles fica **não medido**. O extrator só lê o literal.
+
+Os 7 campos que não são de texto (radio e file) ficam fora da regra de
+propósito, como no lote 2a. As duas `textarea` da `/meu-negocio` crescem 9px
+porque a altura delas é em linhas.

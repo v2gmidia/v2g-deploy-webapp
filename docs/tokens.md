@@ -34,7 +34,7 @@ tinham nesses blocos.
 | Token | Valor | Para que serve |
 |---|---|---|
 | `--display` | `var(--font-archivo), system-ui, sans-serif` | Archivo, a fonte da marca. Títulos, e desde o lote 2a todos os controles: `button`, os `input` de texto, `select` e `textarea`. |
-| `--body` | `"Segoe UI", system-ui, -apple-system, Roboto, sans-serif` | pilha de sistema, usada no texto corrido; controles usam --display (Archivo). Divisão provisória, pendente do lote de tipografia. |
+| `--body` | `var(--font-archivo), "Segoe UI", system-ui, -apple-system, Roboto, sans-serif` | texto corrido. Desde o lote 2b (15/09/2026) começa por Archivo, com a pilha de sistema como reserva. Medição em `docs/tipografia-pendente.md` §6. |
 
 O que já foi medido sobre `--body` está em `docs/tipografia-pendente.md`.
 
@@ -327,3 +327,342 @@ para 8px. Os 4 cantos saíram iguais em todas as 101 leituras.
   de 14px para 12px. Não foram montados no navegador. A mudança está no CSS
   e nas contagens acima; o raio computado deles fica "não medido".
 - **Rotas com sessão:** não abertas.
+
+---
+
+## Raio: lote 2b — APLICADA
+
+Aplicada em 15/09/2026, por pedido do Victor: `--raio-controle` de 8px para
+**12px** e `--raio-cartao` de 12px para **16px**. Contra as referências que
+ele mandou (Mercado Pago, PicPay, Nubank, Santander, Contabilizei), 8 e 12
+ficaram quadrados demais. `--raio-pilula` não mudou.
+
+```
+$ grep -nE "^\s*--raio-(controle|cartao):" app/globals.css
+--raio-controle: 12px;  /* botão, campo, item de lista e de nav */
+--raio-cartao: 16px;    /* card, caixa, bloco */
+javascript_tool → getComputedStyle(document.documentElement).getPropertyValue('--raio-*'), /entrar, 375px
+{ "controle": "12px", "cartao": "16px", "pilula": "999px" }
+```
+
+Quem lê cada token não mudou: só o valor.
+```
+$ grep -oE "var\(--raio-(controle|cartao)\)" app/globals.css | sort | uniq -c
+     31 var(--raio-cartao)
+     37 var(--raio-controle)
+```
+
+### Antes e depois nas 22 aparências e nos 35 campos, 375px
+
+Montagem de `docs/botoes.md` §0, tema claro. O "antes" foi lido com o CSS de
+antes da edição. O "depois" foi lido com o `globals.css` do disco já
+recarregado; o script confere que a folha carregada tem
+`--raio-controle: 12px` antes de medir. Uma simulação feita antes da edição
+deu exatamente os mesmos números.
+```
+javascript_tool → __bancada.rodar({tema:"claro"}) antes da edição; depois: folhaTem12 === true, rodar de novo; borderTopLeftRadius por linha
+```
+
+| Aparência | Antes | Depois |
+|---|---|---|
+| B1 `chip-opt` | 999px | 999px |
+| B2 `btn-linha` | 8px | **12px** |
+| B3 `btn-linha fraco` | 8px | **12px** |
+| B4 `text-fallback` | 0px | 0px |
+| B5 `cta` | 8px | **12px** |
+| B6 `btn-linha forte` | 8px | **12px** |
+| B7 `mini-send` (ao lado de campo) | 8px | **12px** |
+| B8 `cta ghost` | 8px | **12px** |
+| B9 `cta` desabilitado | 8px | **12px** |
+| B10 `acct-row` | 0px | 0px |
+| B11 `botao-leve` | 999px | 999px |
+| B12 `link-btn` (auth-foot) | 0px | 0px |
+| B13 `ec-back` | 50% | 50% |
+| B14 `ec-doubt` | 0px | 0px |
+| B15 `cta quiet` | 8px | **12px** (sem fundo nem borda: não aparece) |
+| B16 `tema-opcao picked` | 12px | **16px** (lê `--raio-cartao`) |
+| B17 `tema-opcao` | 12px | **16px** (lê `--raio-cartao`) |
+| B18 `botao-leve` (pd-convite) | 8px | **12px** |
+| B19 `mini-send` (pd-guardar) | 8px | **12px** |
+| B20 `link-btn` (barra lateral) | 0px | 0px |
+| B21 `btn-texto` | 0px | 0px |
+| B22 `chip-opt picked` | 999px | 999px |
+
+| Campo | Antes | Depois |
+|---|---|---|
+| C1 `.field input` | 8px | **12px** |
+| C2 `.fallback-field input` / `.city-row input` | 8px | **12px** |
+| C3 `.rc-editor input, textarea` | 8px | **12px** |
+| C4 `input[type=radio]` | 0px | 0px |
+| C5 `.field input` desabilitado | 8px | **12px** |
+| C6 `input[type=file].id-arquivo` | 0px | 0px |
+| C7 `.rev-corrigir input, textarea` | 8px | **12px** |
+| C8 `input[type=file].sr-only` | 0px | 0px |
+
+Por linha:
+```
+javascript_tool → contagem de borderTopLeftRadius, antes e depois
+botões antes:  8px 38 · 50% 1 · 0px 13 · 999px 12 · 12px 2
+botões depois: 12px 38 · 50% 1 · 0px 13 · 999px 12 · 16px 2
+campos antes:  0px 6 · 8px 29
+campos depois: 0px 6 · 12px 29
+altura de alguma das 101 linhas mudou: nenhuma
+```
+Mudaram 40 linhas de botão e 29 campos.
+
+**O que isto não mede:**
+
+- **Os contêineres.** São 37 declarações de controle e 31 de cartão; entre
+  elas, os itens de lista e de navegação que o lote raio colocou em
+  controle (`.nav-item`, `.card`, `.list-row`, `.bubble`, `.fase`…) e todos
+  os cartões. A mudança está no CSS e na contagem acima; o raio computado
+  deles fica "não medido".
+- **Rotas com sessão:** não abertas.
+
+---
+
+## PROPOSTA — escala de texto, lote 2b, 15/09/2026 — NÃO APLICADA
+
+Nada abaixo está no `globals.css`. Os números são para aprovar.
+
+### O que existe hoje, declarado
+
+```
+$ grep -rhoE "(^|[;{ \t])font-size\s*:\s*[^;}]*" app --include=*.css | sed -E "s/^[;{ \t]*//; s/\s+/ /g; s/ *$//; s/ !important//" | sort | uniq -c | sort -rn
+$ for f in app/globals.css "app/(marketing)/lp.css"; do grep -oE "font-size\s*:" "$f" | wc -l; done
+globals.css: 252 · lp.css: 51
+```
+
+No `globals.css` todo tamanho passa por token. Os literais em px vêm todos
+do `lp.css`, que é a rota `/`.
+
+| Valor | Declarações | Arquivo |
+|---|---:|---|
+| `var(--fs-corpo)` 13px | 112 | globals.css |
+| `var(--fs-legenda)` 11px | 73 | globals.css |
+| `var(--fs-titulo)` 15px | 39 | globals.css |
+| `var(--fs-tela)` 22px | 10 | globals.css |
+| `var(--fs-bloco)` 18px | 7 | globals.css |
+| `var(--fs-destaque)` 26px | 3 | globals.css |
+| `var(--fs-hero-*)` (6 tokens, `clamp()`) | 7 | globals.css |
+| `var(--fs-code)` 0.92em | 1 | globals.css |
+| `14px` | 7 | lp.css |
+| `12px` | 5 | lp.css |
+| `19px` · `17px` · `14.5px` · `13px` | 4 cada | lp.css |
+| `16px` · `15px` · `13.5px` | 3 cada | lp.css |
+| `9.5px` · `16.5px` | 2 cada | lp.css |
+| `62px` · `22px` · `20px` · `17.5px` · `12.5px` · `11px` · `11.5px` | 1 cada | lp.css |
+| `clamp(34px, 5.2vw, 60px)` · `clamp(28px, 4vw, 46px)` · `clamp(27px, 3.6vw, 42px)` | 1 cada | lp.css |
+
+### O que existe hoje, sem ninguém ter declarado
+
+O `13.33px` é o tamanho padrão do Chromium para `<button>` e `<input>`
+que não recebem `font-size` de regra nenhuma.
+```
+javascript_tool → fontSize computado das 66 linhas de botão e dos 35 campos, montagem de docs/botoes.md §0, /entrar, 375px, tema claro
+13.3333px: B10 ×2, B13 ×1, B16 ×1, B17 ×1 (5 botões) · C4 ×3, C8 ×1 (4 campos)
+```
+
+Nas rotas públicas, o que aparece na tela, elemento com texto visível:
+```
+javascript_tool → por rota, iframe 375×812: fontSize computado dos elementos com nó de texto próprio e visíveis
+```
+
+| Rota | Tamanhos computados |
+|---|---|
+| `/` | 9.5px ×3 · 11px ×1 · 11.5px ×1 · 12px ×10 · 12.5px ×3 · 13px ×12 · 13.5px ×7 · 14px ×14 · 14.5px ×14 · 15px ×6 · 16px ×8 · 16.5px ×10 · 17px ×11 · 17.5px ×1 · 19px ×7 · 20px ×2 · 22px ×1 · 27px ×8 · 28px ×2 · 34px ×2 · 62px ×1 |
+| `/entrar` | 11px ×6 · 13px ×4 · 15px ×2 · 18px ×1 · 22px ×1 |
+| `/recuperar` | 11px ×2 · 13px ×3 · 15px ×2 · 18px ×1 · 22px ×1 |
+| `/redefinir` | 11px ×1 · 13px ×3 · 15px ×1 · 18px ×1 · 22px ×1 |
+| `/exclusao-de-dados/x` | 11px ×1 · 16px ×1 · 18px ×1 · 32px ×1 |
+
+Os `16px` e `32px` da `/exclusao-de-dados/x` não saem de nenhum `--fs-*`. A
+regra de onde vêm não foi lida.
+
+Rotas com sessão: **não medido**, exige login.
+
+### A proposta: cinco degraus
+
+| Degrau | Token | Hoje | Declarações que mudam de valor (globals.css) |
+|---|---|---|---:|
+| **12px** | `--fs-legenda` | 11px | 73 |
+| **14px** | `--fs-corpo` | 13px | 112 |
+| **16px** | `--fs-titulo` | 15px | 39 |
+| **20px** | `--fs-bloco` + `--fs-tela` | 18px e 22px | 7 + 10 |
+| **28px** | `--fs-destaque` | 26px | 3 |
+
+```
+$ node -e '...lê globals.css sem comentário, conta font-size: var(--fs-*) por token, aplica o mapa acima...'
+bloco 7 (18→20) · legenda 73 (11→12) · titulo 39 (15→16) · corpo 112 (13→14) · destaque 3 (26→28) · tela 10 (22→20) · 7 hero-* e 1 code fora da escala
+```
+
+**Por que esses cinco:**
+
+- **16px precisa existir.** Abaixo dele o Safari do iPhone dá zoom no campo
+  (item 2). E é o tamanho da principal e da secundária do item 1.
+- **14px precisa existir.** É o tamanho da discreta e da escolha do item 1.
+- **Hoje o 14 e o 16 são reprovados pelo detector.** A simulação do item 1
+  foi rodada nele:
+  ```
+  $ node .claude/skills/impeccable/scripts/detect.mjs --json app/__sim2b/t.css   (cópia temporária da simulação, apagada em seguida)
+  design-system-font-size: "font-size: 16px is off the DESIGN.md type ramp" ×2 · "font-size: 14px …" ×2
+  ```
+  Por isso os itens 1 e 2 dependem desta escala aprovada. Sem ela, o jeito
+  de passar no detector seria abrir exceção, e isso não foi feito.
+- **Cada degrau fica a 2px ou mais do vizinho.** É a regra do comentário da
+  escala no `globals.css`: o detector aceita qualquer valor a até 0,5px de um
+  degrau, e degraus próximos demais deixam de ser distintos para ele.
+- **A legenda sobe de 11px para 12px.** São 73 declarações, quase todas
+  etiqueta em caixa alta, nota e data, lidas por um público de 40+ no
+  celular.
+
+**O que se perde, dito em número:** título de tela (22) e título de bloco
+(18) viram o mesmo degrau, 20px. São 17 declarações. A diferença entre os
+dois passa a ser só de peso e de espaço. Com o teto de cinco, é o par mais
+próximo e o de menos uso.
+
+**Fora da escala, como hoje:** os 6 `--fs-hero-*` (`clamp()`) e o
+`--fs-code` (`em`).
+
+**O `lp.css` não está nesta proposta.** Hoje ele já não segue a escala (48
+literais). O degrau mais perto de cada literal, só como informação:
+```
+$ node -e '...font-size literal do lp.css → degrau mais perto de [12,14,16,20,28]...'
+9.5→12 ×2 · 11→12 ×1 · 11.5→12 ×1 · 12→12 ×5 · 12.5→12 ×1 · 13→12 ×4 · 13.5→14 ×3 · 14→14 ×7 · 14.5→14 ×4 · 15→14 ×3 · 16→16 ×3 · 16.5→16 ×2 · 17→16 ×4 · 17.5→16 ×1 · 19→20 ×4 · 20→20 ×1 · 22→20 ×1 · 62→28 ×1
+```
+O `62px` é número de herói. Ele não cabe em escala de interface.
+
+**Não medido, porque não foi aplicado:** quanto cada texto cresce na tela e
+onde passa a quebrar linha. Com 13 → 14 no corpo, o texto fica cerca de 7,7%
+mais largo. Isso só dá para medir nas rotas públicas; nas 21 com sessão,
+não.
+
+---
+
+## PROPOSTA — escala de espaço, lote 2b, 15/09/2026 — NÃO APLICADA
+
+### O que existe hoje
+
+Cada comprimento conta sozinho: `padding: 14px 16px` são dois.
+```
+$ grep -oE "(^|[;{ \t])padding(-[a-z]+)?\s*:\s*[^;}]*" app/globals.css | sed -E "s/^[;{ \t]*padding(-[a-z]+)?\s*:\s*//; s/!important//" | tr ' ' '\n' | grep -E "^-?[0-9.]+(px|em|rem|%)?$|^auto$" | sed -E 's/^-//' | sort | uniq -c | sort -rn
+$ (idem para margin, e para "app/(marketing)/lp.css")
+```
+
+**`globals.css`, padding** (178 declarações, 104 valores distintos por
+declaração):
+43×0 · 29×18px · 26×14px · 24×12px · 23×16px · 20×20px · 12×22px · 11×13px ·
+10×26px · 10×15px · 10×11px · 9×9px · 9×10px · 7×8px · 6×6px · 6×34px ·
+6×30px · 5×4px · 4×5px · 4×24px · 3×32px · 2×56px · 2×40px · 2×38px · 2×2px ·
+2×28px · 2×17px · 1×7px · 1×36px · 1×1px
+
+**`globals.css`, margin** (262 declarações, 82 valores distintos por
+declaração):
+207×0 · 32×10px · 25×14px · 23×8px · 23×6px · 18×12px · 15×22px · 11×auto ·
+11×4px · 11×2px · 10×18px · 10×16px · 9×3px · 7×5px · 6×1px · 5×20px · 3×7px ·
+2×9px · 2×28px · 2×26px · 2×15px · 1×46px · 1×38px · 1×24px · 1×11px
+
+**Com `var()` ou `calc()`, fora da contagem acima** (4):
+`padding: 40px var(--sangria) 36px` · `padding: 20px 18px calc(var(--barra-h) + 24px)` ·
+`padding-bottom: calc(var(--barra-h) + 24px)` · `margin: 0 calc(-1 * var(--sangria)) 22px`
+
+**`lp.css`, padding:** 11×0 · 4×26px · 4×24px · 4×22px · 3×28px · 3×20px ·
+3×14px · 2×7px · 2×76px · 2×54px · 2×44px · 2×40px · 2×18px · 2×15px · 2×13px ·
+2×12px · 2×11px · 1×66px · 1×60px · 1×5px · 1×56px · 1×46px · 1×34px · 1×32px ·
+1×30px · 1×1px · 1×19px · 1×17px · 1×10px
+
+**`lp.css`, margin:** 41×0 · 8×auto · 5×14px · 3×8px · 3×4px · 3×18px ·
+3×16px · 3×10px · 2×30px · 2×26px · 2×22px · 2×20px · 1×6px · 1×42px ·
+1×40px · 1×3px · 1×24px · 1×1px · 1×15px · 1×12px
+
+`gap` não foi pedido e fica de fora. Tem 24 valores distintos
+(`docs/varredura-visual.md` §2.4).
+
+### A proposta: seis degraus
+
+**4 · 8 · 12 · 16 · 24 · 32**, com `0` e `auto` fora, porque não são
+degraus.
+
+```
+$ node -e '...cada comprimento px ≠ 0 de padding/margin do globals.css → degrau mais perto de [4,8,12,16,24,32]...'
+ESPAÇO globals.css: 469 comprimentos px ≠ 0 · já no degrau 129 · mudariam 340
+```
+
+| Hoje → degrau | Comprimentos |
+|---|---|
+| → **4** | 1 ×7 · 2 ×13 · 3 ×9 · 4 ×16 · 5 ×11 · 6 ×29 |
+| → **8** | 7 ×4 · 8 ×30 · 9 ×11 · 10 ×41 |
+| → **12** | 11 ×11 · 12 ×42 · 13 ×11 · 14 ×51 |
+| → **16** | 15 ×12 · 16 ×33 · 17 ×2 · 18 ×39 · 20 ×25 |
+| → **24** | 22 ×27 · 24 ×5 · 26 ×12 · 28 ×4 |
+| → **32** | 30 ×6 · 32 ×3 · 34 ×6 · 36 ×1 · 38 ×3 · 40 ×2 · 46 ×1 · 56 ×2 |
+
+**Onde a proposta pesa, para decidir antes:**
+
+- **340 de 469 comprimentos mudam de valor.** É muito mais mexida que a
+  escala de texto, e quase toda cai nas telas com sessão, onde não dá para
+  medir.
+- **Os ajustes de 1 a 3px (29) viram 4.** São acertos ópticos: ícone meio
+  pixel acima, rótulo encostado. Arredondar move coisa que foi posta ali de
+  propósito. A alternativa é deixá-los fora da escala, como exceção
+  declarada, e a escala passa a ter sete valores.
+- **O 20px vai para 16, e não para 24.** Os dois estão a 4 dele; o desempate
+  foi para baixo. São 25 comprimentos, quase todos padding de cartão.
+- **Os de 36 a 56 (9) viram 32.** São os respiros grandes da `/inicio` e da
+  casa do criativo, e encolhem visivelmente.
+
+---
+
+## PROPOSTA — três tokens de papel para os controles (item 1), 15/09/2026 — NÃO APLICADA
+
+Seguem o padrão da camada de papéis: no `:root` apontam para a paleta; nos
+dois blocos escuros, o valor escrito direto.
+
+| Token | Claro | Escuro | Serve |
+|---|---|---|---|
+| `--fundo-controle` | `rgb(var(--navy-rgb) / 0.06)` | `rgb(210 224 240 / 0.06)` | o "cinza claro" da secundária, da escolha e do ícone |
+| `--texto-discreto` | `var(--ink-mute)` → #5A6977 | `#7D8CA1` | a discreta sobre fundo claro (página, cartão) |
+| `--texto-discreto-sobre-placa` | `var(--sidebar-ink)` → `rgb(var(--plate-ink-rgb) / 0.78)` | `rgb(233 239 248 / 0.66)` | a discreta sobre a placa escura (barra lateral) |
+
+**`--fundo-controle` é o mesmo tingimento que o `.ec-back` já usa.** O
+"cinza claro" do desenho (`--fraca` #EDF2F5) não existe na paleta. E, por
+ser translúcido, ele acompanha o fundo onde cai, cartão ou página, nos dois
+temas.
+
+### Por que a discreta precisa de dois tokens
+
+A cor do desenho (#9FB3C4) está sobre o cartão escuro da pergunta do dia.
+Sobre fundo claro ela reprova.
+```
+$ node -e '...razão WCAG de cada candidato contra cada fundo...'
+```
+
+| Candidato | canvas #F1F6F7 | surface #FEFEFE | surface-2 #FFFFFF | ice-soft #E3F6FE | canvas esc. #050A13 | surface esc. #0C1523 | surface-2 esc. #111C2E | ice-soft esc. #0E2231 | plate #111E2F | barra esc. #080E1A |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| desenho #9FB3C4 | **1,98** | **2,14** | **2,16** | **1,94** | 9,18 | 8,47 | 7,91 | 7,52 | 7,77 | 8,93 |
+| `--ink-mute` claro #5A6977 | 5,18 | 5,59 | 5,64 | 5,07 | **3,51** | **3,24** | **3,03** | **2,88** | **2,98** | **3,42** |
+| `--ink-mute` escuro #7D8CA1 | **3,14** | **3,39** | **3,42** | **3,08** | 5,79 | 5,35 | 4,99 | 4,75 | 4,91 | 5,64 |
+| `--ink-soft` claro #485A6B | 6,53 | 7,06 | 7,12 | 6,40 | **2,79** | **2,57** | **2,40** | **2,28** | **2,36** | **2,71** |
+| `--ink-soft` escuro #9FB0C6 | **2,03** | **2,19** | **2,21** | **1,99** | 8,97 | 8,28 | 7,73 | 7,35 | 7,60 | 8,73 |
+
+Nenhum tom passa de 4,5 nos dois grupos de fundo. Por isso são dois
+tokens: um para fundo claro e um para a placa escura. Cada um troca de valor
+com o tema.
+
+Medido na montagem, com o mapeamento simulado:
+```
+javascript_tool → razão da tinta contra o fundo composto (fundo do controle sobre os ancestrais), /entrar, 375px, data-tema claro e escuro, com a proposta injetada
+```
+
+| Uso | Claro | Escuro |
+|---|---:|---:|
+| discreta sobre cartão (`--texto-discreto`) | 5,59 | 5,35 |
+| discreta sobre página (`--texto-discreto`) | 5,18 | 5,79 |
+| discreta na barra lateral (`--texto-discreto-sobre-placa`) | 9,77 | 7,56 |
+| secundária: cobalto sobre `--fundo-controle`, em cartão / em página | 6,50 / 6,03 | 4,89 / 5,45 |
+| escolha: `--texto-forte` sobre `--fundo-controle`, em cartão / em página | 14,80 / 13,71 | 13,98 / 15,57 |
+| `--fundo-controle` contra o fundo, em cartão / em página | 1,13 / 1,12 | 1,13 / 1,10 |
+
+A última linha não é contraste de texto. É o quanto o preenchimento se
+destaca do fundo: pouco, e é o que o desenho pede. O texto do botão é o que
+o identifica.

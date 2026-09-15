@@ -23,7 +23,7 @@ colors:
   plate: "#111E2F"
   plate-ink: "#F1F6F7"
   sidebar-active-bg: "rgb(255 255 255 / 0.15)"
-  sidebar-ink: "rgb(255 255 255 / 0.78)"
+  sidebar-ink: "rgb(var(--plate-ink-rgb) / 0.78)"
   sidebar-ink-strong: "#FFFFFF"
   sidebar-line: "rgb(255 255 255 / 0.16)"
   surface: "#FEFEFE"
@@ -42,6 +42,10 @@ colors:
   cobalt-ink-escuro: "#5C88FA"
   crit-escuro: "#E8756D"
   crit-soft-escuro: "#2C1210"
+  fundo-barra-escuro: "#080E1A"
+  fundo-pagina-escuro: "#050A13"
+  fundo-superficie-escuro: "#0C1523"
+  fundo-topo-escuro: "#050A13"
   good-escuro: "#4FC57E"
   good-soft-escuro: "#0E2418"
   ice-escuro: "#8FD9F5"
@@ -51,6 +55,7 @@ colors:
   ink-soft-escuro: "#9FB0C6"
   lime-escuro: "#D5EF25"
   line-escuro: "#1C2840"
+  linha-divisoria-escuro: "#1C2840"
   navy-escuro: "#E9EFF8"
   offwhite-escuro: "#050A13"
   sidebar-active-bg-escuro: "#1B44E5"
@@ -59,13 +64,16 @@ colors:
   sidebar-line-escuro: "rgb(233 239 248 / 0.10)"
   surface-escuro: "#0C1523"
   surface-2-escuro: "#111C2E"
+  texto-forte-escuro: "#E9EFF8"
+  texto-fraco-escuro: "#9FB0C6"
+  texto-sobre-escuro-escuro: "#FFFFFF"
   warn-escuro: "#E0A63C"
   warn-soft-escuro: "#2A1F0A"
 typography:
   display:
     fontFamily: "Archivo, system-ui, sans-serif"
   body:
-    fontFamily: "Segoe UI, system-ui, -apple-system, Roboto, sans-serif"
+    fontFamily: "Archivo, Segoe UI, system-ui, -apple-system, Roboto, sans-serif"
   mono:
     fontFamily: "ui-monospace, Cascadia Mono, Consolas, monospace"
   monoLegado:
