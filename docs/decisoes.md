@@ -43,20 +43,13 @@ na seção de baixo.
 - [ ] **Escala de espaço (4/8/12/16/24/32).** Proposta em `docs/tokens.md`.
       Mexe em 340 de 469 valores e vira lote próprio, depois do 2b. — 15/09
 - [ ] **`tema-opcao` como variação "escolha-cartão".** Fora do 2b. — 15/09
-- [ ] **O botão lima do cartão de suporte da barra lateral não cabe na
-      secundária.** "Falar com uma pessoa" já quebra em duas linhas no cartão
-      de 220px, e alinhar ao papel o deixaria mais alto. Saídas: rótulo mais
-      curto, uma secundária compacta declarada para a barra, ou o botão sair
-      do cartão. `docs/botoes.md` §13.2. — 15/09
-- [ ] **Seis placeholders esperam texto mais curto do Victor.** Cinco não
-      cabem em 16px: `onboarding/perguntas.ts:112`, `:122`, `:144` e
-      `SeletorDeNicho.tsx:63`, `:66`. O `:70` cabe, com 15px de folga. As
-      larguras estão em `docs/botoes.md` §13.4. — 15/09
-- [ ] **Bordas que ficaram por significado, em 4 das 7 telas:** a esquerda
-      do `.alert-card` e do `.diag-lista`, o veredito do `.analise-cartao`, o
-      tracejado da `.casa-desenho`, e o `.rev-opcao`/`.rev-plinha`, que não
-      têm fundo. Se o desenho quiser tirar também, cada um pede outro sinal
-      no lugar da borda. `docs/botoes.md` §13.3. — 15/09
+- [ ] **"Falar com uma pessoa" sai do cartão e vira item de linha da barra
+      lateral — decidido, esperando aprovação do diff de `.tsx`.** Não dá só
+      em CSS: é preciso apagar o `.side-support` e criar a linha no
+      `app/(protected)/layout.tsx`. O diff proposto está em
+      `docs/estado/visual-controles-3-15-09.md` §1. A barra NÃO tem item
+      "Ajuda": o fim dela é só o `.side-account`, com o "Sair" como link de
+      texto. — 15/09
 
 - [ ] **Trava de completude do cadastro: 6 campos ou 11?** O app conta 6, o
       backend exige 11 no modo `gerar`. Subir para 11 pode barrar cliente que
@@ -68,6 +61,34 @@ na seção de baixo.
 ---
 
 ## Decididas
+
+### 2026-09-15 — Lote 2b, fechamento: as bordas que ficam, os placeholders, o botão lima
+**Decisões do Victor, no chat, sobre `docs/botoes.md` §13.**
+
+**1. Quatro bordas continuam, por exceção DELIBERADA ao cartão sem borda.**
+Nelas a borda não é sobra: é o único sinal de alguma coisa. Quem tirar
+qualquer uma num lote futuro precisa pôr outro sinal no lugar e registrar
+aqui antes.
+
+| Borda | Onde | Por que fica |
+|---|---|---|
+| **Borda esquerda do `.alert-card`** (cobalto, `.warn`, `.crit`, `.good`) e **do `.diag-lista li`** (`--crit` no `.critica`) | `/alertas`, `/saude-meta`, `/revisar-perfil/[proposta]` | É a **severidade**. Diz, antes de ler, se o aviso é informação, atenção ou bloqueio. No `.diag-lista` ela separa bloqueio de aviso sem repetir o rótulo em cada linha (comentário da regra em `globals.css`). |
+| **A cor da borda do `.analise-cartao`** (`.v-bom`, `.v-ajuste`, `.v-fraco`) | `/criativos` | É o **veredito** da checagem da peça. Sem ela, "pode subir" e "precisa de ajuste" ficam com a mesma cara. O `.v-neutro` não carrega veredito e perdeu a borda. |
+| **O tracejado da `.casa-desenho`** | `/criativos` | Diz **"isto é um desenho, não clica"**. Borda sólida, ou nenhuma, leria como cartão clicável, e a tela prometeria o que não faz (comentário da regra em `globals.css`). |
+| **A borda do `.rev-opcao` e do `.rev-plinha`** | `/revisar-perfil/[proposta]` | Os dois **não têm fundo**. Sem borda, somem sobre a página, e o operador perde o limite entre as duas opções que está comparando. |
+
+**2. Placeholders encurtados, texto do Victor.** Só a string muda.
+- `onboarding/perguntas.ts:70` fica "O nome do seu negócio";
+- `:112` → "O que seu negócio vende?";
+- `:122` → "Ex: bolo e salgado feitos no dia";
+- `:144` → "Onde seus clientes estão?";
+- `components/ui/SeletorDeNicho.tsx:66` → "O que seu negócio vende?";
+- `:63` → "Busque ou escreva".
+
+**3. "Falar com uma pessoa" sai do cartão.** Vira item de linha no fim da
+barra lateral, e o cartão `.side-support` deixa de existir. Isto **inverte o
+item 2 da decisão de 11/09** ("o `.side-support` vira card claro"). Como
+exige tocar `.tsx`, espera a aprovação do diff (em aberto, acima).
 
 ### 2026-09-15 — Lote 2b: escala, papéis dos controles, campo, cartão
 **Decisões do Victor, no chat, sobre a proposta do lote 2b**
