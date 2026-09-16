@@ -62,6 +62,41 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-15 — `pages_manage_ads` entra no login; a `/aprovar` passa a disparar a criação da campanha
+**Duas decisões trazidas pelo Victor no chat. A segunda é do Gabriel.**
+
+**1. `pages_manage_ads` entra na lista de escopos** (`lib/meta/oauth.ts`),
+sem remover nenhum dos cinco que já estavam, e vai junto no pedido de App
+Review. Os seis pedidos passam a ser: `ads_read`, `ads_management`,
+`business_management`, `pages_show_list`, `pages_read_engagement` e
+`pages_manage_ads`. (`public_profile` continua vindo por padrão, sem ser
+pedido.)
+
+*O que isso faz com quem já conectou, e é imediato:* escopo novo não é
+concedido retroativamente. A `/conectar` compara concedidos × pedidos
+(`conectar/page.tsx:40-42`), então a única conexão existente — o negócio
+V2G, `a85c37a9` — passa a cair em `precisaReconectar` e vê o pedido de
+refazer a conexão. Nada quebra enquanto ele não refizer: nenhuma linha do
+código exerce o escopo novo, e o token atual continua válido.
+
+**2. A `/aprovar` dispara a criação da campanha — decisão do Gabriel.**
+Isto **substitui** a regra "o webapp lê estado, não o empurra", que está
+escrita em dois lugares e passa a valer como histórico:
+`docs/o-que-o-webapp-consome.md` §2, que classifica `POST /campanhas`
+entre as 26 rotas "de outro cliente — n8n e scripts", e
+`docs/disparo-pipeline.md` §1 ("Uma rota. Uma.").
+
+*Registro não é implementação, e três coisas continuam de pé antes de ela
+existir:* (a) `POST /campanhas` exige execução em `estrutura_pronta`, e as
+8 nesse estado têm `business_id` **e** `cliente_id` nulos — sem vínculo não
+há dono para conferir antes de gastar dinheiro de terceiro
+(`backend-integracao.md` §1); (b) `TIMEOUTS.campanha` é 300.000 ms, e
+`backend-integracao.md` §4 diz que nenhum acima de `rapido` cabe num
+request de navegador — o padrão prescrito é dispara-e-consulta; (c)
+`/saude` responde `mocks: {meta: false}`, então a chamada é escrita real na
+Meta e exige autorização humana explícita (`CLAUDE.md`).
+Medições em [`estado/pre-voo-no-aprovar-15-09.md`](./estado/pre-voo-no-aprovar-15-09.md).
+
 ### 2026-09-15 — A conta de anúncio não se adivinha; o pré-voo entra na `/aprovar`
 **Decisões do Victor, no chat, sobre o escopo mínimo do App Review da Meta.**
 

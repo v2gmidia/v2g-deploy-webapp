@@ -78,6 +78,24 @@ export const ESCOPOS = [
   "business_management",
   "pages_show_list",
   "pages_read_engagement",
+  // ------------------------------------------------------------------
+  // `pages_manage_ads`: entra em 15/09/2026, junto do pedido de App
+  // Review. Decisão registrada em `docs/decisoes.md`.
+  //
+  // NENHUMA linha deste projeto exerce este escopo hoje — é o mesmo caso
+  // que `ads_management` foi no lote da conexão, e pelo mesmo argumento
+  // (§2 do `docs/oauth-meta.md`): o segundo consentimento cairia no pior
+  // momento do funil, com o cliente esperando o anúncio subir, e os
+  // escopos de anúncio passam pelo mesmo App Review. Pedir depois é
+  // enfrentar a fila do Meta duas vezes.
+  //
+  // CONSEQUÊNCIA IMEDIATA, e ela é visível na interface: escopo novo NÃO
+  // vale para quem já conectou — o Meta não concede permissão
+  // retroativamente. A `/conectar` compara o que foi concedido com o que
+  // esta lista pede e passa a exigir reconexão de TODA conexão anterior.
+  // Ver `app/(fluxo)/conectar/page.tsx:40-42`.
+  // ------------------------------------------------------------------
+  "pages_manage_ads",
 ] as const;
 
 export function credenciaisMeta(): { appId: string; appSecret: string } {
