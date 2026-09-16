@@ -12,6 +12,27 @@ import { falha, registrarErroBackend, type Resultado } from "./erros";
 export interface PreRequisitos {
   ok: boolean;
   bloqueios: string[];
+  /**
+   * Requisitos que o backend NÃO CONSEGUIU conferir — e eles contam como
+   * bloqueio.
+   *
+   * ============================================================
+   * NÃO É CAMPO DECORATIVO, E IGNORÁ-LO MENTE NA TELA.
+   *
+   * O `ok` da rota já leva esta lista em conta; quem lê só `bloqueios`
+   * pode receber `ok: false` com a lista de bloqueios VAZIA e concluir que
+   * não há nada errado. O docstring do backend diz o porquê da lista
+   * existir separada: "seguir para a subida sem saber se um requisito esta
+   * cumprido e a mesma aposta que seguir sabendo que nao esta, com
+   * dinheiro de terceiro e conta que pode ser banida".
+   *
+   * Medido em 15/09/2026, com uma conta sem permissão: a rota devolveu um
+   * bloqueio (a conta inacessível) E um `nao_verificados` (não deu para
+   * sondar se o App está publicado). São fatos diferentes sobre a mesma
+   * subida, e a tela precisa dos dois.
+   * ============================================================
+   */
+  naoVerificados: string[];
   avisos: string[];
   /**
    * `null` quando o backend não informou.
@@ -50,12 +71,14 @@ function validar(bruto: unknown): PreRequisitos | null {
   };
 
   const bloqueios = listaDeTexto(o.bloqueios);
+  const naoVerificados = listaDeTexto(o.nao_verificados);
   const avisos = listaDeTexto(o.avisos);
-  if (bloqueios === null || avisos === null) return null;
+  if (bloqueios === null || naoVerificados === null || avisos === null) return null;
 
   return {
     ok: o.ok,
     bloqueios,
+    naoVerificados,
     avisos,
     temWhatsapp: typeof o.tem_whatsapp === "boolean" ? o.tem_whatsapp : null,
   };

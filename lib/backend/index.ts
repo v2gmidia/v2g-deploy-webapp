@@ -52,6 +52,19 @@ export {
  * "verificamos e não tem". É o bug do `oauth-meta.md` §2.1 de novo, e o
  * conserto é do lado do backend. Não trate o `false` desta rota como
  * negativa dura numa tela.
+ *
+ * E LEIA `naoVerificados`, NÃO SÓ `bloqueios`. São duas listas, e a
+ * segunda conta igual — o `ok` da rota já a leva em conta, então quem lê
+ * só a primeira pode receber `ok: false` com `bloqueios` vazio e concluir
+ * que está tudo certo. Medido em 15/09/2026: com uma conta sem permissão a
+ * rota devolve as duas preenchidas. Ver o bloco do campo em
+ * `pre-requisitos.ts`.
+ *
+ * UM ESTADO NOVO DESDE 09/09/2026, e ele fecha o `tem_whatsapp: null`:
+ * `GET /campanhas/{id_execucao}/destino` mede, com `validate_only` no
+ * conjunto, o destino de mensagem que a Meta aceita. Não há cliente para
+ * ela aqui — é a resposta certa para "esta Página tem WhatsApp?", e a
+ * pergunta só existe depois que há execução.
  */
 export {
   consultarPreRequisitos,
@@ -112,4 +125,3 @@ export {
   type ArquivoAceito,
   type ResultadoDoEnvio,
 } from "./criativos-do-cliente";
-

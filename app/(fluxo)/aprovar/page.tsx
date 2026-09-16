@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
 import { tituloDaAba } from "@/lib/titulos";
+import { preVooDoNegocio, type PreVoo } from "@/lib/campanha/pre-voo";
+import type { PreRequisitos, Resultado } from "@/lib/backend";
 
 export const metadata = tituloDaAba("/aprovar");
 
@@ -35,6 +37,11 @@ export const metadata = tituloDaAba("/aprovar");
 export default async function AprovarPage() {
   const supabase = await createClient();
 
+  // O PRÉ-VOO NÃO DEPENDE DA PEÇA, e é por isso que ele é lido aqui, antes
+  // do `if (!pendente)`: ele responde "de onde este anúncio sai", que vale
+  // igual quando não há nada para aprovar. Os DOIS estados o recebem.
+  const preVoo = await preVooDoNegocio();
+
   // `apenasPecasDeAnuncio` é o que separa a peça que a IA montou da logo
   // que o cliente subiu na /conta — as duas moram em `creatives` e as duas
   // nascem `draft`. Sem ele, esta tela apresentava a logo do cliente como
@@ -50,7 +57,7 @@ export default async function AprovarPage() {
     .limit(1)
     .maybeSingle();
 
-  if (!pendente) return <NadaParaAprovar />;
+  if (!pendente) return <NadaParaAprovar preVoo={preVoo} />;
 
   // O estado "substituto" vem dos dados: existe uma peça reprovada na
   // mesma campanha? Então esta é a que veio no lugar dela.
@@ -129,6 +136,8 @@ export default async function AprovarPage() {
         </div>
       </section>
 
+      <DeOndeSai preVoo={preVoo} />
+
       <section className="trust">
         <b className="title">A aprovação ainda não está ligada</b>
         Falta a parte que guarda a sua resposta e coloca a peça na fila. Enquanto isso, se quiser
@@ -158,7 +167,7 @@ export default async function AprovarPage() {
 }
 
 
-function NadaParaAprovar() {
+function NadaParaAprovar({ preVoo }: { preVoo: PreVoo }) {
   return (
     <div className="auth-grid solo">
       <main className="auth-card">
@@ -169,6 +178,9 @@ function NadaParaAprovar() {
           gente te avisa.
         </p>
       </div>
+
+      <DeOndeSai preVoo={preVoo} />
+
       <section className="trust">
         <b className="title">Enquanto isso</b>
         Dá para ver como estão seus anúncios ou conferir o que já foi decidido por você.
@@ -182,3 +194,167 @@ function NadaParaAprovar() {
   );
 }
 
+/**
+ * DE ONDE ESTE ANÚNCIO SAI — o pré-voo, em linguagem de cliente.
+ *
+ * ============================================================
+ * APARECE NOS DOIS ESTADOS DESTA TELA, INCLUSIVE NO "NADA PARA APROVAR".
+ *
+ * Medido em 15/09/2026: a única peça de campanha viva no banco é do
+ * negócio FICTÍCIO, e sob RLS nenhum login a alcança — ou seja, todo
+ * cliente real cai no estado vazio. Um bloco que só existisse no estado
+ * com peça seria um bloco que ninguém vê.
+ * ============================================================
+ *
+ * NÃO MOSTRA id de conta nem de Página. Número de conta de anúncio é
+ * jargão de gestor de tráfego, e a regra do produto é não ter jargão na
+ * interface. Quando o nome não dá para ler, a tela DIZ isso — não mostra o
+ * id como consolo.
+ *
+ * Nenhuma classe nova, nenhuma cor e nenhum tamanho novo: reusa `.trust`,
+ * `.title` e `.card-note`, que esta tela e a `/conta` já usam.
+ */
+function DeOndeSai({ preVoo }: { preVoo: PreVoo }) {
+  // Sem negócio não há o que dizer sobre Página ou conta, e um bloco
+  // vazio com título é pior que bloco nenhum: ele promete informação.
+  if (!preVoo.temNegocio) return null;
+
+  const { pagina, conta, preRequisitos, conexaoIlegivel } = preVoo;
+
+  return (
+    <section className="trust">
+      <b className="title">De onde este anúncio sai</b>
+
+      <span style={{ display: "block", marginTop: 4 }}>
+        {conexaoIlegivel
+          ? "Não conseguimos conferir sua conexão com o Facebook agora. Sua conta e seus anúncios não mudaram por causa disso."
+          : pagina === null
+            ? "Nenhuma página escolhida ainda — é dela que o anúncio sai, e é o WhatsApp dela que recebe as conversas."
+            : pagina.nome
+              ? `Página conectada: ${pagina.nome}`
+              : "Página conectada: não conseguimos ler o nome dela agora."}
+      </span>
+
+      {conta !== null && <Conta conta={conta} />}
+
+      {preRequisitos !== null && <Requisitos resultado={preRequisitos} />}
+
+      {!conexaoIlegivel && pagina === null && (
+        <a className="cta" href="/conectar" style={{ marginTop: 12, width: "max-content" }}>
+          Escolher minha página
+        </a>
+      )}
+    </section>
+  );
+}
+
+/**
+ * A conta de anúncio — e a ausência de escolha dita na cara.
+ *
+ * Enquanto não existe campanha, não existe conta escolhida: a única marca
+ * no schema é `campaigns.ad_account_id`. Dizer "Conta de anúncio: X"
+ * escolhendo a mais recentemente gravada seria afirmar uma decisão que
+ * ninguém tomou. Decisão do Victor, 15/09/2026 — ver `docs/decisoes.md` e
+ * o bloco de `lib/campanha/pre-voo.ts`.
+ */
+function Conta({ conta }: { conta: NonNullable<PreVoo["conta"]> }) {
+  if (conta.marcada) {
+    return (
+      <span style={{ display: "block", marginTop: 4 }}>
+        Conta de anúncio: {conta.conta.nome}
+      </span>
+    );
+  }
+
+  if (conta.contas.length === 0) {
+    return (
+      <span style={{ display: "block", marginTop: 4 }}>
+        Nenhuma conta de anúncio escolhida ainda.
+      </span>
+    );
+  }
+
+  return (
+    <span style={{ display: "block", marginTop: 4 }}>
+      {conta.contas.length === 1 ? "Conta de anúncio ligada: " : "Contas de anúncio ligadas: "}
+      {conta.contas.map((c) => c.nome).join(", ")}. A conta é escolhida na criação da campanha.
+    </span>
+  );
+}
+
+/**
+ * Os requisitos de subida, como a rota os devolve.
+ *
+ * ============================================================
+ * DOIS TIPOS DE "FALHOU", E ELES NÃO SE MISTURAM.
+ *
+ *  1. A CHAMADA falhou (rede, token nosso, backend fora). A mensagem já
+ *     vem em português de `lib/backend/erros.ts`, e a resposta crua da
+ *     FastAPI nunca chega à tela.
+ *  2. A chamada deu 200 e a RESPOSTA diz que falta coisa. Aí o que a tela
+ *     mostra é o bloqueio que a rota devolveu, palavra por palavra.
+ * ============================================================
+ *
+ * `naoVerificados` entra junto de `bloqueios` porque o backend conta os
+ * dois igual — "seguir para a subida sem saber se um requisito esta
+ * cumprido e a mesma aposta que seguir sabendo que nao esta". O rótulo
+ * separa os dois na tela, mas nenhum deles vira "está tudo certo".
+ *
+ * O TEXTO DOS BLOQUEIOS É DO BACKEND, e às vezes tem id de conta e frase
+ * em inglês da Meta dentro. Está assim de propósito: a instrução foi
+ * mostrar o bloqueio que a rota devolve. Traduzir para linguagem de
+ * cliente é decisão de produto, não conserto — e teria que ser feita sem
+ * apagar o motivo real.
+ */
+function Requisitos({ resultado }: { resultado: Resultado<PreRequisitos> }) {
+  if (!resultado.ok) {
+    return <span style={{ display: "block", marginTop: 4 }}>{resultado.mensagem}</span>;
+  }
+
+  const { ok: liberado, bloqueios, naoVerificados, avisos } = resultado.dados;
+
+  if (liberado && bloqueios.length === 0 && naoVerificados.length === 0) {
+    return (
+      <>
+        <span style={{ display: "block", marginTop: 4 }}>
+          Os requisitos para subir o anúncio estão cumpridos.
+        </span>
+        {avisos.map((aviso) => (
+          <p className="card-note" key={aviso}>
+            {aviso}
+          </p>
+        ))}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {bloqueios.length > 0 && (
+        <>
+          <span style={{ display: "block", marginTop: 4 }}>
+            O que impede este anúncio de subir:
+          </span>
+          {bloqueios.map((bloqueio) => (
+            <p className="card-note" key={bloqueio}>
+              {bloqueio}
+            </p>
+          ))}
+        </>
+      )}
+
+      {naoVerificados.length > 0 && (
+        <>
+          <span style={{ display: "block", marginTop: 4 }}>
+            O que não deu para conferir — e conta como impedimento até dar:
+          </span>
+          {naoVerificados.map((item) => (
+            <p className="card-note" key={item}>
+              {item}
+            </p>
+          ))}
+        </>
+      )}
+    </>
+  );
+}

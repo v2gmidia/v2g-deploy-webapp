@@ -32,6 +32,13 @@ na seção de baixo.
       decidir até onde voltar; (b) o disparador cobre, e a tela continua só
       de ontem — mas o furo dura enquanto ele não existir. — levantado em 01/09
 
+- [ ] **Não existe marca de "conta de anúncio escolhida" no schema.** A
+      única marca é `campaigns.ad_account_id`, e `campaigns` tem zero
+      linhas — enquanto o negócio conectado tem TRÊS contas ativas (medido
+      em 15/09). A regra de EXIBIÇÃO está decidida (abaixo, 15/09); o que
+      continua aberto é se a escolha deve virar registro próprio, gravado
+      quando o cliente escolhe na `/conectar/escolher`, em vez de só nascer
+      junto da campanha. — levantado em 15/09
 - [ ] **Linha desabilitada sem fonte de dado na `/conta` (B10, `acct-row`).**
       `conta/page.tsx:369` e `:376` mostram uma função que não tem endpoint,
       desabilitada. Isso contraria a regra de omitir em vez de desabilitar.
@@ -55,6 +62,46 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-15 — A conta de anúncio não se adivinha; o pré-voo entra na `/aprovar`
+**Decisões do Victor, no chat, sobre o escopo mínimo do App Review da Meta.**
+
+Registro do lote em [`estado/pre-voo-no-aprovar-15-09.md`](./estado/pre-voo-no-aprovar-15-09.md).
+
+**1. Dos três itens, só o item 2 entra agora.** A `/aprovar` passa a mostrar
+a Página conectada, as contas de anúncio e os requisitos de subida, lidos de
+`GET /campanhas/pre-requisitos`. Só leitura.
+
+**2. O item 1 está PARADO — nada de `UPDATE` em `execucoes` nem de
+`POST /campanhas`.** O Victor está investigando no backend por que as
+execuções nascem sem `business_id`.
+*Por que isso trava o item 1, e não é preciosismo:* a rota exige execução em
+`estrutura_pronta`, e as 8 nesse estado têm `business_id` **e** `cliente_id`
+nulos. Sem vínculo não há dono para conferir, e `backend-integracao.md` §1 é
+explícito: "não existe rede de segurança do outro lado". Somado a isso,
+`/saude` responde `mocks: {meta: false}` — a chamada é escrita real na Meta.
+
+**3. Conta de anúncio: só com marca de verdade.** Mostra "V2G CONTA"
+(`act_2818009911919726`) **se** houver marca de conta escolhida; se não
+houver, mostra as três e diz que "a conta é escolhida na criação".
+*Palavras dele:* "Não invente regra de 'a mais recente'."
+*Por quê:* `updated_at` mais novo é ordem de gravação, não registro de
+escolha — a tela afirmaria uma decisão que ninguém tomou. A única marca no
+schema é `campaigns.ad_account_id`, e `campaigns` está vazia. O
+`verba/actions.ts` já havia chegado à mesma conclusão por outro caminho: ele
+pega o MENOR piso entre as contas porque "qual conta a campanha vai usar só
+se decide quando a campanha existe".
+
+**4. `nao_verificados` entra junto de `bloqueios`.** O validador de
+`lib/backend/pre-requisitos.ts` lia só uma das duas listas do `Prevoo`.
+*Por quê:* o `ok` da rota conta as duas, então quem lê só `bloqueios` pode
+receber `ok: false` com a lista vazia e dizer na tela que está tudo certo. O
+backend escreve o motivo no próprio docstring: "seguir para a subida sem
+saber se um requisito esta cumprido e a mesma aposta que seguir sabendo que
+nao esta, com dinheiro de terceiro e conta que pode ser banida".
+
+**5. O Bloco E não existe, e não se constrói agora.** Confirmado: nenhuma
+das 51 rotas do backend lista post publicado da Página, e nenhuma das 26
+telas faz isso. Construir começa no backend, não no webapp.
 ### 2026-09-15 — "Falar com uma pessoa" vira item da barra; DESFAZ o item 2 de 11/09
 **Decisão do Victor, no chat, aprovando o diff de
 `docs/estado/visual-controles-3-15-09.md` §1.**
