@@ -20,6 +20,15 @@
  * conversas sem medição. Os números e as frases do backend repetem o que a
  * produção devolveu na conta da V2G; o que é inventado está marcado.
  *
+ * ============================================================
+ * TRÊS ESTADOS DESDE 16/09/2026, para o laboratório visual.
+ *
+ * `pausado` é o da conta real e continua sendo o padrão — nenhum chamador
+ * antigo muda. `no-ar` e `preparando` variam o MÍNIMO necessário para o
+ * estado mudar: a veiculação e a medição. Os números não foram inventados
+ * duas vezes; quando não há medição, o campo é `null`, nunca zero.
+ * ============================================================
+ *
  * NÃO TEM LIGAÇÃO COM A FIXTURE DA `/inicio` (`lib/dev/fixtures-inicio.ts`).
  * Aquela é lida pela página real, com sessão, e a trava `conferir:inicio` §6
  * exige que só a `/inicio` a alcance. Esta é lida só pela bancada, sem
@@ -39,6 +48,9 @@ export const SENTINELA = "EXEMPLO_SO_DE_DESENVOLVIMENTO_V2G";
 // Inventados: nenhum destes existe no banco.
 const NEGOCIO = "00000000-0000-4000-8000-00000000e001";
 const EXECUCAO = "00000000-0000-4000-8000-00000000e002";
+
+/** Os três estados que o laboratório desenha. */
+export type EstadoDeExemplo = "preparando" | "no-ar" | "pausado";
 
 /** Quem aparece no casco. Inventado. */
 export const CASCO_DE_EXEMPLO = {
@@ -61,15 +73,26 @@ const CADASTRO_COMPLETO: ResumoDePendencias = {
 const NIVEL_SEM_ALVO =
   "Ainda não definimos juntos quanto vale a pena pagar por cada pessoa que chega. Sem esse número não dá para dizer se está bom ou ruim.";
 
-function execucao(): ExecucaoDoNegocio {
+/**
+ * A veiculação de cada estado. É o único eixo que muda entre `no-ar` e
+ * `pausado` — e é de propósito: os dois têm os mesmos números, e o que
+ * separa um do outro é o que a plataforma está fazendo com o anúncio
+ * AGORA. Ver `lib/veiculacao/estado.ts`.
+ */
+const VEICULACAO: Record<EstadoDeExemplo, "no_ar" | "ja_foi_ao_ar" | "sem_evidencia"> = {
+  preparando: "sem_evidencia",
+  "no-ar": "no_ar",
+  pausado: "ja_foi_ao_ar",
+};
+
+function execucao(estado: EstadoDeExemplo): ExecucaoDoNegocio {
   return {
     idExecucao: EXECUCAO,
     businessId: NEGOCIO,
     status: "cadastro_completo",
     andamento: "Tudo anotado. Começando a montar seu anúncio",
     pedeAcao: false,
-    // "já foi ao ar" é o que o backend devolve para a campanha PAUSADA.
-    veiculacao: "ja_foi_ao_ar",
+    veiculacao: VEICULACAO[estado],
     atualizadoEm: "2026-09-09T02:35:50Z",
   };
 }
@@ -123,9 +146,24 @@ function consolidado(): ConsolidadoDoNegocio {
   };
 }
 
-/** O estado que a `/inicio` desenha, no formato de `estadoDoCliente()`. */
-export function exemploDoInicio(agora: Date): EstadoDoCliente {
-  const exec = execucao();
+/**
+ * O estado que o Início desenha, no formato de `estadoDoCliente()`.
+ *
+ * O PADRÃO É `pausado` — o estado da conta real, e o que a `/exemplo/inicio`
+ * já desenhava antes de existirem três. Nenhum chamador antigo muda.
+ *
+ * EM `preparando` NÃO HÁ NÚMERO NENHUM, e isso não é um estado "vazio": é
+ * ausência de medição. Os campos ficam `null` e a tela omite a seção — o
+ * zero seria uma afirmação falsa sobre o dinheiro do cliente.
+ */
+export function exemploDoInicio(
+  agora: Date,
+  estado: EstadoDeExemplo = "pausado",
+): EstadoDoCliente {
+  const exec = execucao(estado);
+  const medido = estado !== "preparando";
+  const acumulado = medido ? consolidado() : null;
+
   return {
     temNegocio: true,
     negocioId: NEGOCIO,
@@ -141,10 +179,10 @@ export function exemploDoInicio(agora: Date): EstadoDoCliente {
         campanhaCriadaEm: null,
         publicacaoFalhou: false,
         publicadaEm: null,
-        temNumero: true,
+        temNumero: medido,
         execucaoDoBackend: exec,
         execucaoIlegivel: false,
-        veiculacao: "ja_foi_ao_ar",
+        veiculacao: estado === "preparando" ? "nunca_foi_ao_ar" : VEICULACAO[estado] === "no_ar" ? "no_ar" : "ja_foi_ao_ar",
       },
       agora,
     ),
@@ -152,17 +190,22 @@ export function exemploDoInicio(agora: Date): EstadoDoCliente {
     melhoras: { fotos: 2, temLogo: true },
     blocosDaTrilha: 6,
     resultado: {
-      investidoCentavos: 1025,
-      moeda: "BRL",
+      investidoCentavos: medido ? 1025 : null,
+      moeda: medido ? "BRL" : null,
       // conversas sem medição: a rota do negócio não manda o `medido`
       pessoas: null,
-      cliques: 64,
-      impressoes: 1657,
+      cliques: medido ? 64 : null,
+      impressoes: medido ? 1657 : null,
     },
     campanhasNoAr: [],
     verbaMensal: 2000,
-    temNumero: true,
-    diaSeguinte: { execucao: exec, acumulado: consolidado() },
-    veiculacao: "ja_foi_ao_ar",
+    temNumero: medido,
+    diaSeguinte: { execucao: exec, acumulado },
+    veiculacao:
+      estado === "preparando"
+        ? "nunca_foi_ao_ar"
+        : estado === "no-ar"
+          ? "no_ar"
+          : "ja_foi_ao_ar",
   };
 }
