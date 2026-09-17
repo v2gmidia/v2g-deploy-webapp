@@ -147,3 +147,53 @@ pior que silêncio (a mesma regra já escrita em `frases.ts:544`).
 
 **Se o Victor decidir outra:** (a) exige rota nova no backend e autorização
 humana explícita para escrita na Meta. Não é mudança de tela.
+
+---
+
+## DUVIDA-7 — O que o lima significa
+
+**O que era.** Na rodada 1 as quatro fases saíam com marca limão de
+"Concluído" ao lado da manchete "Seu anúncio já rodou e não está no ar
+agora" — informação virando comemoração sobre campanha parada.
+
+**Escolhido: lima = "no ar agora", e só.** Parado, as marcas e o selo ficam
+neutros. Devolve sentido à Signal Lime Rule do `DESIGN.md`: quatro marcas
+limão seguidas não são sinal, são decoração.
+
+**Se o Victor decidir outra:** é a classe `.viva`/`.heroiVivo` no CSS Module
+da bancada. Nenhuma lógica muda.
+
+---
+
+## DUVIDA-8 — A trilha depois da publicação
+
+**O que era.** A rodada 4 manda tirar a trilha no pausado e também no "no ar",
+porque "Otimizar" é trabalho contínuo e não missão encerrada. Isso resolve o
+desenho, mas deixa em aberto a **política**: a trilha some para sempre depois
+da primeira publicação? Volta se a campanha for refeita? Vira histórico em
+outra tela?
+
+**Escolhido: ocultar depois de `esteveNoAr`.** É o comportamento mais
+conservador em relação ao defeito que o contrato mandou matar — nenhum estado
+publicado pode parecer conclusão.
+
+**Isto é recomendação visual, NÃO decisão de produto aprovada.** Vai para o
+Gabriel junto das outras duas.
+
+**Se decidirem outra:** é a linha `const mostrarTrilha = !jaPublicou` no
+componente da bancada.
+
+---
+
+## DUVIDA-9 — Dois nomes para o suporte, e um deles é de produção
+
+**O que era.** O `Casco` usa **dois** rótulos para a mesma ação: "Falar com
+alguém" na lateral (`components/ui/Casco.tsx:159`) e "Falar com uma pessoa" no
+topo do celular (`:212`). A bancada padronizou em "Falar com alguém", mas
+abaixo de 900px os dois aparecem no mesmo campo de visão.
+
+**Escolhido: não tocar no `Casco`.** É componente de produção, e a rodada
+proíbe editá-lo só para cumprir esta entrega.
+
+**A alteração exata que faltaria:** trocar o texto de `Casco.tsx:212` para
+"Falar com alguém". Uma linha, nenhum outro efeito.

@@ -5,11 +5,11 @@
  * NENHUM VALOR LITERAL DE COR OU DE TAMANHO DE TEXTO.
  *
  * Tudo aqui é `var(--token)` do `app/globals.css`. É o que garante
- * paridade entre claro e escuro sem eu escrever paleta nova, e é o que
- * mantém o detector do `DESIGN.md` limpo — a regra 4 da sessão proíbe
- * silenciar o hook com exceção em configuração.
+ * paridade entre claro e escuro sem paleta nova, e o que mantém o
+ * detector do `DESIGN.md` limpo — a regra da sessão proíbe silenciar o
+ * hook com exceção em configuração.
  *
- * Este arquivo NÃO é `globals.css`: ele é um CSS Module dentro de
+ * Este arquivo NÃO é `globals.css`: é um CSS Module dentro de
  * `app/exemplo/`, que não serve produção (a rota devolve 404 no build).
  * ============================================================
  */
@@ -20,21 +20,7 @@
   gap: 24px;
 }
 
-/* ---------------------------------------------------------- saudação */
-
-.saudacao h1 {
-  font-family: var(--display);
-  font-size: var(--fs-tela);
-  line-height: 1.15;
-  margin: 0;
-}
-
-/* ------------------------------------------------------------- herói
- *
- * A ÚNICA SUPERFÍCIE FORTE DA TELA. O herói domina a ORIENTAÇÃO ("onde
- * estou"); o cartão de ação domina a DECISÃO. Duas ênfases, pesos
- * diferentes, nunca duas cores fortes brigando.
- */
+/* ------------------------------------------------------------- herói */
 
 .heroi {
   background: var(--cobalt);
@@ -57,10 +43,7 @@
   opacity: 0.8;
 }
 
-/*
- * O SELO É A MESMA FONTE ÚNICA, no formato curto. Ele fica neutro por
- * padrão e só acende quando o anúncio está no ar agora — ver DUVIDA-7.
- */
+/* O selo fica neutro por padrão; lima só quando está no ar agora. */
 .heroiSelo {
   font-size: var(--fs-legenda);
   font-weight: 700;
@@ -89,7 +72,73 @@
   margin: 14px 0 0;
 }
 
-/* --------------------------------------------------- a trilha, uma só */
+/* ------------------------------- o que substitui a trilha depois da publicação */
+
+.heroiDepois {
+  display: flex;
+  flex-direction: column;
+  margin-top: 18px;
+}
+
+.heroiNumeroRotulo {
+  font-size: var(--fs-legenda);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.8;
+}
+
+.heroiNumero {
+  font-family: var(--display);
+  font-size: var(--fs-destaque);
+  line-height: 1.05;
+  margin-top: 4px;
+}
+
+.heroiLegenda {
+  font-size: var(--fs-corpo);
+  opacity: 0.85;
+  margin-top: 6px;
+}
+
+.heroiLink {
+  color: var(--card-cobalt-ink);
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  margin-top: 14px;
+  width: max-content;
+}
+
+.heroiTexto {
+  font-size: var(--fs-corpo);
+  line-height: 1.45;
+  margin: 0;
+  opacity: 0.92;
+}
+
+.heroiBotao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--alt-controle);
+  padding: 0 20px;
+  margin-top: 16px;
+  width: max-content;
+  border-radius: var(--raio-controle);
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: var(--fs-titulo);
+  /* INVERTIDO DE PROPÓSITO: o `.cta` global é cobalto, e cobalto sobre o
+     herói cobalto vira texto solto — foi o que a rodada 4 mostrou em
+     1280px. Aqui o botão empresta a cor do texto do cartão e devolve o
+     cobalto no rótulo. */
+  background: var(--card-cobalt-ink);
+  color: var(--cobalt);
+  /* É botão, não link: o sublinhado herdado de `a` fazia o corpo do botão
+     parecer um link dentro de uma caixa. */
+  text-decoration: none;
+}
+
+/* --------------------------------------------------- a trilha (preparação) */
 
 .fases {
   display: grid;
@@ -120,16 +169,6 @@
   color: var(--card-cobalt-ink);
 }
 
-/*
- * LIMA SÓ QUANDO ESTÁ NO AR AGORA. Ver o bloco DUVIDA-7 no componente:
- * quatro marcas limão sobre uma campanha parada transformavam informação
- * ("Concluído") em comemoração, que é o defeito 10.d do contrato.
- */
-.viva .faseMarca {
-  background: var(--lime);
-  color: var(--navy);
-}
-
 .atual .faseMarca {
   background: var(--card-cobalt-ink);
   color: var(--cobalt);
@@ -143,7 +182,13 @@
   opacity: 0.75;
 }
 
-/* ------------------------------------------------- a ação primária */
+/* ------------------------------------------------- a coluna da direita */
+
+.coluna {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
 .acao {
   background: var(--surface);
@@ -178,40 +223,56 @@
   width: max-content;
 }
 
-/* ------------------------------------------------------- os números */
+.comando {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+  padding: 20px;
+}
+
+.comandoLinha {
+  font-size: var(--fs-corpo);
+  color: var(--ink-soft);
+  margin: 8px 0 0;
+  line-height: 1.45;
+}
+
+/* ------------------------------------------------------- os números
+ *
+ * GRADE 2 × 2 NO CELULAR, CÉLULAS DE ALTURA IGUAL.
+ *
+ * `grid-auto-rows: 1fr` + `height: 100%` no cartão é o que mantém as
+ * quatro alturas iguais sem depender do conteúdo. A explicação da
+ * ausência saiu de dentro da célula e virou nota abaixo da grade,
+ * amarrada por `aria-describedby`.
+ */
 
 .numeros {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 1fr;
   gap: 12px;
-  align-items: start;
-}
-
-/*
- * A AUSÊNCIA OCUPA A LINHA INTEIRA NO CELULAR.
- *
- * Ela carrega uma explicação de três linhas, e na grade de duas colunas
- * isso esticava o cartão vizinho ("Vezes que apareceu") para a mesma
- * altura, criando um vazio grande ao lado de um número curto.
- */
-.numeroAusente {
-  grid-column: 1 / -1;
 }
 
 .numero {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--raio-card);
   padding: 16px;
 }
 
+/* Rótulo de UMA linha: "Investido", "Cliques", "Exibições", "Conversas". */
 .numeroRotulo {
   display: block;
   font-size: var(--fs-legenda);
   color: var(--ink-mute);
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  line-height: 1.3;
+  white-space: nowrap;
 }
 
 .numeroValor {
@@ -222,14 +283,7 @@
   margin-top: 8px;
 }
 
-/*
- * A AUSÊNCIA NÃO É UM NÚMERO, E NÃO USA O TIPO DE NÚMERO.
- *
- * Na rodada 1 "ainda não sabemos" saía em `--fs-tela`, ocupava duas
- * linhas e dominava o bloco — uma ausência gritando mais alto que os três
- * números medidos ao lado. Continua sendo a mesma informação, no peso que
- * ela merece.
- */
+/* A ausência não é um número, e não usa o tipo de número. */
 .numeroValorAusente {
   display: block;
   font-size: var(--fs-titulo);
@@ -239,12 +293,11 @@
   margin-top: 8px;
 }
 
-.numeroNota {
-  display: block;
-  font-size: var(--fs-legenda);
+.notaGrade {
+  font-size: var(--fs-corpo);
   color: var(--ink-mute);
-  margin-top: 8px;
-  line-height: 1.4;
+  line-height: 1.45;
+  margin: 12px 0 0;
 }
 
 .frase {
@@ -254,7 +307,9 @@
   margin: 12px 0 0;
 }
 
-/* ---------------------------------------------------------- rodapé */
+.listaLarga {
+  margin-top: 0;
+}
 
 .rodape {
   display: flex;
@@ -262,27 +317,25 @@
   gap: 24px;
 }
 
-.comando {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--raio-cartao);
-  padding: 20px;
-  align-self: start;
-}
-
-.comandoLinha {
-  font-size: var(--fs-corpo);
-  color: var(--ink-soft);
-  margin: 8px 0 0;
-  line-height: 1.45;
-}
-
 /* -------------------------------------------------------- 900px e acima */
 
 @media (min-width: 900px) {
   .topo {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* Sem cartão de decisão, o herói ocupa a linha inteira em vez de deixar
+     meia tela vazia ao lado. */
+  .topoSozinho {
+    grid-template-columns: 1fr;
+  }
+
+  .rodape {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
     gap: 20px;
     align-items: start;
   }
@@ -291,24 +344,11 @@
     grid-template-columns: repeat(4, 1fr);
   }
 
-  /* Em quatro colunas ela é uma célula como as outras: o problema que o
-     `grid-column: 1 / -1` resolve só existe na grade de duas. */
-  .numeroAusente {
-    grid-column: auto;
-  }
-
-  .rodape {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-
   .heroiManchete {
     font-size: var(--fs-tela);
   }
 
-  .saudacao h1 {
-    font-size: var(--fs-destaque);
+  .heroiNumero {
+    font-size: var(--fs-hero-frase);
   }
 }

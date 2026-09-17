@@ -82,7 +82,7 @@ export default async function ExemploPage({ params }: { params: Promise<{ tela: 
         rotuloDaConta={casco.nomeNegocio}
         inicial={casco.inicial}
       >
-        <TelaCanonica estado={exemplo.exemploDoInicio(agora, canonica)} nome={casco.nome} />
+        <TelaCanonica estado={exemplo.exemploDoInicio(agora, canonica)} />
       </Casco>
     );
   }
