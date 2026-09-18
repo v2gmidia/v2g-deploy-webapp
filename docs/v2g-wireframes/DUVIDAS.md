@@ -309,6 +309,11 @@ rótulo "Enquanto rodou" da metade dos números no parado.
 
 ## DUVIDA-13 — A pergunta do dia só aparece com o anúncio no ar agora
 
+> **ATUALIZADA em 17/09/2026, R5-b** — a pergunta saiu também do momento
+> "concluiu" (achado da auditoria: a caixa dela era maior que a âncora e
+> tinha o único botão, e a conclusão perdia a disputa). Hoje ela aparece
+> só no `no-ar`, que é o Início de todo dia depois da conclusão.
+
 **O que era.** A tela atual mostra a pergunta do dia sempre que há
 execução. No parado, o "Guardar" dela seria uma segunda principal ao lado
 de "Voltar a anunciar" — e a decisão de 16/09 faz de "Voltar a anunciar"
@@ -324,3 +329,57 @@ quem viu o anúncio antes — não tem onde ser contada no Início parado.
 **Se o Victor decidir outra:** tirar o `noArAgora &&` da condição do bloco
 `<PerguntaDoDia>`. A tela passaria a ter duas principais no parado, uma
 delas desabilitada; a hierarquia precisaria ser refeita.
+
+---
+
+# Rodada 5-b — 17/09/2026, depois da auditoria
+
+---
+
+## DUVIDA-14 — "Otimizar" na partição de produção
+
+**O que era.** Achado B1: no concluiu a tela dizia "4 de 4" com "Otimizar
+✓". A fonte é `PARTICAO` em `lib/estado/frases.ts`, que liga a fase
+"Otimizar" à etapa `numeros` — fecha quando o primeiro número chega.
+
+**Escolhido: consertar na bancada, não na partição.** A conclusão mostra só
+as três fases que terminam (`FASE_CONTINUA = "otimizar"` em
+`TelaCanonica.tsx`) e diz "A otimização começa agora, e não termina."
+`lib/estado/frases.ts` é produção e é lido pela `/inicio` real; mudar a
+partição muda o contador de lá também, e `conferir:inicio` §3 trava a
+partição em seis etapas cobertas.
+
+**O conserto da família, que não é desta sessão:** renomear a quarta fase
+para o que a etapa `numeros` mede de fato ("Primeiros números") ou
+separá-la da trilha de preparação. As duas mudam texto de produção.
+
+**Se o Victor decidir outra:** tirar o filtro `fasesDaPreparacao` de
+`TelaCanonica.tsx` volta às quatro fases.
+
+---
+
+## DUVIDA-15 — B2: a ação do parado, e onde discordo da auditoria
+
+**O que a auditoria pediu.** Que a saída que funciona ("Falar com alguém")
+seja a coisa óbvia da tela; hoje o desabilitado e a secundária têm o mesmo
+peso, e o R$ 10,25 domina.
+
+**O que foi consertado, medido no DOM (R5-b):**
+- o R$ 10,25 saiu da âncora e foi para a grade, no tamanho dos outros
+  números. Os maiores textos da tela agora: manchete 30px, os quatro
+  números 24px — nenhum dinheiro acima da ação;
+- a âncora do parado é só a ação, com 480px de largura; sobra dentro dela:
+  **0px** nas três larguras (era 79 e 69);
+- o motivo termina apontando para o botão de baixo: "É só chamar."
+
+**Onde discordo, e por quê.** Vestir "Falar com alguém" de principal (cobalto
+cheio) inverte a decisão do Victor de 16/09, registrada em `decisoes.md`:
+"Voltar a anunciar" é a principal, "a saída humana cai para secundária". A
+auditoria mesmo registra que a decisão manda isso. Com uma principal
+desabilitada, **nenhuma** principal habilitada é o resultado direto da
+decisão, e não um defeito de desenho que eu consiga consertar sem desfazê-la.
+
+**O que muda se o Victor decidir outra:** trocar `cta ghost` por `cta` no
+link "Falar com alguém" e `cta` por `cta ghost` no botão desabilitado —
+duas classes em `TelaCanonica.tsx`. Fica registrado para ele decidir olhando
+`r5b-pausado-*`.

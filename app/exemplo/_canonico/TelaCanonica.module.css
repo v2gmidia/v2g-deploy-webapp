@@ -1,5 +1,6 @@
 /*
- * A TELA CANÔNICA DO INÍCIO — laboratório visual, rodada 5.
+ * A TELA CANÔNICA DO INÍCIO — laboratório visual, rodada 5 (e 5-b, depois
+ * da auditoria).
  *
  * ============================================================
  * NENHUM VALOR LITERAL DE COR OU DE TAMANHO DE TEXTO.
@@ -13,12 +14,11 @@
  * ============================================================
  *
  * ============================================================
- * QUEM DECIDE A DIVISÃO É A LARGURA DA TELA DE CONTEÚDO, não a janela.
+ * QUEM DECIDE A DIVISÃO É A LARGURA DO CONTEÚDO, não a janela.
  *
  * `.tela` é o container. A 900px de janela a lateral ocupa o lado
- * esquerdo e sobra uma faixa estreita — o `@media (min-width: 900px)`
- * da rodada 4 dizia "largo" nessa hora, e as quatro fases quebravam.
- * Com `@container`, cada bloco se divide quando ELE cabe.
+ * esquerdo e sobra uma faixa estreita; com `@container`, cada bloco se
+ * divide quando ELE cabe.
  * ============================================================
  */
 
@@ -135,6 +135,11 @@
   margin: 8px 0 0;
 }
 
+/* Sem eyebrow antes (D1), o título não precisa do respiro de cima. */
+.vez > .vezTitulo:first-child {
+  margin-top: 0;
+}
+
 .texto {
   font-size: var(--fs-titulo);
   line-height: 1.5;
@@ -178,7 +183,7 @@
   margin-top: 16px;
 }
 
-/* --- a trilha. Estreita: quatro barras e a linha "Agora". */
+/* --- a trilha do preparando. Estreita: quatro barras e a linha "Agora". */
 
 .fases {
   display: grid;
@@ -196,12 +201,21 @@
   background: var(--line);
 }
 
+/* ============================================================
+   AS BARRAS NO ESCURO (achado I7).
+
+   Feita era `--cobalt` e a atual era cobalto a 45%. No escuro o cobalto
+   é #0239C7, escuro sobre a superfície escura, e a atual ficava quase
+   igual às travadas. Agora as duas leem `--cobalt-ink`, o cobalto que o
+   tema escuro clareia para texto (#5C88FA), e a atual é meia barra —
+   "em andamento" é desenho, não só um tom mais fraco da mesma cor.
+   ============================================================ */
 .fase.feita {
-  background: var(--cobalt);
+  background: var(--cobalt-ink);
 }
 
 .fase.atual {
-  background: rgb(var(--cobalt-rgb) / 0.45);
+  background: linear-gradient(to right, var(--cobalt-ink) 50%, var(--line) 50%);
 }
 
 /* No estreito, marca, nome e rótulo são só para o leitor de tela. */
@@ -223,6 +237,74 @@
 }
 
 .faseAgora b {
+  color: var(--texto-forte);
+}
+
+/* ============================================================
+   A TRILHA DA CONCLUSÃO — achado I6.
+
+   Três fases, COM NOME, em qualquer largura: a conclusão acontece uma
+   vez, e no celular ela dizia "4 de 4" sobre quatro barras sem nome.
+   Estreita: uma fase por linha. Larga: as três lado a lado. O rótulo
+   ("Concluído") fica só para o leitor de tela — o ✓ e o título da faixa
+   já dizem isso.
+   ============================================================ */
+.fasesFeitas {
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.fasesFeitas .fase,
+.fasesFeitas .fase.feita {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+  gap: 12px;
+  height: auto;
+  border-radius: 0;
+  background: none;
+}
+
+.fasesFeitas .fase .faseMarca,
+.fasesFeitas .fase .faseNome {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
+
+/* A marca volta ao quadrado de 28px. Sem isto, o `width: auto` de cima
+   (especificidade 0,3,0) vence o 28px de `.faseMarca` (0,1,0) e o
+   quadrado vira retângulo do tamanho do caractere. */
+.fasesFeitas .fase .faseMarca {
+  width: 28px;
+  height: 28px;
+}
+
+/* --- as marcas quadradas, da lista (preparando no largo e conclusão). */
+
+.faseMarca {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--raio-micro);
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  background: var(--fundo-controle);
+  color: var(--texto-discreto);
+}
+
+.feita .faseMarca {
+  background: var(--cobalt);
+  color: var(--white);
+}
+
+.faseNome {
+  font-size: var(--fs-titulo);
+  font-weight: 700;
   color: var(--texto-forte);
 }
 
@@ -252,9 +334,7 @@
   margin-top: 8px;
 }
 
-/* O rodapé da âncora: a frase de nível e, quando há, o link. Um bloco
-   só com o próprio respiro — na primeira versão o respiro de baixo era
-   do link, e sem link a frase encostava na borda (parado, 1280). */
+/* O rodapé da âncora: a frase de nível e, quando há, o link. */
 .ancoraRodape {
   grid-column: 1 / -1;
   display: flex;
@@ -273,15 +353,30 @@
   max-width: 72ch;
 }
 
-/* --- parado: a ação de voltar */
+/* ============================================================
+   PARADO — a âncora é só a ação (B2, I5).
 
-.voltar .botao {
+   Uma metade só, e a caixa com a largura do que ela contém: no largo,
+   caixa de parede a parede em volta de dois botões era o vazio da R4
+   de volta, dentro da borda. Os dois botões com a mesma largura, um
+   embaixo do outro, com o motivo entre eles — ele explica o de cima e
+   aponta para o de baixo.
+   ============================================================ */
+.ancoraAcao {
+  align-self: flex-start;
+  width: 100%;
+  max-width: 480px;
+  box-sizing: border-box;
+}
+
+.botaoLargo {
   width: 100%;
 }
 
-.voltar .botao + .botao,
-.motivo + .botao {
-  margin-top: 16px;
+/* O primeiro botão encosta no padding da caixa: com a margem de 16px do
+   `.botao`, o respiro de cima era 40 contra 24 embaixo (R5-b). */
+.ancoraAcao .botao:first-child {
+  margin-top: 0;
 }
 
 .motivo {
@@ -289,7 +384,25 @@
   line-height: 1.5;
   color: var(--texto-fraco);
   margin: 8px 0 0;
-  max-width: 48ch;
+}
+
+/* ------------------------------------------------ a pergunta do dia
+ *
+ * O componente é o de produção, sem mudança. O invólucro corrige por fora:
+ *   I2  o `.rc-bloco` traz 28px de margem embaixo, e a faixa terminava
+ *       28px abaixo da própria caixa — 60px visíveis contra 32 no resto;
+ *   I3  título de 16px, contra 20px dos outros títulos de faixa;
+ *   I3  no largo, pergunta à esquerda e campo à direita (abaixo).
+ */
+
+.pergunta :global(.rc-bloco) {
+  margin-bottom: 0;
+}
+
+.pergunta :global(.section-title h2) {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  line-height: 1.25;
 }
 
 /* ------------------------------------------------ 3. os números */
@@ -316,9 +429,7 @@
   color: var(--texto-discreto);
 }
 
-/* Estreito: uma LISTA, rótulo à esquerda e valor à direita. Quatro
-   cartões em 2 × 2 a 343px apertavam o número e o rótulo; a lista lê de
-   cima para baixo como o dono lê um extrato. */
+/* Estreito: uma LISTA, rótulo à esquerda e valor à direita. */
 .numeros {
   display: flex;
   flex-direction: column;
@@ -358,30 +469,6 @@
   font-size: var(--fs-bloco);
   color: var(--texto-discreto);
   margin: 0;
-}
-
-/* Dentro da âncora do parado: a lista sem moldura própria — a moldura
-   é a da âncora. */
-.numerosLista {
-  width: 100%;
-  margin-top: 16px;
-  background: none;
-  border: 0;
-  border-top: 1px solid var(--line);
-  border-radius: 0;
-}
-
-.numerosLista .numero {
-  padding: 12px 0;
-}
-
-/* ------------------------------------------------ a pergunta do dia
- *
- * O componente é o de produção, sem mudança. Os campos dele esticavam
- * até 1.200px no largo; aqui só se limita a largura DELES, por fora. */
-
-.pergunta :global(.fallback-field) {
-  max-width: 560px;
 }
 
 /* ------------------------------------------------ 4. o resto */
@@ -460,7 +547,7 @@
 
   /* Números: grade de células. Quatro, ou três quando o investido já
      está na âncora — nunca uma célula sozinha na última linha. */
-  .numerosGrade {
+  .numeros {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     background: none;
@@ -468,11 +555,11 @@
     gap: 12px;
   }
 
-  .numerosGrade.numerosTres {
+  .numerosTres {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .numerosGrade .numero {
+  .numero {
     flex-direction: column;
     justify-content: flex-start;
     gap: 8px;
@@ -481,35 +568,41 @@
     border-radius: var(--raio-cartao);
   }
 
-  .numerosGrade .numero + .numero {
+  .numero + .numero {
     border-top: 1px solid var(--line);
   }
 
-  .numerosGrade .numeroValor,
-  .numerosGrade .numeroAusente {
+  .numeroValor,
+  .numeroAusente {
     font-size: var(--fs-tela);
   }
 
-  .voltar .botao {
-    width: auto;
-    min-width: 240px;
+  /* A conclusão: as três fases lado a lado. */
+  /* Três colunas iguais, de parede a parede: com `max-content` as três
+     fases ficavam juntas à esquerda e o resto da faixa, vazio (R5-b). */
+  .fasesFeitas {
+    grid-template-columns: repeat(3, 1fr);
+    column-gap: 24px;
   }
 }
 
 /* ------------------------------------------------ a partir de 720px de conteúdo */
 
 @container (min-width: 720px) {
-  /* A âncora se divide em duas metades lado a lado. As duas têm
-     conteúdo real em todos os momentos — é isso que fecha o vazio
-     dentro do herói da rodada 4. */
+  /* A âncora se divide em duas metades lado a lado. */
   .ancora {
     grid-template-columns: 1fr 1fr;
   }
 
-  /* No preparando o texto da etapa é o que mais pesa; com metades
-     iguais a lista das fases acabava na metade da altura dele. */
+  /* No preparando o texto da etapa é o que mais pesa. */
   .ancoraPreparando {
     grid-template-columns: 2fr 3fr;
+  }
+
+  /* Conclusão e ação: uma coluna só (a ação ainda com largura própria). */
+  .ancoraConcluiu,
+  .ancoraAcao {
+    grid-template-columns: 1fr;
   }
 
   .vez {
@@ -517,21 +610,24 @@
     border-left: 1px solid var(--line);
   }
 
+  .ancoraConcluiu .vez {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
   .valorAncora,
   .valorAncoraAusente {
     font-size: var(--fs-hero-frase);
   }
 
-  /* A trilha vira lista: uma fase por linha, rótulo à direita, sem
-     quebrar. "Em andamento" tem a linha inteira da metade. */
-  .fases {
+  /* A trilha do preparando vira lista: uma fase por linha, rótulo à
+     direita, sem quebrar. */
+  .fases:not(.fasesFeitas) {
     grid-template-columns: 1fr;
     gap: 0;
   }
 
-  .fase,
-  .fase.feita,
-  .fase.atual {
+  .fases:not(.fasesFeitas) .fase {
     display: grid;
     grid-template-columns: 28px 1fr auto;
     align-items: center;
@@ -542,13 +638,13 @@
     background: none;
   }
 
-  .fase + .fase {
+  .fases:not(.fasesFeitas) .fase + .fase {
     border-top: 1px solid var(--line);
   }
 
-  .fase .faseMarca,
-  .fase .faseNome,
-  .fase .faseRotulo {
+  .fases:not(.fasesFeitas) .fase .faseMarca,
+  .fases:not(.fasesFeitas) .fase .faseNome,
+  .fases:not(.fasesFeitas) .fase .faseRotulo {
     position: static;
     width: auto;
     height: auto;
@@ -556,33 +652,16 @@
     clip-path: none;
   }
 
-  .faseMarca {
-    display: inline-grid;
-    place-items: center;
+  /* Mesmo motivo da conclusão: a marca volta ao quadrado. */
+  .fases:not(.fasesFeitas) .fase .faseMarca {
     width: 28px;
     height: 28px;
-    border-radius: var(--raio-micro);
-    font-size: var(--fs-corpo);
-    font-weight: 700;
-    background: var(--fundo-controle);
-    color: var(--texto-discreto);
-  }
-
-  .feita .faseMarca {
-    background: var(--cobalt);
-    color: var(--white);
   }
 
   .atual .faseMarca {
     background: none;
     box-shadow: inset 0 0 0 2px var(--cobalt-ink);
     color: var(--cobalt-ink);
-  }
-
-  .faseNome {
-    font-size: var(--fs-titulo);
-    font-weight: 700;
-    color: var(--texto-forte);
   }
 
   .travada .faseNome {
@@ -609,41 +688,29 @@
     grid-template-columns: repeat(3, 1fr);
   }
 
-  /* ---- CONCLUIU: sem metades. A trilha vira UMA faixa de quatro, e a
-     mensagem vem embaixo. Dividida ao lado, a mensagem tinha três
-     linhas e a metade dela era vazio. O rótulo "Concluído" quatro vezes
-     seguidas é ruído: o contador já diz 4 de 4, e o rótulo fica só para
-     o leitor de tela. */
-  .ancoraConcluiu {
-    grid-template-columns: 1fr;
+  /* A pergunta do dia no largo (I3): pergunta à esquerda, campo à
+     direita. Simulado com <style> antes: os campos passam a ir até a
+     borda interna da caixa, onde antes paravam 343px antes dela. */
+  .pergunta :global(.card) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+    column-gap: 24px;
+    align-items: center;
   }
 
-  .ancoraConcluiu .vez {
-    border-left: 0;
-    border-top: 1px solid var(--line);
+  .pergunta :global(.card) > * {
+    grid-column: 1 / -1;
   }
 
-  .ancoraConcluiu .fases {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
+  .pergunta :global(.card > .rc-abertura),
+  .pergunta :global(.card > .fallback-field:not(.pd-guardar)) {
+    grid-column: auto;
   }
 
-  .ancoraConcluiu .fase,
-  .ancoraConcluiu .fase.feita {
-    grid-template-columns: 28px 1fr;
-    padding: 0;
-  }
-
-  .ancoraConcluiu .fase + .fase {
-    border-top: 0;
-  }
-
-  .ancoraConcluiu .fase .faseRotulo {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+  /* A pergunta centraliza com o campo ao lado: a margem própria do
+     parágrafo a deixava alguns pixels acima do meio do campo. */
+  .pergunta :global(.card > .rc-abertura) {
+    margin-top: 0;
+    margin-bottom: 0;
   }
 }

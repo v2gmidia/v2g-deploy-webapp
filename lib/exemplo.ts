@@ -254,6 +254,28 @@ function consolidadoDeTresMeses(): ConsolidadoDoNegocio {
 }
 
 /**
+ * OS TRÊS DIAS REAIS, TRAZIDOS PARA OS TRÊS DIAS ANTES DE `agora`.
+ *
+ * Achado D5 da auditoria da R5: no `concluiu` a tela dizia "Ele está
+ * sendo exibido agora" ao lado de "com gasto medido de 05/09 a 07/09",
+ * numa captura de 17/09 — um anúncio que acabou de ir ao ar com o gasto
+ * parado há dez dias. Os VALORES continuam os da conta da V2G; só as
+ * DATAS andam, e isso é invenção da bancada, marcada aqui.
+ */
+function recente(c: ConsolidadoDoNegocio, agora: Date): ConsolidadoDoNegocio {
+  const n = c.dias.length;
+  // No fuso de São Paulo, e terminando ONTEM: com `toISOString()` (UTC), às
+  // 21h de São Paulo já é o dia seguinte, e o último dia de gasto saía
+  // "hoje" — medido na primeira captura da R5-b.
+  const dia = (k: number) =>
+    new Date(agora.getTime() - (n - k) * 86_400_000).toLocaleDateString("en-CA", {
+      timeZone: "America/Sao_Paulo",
+    });
+  const dias = c.dias.map((d, k) => ({ ...d, dia: dia(k) }));
+  return { ...c, dias, desde: dias[0]?.dia ?? c.desde, ate: dias[n - 1]?.dia ?? c.ate };
+}
+
+/**
  * O estado que o Início desenha, no formato de `estadoDoCliente()`.
  *
  * O PADRÃO É `pausado` — o estado da conta real, e o que a `/exemplo/inicio`
@@ -270,7 +292,13 @@ export function exemploDoInicio(
   const exec = execucao(estado);
   const medido = estado !== "preparando";
   const acumulado =
-    estado === "preparando" ? null : estado === "no-ar" ? consolidadoDeTresMeses() : consolidadoReal();
+    estado === "preparando"
+      ? null
+      : estado === "no-ar"
+        ? consolidadoDeTresMeses()
+        : estado === "concluiu"
+          ? recente(consolidadoReal(), agora)
+          : consolidadoReal();
   const veiculacao =
     estado === "preparando" ? "nunca_foi_ao_ar" : VEICULACAO[estado] === "no_ar" ? "no_ar" : "ja_foi_ao_ar";
 
