@@ -383,3 +383,27 @@ decisão, e não um defeito de desenho que eu consiga consertar sem desfazê-la.
 link "Falar com alguém" e `cta` por `cta ghost` no botão desabilitado —
 duas classes em `TelaCanonica.tsx`. Fica registrado para ele decidir olhando
 `r5b-pausado-*`.
+
+---
+
+# Rodada 5-c — 17/09/2026, depois da reconferência
+
+---
+
+## DUVIDA-16 — O dia da conclusão não tem onde contar venda (N5)
+
+**O que era.** A reconferência (`AUDITORIA-R5-B.md` N5) registra que o
+concluiu ficou sem ação: a pergunta do dia saiu dele (DUVIDA-13) para a
+conclusão não perder a disputa pela âncora. A auditoria não trata como
+defeito, mas aponta a consequência: no dia da conclusão o dono não conta
+venda.
+
+**Escolhido: manter sem a pergunta.** A conclusão aparece uma vez; a
+pergunta volta na visita seguinte, que já é o `no-ar`. E a primeira
+pergunta é sobre ONTEM — o dia em que o anúncio acabou de ir ao ar, em que
+venda do anúncio é improvável e o "não sei" é a resposta mais comum.
+
+**Se o Victor decidir outra:** tirar `momento === "no-ar"` da condição da
+`<PerguntaDoDia>` em `TelaCanonica.tsx` e trocar por `noArAgora`. A
+conclusão volta a dividir a tela com uma caixa maior que ela.
+
