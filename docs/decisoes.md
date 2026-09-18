@@ -62,6 +62,23 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-16 — três decisões de produto, por Victor
+
+Origem: conversa de produto. Fecham DUVIDA-1, DUVIDA-6 e DUVIDA-8.
+
+1. "Gestor" refere-se à própria V2G, que opera as campanhas. A IA boa é a
+   que não parece IA. A frase é verdadeira e permanece.
+
+2. Vai existir a ação de retomar campanha. O endpoint não existe ainda; o
+   botão é desenhado agora e fica desabilitado com o motivo escrito
+   embaixo. Exceção deliberada à regra de omitir em vez de desabilitar: a
+   função vai existir e o dono precisa saber que ela é dele.
+
+3. A trilha aparece uma vez ao concluir e some para sempre. Sem placar
+   permanente.
+
+Substituem o que o PRD de 17/09 lista como "decisões pendentes de produto".
+
 ### 2026-09-17 — A trilha da preparação aparece uma vez e some para sempre
 **Chegou no briefing da rodada 5 da tela canônica do Início, 17/09. O
 briefing não nomeia quem decidiu.** Fecha a DUVIDA-8 de
