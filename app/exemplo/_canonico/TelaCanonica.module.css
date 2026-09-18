@@ -127,6 +127,13 @@
   margin: 8px 0 0;
 }
 
+/* N3 da R5-b: o rótulo "A preparação" ficou só para leitor de tela, e o
+   contador passa a ser a primeira linha visível — na mesma altura do
+   título da metade direita. */
+.ancoraPreparando .contador {
+  margin-top: 0;
+}
+
 .vezTitulo {
   font-family: var(--display);
   font-size: var(--fs-bloco);
@@ -362,12 +369,8 @@
    embaixo do outro, com o motivo entre eles — ele explica o de cima e
    aponta para o de baixo.
    ============================================================ */
-.ancoraAcao {
-  align-self: flex-start;
-  width: 100%;
-  max-width: 480px;
-  box-sizing: border-box;
-}
+/* N1 da R5-b: a âncora do parado tem duas metades — a ação e o que ele fez
+   enquanto rodou. A caixa de 480px deixava 462px vazios ao lado dela. */
 
 .botaoLargo {
   width: 100%;
@@ -375,7 +378,7 @@
 
 /* O primeiro botão encosta no padding da caixa: com a margem de 16px do
    `.botao`, o respiro de cima era 40 contra 24 embaixo (R5-b). */
-.ancoraAcao .botao:first-child {
+.ancoraAcao > .botao:first-child {
   margin-top: 0;
 }
 
@@ -471,6 +474,23 @@
   margin: 0;
 }
 
+/* Dentro da âncora (parado): lista sem moldura própria — a moldura é a da
+   âncora. Continua lista em qualquer largura. */
+.numerosLista {
+  width: 100%;
+  margin-top: 8px;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+}
+
+/* 8px por linha: com 12, a metade dos números ficava 48px mais alta que a
+   da ação, e a ação sobrava por dentro (medido na R5-b). */
+.numerosLista .numero {
+  padding: 8px 0;
+}
+
 /* ------------------------------------------------ 4. o resto */
 
 .quiser {
@@ -547,7 +567,7 @@
 
   /* Números: grade de células. Quatro, ou três quando o investido já
      está na âncora — nunca uma célula sozinha na última linha. */
-  .numeros {
+  .numerosGrade {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     background: none;
@@ -555,11 +575,11 @@
     gap: 12px;
   }
 
-  .numerosTres {
+  .numerosGrade.numerosTres {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .numero {
+  .numerosGrade .numero {
     flex-direction: column;
     justify-content: flex-start;
     gap: 8px;
@@ -568,12 +588,12 @@
     border-radius: var(--raio-cartao);
   }
 
-  .numero + .numero {
+  .numerosGrade .numero + .numero {
     border-top: 1px solid var(--line);
   }
 
-  .numeroValor,
-  .numeroAusente {
+  .numerosGrade .numeroValor,
+  .numerosGrade .numeroAusente {
     font-size: var(--fs-tela);
   }
 
@@ -600,8 +620,7 @@
   }
 
   /* Conclusão e ação: uma coluna só (a ação ainda com largura própria). */
-  .ancoraConcluiu,
-  .ancoraAcao {
+  .ancoraConcluiu {
     grid-template-columns: 1fr;
   }
 
@@ -712,5 +731,12 @@
   .pergunta :global(.card > .rc-abertura) {
     margin-top: 0;
     margin-bottom: 0;
+  }
+
+  /* N2 da R5-b: "Guardar" fica embaixo dos campos, na coluna deles. Antes
+     ele voltava para a coluna das perguntas, e o olho ia da pergunta ao
+     campo e voltava à esquerda para guardar. */
+  .pergunta :global(.card > .fallback-field.pd-guardar) {
+    grid-column: 2;
   }
 }

@@ -363,12 +363,16 @@ export function TelaCanonica({
               <h2 className={css.eyebrow}>O que ele fez enquanto rodou</h2>
               {periodo && <span className={css.fonte}>com gasto medido {periodo}</span>}
               <Numeros resultado={resultado} investido forma="lista" />
-              {resultado.pessoas === null && <NotaConversas />}
             </div>
           )}
-          {acumulado?.nivelFrase && (
+          {/* As duas explicações descem para o rodapé da âncora, embaixo das
+              DUAS metades: dentro da metade dos números, a nota a deixava
+              102px mais alta que a da ação, e a ação sobrava por dentro
+              (medido na R5-b, a família do I5). */}
+          {(resultado.pessoas === null || acumulado?.nivelFrase) && (
             <div className={css.ancoraRodape}>
-              <p className={css.ancoraFrase}>{acumulado.nivelFrase}</p>
+              {resultado.pessoas === null && <NotaConversas rodape />}
+              {acumulado?.nivelFrase && <p className={css.ancoraFrase}>{acumulado.nivelFrase}</p>}
             </div>
           )}
         </section>
@@ -520,9 +524,9 @@ function Numeros({
   );
 }
 
-function NotaConversas() {
+function NotaConversas({ rodape = false }: { rodape?: boolean }) {
   return (
-    <p className={css.nota} id="nota-conversas">
+    <p className={rodape ? css.ancoraFrase : css.nota} id="nota-conversas">
       <b>Conversas:</b> a contagem de quem chega pelo anúncio ainda não está de pé. Não quer
       dizer que ninguém chegou.
     </p>
