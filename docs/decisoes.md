@@ -80,8 +80,10 @@ Origem: conversa de produto. Fecham DUVIDA-1, DUVIDA-6 e DUVIDA-8.
 Substituem o que o PRD de 17/09 lista como "decisões pendentes de produto".
 
 ### 2026-09-17 — A trilha da preparação aparece uma vez e some para sempre
-**Chegou no briefing da rodada 5 da tela canônica do Início, 17/09. O
-briefing não nomeia quem decidiu.** Fecha a DUVIDA-8 de
+**Chegou no briefing da rodada 5 da tela canônica do Início, 17/09.**
+> **Autoria confirmada depois:** a entrada “2026-09-16 — três decisões de
+> produto, por Victor”, logo acima, registra esta decisão como do Victor, de
+> 16/09. Esta entrada fica pelo detalhe do que “uma vez” exige. Fecha a DUVIDA-8 de
 `docs/v2g-wireframes/DUVIDAS.md`.
 
 Quando as quatro fases fecham, o Início mostra a conclusão **uma vez** e
