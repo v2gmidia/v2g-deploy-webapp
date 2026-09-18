@@ -62,6 +62,23 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-18 — Os botões do pausado ficam como estão
+**Decisão do Victor, no chat, fechando o B2 da auditoria visual da R5.**
+Fecha a DUVIDA-15 de `docs/v2g-wireframes/DUVIDAS.md`.
+
+No estado parado, "Voltar a anunciar" continua a principal, desabilitada,
+com o motivo embaixo, e "Falar com alguém" continua a secundária — as duas
+com a mesma caixa (medida em `AUDITORIA-R5-B.md` e `AUDITORIA-R5-C.md`).
+
+*O que isso confirma:* a decisão de 16/09 vale também para o peso visual.
+A régua da auditoria pede uma ação dominante por tela; aqui a principal é,
+por decisão, uma ação que ainda não funciona, e a tela aceita não ter
+principal habilitada enquanto o endpoint de retomada não existir.
+
+*O que foi descartado:* vestir "Falar com alguém" de principal (cobalto
+cheio) e o desabilitado de secundária. Seria a troca de duas classes em
+`app/exemplo/_canonico/TelaCanonica.tsx`, e desfaria a decisão de 16/09.
+
 ### 2026-09-16 — três decisões de produto, por Victor
 
 Origem: conversa de produto. Fecham DUVIDA-1, DUVIDA-6 e DUVIDA-8.

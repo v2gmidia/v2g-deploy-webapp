@@ -360,6 +360,10 @@ separá-la da trilha de preparação. As duas mudam texto de produção.
 
 ## DUVIDA-15 — B2: a ação do parado, e onde discordo da auditoria
 
+> **RESOLVIDA em 18/09/2026** — decisão do Victor, registrada em
+> `docs/decisoes.md`: os botões do pausado ficam como estão. O texto abaixo
+> é o raciocínio da época e fica como estava.
+
 **O que a auditoria pediu.** Que a saída que funciona ("Falar com alguém")
 seja a coisa óbvia da tela; hoje o desabilitado e a secundária têm o mesmo
 peso, e o R$ 10,25 domina.
