@@ -72,6 +72,18 @@ estrela. Principal habilitada: `Falar com a gente` (preparando), `Guardar`
 | `r5c-pausado-claro-375` | idem | ação, números e notas empilhados na mesma caixa | claro | 375, barra inferior | ok |
 | `r5c-pausado-escuro-375` | idem | idem | escuro | 375, barra inferior | ok |
 
+## 2a. Resposta à `AUDITORIA-R5-C.md`
+
+Vereditos: preparando e concluiu aprovados; no ar e pausado aprovados com
+ressalva (I4, de produção; B2, com o Victor). Um achado novo, de detalhe:
+
+**D8 — "Guardar" alinha com o prefixo "R$", não com o campo de valor.
+Discordo.** Pela medida da própria auditoria, o botão começa em 711, que é a
+borda esquerda da coluna dos campos: é ali que começam as duas linhas, a das
+vendas e a do valor (o prefixo faz parte do campo de valor). Alinhar em 760
+tiraria o botão da coluna para seguir o interior de um campo só, e a coluna
+passaria a ter duas bordas esquerdas. Sem mudança no código.
+
 ## 3. Verificações
 
 ```
