@@ -161,7 +161,9 @@ export function TelaCanonica({
       {momento === "preparando" && (
         <section className={`${css.ancora} ${css.ancoraPreparando}`} aria-labelledby="titulo-trilha">
           <div className={css.ancoraMetade}>
-            <h2 className={css.eyebrow} id="titulo-trilha">
+            {/* N3 da R5-b: o rótulo fica só para leitor de tela. Visível, ele
+                empurrava "1 de 4" para baixo do título da metade direita. */}
+            <h2 className={css.soLeitor} id="titulo-trilha">
               A preparação
             </h2>
             <p className={css.contador}>
@@ -243,7 +245,7 @@ export function TelaCanonica({
           </div>
           <div className={`${css.ancoraMetade} ${css.vez}`}>
             {/* DUVIDA-12: texto desta rodada, esperando o Gabriel. */}
-            <p className={css.textoForte}>A otimização começa agora, e não termina.</p>
+            <p className={css.textoForte}>A otimização começa agora.</p>
             <p className={css.texto}>
               Ela acontece enquanto o anúncio roda. Daqui em diante, o Início mostra o que ele
               está fazendo: quanto foi investido e quanto voltou para você. Esta é a última vez
@@ -321,8 +323,8 @@ export function TelaCanonica({
           decisão, e está em DUVIDA-15.
           ============================================================ */}
       {momento === "parado" && (
-        <section className={`${css.ancora} ${css.ancoraAcao}`} aria-label="Voltar a anunciar">
-          <div className={css.ancoraMetade}>
+        <section className={`${css.ancora} ${css.ancoraParado}`} aria-label="Voltar a anunciar">
+          <div className={`${css.ancoraMetade} ${css.ancoraAcao}`}>
             <button
               type="button"
               className={`cta ${css.botao} ${css.botaoLargo}`}
@@ -347,6 +349,28 @@ export function TelaCanonica({
               Falar com alguém
             </a>
           </div>
+          {/* ============================================================
+              N1 DA R5-b — a metade direita é o que ele fez enquanto rodou.
+
+              Com a âncora de 480px sobravam 462px vazios ao lado dela. Os
+              números da plataforma vêm para cá, em LISTA, no tamanho de
+              lista (20px) — abaixo dos 30px da manchete, para o dinheiro
+              não voltar a dominar a tela (B2). A seção de números separada
+              deixa de existir no parado.
+              ============================================================ */}
+          {estado.temNumero && (
+            <div className={`${css.ancoraMetade} ${css.vez}`}>
+              <h2 className={css.eyebrow}>O que ele fez enquanto rodou</h2>
+              {periodo && <span className={css.fonte}>com gasto medido {periodo}</span>}
+              <Numeros resultado={resultado} investido forma="lista" />
+              {resultado.pessoas === null && <NotaConversas />}
+            </div>
+          )}
+          {acumulado?.nivelFrase && (
+            <div className={css.ancoraRodape}>
+              <p className={css.ancoraFrase}>{acumulado.nivelFrase}</p>
+            </div>
+          )}
         </section>
       )}
 
@@ -377,20 +401,16 @@ export function TelaCanonica({
       {/* ============================================================
           3. OS NÚMEROS. Lista no celular, grade no largo.
           ============================================================ */}
-      {estado.temNumero && (
+      {estado.temNumero && momento !== "parado" && (
         <section aria-labelledby="titulo-numeros">
           <div className={css.faixaTitulo}>
             <h2 id="titulo-numeros">
-              {momento === "concluiu"
-                ? "Os primeiros sinais"
-                : momento === "parado"
-                  ? "O que ele fez enquanto rodou"
-                  : "O que a plataforma contou"}
+              {momento === "concluiu" ? "Os primeiros sinais" : "O que a plataforma contou"}
             </h2>
             {periodo && <span className={css.faixaNota}>com gasto medido {periodo}</span>}
           </div>
 
-          <Numeros resultado={resultado} investido={momento !== "no-ar"} />
+          <Numeros resultado={resultado} investido={momento !== "no-ar"} forma="grade" />
           {resultado.pessoas === null && <NotaConversas />}
 
           {/* No `no-ar` a frase de nível já está na âncora. */}
@@ -455,12 +475,20 @@ export function TelaCanonica({
 function Numeros({
   resultado,
   investido,
+  forma,
 }: {
   resultado: EstadoDoCliente["resultado"];
   investido: boolean;
+  /** `lista` em qualquer largura (dentro da âncora); `grade` vira células no largo */
+  forma: "lista" | "grade";
 }) {
+  const classes = [
+    css.numeros,
+    forma === "lista" ? css.numerosLista : css.numerosGrade,
+    forma === "grade" && !investido ? css.numerosTres : "",
+  ].join(" ");
   return (
-    <dl className={`${css.numeros} ${investido ? "" : css.numerosTres}`}>
+    <dl className={classes}>
       {investido && (
         <div className={css.numero}>
           <dt className={css.numeroRotulo}>Investido</dt>
