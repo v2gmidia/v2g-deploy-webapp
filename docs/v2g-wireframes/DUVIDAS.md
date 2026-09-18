@@ -10,6 +10,11 @@ Cada uma tem marca no código: `/* DUVIDA-N */`.
 
 ## DUVIDA-1 — "Seu gestor pode retomar quando fizer sentido"
 
+> **RESOLVIDA em 17/09/2026** — decisão do Victor de 16/09, registrada em
+> `docs/decisoes.md`: "gestor" é a própria V2G, e a frase fica. A rodada 5
+> passa a mostrar o apoio da fonte única no estado parado (ver DUVIDA-10).
+> O texto abaixo é o raciocínio da época e fica como estava.
+
 **O que era.** A frase de apoio do estado `ja_foi_ao_ar`, em
 `lib/veiculacao/estado.ts:297-298`. A V2G se posiciona como "gestão de
 tráfego **sem** gestor de tráfego" (`PRODUCT.md:21`), e "seu gestor" sugere
@@ -126,6 +131,12 @@ da escala reprovaria — e a regra 4 proíbe silenciar isso.
 
 ## DUVIDA-6 — O estado pausado não tem ação
 
+> **RESOLVIDA em 17/09/2026** — decisão do Victor de 16/09, registrada em
+> `docs/decisoes.md`: "Voltar a anunciar" é a principal do parado,
+> desabilitada com o motivo embaixo, como exceção deliberada à regra de
+> omitir. "Falar com alguém" cai para secundária. O texto abaixo é o
+> raciocínio da época e fica como estava.
+
 **O que era.** Com o anúncio em `ja_foi_ao_ar` e a cadeia fechada, a tela não
 oferece **nada** para fazer — hoje ela escreve "Nada está esperando por você"
 (`TelaDoInicio.tsx:554`). O item 10 diz que isso é mentira visual, mas não diz
@@ -167,6 +178,10 @@ da bancada. Nenhuma lógica muda.
 
 ## DUVIDA-8 — A trilha depois da publicação
 
+> **RESOLVIDA em 17/09/2026** — decisão chegada no briefing da rodada 5,
+> registrada em `docs/decisoes.md`: a trilha aparece uma vez na conclusão e
+> some para sempre. O que ficou em aberto dessa decisão é a DUVIDA-11.
+
 **O que era.** A rodada 4 manda tirar a trilha no pausado e também no "no ar",
 porque "Otimizar" é trabalho contínuo e não missão encerrada. Isso resolve o
 desenho, mas deixa em aberto a **política**: a trilha some para sempre depois
@@ -197,3 +212,115 @@ proíbe editá-lo só para cumprir esta entrega.
 
 **A alteração exata que faltaria:** trocar o texto de `Casco.tsx:212` para
 "Falar com alguém". Uma linha, nenhum outro efeito.
+
+---
+
+# Rodada 5 — 17/09/2026
+
+Mesma regra: não parar, escolher o conservador, registrar o que muda se o
+Victor decidir outra. Marcas no código: `DUVIDA-10` a `DUVIDA-13`.
+
+---
+
+## DUVIDA-10 — O apoio do estado parado volta a aparecer
+
+**O que era.** A rodada 4 escondia a frase de apoio de `ja_foi_ao_ar`
+("Ele saiu do ar e nenhuma verba está sendo gasta agora. Seu gestor pode
+retomar quando fizer sentido.") por dois motivos: o "gestor" estava em
+dúvida (DUVIDA-1), e "nenhuma verba está sendo gasta agora" parecia uma
+afirmação sobre o presente sem fonte.
+
+**Escolhido: mostrar, inteira, na faixa "onde estou", nos quatro
+momentos.** O primeiro motivo caiu com a decisão de 16/09. O segundo não
+se sustenta medido: `ja_foi_ao_ar` vem do backend a partir do status da
+Meta (`status_na_plataforma: "PAUSED"`, medição de 11/09 no cabeçalho de
+`lib/veiculacao/estado.ts`), e campanha pausada na Meta não gasta. A frase
+é da fonte única, e a regra do produto é que a tela não traduz nem
+esconde pedaço dela.
+
+**Se o Victor decidir outra:** tirar a linha `<p className={css.apoio}>` de
+`TelaCanonica.tsx`. Nenhuma lógica muda.
+
+---
+
+## DUVIDA-11 — O momento "acabou de concluir" não tem fonte
+
+**O que era.** A decisão de 17/09 pede que a conclusão apareça **uma vez**.
+`esteveNoAr()` responde "a preparação acabou?", mas não responde "o dono
+já viu isso?" — e sem a segunda resposta não existe "uma vez": ou aparece
+sempre (o placar que a decisão mata), ou nunca.
+
+**Medido:** nenhuma das três fontes que o Início lê tem o dado. `veiculacao`
+é um slug sem data (`lib/veiculacao/estado.ts:116`); `publicada_em` veio
+`null` na única conta real (medição de 11/09); e `campaigns` tem zero
+linhas. A rodada proíbe inventar campo e guardar no navegador.
+
+**Escolhido: a tela recebe `mostrarConclusao`, que hoje só a bancada
+liga.** Em `TelaCanonica.tsx` o momento é `concluiu` só se esteve no ar
+**e** a cadeia está fechada **e** `mostrarConclusao` é verdadeiro. O
+padrão é `false`. Em produção, sem fonte, a tela cairia direto no momento
+de depois (sem trilha) — a conclusão nunca apareceria. Uma omissão, e não
+o defeito de volta.
+
+**O que o backend teria de mandar**, do mais barato ao mais completo:
+
+1. `GET /negocios/{id}/execucao` incluir `foi_ao_ar_pela_primeira_vez_em`
+   (timestamp). Sozinho, NÃO resolve "uma vez" — só permitiria uma janela
+   de tempo ("nos primeiros N dias"), que é placar temporário, não uma
+   vez. Serve de insumo para o item 2.
+2. Um registro de que **o dono viu** a conclusão — por exemplo
+   `conclusao_vista_em` em `businesses`, gravado por uma ação explícita
+   do dono ("Entendi"). **Não** gravado ao renderizar: o Next faz prefetch
+   de rota, e uma gravação no carregamento consumiria o momento sem
+   ninguém ter olhado.
+
+O item 2 é escrita nova no banco e botão novo — os dois exigem decisão, e
+por isso a bancada **não** desenha o botão "Entendi" (seria botão para
+capacidade que não existe).
+
+**Se o Victor decidir outra:** a janela de tempo do item 1 é uma linha no
+cálculo de `momento`, trocando `mostrarConclusao` por uma comparação de
+datas. Registro aqui que ela contraria o texto da decisão.
+
+---
+
+## DUVIDA-12 — O texto da conclusão é desta rodada
+
+**O que era.** O momento (b) precisa dizer que a preparação acabou e que
+não vai aparecer de novo. Não há texto de produto para isso.
+
+**Escrito nesta rodada, esperando o Gabriel:**
+- título da faixa: "A preparação terminou"
+- "Esta é a última vez que a preparação aparece aqui."
+- "Daqui em diante, o Início mostra o que o anúncio está fazendo: quanto
+  foi investido e quanto voltou para você."
+
+Sem celebração, sem lima (lima é "no ar agora", e o selo do topo já é
+lima nesse momento). As marcas das quatro fases são cobalto.
+
+**Se o Gabriel escrever outro:** três strings em `TelaCanonica.tsx`.
+
+Também desta rodada, e na mesma fila: o motivo do botão desabilitado —
+"Este botão ainda não funciona por aqui. Enquanto isso, quem coloca seu
+anúncio de volta para rodar é a equipe da V2G — é só chamar." — e o
+rótulo "Enquanto rodou" da metade dos números no parado.
+
+---
+
+## DUVIDA-13 — A pergunta do dia só aparece com o anúncio no ar agora
+
+**O que era.** A tela atual mostra a pergunta do dia sempre que há
+execução. No parado, o "Guardar" dela seria uma segunda principal ao lado
+de "Voltar a anunciar" — e a decisão de 16/09 faz de "Voltar a anunciar"
+a principal.
+
+**Escolhido: pergunta só quando `estaNoArAgora`.** Nos momentos (b) e (c)
+ela é a única principal habilitada da tela (relatório do driver,
+`botoesPrincipaisHabilitados: ["Guardar"]`).
+
+**O que se perde, dito na cara:** venda que chega depois da pausa — de
+quem viu o anúncio antes — não tem onde ser contada no Início parado.
+
+**Se o Victor decidir outra:** tirar o `noArAgora &&` da condição do bloco
+`<PerguntaDoDia>`. A tela passaria a ter duas principais no parado, uma
+delas desabilitada; a hierarquia precisaria ser refeita.

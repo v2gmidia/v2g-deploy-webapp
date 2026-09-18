@@ -1,354 +1,649 @@
 /*
- * A TELA CANÔNICA DO INÍCIO — laboratório visual.
+ * A TELA CANÔNICA DO INÍCIO — laboratório visual, rodada 5.
  *
  * ============================================================
  * NENHUM VALOR LITERAL DE COR OU DE TAMANHO DE TEXTO.
  *
- * Tudo aqui é `var(--token)` do `app/globals.css`. É o que garante
- * paridade entre claro e escuro sem paleta nova, e o que mantém o
- * detector do `DESIGN.md` limpo — a regra da sessão proíbe silenciar o
- * hook com exceção em configuração.
+ * Tudo aqui é `var(--token)` do `app/globals.css`: paridade entre claro e
+ * escuro sem paleta nova, e o detector do `DESIGN.md` limpo. Espaço só
+ * em 4 · 8 · 12 · 16 · 24 · 32.
  *
  * Este arquivo NÃO é `globals.css`: é um CSS Module dentro de
  * `app/exemplo/`, que não serve produção (a rota devolve 404 no build).
  * ============================================================
+ *
+ * ============================================================
+ * QUEM DECIDE A DIVISÃO É A LARGURA DA TELA DE CONTEÚDO, não a janela.
+ *
+ * `.tela` é o container. A 900px de janela a lateral ocupa o lado
+ * esquerdo e sobra uma faixa estreita — o `@media (min-width: 900px)`
+ * da rodada 4 dizia "largo" nessa hora, e as quatro fases quebravam.
+ * Com `@container`, cada bloco se divide quando ELE cabe.
+ * ============================================================
  */
 
 .tela {
+  container-type: inline-size;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
-/* ------------------------------------------------------------- herói */
-
-.heroi {
-  background: var(--cobalt);
-  color: var(--card-cobalt-ink);
-  border-radius: var(--raio-cartao);
-  padding: 20px;
-}
-
-.heroiTopo {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.heroiEtiqueta {
-  font-size: var(--fs-legenda);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.8;
-}
-
-/* O selo fica neutro por padrão; lima só quando está no ar agora. */
-.heroiSelo {
-  font-size: var(--fs-legenda);
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: var(--raio-pilula);
-  background: rgb(255 255 255 / 0.16);
-  color: var(--card-cobalt-ink);
+.soLeitor {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   white-space: nowrap;
 }
 
-.heroiVivo .heroiSelo {
-  background: var(--lime);
-  color: var(--navy);
-}
+/* ------------------------------------------------ 1. onde estou */
 
-.heroiManchete {
-  font-family: var(--display);
-  font-size: var(--fs-bloco);
-  line-height: 1.2;
-  margin: 10px 0 0;
-}
-
-.heroiContador {
-  font-size: var(--fs-legenda);
-  opacity: 0.8;
-  margin: 14px 0 0;
-}
-
-/* ------------------------------- o que substitui a trilha depois da publicação */
-
-.heroiDepois {
+.estado {
   display: flex;
   flex-direction: column;
-  margin-top: 18px;
+  align-items: flex-start;
+  gap: 8px;
 }
 
-.heroiNumeroRotulo {
+/* Neutro por padrão. Lima só quando está no ar AGORA (DUVIDA-7). */
+.selo {
   font-size: var(--fs-legenda);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  opacity: 0.8;
-}
-
-.heroiNumero {
-  font-family: var(--display);
-  font-size: var(--fs-destaque);
-  line-height: 1.05;
-  margin-top: 4px;
-}
-
-.heroiLegenda {
-  font-size: var(--fs-corpo);
-  opacity: 0.85;
-  margin-top: 6px;
-}
-
-.heroiLink {
-  color: var(--card-cobalt-ink);
-  font-size: var(--fs-corpo);
   font-weight: 700;
-  margin-top: 14px;
-  width: max-content;
+  line-height: 1;
+  padding: 8px 12px;
+  border-radius: var(--raio-pilula);
+  background: var(--fundo-controle);
+  color: var(--texto-fraco);
 }
 
-.heroiTexto {
-  font-size: var(--fs-corpo);
-  line-height: 1.45;
+/* `--black`, não `--navy`: no escuro o navy vira tinta clara, e tinta
+   clara sobre lima some. O `--black` não muda de tema. */
+.seloVivo {
+  background: var(--lime);
+  color: var(--black);
+}
+
+.manchete {
+  font-family: var(--display);
+  font-size: var(--fs-tela);
+  line-height: 1.2;
+  color: var(--texto-forte);
+  margin: 4px 0 0;
+  max-width: 32ch;
+  /* "Seu anúncio ainda não foi ao / ar." deixava a última palavra
+     sozinha na linha, a 375px. */
+  text-wrap: balance;
+}
+
+.apoio {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
   margin: 0;
-  opacity: 0.92;
+  max-width: 60ch;
 }
 
-.heroiBotao {
+/* ------------------------------------------------ 2. a âncora */
+
+.ancora {
+  display: grid;
+  grid-template-columns: 1fr;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+}
+
+.ancoraMetade {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 24px 16px;
+  min-width: 0;
+}
+
+/* A segunda metade: separada por linha, embaixo no estreito e ao lado
+   no largo. Não é outro cartão — é a mesma âncora. */
+.vez {
+  border-top: 1px solid var(--line);
+}
+
+.eyebrow {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-discreto);
+  margin: 0;
+}
+
+.contador {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--texto-forte);
+  margin: 8px 0 0;
+}
+
+.vezTitulo {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  line-height: 1.25;
+  color: var(--texto-forte);
+  margin: 8px 0 0;
+}
+
+.texto {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 8px 0 0;
+  max-width: 60ch;
+}
+
+.textoForte {
+  font-size: var(--fs-titulo);
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--texto-forte);
+  margin: 0;
+}
+
+.nota {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-discreto);
+  margin: 12px 0 0;
+  max-width: 72ch;
+}
+
+.botao {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--alt-controle);
-  padding: 0 20px;
+  padding: 0 24px;
   margin-top: 16px;
-  width: max-content;
-  border-radius: var(--raio-controle);
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: var(--fs-titulo);
-  /* INVERTIDO DE PROPÓSITO: o `.cta` global é cobalto, e cobalto sobre o
-     herói cobalto vira texto solto — foi o que a rodada 4 mostrou em
-     1280px. Aqui o botão empresta a cor do texto do cartão e devolve o
-     cobalto no rótulo. */
-  background: var(--card-cobalt-ink);
-  color: var(--cobalt);
-  /* É botão, não link: o sublinhado herdado de `a` fazia o corpo do botão
-     parecer um link dentro de uma caixa. */
   text-decoration: none;
 }
 
-/* --------------------------------------------------- a trilha (preparação) */
+.link {
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  color: var(--cobalt-ink);
+}
+
+.vez > .link {
+  margin-top: 16px;
+}
+
+/* --- a trilha. Estreita: quatro barras e a linha "Agora". */
 
 .fases {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  gap: 4px;
+  width: 100%;
   list-style: none;
-  margin: 18px 0 0;
+  margin: 16px 0 0;
   padding: 0;
 }
 
 .fase {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: var(--fs-legenda);
+  height: 8px;
+  border-radius: var(--raio-pilula);
+  background: var(--line);
 }
 
-.faseMarca {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: var(--raio-micro);
+.fase.feita {
+  background: var(--cobalt);
+}
+
+.fase.atual {
+  background: rgb(var(--cobalt-rgb) / 0.45);
+}
+
+/* No estreito, marca, nome e rótulo são só para o leitor de tela. */
+.fase .faseMarca,
+.fase .faseNome,
+.fase .faseRotulo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.faseAgora {
   font-size: var(--fs-corpo);
-  font-weight: 700;
-  background: rgb(255 255 255 / 0.18);
-  color: var(--card-cobalt-ink);
-}
-
-.atual .faseMarca {
-  background: var(--card-cobalt-ink);
-  color: var(--cobalt);
-}
-
-.faseNome {
-  font-weight: 700;
-}
-
-.faseRotulo {
-  opacity: 0.75;
-}
-
-/* ------------------------------------------------- a coluna da direita */
-
-.coluna {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.acao {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--raio-cartao);
-  padding: 20px;
-}
-
-.acaoTitulo {
-  font-family: var(--display);
-  font-size: var(--fs-titulo);
-  line-height: 1.25;
-  margin: 6px 0 0;
-}
-
-.acaoCorpo {
-  font-size: var(--fs-corpo);
-  color: var(--ink-soft);
-  margin: 8px 0 0;
-  line-height: 1.45;
-}
-
-.acaoNota {
-  font-size: var(--fs-corpo);
-  color: var(--ink-mute);
+  color: var(--texto-fraco);
   margin: 12px 0 0;
-  line-height: 1.45;
 }
 
-.acaoBotao {
+.faseAgora b {
+  color: var(--texto-forte);
+}
+
+/* --- os valores da âncora */
+
+.valorAncora {
+  font-family: var(--display);
+  font-size: var(--fs-destaque);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--texto-forte);
+  margin-top: 8px;
+}
+
+.valorAncoraAusente {
+  font-family: var(--display);
+  font-size: var(--fs-destaque);
+  line-height: 1.1;
+  color: var(--texto-discreto);
+  margin-top: 8px;
+}
+
+.fonte {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin-top: 8px;
+}
+
+/* O rodapé da âncora: a frase de nível e, quando há, o link. Um bloco
+   só com o próprio respiro — na primeira versão o respiro de baixo era
+   do link, e sem link a frase encostava na borda (parado, 1280). */
+.ancoraRodape {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  padding: 16px 16px 24px;
+}
+
+.ancoraFrase {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 0;
+  max-width: 72ch;
+}
+
+/* --- parado: a ação de voltar */
+
+.voltar .botao {
+  width: 100%;
+}
+
+.voltar .botao + .botao,
+.motivo + .botao {
   margin-top: 16px;
-  width: max-content;
 }
 
-.comando {
+.motivo {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 8px 0 0;
+  max-width: 48ch;
+}
+
+/* ------------------------------------------------ 3. os números */
+
+.faixaTitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+
+.faixaTitulo h2 {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  line-height: 1.25;
+  color: var(--texto-forte);
+  margin: 0;
+}
+
+.faixaNota {
+  font-size: var(--fs-corpo);
+  color: var(--texto-discreto);
+}
+
+/* Estreito: uma LISTA, rótulo à esquerda e valor à direita. Quatro
+   cartões em 2 × 2 a 343px apertavam o número e o rótulo; a lista lê de
+   cima para baixo como o dono lê um extrato. */
+.numeros {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--raio-cartao);
-  padding: 20px;
-}
-
-.comandoLinha {
-  font-size: var(--fs-corpo);
-  color: var(--ink-soft);
-  margin: 8px 0 0;
-  line-height: 1.45;
-}
-
-/* ------------------------------------------------------- os números
- *
- * GRADE 2 × 2 NO CELULAR, CÉLULAS DE ALTURA IGUAL.
- *
- * `grid-auto-rows: 1fr` + `height: 100%` no cartão é o que mantém as
- * quatro alturas iguais sem depender do conteúdo. A explicação da
- * ausência saiu de dentro da célula e virou nota abaixo da grade,
- * amarrada por `aria-describedby`.
- */
-
-.numeros {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  grid-auto-rows: 1fr;
-  gap: 12px;
 }
 
 .numero {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  height: 100%;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--raio-card);
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
   padding: 16px;
 }
 
-/* Rótulo de UMA linha: "Investido", "Cliques", "Exibições", "Conversas". */
+.numero + .numero {
+  border-top: 1px solid var(--line);
+}
+
 .numeroRotulo {
-  display: block;
-  font-size: var(--fs-legenda);
-  color: var(--ink-mute);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  white-space: nowrap;
+  font-size: var(--fs-corpo);
+  color: var(--texto-fraco);
 }
 
 .numeroValor {
-  display: block;
   font-family: var(--display);
-  font-size: var(--fs-tela);
-  line-height: 1.1;
-  margin-top: 8px;
-}
-
-/* A ausência não é um número, e não usa o tipo de número. */
-.numeroValorAusente {
-  display: block;
-  font-size: var(--fs-titulo);
+  font-size: var(--fs-bloco);
   font-weight: 700;
-  color: var(--ink-mute);
-  line-height: 1.25;
-  margin-top: 8px;
+  color: var(--texto-forte);
+  margin: 0;
 }
 
-.notaGrade {
-  font-size: var(--fs-corpo);
-  color: var(--ink-mute);
-  line-height: 1.45;
-  margin: 12px 0 0;
+.numeroAusente {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  color: var(--texto-discreto);
+  margin: 0;
 }
 
-.frase {
-  font-size: var(--fs-corpo);
-  color: var(--ink-soft);
-  line-height: 1.45;
-  margin: 12px 0 0;
+/* Dentro da âncora do parado: a lista sem moldura própria — a moldura
+   é a da âncora. */
+.numerosLista {
+  width: 100%;
+  margin-top: 16px;
+  background: none;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
 }
 
-.listaLarga {
-  margin-top: 0;
+.numerosLista .numero {
+  padding: 12px 0;
 }
 
-.rodape {
+/* ------------------------------------------------ a pergunta do dia
+ *
+ * O componente é o de produção, sem mudança. Os campos dele esticavam
+ * até 1.200px no largo; aqui só se limita a largura DELES, por fora. */
+
+.pergunta :global(.fallback-field) {
+  max-width: 560px;
+}
+
+/* ------------------------------------------------ 4. o resto */
+
+.quiser {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.quiserItem {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 4px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+  text-decoration: none;
 }
 
-/* -------------------------------------------------------- 900px e acima */
+.quiserItem b {
+  font-size: var(--fs-titulo);
+  line-height: 1.35;
+  color: var(--cobalt-ink);
+}
 
-@media (min-width: 900px) {
-  .topo {
+.quiserItem span {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+}
+
+.quiserItem:hover b {
+  text-decoration: underline;
+}
+
+.comando {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 16px;
+  padding: 16px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.comandoTitulo {
+  font-size: var(--fs-titulo);
+  color: var(--texto-forte);
+}
+
+.comandoLinha {
+  font-size: var(--fs-corpo);
+  color: var(--texto-fraco);
+}
+
+/* ------------------------------------------------ a partir de 560px de conteúdo */
+
+@container (min-width: 560px) {
+  .ancoraMetade {
+    padding: 24px;
+  }
+
+  .ancoraRodape {
+    padding: 16px 24px 24px;
+  }
+
+  .manchete {
+    font-size: var(--fs-destaque);
+  }
+
+  /* Números: grade de células. Quatro, ou três quando o investido já
+     está na âncora — nunca uma célula sozinha na última linha. */
+  .numerosGrade {
     display: grid;
-    grid-template-columns: 1.25fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-
-  /* Sem cartão de decisão, o herói ocupa a linha inteira em vez de deixar
-     meia tela vazia ao lado. */
-  .topoSozinho {
-    grid-template-columns: 1fr;
-  }
-
-  .rodape {
-    display: grid;
-    grid-template-columns: 1.25fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-
-  .numeros {
     grid-template-columns: repeat(4, 1fr);
+    background: none;
+    border: 0;
+    gap: 12px;
   }
 
-  .heroiManchete {
+  .numerosGrade.numerosTres {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .numerosGrade .numero {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--raio-cartao);
+  }
+
+  .numerosGrade .numero + .numero {
+    border-top: 1px solid var(--line);
+  }
+
+  .numerosGrade .numeroValor,
+  .numerosGrade .numeroAusente {
     font-size: var(--fs-tela);
   }
 
-  .heroiNumero {
+  .voltar .botao {
+    width: auto;
+    min-width: 240px;
+  }
+}
+
+/* ------------------------------------------------ a partir de 720px de conteúdo */
+
+@container (min-width: 720px) {
+  /* A âncora se divide em duas metades lado a lado. As duas têm
+     conteúdo real em todos os momentos — é isso que fecha o vazio
+     dentro do herói da rodada 4. */
+  .ancora {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* No preparando o texto da etapa é o que mais pesa; com metades
+     iguais a lista das fases acabava na metade da altura dele. */
+  .ancoraPreparando {
+    grid-template-columns: 2fr 3fr;
+  }
+
+  .vez {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+  }
+
+  .valorAncora,
+  .valorAncoraAusente {
     font-size: var(--fs-hero-frase);
+  }
+
+  /* A trilha vira lista: uma fase por linha, rótulo à direita, sem
+     quebrar. "Em andamento" tem a linha inteira da metade. */
+  .fases {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .fase,
+  .fase.feita,
+  .fase.atual {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    align-items: center;
+    gap: 12px;
+    height: auto;
+    padding: 8px 0;
+    border-radius: 0;
+    background: none;
+  }
+
+  .fase + .fase {
+    border-top: 1px solid var(--line);
+  }
+
+  .fase .faseMarca,
+  .fase .faseNome,
+  .fase .faseRotulo {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
+
+  .faseMarca {
+    display: inline-grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: var(--raio-micro);
+    font-size: var(--fs-corpo);
+    font-weight: 700;
+    background: var(--fundo-controle);
+    color: var(--texto-discreto);
+  }
+
+  .feita .faseMarca {
+    background: var(--cobalt);
+    color: var(--white);
+  }
+
+  .atual .faseMarca {
+    background: none;
+    box-shadow: inset 0 0 0 2px var(--cobalt-ink);
+    color: var(--cobalt-ink);
+  }
+
+  .faseNome {
+    font-size: var(--fs-titulo);
+    font-weight: 700;
+    color: var(--texto-forte);
+  }
+
+  .travada .faseNome {
+    color: var(--texto-fraco);
+  }
+
+  .faseRotulo {
+    font-size: var(--fs-corpo);
+    color: var(--texto-discreto);
+    white-space: nowrap;
+  }
+
+  .atual .faseRotulo {
+    color: var(--cobalt-ink);
+    font-weight: 700;
+  }
+
+  /* No largo a lista já diz a fase de agora; a linha repetiria. */
+  .faseAgora {
+    display: none;
+  }
+
+  .quiser {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* ---- CONCLUIU: sem metades. A trilha vira UMA faixa de quatro, e a
+     mensagem vem embaixo. Dividida ao lado, a mensagem tinha três
+     linhas e a metade dela era vazio. O rótulo "Concluído" quatro vezes
+     seguidas é ruído: o contador já diz 4 de 4, e o rótulo fica só para
+     o leitor de tela. */
+  .ancoraConcluiu {
+    grid-template-columns: 1fr;
+  }
+
+  .ancoraConcluiu .vez {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .ancoraConcluiu .fases {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .ancoraConcluiu .fase,
+  .ancoraConcluiu .fase.feita {
+    grid-template-columns: 28px 1fr;
+    padding: 0;
+  }
+
+  .ancoraConcluiu .fase + .fase {
+    border-top: 0;
+  }
+
+  .ancoraConcluiu .fase .faseRotulo {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }

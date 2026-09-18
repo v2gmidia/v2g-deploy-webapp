@@ -47,9 +47,21 @@ export const metadata: Metadata = {
  * `inicio` continua desenhando a tela ATUAL, para a comparação lado a lado
  * não depender de memória.
  * ============================================================
+ *
+ * ============================================================
+ * RODADA 5 (17/09/2026): QUATRO ESTADOS.
+ *
+ * `inicio-concluiu` é o momento (b) — a preparação acabou de fechar. Ele
+ * manda a MESMA veiculação que `inicio-no-ar` (`no_ar`); o que o separa é
+ * `mostrarConclusao`, que aqui vem do NOME DA ROTA e em produção não vem
+ * de lugar nenhum, porque nenhuma fonte diz "o dono ainda não viu a
+ * conclusão". Sem fonte, o valor de produção é `false` e a tela cai no
+ * momento (c). Ver DUVIDA-11.
+ * ============================================================
  */
-const CANONICAS: Record<string, "preparando" | "no-ar" | "pausado"> = {
+const CANONICAS: Record<string, "preparando" | "concluiu" | "no-ar" | "pausado"> = {
   "inicio-preparando": "preparando",
+  "inicio-concluiu": "concluiu",
   "inicio-no-ar": "no-ar",
   "inicio-pausado": "pausado",
 };
@@ -82,7 +94,11 @@ export default async function ExemploPage({ params }: { params: Promise<{ tela: 
         rotuloDaConta={casco.nomeNegocio}
         inicial={casco.inicial}
       >
-        <TelaCanonica estado={exemplo.exemploDoInicio(agora, canonica)} />
+        <TelaCanonica
+          estado={exemplo.exemploDoInicio(agora, canonica)}
+          mostrarConclusao={canonica === "concluiu"}
+          diaDaPergunta={diaDeOntemEmSaoPaulo(agora)}
+        />
       </Casco>
     );
   }

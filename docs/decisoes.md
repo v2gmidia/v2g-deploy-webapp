@@ -62,6 +62,63 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-09-17 — A trilha da preparação aparece uma vez e some para sempre
+**Chegou no briefing da rodada 5 da tela canônica do Início, 17/09. O
+briefing não nomeia quem decidiu.** Fecha a DUVIDA-8 de
+`docs/v2g-wireframes/DUVIDAS.md`.
+
+Quando as quatro fases fecham, o Início mostra a conclusão **uma vez** e
+nunca mais. Não há placar permanente de etapas sobre campanha publicada.
+A fonte para saber que a preparação acabou é a que já existe,
+`esteveNoAr()` em `lib/veiculacao/estado.ts` — **sem campo novo e sem
+estado guardado no navegador.**
+
+*O que isso deixa em aberto, e está registrado como DUVIDA-11:* "uma vez"
+exige saber se o dono **já viu** a conclusão, e nenhuma fonte diz isso.
+`esteveNoAr()` diz que a preparação acabou; não diz quando, nem se alguém
+olhou. Enquanto o backend não mandar esse dado, a bancada desenha o
+momento da conclusão, e a produção cairia direto no momento de depois —
+sem conclusão nenhuma. O lado conservador é esse porque o defeito que a
+decisão mata é o placar que **não some**.
+
+### 2026-09-16 — "Voltar a anunciar" desabilitado: exceção deliberada à regra de omitir
+**Decisão do Victor, 16/09. Registrada aqui em 17/09, na rodada 5.** Fecha
+a DUVIDA-6 de `docs/v2g-wireframes/DUVIDAS.md`.
+
+**O que muda.** No estado parado (`ja_foi_ao_ar`), a ação principal do
+Início passa a ser **"Voltar a anunciar"**, em botão principal. A saída
+humana ("Falar com alguém") cai para secundária.
+
+**A exceção.** O backend ainda não tem a rota de retomar campanha. Pela
+regra geral, o que não tem fonte é **omitido, não desabilitado** — botão
+parado ensina que a função existe e está a um clique. Aqui a regra é
+quebrada **de propósito**: o botão aparece **desabilitado, com o motivo
+escrito embaixo**, em português que o dono entende.
+
+**Por quê.** A função vai existir e a decisão de voltar a anunciar é do
+dono. Omitir o botão ensinaria que retomar não é assunto dele; mostrar
+desabilitado, com o motivo, ensina que é dele e que hoje passa pela V2G.
+
+**Os limites da exceção.** Vale só para esta ação. O motivo escrito não
+promete prazo ("em breve" é promessa, e ninguém mediu quando). Toda
+exceção nova à regra de omitir precisa da mesma aprovação e do mesmo
+registro datado. O item em aberto sobre a linha desabilitada da `/conta`
+(B10, acima) **não** é coberto por esta decisão.
+
+### 2026-09-16 — "Gestor" é a própria V2G
+**Decisão do Victor, 16/09. Registrada aqui em 17/09, na rodada 5.** Fecha
+a DUVIDA-1 de `docs/v2g-wireframes/DUVIDAS.md`.
+
+Quem opera as campanhas é a V2G, e é ela que a palavra "gestor" nomeia. A
+frase de apoio do estado parado, em `lib/veiculacao/estado.ts:298` —
+"Ele saiu do ar e nenhuma verba está sendo gasta agora. Seu gestor pode
+retomar quando fizer sentido." — **é verdadeira e permanece.**
+
+*O que isto descarta:* a leitura de que "seu gestor" contradiz o
+posicionamento "gestão de tráfego sem gestor de tráfego" (`PRODUCT.md:21`).
+Não contradiz: o produto substitui o gestor **contratado pelo dono**; o
+gestor que existe é a V2G.
+
 ### 2026-09-15 — `pages_manage_ads` entra no login; a `/aprovar` passa a disparar a criação da campanha
 **Duas decisões trazidas pelo Victor no chat. A segunda é do Gabriel.**
 
