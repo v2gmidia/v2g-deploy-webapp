@@ -191,23 +191,20 @@ async function travar(businessId: string): Promise<boolean> {
 // ============================================================
 
 /**
- * OS DOIS CABEÇALHOS POSSÍVEIS, e a escolha entre eles não é nossa.
+ * UM CABEÇALHO SÓ — `X-V2G-Webhook`. Decisão do Gabriel, 20/09/2026.
  *
- * `X-V2G-Webhook` era o único aqui, com um argumento escrito: o webhook do
- * n8n e a API do backend são duas superfícies, e um segredo só faria
- * rotacionar uma obrigar a rotacionar a outra.
+ * Até aqui o disparo mandava os dois: `X-V2G-Token`, com o token do
+ * backend (`V2G_API_TOKEN`), e `X-V2G-Webhook`, com o do webhook — o que
+ * existisse no ambiente saía. O `X-V2G-Token` saiu: ele é o segredo da API
+ * do backend, e o n8n é outra superfície. Mandar o token de uma para a
+ * outra faz rotacionar uma obrigar a rotacionar a outra, e entrega o
+ * segredo do backend a quem só precisava disparar um workflow.
  *
- * O argumento continua bom e a instância não o segue. Em 31/08/2026 ficou
- * definido que o webhook em produção confere `X-V2G-Token`, com o mesmo
- * valor do `API_TOKEN` do Easypanel. Quem manda é o n8n que está de pé, não
- * o comentário — então os dois são suportados, e o que existir no ambiente
- * é o que sai.
- *
- * Se um dia a separação voltar, é só preencher `V2G_N8N_WEBHOOK_TOKEN` em
- * vez de `V2G_API_TOKEN`: o código não precisa mudar.
+ * O n8n passa a conferir `X-V2G-Webhook`, e o único segredo que o webapp
+ * manda para ele é o `V2G_N8N_WEBHOOK_TOKEN`. Sem essa variável o disparo
+ * RECUSA antes de criar a execução — ver `webhookConfigurado()`.
  */
 const CABECALHO_N8N = "X-V2G-Webhook";
-const CABECALHO_BACKEND = "X-V2G-Token";
 
 /** Quanto o webhook pode demorar antes de a gente desistir de esperar. */
 const TIMEOUT_WEBHOOK_MS = 10_000;
@@ -231,21 +228,20 @@ function webhookConfigurado(): { url: string; cabecalhos: Record<string, string>
     return null;
   }
 
-  const cabecalhos: Record<string, string> = { "Content-Type": "application/json" };
-
-  const tokenBackend = process.env.V2G_API_TOKEN;
   const tokenWebhook = process.env.V2G_N8N_WEBHOOK_TOKEN;
-  if (tokenBackend) cabecalhos[CABECALHO_BACKEND] = tokenBackend;
-  if (tokenWebhook) cabecalhos[CABECALHO_N8N] = tokenWebhook;
-
-  if (!tokenBackend && !tokenWebhook) {
+  if (!tokenWebhook) {
     console.error(
       "[pipeline] webhook sem token ::",
-      "preencha V2G_API_TOKEN (ou V2G_N8N_WEBHOOK_TOKEN). Sem header o n8n",
-      "responde 403 e o pipeline não começa",
+      "preencha V2G_N8N_WEBHOOK_TOKEN. Sem header o n8n responde 403 e o",
+      "pipeline não começa",
     );
     return null;
   }
+
+  const cabecalhos: Record<string, string> = {
+    "Content-Type": "application/json",
+    [CABECALHO_N8N]: tokenWebhook,
+  };
 
   return { url, cabecalhos };
 }
