@@ -44,7 +44,26 @@ export default async function LandingPage() {
   if (user) redirect("/inicio");
 
   return (
-    <div className="lp">
+    // ============================================================
+    // A LP SE DECLARA CLARA, e não é preferência de gosto.
+    //
+    // Medido em 20/09/2026: no tema escuro, 28 dos 59 textos desta página
+    // ficam abaixo do piso de contraste, o pior a 1,16:1 — tinta clara
+    // sobre cartão branco. O `globals.css` chega aqui pelo layout raiz e
+    // troca a TINTA; o `lp.css` não tem uma linha de
+    // `prefers-color-scheme` e os cartões continuam brancos.
+    // Ver `docs/buraco-lp-sem-tema-escuro.md`.
+    //
+    // `data-tema="claro"` num `<div>` funciona porque propriedade
+    // personalizada HERDA: o bloco `[data-tema="claro"]` do
+    // `globals.css` redeclara os 50 tokens aqui, e tudo abaixo lê os
+    // valores claros. Nada acima é tocado — o app continua respeitando o
+    // tema do sistema e o botão.
+    //
+    // ISTO É REMÉDIO, NÃO CURA. Some no dia em que o `lp.css` for
+    // calibrado para os dois temas.
+    // ============================================================
+    <div className="lp" data-tema="claro">
       {/* ============================================================
            NAV
            ============================================================ */}

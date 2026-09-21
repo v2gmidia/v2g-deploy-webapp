@@ -42,6 +42,12 @@
   color: var(--ink);
   font-family: var(--body);
   -webkit-font-smoothing: antialiased;
+  /* O `<body>` é compartilhado com o app e fica ESCURO quando o sistema
+     está em modo escuro. Sem uma altura mínima, a faixa abaixo do último
+     bloco da LP mostraria esse fundo — a página clara terminaria num
+     rodapé preto. `100dvh` cobre a janela; o conteúdo, quando é maior,
+     manda. */
+  min-height: 100dvh;
 }
 
 .lp-container { max-width: 1120px; margin: 0 auto; padding: 0 28px; }

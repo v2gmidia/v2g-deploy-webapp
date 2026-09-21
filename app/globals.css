@@ -496,8 +496,97 @@
   --texto-discreto-sobre-placa: rgb(233 239 248 / 0.66);
 }
 
+/* ============================================================
+   TEMA CLARO TRAVADO — para uma REGIÃO da página, não para a raiz.
+
+   O seletor é `[data-tema="claro"]` SEM o `:root` de propósito: assim
+   ele vale também num `<div>` no meio da árvore, e tudo dentro dele
+   volta ao tema claro independentemente do que o `<html>` diz.
+
+   POR QUE ISSO EXISTE. A landing page (`app/(marketing)/`) não tem tema
+   escuro que funcione: medido em 20/09/2026, **28 de 59 textos abaixo do
+   piso**, o pior a 1,16:1 — tinta clara sobre cartão branco. O
+   `globals.css` chega lá pelo layout raiz e troca a TINTA; o `lp.css`
+   não tem uma linha de `prefers-color-scheme` e os cartões continuam
+   brancos. Ver `docs/buraco-lp-sem-tema-escuro.md`.
+
+   Enquanto a LP não for calibrada para os dois temas, ela se declara
+   clara. Propriedade personalizada HERDA, então declarar os tokens na
+   `.lp` basta: tudo abaixo dela lê os valores daqui, e nada acima é
+   tocado. O app continua respeitando o tema do sistema e o botão.
+
+   OS VALORES NÃO FORAM DIGITADOS. São os 50 tokens que o bloco escuro
+   acima troca, com o valor que cada um tem no `:root` deste arquivo,
+   copiados por script. Se um token claro mudar lá em cima, este bloco
+   precisa ser regerado — e é por isso que a lista está inteira e em
+   ordem, para o `git diff` mostrar a diferença.
+   ============================================================ */
+[data-tema="claro"] {
+  --offwhite: #F1F6F7;
+  --canvas: var(--offwhite);
+  --surface: #FEFEFE;
+  --surface-2: #FFFFFF;
+  --white: #FFFFFF;
+  --cobalt: #0743DC;
+  --cobalt-dark: #0532A5;
+  --cobalt-ink: var(--cobalt);
+  --lime: #E8FC65;
+  --ice: #B0E9FD;
+  --cobalt-rgb: 7 67 220;
+  --navy-rgb: 17 30 47;
+  --offwhite-rgb: 241 246 247;
+  --ice-rgb: 176 233 253;
+  --lime-rgb: 232 252 101;
+  --surface-rgb: 254 254 254;
+  --navy: #111E2F;
+  --ink: #111E2F;
+  --ink-soft: #485A6B;
+  --ink-mute: #5A6977;
+  --line: #D9E3E6;
+  --ice-soft: #E3F6FE;
+  --good: #237644;
+  --good-soft: #E2F3E8;
+  --warn: #8D6116;
+  --warn-soft: #FAEFD8;
+  --crit: #AD3E38;
+  --crit-soft: #F9E4E2;
+  --sidebar-bg: var(--plate);
+  --sidebar-ink: rgb(var(--plate-ink-rgb) / 0.78);
+  --sidebar-ink-strong: #FFFFFF;
+  --sidebar-active-bg: rgb(255 255 255 / 0.15);
+  --sidebar-line: rgb(255 255 255 / 0.16);
+  --card-ice-bg: #DCEEFB;
+  --card-ice-ink: var(--navy);
+  --card-cobalt-bg: var(--cobalt);
+  --card-cobalt-ink: #FFFFFF;
+  --card-lime-bg: var(--lime);
+  --card-lime-ink: var(--black);
+  --fundo-pagina: var(--offwhite);
+  --fundo-superficie: var(--surface);
+  --fundo-topo: var(--offwhite);
+  --fundo-barra: var(--plate);
+  --texto-forte: var(--navy);
+  --texto-fraco: var(--ink-soft);
+  --linha-divisoria: var(--line);
+  --texto-sobre-escuro: var(--white);
+  --fundo-controle: rgb(var(--navy-rgb) / 0.06);
+  --texto-discreto: var(--ink-mute);
+  --texto-discreto-sobre-placa: var(--sidebar-ink);
+  /* E o que NÃO é nosso: tocador de áudio, `select`, barra de rolagem. */
+  color-scheme: light;
+}
+
 /* Diz ao navegador em qual tema pintar barra de rolagem, campos nativos
    e menus de `select`. Sem isto, um `select` no tema escuro abre branco. */
+/* A linha que faltava: as duas abaixo dependem do atributo `data-tema`,
+   que só existe DEPOIS de a pessoa escolher um tema. Quem confia no modo
+   escuro do sistema e nunca clicou caía fora das duas — tokens escuros e
+   controles nativos claros: `select` branco, tocador de áudio branco,
+   barra de rolagem clara. Ver `docs/buraco-color-scheme.md`.
+
+   `light dark` deixa o navegador seguir o sistema; as duas regras
+   seguintes continuam por cima, para a escolha explícita vencer. */
+:root { color-scheme: light dark; }
 :root[data-tema="escuro"] { color-scheme: dark; }
 :root[data-tema="claro"] { color-scheme: light; }
 
