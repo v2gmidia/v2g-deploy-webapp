@@ -54,7 +54,29 @@ const CANONICAS: Record<string, "preparando" | "no-ar" | "pausado"> = {
   "inicio-pausado": "pausado",
 };
 
-export default async function ExemploPage({ params }: { params: Promise<{ tela: string }> }) {
+/**
+ * ============================================================
+ * O ONBOARDING NOVO (20/09/2026) ENTRA PELO MESMO TRINCO.
+ *
+ * `/exemplo/onboarding` desenha as ONZE perguntas do briefing de 20/09,
+ * em `_onboarding/`. O onboarding do ar — `app/(fluxo)/onboarding/`, com
+ * cinco perguntas — não foi tocado.
+ *
+ * Dois parâmetros de URL, só para CAPTURAR TELA:
+ *   ?passo=N    abre direto na pergunta N (1 a 11; 12 é o resumo)
+ *   ?exemplo=1  preenche as respostas anteriores com dado de bancada
+ *
+ * Eles não existem no fluxo de verdade: quem entra pela porta cai no
+ * passo 1 com o que o próprio navegador guardou.
+ * ============================================================
+ */
+export default async function ExemploPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tela: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const ehDesenvolvimento = process.env.NODE_ENV !== "production";
   const exemplo = ehDesenvolvimento ? await import("@/lib/exemplo") : null;
   if (!exemplo) notFound();
@@ -62,6 +84,37 @@ export default async function ExemploPage({ params }: { params: Promise<{ tela: 
   const { tela } = await params;
   const agora = new Date();
   const casco = exemplo.CASCO_DE_EXEMPLO;
+
+  // ---- o onboarding novo, onze perguntas ----
+  if (tela === "onboarding") {
+    const modulo = ehDesenvolvimento ? await import("../_onboarding/Onboarding") : null;
+    if (!modulo) notFound();
+    const { Onboarding } = modulo;
+
+    const busca = await searchParams;
+    const passo = Number(Array.isArray(busca.passo) ? busca.passo[0] : (busca.passo ?? "1"));
+    const comExemplo = (Array.isArray(busca.exemplo) ? busca.exemplo[0] : busca.exemplo) === "1";
+    // `?nicho=` troca só o tipo de negócio do dado de exemplo — existe
+    // para capturar o passo 9 nos dois casos: com custo por contato
+    // conhecido e sem ele.
+    const nicho = Array.isArray(busca.nicho) ? busca.nicho[0] : busca.nicho;
+
+    // A DECISÃO SOBRE O MICROFONE É DO SERVIDOR, e por dois motivos: a
+    // chave não pode chegar ao navegador, e a tela precisa saber ANTES de
+    // desenhar — um microfone que só falha depois do clique faz a pessoa
+    // gravar para descobrir que não dá.
+    const temChave = Boolean(process.env.OPENAI_API_KEY);
+
+    return (
+      <Onboarding
+        passoInicial={Number.isFinite(passo) ? Math.min(Math.max(passo - 1, 0), 11) : 0}
+        transcricaoLigada={temChave}
+        motivoSemTranscricao="A transcrição por áudio ainda não está ligada aqui. Pode escrever pelo teclado."
+        comExemplo={comExemplo}
+        nichoDeExemplo={nicho ?? null}
+      />
+    );
+  }
 
   // ---- a composição nova, três estados ----
   const canonica = CANONICAS[tela];

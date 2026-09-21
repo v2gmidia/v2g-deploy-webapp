@@ -197,3 +197,215 @@ proíbe editá-lo só para cumprir esta entrega.
 
 **A alteração exata que faltaria:** trocar o texto de `Casco.tsx:212` para
 "Falar com alguém". Uma linha, nenhum outro efeito.
+
+---
+
+# Onboarding novo — 20/09/2026
+
+O briefing manda reescrever o onboarding self-service: onze perguntas no
+lugar de cinco, áudio ou teclado em toda pergunta de texto, slider de
+verba com texto vivo, e fim com resumo e agendamento. Feito na bancada,
+em `/exemplo/onboarding`; o onboarding do ar (`app/(fluxo)/onboarding/`,
+cinco perguntas) **não foi tocado**.
+
+Cada decisão abaixo foi tomada sem o Victor, com o que muda se ele
+decidir outra.
+
+---
+
+## DUVIDA-ONB-1 — A `OPENAI_API_KEY` não existe neste repositório
+
+**Medido em 20/09/2026** (varredura AST de `process.env` em 201 arquivos):
+as 19 variáveis lidas pelo código não incluem `OPENAI_API_KEY`, e ela
+também não está no `.env.example`. A chave de IA que existe é a
+`ANTHROPIC_API_KEY` — e a Anthropic não tem rota de transcrição de áudio,
+que é por isso que o briefing pede OpenAI.
+
+**Escolhido: a tela nasce com o microfone DESABILITADO, com o motivo
+escrito ao lado, e o teclado funcionando.** Nenhuma tela quebra, nada
+fica escondido, e o cliente não descobre a ausência depois de gravar. A
+decisão de mostrar ou não vem do SERVIDOR (`page.tsx` lê a env e passa um
+booleano), porque a chave não pode chegar ao navegador e porque a tela
+precisa saber antes de desenhar.
+
+**O que falta para ligar:** `OPENAI_API_KEY` no `.env.local` e na Vercel,
+mais a linha no `.env.example`. Não acrescentei a variável ao
+`.env.example` porque isso é arquivo de contrato do deploy, e quem decide
+que o produto passa a depender da OpenAI é o Victor.
+
+**Todas as capturas desta rodada mostram o microfone desabilitado** — é o
+estado real desta máquina, não uma escolha de captura.
+
+---
+
+## DUVIDA-ONB-2 — Quais perguntas aceitam áudio
+
+**O que era.** O briefing diz "toda pergunta de texto aceita áudio ou
+teclado" e "perguntas de escolha (raio, nicho, valor) são botão/slider,
+sem áudio". Sobraram duas que não são nem uma coisa nem outra: o CEP e o
+WhatsApp.
+
+**Escolhido: CEP e WhatsApp só por teclado.** Os dois têm FORMATO —
+oito dígitos, DDD + número —, e uma transcrição de número ditado erra
+dígito com frequência alta o bastante para transformar a ajuda em
+armadilha: o cliente confirma "cento e oitenta e quatro..." sem reler, e
+o anúncio vai para o CEP errado. Os dois têm máscara, que é o que o
+teclado do celular resolve bem.
+
+**Aceitam áudio:** nome, empresa, descrição, Instagram e site.
+
+**Se o Victor decidir outra:** é o campo `audio: true` em
+`perguntas.ts`, uma linha por pergunta.
+
+---
+
+## DUVIDA-ONB-3 — Onde o áudio original fica guardado
+
+**O que o briefing pede:** "GUARDE o áudio original junto da transcrição".
+
+**Na bancada, o áudio fica em memória**, ao lado da transcrição, com um
+tocador para o cliente ouvir de novo antes de confirmar. Ele NÃO é
+gravado em lugar nenhum: esta rodada proíbe escrita no banco, e o
+`localStorage` (onde as respostas ficam) não aguenta áudio — o teto é de
+~5 MB por origem, e trinta segundos de webm já ocupam a metade disso.
+
+**O que produção precisa ter**, e é trabalho que não foi feito aqui:
+1. um bucket no Supabase Storage para os áudios do onboarding, com RLS
+   por `business_id` — o padrão já existe em `lib/identidade/armazenar.ts`;
+2. uma coluna ou jsonb que ligue cada resposta ao arquivo e à transcrição,
+   para "o que ele disse" e "o que a máquina entendeu" continuarem
+   distinguíveis depois;
+3. decisão de retenção: áudio de cliente é dado pessoal, e hoje nenhum
+   documento do repositório diz por quanto tempo ele fica.
+
+---
+
+## DUVIDA-ONB-4 — O custo por contato por nicho não vem de lugar nenhum
+
+**Medido:** o `GET /nichos` entrega `nicho`, `rotulo`, `termosDeBusca` e
+`subTipos`, e mais nada (`lib/nichos/tipos.ts:20-48`). O custo-alvo por
+contato é saída do agente `diagnosticar-orcamento`, e
+`docs/contrato-do-dashboard.md:360` registra que ele **ainda não existe**
+para nenhum cliente.
+
+**Escolhido: uma tabela declarada na bancada, com os três números que o
+Victor deu no chat em 20/09** (bebidas R$ 7, agência R$ 30, arquitetura
+R$ 60), e **`null` para todo o resto** — que é o que faz a tela dizer
+"ainda não temos a média de custo por contato do seu tipo de negócio".
+Os dois caminhos estão capturados: `onb-09-*` (com custo) e
+`onb-09b-semfaixa-*` (sem).
+
+**O que o backend teria de mandar:** uma faixa por nicho no `GET /nichos`,
+ou um campo no documento de `knowledge/`. No dia em que vier, a tabela de
+`custo-por-contato.ts` morre e a leitura passa a ser do dado vivo.
+
+**O mínimo indicado nunca aparece abaixo do piso.** Em bebidas, 15
+contatos a R$ 7 com 15% de folga dão R$ 121 — abaixo dos R$ 750 com que a
+gente consegue rodar. Dizer "o indicado é R$ 121" numa tela que bloqueia
+em R$ 750 seria a tela se contradizendo; a frase passa a dizer os dois
+números.
+
+---
+
+## DUVIDA-ONB-5 — O CEP é validado só no formato
+
+**Medido:** não existe resolvedor de CEP neste repositório. A única
+resolução geográfica é `garantirGeo()` (`lib/meta/publicar.ts`), que fala
+com a Meta e exige token — e esta rodada proíbe tocar a Meta.
+
+**Escolhido: validar oito dígitos e formatar `00000-000`.** A tela não
+afirma que o CEP existe, porque ninguém consultou nada.
+
+**O que falta:** escolher a fonte (ViaCEP é grátis e sem chave;
+BrasilAPI idem) e decidir o que fazer quando ela estiver fora — o
+caminho honesto é aceitar o CEP mesmo assim e marcar como não conferido,
+nunca barrar o cadastro por indisponibilidade nossa.
+
+---
+
+## DUVIDA-ONB-6 — O fim manda para o WhatsApp, não para uma agenda
+
+**O que era.** O briefing manda terminar com resumo e botão de agendar 30
+minutos, "se não houver agenda integrada, manda pro WhatsApp com mensagem
+pronta".
+
+**Medido: não há agenda integrada.** Nenhuma menção a Cal.com, Calendly
+ou Google Calendar no repositório.
+
+**Escolhido: o botão abre o WhatsApp com a mensagem pronta**, citando o
+nome da empresa que ele acabou de cadastrar.
+
+**O que falta:** escolher a ferramenta de agenda e decidir quem é o dono
+do horário (Victor? Gabriel? rodízio?). Enquanto isso, o WhatsApp é o
+caminho que existe.
+
+---
+
+## DUVIDA-ONB-7 — O que a bancada grava, e o que produção vai gravar
+
+**Na bancada:** cada resposta aceita vai para o `localStorage` no
+instante em que é validada — é o "dá para sair e voltar" do briefing sem
+tocar no banco, que esta rodada proíbe.
+
+**Em produção o destino é `confirmar_campo_do_cliente`**, a mesma porta
+que a `/meu-negocio` usa (migrations 0015/0016), que grava valor e
+procedência na mesma transação. Três campos do onboarding novo **não têm
+coluna hoje** e precisam de migration antes de qualquer uso real:
+
+| pergunta | onde gravar | existe? |
+|---|---|---|
+| 1. nome da PESSOA | nova coluna em `profiles` ou `businesses` | **não existe** |
+| 3. raio de atendimento | `businesses.radius_km` | existe (lista branca da `/conta`) |
+| 8. WhatsApp que recebe cliente | coluna nova, ou `businesses.phone` | **não existe** |
+
+O resto tem coluna: `name`, `cep`, `description`, `instagram_handle`,
+`site_url`, `niche`, `monthly_budget`.
+
+---
+
+## DUVIDA-ONB-8 — A rota de transcrição fica REGISTRADA em produção
+
+**Remedido em 20/09/2026, depois de refazer o `pnpm build`** (703 arquivos
+do pacote, fora de `.next/dev` e `.next/cache`):
+
+| o que procurei | no pacote |
+|---|---|
+| "Como posso te chamar", "Responder falando" | **0** |
+| `custoDoNicho`, `frasesDoSlider`, `distribuidora-de-bebidas` | **0** |
+| `v2g:onboarding-v2:bancada` | **0** |
+| `transcribe`, `gpt-4o`, `api.openai.com`, `OPENAI_API_KEY` **no `.js` executado** | **0** |
+| `gpt-4o-mini-transcribe` no `.js.map` | 1 |
+| o CAMINHO `/exemplo/api-transcrever` nos manifestos | 29 |
+
+**O corpo da rota não sobrevive ao build.** `process.env.NODE_ENV` vira
+literal, e o compilador poda tudo depois do trinco. O que resta no chunk
+de servidor é a função inteira, em uma linha:
+
+```js
+function f(e){return NextResponse.json({...},{status:404})}
+```
+
+Nenhuma chave, nenhum nome de modelo, nenhum endereço da OpenAI executam
+ou existem no código que roda. O nome do modelo só continua no
+**sourcemap**, que é arquivo de depuração e não é servido ao navegador.
+
+**O que de fato vaza é o CAMINHO.** `/exemplo/api-transcrever` está nos
+manifestos de rota, porque rota do Next é módulo de topo e não se
+registra condicionalmente como a página faz com `await import()`.
+
+**Medido com `next start`** na porta 3110, contra o pacote de produção:
+
+```
+GET  /entrar                    -> 200   (controle)
+GET  /exemplo/onboarding        -> 404
+GET  /exemplo/inicio            -> 404
+POST /exemplo/api-transcrever   -> 404   corpo de 0 bytes
+GET  /exemplo/api-transcrever   -> 405   o Next recusa o método antes do corpo
+```
+
+O 405 por GET é comportamento do Next para rota que só exporta `POST`, e
+acontece ANTES de qualquer código meu rodar. Ele revela que o caminho está
+registrado — o mesmo que os manifestos já revelam.
+
+**Se o Victor quiser zero:** a rota sai da bancada e o endpoint nasce
+direto no lugar definitivo, quando o onboarding novo virar produção.
