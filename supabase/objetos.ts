@@ -335,4 +335,12 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "o corpo das funções: que `apagar_dados_da_meta` varre N conexões em laço, que ela apaga o segredo do Vault, e que preserva `campaigns.published_at`",
     ],
   },
+  {
+    arquivo: "0022_whatsapp_do_anuncio.sql",
+    cria: [{ tipo: "coluna", tabela: "businesses", nome: "whatsapp_do_anuncio" }],
+    foraDoAlcance: [
+      "ela NÃO entra na lista branca da `confirmar_campo_do_cliente` — a lista não entra sozinha, e o porquê está em docs/migracao-whatsapp-do-anuncio.md",
+      "o `comment on column`, que é onde está escrito que este número é o do NEGÓCIO e não o da pessoa",
+    ],
+  },
 ];

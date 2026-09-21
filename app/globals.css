@@ -688,7 +688,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: var(--raio-controle);
 }
 .field input::placeholder { color: var(--ink-mute); }
-.field input:focus { border-color: var(--cobalt); outline: none; }
+.field input:focus { border-color: var(--cobalt-ink); outline: none; }
 .field .note { font-size: var(--fs-legenda); line-height: 1.45; color: var(--ink-soft); margin-top: 5px; }
 .field .error { font-size: var(--fs-legenda); line-height: 1.45; color: var(--crit); margin-top: 5px; }
 
@@ -903,7 +903,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   border-radius: var(--raio-pilula);
   padding: 9px 15px;
 }
-.auth-top .auth-help:hover { border-color: var(--cobalt); }
+.auth-top .auth-help:hover { border-color: var(--cobalt-ink); }
 .auth-card {
   background: var(--surface);
   border: 1.5px solid var(--line);
@@ -1484,7 +1484,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--surface);
 }
 .fallback-field input:focus,
-.city-row input:focus { border-color: var(--cobalt); outline: none; }
+.city-row input:focus { border-color: var(--cobalt-ink); outline: none; }
 
 /* ------------------------------------------------------------
    O SIMBOLO DA MOEDA DENTRO DO CAMPO. Item B4, 11/09/2026.
@@ -1675,7 +1675,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .ec-dots i {
   display: block;
   width: 8px; height: 8px;
-  border: 1.4px solid var(--cobalt);
+  border: 1.4px solid var(--cobalt-ink);
   background: transparent;
 }
 .ec-dots i.done { background: rgb(var(--cobalt-rgb) / 0.3); }
@@ -1890,14 +1890,14 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   color: var(--ink);
   border-radius: var(--raio-controle);
 }
-.field select:focus { border-color: var(--cobalt); outline: none; }
+.field select:focus { border-color: var(--cobalt-ink); outline: none; }
 .field input:disabled, .field select:disabled { background: rgb(var(--navy-rgb) / 0.04); color: var(--ink-mute); }
 
 /* ---------- avisos ---------- */
 .alert-card {
   background: var(--surface);
   border: 1.5px solid var(--line);
-  border-left: 4px solid var(--cobalt);
+  border-left: 4px solid var(--cobalt-ink);
   border-radius: var(--raio-controle);
   padding: 16px 18px;
 }
@@ -2110,7 +2110,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
      a `.auth-help` de `(fluxo)`, com 9px, mede 41px e fica abaixo dele. */
   padding: 11px 15px;
 }
-.topbar-help:hover { border-color: var(--cobalt); }
+.topbar-help:hover { border-color: var(--cobalt-ink); }
 /* Aqui, e não junto do resto da regra de 900px lá em cima: a mesma
    especificidade decide pela ORDEM no arquivo, e lá em cima esta linha
    perdia para o `display: none` acima. Ver o comentário na regra de
@@ -2390,7 +2390,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   background: var(--surface);
   color: var(--ink-soft);
 }
-.btn-sm.primary { border-color: var(--cobalt); color: var(--cobalt-ink); font-weight: 700; }
+.btn-sm.primary { border-color: var(--cobalt-ink); color: var(--cobalt-ink); font-weight: 700; }
 .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .est-link {
@@ -2430,8 +2430,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   cursor: pointer;
   background: var(--surface);
 }
-.escolha-item:hover { border-color: var(--cobalt); }
-.escolha-item.picked { border-color: var(--cobalt); background: rgb(var(--cobalt-rgb) / 0.05); }
+.escolha-item:hover { border-color: var(--cobalt-ink); }
+.escolha-item.picked { border-color: var(--cobalt-ink); background: rgb(var(--cobalt-rgb) / 0.05); }
 .escolha-item.off { opacity: 0.55; cursor: not-allowed; background: rgb(var(--navy-rgb) / 0.03); }
 .escolha-item.off:hover { border-color: var(--line); }
 .escolha-item input { margin-top: 3px; flex: none; accent-color: var(--cobalt); }
@@ -2528,8 +2528,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   flex-direction: column;
   gap: 4px;
 }
-.tema-opcao:hover { border-color: var(--cobalt); }
-.tema-opcao.picked { border-color: var(--cobalt); box-shadow: 0 0 0 3px rgb(var(--cobalt-rgb) / 0.16); }
+.tema-opcao:hover { border-color: var(--cobalt-ink); }
+.tema-opcao.picked { border-color: var(--cobalt-ink); box-shadow: 0 0 0 3px rgb(var(--cobalt-rgb) / 0.16); }
 .tema-opcao b { font-family: var(--display); font-size: var(--fs-titulo); color: var(--ink); margin-top: 6px; }
 .tema-opcao span { font-size: var(--fs-corpo); line-height: 1.45; color: var(--ink-soft); }
 /* A miniatura: duas faixas — fundo e superfície — com um ponto de acento
@@ -3610,7 +3610,7 @@ code {
 
 /* atual — anel cobalto com miolo cheio. É a única linha que ganha peso. */
 .trilha-item.e-atual .trilha-marca {
-  border-color: var(--cobalt);
+  border-color: var(--cobalt-ink);
   border-width: 2px;
 }
 .trilha-item.e-atual .trilha-marca::after {
@@ -4469,8 +4469,8 @@ code {
   text-decoration: none;
 }
 .casa-indice a:hover {
-  border-color: var(--cobalt);
-  color: var(--cobalt);
+  border-color: var(--cobalt-ink);
+  color: var(--cobalt-ink);
 }
 .casa-indice a:focus-visible {
   outline: 2px solid var(--cobalt);

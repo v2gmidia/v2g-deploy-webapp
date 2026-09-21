@@ -1,0 +1,668 @@
+/*
+ * O ONBOARDING NOVO — bancada.
+ *
+ * ============================================================
+ * NENHUM VALOR LITERAL DE COR NEM DE TAMANHO DE TEXTO. Tudo lê os tokens
+ * de `app/globals.css`; espaço na escala 4 · 8 · 12 · 16 · 24 · 32. É o
+ * que mantém claro e escuro com a mesma anatomia e o detector do
+ * `DESIGN.md` limpo.
+ * ============================================================
+ *
+ * UMA PERGUNTA OCUPA A TELA. O palco é centrado e tem largura de leitura;
+ * o progresso fica no topo, e o "falar com uma pessoa" nunca sai de lá.
+ */
+
+.tela {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 100dvh;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--fundo-pagina);
+  /* ============================================================
+     `color-scheme` é o que manda no que NÃO é nosso: o tocador do
+     `<audio>`, a barra de rolagem, o seletor de arquivo. Sem ele o
+     tocador sai claro no tema escuro — um retângulo branco no meio de
+     uma tela preta, que foi o que a captura mostrou.
+
+     `light dark` deixa o navegador escolher pelo tema do sistema, que é
+     o mesmo critério do resto da folha.
+
+     ISTO DEVERIA ESTAR NO `:root` do `app/globals.css`, e não aqui: todo
+     campo, toda barra de rolagem e todo seletor do produto tem o mesmo
+     problema. Não pus lá porque esta rodada não autoriza — registrado em
+     docs/buraco-color-scheme.md.
+     ============================================================ */
+  color-scheme: light dark;
+}
+
+/* ------------------------------------------------------------- o topo */
+
+.topo {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.barra {
+  height: 4px;
+  width: 100%;
+  border-radius: var(--raio-pilula);
+  background: var(--fundo-controle);
+  overflow: hidden;
+}
+
+/* A barra cresce por `transform`, não por `width`.
+   Animar largura obriga o navegador a refazer o layout a cada quadro; o
+   `scaleX` roda no compositor. A origem é a esquerda para ela crescer
+   do começo, e não do meio. O fator vem do JSX, que é quem sabe em que
+   pergunta o cliente está. */
+.barraCheia {
+  display: block;
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  /* `--cobalt-ink`, pelo mesmo motivo das bordas: no escuro, o cobalto de
+     fundo (#0239C7) contra o trilho COMPOSTO dava 2,05:1 — a barra de
+     progresso quase sumia no tema escuro. Com a tinta, 6,9:1. */
+  background: var(--cobalt-ink);
+  border-radius: var(--raio-pilula);
+  transition: transform 240ms ease;
+}
+
+.topoLinha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.contador {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-discreto);
+}
+
+.humano,
+.humanoLinha {
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  color: var(--cobalt-ink);
+}
+
+/* ------------------------------------------------------------ o palco */
+
+.palco {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 220ms ease, transform 220ms ease;
+}
+
+/* O estado de entrada: a pergunta nova sobe um pouco e aparece. Quem
+   pediu menos movimento no sistema não recebe nenhum. */
+.entrando {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .palco,
+  .entrando {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.titulo {
+  font-family: var(--display);
+  font-size: var(--fs-destaque);
+  line-height: 1.15;
+  color: var(--texto-forte);
+  margin: 0;
+  max-width: 20ch;
+  text-wrap: balance;
+}
+
+.subtitulo {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  line-height: 1.25;
+  color: var(--texto-forte);
+  margin: 24px 0 0;
+}
+
+.ajuda,
+.texto {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 0;
+  max-width: 52ch;
+}
+
+.dica {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-discreto);
+  margin: 0;
+  max-width: 60ch;
+}
+
+.forma {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* ------------------------------------------------------------- campos */
+
+.campo,
+.campoLongo {
+  width: 100%;
+  box-sizing: border-box;
+  /* 16px é o piso: abaixo disso o iPhone dá zoom ao focar. */
+  font-size: var(--fs-titulo);
+  font-family: var(--body);
+  color: var(--texto-forte);
+  background: var(--fundo-superficie);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-controle);
+  padding: 12px 16px;
+}
+
+.campo {
+  min-height: var(--alt-campo);
+}
+
+.campoLongo {
+  line-height: 1.5;
+  resize: vertical;
+}
+
+.campo:focus-visible,
+.campoLongo:focus-visible {
+  outline: 2px solid var(--cobalt-ink);
+  outline-offset: 2px;
+}
+
+.rotuloGrupo {
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  color: var(--texto-forte);
+  margin: 8px 0 0;
+}
+
+/* ------------------------------------------------------------ escolhas */
+
+.escolhas {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.escolha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: var(--alt-principal);
+  padding: 12px 16px;
+  text-align: left;
+  font-family: var(--display);
+  font-size: var(--fs-titulo);
+  font-weight: 700;
+  color: var(--texto-forte);
+  background: var(--fundo-superficie);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-controle);
+  cursor: pointer;
+}
+
+.escolha:hover {
+  border-color: var(--cobalt-ink);
+}
+
+/* `--cobalt-ink` em toda BORDA desta folha, e nao `--cobalt`: a borda e
+   marca, e marca segue o fundo. A varredura de contraste que migrou 31
+   regras de `color:` e `outline:` (docs/contraste.md §9.1) nao passou por
+   `border-color:` — ver docs/buraco-borda-cobalt-no-escuro.md. */
+.escolhida {
+  border-color: var(--cobalt-ink);
+  box-shadow: inset 0 0 0 1px var(--cobalt-ink);
+}
+
+.escolhaNota {
+  font-size: var(--fs-corpo);
+  font-weight: 600;
+  color: var(--texto-discreto);
+}
+
+/* ------------------------------------------------------------ o áudio */
+
+.microLinha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.micro {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--alt-controle);
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-pilula);
+  background: var(--fundo-superficie);
+  color: var(--texto-forte);
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.micro:disabled {
+  color: var(--texto-discreto);
+  background: var(--fundo-controle);
+  cursor: not-allowed;
+}
+
+/* O "estou ouvindo" e o sinal mais importante desta tela: se ele nao
+   aparecer, a pessoa fala para um microfone que ela nao sabe se esta
+   ligado. Com `--cobalt` a borda dava 2,28:1 no tema escuro. */
+.microAtivo {
+  border-color: var(--cobalt-ink);
+  color: var(--cobalt-ink);
+}
+
+.microMotivo {
+  font-size: var(--fs-corpo);
+  color: var(--texto-discreto);
+  max-width: 44ch;
+}
+
+/* ============================================================
+   O CONVITE AO ÁUDIO — só nas perguntas ABERTAS.
+
+   O microfone fica mais convidativo que o teclado por TRÊS coisas ao
+   mesmo tempo: altura de botão principal, tinta de cobalto e um fundo de
+   cobalto a 8%. Nenhuma delas encolhe o campo, que continua acima, do
+   mesmo tamanho e com o foco.
+
+   E ele NÃO vira o botão principal da tela: continua com borda em vez de
+   fundo cheio, que é o que separa o convite do "Continuar".
+   ============================================================ */
+
+.convite {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  /* Fraco, e não discreto: é para ser lido, não sussurrado. */
+  color: var(--texto-fraco);
+  margin: 0;
+  max-width: 56ch;
+}
+
+.microConvite {
+  min-height: var(--alt-principal);
+  font-size: var(--fs-titulo);
+  /* `--cobalt-ink`, e NÃO `--cobalt`: a borda é a marca, e o critério do
+     `globals.css` é o FUNDO, não a propriedade. Medido nesta tela: com
+     `--cobalt`, a borda dava 2,28:1 contra o fundo escuro — o mesmo
+     número que a doc do token cita como o motivo de `--cobalt-ink`
+     existir. Com ele, 5,79:1, e o claro não muda (lá os dois são o mesmo
+     azul). O tingimento do fundo continua em `--cobalt-rgb`, que é para
+     isso que ele existe. */
+  border: 2px solid var(--cobalt-ink);
+  color: var(--cobalt-ink);
+  background: rgb(var(--cobalt-rgb) / 0.08);
+}
+
+.microConvida {
+  font-size: var(--fs-corpo);
+  color: var(--texto-fraco);
+  max-width: 44ch;
+}
+
+.ditado {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ditadoTitulo {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-discreto);
+  margin: 0;
+}
+
+.ditadoTexto {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-forte);
+  margin: 0;
+}
+
+.ditadoAudio {
+  width: 100%;
+}
+
+.ditadoNota {
+  font-size: var(--fs-corpo);
+  color: var(--texto-discreto);
+  margin: 0;
+}
+
+/* ------------------------------------------------------------ a verba */
+
+.valorGrande {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-family: var(--display);
+  font-size: var(--fs-hero-frase);
+  font-weight: 700;
+  color: var(--texto-forte);
+}
+
+.valorNota {
+  font-size: var(--fs-corpo);
+  font-weight: 600;
+  color: var(--texto-discreto);
+}
+
+.slider {
+  width: 100%;
+  /* Idem: o `accent-color` pinta o polegar e o trilho preenchido, que sao
+     marca sobre fundo escuro. */
+  accent-color: var(--cobalt-ink);
+}
+
+.vivo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+}
+
+.vivoLinha {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 0;
+  max-width: 56ch;
+}
+
+/* ---------------------------------------------------------- arquivos */
+
+.arquivo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 24px 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+  cursor: pointer;
+}
+
+/* O seletor nativo sai da tela, e não do DOM: o clique no rótulo continua
+   abrindo o seletor de arquivo, e o leitor de tela continua achando o
+   campo. Visível, ele duplicava o rótulo — "Escolher arquivos" aparecia
+   duas vezes, uma em inglês do sistema. */
+.arquivo input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.arquivoRotulo {
+  font-family: var(--display);
+  font-size: var(--fs-titulo);
+  font-weight: 700;
+  color: var(--texto-forte);
+}
+
+.arquivoNota {
+  font-size: var(--fs-corpo);
+  color: var(--texto-discreto);
+}
+
+/* ------------------------------------------------------------- recado */
+
+.recado,
+.recadoCalmo {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 56ch;
+}
+
+.recado {
+  color: var(--texto-forte);
+  border-left: 2px solid var(--cobalt-ink);
+  padding-left: 12px;
+}
+
+.recadoCalmo {
+  color: var(--texto-discreto);
+}
+
+/* -------------------------------------------------------------- ações */
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  text-decoration: none;
+}
+
+.voltar {
+  min-height: var(--alt-controle);
+  background: none;
+  border: 0;
+  padding: 0 8px;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  font-weight: 600;
+  color: var(--texto-discreto);
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------- resumo */
+
+.resumo {
+  width: 100%;
+  margin: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+}
+
+.resumoLinha {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+}
+
+.resumoLinha + .resumoLinha {
+  border-top: 1px solid var(--line);
+}
+
+.resumoRotulo {
+  font-size: var(--fs-corpo);
+  color: var(--texto-fraco);
+  margin: 0;
+  min-width: 0;
+}
+
+.resumoRotulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+/* "falado" ao LADO do rótulo, e nunca no lugar do valor: a origem da
+   resposta é nota de rodapé, não a resposta. */
+.marcaAudio {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--cobalt-ink);
+  white-space: nowrap;
+}
+
+/* O "mudar" é discreto de propósito: ele aparece onze vezes na mesma
+   tela, e onze botões com peso viram uma parede. */
+.mudar {
+  display: block;
+  margin-left: auto;
+  margin-top: 4px;
+  min-height: var(--alt-controle);
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  font-weight: 600;
+  color: var(--cobalt-ink);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.resumoValor {
+  font-size: var(--fs-titulo);
+  font-weight: 700;
+  color: var(--texto-forte);
+  margin: 0;
+  text-align: right;
+  max-width: 60%;
+  /* Endereço de site não tem espaço para quebrar, e a 375px ele saía pela
+     borda direita do cartão. */
+  overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------- a partir de 700px de tela */
+
+@media (min-width: 700px) {
+  .tela {
+    padding: 32px;
+    gap: 32px;
+  }
+
+  .escolhas {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .titulo {
+    font-size: var(--fs-hero-frase);
+  }
+}
+
+/* ---------------------------------------- o painel de destino (bancada)
+
+   Atrás de `?destino=1`. Não é tela de cliente: é a resposta olhável para
+   "e isso vai para onde?". Por isso tem nome de coluna, que em qualquer
+   outra tela deste produto seria jargão proibido.
+   ------------------------------------------------------------------- */
+
+.destino {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 32px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+  overflow-x: auto;
+}
+
+.destinoTitulo {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-discreto);
+  margin: 0 0 12px;
+}
+
+.destinoTabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-legenda);
+  color: var(--texto-fraco);
+}
+
+.destinoTabela th,
+.destinoTabela td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.destinoTabela th {
+  color: var(--texto-discreto);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.destinoTabela code {
+  /* A pilha monoespaçada do DESIGN.md. */
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: var(--texto-forte);
+}
+
+.destinoNota {
+  font-size: var(--fs-legenda);
+  color: var(--texto-discreto);
+  margin: 12px 0 0;
+}

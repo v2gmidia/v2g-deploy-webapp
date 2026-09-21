@@ -870,3 +870,101 @@ ordem em que eu as recomendaria:
    lotes. Um `git commit --amend` só na mensagem, sem tocar em conteúdo.
 3. **Separar de verdade**, refazendo os dois commits. É o mais limpo e o
    mais arriscado, e só vale se nada foi para o GitHub ainda.
+
+---
+
+# §14 — `border-color` entrou na varredura (20/09/2026)
+
+**A §9.1 migrou "31 regras de `color:` / `outline:`". Ela não passou por
+`border-color:`.** Restaram 21 regras pintando borda com `var(--cobalt)`
+— 20 em `app/globals.css`, 1 em `app/(marketing)/lp.css`. No tema escuro
+elas mediam de **1,87 a 2,28:1**, e o piso para objeto gráfico é 3:1.
+
+## 14.1 O que foi medido, e como
+
+Harness em `scratchpad/medir-bordas.mjs`: monta a marcação real de cada
+regra, força `:hover` e `:focus` lendo a declaração no CSSOM (nenhum dos
+dois aparece sozinho numa página headless), e **compõe as camadas
+translúcidas** antes de calcular. O número reportado é o PIOR dos dois
+lados da borda: contra o fundo do próprio elemento e contra o do pai.
+
+Duas coisas que só apareceram por medir, e não por ler o CSS:
+
+1. **Quatro das 21 são borda MORTA.** O grupo dos cinco papéis de botão
+   (linhas 4709 e 4756) põe `border: 0` depois, e a largura computada é
+   `0px`. Trocar a cor delas não mudaria um pixel.
+2. **O `:focus` que eu media primeiro não era o `:focus`.** `el.focus()`
+   numa página headless nem sempre pega, e a primeira rodada devolveu a
+   borda de repouso (`--line`, 1,24:1) achando que era a de foco. Só
+   depois de ler a regra no CSSOM o número certo apareceu: **2,10:1**.
+
+## 14.2 As 14 que mudaram
+
+| linha | regra | o que a borda significa | antes | depois |
+|---|---|---|---|---|
+| 602 | `.field input:focus` | onde o cursor está | 2,10 | **5,54** |
+| 817 | `.auth-top .auth-help:hover` | o que o mouse toca | 2,10 | **5,54** |
+| 1398 | `.city-row input:focus` | onde o cursor está | 2,10 | **5,54** |
+| 1589 | `.ec-dots i` | quantos combinados faltam | 2,28 | **6,00** |
+| 1804 | `.field select:focus` | onde o cursor está | 2,10 | **5,54** |
+| 1811 | `.alert-card` (tarja) | a tarja do alerta | 2,10 | **5,54** |
+| 2024 | `.topbar-help:hover` | o que o mouse toca | 2,10 | **5,54** |
+| 2304 | `.btn-sm.primary` | qual botão é o principal | 2,10 | **5,54** |
+| 2344 | `.escolha-item:hover` | o que o mouse toca | 2,10 | **5,54** |
+| 2345 | `.escolha-item.picked` | a opção escolhida | 2,24 | **5,90** |
+| 2442 | `.tema-opcao:hover` | o que o mouse toca | 2,10 | **5,54** |
+| 2443 | `.tema-opcao.picked` | o tema ligado | 2,10 | **5,54** |
+| 3524 | `.trilha-item.e-atual .trilha-marca` | você está aqui | 2,10 | **5,54** |
+| 4383 | `.casa-indice a:hover` (borda **e** tinta) | o que o mouse toca | 2,10 | **5,54** |
+| lp:471 | `.faq details[open]` | a pergunta aberta | 1,87 | **3,30** |
+
+Três delas são **foco de teclado**, e esse é o caso mais sério: quem
+navega sem mouse perde o rastro de onde está, e é o público que mais
+depende da borda.
+
+O `.faq` da LP é o caso da §9.1 ao vivo: o cartão é **branco mesmo no
+tema escuro**, então a borda tem um lado claro e um escuro. Contra o
+branco ela piorou (8,70 → 3,30); contra o pai escuro melhorou (1,87 →
+4,92). O pior dos dois lados subiu de 1,87 para 3,30 — acima do piso —,
+e é por isso que a troca fica.
+
+## 14.3 As 6 que NÃO mudaram, e por quê
+
+| linha | regra | por que fica |
+|---|---|---|
+| 672 | `.cta.ghost` | borda morta: `border: 0` na linha 4709. Medido 0px. |
+| 1160 | `.chip-opt` | borda morta: `border: 0` na 4756. Medido 0px. |
+| 1226 | `.botao-leve:hover` | borda morta, mesmo grupo. Medido 0px. |
+| 4018 | `.pd-convite .botao-leve:hover` | borda morta, mesmo grupo. Medido 0px. |
+| 3493 | `.trilha-item.e-feita .trilha-marca` | **preenchimento**: borda e fundo são o mesmo cobalto. Trocar só a borda criaria um anel que não existe hoje. |
+| 3741 | `.fase.f-atual .fase-marca` | **preenchimento com texto branco por cima.** Medido: branco sobre `--cobalt` dá **8,70:1**; sobre `--cobalt-ink` cairia para **3,30:1**. |
+
+A linha 3741 é a regra em uma medida: **cobalto é bom como fundo e ruim
+como tinta.** Trocar o fundo quebraria o texto que está em cima dele — é
+o mesmo motivo pelo qual o token existe, aplicado do outro lado.
+
+**Fica aberto**, e não foi consertado aqui: o preenchimento das linhas
+3493 e 3741 mede **2,28:1 contra o fundo da página** no tema escuro. É
+defeito de preenchimento, não de borda, e pede a própria rodada.
+
+## 14.4 O tema claro não mudou — medido, não prometido
+
+21 casos, os dois temas, antes e depois: **no tema claro, cor e contraste
+idênticos em 21 de 21.** Era o esperado — lá `--cobalt-ink` é
+literalmente `var(--cobalt)` (`app/globals.css:100`) —, mas esperado não
+é medido.
+
+## 14.5 Como conferir que a varredura não envelheceu
+
+```bash
+grep -n "border[a-z-]*: *[^;]*var(--cobalt)" app/globals.css
+```
+
+Hoje devolve 6 linhas, e as 6 estão justificadas na tabela 14.3. Linha
+nova nessa busca é regressão.
+
+**Para OLHAR:** `/exemplo/bordas` na bancada renderiza a marcação real
+das 14, com o estado de repouso e o estado forçado lado a lado, e a lista
+das 6 que ficaram. Capturas em
+`docs/v2g-wireframes/capturas/bordas-cobalt/`.
+

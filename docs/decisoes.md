@@ -706,3 +706,49 @@ elemento do cartão.
 **Descartado:** remover o cartão (perderia a prova visual) e inventar número
 novo (afirmação falsa numa página de vendas no ar).
 **Registro:** commit `df19ec0` na LP, detalhe em `lp/docs/prova-social-e-legibilidade.md` §7.1.
+
+### 2026-09-20 — O áudio anda numa direção só: NÃO haverá voz de IA
+**Decisão:** o cliente pode responder falando; a máquina **nunca** fala com
+ele. A pergunta é texto na tela e continua sendo texto na tela. Só
+transcrição (entrada), nunca síntese (saída).
+**Descartado:** conversa falada e leitura das perguntas em voz alta.
+**O que isso proíbe, por nome:** `speechSynthesis`,
+`SpeechSynthesisUtterance`, `/v1/audio/speech`, qualquer serviço de
+text-to-speech.
+**O que NÃO é proibido:** o `<audio>` que toca de volta a gravação **do
+próprio cliente**, para ele conferir o que disse antes de aceitar a
+transcrição. Isso é o áudio dele voltando, não a nossa voz falando.
+**Registro:** bloco "SÓ ENTRADA. NUNCA SAÍDA." no topo de
+`app/exemplo/_onboarding/Onboarding.tsx`. Varredura de 20/09 em 174
+arquivos de `app/`, `lib/` e `components/`: zero ocorrências das oito APIs
+de síntese, e um `<audio>` só, com `src={ditado.url}`.
+
+### 2026-09-20 — O convite ao áudio só existe nas perguntas ABERTAS
+**Decisão:** nas duas perguntas abertas — "o que você vende" e a correção
+do resumo — o microfone fica mais convidativo que o teclado, **sem esconder
+o teclado**, e ganha duas frases:
+
+- abaixo do campo: *"Prefere falar? É bem mais rápido, e quem fala costuma
+  contar mais sobre o negócio."*
+- ao lado do microfone: *"Toque e fale, como se estivesse explicando para
+  um cliente."*
+
+Nas perguntas curtas (nome, empresa, Instagram, site) microfone e teclado
+ficam com o **mesmo peso** e não há frase de incentivo — pedir para alguém
+falar um `@` não economiza o tempo de ninguém.
+**A regra que vem junto:** nenhuma das frases promete resultado. Nada de
+"converte mais" ou "melhores resultados" — a gente não mede isso. O que
+elas afirmam é o que dá para observar na hora: falar é mais rápido que
+digitar, e quem fala costuma contar mais.
+**Como o "mais convidativo" foi feito, e o que ele NÃO é:** altura de botão
+principal (54px contra 44px), tinta e borda de cobalto, e fundo tingido a
+8%. Continua com borda em vez de fundo cheio — o botão principal da tela
+continua sendo o "Continuar". O campo de texto não encolhe e continua
+recebendo o foco quando a pergunta abre.
+**Sem chave de transcrição, o convite não aparece:** convidar para falar
+num microfone desabilitado seria oferecer o que não existe. No lugar dele
+fica o motivo escrito, e o teclado.
+**Registro:** `CONVITE_ABAIXO_DO_CAMPO` e `CONVITE_NO_MICROFONE` em
+`app/exemplo/_onboarding/perguntas.ts`, campo `aberta` no `Passo`.
+Capturas em `docs/v2g-wireframes/capturas/onboarding-v2/`, com e sem chave.
+

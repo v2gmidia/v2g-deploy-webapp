@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { CasoDeFalha } from "../_onboarding/recados";
 import { Casco } from "@/components/ui/Casco";
 import { TelaDoInicio } from "@/app/(protected)/inicio/TelaDoInicio";
 import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
@@ -54,7 +55,33 @@ const CANONICAS: Record<string, "preparando" | "no-ar" | "pausado"> = {
   "inicio-pausado": "pausado",
 };
 
-export default async function ExemploPage({ params }: { params: Promise<{ tela: string }> }) {
+/**
+ * ============================================================
+ * O ONBOARDING NOVO (20/09/2026) ENTRA PELO MESMO TRINCO.
+ *
+ * `/exemplo/onboarding` desenha as ONZE perguntas do briefing de 20/09,
+ * em `_onboarding/`. O onboarding do ar — `app/(fluxo)/onboarding/`, com
+ * cinco perguntas — não foi tocado.
+ *
+ * Parâmetros de URL, só para CAPTURAR TELA:
+ *   ?passo=N      abre direto na pergunta N (1 a 11; 12 é o resumo)
+ *   ?exemplo=1    preenche as respostas anteriores com dado de bancada
+ *   ?nicho=…      troca o tipo de negócio do dado de exemplo
+ *   ?microfone=1  desenha o microfone LIGADO;  ?microfone=0 desenha DESLIGADO
+ *   ?destino=1    mostra onde cada resposta vai cair em produção
+ *   ?falha=<caso> desenha a tela de quando a transcrição não vem
+ *
+ * Eles não existem no fluxo de verdade: quem entra pela porta cai no
+ * passo 1 com o que o próprio navegador guardou.
+ * ============================================================
+ */
+export default async function ExemploPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tela: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const ehDesenvolvimento = process.env.NODE_ENV !== "production";
   const exemplo = ehDesenvolvimento ? await import("@/lib/exemplo") : null;
   if (!exemplo) notFound();
@@ -62,6 +89,71 @@ export default async function ExemploPage({ params }: { params: Promise<{ tela: 
   const { tela } = await params;
   const agora = new Date();
   const casco = exemplo.CASCO_DE_EXEMPLO;
+
+  // ---- a amostra das bordas de cobalto no tema escuro ----
+  // As 14 regras consertadas em 20/09 moram no `globals.css` e pintam
+  // telas atrás do login. Esta amostra renderiza a marcação real de cada
+  // uma, para o conserto poder ser olhado nos dois temas.
+  if (tela === "bordas") {
+    const modulo = ehDesenvolvimento ? await import("../_bordas/Amostra") : null;
+    if (!modulo) notFound();
+    return <modulo.Amostra />;
+  }
+
+  // ---- o onboarding novo, onze perguntas ----
+  if (tela === "onboarding") {
+    const modulo = ehDesenvolvimento ? await import("../_onboarding/Onboarding") : null;
+    if (!modulo) notFound();
+    const { Onboarding } = modulo;
+
+    const busca = await searchParams;
+    const passo = Number(Array.isArray(busca.passo) ? busca.passo[0] : (busca.passo ?? "1"));
+    const comExemplo = (Array.isArray(busca.exemplo) ? busca.exemplo[0] : busca.exemplo) === "1";
+    // `?nicho=` troca só o tipo de negócio do dado de exemplo — existe
+    // para capturar o passo 9 nos dois casos: com custo por contato
+    // conhecido e sem ele.
+    const nicho = Array.isArray(busca.nicho) ? busca.nicho[0] : busca.nicho;
+
+    // A DECISÃO SOBRE O MICROFONE É DO SERVIDOR, e por dois motivos: a
+    // chave não pode chegar ao navegador, e a tela precisa saber ANTES de
+    // desenhar — um microfone que só falha depois do clique faz a pessoa
+    // gravar para descobrir que não dá.
+    const temChave = Boolean(process.env.OPENAI_API_KEY);
+
+    // `?microfone=` DESENHA um dos dois estados, para capturar tela:
+    //   1 → ligado    0 → desligado, com o motivo escrito
+    // Sem o parâmetro vale o ambiente. Ele não inventa transcrição nenhuma:
+    // com `1` e sem chave, gravar ainda esbarra no 501 da rota; com `0` e
+    // com chave, o botão só deixa de ser oferecido.
+    //
+    // Os DOIS precisam ser capturáveis, e por isso o parâmetro tem três
+    // estados em vez de dois: a chave entrou no `.env.local` desta máquina
+    // em 20/09, então omitir o parâmetro deixou de mostrar o caminho sem
+    // chave — que continua sendo o de qualquer máquina que não a tenha.
+    const microfonePedido = Array.isArray(busca.microfone)
+      ? busca.microfone[0]
+      : busca.microfone;
+
+    return (
+      <Onboarding
+        passoInicial={Number.isFinite(passo) ? Math.min(Math.max(passo - 1, 0), 11) : 0}
+        transcricaoLigada={
+          microfonePedido === "1" ? true : microfonePedido === "0" ? false : temChave
+        }
+        motivoSemTranscricao="A transcrição por áudio ainda não está ligada aqui. Pode escrever pelo teclado."
+        comExemplo={comExemplo}
+        mostrarDestino={
+          (Array.isArray(busca.destino) ? busca.destino[0] : busca.destino) === "1"
+        }
+        falhaDeExemplo={
+          ((Array.isArray(busca.falha) ? busca.falha[0] : busca.falha) as
+            | CasoDeFalha
+            | undefined) ?? null
+        }
+        nichoDeExemplo={nicho ?? null}
+      />
+    );
+  }
 
   // ---- a composição nova, três estados ----
   const canonica = CANONICAS[tela];

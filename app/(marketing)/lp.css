@@ -474,7 +474,7 @@
   border-radius: 12px;
   overflow: hidden;
 }
-.faq details[open] { border-color: var(--cobalt); }
+.faq details[open] { border-color: var(--cobalt-ink); }
 .faq summary {
   list-style: none;
   cursor: pointer;
