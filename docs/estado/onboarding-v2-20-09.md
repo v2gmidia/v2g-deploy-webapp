@@ -130,3 +130,116 @@ ocorrência de "erro", CPL, CPA, ROAS, diminutivo ou "grátis".
 
 Intactos: `app/(fluxo)/`, `app/(protected)/`, `app/(public)/`,
 `components/`, `lib/`, `proxy.ts`, `app/globals.css`, `.env.example`.
+
+---
+
+# Complemento: o áudio, duas decisões — 20/09/2026 (tarde)
+
+Mesma branch, mesma bancada, sem commit.
+
+## 6. As duas decisões
+
+**Não haverá voz de IA.** Só transcrição (entrada), nunca síntese (saída).
+A pergunta é texto na tela e continua sendo. Varri 174 arquivos de `app/`,
+`lib/` e `components/` (ignorando comentário, senão o bloco que DECLARA a
+regra se acusava sozinho): zero ocorrências de `speechSynthesis`,
+`SpeechSynthesisUtterance`, `/audio/speech`, `text-to-speech`, ElevenLabs,
+`tts-1` e `gpt-4o-mini-tts`. Um `<audio>` só em toda a superfície, e a
+fonte dele é `ditado.url` — a gravação do próprio cliente voltando.
+
+**O convite ao áudio só nas perguntas ABERTAS**, que são duas: "o que você
+vende" e a correção do resumo. Nelas o microfone fica mais convidativo que
+o teclado — 54px contra 44px, borda e tinta de cobalto, fundo tingido a 8%
+— e ganha as duas frases do briefing. Nas curtas (nome, empresa,
+Instagram, site) os dois ficam com o mesmo peso e não há frase. Medido nas
+capturas:
+
+| tela | altura do microfone | convite | campo |
+|---|---|---|---|
+| 1, 2, 5, 6 (curtas) | 44px | não | 48px |
+| 4 e o resumo (abertas) | **54px** | **sim** | 98px |
+| 4 e o resumo, SEM chave | 44px | não | 98px |
+
+O teclado não encolhe em nenhuma, e continua recebendo o foco quando a
+pergunta abre. O microfone convidativo continua com BORDA, não fundo
+cheio: o principal da tela continua sendo o "Continuar".
+
+**Sem chave, `aberta` não muda nada** — convidar para falar num microfone
+desabilitado seria oferecer o que não existe.
+
+## 7. A correção do resumo não existia — foi desenhada
+
+O briefing trata "a correção do resumo" como pergunta aberta. O resumo só
+tinha "Voltar e revisar". Agora tem *"Tem alguma coisa errada aí?"*, campo
+aberto, áudio convidativo e "Guardar a correção". Ela não valida nada, de
+propósito. Vai para o `localStorage` e **entra na mensagem do WhatsApp** de
+agendar — o único caminho que hoje chega numa pessoa. Em produção não tem
+destino: DUVIDA-ONB-9.
+
+## 8. A chave da OpenAI apareceu no meio da rodada
+
+De manhã a `OPENAI_API_KEY` não existia neste repositório, e as 52
+capturas mostravam o microfone desabilitado. À tarde ela está no
+`.env.local` — só o NOME foi lido. O estado real das telas virou o
+microfone LIGADO, e as capturas foram refeitas por isso.
+
+Para os dois caminhos continuarem capturáveis, o `?microfone=` da bancada
+virou três estados: `1` ligado, `0` desligado, ausente vale o ambiente.
+
+**Não exercitei a transcrição ponta a ponta.** Chamar a rota de verdade
+gasta na conta da OpenAI do Victor, e eu não fiz isso sem ele pedir. O que
+está provado é a tela nos dois estados, não a qualidade da transcrição.
+
+## 9. Um defeito de família, achado ao medir o convite
+
+A borda do microfone convidativo, com `var(--cobalt)`, media **2,28:1** no
+tema escuro — o número exato que `docs/contraste.md` §9.1 cita como o
+motivo de `--cobalt-ink` existir. A varredura que criou o token migrou "31
+regras de `color:` / `outline:`" e **não passou por `border-color:`**.
+
+Consertei as 6 desta folha, e medi cada uma:
+
+| regra | antes | depois |
+|---|---|---|
+| `.microConvite` | 2,28:1 | 6,00:1 |
+| `.microAtivo` (o "estou ouvindo") | 2,28:1 | 6,00:1 |
+| `.escolhida` | 2,28:1 | 6,00:1 |
+| `.recado` (medido provocando uma recusa de verdade) | 2,28:1 | 6,00:1 |
+| `.barraCheia`, contra o trilho COMPOSTO | 2,05:1 | 5,45:1 |
+| `.slider` (`accent-color`) | 2,28:1 | 6,00:1 |
+
+**A barraCheia quase me escapou:** o trilho é translúcido a 6%, e o meu
+primeiro medidor leu a camada crua e devolveu 6,49:1. Composto sobre o
+fundo, era 2,05:1. Passei a compor as camadas antes de medir — e o mesmo
+erro estava no medidor das capturas.
+
+As **22 de produção** ficaram de fora desta rodada e estão descritas em
+`docs/buraco-borda-cobalt-no-escuro.md`, com a medição e o conserto. Seis
+delas são `:focus` de campo — foco de teclado a 2,28:1 é o caso mais sério.
+
+## 10. Verificações
+
+```
+pnpm typecheck   EXIT=0
+pnpm build       EXIT=0
+pnpm conferir    EXIT=1   ← conferir:nichos, rede, o vermelho conhecido
+```
+
+Os doze que o `&&` pula, um a um, todos EXIT=0.
+
+Mais dois conferidores próprios, em Node fora do navegador: 35 conferências
+das validações e da conta do slider, e 38 das duas decisões do áudio
+(inclusive dois controles positivos de que o tira-comentários funciona e
+não come URL).
+
+**A bancada não chega a produção.** Nos 703 arquivos do pacote, zero
+ocorrências de qualquer texto ou função dela — incluindo as duas frases
+novas do convite.
+
+## 11. As 60 capturas
+
+12 telas × 2 larguras × 2 temas, mais 4 do passo 9 sem custo conhecido e 8
+do caminho sem chave. Nenhum vazamento horizontal em 32 medidas; pior
+contraste de texto 4,61:1; nenhuma ocorrência de "erro", CPL, CPA, ROAS,
+diminutivo, "grátis" ou promessa de resultado.
+

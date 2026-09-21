@@ -52,6 +52,19 @@ export interface Passo {
    * num campo que tem formato. Ver DUVIDAS.md, DUVIDA-ONB-2.
    */
   audio: boolean;
+  /**
+   * Pergunta ABERTA — a resposta é livre e quanto mais longa, melhor para
+   * quem vai escrever o anúncio.
+   *
+   * Nelas o convite ao áudio aparece e o microfone fica mais convidativo
+   * que o teclado, SEM esconder o teclado. Nas curtas (nome, empresa,
+   * Instagram, site) os dois ficam com o mesmo peso e não há convite: pedir
+   * para alguém falar um `@` não economiza o tempo de ninguém.
+   *
+   * São duas no fluxo inteiro: esta, e a correção do resumo — que não é
+   * passo numerado e por isso pede `aberta` na mão, lá no componente.
+   */
+  aberta?: boolean;
   placeholder?: string;
   /** rótulo do campo para quem usa leitor de tela */
   rotulo?: string;
@@ -95,6 +108,7 @@ export const PASSOS: Passo[] = [
     ajuda: "Com suas palavras. É daqui que sai o texto do seu anúncio.",
     tipo: "texto",
     audio: true,
+    aberta: true,
     rotulo: "O que você vende",
     placeholder: "Ex: bolo e salgado feitos no dia",
   },
@@ -163,6 +177,25 @@ export const PASSOS: Passo[] = [
 ];
 
 export const TOTAL = PASSOS.length;
+
+/**
+ * O CONVITE AO ÁUDIO — as duas frases, num lugar só.
+ *
+ * ============================================================
+ * NÃO PROMETEM RESULTADO. Nada de "converte mais" ou "melhores
+ * resultados": a gente não mede isso, e prometer o que não se mede é o
+ * que esse público já comprou de agência antes.
+ *
+ * O que as frases afirmam é o que dá para observar na hora — falar é mais
+ * rápido que digitar, e quem fala costuma contar mais. Decisão do Victor
+ * em 20/09/2026 (`docs/decisoes.md`).
+ * ============================================================
+ */
+export const CONVITE_ABAIXO_DO_CAMPO =
+  "Prefere falar? É bem mais rápido, e quem fala costuma contar mais sobre o negócio.";
+
+export const CONVITE_NO_MICROFONE =
+  "Toque e fale, como se estivesse explicando para um cliente.";
 
 /**
  * OS TIPOS DE NEGÓCIO, na bancada.

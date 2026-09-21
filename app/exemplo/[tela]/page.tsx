@@ -62,9 +62,11 @@ const CANONICAS: Record<string, "preparando" | "no-ar" | "pausado"> = {
  * em `_onboarding/`. O onboarding do ar — `app/(fluxo)/onboarding/`, com
  * cinco perguntas — não foi tocado.
  *
- * Dois parâmetros de URL, só para CAPTURAR TELA:
- *   ?passo=N    abre direto na pergunta N (1 a 11; 12 é o resumo)
- *   ?exemplo=1  preenche as respostas anteriores com dado de bancada
+ * Parâmetros de URL, só para CAPTURAR TELA:
+ *   ?passo=N      abre direto na pergunta N (1 a 11; 12 é o resumo)
+ *   ?exemplo=1    preenche as respostas anteriores com dado de bancada
+ *   ?nicho=…      troca o tipo de negócio do dado de exemplo
+ *   ?microfone=1  desenha o microfone LIGADO;  ?microfone=0 desenha DESLIGADO
  *
  * Eles não existem no fluxo de verdade: quem entra pela porta cai no
  * passo 1 com o que o próprio navegador guardou.
@@ -105,10 +107,26 @@ export default async function ExemploPage({
     // gravar para descobrir que não dá.
     const temChave = Boolean(process.env.OPENAI_API_KEY);
 
+    // `?microfone=` DESENHA um dos dois estados, para capturar tela:
+    //   1 → ligado    0 → desligado, com o motivo escrito
+    // Sem o parâmetro vale o ambiente. Ele não inventa transcrição nenhuma:
+    // com `1` e sem chave, gravar ainda esbarra no 501 da rota; com `0` e
+    // com chave, o botão só deixa de ser oferecido.
+    //
+    // Os DOIS precisam ser capturáveis, e por isso o parâmetro tem três
+    // estados em vez de dois: a chave entrou no `.env.local` desta máquina
+    // em 20/09, então omitir o parâmetro deixou de mostrar o caminho sem
+    // chave — que continua sendo o de qualquer máquina que não a tenha.
+    const microfonePedido = Array.isArray(busca.microfone)
+      ? busca.microfone[0]
+      : busca.microfone;
+
     return (
       <Onboarding
         passoInicial={Number.isFinite(passo) ? Math.min(Math.max(passo - 1, 0), 11) : 0}
-        transcricaoLigada={temChave}
+        transcricaoLigada={
+          microfonePedido === "1" ? true : microfonePedido === "0" ? false : temChave
+        }
         motivoSemTranscricao="A transcrição por áudio ainda não está ligada aqui. Pode escrever pelo teclado."
         comExemplo={comExemplo}
         nichoDeExemplo={nicho ?? null}

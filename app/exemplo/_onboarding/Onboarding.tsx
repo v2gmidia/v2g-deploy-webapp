@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { NICHOS_DA_BANCADA, PASSOS, RAIOS, TOTAL, type Passo } from "./perguntas";
+import {
+  CONVITE_ABAIXO_DO_CAMPO,
+  CONVITE_NO_MICROFONE,
+  NICHOS_DA_BANCADA,
+  PASSOS,
+  RAIOS,
+  TOTAL,
+  type Passo,
+} from "./perguntas";
 import { custoDoNicho, frasesDoSlider } from "./custo-por-contato";
 import {
   mascararCep,
@@ -39,6 +47,19 @@ import css from "./Onboarding.module.css";
  * O TECLADO É A VIA PRINCIPAL. O áudio é alternativa, nunca obrigação:
  * sem chave de transcrição o microfone nasce desabilitado com o motivo
  * escrito ao lado, e a tela inteira continua funcionando.
+ *
+ * ============================================================
+ * SÓ ENTRADA. NUNCA SAÍDA. — decisão do Victor, 20/09/2026.
+ *
+ * O áudio anda numa direção só: o cliente fala, a máquina transcreve. Não
+ * existe voz de IA neste fluxo — nada de `speechSynthesis`, nada de
+ * `/audio/speech`, nada de conversa falada. A PERGUNTA é texto na tela, e
+ * continua sendo texto na tela.
+ *
+ * O único `<audio>` desta superfície toca a gravação DO PRÓPRIO CLIENTE,
+ * para ele conferir o que disse antes de aceitar a transcrição. Isso é o
+ * áudio dele voltando, não a nossa voz falando com ele.
+ * ============================================================
  */
 
 const CHAVE_LOCAL = "v2g:onboarding-v2:bancada";
@@ -133,7 +154,8 @@ export function Onboarding({
   }, [passo]);
 
   useEffect(() => {
-    setRascunho(atual ? (respostas[atual.id] ?? "") : "");
+    // No fim não há passo, e o campo da tela é o da correção do resumo.
+    setRascunho(atual ? (respostas[atual.id] ?? "") : (respostas.correcao ?? ""));
     setRecado(null);
     setDitado(null);
     // Foco no campo a cada pergunta nova: quem responde de teclado não
@@ -180,6 +202,19 @@ export function Onboarding({
 
   function voltar() {
     setPasso((p) => Math.max(0, p - 1));
+  }
+
+  /**
+   * A CORREÇÃO DO RESUMO — a segunda pergunta aberta do fluxo.
+   *
+   * Ela não valida nada: é o cliente dizendo, com as palavras dele, o que
+   * a gente entendeu errado. Não existe recusa possível aqui.
+   */
+  function guardarCorrecao() {
+    const texto = rascunho.trim();
+    gravar({ ...respostas, correcao: texto });
+    setDitado(null);
+    setRecado(texto ? "Anotado. Eu levo isso para a conversa." : null);
   }
 
   // ---- áudio ------------------------------------------------------------
@@ -259,8 +294,21 @@ export function Onboarding({
     );
   }
 
-  function Microfone() {
-    if (!atual?.audio) return null;
+  /**
+   * O MICROFONE.
+   *
+   * `aberta` é a pergunta em que vale a pena falar: o botão fica mais
+   * convidativo que o teclado — borda de cobalto, tinta de cobalto, altura
+   * de botão principal — e ganha a frase que diz COMO falar.
+   *
+   * O TECLADO NÃO ENCOLHE NEM SOME. O campo continua acima, do mesmo
+   * tamanho, e continua recebendo o foco quando a pergunta abre. Quem quer
+   * digitar já está digitando.
+   *
+   * SEM CHAVE, `aberta` NÃO MUDA NADA: convidar para falar num microfone
+   * desabilitado seria oferecer o que não existe. O que aparece é o motivo.
+   */
+  function Microfone({ aberta = false }: { aberta?: boolean }) {
     if (!transcricaoLigada) {
       return (
         <div className={css.microLinha}>
@@ -277,18 +325,33 @@ export function Onboarding({
       <div className={css.microLinha}>
         <button
           type="button"
-          className={`${css.micro} ${gravando ? css.microAtivo : ""}`}
+          className={[css.micro, aberta ? css.microConvite : "", gravando ? css.microAtivo : ""]
+            .filter(Boolean)
+            .join(" ")}
           onClick={gravando ? pararDeGravar : comecarAGravar}
           disabled={transcrevendo}
         >
           <span aria-hidden="true">🎙</span>{" "}
           {gravando ? "Parar de gravar" : transcrevendo ? "Transcrevendo…" : "Responder falando"}
         </button>
-        <span className={css.microMotivo}>
-          {gravando ? "Estou ouvindo. Toque para parar." : "Ou escreva pelo teclado."}
+        <span className={aberta ? css.microConvida : css.microMotivo}>
+          {gravando
+            ? "Estou ouvindo. Toque para parar."
+            : aberta
+              ? CONVITE_NO_MICROFONE
+              : "Ou escreva pelo teclado."}
         </span>
       </div>
     );
+  }
+
+  /**
+   * O CONVITE, abaixo do campo. Só nas perguntas abertas, e só quando o
+   * microfone funciona de verdade.
+   */
+  function Convite({ aberta = false }: { aberta?: boolean }) {
+    if (!aberta || !transcricaoLigada) return null;
+    return <p className={css.convite}>{CONVITE_ABAIXO_DO_CAMPO}</p>;
   }
 
   function Ditado() {
@@ -347,6 +410,41 @@ export function Onboarding({
             />
           </dl>
 
+          {/* ---------- a correção: a segunda pergunta ABERTA ---------- */}
+          <h2 className={css.subtitulo}>Tem alguma coisa errada aí?</h2>
+          <p className={css.ajuda}>
+            Me conta o que eu entendi torto, com suas palavras. A gente arruma antes de montar
+            o anúncio.
+          </p>
+
+          <div className={css.forma}>
+            <textarea
+              ref={(el) => {
+                campo.current = el;
+              }}
+              className={css.campoLongo}
+              value={rascunho}
+              onChange={(e) => setRascunho(e.target.value)}
+              placeholder="Ex: eu não entrego no mesmo dia, só no dia seguinte"
+              aria-label="O que está errado no resumo"
+              rows={3}
+            />
+
+            <Convite aberta />
+            <Microfone aberta />
+            <Ditado />
+            {recado && <p className={css.recadoCalmo}>{recado}</p>}
+
+            <div className={css.acoes}>
+              <button type="button" className={`cta ghost ${css.botao}`} onClick={guardarCorrecao}>
+                Guardar a correção
+              </button>
+              <button type="button" className={css.voltar} onClick={voltar}>
+                Voltar e revisar as respostas
+              </button>
+            </div>
+          </div>
+
           <p className={css.ajuda}>
             O próximo passo é meia hora com a gente para conferir tudo isso antes de o dinheiro
             começar a rodar.
@@ -354,16 +452,18 @@ export function Onboarding({
           <a
             className={`cta ${css.botao}`}
             href={`${WHATSAPP_HUMANO}?text=${encodeURIComponent(
-              `Oi! Acabei de preencher o cadastro da ${respostas.empresa ?? "minha empresa"} e quero marcar os 30 minutos.`,
+              `Oi! Acabei de preencher o cadastro da ${respostas.empresa ?? "minha empresa"} e quero marcar os 30 minutos.` +
+                (respostas.correcao
+                  ? `
+
+Uma correção no que eu preenchi: ${respostas.correcao.slice(0, 700)}`
+                  : ""),
             )}`}
             target="_blank"
             rel="noopener"
           >
             Agendar os 30 minutos
           </a>
-          <button type="button" className={css.voltar} onClick={voltar}>
-            Voltar e revisar
-          </button>
         </section>
       </div>
     );
@@ -422,7 +522,8 @@ export function Onboarding({
               />
             )}
 
-            <Microfone />
+            <Convite aberta={p.aberta} />
+            {p.audio && <Microfone aberta={p.aberta} />}
             <Ditado />
             {recado && <p className={css.recado}>{recado}</p>}
 

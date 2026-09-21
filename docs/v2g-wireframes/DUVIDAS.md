@@ -213,49 +213,79 @@ decidir outra.
 
 ---
 
-## DUVIDA-ONB-1 — A `OPENAI_API_KEY` não existe neste repositório
+## DUVIDA-ONB-1 — A `OPENAI_API_KEY` apareceu no `.env.local` (RESOLVIDA em parte)
 
-**Medido em 20/09/2026** (varredura AST de `process.env` em 201 arquivos):
-as 19 variáveis lidas pelo código não incluem `OPENAI_API_KEY`, e ela
-também não está no `.env.example`. A chave de IA que existe é a
-`ANTHROPIC_API_KEY` — e a Anthropic não tem rota de transcrição de áudio,
-que é por isso que o briefing pede OpenAI.
+**Medido em 20/09/2026, de manhã:** as 19 variáveis lidas pelo código não
+incluíam `OPENAI_API_KEY`, e ela não estava em `.env.local` nem em
+`.env.example`. Todas as capturas daquela rodada mostram o microfone
+desabilitado — era o estado real da máquina.
 
-**Escolhido: a tela nasce com o microfone DESABILITADO, com o motivo
-escrito ao lado, e o teclado funcionando.** Nenhuma tela quebra, nada
-fica escondido, e o cliente não descobre a ausência depois de gravar. A
-decisão de mostrar ou não vem do SERVIDOR (`page.tsx` lê a env e passa um
-booleano), porque a chave não pode chegar ao navegador e porque a tela
-precisa saber antes de desenhar.
+**Remedido em 20/09/2026, à tarde: ela está no `.env.local`.** Alguém a
+acrescentou enquanto esta rodada corria (só o NOME foi lido; o valor,
+nunca). O microfone da bancada passou a nascer LIGADO, e as capturas foram
+refeitas por causa disso.
 
-**O que falta para ligar:** `OPENAI_API_KEY` no `.env.local` e na Vercel,
-mais a linha no `.env.example`. Não acrescentei a variável ao
-`.env.example` porque isso é arquivo de contrato do deploy, e quem decide
-que o produto passa a depender da OpenAI é o Victor.
+**O que continua aberto:**
 
-**Todas as capturas desta rodada mostram o microfone desabilitado** — é o
-estado real desta máquina, não uma escolha de captura.
+1. **Ela não está no `.env.example`**, que é o arquivo de contrato do
+   deploy. Quem clonar o repositório não sabe que ela existe. Não
+   acrescentei: quem decide que o produto passa a depender da OpenAI é o
+   Victor. (E não é a única nessa situação — `N8N_API_KEY`, `N8N_BASE_URL`,
+   `META_SYSTEM_USER_ACCESS_TOKEN`, `V2G_OREGON_URL` e
+   `V2G_OREGON_SERVICE_KEY` também estão no `.env.local` e fora do
+   exemplo.)
+2. **Ela não está na Vercel** até alguém pôr — o `.env.local` é desta
+   máquina.
+3. **A transcrição não foi exercitada ponta a ponta.** Chamar a rota de
+   verdade gasta na conta da OpenAI do Victor, e eu não fiz isso sem ele
+   pedir. O que está provado é a tela nos dois estados, não a qualidade da
+   transcrição.
+
+**Os dois caminhos continuam capturados**, porque o estado sem chave
+continua sendo o de qualquer outra máquina: `?microfone=1` desenha ligado,
+`?microfone=0` desenha desligado, e sem o parâmetro vale o ambiente. Ver
+`onb-04-semchave-*` e `onb-12-semchave-*`.
 
 ---
 
-## DUVIDA-ONB-2 — Quais perguntas aceitam áudio
+## DUVIDA-ONB-2 — Quais perguntas aceitam áudio, e quais CONVIDAM
 
-**O que era.** O briefing diz "toda pergunta de texto aceita áudio ou
-teclado" e "perguntas de escolha (raio, nicho, valor) são botão/slider,
-sem áudio". Sobraram duas que não são nem uma coisa nem outra: o CEP e o
-WhatsApp.
+**O que era.** O briefing de 20/09 de manhã diz "toda pergunta de texto
+aceita áudio ou teclado" e "perguntas de escolha (raio, nicho, valor) são
+botão/slider, sem áudio". Sobraram duas que não são nem uma coisa nem
+outra: o CEP e o WhatsApp.
 
-**Escolhido: CEP e WhatsApp só por teclado.** Os dois têm FORMATO —
-oito dígitos, DDD + número —, e uma transcrição de número ditado erra
-dígito com frequência alta o bastante para transformar a ajuda em
-armadilha: o cliente confirma "cento e oitenta e quatro..." sem reler, e
-o anúncio vai para o CEP errado. Os dois têm máscara, que é o que o
-teclado do celular resolve bem.
+**Escolhido: CEP e WhatsApp só por teclado.** Os dois têm FORMATO — oito
+dígitos, DDD + número —, e uma transcrição de número ditado erra dígito com
+frequência alta o bastante para transformar a ajuda em armadilha: o cliente
+confirma "cento e oitenta e quatro..." sem reler, e o anúncio vai para o
+CEP errado. Os dois têm máscara, que é o que o teclado do celular resolve
+bem.
 
 **Aceitam áudio:** nome, empresa, descrição, Instagram e site.
 
-**Se o Victor decidir outra:** é o campo `audio: true` em
-`perguntas.ts`, uma linha por pergunta.
+---
+
+**O complemento de 20/09 à tarde partiu esse grupo em dois** (decisão do
+Victor, `docs/decisoes.md`): aceitar áudio e CONVIDAR a falar deixaram de
+ser a mesma coisa.
+
+| pergunta | aceita áudio | convida a falar |
+|---|---|---|
+| 1. nome da pessoa | sim | **não** — mesmo peso que o teclado |
+| 2. nome da empresa | sim | **não** |
+| 4. o que você vende | sim | **sim** — é ABERTA |
+| 5. Instagram | sim | **não** |
+| 6. site | sim | **não** |
+| a correção do resumo | sim | **sim** — é ABERTA |
+| 3, 7, 8, 9, 10, 11 | não | não |
+
+**Onde isso mora:** o campo `aberta` em `perguntas.ts`, uma linha por
+pergunta. A correção do resumo não é passo numerado, então ela pede
+`aberta` na mão, no componente.
+
+**Se o Victor decidir outra:** é a mesma linha. Nenhuma frase está
+escrita dentro de componente — as duas são constantes exportadas.
 
 ---
 
@@ -409,3 +439,53 @@ registrado — o mesmo que os manifestos já revelam.
 
 **Se o Victor quiser zero:** a rota sai da bancada e o endpoint nasce
 direto no lugar definitivo, quando o onboarding novo virar produção.
+
+---
+
+## DUVIDA-ONB-9 — A correção do resumo não tem destino em produção
+
+**O que é.** O complemento de 20/09 trata "a correção do resumo" como a
+segunda pergunta aberta do fluxo. Ela não existia: o resumo só tinha
+"Voltar e revisar". Desenhei o bloco — *"Tem alguma coisa errada aí?"*,
+campo aberto, áudio convidativo, botão "Guardar a correção".
+
+**Ela não valida nada, de propósito.** É o cliente dizendo com as palavras
+dele o que a gente entendeu errado. Não existe recusa possível ali.
+
+**Na bancada ela vai para o `localStorage`**, como as outras respostas, e
+**entra na mensagem do WhatsApp** de agendar os 30 minutos (cortada em 700
+caracteres). Esse é o único caminho que hoje chega numa pessoa — deixar a
+correção só no navegador seria perdê-la.
+
+**Em produção ela não tem coluna.** Não é campo do negócio: é um recado
+sobre o cadastro. As opções, e nenhuma é minha para escolher:
+
+1. uma coluna de texto livre em `businesses` (simples, mas vira campo que
+   ninguém lê);
+2. uma tabela de recados do onboarding, com data e situação (resolvido ou
+   não) — é o que dá para trabalhar;
+3. não gravar, e mandar só no WhatsApp — que é o que a bancada faz.
+
+**O que falta decidir:** qual das três, e quem lê. Um recado que ninguém
+lê é pior que não perguntar, porque o cliente escreveu achando que alguém
+ia ver.
+
+---
+
+## DUVIDA-ONB-10 — O `.env.example` está cinco nomes atrás do `.env.local`
+
+**Medido em 20/09/2026** (só os NOMES; nenhum valor foi lido). Estão no
+`.env.local` e **não** no `.env.example`:
+
+- `OPENAI_API_KEY` — a transcrição
+- `N8N_API_KEY`, `N8N_BASE_URL`
+- `META_SYSTEM_USER_ACCESS_TOKEN`
+- `V2G_OREGON_URL`, `V2G_OREGON_SERVICE_KEY`
+
+E o caminho contrário: o `.env.example` tem seis `SUPABASE_SMTP_*` que o
+`.env.local` não tem.
+
+**Não mexi em nenhum dos dois.** O `.env.example` é contrato de deploy —
+acrescentar nome ali é dizer que o produto passa a depender daquilo, e
+essa é decisão do Victor. Registro para não envelhecer em silêncio.
+
