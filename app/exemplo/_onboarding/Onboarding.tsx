@@ -8,6 +8,7 @@ import {
   PASSOS,
   RAIOS,
   TOTAL,
+  ondeParou,
   type Passo,
 } from "./perguntas";
 import { custoDoNicho, frasesDoSlider } from "./custo-por-contato";
@@ -23,6 +24,8 @@ import {
   validarWhatsapp,
   type Veredito,
 } from "./validacoes";
+import { escritasDe, FORA_DE_COLUNA } from "./destino";
+import { RECADOS, TEM_AUDIO_GUARDADO, type CasoDeFalha } from "./recados";
 import css from "./Onboarding.module.css";
 
 /**
@@ -65,8 +68,30 @@ import css from "./Onboarding.module.css";
 const CHAVE_LOCAL = "v2g:onboarding-v2:bancada";
 const WHATSAPP_HUMANO = "https://wa.me/5521936182176";
 const PISO_MENSAL = 750;
+/**
+ * Teto de uma gravação só: dois minutos.
+ *
+ * Não é limite da OpenAI (o dela é de tamanho, 20 MB). É para ninguém
+ * falar oito minutos e descobrir o limite depois — e porque uma resposta
+ * de dois minutos já é mais do que qualquer uma destas perguntas pede.
+ */
+const TETO_DE_GRAVACAO_MS = 2 * 60 * 1000;
 
 type Respostas = Record<string, string>;
+
+/**
+ * A chave reservada que lista quais perguntas foram respondidas FALANDO.
+ *
+ * Começa com dois sublinhados para nunca colidir com o id de uma pergunta,
+ * e o mapa de `destino.ts` a ignora porque ela não está lá — resposta que
+ * não é pergunta não vira escrita.
+ */
+const CHAVE_AUDIO = "__respondidas_falando";
+
+function lerMarcasDeAudio(respostas: Respostas): string[] {
+  const bruto = respostas[CHAVE_AUDIO];
+  return bruto ? bruto.split(",").filter(Boolean) : [];
+}
 
 /** Uma resposta ditada: o que a transcrição entendeu e o áudio original. */
 interface Ditado {
@@ -88,6 +113,8 @@ const EXEMPLO: Respostas = {
   whatsapp: "(15) 99876-5432",
   verba: "1200",
   material: "3",
+  // Duas respondidas falando, para a marca do resumo aparecer na captura.
+  [CHAVE_AUDIO]: "descricao,empresa",
 };
 
 export function Onboarding({
@@ -96,6 +123,8 @@ export function Onboarding({
   motivoSemTranscricao,
   comExemplo = false,
   nichoDeExemplo = null,
+  mostrarDestino = false,
+  falhaDeExemplo = null,
 }: {
   passoInicial?: number;
   /** a `OPENAI_API_KEY` existe neste ambiente? Decidido no servidor. */
@@ -105,6 +134,19 @@ export function Onboarding({
   comExemplo?: boolean;
   /** troca o tipo de negócio do dado de exemplo — só para capturar tela */
   nichoDeExemplo?: string | null;
+  /**
+   * `?destino=1` mostra ONDE cada resposta vai cair em produção. É painel
+   * de bancada, não tela de cliente: nenhum dono de padaria precisa saber
+   * o nome de uma coluna.
+   */
+  mostrarDestino?: boolean;
+  /**
+   * `?falha=<caso>` desenha a tela como ela fica quando a transcrição não
+   * vem. É para CAPTURAR: nenhuma chamada é feita, nenhum erro é
+   * provocado do lado de lá, e a frase sai do mesmo `recados.ts` que a
+   * rota devolve — então a captura não pode divergir da tela real.
+   */
+  falhaDeExemplo?: CasoDeFalha | null;
 }) {
   const [passo, setPasso] = useState(passoInicial);
   const [respostas, setRespostas] = useState<Respostas>(
@@ -113,12 +155,22 @@ export function Onboarding({
   const [rascunho, setRascunho] = useState("");
   const [recado, setRecado] = useState<string | null>(null);
   const [ditado, setDitado] = useState<Ditado | null>(null);
+  /**
+   * O ÁUDIO GRAVADO, INDEPENDENTE DA TRANSCRIÇÃO.
+   *
+   * Ele entra aqui no instante em que a gravação PARA, antes de qualquer
+   * chamada. Se a transcrição falhar — sem chave, 429, 500, áudio mudo —
+   * o áudio continua na tela, com tocador, e o cliente não perde o que
+   * acabou de falar. Era o defeito: o blob morria dentro da função.
+   */
+  const [audioGuardado, setAudioGuardado] = useState<{ url: string; quando: number } | null>(null);
   const [gravando, setGravando] = useState(false);
   const [transcrevendo, setTranscrevendo] = useState(false);
   const [entrando, setEntrando] = useState(true);
 
   const gravador = useRef<MediaRecorder | null>(null);
   const pedacos = useRef<Blob[]>([]);
+  const tetoDeTempo = useRef<ReturnType<typeof setTimeout> | null>(null);
   const campo = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   const atual: Passo | null = passo < TOTAL ? PASSOS[passo]! : null;
@@ -129,12 +181,27 @@ export function Onboarding({
     if (comExemplo) return;
     try {
       const bruto = window.localStorage.getItem(CHAVE_LOCAL);
-      if (bruto) setRespostas(JSON.parse(bruto) as Respostas);
+      if (!bruto) return;
+      const guardadas = JSON.parse(bruto) as Respostas;
+      setRespostas(guardadas);
+      // ============================================================
+      // RETOMAR DE ONDE PAROU, e não do começo.
+      //
+      // Guardar as respostas e ainda assim abrir na pergunta 1 é pedir
+      // para a pessoa passar de novo por tudo que ela já respondeu. O
+      // ponto de retomada é a PRIMEIRA pergunta sem resposta — não a
+      // última respondida, que daria uma pergunta a menos quando ela
+      // tivesse voltado para corrigir alguma coisa no meio.
+      //
+      // `passoInicial` explícito na URL vence: ele existe para capturar
+      // tela, e captura não retoma nada.
+      // ============================================================
+      if (passoInicial === 0) setPasso(ondeParou(guardadas));
     } catch {
       // localStorage bloqueado (janela anônima, cookie desligado): a tela
       // funciona igual, só não lembra quando ele voltar.
     }
-  }, [comExemplo]);
+  }, [comExemplo, passoInicial]);
 
   /** Grava a resposta no instante em que ela é aceita. */
   const gravar = useCallback((proximas: Respostas) => {
@@ -158,6 +225,11 @@ export function Onboarding({
     setRascunho(atual ? (respostas[atual.id] ?? "") : (respostas.correcao ?? ""));
     setRecado(null);
     setDitado(null);
+    setAudioGuardado((velho) => {
+      // `createObjectURL` segura o blob na memória até alguém revogar.
+      if (velho) URL.revokeObjectURL(velho.url);
+      return null;
+    });
     // Foco no campo a cada pergunta nova: quem responde de teclado não
     // deveria ter que clicar antes de digitar.
     const t = setTimeout(() => campo.current?.focus(), 80);
@@ -165,7 +237,24 @@ export function Onboarding({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [passo]);
 
+  /**
+   * A FALHA DE EXEMPLO, para capturar. Não chama nada e não provoca nada:
+   * põe na tela o recado que a rota devolveria e, nos casos em que o
+   * cliente já tinha gravado, um áudio de um segundo de silêncio gerado
+   * aqui — um WAV montado em memória, que é o menor jeito de ter um
+   * tocador de verdade sem um arquivo no repositório.
+   */
+  useEffect(() => {
+    if (!falhaDeExemplo) return;
+    setRecado(RECADOS[falhaDeExemplo]);
+    if (!TEM_AUDIO_GUARDADO[falhaDeExemplo]) return;
+    const url = URL.createObjectURL(wavDeSilencio(1));
+    setAudioGuardado({ url, quando: Date.now() });
+    return () => URL.revokeObjectURL(url);
+  }, [falhaDeExemplo, passo]);
+
   const custo = useMemo(() => custoDoNicho(respostas.nicho ?? null), [respostas.nicho]);
+  const falando = useMemo(() => lerMarcasDeAudio(respostas), [respostas]);
 
   // ---- validação por passo ---------------------------------------------
   function validar(p: Passo, valor: string): Veredito {
@@ -196,12 +285,39 @@ export function Onboarding({
       setRecado(veredito.recado);
       return;
     }
-    gravar({ ...respostas, ...extras, [atual.id]: veredito.valor });
+    // ============================================================
+    // DE ONDE VEIO A RESPOSTA fica guardado junto dela.
+    //
+    // O briefing manda o resumo mostrar "inclusive o que veio de áudio".
+    // A marca vive numa chave reservada em vez de num estado à parte
+    // porque ela precisa sobreviver a fechar o navegador — se sobrevivesse
+    // só a resposta, quem voltasse veria o resumo sem saber o que tinha
+    // ditado.
+    //
+    // `ditado` não-nulo quer dizer que o rascunho saiu de uma transcrição
+    // NESTA pergunta. Se a pessoa reescreveu tudo por cima, a marca
+    // continua — e continua certa: a origem foi o áudio.
+    // ============================================================
+    const marcados = new Set(lerMarcasDeAudio(respostas));
+    if (ditado) marcados.add(atual.id);
+    else marcados.delete(atual.id);
+    gravar({
+      ...respostas,
+      ...extras,
+      [atual.id]: veredito.valor,
+      [CHAVE_AUDIO]: [...marcados].join(","),
+    });
     setPasso((p) => p + 1);
   }
 
   function voltar() {
     setPasso((p) => Math.max(0, p - 1));
+  }
+
+  /** Vai direto para uma pergunta, pelo id. É o "mudar" do resumo. */
+  function irPara(id: string) {
+    const i = PASSOS.findIndex((p) => p.id === id);
+    if (i >= 0) setPasso(i);
   }
 
   /**
@@ -229,14 +345,31 @@ export function Onboarding({
       };
       rec.onstop = async () => {
         fluxo.getTracks().forEach((t) => t.stop());
+        if (tetoDeTempo.current) {
+          clearTimeout(tetoDeTempo.current);
+          tetoDeTempo.current = null;
+        }
         const audio = new Blob(pedacos.current, { type: rec.mimeType || "audio/webm" });
+        // GUARDA ANTES DE TENTAR. Se a transcrição falhar, o áudio fica.
+        setAudioGuardado({ url: URL.createObjectURL(audio), quando: Date.now() });
         await transcrever(audio);
       };
       gravador.current = rec;
       rec.start();
       setGravando(true);
+      // Teto de tempo no NAVEGADOR: sem ele, alguém fala oito minutos e só
+      // descobre o limite quando o arquivo é recusado do outro lado. Aqui
+      // a gravação para sozinha e o que foi dito até ali é transcrito.
+      tetoDeTempo.current = setTimeout(() => {
+        if (gravador.current) {
+          pararDeGravar();
+          setRecado(RECADOS.teto_de_tempo);
+        }
+      }, TETO_DE_GRAVACAO_MS);
     } catch {
-      setRecado("Não consegui abrir seu microfone. Pode escrever pelo teclado.");
+      // Microfone negado no navegador, ou aparelho sem microfone. Não há
+      // áudio para perder, e o teclado continua inteiro.
+      setRecado(RECADOS.sem_permissao);
     }
   }
 
@@ -262,7 +395,10 @@ export function Onboarding({
         motivo?: string;
       };
       if (!resposta.ok || !dados.texto) {
-        setRecado(dados.motivo ?? "Não consegui transcrever agora. Pode escrever pelo teclado.");
+        // O `motivo` vem da rota, escrito para o dono. Sem ele — resposta
+        // que nem JSON é, 500 de proxy, rede cortada — entra o nosso.
+        setRecado(dados.motivo ?? RECADOS.recusado);
+        // E NÃO limpa `audioGuardado`: o áudio continua na tela.
         return;
       }
       setDitado({ texto: dados.texto, audio, url: URL.createObjectURL(audio) });
@@ -354,6 +490,28 @@ export function Onboarding({
     return <p className={css.convite}>{CONVITE_ABAIXO_DO_CAMPO}</p>;
   }
 
+  /**
+   * O ÁUDIO QUE FICOU, quando a transcrição não veio.
+   *
+   * Aparece só quando há áudio e NÃO há transcrição — se houver as duas, o
+   * `Ditado` abaixo já mostra o tocador junto do texto. É o que cumpre
+   * "nunca perca o áudio já gravado": a falha custa a transcrição, não o
+   * que a pessoa falou.
+   */
+  function AudioSemTexto() {
+    if (!audioGuardado || ditado) return null;
+    return (
+      <div className={css.ditado}>
+        <p className={css.ditadoTitulo}>Seu áudio está aqui</p>
+        <audio className={css.ditadoAudio} controls src={audioGuardado.url} />
+        <p className={css.ditadoNota}>
+          Não consegui transformar em texto desta vez, mas o que você falou não se perdeu. Dá
+          para ouvir de novo e escrever pelo teclado, ou tentar gravar outra vez.
+        </p>
+      </div>
+    );
+  }
+
   function Ditado() {
     if (!ditado) return null;
     return (
@@ -383,31 +541,15 @@ export function Onboarding({
           </p>
 
           <dl className={css.resumo}>
-            <Linha rotulo="Você" valor={respostas.pessoa} />
-            <Linha rotulo="Empresa" valor={respostas.empresa} />
-            <Linha
-              rotulo="Atende"
-              valor={
-                respostas.local
-                  ? `${respostas.local} · até ${respostas.local_raio ?? "—"} km`
-                  : undefined
-              }
-            />
-            <Linha rotulo="Vende" valor={respostas.descricao} />
-            <Linha rotulo="Instagram" valor={respostas.instagram} />
-            <Linha rotulo="Site" valor={respostas.site || "não tem"} />
-            <Linha
-              rotulo="Tipo de negócio"
-              valor={
-                NICHOS_DA_BANCADA.find((n) => n.nicho === respostas.nicho)?.rotulo ?? undefined
-              }
-            />
-            <Linha rotulo="WhatsApp" valor={respostas.whatsapp} />
-            <Linha rotulo="Por mês" valor={porMes(respostas.verba)} />
-            <Linha
-              rotulo="Material"
-              valor={respostas.material ? `${respostas.material} arquivo(s)` : undefined}
-            />
+            {LINHAS_DO_RESUMO.map((l) => (
+              <Linha
+                key={l.id}
+                rotulo={l.rotulo}
+                valor={l.valor(respostas)}
+                aoMudar={() => irPara(l.id)}
+                porAudio={falando.includes(l.id)}
+              />
+            ))}
           </dl>
 
           {/* ---------- a correção: a segunda pergunta ABERTA ---------- */}
@@ -433,6 +575,7 @@ export function Onboarding({
             <Convite aberta />
             <Microfone aberta />
             <Ditado />
+            <AudioSemTexto />
             {recado && <p className={css.recadoCalmo}>{recado}</p>}
 
             <div className={css.acoes}>
@@ -451,19 +594,14 @@ export function Onboarding({
           </p>
           <a
             className={`cta ${css.botao}`}
-            href={`${WHATSAPP_HUMANO}?text=${encodeURIComponent(
-              `Oi! Acabei de preencher o cadastro da ${respostas.empresa ?? "minha empresa"} e quero marcar os 30 minutos.` +
-                (respostas.correcao
-                  ? `
-
-Uma correção no que eu preenchi: ${respostas.correcao.slice(0, 700)}`
-                  : ""),
-            )}`}
+            href={`${WHATSAPP_HUMANO}?text=${encodeURIComponent(mensagemDoAgendamento(respostas))}`}
             target="_blank"
             rel="noopener"
           >
             Agendar os 30 minutos
           </a>
+
+          {mostrarDestino && <Destino respostas={respostas} />}
         </section>
       </div>
     );
@@ -525,6 +663,7 @@ Uma correção no que eu preenchi: ${respostas.correcao.slice(0, 700)}`
             <Convite aberta={p.aberta} />
             {p.audio && <Microfone aberta={p.aberta} />}
             <Ditado />
+            <AudioSemTexto />
             {recado && <p className={css.recado}>{recado}</p>}
 
             <div className={css.acoes}>
@@ -758,6 +897,183 @@ Uma correção no que eu preenchi: ${respostas.correcao.slice(0, 700)}`
 }
 
 /** O mesmo formato de dinheiro do resto da tela — nunca `R$ 1200` cru. */
+/**
+ * ONDE CADA RESPOSTA VAI CAIR — painel de bancada, atrás de `?destino=1`.
+ *
+ * Ele lê o mapa de `destino.ts` e não escreve nada. Existe para a
+ * pergunta "e isso vai para onde?" ter resposta olhável, em vez de morar
+ * só num documento.
+ */
+function Destino({ respostas }: { respostas: Respostas }) {
+  const escritas = escritasDe(respostas);
+  const faltando = escritas.filter((e) => !e.colunaExiste);
+  return (
+    <div className={css.destino}>
+      <p className={css.destinoTitulo}>Bancada — onde isto vai cair em produção</p>
+      <table className={css.destinoTabela}>
+        <thead>
+          <tr>
+            <th>pergunta</th>
+            <th>coluna</th>
+            <th>existe?</th>
+            <th>o cliente edita depois?</th>
+          </tr>
+        </thead>
+        <tbody>
+          {escritas.map((e) => (
+            <tr key={e.pergunta}>
+              <td>{e.pergunta}</td>
+              <td>
+                <code>
+                  {e.tabela}.{e.campo}
+                </code>
+              </td>
+              <td>{e.colunaExiste ? "sim" : "NÃO — migration 0022, não aplicada"}</td>
+              <td>{e.naListaBranca ? "sim" : "não — fora da lista branca"}</td>
+            </tr>
+          ))}
+          {FORA_DE_COLUNA.map((f) => (
+            <tr key={f.pergunta}>
+              <td>{f.pergunta}</td>
+              <td>— não é coluna</td>
+              <td colSpan={2}>{f.onde}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className={css.destinoNota}>
+        {faltando.length === 0
+          ? "Todas as respostas têm onde cair."
+          : `${faltando.length} resposta(s) sem coluna no banco hoje. A escrita falharia alto, que é melhor do que gravar em lugar nenhum em silêncio.`}
+      </p>
+    </div>
+  );
+}
+
+/**
+ * Um WAV de N segundos de silêncio, montado em memória.
+ *
+ * Só a bancada usa, e só para a captura ter um tocador de verdade em vez
+ * de um retângulo vazio. 44 bytes de cabeçalho e o resto em zeros — não
+ * há arquivo de áudio no repositório por causa disto.
+ */
+function wavDeSilencio(segundos: number): Blob {
+  const taxa = 8000;
+  const amostras = taxa * segundos;
+  const buffer = new ArrayBuffer(44 + amostras * 2);
+  const v = new DataView(buffer);
+  const texto = (pos: number, t: string) => {
+    for (let i = 0; i < t.length; i++) v.setUint8(pos + i, t.charCodeAt(i));
+  };
+  texto(0, "RIFF");
+  v.setUint32(4, 36 + amostras * 2, true);
+  texto(8, "WAVEfmt ");
+  v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true);
+  v.setUint16(22, 1, true);
+  v.setUint32(24, taxa, true);
+  v.setUint32(28, taxa * 2, true);
+  v.setUint16(32, 2, true);
+  v.setUint16(34, 16, true);
+  texto(36, "data");
+  v.setUint32(40, amostras * 2, true);
+  return new Blob([buffer], { type: "audio/wav" });
+}
+
+/**
+ * O RESUMO MOSTRA TUDO QUE FOI PERGUNTADO — as onze, inclusive as que
+ * ficaram sem resposta, que aparecem como traço e continuam mudáveis.
+ *
+ * A lista mora aqui e não no JSX porque ela é a mesma que monta a mensagem
+ * do WhatsApp: duas listas separadas divergem, e a pessoa que atende
+ * receberia um resumo diferente do que o cliente viu na tela.
+ */
+const LINHAS_DO_RESUMO: {
+  id: string;
+  rotulo: string;
+  valor: (r: Respostas) => string | undefined;
+}[] = [
+  { id: "pessoa", rotulo: "Você", valor: (r) => r.pessoa },
+  { id: "empresa", rotulo: "Empresa", valor: (r) => r.empresa },
+  {
+    id: "local",
+    rotulo: "Atende",
+    valor: (r) => (r.local ? `${r.local} · até ${r.local_raio ?? "—"} km` : undefined),
+  },
+  { id: "descricao", rotulo: "Vende", valor: (r) => r.descricao },
+  { id: "instagram", rotulo: "Instagram", valor: (r) => r.instagram },
+  // String vazia é a resposta "não tenho site", e ela é resposta.
+  { id: "site", rotulo: "Site", valor: (r) => (r.site === "" ? "não tem" : r.site) },
+  {
+    id: "nicho",
+    rotulo: "Tipo de negócio",
+    valor: (r) => NICHOS_DA_BANCADA.find((n) => n.nicho === r.nicho)?.rotulo,
+  },
+  { id: "whatsapp", rotulo: "WhatsApp", valor: (r) => r.whatsapp },
+  { id: "verba", rotulo: "Por mês", valor: (r) => porMes(r.verba) },
+  {
+    id: "material",
+    rotulo: "Material",
+    valor: (r) => (r.material ? `${r.material} arquivo(s)` : undefined),
+  },
+  {
+    id: "conexao",
+    rotulo: "Facebook",
+    valor: (r) => (r.conexao ? "conectado" : undefined),
+  },
+];
+
+/**
+ * A MENSAGEM QUE VAI PRONTA PARA QUEM ATENDE.
+ *
+ * ============================================================
+ * QUEM ATENDE NÃO COMEÇA DO ZERO. O botão abre o WhatsApp com o cadastro
+ * inteiro escrito — as onze respostas, o que ficou em branco, o que veio
+ * falado, e a correção que o cliente escreveu no fim.
+ *
+ * Ela é montada a partir da MESMA `LINHAS_DO_RESUMO` que desenha a tela.
+ * Duas listas separadas divergem, e a pessoa que atende receberia um
+ * resumo diferente do que o cliente acabou de ver.
+ * ============================================================
+ *
+ * O TETO existe: o WhatsApp corta mensagem muito longa e o corte cairia no
+ * meio do cadastro. A correção é a única parte de tamanho imprevisível,
+ * então é ela que é cortada, e com aviso — nunca em silêncio.
+ */
+const TETO_DA_CORRECAO = 600;
+
+export function mensagemDoAgendamento(respostas: Respostas): string {
+  const empresa = respostas.empresa?.trim();
+  const pessoa = respostas.pessoa?.trim();
+  const falando = lerMarcasDeAudio(respostas);
+
+  const linhas: string[] = [
+    pessoa
+      ? `Oi! Aqui é ${pessoa}${empresa ? `, da ${empresa}` : ""}. Acabei de preencher o cadastro e quero marcar os 30 minutos.`
+      : "Oi! Acabei de preencher o cadastro e quero marcar os 30 minutos.",
+    "",
+    "O que eu respondi:",
+  ];
+
+  for (const l of LINHAS_DO_RESUMO) {
+    const v = l.valor(respostas);
+    const marca = falando.includes(l.id) ? " (falado)" : "";
+    linhas.push(`• ${l.rotulo}: ${v && v.length > 0 ? v : "não respondi"}${marca}`);
+  }
+
+  const correcao = respostas.correcao?.trim();
+  if (correcao) {
+    linhas.push("", "O que eu marquei como errado no resumo:");
+    linhas.push(
+      correcao.length > TETO_DA_CORRECAO
+        ? `${correcao.slice(0, TETO_DA_CORRECAO)}… (cortei aqui, conto o resto na conversa)`
+        : correcao,
+    );
+  }
+
+  return linhas.join(String.fromCharCode(10));
+}
+
 function porMes(bruto?: string): string | undefined {
   const n = Number(bruto);
   if (!bruto || !Number.isFinite(n)) return undefined;
@@ -768,11 +1084,44 @@ function porMes(bruto?: string): string | undefined {
   }).format(n);
 }
 
-function Linha({ rotulo, valor }: { rotulo: string; valor?: string }) {
+/**
+ * Uma linha do resumo.
+ *
+ * `mudar` leva de volta À PERGUNTA, e não ao passo anterior: o briefing
+ * pede "opção de voltar a qualquer pergunta", e uma pessoa que quer
+ * corrigir o WhatsApp não deveria passar por mais seis telas para chegar
+ * lá. O traço no lugar do valor é ausência, e ausência também se muda.
+ */
+function Linha({
+  rotulo,
+  valor,
+  aoMudar,
+  porAudio = false,
+}: {
+  rotulo: string;
+  valor?: string;
+  aoMudar?: () => void;
+  /** veio de áudio: a marca fica ao lado, não no lugar do valor */
+  porAudio?: boolean;
+}) {
   return (
     <div className={css.resumoLinha}>
-      <dt className={css.resumoRotulo}>{rotulo}</dt>
-      <dd className={css.resumoValor}>{valor && valor.length > 0 ? valor : "—"}</dd>
+      <dt className={css.resumoRotulo}>
+        {rotulo}
+        {porAudio && (
+          <span className={css.marcaAudio} title="você respondeu falando">
+            <span aria-hidden="true">🎙</span> falado
+          </span>
+        )}
+      </dt>
+      <dd className={css.resumoValor}>
+        <span>{valor && valor.length > 0 ? valor : "—"}</span>
+        {aoMudar && (
+          <button type="button" className={css.mudar} onClick={aoMudar}>
+            mudar
+          </button>
+        )}
+      </dd>
     </div>
   );
 }

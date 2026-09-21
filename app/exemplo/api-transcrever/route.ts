@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { RECADOS, STATUS_DA_ROTA } from "../_onboarding/recados";
 
 /**
  * A TRANSCRIÇÃO DO ÁUDIO DO ONBOARDING — bancada, e só ela.
@@ -46,11 +47,8 @@ export async function POST(request: Request) {
   const chave = process.env.OPENAI_API_KEY;
   if (!chave) {
     return NextResponse.json(
-      {
-        motivo:
-          "A transcrição por áudio ainda não está ligada aqui. Pode escrever pelo teclado.",
-      },
-      { status: 501 },
+      { motivo: RECADOS.sem_chave },
+      { status: STATUS_DA_ROTA.sem_chave },
     );
   }
 
@@ -58,14 +56,14 @@ export async function POST(request: Request) {
   const audio = formulario?.get("audio");
   if (!(audio instanceof File) || audio.size === 0) {
     return NextResponse.json(
-      { motivo: "Não chegou áudio nenhum. Tenta gravar de novo?" },
-      { status: 400 },
+      { motivo: RECADOS.sem_audio },
+      { status: STATUS_DA_ROTA.sem_audio },
     );
   }
   if (audio.size > TETO_BYTES) {
     return NextResponse.json(
-      { motivo: "Esse áudio ficou longo demais. Grava um trecho menor?" },
-      { status: 413 },
+      { motivo: RECADOS.longo },
+      { status: STATUS_DA_ROTA.longo },
     );
   }
 
@@ -93,18 +91,28 @@ export async function POST(request: Request) {
         resposta.status,
         texto.slice(0, 300),
       );
-      return NextResponse.json(
-        { motivo: "Não consegui entender esse áudio agora. Pode escrever pelo teclado." },
-        { status: 502 },
-      );
+      // ============================================================
+      // CADA FALHA COM O SEU RECADO, e nenhum deles culpa quem falou.
+      //
+      // Um recado genérico faz a pessoa tentar de novo na hora em todos os
+      // casos — e em 429 tentar de novo na hora é exatamente o que piora.
+      // O que muda é O QUE FAZER, não o tom.
+      // ============================================================
+      const caso =
+        resposta.status === 429
+          ? "limite"
+          : resposta.status === 401 || resposta.status === 403 || resposta.status >= 500
+            ? "fora_do_ar"
+            : "recusado";
+      return NextResponse.json({ motivo: RECADOS[caso] }, { status: STATUS_DA_ROTA[caso] });
     }
 
     const dados = (await resposta.json()) as { text?: unknown };
     const texto = typeof dados.text === "string" ? dados.text.trim() : "";
     if (!texto) {
       return NextResponse.json(
-        { motivo: "O áudio veio sem fala. Tenta de novo, ou escreve pelo teclado." },
-        { status: 422 },
+        { motivo: RECADOS.mudo },
+        { status: STATUS_DA_ROTA.mudo },
       );
     }
 
@@ -115,8 +123,8 @@ export async function POST(request: Request) {
       erro instanceof Error ? erro.name : "desconhecida",
     );
     return NextResponse.json(
-      { motivo: "Não consegui falar com a transcrição agora. Pode escrever pelo teclado." },
-      { status: 503 },
+      { motivo: RECADOS.rede },
+      { status: STATUS_DA_ROTA.rede },
     );
   }
 }

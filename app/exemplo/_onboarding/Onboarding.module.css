@@ -20,6 +20,21 @@
   padding: 16px;
   box-sizing: border-box;
   background: var(--fundo-pagina);
+  /* ============================================================
+     `color-scheme` é o que manda no que NÃO é nosso: o tocador do
+     `<audio>`, a barra de rolagem, o seletor de arquivo. Sem ele o
+     tocador sai claro no tema escuro — um retângulo branco no meio de
+     uma tela preta, que foi o que a captura mostrou.
+
+     `light dark` deixa o navegador escolher pelo tema do sistema, que é
+     o mesmo critério do resto da folha.
+
+     ISTO DEVERIA ESTAR NO `:root` do `app/globals.css`, e não aqui: todo
+     campo, toda barra de rolagem e todo seletor do produto tem o mesmo
+     problema. Não pus lá porque esta rodada não autoriza — registrado em
+     docs/buraco-color-scheme.md.
+     ============================================================ */
+  color-scheme: light dark;
 }
 
 /* ------------------------------------------------------------- o topo */
@@ -525,6 +540,42 @@
   font-size: var(--fs-corpo);
   color: var(--texto-fraco);
   margin: 0;
+  min-width: 0;
+}
+
+.resumoRotulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+/* "falado" ao LADO do rótulo, e nunca no lugar do valor: a origem da
+   resposta é nota de rodapé, não a resposta. */
+.marcaAudio {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--cobalt-ink);
+  white-space: nowrap;
+}
+
+/* O "mudar" é discreto de propósito: ele aparece onze vezes na mesma
+   tela, e onze botões com peso viram uma parede. */
+.mudar {
+  display: block;
+  margin-left: auto;
+  margin-top: 4px;
+  min-height: var(--alt-controle);
+  padding: 0;
+  background: none;
+  border: 0;
+  font-family: var(--display);
+  font-size: var(--fs-corpo);
+  font-weight: 600;
+  color: var(--cobalt-ink);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .resumoValor {
@@ -554,4 +605,64 @@
   .titulo {
     font-size: var(--fs-hero-frase);
   }
+}
+
+/* ---------------------------------------- o painel de destino (bancada)
+
+   Atrás de `?destino=1`. Não é tela de cliente: é a resposta olhável para
+   "e isso vai para onde?". Por isso tem nome de coluna, que em qualquer
+   outra tela deste produto seria jargão proibido.
+   ------------------------------------------------------------------- */
+
+.destino {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 32px;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+  overflow-x: auto;
+}
+
+.destinoTitulo {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-discreto);
+  margin: 0 0 12px;
+}
+
+.destinoTabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-legenda);
+  color: var(--texto-fraco);
+}
+
+.destinoTabela th,
+.destinoTabela td {
+  text-align: left;
+  vertical-align: top;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.destinoTabela th {
+  color: var(--texto-discreto);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.destinoTabela code {
+  /* A pilha monoespaçada do DESIGN.md. */
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: var(--texto-forte);
+}
+
+.destinoNota {
+  font-size: var(--fs-legenda);
+  color: var(--texto-discreto);
+  margin: 12px 0 0;
 }

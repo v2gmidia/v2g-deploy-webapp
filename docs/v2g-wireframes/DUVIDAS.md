@@ -371,25 +371,48 @@ caminho que existe.
 
 ---
 
-## DUVIDA-ONB-7 — O que a bancada grava, e o que produção vai gravar
+## DUVIDA-ONB-7 — O que a bancada grava, e o que produção vai gravar (CORRIGIDA)
 
-**Na bancada:** cada resposta aceita vai para o `localStorage` no
-instante em que é validada — é o "dá para sair e voltar" do briefing sem
-tocar no banco, que esta rodada proíbe.
+**Na bancada:** cada resposta aceita vai para o `localStorage` no instante
+em que é validada, e quem sai e volta **retoma na primeira pergunta sem
+resposta** — não na pergunta 1. Provado em 20/09 com cinco respostas
+guardadas: a tela reabriu na 5.
 
-**Em produção o destino é `confirmar_campo_do_cliente`**, a mesma porta
-que a `/meu-negocio` usa (migrations 0015/0016), que grava valor e
-procedência na mesma transação. Três campos do onboarding novo **não têm
-coluna hoje** e precisam de migration antes de qualquer uso real:
+**Em produção o destino é `confirmar_campo_do_cliente`**, a mesma porta da
+`/meu-negocio` (migrations 0015/0016), que grava valor e procedência na
+mesma transação.
 
-| pergunta | onde gravar | existe? |
+---
+
+**ESTA DÚVIDA DIZIA QUE TRÊS COLUNAS FALTAVAM. FALTA UMA.** Remedido em
+20/09 contra `supabase/migrations/` em vez de contra o catálogo de
+extração — que foi o meu erro: o catálogo não lista `full_name` nem
+`radius_km` porque nenhuma das duas vem da conversa com o agente.
+
+| pergunta | onde grava | existe? |
 |---|---|---|
-| 1. nome da PESSOA | nova coluna em `profiles` ou `businesses` | **não existe** |
-| 3. raio de atendimento | `businesses.radius_km` | existe (lista branca da `/conta`) |
-| 8. WhatsApp que recebe cliente | coluna nova, ou `businesses.phone` | **não existe** |
+| 1. nome da PESSOA | `profiles.full_name` | **existe**, `0001_init.sql:51` |
+| 3. raio de atendimento | `businesses.radius_km` | **existe**, `0001_init.sql:56` |
+| 8. WhatsApp que recebe cliente | `businesses.whatsapp_do_anuncio` | **não existe** |
 
-O resto tem coluna: `name`, `cep`, `description`, `instagram_handle`,
-`site_url`, `niche`, `monthly_budget`.
+A migration `0022_whatsapp_do_anuncio.sql` está escrita e **NÃO aplicada**.
+Ela é a razão de `pnpm conferir:migrations` estar vermelho: aquele
+conferidor lê o schema VIVO, e fica verde no instante em que alguém rodar
+`db:migrate`.
+
+**O que NÃO entrou junto, e por quê:** a coluna na lista branca da
+`confirmar_campo_do_cliente`. A lista não entra sozinha — precisa de
+`lib/agentes/campos.ts` ou de `EXTRAS_ESPERADOS` na mesma leva, senão
+`conferir:lista-branca` fica vermelho. Está tudo pronto para colar em
+`docs/migracao-whatsapp-do-anuncio.md`.
+
+**Enquanto a lista branca não entrar:** o número é gravável pelo backend e
+o cliente **não** o edita pela `/meu-negocio`.
+
+**Onde isso está ligado no código:** `app/exemplo/_onboarding/destino.ts`
+mapeia as onze perguntas para as colunas, com `colunaExiste` e
+`naListaBranca` por campo, e não escreve nada. `?destino=1` na bancada
+mostra a tabela na tela.
 
 ---
 

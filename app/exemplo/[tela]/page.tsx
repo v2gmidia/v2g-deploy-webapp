@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import type { CasoDeFalha } from "../_onboarding/recados";
 import { Casco } from "@/components/ui/Casco";
 import { TelaDoInicio } from "@/app/(protected)/inicio/TelaDoInicio";
 import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
@@ -67,6 +68,8 @@ const CANONICAS: Record<string, "preparando" | "no-ar" | "pausado"> = {
  *   ?exemplo=1    preenche as respostas anteriores com dado de bancada
  *   ?nicho=…      troca o tipo de negócio do dado de exemplo
  *   ?microfone=1  desenha o microfone LIGADO;  ?microfone=0 desenha DESLIGADO
+ *   ?destino=1    mostra onde cada resposta vai cair em produção
+ *   ?falha=<caso> desenha a tela de quando a transcrição não vem
  *
  * Eles não existem no fluxo de verdade: quem entra pela porta cai no
  * passo 1 com o que o próprio navegador guardou.
@@ -86,6 +89,16 @@ export default async function ExemploPage({
   const { tela } = await params;
   const agora = new Date();
   const casco = exemplo.CASCO_DE_EXEMPLO;
+
+  // ---- a amostra das bordas de cobalto no tema escuro ----
+  // As 14 regras consertadas em 20/09 moram no `globals.css` e pintam
+  // telas atrás do login. Esta amostra renderiza a marcação real de cada
+  // uma, para o conserto poder ser olhado nos dois temas.
+  if (tela === "bordas") {
+    const modulo = ehDesenvolvimento ? await import("../_bordas/Amostra") : null;
+    if (!modulo) notFound();
+    return <modulo.Amostra />;
+  }
 
   // ---- o onboarding novo, onze perguntas ----
   if (tela === "onboarding") {
@@ -129,6 +142,14 @@ export default async function ExemploPage({
         }
         motivoSemTranscricao="A transcrição por áudio ainda não está ligada aqui. Pode escrever pelo teclado."
         comExemplo={comExemplo}
+        mostrarDestino={
+          (Array.isArray(busca.destino) ? busca.destino[0] : busca.destino) === "1"
+        }
+        falhaDeExemplo={
+          ((Array.isArray(busca.falha) ? busca.falha[0] : busca.falha) as
+            | CasoDeFalha
+            | undefined) ?? null
+        }
         nichoDeExemplo={nicho ?? null}
       />
     );

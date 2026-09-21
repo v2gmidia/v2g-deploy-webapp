@@ -1,0 +1,78 @@
+-- ============================================================
+-- 0022 — `businesses.whatsapp_do_anuncio`
+--
+-- NÃO APLICADA. Escrita na madrugada de 20/09/2026 e deixada pronta; quem
+-- roda `db:migrate` é uma pessoa.
+--
+-- ------------------------------------------------------------
+-- POR QUE ELA EXISTE
+--
+-- O onboarding novo (docs/estado/onboarding-v2-20-09.md) faz onze
+-- perguntas. Dez já têm onde morar. Esta é a única que não tem:
+--
+--   "Qual WhatsApp recebe cliente?"  →  não existe coluna
+--
+-- As outras duas que eu havia registrado como faltantes na DUVIDA-ONB-7
+-- JÁ EXISTEM, e a dúvida estava errada:
+--
+--   nome da pessoa       →  `profiles.full_name`     (0001_init.sql:51)
+--   raio de atendimento  →  `businesses.radius_km`   (0001_init.sql:56)
+--
+-- ------------------------------------------------------------
+-- POR QUE NÃO É `profiles.whatsapp`
+--
+-- `profiles.whatsapp` (0001_init.sql:52) já existe e NÃO serve: ele é o
+-- número da PESSOA que tem a conta — por onde a V2G fala com ela. Este é o
+-- número do NEGÓCIO, para onde o anúncio manda quem clicar.
+--
+-- Na maioria dos casos vai ser o mesmo número digitado duas vezes, e
+-- mesmo assim são fatos diferentes:
+--
+--   * o dono troca de celular pessoal e o anúncio não pode mudar junto;
+--   * uma agência que administra o negócio tem o próprio contato, e o
+--     anúncio continua apontando para o cliente;
+--   * um negócio com dois sócios tem um número de atendimento e dois
+--     números de pessoa.
+--
+-- Guardar os dois no mesmo lugar é o tipo de economia que reaparece como
+-- anúncio mandando cliente para o telefone errado.
+--
+-- ------------------------------------------------------------
+-- POR QUE O NOME ESTÁ EM PORTUGUÊS
+--
+-- A tabela mistura: `site_url` e `instagram_handle` (0010) em inglês,
+-- `atende_somente_no_local`, `procedencia`, `dados_ficticios` e
+-- `cadastro_estado` (0010, 0012, 0018) em português. Não há convenção
+-- única a respeitar.
+--
+-- Escolhi o português porque o nome precisa dizer DE QUEM é o número —
+-- que é a distinção inteira para `profiles.whatsapp`. `whatsapp_number`
+-- não diria, e `business_whatsapp` diria pela metade.
+--
+-- ------------------------------------------------------------
+-- O QUE ESTA MIGRATION **NÃO** FAZ, e por quê
+--
+-- Ela NÃO põe a coluna na lista branca da `confirmar_campo_do_cliente`.
+-- Isso é de propósito, e é o assunto de `docs/migracao-whatsapp-do-anuncio.md`:
+-- a lista branca não entra sozinha. Ela precisa, na mesma leva, de
+--
+--   1. `lib/agentes/campos.ts` — o catálogo do que a tela mostra;
+--   2. `scripts/conferir-lista-branca.ts` — `EXTRAS_ESPERADOS`, se o campo
+--      NÃO entrar no catálogo.
+--
+-- Sem os dois, `pnpm conferir:lista-branca` fica vermelho — que é
+-- exatamente o serviço daquele conferidor. A sessão que escreveu isto
+-- estava proibida de tocar código de produção fora de CSS, então parou
+-- aqui em vez de deixar a suíte vermelha.
+--
+-- Enquanto a coluna não estiver na lista branca, ela é gravável pelo
+-- backend (`service_role`) e NÃO é editável pelo cliente na
+-- `/meu-negocio`. Para o onboarding isso basta; para "mudar o número
+-- depois", não.
+-- ============================================================
+
+alter table public.businesses
+  add column if not exists whatsapp_do_anuncio text;
+
+comment on column public.businesses.whatsapp_do_anuncio is
+  'O WhatsApp do NEGOCIO: o numero para onde o anuncio manda quem clicar. Nao confundir com profiles.whatsapp, que e o numero da pessoa dona da conta, por onde a V2G fala com ela. Guardado como o cliente digitou, com mascara: "(15) 99876-5432". Quem precisar do formato E.164 para a Meta converte na leitura — ver docs/migracao-whatsapp-do-anuncio.md.';

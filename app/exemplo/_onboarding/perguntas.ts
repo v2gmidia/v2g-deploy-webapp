@@ -227,3 +227,38 @@ export const RAIOS: { km: number; rotulo: string }[] = [
   { km: 25, rotulo: "A cidade toda" },
   { km: 50, rotulo: "Cidade e região" },
 ];
+
+/**
+ * ONDE A PESSOA PAROU — a primeira pergunta sem resposta.
+ *
+ * ============================================================
+ * A PRIMEIRA SEM RESPOSTA, e não a última respondida. Se ela voltou para
+ * corrigir o Instagram e fechou o navegador ali, "a última respondida"
+ * seria a verba, e ela reabriria no fim sem o Instagram. A primeira sem
+ * resposta reabre exatamente onde falta trabalho.
+ *
+ * Tudo respondido devolve `TOTAL`, que é o resumo.
+ * ============================================================
+ *
+ * O passo 3 é o único com DUAS respostas na mesma tela (CEP e raio), e
+ * por isso ele só conta como respondido quando as duas estão lá.
+ */
+export function ondeParou(respostas: Record<string, string>): number {
+  const respondido = (id: string) => {
+    const v = respostas[id];
+    if (v === undefined || v === null) return false;
+    // O site tem saída legítima: "não tenho site" grava string vazia, e
+    // isso É uma resposta. Os outros em branco não são.
+    if (id === "site") return true;
+    return v.trim() !== "";
+  };
+  for (let i = 0; i < PASSOS.length; i++) {
+    const p = PASSOS[i]!;
+    if (p.id === "local") {
+      if (!respondido("local") || !respondido("local_raio")) return i;
+      continue;
+    }
+    if (!respondido(p.id)) return i;
+  }
+  return PASSOS.length;
+}
