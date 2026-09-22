@@ -47,9 +47,24 @@ export interface Passo {
   ajuda?: string;
   tipo: TipoDePasso;
   /**
-   * Aceita áudio? Toda pergunta de TEXTO aceita; escolha, número e
-   * arquivo não — ditar um CEP ou um telefone é pedir transcrição errada
-   * num campo que tem formato. Ver DUVIDAS.md, DUVIDA-ONB-2.
+   * Aceita áudio?
+   *
+   * ============================================================
+   * SÓ ONDE DITAR NÃO PIORA — decisão do Victor, 21/09/2026.
+   *
+   * Até a v2, cinco perguntas aceitavam áudio. Sobrou UMA: "o que você
+   * vende". As outras quatro saíram, e por motivos diferentes:
+   *
+   *   nome e empresa   — são uma palavra ou duas. Ditar não economiza
+   *                      nada, e nome próprio é o que a transcrição mais
+   *                      erra: "Thainá" volta "Tainá" e ninguém relê.
+   *   Instagram e site — têm FORMATO. Ditar um `@` ou um endereço erra
+   *                      letra, e uma letra errada num `@` é um
+   *                      anunciante que não existe.
+   *
+   * CEP, telefone, escolha, número e arquivo nunca aceitaram, pelo mesmo
+   * motivo dos dois últimos. Ver DUVIDAS.md, DUVIDA-ONB-2.
+   * ============================================================
    */
   audio: boolean;
   /**
@@ -77,7 +92,7 @@ export const PASSOS: Passo[] = [
     titulo: "Como posso te chamar?",
     ajuda: "Seu nome, não o da empresa — é com você que a gente fala.",
     tipo: "texto",
-    audio: true,
+    audio: false,
     rotulo: "Seu nome",
     placeholder: "Seu nome",
   },
@@ -87,7 +102,7 @@ export const PASSOS: Passo[] = [
     titulo: "Qual o nome da sua empresa?",
     ajuda: "É esse nome que vai aparecer no anúncio.",
     tipo: "texto",
-    audio: true,
+    audio: false,
     rotulo: "O nome do seu negócio",
     placeholder: "O nome do seu negócio",
   },
@@ -95,7 +110,10 @@ export const PASSOS: Passo[] = [
     id: "local",
     ordem: 3,
     titulo: "De onde você atende?",
-    ajuda: "O CEP do seu ponto — e até onde vale a pena buscar cliente.",
+    // A ordem da tela mudou na v3 (alcance antes do CEP), e a ajuda
+    // seguiu: liderar pelo CEP faria quem vende online digitar um
+    // para so depois descobrir que nao precisava.
+    ajuda: "Até onde vale a pena buscar cliente — e de que ponto a gente parte.",
     tipo: "local",
     audio: false,
     rotulo: "CEP",
@@ -118,7 +136,7 @@ export const PASSOS: Passo[] = [
     titulo: "Qual o @ do seu Instagram?",
     ajuda: "É o perfil que aparece como anunciante. Pode colar o link.",
     tipo: "texto",
-    audio: true,
+    audio: false,
     rotulo: "Seu Instagram",
     placeholder: "@seunegocio",
   },
@@ -128,7 +146,7 @@ export const PASSOS: Passo[] = [
     titulo: "Você tem site?",
     ajuda: "A gente lê o site para entender melhor o que você vende.",
     tipo: "site",
-    audio: true,
+    audio: false,
     rotulo: "Endereço do site",
     placeholder: "seunegocio.com.br",
   },
@@ -169,8 +187,11 @@ export const PASSOS: Passo[] = [
   {
     id: "conexao",
     ordem: 11,
-    titulo: "Falta conectar seu Facebook.",
-    ajuda: "É o que autoriza a gente a anunciar por você.",
+    // NAO presume que ela ja anuncia. Metade do publico que a V2G quer
+    // atender nunca anunciou, e abrir com "falta conectar" transformava a
+    // ultima pergunta numa exigencia que essa metade nao tem como cumprir.
+    titulo: "Falta uma última coisa.",
+    ajuda: "Como a gente vai publicar seu anúncio.",
     tipo: "conexao",
     audio: false,
   },
@@ -198,35 +219,93 @@ export const CONVITE_NO_MICROFONE =
   "Toque e fale, como se estivesse explicando para um cliente.";
 
 /**
- * OS TIPOS DE NEGÓCIO, na bancada.
+ * OS TIPOS DE NEGÓCIO — cópia fiel do `GET /nichos`, lida em 21/09/2026.
  *
- * Em produção esta lista vem do `GET /nichos` — `app/(fluxo)/onboarding/
- * page.tsx:47` já faz essa chamada, e `lib/nichos/validar.ts` confere a
- * escolha contra a lista viva. A bancada não tem token do backend, então
- * a lista aqui é fixa; os três primeiros são os que têm custo por contato
- * conhecido (ver `custo-por-contato.ts`).
+ * ============================================================
+ * A LISTA DA v2 ESTAVA ERRADA, e não por pouco. Ela tinha oito nomes
+ * (bebidas, agência, barbearia, manicure, petshop, oficina…) dos quais
+ * **só dois existem no backend**: `arquitetura` e `clinica-odontologica`.
+ * Os outros seis nunca existiram — inclusive a `distribuidora-de-bebidas`
+ * que aparecia em todas as capturas da v2.
  *
- * **Nunca campo livre**, como o briefing manda: quem não se encontra na
- * lista fala com uma pessoa, e o botão está sempre na tela.
+ * Medido em 21/09/2026 contra `api.v2gmidia.com.br/nichos`: 8 nichos,
+ * 113 termos de busca, campos em snake_case (`termos_de_busca`,
+ * `sub_tipos`).
+ *
+ * A LISTA ABAIXO É CÓPIA, NÃO FONTE. A bancada não tem o token do backend
+ * (ele é de servidor), então ela não chama a rota. Em produção quem chama
+ * é `app/(fluxo)/onboarding/page.tsx:47`, e `lib/nichos/validar.ts` já
+ * confere a escolha contra a lista viva.
+ *
+ * A lista viva MUDA — ela encolheu de 10 para 8, que é o vermelho do
+ * `pnpm conferir:nichos`. Cópia envelhece: por isso a data está escrita
+ * aqui, e por isso esta tela não decide nada sobre nicho.
+ * ============================================================
  */
 export const NICHOS_DA_BANCADA: { nicho: string; rotulo: string }[] = [
-  { nicho: "distribuidora-de-bebidas", rotulo: "Distribuidora de bebidas" },
-  { nicho: "agencia-de-marketing", rotulo: "Agência de marketing" },
-  { nicho: "arquitetura", rotulo: "Arquitetura" },
+  { nicho: "advocacia", rotulo: "Advogado" },
+  { nicho: "analise-coloracao-pessoal", rotulo: "Análise de coloração pessoal / consultoria de imagem (Austrália)" },
+  { nicho: "arquitetura", rotulo: "Arquiteto" },
   { nicho: "clinica-odontologica", rotulo: "Dentista" },
-  { nicho: "barbearia", rotulo: "Barbearia" },
-  { nicho: "manicure", rotulo: "Manicure" },
-  { nicho: "petshop", rotulo: "Petshop" },
-  { nicho: "oficina-mecanica", rotulo: "Oficina mecânica" },
+  { nicho: "gestao-de-trafego", rotulo: "Gestão de tráfego pago / anúncios no Google e no Instagram para pequeno negócio" },
+  { nicho: "rastreamento-veicular", rotulo: "Rastreamento veicular / rastreador para carro, moto e frota" },
+  { nicho: "reparos", rotulo: "Reparos residenciais" },
+  { nicho: "venda-de-veiculo", rotulo: "Loja de veículos" },
 ];
 
-/** As distâncias que o cliente escolhe no passo 3. */
-export const RAIOS: { km: number; rotulo: string }[] = [
-  { km: 3, rotulo: "Aqui perto" },
-  { km: 10, rotulo: "Meu bairro e vizinhos" },
-  { km: 25, rotulo: "A cidade toda" },
-  { km: 50, rotulo: "Cidade e região" },
+/**
+ * "Outro" NÃO é um nicho do backend — é uma saída da tela.
+ *
+ * ============================================================
+ * MEDIDO: não existe nicho genérico. Os oito são todos específicos, e
+ * nenhum se chama `outro`, `geral` ou `diverso`. O briefing pede que
+ * "Outro" caia "no nicho genérico do backend", e esse nicho não existe.
+ *
+ * O que a bancada faz: guarda `outro` e abre um campo curto para a pessoa
+ * dizer qual é o negócio dela — o texto vai junto, para uma pessoa ler.
+ * NÃO inventei um mapeamento para um dos oito, e não inventei um nicho.
+ *
+ * O que falta do lado do backend: DUVIDAS.md, DUVIDA-ONB-12.
+ * ============================================================
+ */
+export const NICHO_OUTRO = "outro";
+
+/**
+ * ATENDER O BRASIL INTEIRO não é um raio grande — é outra coisa.
+ *
+ * ============================================================
+ * Guardado como a string `"brasil"`, e NÃO como um km enorme. Um
+ * `radius_km = 99999` seria número que parece número e não é: o backend
+ * monta `geo_locations.custom_locations` com lat/lng mais raio
+ * (`src/meta/graph.py:1166`), e um raio absurdo em volta de um CEP não é
+ * o país — é um círculo que entra no mar e no Paraguai.
+ *
+ * O BACKEND HOJE NÃO SABE SEGMENTAR PAÍS. Medido em 21/09/2026 contra o
+ * instantâneo do backend: `Conjunto.raio_km` é obrigatório, `cep_centro`
+ * nulo gera o aviso "a Meta vai precisar de uma localização definida a
+ * mão antes de publicar", e `_segmentacao` só emite `custom_locations`.
+ * Ver DUVIDAS.md, DUVIDA-ONB-11.
+ * ============================================================
+ */
+export const ABRANGENCIA_BRASIL = "brasil";
+
+/** O que o cliente escolhe no passo 3. `valor` é o que fica guardado. */
+export const RAIOS: { valor: string; rotulo: string; nota: string }[] = [
+  { valor: "3", rotulo: "Aqui perto", nota: "3 km" },
+  { valor: "10", rotulo: "Meu bairro e vizinhos", nota: "10 km" },
+  { valor: "25", rotulo: "A cidade toda", nota: "25 km" },
+  { valor: "50", rotulo: "Cidade e região", nota: "50 km" },
+  {
+    valor: ABRANGENCIA_BRASIL,
+    rotulo: "O Brasil inteiro",
+    nota: "vendo online / entrego em todo lugar",
+  },
 ];
+
+/** Atende o país inteiro? Então o CEP deixa de ser obrigatório. */
+export function atendeOBrasilInteiro(respostas: Record<string, string>): boolean {
+  return respostas.local_raio === ABRANGENCIA_BRASIL;
+}
 
 /**
  * ONDE A PESSOA PAROU — a primeira pergunta sem resposta.
@@ -240,8 +319,13 @@ export const RAIOS: { km: number; rotulo: string }[] = [
  * Tudo respondido devolve `TOTAL`, que é o resumo.
  * ============================================================
  *
- * O passo 3 é o único com DUAS respostas na mesma tela (CEP e raio), e
- * por isso ele só conta como respondido quando as duas estão lá.
+ * DUAS PERGUNTAS TÊM MAIS DE UMA RESPOSTA NA MESMA TELA:
+ *
+ *   passo 3 — CEP e raio. As duas são obrigatórias, MENOS quando a pessoa
+ *             atende o Brasil inteiro: aí o CEP não é, porque quem vende
+ *             online não tem um ponto de onde o raio parta.
+ *   passo 7 — o tipo de negócio e, quando ele é "Outro", o texto curto que
+ *             diz qual é. Um "Outro" sem texto não diz nada a ninguém.
  */
 export function ondeParou(respostas: Record<string, string>): number {
   const respondido = (id: string) => {
@@ -255,7 +339,16 @@ export function ondeParou(respostas: Record<string, string>): number {
   for (let i = 0; i < PASSOS.length; i++) {
     const p = PASSOS[i]!;
     if (p.id === "local") {
-      if (!respondido("local") || !respondido("local_raio")) return i;
+      if (!respondido("local_raio")) return i;
+      // Brasil inteiro: sem CEP obrigatório. Quem vende online não tem um
+      // ponto de onde o raio parta.
+      if (!atendeOBrasilInteiro(respostas) && !respondido("local")) return i;
+      continue;
+    }
+    if (p.id === "nicho") {
+      if (!respondido("nicho")) return i;
+      // "Outro" sem o texto não diz nada a ninguém.
+      if (respostas.nicho === NICHO_OUTRO && !respondido("nicho_outro")) return i;
       continue;
     }
     if (!respondido(p.id)) return i;

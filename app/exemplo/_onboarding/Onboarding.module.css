@@ -398,11 +398,71 @@
   color: var(--texto-discreto);
 }
 
-.slider {
+/* ------------------------------------------------ o campo de dinheiro
+
+   O slider saiu em 21/09: ele tinha mínimo, máximo e passo, e decidia por
+   quem responde. O campo é grande porque o valor é a resposta — e o "R$"
+   fica FORA do campo, para apagar de trás para a frente não esbarrar nele.
+   ------------------------------------------------------------------- */
+
+.campoDinheiro {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
   width: 100%;
-  /* Idem: o `accent-color` pinta o polegar e o trilho preenchido, que sao
-     marca sobre fundo escuro. */
-  accent-color: var(--cobalt-ink);
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-controle);
+  background: var(--fundo-superficie);
+}
+
+.campoDinheiro:focus-within {
+  outline: 2px solid var(--cobalt-ink);
+  outline-offset: 2px;
+}
+
+.moeda {
+  font-family: var(--display);
+  font-size: var(--fs-tela);
+  font-weight: 700;
+  color: var(--texto-fraco);
+}
+
+/* ============================================================
+   `.campoDinheiro .campoValor`, e NAO so `.campoValor`.
+
+   O `globals.css` (lote 2a, 14/09) poe a familia dos controles num
+   `:is(input[type="text"], ...)`, e o comentario de la explica que o
+   `:is()` foi escolhido JUSTAMENTE pela especificidade: ele vale (0,1,1),
+   do `input[type=...]`, para ganhar de `.field input`.
+
+   Uma classe sozinha vale (0,1,0) e PERDE. Medido: a regra existia, o
+   navegador a listava, e o computado saia 16px — o tamanho padrao, que e
+   o que sobra quando a declaracao perde. Dois seletores resolvem sem
+   `!important` e sem tocar na regra de producao.
+   ============================================================ */
+.campoDinheiro .campoValor {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: var(--display);
+  /* O valor é a resposta desta tela, e o tamanho diz isso. */
+  font-size: var(--fs-hero-frase);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--texto-forte);
+}
+
+.campoDinheiro .campoValor:focus {
+  outline: none;
+}
+
+.campoDinheiro .campoValor::placeholder {
+  color: var(--texto-discreto);
+  font-weight: 700;
 }
 
 .vivo {
@@ -665,4 +725,210 @@
   font-size: var(--fs-legenda);
   color: var(--texto-discreto);
   margin: 12px 0 0;
+}
+
+/* ------------------------------------------- a fala aparecendo ao vivo
+
+   Duas camadas de certeza no mesmo parágrafo: o que o navegador já deu
+   por FECHADO, em tinta normal, e o que ele ainda está ouvindo, mais
+   claro e em itálico. A diferença é informação — mostrar as duas com o
+   mesmo peso faria a palavra provisória parecer decidida.
+   ------------------------------------------------------------------- */
+
+.aoVivo {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid var(--cobalt-ink);
+  border-radius: var(--raio-cartao);
+  background: rgb(var(--cobalt-rgb) / 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.aoVivoTitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cobalt-ink);
+  margin: 0;
+}
+
+/* O ponto que pulsa enquanto o microfone está aberto. Quem pediu menos
+   movimento no sistema recebe um ponto parado, que diz a mesma coisa. */
+.pulso {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--raio-pilula);
+  background: var(--cobalt-ink);
+  animation: pulsar 1.4s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulso { animation: none; }
+}
+
+.aoVivoTexto {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-forte);
+  margin: 0;
+  min-height: 1.5em;
+}
+
+.provisorio {
+  color: var(--texto-discreto);
+  font-style: italic;
+}
+
+.aoVivoNota {
+  font-size: var(--fs-legenda);
+  color: var(--texto-discreto);
+  margin: 0;
+}
+
+/* ------------------------------------------------- as cores da empresa
+
+   As bolinhas são grandes porque são a resposta, e cada uma é um
+   `input[type=color]` de verdade — o seletor nativo do sistema é melhor
+   do que qualquer roda de cor que eu desenhasse aqui.
+   ------------------------------------------------------------------- */
+
+.cores {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+}
+
+.coresLinha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.cor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.bolinha {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-pilula);
+  background: none;
+  cursor: pointer;
+  /* O `appearance: none` tira a moldura cinza que o Chrome põe em volta
+     do seletor de cor; sem isso a bolinha vira um quadrado com um
+     quadrado dentro. */
+  appearance: none;
+  -webkit-appearance: none;
+  overflow: hidden;
+}
+
+.bolinha::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.bolinha::-webkit-color-swatch {
+  border: none;
+  border-radius: var(--raio-pilula);
+}
+
+.bolinha::-moz-color-swatch {
+  border: none;
+  border-radius: var(--raio-pilula);
+}
+
+.corCodigo {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: var(--fs-legenda);
+  color: var(--texto-discreto);
+  text-transform: uppercase;
+}
+
+.corPapel {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  color: var(--texto-fraco);
+}
+
+/* A bolinha desmarcada nao some: ela fica apagada, para a pessoa poder
+   voltar atras sem ter que mandar a logo de novo. */
+.bolinhaFora {
+  opacity: 0.35;
+}
+
+.corMarca {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--alt-controle);
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  color: var(--texto-fraco);
+  cursor: pointer;
+}
+
+.corMarca input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--cobalt-ink);
+  cursor: pointer;
+}
+
+/* ------------------------------------------- as duas trilhas do passo 11 */
+
+.trilhaEscolha {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  width: 100%;
+}
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 16px;
+  list-style: none;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+}
+
+.checkItem {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+}
+
+.checkMarca {
+  font-weight: 700;
+  color: var(--texto-discreto);
 }

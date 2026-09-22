@@ -343,4 +343,15 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "o `comment on column`, que é onde está escrito que este número é o do NEGÓCIO e não o da pessoa",
     ],
   },
+  {
+    arquivo: "0023_cores_da_marca_na_lista_branca.sql",
+    // Ela nao CRIA objeto: reescreve uma funcao que ja existe. Declarada
+    // assim, o conferidor confirma que a funcao esta no banco — e nao tem
+    // como ver o corpo dela, que e justamente o que muda aqui.
+    cria: [{ tipo: "rpc", nome: "confirmar_campo_do_cliente" }],
+    foraDoAlcance: [
+      "o CORPO da funcao, que e a unica coisa que esta migration muda: as tres cores entrando na lista branca de `identidade_visual`",
+      "que ela esteja APLICADA — a presenca da funcao nao distingue a versao 0016 da 0023. So o ledger ou um teste de escrita responde isso",
+    ],
+  },
 ];

@@ -512,3 +512,179 @@ E o caminho contrário: o `.env.example` tem seis `SUPABASE_SMTP_*` que o
 acrescentar nome ali é dizer que o produto passa a depender daquilo, e
 essa é decisão do Victor. Registro para não envelhecer em silêncio.
 
+---
+
+# Onboarding v3 — 21/09/2026
+
+O feedback do Victor sobre a bancada. As quatro dúvidas abaixo saíram de
+MEDIÇÕES feitas nesta rodada, não de suposição — e três delas dizem que o
+backend não tem onde receber o que a tela agora pergunta.
+
+---
+
+## DUVIDA-ONB-11 — O backend não sabe segmentar o Brasil inteiro
+
+**O que a tela passou a oferecer.** "O Brasil inteiro — vendo online /
+entrego em todo lugar", como quinta opção de alcance. Escolhendo-a, o CEP
+deixa de ser obrigatório.
+
+**Medido em 21/09/2026**, no instantâneo do backend (`head-4e2eae9`, de
+14/09 — não é o repositório vivo, e isso importa):
+
+| onde | o que está escrito |
+|---|---|
+| `src/dominio/campanha.py:156` | `raio_km: int` — obrigatório, sem nulo |
+| `:152` | `cep_centro` nulo quer dizer "não atende num ponto único", e a nota diz que "a Meta recebe a cidade em vez de raio, decisão que fica para a camada `meta/`" |
+| `:347` | sem `cep_centro`, a montagem devolve o aviso: *"o raio não tem ponto de partida e a Meta vai precisar de uma localização definida a mão antes de publicar"* |
+| `src/meta/graph.py:1166` | `_segmentacao` emite **só** `geo_locations.custom_locations` com lat/lng + raio |
+
+Ou seja: **não existe caminho de país.** O que existe é raio em volta de
+um ponto, e a intenção — não implementada — de mandar a cidade quando não
+há ponto.
+
+**O que falta, do lado do backend:**
+
+1. o `Conjunto` precisa poder dizer ABRANGÊNCIA, e não só raio. Hoje
+   `raio_km` é obrigatório, então "país" não cabe no modelo;
+2. `_segmentacao` precisa de um ramo que emita
+   `geo_locations: {"countries": ["BR"]}` — que a Meta aceita — e que
+   **pule a geocodificação**, porque não há ponto a resolver;
+3. o `garantirGeo()` do webapp (`lib/meta/publicar.ts`) precisa saber que
+   nesse caso não há geo a garantir, senão ele barra antes.
+
+**O que a bancada faz enquanto isso:** guarda a escolha como a string
+`"brasil"` em `local_raio`. Ela **não vira escrita**: `radius_km` é `int`,
+e um raio que "cubra o país" seria número que parece número e não é — em
+volta de um CEP, um raio absurdo é um círculo que entra no mar e no
+Paraguai, não o Brasil.
+
+**O que NÃO fazer:** gravar 99999 em `radius_km`. Seria a tela mentindo
+para o backend, e o backend entregando anúncio no lugar errado com
+dinheiro do cliente.
+
+---
+
+## DUVIDA-ONB-12 — Não existe nicho genérico para o "Outro"
+
+**O que o briefing pede:** "Outro — meu negócio não está aqui", que "cai
+no nicho genérico do backend".
+
+**Medido em 21/09/2026** contra `GET https://api.v2gmidia.com.br/nichos`:
+**8 nichos, todos específicos.** Nenhum se chama `outro`, `geral`,
+`generico` ou `diverso`:
+
+```
+advocacia · analise-coloracao-pessoal · arquitetura · clinica-odontologica
+gestao-de-trafego · rastreamento-veicular · reparos · venda-de-veiculo
+```
+
+**O nicho genérico não existe.** Não inventei um mapeamento: escolher
+"Outro" guarda `outro` e abre um campo curto para a pessoa escrever o que
+o negócio faz. O texto vai para o resumo e para a mensagem de quem atende.
+
+**O que falta decidir:**
+
+1. **criar um nicho genérico no backend** — e aí a pergunta é o que o
+   pipeline faz com ele, já que o nicho é o que gera termos de busca (os
+   oito têm 113 termos ao todo; um genérico teria zero);
+2. **ou tratar "Outro" como uma fila humana** — o cadastro entra, uma
+   pessoa lê o texto e escolhe o nicho mais próximo à mão;
+3. **ou recusar** — dizer na hora que a V2G ainda não atende aquele tipo
+   de negócio.
+
+**Recomendo a 2.** A 1 cria um nicho que o pipeline não sabe usar, e a 3
+descarta cliente antes de saber se dá para atender. A 2 é a única que não
+perde informação.
+
+---
+
+## DUVIDA-ONB-13 — Dois dos três custos por contato eram de nichos que não existem
+
+**O que era.** A tabela de custo tinha três entradas, dos números que o
+Victor deu em 20/09: bebidas R$ 7, agência R$ 30, arquitetura R$ 60.
+
+**Medido em 21/09:** dos três nomes, **só `arquitetura` existe** no
+`GET /nichos`. `distribuidora-de-bebidas` e `agencia-de-marketing` eram
+nomes da lista inventada da v2.
+
+**O que eu fiz com cada um:**
+
+| número do Victor | o que fiz | por quê |
+|---|---|---|
+| arquitetura R$ 60 | **mantido** | o nicho existe com esse nome exato |
+| agência R$ 30 | **movido** para `gestao-de-trafego` | é o nicho real mais próximo: "Gestão de tráfego pago / anúncios no Google e no Instagram para pequeno negócio". **É mapeamento meu, não do Victor.** |
+| bebidas R$ 7 | **descartado** | não há nicho de bebidas. Jogar o número em cima de outro seria custo de um negócio valendo para outro. |
+
+**O que falta:** você confirmar o mapeamento de "agência" →
+`gestao-de-trafego`, e dizer se algum dos outros seis nichos tem custo
+conhecido. Os seis sem custo caem no caminho "ainda não temos a média",
+que já existe e já está capturado.
+
+---
+
+## DUVIDA-ONB-14 — As cores da logo: as colunas existem, a porta não, e ninguém as lê
+
+**O que a tela passou a fazer.** Depois do upload da logo, extrai as 2 ou
+3 cores principais **no navegador** (canvas + contagem, sem API), mostra
+cada uma como bolinha com caixa marcada, e pergunta "essas são as cores da
+sua empresa?". O cliente desmarca ou troca.
+
+**Medido em 21/09, e são três coisas diferentes:**
+
+**1. A coluna EXISTE.** `identidade_visual.cor_primaria`, `cor_secundaria`
+e `cor_destaque`, desde a `0010_perfil_empresa.sql:71`. **Não falta
+coluna.**
+
+**2. A PORTA não existe.** A `confirmar_campo_do_cliente` é a única que
+grava valor e procedência na mesma transação, e a lista branca dela para
+`identidade_visual` aceita só `tom_de_voz` e `observacoes`.
+
+Escrevi a migration: **`0023_cores_da_marca_na_lista_branca.sql`, NÃO
+APLICADA.** Ela é cópia mecânica da 0016 com três linhas de diferença no
+array — o `git diff` entre as duas mostra só isso.
+
+**3. NINGUÉM LÊ essas colunas.** E isso derruba a justificativa da 0015
+para tê-las deixado de fora, que era:
+
+> "cor e fonte ficam de fora pelo mesmo motivo do catálogo: são lidas pela
+> geração de criativo como código de cor e nome de fonte"
+
+Medido no agente `gerar_criativo_visual`: a `Entrada` dele tem `nicho`,
+`angulo_origem`, `texto_overlay` e `formatos` — **nenhum campo de cor**. O
+`prompt.md` manda a cor vir das FOTOS ("iluminação e cor coerentes com as
+fotos recebidas"). O único lugar do backend que fala em paleta é o
+`varrer_site`, que a extrai do HTML do site e a guarda na saída dele, sem
+devolver para a identidade.
+
+**O que falta, do lado do backend:** o `gerar_criativo_visual` receber as
+cores da marca e usá-las. Sem isso, o que a tela pergunta fica guardado e
+não muda um pixel do anúncio — e perguntar uma coisa que não muda nada é
+pior do que não perguntar.
+
+**O que continua fora da lista branca, de propósito:** `fonte_titulo` e
+`fonte_corpo`. Nome de fonte digitado por cliente é caminho para criativo
+que não renderiza, e ninguém pediu isso.
+
+---
+
+## DUVIDA-ONB-2 — atualizada em 21/09: o áudio ficou em UMA pergunta
+
+O corte de 20/09 deixava áudio em cinco perguntas. O Victor cortou para
+uma, e os motivos são dele:
+
+| pergunta | aceita áudio | por quê |
+|---|---|---|
+| 1. nome / 2. empresa | **não** | uma palavra ou duas; ditar não economiza, e nome próprio é o que a transcrição mais erra |
+| 4. o que você vende | **sim** | é a única resposta longa do fluxo |
+| 5. Instagram / 6. site | **não** | têm FORMATO. Uma letra errada num `@` é um anunciante que não existe |
+| a correção do resumo | **sim** | resposta livre, pelo mesmo motivo da 4 |
+
+**A transcrição agora é híbrida**, e isso muda o risco: o texto do
+NAVEGADOR aparece enquanto a pessoa fala (Web Speech, grátis), e o da
+OpenAI substitui ao terminar, uma vez. Quando a OpenAI falha, o texto do
+navegador **continua na tela** — antes, uma falha custava tudo o que a
+pessoa tinha falado.
+
+**Quem não tem Web Speech** (Firefox) cai no comportamento da v2: grava,
+espera, e o texto aparece de uma vez. Nada quebra.
+

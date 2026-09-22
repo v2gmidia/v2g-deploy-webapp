@@ -70,6 +70,7 @@ const CANONICAS: Record<string, "preparando" | "no-ar" | "pausado"> = {
  *   ?microfone=1  desenha o microfone LIGADO;  ?microfone=0 desenha DESLIGADO
  *   ?destino=1    mostra onde cada resposta vai cair em produção
  *   ?falha=<caso> desenha a tela de quando a transcrição não vem
+ *   ?aovivo=1     desenha o bloco da fala ao vivo, com exemplo dentro
  *
  * Eles não existem no fluxo de verdade: quem entra pela porta cai no
  * passo 1 com o que o próprio navegador guardou.
@@ -144,6 +145,9 @@ export default async function ExemploPage({
         comExemplo={comExemplo}
         mostrarDestino={
           (Array.isArray(busca.destino) ? busca.destino[0] : busca.destino) === "1"
+        }
+        falaDeExemplo={
+          (Array.isArray(busca.aovivo) ? busca.aovivo[0] : busca.aovivo) === "1"
         }
         falhaDeExemplo={
           ((Array.isArray(busca.falha) ? busca.falha[0] : busca.falha) as

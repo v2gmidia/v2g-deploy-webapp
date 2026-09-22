@@ -52,11 +52,35 @@ export const FOLGA = 0.15;
  * As chaves são os `nicho` de `knowledge/` (os mesmos que o `GET /nichos`
  * devolve), não rótulos de tela.
  */
+/**
+ * ============================================================
+ * DOIS DOS TRÊS NICHOS QUE O VICTOR CITOU NÃO EXISTEM NO BACKEND.
+ *
+ * Medido em 21/09/2026 contra o `GET /nichos`: a lista viva tem oito
+ * nichos, e `distribuidora-de-bebidas` e `agencia-de-marketing` não estão
+ * entre eles. Eram nomes da lista inventada da v2.
+ *
+ * O que sobrou, e o que eu fiz com cada número:
+ *
+ *   arquitetura R$ 60   MANTIDO. O nicho existe com esse nome exato.
+ *   agência R$ 30       MOVIDO para `gestao-de-trafego`, que é o nicho
+ *                       real mais próximo ("Gestão de tráfego pago /
+ *                       anúncios no Google e no Instagram para pequeno
+ *                       negócio"). É MAPEAMENTO MEU, não do Victor, e
+ *                       está marcado como tal em DUVIDAS.md.
+ *   bebidas R$ 7        SEM DESTINO. Não há nicho de bebidas na lista.
+ *                       O número não foi jogado em cima de outro nicho:
+ *                       ficaria custo de um negócio valendo para outro.
+ *
+ * Os seis nichos sem custo caem no caminho "ainda não temos a média",
+ * que já existe e já está capturado.
+ * ============================================================
+ */
 const CUSTO_TIPICO: Record<string, number> = {
-  // informados pelo Victor em 20/09/2026 — ver o bloco do topo
-  "distribuidora-de-bebidas": 7,
-  "agencia-de-marketing": 30,
+  // informado pelo Victor em 20/09/2026, nicho confirmado no GET /nichos
   arquitetura: 60,
+  // o "agência ~R$ 30" do Victor, mapeado por mim — ver DUVIDA-ONB-13
+  "gestao-de-trafego": 30,
 };
 
 /** O que a tela precisa saber para escrever a frase. Nunca inventa. */
