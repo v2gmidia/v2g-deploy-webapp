@@ -50,7 +50,18 @@ const NEGOCIO = "00000000-0000-4000-8000-00000000e001";
 const EXECUCAO = "00000000-0000-4000-8000-00000000e002";
 
 /** Os três estados que o laboratório desenha. */
-export type EstadoDeExemplo = "preparando" | "no-ar" | "pausado";
+/**
+ * ============================================================
+ * "chegada" ENTROU EM 22/09, e existe por um motivo só: é o único destes
+ * quatro em que a CONEXÃO está pendente.
+ *
+ * Os outros três têm `conexaoAtiva: true`, então a etapa atual é sempre a
+ * peça ou depois dela — e o defeito da cadeia (uma etapa POSTERIOR
+ * marcada como feita) não aparece em nenhum. Sem este estado não havia
+ * como capturar o antes e o depois do conserto.
+ * ============================================================
+ */
+export type EstadoDeExemplo = "chegada" | "preparando" | "no-ar" | "pausado";
 
 /** Quem aparece no casco. Inventado. */
 export const CASCO_DE_EXEMPLO = {
@@ -80,6 +91,7 @@ const NIVEL_SEM_ALVO =
  * AGORA. Ver `lib/veiculacao/estado.ts`.
  */
 const VEICULACAO: Record<EstadoDeExemplo, "no_ar" | "ja_foi_ao_ar" | "sem_evidencia"> = {
+  chegada: "sem_evidencia",
   preparando: "sem_evidencia",
   "no-ar": "no_ar",
   pausado: "ja_foi_ao_ar",
@@ -161,7 +173,10 @@ export function exemploDoInicio(
   estado: EstadoDeExemplo = "pausado",
 ): EstadoDoCliente {
   const exec = execucao(estado);
-  const medido = estado !== "preparando";
+  const medido = estado !== "preparando" && estado !== "chegada";
+  // Só a `chegada` tem a conexão em aberto — é o que põe a etapa atual
+  // ANTES da aprovação, e é aí que o defeito da cadeia aparece.
+  const conectou = estado !== "chegada";
   const acumulado = medido ? consolidado() : null;
 
   return {
@@ -171,7 +186,7 @@ export function exemploDoInicio(
       {
         temNegocio: true,
         cadastro: CADASTRO_COMPLETO,
-        conexaoAtiva: true,
+        conexaoAtiva: conectou,
         cadastroEnviadoEm: "2026-08-19T23:31:49.646Z",
         execucao: null,
         pecasProntas: 0,
@@ -202,7 +217,7 @@ export function exemploDoInicio(
     temNumero: medido,
     diaSeguinte: { execucao: exec, acumulado },
     veiculacao:
-      estado === "preparando"
+      estado === "preparando" || estado === "chegada"
         ? "nunca_foi_ao_ar"
         : estado === "no-ar"
           ? "no_ar"

@@ -183,6 +183,13 @@ export default async function ExemploPage({
   // Uma tela por vez. Nome que não existe é 404, não uma tela vazia.
   if (tela !== "inicio") notFound();
 
+  const busca2 = await searchParams;
+  const pedido = Array.isArray(busca2.estado) ? busca2.estado[0] : busca2.estado;
+  const estadoDoExemplo: "chegada" | "preparando" | "no-ar" | "pausado" =
+    pedido === "chegada" || pedido === "preparando" || pedido === "no-ar"
+      ? pedido
+      : "pausado";
+
   return (
     <Casco
       nome={casco.nome}
@@ -190,8 +197,17 @@ export default async function ExemploPage({
       rotuloDaConta={casco.nomeNegocio}
       inicial={casco.inicial}
     >
+      {/* ============================================================
+          `?estado=` escolhe o momento, e existe para capturar o ANTES e o
+          DEPOIS de um conserto na tela de produção.
+
+          O padrao continua `pausado`, que e o que a bancada mostrava. O
+          `preparando` e o estado em que os dois defeitos de 22/09
+          aparecem: execucao existe (o pipeline disparou) e o anuncio
+          NUNCA foi ao ar.
+          ============================================================ */}
       <TelaDoInicio
-        estado={exemplo.exemploDoInicio(agora)}
+        estado={exemplo.exemploDoInicio(agora, estadoDoExemplo)}
         ultimaDecisao={null}
         diaDaPergunta={diaDeOntemEmSaoPaulo(agora)}
         atrasados={[]}

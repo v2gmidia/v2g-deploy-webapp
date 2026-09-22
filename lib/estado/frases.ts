@@ -1008,26 +1008,49 @@ const ROTULO: Record<EstadoDaFase, string> = {
 /**
  * As quatro fases, com o estado de cada uma.
  *
- * Uma fase está `feita` quando TODAS as etapas dela fecharam — parcial
- * não conta, porque "Criar: concluído" com a aprovação pendente é a
- * mesma contradição que a lista tinha antes de ler posição em vez de
- * `concluida`.
+ * ============================================================
+ * POSIÇÃO, E NÃO `concluida` — corrigido em 22/09/2026.
  *
- * `atual` é a fase que contém a etapa aberta mais antiga. Com `atual`
- * nulo (cadeia inteira fechada) nenhuma fase é a atual, e as quatro
- * saem `feita`.
+ * O comentário desta função já dizia que "Criar: concluído" com a
+ * aprovação pendente é "a mesma contradição que a lista tinha antes de
+ * ler posição em vez de `concluida`". A lista foi corrigida
+ * (`posicoesDaCadeia`); **esta função não**, e continuou lendo
+ * `e.concluida`.
+ *
+ * O resultado, medido na bancada com a conexão em aberto:
+ *
+ *     Preparar EM ANDAMENTO · Criar CONCLUÍDO · Publicar CONCLUÍDO
+ *
+ * Duas fases posteriores carimbadas enquanto a primeira está aberta. Do
+ * lado do dado faz sentido — `pecasParaAprovar: 0` quer dizer "nada
+ * esperando aprovação", e `concluida` responde a isso. Do lado da tela
+ * não faz nenhum: o dono lê quatro caixas em ordem.
+ *
+ * Agora uma fase é `feita` quando TODAS as etapas dela vêm ANTES da
+ * etapa atual — exatamente o critério de `posicoesDaCadeia`, para as
+ * duas leituras da mesma cadeia pararem de discordar.
+ *
+ * O QUE NÃO MUDA: com `atual` nulo (cadeia inteira fechada) o índice
+ * vira o tamanho da lista, toda etapa fica antes dele, e as quatro saem
+ * `feita` — que é o que a `conferir:inicio` §4 exige.
+ * ============================================================
+ *
+ * `atual` é a fase que contém a etapa aberta mais antiga.
  */
 export function fasesDaCadeia(etapas: Etapa[], atual: Etapa | null): Fase[] {
-  const porId = new Map(etapas.map((e) => [e.id, e]));
+  // O mesmo índice que `posicoesDaCadeia` usa, e pelo mesmo motivo.
+  const iAtual = atual ? etapas.findIndex((e) => e.id === atual.id) : etapas.length;
+  const posicaoDe = new Map(etapas.map((e, i) => [e.id, i]));
 
   return PARTICAO.map((f) => {
-    const minhas = f.etapas.map((id) => porId.get(id)).filter((e): e is Etapa => e !== undefined);
     const temAtual = atual !== null && f.etapas.includes(atual.id);
-    const todasFeitas = minhas.length > 0 && minhas.every((e) => e.concluida);
+    const minhas = f.etapas.filter((id) => posicaoDe.has(id));
+    const todasAntes =
+      minhas.length > 0 && minhas.every((id) => (posicaoDe.get(id) ?? Infinity) < iAtual);
 
     // A ordem importa: uma fase que contém a etapa atual é `atual`
     // mesmo que a outra etapa dela já esteja fechada.
-    const estado: EstadoDaFase = temAtual ? "atual" : todasFeitas ? "feita" : "travada";
+    const estado: EstadoDaFase = temAtual ? "atual" : todasAntes ? "feita" : "travada";
 
     return { id: f.id, nome: f.nome, etapas: f.etapas, estado, rotulo: ROTULO[estado] };
   });

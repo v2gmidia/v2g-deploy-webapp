@@ -3,7 +3,7 @@ import { diaCurto, dinheiro } from "@/lib/formato";
 import { contagemOuAusencia, dinheiroOuAusencia } from "@/lib/dia-seguinte/exibir";
 import { PerguntaDoDia } from "./PerguntaDoDia";
 import type { EstadoDoCliente } from "@/lib/estado/cliente";
-import { fraseDeVeiculacao } from "@/lib/veiculacao/estado";
+import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import {
   estadoNaLista,
   fasesDaCadeia,
@@ -204,8 +204,34 @@ export function TelaDoInicio({
   //
   // Respondido, ele encolhe para uma linha. Ver `PerguntaDoDia`.
   // ============================================================
+  // ============================================================
+  // O PORTÃO DA PERGUNTA — `esteveNoAr()`, e não "tem execução".
+  //
+  // Até 22/09 a condição era `execucaoDoDia !== null`. A execução nasce
+  // quando o PIPELINE DISPARA — muito antes de qualquer anúncio existir —,
+  // então quem acabou de terminar o cadastro lia:
+  //
+  //     "Uma pergunta rápida sobre ontem:
+  //      Quantas dessas conversas viraram venda ontem?"
+  //
+  // Não houve ontem, não houve conversa e não houve anúncio. A pergunta
+  // não era só inútil: ela AFIRMA que algo rodou, numa tela que na linha
+  // de cima diz "sua campanha está sendo preparada".
+  //
+  // `esteveNoAr` é o predicado da fonte única (`lib/veiculacao/estado.ts`)
+  // e cobre os dois casos em que a pergunta faz sentido: `no_ar` e
+  // `ja_foi_ao_ar`. Ele devolve `false` para `nao_sabemos` — não saber
+  // não é prova, e perguntar sobre um dia que talvez não tenha existido é
+  // o mesmo defeito com outra roupa.
+  //
+  // A execução continua sendo necessária: é dela que sai o `idExecucao`
+  // que a resposta endereça. As duas condições juntas, e não uma no lugar
+  // da outra.
+  // ============================================================
+  const cabePerguntarSobreOntem = esteveNoAr(estado.veiculacao);
+
   const cardDaPergunta =
-    execucaoDoDia !== null ? (
+    cabePerguntarSobreOntem && execucaoDoDia !== null ? (
       <PerguntaDoDia
         idExecucao={execucaoDoDia.idExecucao}
         dia={diaDaPergunta}
@@ -352,6 +378,23 @@ export function TelaDoInicio({
             card nesta tela, o cliente nunca chegaria à outra para poder
             responder a primeira vez. */}
         {cardDaPergunta}
+        {/* ============================================================
+          SEM A PERGUNTA, UMA LINHA DIZENDO QUANDO ELA VAI EXISTIR.
+
+          Sumir em silêncio deixaria o dono sem saber que um dia a gente
+          vai perguntar — e a primeira vez que a pergunta aparecesse
+          pareceria cobrança do nada.
+
+          Ela NÃO promete prazo: diz a condição ("quando seu anúncio
+          estiver no ar"), não a data.
+          ============================================================ */}
+        {!cabePerguntarSobreOntem && (
+          <p className="foot-line">
+            As perguntas sobre venda começam quando seu anúncio estiver no ar. Até lá não há o
+            que contar.
+          </p>
+        )}
+
 
         <div className="inicio-cols">
           <div className="inicio-col">
@@ -625,6 +668,22 @@ export function TelaDoInicio({
         `lib/dia-seguinte/exibir.ts`.
       */}
       {cardDaPergunta}
+      {/* ============================================================
+          SEM A PERGUNTA, UMA LINHA DIZENDO QUANDO ELA VAI EXISTIR.
+
+          Sumir em silêncio deixaria o dono sem saber que um dia a gente
+          vai perguntar — e a primeira vez que a pergunta aparecesse
+          pareceria cobrança do nada.
+
+          Ela NÃO promete prazo: diz a condição ("quando seu anúncio
+          estiver no ar"), não a data.
+          ============================================================ */}
+      {!cabePerguntarSobreOntem && (
+        <p className="foot-line">
+          As perguntas sobre venda começam quando seu anúncio estiver no ar. Até lá não há o
+          que contar.
+        </p>
+      )}
 
       <div className="inicio-cols">
         <div className="inicio-col">
