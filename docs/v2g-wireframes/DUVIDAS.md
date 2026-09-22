@@ -754,3 +754,158 @@ imagem não monta anúncio. As opções:
 material nenhum, o passo 10 inteiro pode virar opcional e a tela para de
 prometer uma dependência que não existe.
 
+---
+
+## DUVIDA-ONB-16 — atualizada em 22/09: a dependência é REAL, a opção 3 caiu
+
+A entrada acima pedia medição antes de decidir: *"se o anúncio sai sem
+material nenhum, o passo 10 inteiro pode virar opcional"*.
+
+**Medido em 22/09/2026, no snapshot do backend:** existe
+`SemMaterialDoClienteError`, levantada pela geração do criativo visual
+quando o cliente não tem material. O anúncio **não sai** sem material.
+
+Então:
+
+- **a opção 3 está morta** — a frase "sem material a gente não consegue
+  montar o anúncio" não estava errada; estava certa e desacompanhada;
+- **a opção 2 (bloquear no cadastro) continua ruim** pelo motivo de
+  sempre: quem não tem a logo à mão naquele minuto abandona;
+- **a opção 1 foi a escolhida**, e o que faltava nela — "alguém precisa
+  lembrar essa pessoa, e não existe quem" — é o que o desenho de
+  `/exemplo/material` resolve: a cobrança volta em dois momentos, no
+  Início como próximo passo e antes do criativo como tranca.
+
+**O que ainda depende de decisão do Victor:** os dois momentos estão
+desenhados na bancada, não construídos em produção. Colocar o primeiro no
+`/inicio` exige que o estado do cliente saiba responder "tem material?",
+e hoje ele não sabe: `material_depois` é resposta do cadastro, não campo
+que a tela de Início leia. Quem decide se isso vira coluna, derivação ou
+chamada ao backend é o Victor.
+
+---
+
+## DUVIDA-ONB-17 — Os `sub_tipos` estão vazios; quem classifica é o texto
+
+O briefing de 22/09 diz: *"Use os SUBTIPOS que o `GET /nichos` já
+devolve: designer de interiores deve cair em arquitetura, não em
+'Outro'."*
+
+**Medido na resposta viva em 22/09/2026: `sub_tipos` é `[]` nos oito
+nichos. Total de subtipos na lista inteira: zero.** O mecanismo que o
+briefing nomeia não existe hoje.
+
+**O resultado pedido existe por outro campo.** Os `termos_de_busca` de
+`arquitetura` incluem "design de interiores", "arquitetura de interiores"
+e "decoração de interiores" — 12 termos nesse nicho, 113 na lista inteira.
+É sobre eles que a busca local roda, e é por eles que "sou designer de
+interiores" cai em `arquitetura`.
+
+**Não são a mesma coisa, e por isso um não substituiu o outro no código.**
+Termo de busca é vocabulário de quem procura; subtipo é uma subdivisão do
+nicho que o backend um dia vai querer gravar ao lado de `niche`. Quando os
+subtipos chegarem, eles entram **ao lado** dos termos em
+`app/exemplo/_onboarding/classificar.ts`, não no lugar.
+
+---
+
+## DUVIDA-ONB-18 — `POST /agentes/classificar-nicho` existe, e nunca foi chamada
+
+**Existe e está no ar.** Conferido contra o `/openapi.json` do backend em
+22/09/2026 (51 rotas). O contrato:
+
+```
+POST /agentes/classificar-nicho
+entrada: { descricao_livre: string (minLength 10),
+           nome_negocio?: string | null }
+saída:   { nicho, justificativa, candidatos_alternativos,
+           confianca (0..1), requer_revisao, observacao_do_modelo }
+```
+
+`app/exemplo/api-classificar-nicho/route.ts` está escrito contra esse
+contrato e ligado, **mas nenhum POST foi feito**: ela roda um LLM e custa,
+e o briefing autorizou duas chamadas à OpenAI para medir transcrição e
+nenhuma a este agente. O primeiro POST de verdade é do Victor.
+
+**O que isso deixa em aberto:**
+
+1. **O piso de confiança é chute meu.** `PISO_PARA_PROPOR = 0,6` na rota:
+   abaixo disso a tela não propõe e oferece uma pessoa. Não rodei o agente
+   uma vez, então não sei como a confiança dele se distribui — pode ser
+   que ele nunca passe de 0,5, e aí ninguém nunca recebe proposta; pode
+   ser que ele devolva 0,9 para tudo, e aí o piso não filtra nada. **Uma
+   dúzia de descrições reais resolve.**
+2. **`requer_revisao` eu trato como "chama gente", sem exceção.** Parece o
+   conservador, mas é leitura minha do nome do campo, não do
+   comportamento.
+3. **Nicho fora da lista viva vira "chama gente".** Se o agente conhecer
+   nichos que o `GET /nichos` não devolve, essa regra joga fora resposta
+   boa. Vale conferir se os dois lados leem o mesmo `knowledge/`.
+
+---
+
+## DUVIDA-ONB-19 — A lista de nichos não encolheu: ela foi TROCADA
+
+`lib/nichos/tipos.ts` afirma, em comentário: *"183 termos nos dez nichos
+(medido em 22/08/2026)"* e *"Vazio em nove dos dez; só `petshop` tem
+três"*.
+
+**Medido em 22/09/2026: 8 nichos, 113 termos, zero subtipos.** E não é a
+mesma lista com dois a menos: dos dez termos acentuados que
+`lib/nichos/busca.ts` cita pelo nome — rodízio, japonês, ração,
+veterinário, cílios, degradê, óleo, castração, musculação, estética —
+**nove sumiram**. `petshop`, `restaurante`, beleza e academia não existem
+mais no `GET /nichos`.
+
+**As três consequências, em ordem de tamanho:**
+
+1. **Quem tem `businesses.niche` de um nicho extinto.** `nichoPeloRotulo`
+   não reconhece mais "Petshop". Isso trava a reescolha do nicho, e
+   `conferir:nichos` já falha por causa disso — "pizzaria" esperava
+   `restaurante` e cai em texto livre (67 de 79, **e falha igual na `main`,
+   sem nenhuma linha da v4**). Não sei se algum cliente real está nesse
+   estado; é um `SELECT` de um minuto que eu não fiz porque não tenho
+   autorização de leitura no banco nesta tarefa.
+2. **O conferidor ficou preso a 22/08.** Ele afirma dez nichos e nomes
+   concretos. Um conferidor que testa uma lista viva contra nomes fixos
+   vai ficar vermelho toda vez que o `knowledge/` mudar, e vermelho
+   crônico é conferidor que ninguém mais lê.
+3. **Os comentários de `tipos.ts` e `busca.ts` afirmam números falsos.**
+   Não é fofoca de comentário: são os dois arquivos que qualquer um lê
+   para entender a busca de nicho.
+
+---
+
+## DUVIDA-ONB-20 — Três dos oito rótulos são verbete, não rótulo
+
+`lib/nichos/tipos.ts` promete sobre `rotulo`: *"Voz de dono, não de
+catálogo: `clinica-odontologica` → Dentista. É isto que vai no chip e é
+isto que é gravado em `businesses.niche`."*
+
+**Medido no `GET /nichos` de 22/09/2026**, três dos oito chegam assim:
+
+| chars | rótulo |
+|---|---|
+| 64 | Análise de coloração pessoal / consultoria de imagem (Austrália) |
+| 79 | Gestão de tráfego pago / anúncios no Google e no Instagram para pequeno negócio |
+| 59 | Rastreamento veicular / rastreador para carro, moto e frota |
+
+Eles vão inteiros para o chip — está na captura
+`docs/v2g-wireframes/capturas/onboarding-v4/outro-1-pergunta-claro-1280.png`: um chip de três linhas, e outro
+que diz **"(Austrália)"** num produto para PME brasileira.
+
+E agora eles entram numa frase: *"Pelo que você contou, o seu caso é
+[rótulo]. Confere?"*. Inteiro, isso vira
+
+> Pelo que você contou, o seu caso é Gestão de tráfego pago / anúncios no
+> Google e no Instagram para pequeno negócio. Confere?
+
+Ninguém responde "confere" para isso.
+
+**O que eu fiz, e é remendo:** `rotuloParaFrase()` corta na primeira
+barra. Resolve a frase e não resolve o chip. **O conserto de verdade é no
+`knowledge/` do backend**, que é de onde os rótulos vêm — e é decisão de
+quem manda nele, não minha.
+
+**O "(Austrália)" eu deixei aparecer de propósito.** Tapar esconderia que
+ele existe.

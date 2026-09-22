@@ -1,0 +1,248 @@
+/*
+ * ONDE A COBRANÇA DO MATERIAL VOLTA — bancada.
+ *
+ * Nenhum literal de cor nem de tamanho de texto: tudo lê os tokens de
+ * `app/globals.css`. Espaço na escala 4 · 8 · 12 · 16 · 24 · 32.
+ *
+ * A folha é irmã de `_chegada/TelaDeChegada.module.css` de propósito: os
+ * dois momentos desenhados aqui vão morar naquela tela, e desenhar com
+ * outro vocabulário faria a mudança parecer maior do que é.
+ */
+
+.tela {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 100dvh;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--fundo-pagina);
+  color-scheme: light dark;
+}
+
+.topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.marca {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--texto-forte);
+}
+
+/* A etiqueta da bancada. Existe para que ninguém confunda a captura com
+   uma tela de produção — e some junto com a rota, no build. */
+.nota {
+  font-size: var(--fs-legenda);
+  color: var(--texto-fraco);
+}
+
+/* ------------------------------------------------------ cada momento */
+
+.momento {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.momentoTitulo {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  font-weight: 700;
+  color: var(--texto-forte);
+  margin: 0;
+}
+
+.momentoNota {
+  font-size: var(--fs-legenda);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 0;
+  max-width: 60ch;
+}
+
+.momentoNota code {
+  font-family: monospace;
+  font-size: 0.95em;
+}
+
+/* O quadro é o recorte do que vai para a tela de verdade. A borda existe
+   só na bancada, para separar os dois momentos — em produção não há
+   moldura nenhuma em volta do herói. */
+.quadro {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  padding: 24px;
+  margin-top: 8px;
+  border: 1px solid var(--linha-divisoria);
+  border-radius: var(--raio-cartao);
+  background: var(--fundo-superficie);
+}
+
+/* --------------------------------------------------------- o herói */
+
+.heroi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.manchete {
+  font-family: var(--display);
+  font-size: var(--fs-hero-frase);
+  line-height: 1.15;
+  color: var(--texto-forte);
+  margin: 0;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.apoio {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 0;
+  max-width: 54ch;
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  text-decoration: none;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+/* O botão travado e o motivo são UMA peça, empilhados e colados.
+   Lado a lado não acontece: o `cta` deste produto ocupa a largura
+   inteira, então "ao lado" viraria "duas linhas abaixo, solto" — e
+   motivo solto vira legenda da tela toda em vez de explicação daquele
+   botão. 4px é a distância que diz "isto é daquilo ali". */
+.travado {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.motivo {
+  font-size: var(--fs-legenda);
+  color: var(--texto-fraco);
+}
+
+.saida {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 0;
+}
+
+/* Marca de tinta, não de fundo: `--cobalt-ink` é o token que muda no
+   tema escuro. `--cobalt` aqui deixaria o link ilegível à noite. */
+.saidaLinha {
+  color: var(--cobalt-ink);
+  font-weight: 700;
+}
+
+/* ------------------------------------------- a cadeia, como contexto */
+
+.caminho,
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.caminhoTitulo {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--texto-fraco);
+  margin: 0;
+}
+
+.etapas,
+.itens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.etapa,
+.item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--fs-corpo);
+  color: var(--texto-fraco);
+}
+
+.marcaEtapa,
+.marcaItem {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--raio-pilula);
+  border: 1px solid var(--linha-divisoria);
+  flex: none;
+}
+
+.feita .marcaEtapa,
+.temSim .marcaItem {
+  background: var(--texto-fraco);
+  border-color: var(--texto-fraco);
+}
+
+.feita .etapaNome {
+  color: var(--texto-fraco);
+}
+
+.atual .marcaEtapa {
+  background: var(--cobalt-ink);
+  border-color: var(--cobalt-ink);
+}
+
+.atual .etapaNome {
+  color: var(--texto-forte);
+  font-weight: 700;
+}
+
+.vocEstaAqui {
+  font-size: var(--fs-legenda);
+  color: var(--cobalt-ink);
+  font-weight: 700;
+}
+
+/* O que falta fica com a marca VAZIA, não vermelha. Faltar não é falha —
+   e vermelho nesta lista transformaria um lembrete em repreensão. */
+.temNao .marcaItem {
+  background: transparent;
+}
+
+.itemNota {
+  color: var(--texto-fraco);
+  margin-left: 4px;
+}

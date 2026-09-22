@@ -242,16 +242,69 @@ export const CONVITE_NO_MICROFONE =
  * aqui, e por isso esta tela não decide nada sobre nicho.
  * ============================================================
  */
-export const NICHOS_DA_BANCADA: { nicho: string; rotulo: string }[] = [
-  { nicho: "advocacia", rotulo: "Advogado" },
-  { nicho: "analise-coloracao-pessoal", rotulo: "Análise de coloração pessoal / consultoria de imagem (Austrália)" },
-  { nicho: "arquitetura", rotulo: "Arquiteto" },
-  { nicho: "clinica-odontologica", rotulo: "Dentista" },
-  { nicho: "gestao-de-trafego", rotulo: "Gestão de tráfego pago / anúncios no Google e no Instagram para pequeno negócio" },
-  { nicho: "rastreamento-veicular", rotulo: "Rastreamento veicular / rastreador para carro, moto e frota" },
-  { nicho: "reparos", rotulo: "Reparos residenciais" },
-  { nicho: "venda-de-veiculo", rotulo: "Loja de veículos" },
+export const NICHOS_DA_BANCADA: { nicho: string; rotulo: string; termos: string[] }[] = [
+  {
+    nicho: "advocacia",
+    rotulo: "Advogado",
+    termos: ["advogado", "advocacia", "escritório de advocacia", "advogado trabalhista", "advogado previdenciário", "advogado de família", "divórcio", "inventário", "pensão alimentícia", "advogado criminal", "advogado civil", "direito do consumidor", "consultoria jurídica", "assessoria jurídica"],
+  },
+  {
+    nicho: "analise-coloracao-pessoal",
+    rotulo: "Análise de coloração pessoal / consultoria de imagem (Austrália)",
+    termos: ["colour analysis", "color analysis", "personal colour analysis", "colour consultant", "colour consultation", "personal stylist", "image consultant", "style consultant", "seasonal colour analysis", "colour draping", "colour season", "analise de coloracao pessoal", "coloracao pessoal", "consultoria de imagem", "consultor de imagem", "cartela de cores"],
+  },
+  {
+    nicho: "arquitetura",
+    rotulo: "Arquiteto",
+    termos: ["arquiteto", "arquitetura", "escritório de arquitetura", "projeto arquitetônico", "projeto de casa", "projeto de reforma", "arquitetura de interiores", "design de interiores", "decoração de interiores", "paisagismo", "projeto residencial", "projeto comercial"],
+  },
+  {
+    nicho: "clinica-odontologica",
+    rotulo: "Dentista",
+    termos: ["dentista", "odontologia", "ortodontia", "implante", "aparelho", "clareamento", "consultorio odontologico", "prótese", "siso", "canal", "extração", "limpeza", "restauração", "faceta", "lente de contato dental", "dentadura", "aparelho invisível", "periodontia", "endodontia", "odontopediatria", "clareamento a laser"],
+  },
+  {
+    nicho: "gestao-de-trafego",
+    rotulo: "Gestão de tráfego pago / anúncios no Google e no Instagram para pequeno negócio",
+    termos: ["gestão de tráfego", "gestor de tráfego", "agência de tráfego pago", "tráfego pago", "agência de marketing digital", "anúncio no Google", "anúncio no Instagram", "anúncio no Facebook", "campanha de anúncio", "assessoria de marketing", "consultoria de marketing digital", "fazer anúncio para minha empresa"],
+  },
+  {
+    nicho: "rastreamento-veicular",
+    rotulo: "Rastreamento veicular / rastreador para carro, moto e frota",
+    termos: ["rastreamento veicular", "rastreador veicular", "rastreador", "rastreador de carro", "rastreador de moto", "rastreamento de frota", "gestão de frota", "monitoramento veicular", "telemetria veicular", "bloqueador veicular", "localizador de veículo", "segurança veicular"],
+  },
+  {
+    nicho: "reparos",
+    rotulo: "Reparos residenciais",
+    termos: ["reparos residenciais", "marido de aluguel", "manutenção residencial", "pequenos reparos", "conserto em casa", "eletricista", "encanador", "pintor", "vazamento", "desentupimento", "instalação elétrica", "instalação de chuveiro", "montagem de móveis", "pequena reforma"],
+  },
+  {
+    nicho: "venda-de-veiculo",
+    rotulo: "Loja de veículos",
+    termos: ["loja de carros", "loja de motos", "revenda de veículos", "venda de carros", "venda de motos", "seminovos", "carro usado", "moto usada", "concessionária", "multimarcas", "garagem de carros", "compra e venda de veículos"],
+  },
 ];
+
+/**
+ * OS `sub_tipos` DO BACKEND ESTÃO VAZIOS — medido em 22/09/2026.
+ *
+ * ============================================================
+ * O briefing manda usar os SUBTIPOS que o `GET /nichos` devolve, para
+ * "designer de interiores" cair em `arquitetura`. Medido na resposta
+ * viva: `sub_tipos` é `[]` nos oito nichos. **Total de subtipos na lista
+ * inteira: zero.**
+ *
+ * O resultado pedido existe, por OUTRO campo: `termos_de_busca` de
+ * `arquitetura` contém "design de interiores", "arquitetura de
+ * interiores" e "decoração de interiores" — 12 termos ao todo, e 113 na
+ * lista inteira.
+ *
+ * Por isso a busca local lê `termos`, e não `sub_tipos`. Quando o backend
+ * preencher os subtipos, eles entram aqui ao lado — não no lugar: termo
+ * de busca e subtipo não são a mesma coisa.
+ * ============================================================
+ */
+export const TOTAL_DE_TERMOS = 113;
 
 /**
  * "Outro" NÃO é um nicho do backend — é uma saída da tela.
