@@ -1,0 +1,245 @@
+/*
+ * O INÍCIO DE QUEM ACABOU DE CHEGAR — bancada.
+ *
+ * Nenhum literal de cor nem de tamanho de texto: tudo lê os tokens de
+ * `app/globals.css`. Espaço na escala 4 · 8 · 12 · 16 · 24 · 32.
+ *
+ * A HIERARQUIA É O ASSUNTO desta folha. O herói é a única coisa grande da
+ * tela; o caminho é cinza e quieto; a linha da pergunta é a menor. Se um
+ * dia o caminho voltar a competir com o herói, o defeito volta junto.
+ */
+
+.tela {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  min-height: 100dvh;
+  padding: 16px;
+  box-sizing: border-box;
+  background: var(--fundo-pagina);
+  color-scheme: light dark;
+}
+
+/* ------------------------------------------------------------- o topo */
+
+.topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.marca {
+  font-family: var(--display);
+  font-size: var(--fs-bloco);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--texto-forte);
+}
+
+.humano {
+  font-size: var(--fs-corpo);
+  font-weight: 700;
+  color: var(--cobalt-ink);
+}
+
+/* ------------------------------------------------------------ o herói */
+
+.heroi,
+.caminho {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.heroi {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.manchete {
+  font-family: var(--display);
+  font-size: var(--fs-hero-frase);
+  line-height: 1.15;
+  color: var(--texto-forte);
+  margin: 0;
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.apoio {
+  font-size: var(--fs-titulo);
+  line-height: 1.5;
+  color: var(--texto-fraco);
+  margin: 0;
+  max-width: 54ch;
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  text-decoration: none;
+  margin-top: 8px;
+}
+
+/* Sem ação NÃO é sem resposta. O ponto que pulsa diz que alguma coisa
+   está acontecendo do nosso lado — e quem pediu menos movimento no
+   sistema recebe um ponto parado, que diz a mesma coisa. */
+.semAcao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--alt-principal);
+  margin: 0;
+  font-family: var(--display);
+  font-size: var(--fs-titulo);
+  font-weight: 700;
+  color: var(--texto-fraco);
+}
+
+.pulso {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--raio-pilula);
+  background: var(--cobalt-ink);
+  animation: respirar 1.8s ease-in-out infinite;
+}
+
+@keyframes respirar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulso { animation: none; }
+}
+
+.depois {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  color: var(--texto-discreto);
+  margin: 0;
+  max-width: 56ch;
+}
+
+/* ----------------------------------------------------------- o caminho
+
+   Cinza, quieto, sem botão e SEM PLACAR. A régua de "0 de 4" saiu
+   inteira: zero em destaque é má notícia sobre uma coisa que a pessoa
+   acabou de fazer.
+   ------------------------------------------------------------------- */
+
+.caminho {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.caminhoTitulo {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--texto-discreto);
+  margin: 0;
+}
+
+.etapas {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.etapa {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--alt-controle);
+  font-size: var(--fs-corpo);
+  color: var(--texto-discreto);
+}
+
+.marcaEtapa {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: var(--raio-pilula);
+  border: 1.5px solid var(--line);
+  background: none;
+}
+
+.feita .marcaEtapa {
+  background: var(--texto-discreto);
+  border-color: var(--texto-discreto);
+}
+
+.feita .etapaNome {
+  color: var(--texto-fraco);
+}
+
+/* A etapa atual é a única com peso — e ela é a MESMA do botão do herói.
+   Duas marcas diferentes para o mesmo passo seriam a confusão de volta. */
+.atual .marcaEtapa {
+  border-color: var(--cobalt-ink);
+  border-width: 3px;
+}
+
+.atual .etapaNome {
+  color: var(--texto-forte);
+  font-weight: 700;
+}
+
+.vocEstaAqui {
+  font-size: var(--fs-legenda);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--cobalt-ink);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------- a pergunta que não vem */
+
+/* A COLUNA e o TEXTO sao dois elementos, e nao um so com duas margens.
+   Com `margin: 0 auto` e `max-width: 60ch` no mesmo elemento, a linha
+   ficava centrada DENTRO do palco de 720px — desalinhada de todo o resto
+   da tela, que comeca na esquerda. A coluna centra; o texto, dentro dela,
+   comeca na esquerda e para nos 60ch. */
+.pergunta,
+.rodape {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.aindaNao {
+  font-size: var(--fs-legenda);
+  line-height: 1.5;
+  color: var(--texto-discreto);
+  max-width: 60ch;
+  margin: 0;
+}
+
+.perguntaTexto {
+  font-size: var(--fs-corpo);
+  color: var(--texto-fraco);
+  margin: 0;
+}
+
+@media (min-width: 700px) {
+  .tela {
+    padding: 32px;
+    gap: 32px;
+  }
+}

@@ -460,9 +460,20 @@
   outline: none;
 }
 
+/* ============================================================
+   O PLACEHOLDER NAO PODE PARECER RESPOSTA.
+
+   Ele estava em 700 e no mesmo tamanho do valor: a tela mostrava
+   "R$ 1.200" grande e em negrito com o "Continuar" apagado ao lado, e
+   quem lesse veria um valor preenchido e um botao quebrado.
+
+   Peso normal e tinta discreta resolvem sem encolher o campo — o tamanho
+   grande e do CAMPO, e ele continua sendo o mesmo com ou sem resposta.
+   ============================================================ */
 .campoDinheiro .campoValor::placeholder {
   color: var(--texto-discreto);
-  font-weight: 700;
+  font-weight: 400;
+  opacity: 1;
 }
 
 .vivo {

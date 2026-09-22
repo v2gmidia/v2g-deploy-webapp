@@ -1119,10 +1119,22 @@ export function Onboarding({
           </form>
         )}
 
-        {/* ---------- a verba, com o texto vivo ---------- */}
+        {/* ============================================================
+            A VERBA COMECA EM ZERO, E NAO EM 900.
+
+            O 900 era o ponto de partida do slider, e num slider isso e
+            inevitavel: a alavanca precisa estar em algum lugar. Num campo
+            digitado vira outra coisa — o campo abriria com um numero que a
+            pessoa nao escolheu, o texto vivo ja calcularia em cima dele, e
+            o "Continuar" ja estaria aceso. Ela podia seguir sem nunca ter
+            decidido quanto quer investir.
+
+            Com zero: campo vazio, sem texto vivo, e o "Continuar" so
+            acende quando ela digita.
+            ============================================================ */}
         {p.tipo === "verba" && (
           <Verba
-            valor={Number(respostas.verba ?? 900)}
+            valor={Number(respostas.verba ?? 0)}
             custo={custo}
             aoMudar={(v) => gravar({ ...respostas, verba: String(v) })}
             aoSeguir={() => setPasso((x) => x + 1)}
@@ -1181,21 +1193,52 @@ export function Onboarding({
             </label>
             <Cores />
             <p className={css.dica}>
-              A logo é a única obrigatória. As fotos do negócio dão à IA de onde escolher — sem
-              nenhum material, a montagem do anúncio para antes de começar.
+              A logo é a que a gente mais precisa. As fotos do negócio dão à IA de onde
+              escolher.
             </p>
+            {/* ============================================================
+                A TELA DIZIA QUE O MATERIAL ERA OBRIGATÓRIO E DEIXAVA PASSAR.
+
+                "Sem material, a gente não consegue montar o anúncio" com um
+                "Continuar" aceso ao lado é a tela desmentindo a si mesma —
+                e quem lê é alguém que já foi enganado por agência antes.
+
+                Agora são dois caminhos, os dois nomeados: com arquivo, o
+                principal segue; sem arquivo, a saída se chama pelo que ela
+                é. É o mesmo desenho do "não tenho site", que também não é
+                recusa nem culpa.
+                ============================================================ */}
             <div className={css.acoes}>
               <button
                 type="button"
                 className={`cta ${css.botao}`}
+                disabled={!respostas.material}
                 onClick={() => setPasso((x) => x + 1)}
               >
                 Continuar
               </button>
+              {!respostas.material && (
+                <button
+                  type="button"
+                  className={`cta ghost ${css.botao}`}
+                  onClick={() => {
+                    gravar({ ...respostas, material_depois: "1" });
+                    setPasso((x) => x + 1);
+                  }}
+                >
+                  Não tenho agora — mando depois
+                </button>
+              )}
               <button type="button" className={css.voltar} onClick={voltar}>
                 Voltar
               </button>
             </div>
+            {!respostas.material && (
+              <p className={css.dica}>
+                Sem nenhum material a montagem do anúncio não começa — mas dá para mandar pelo
+                WhatsApp depois, no seu tempo.
+              </p>
+            )}
           </div>
         )}
 
@@ -1470,7 +1513,12 @@ const LINHAS_DO_RESUMO: {
   {
     id: "material",
     rotulo: "Material",
-    valor: (r) => (r.material ? `${r.material} arquivo(s)` : undefined),
+    valor: (r) =>
+      r.material
+        ? `${r.material} arquivo(s)`
+        : r.material_depois
+          ? "vai mandar depois"
+          : undefined,
   },
   {
     id: "material",

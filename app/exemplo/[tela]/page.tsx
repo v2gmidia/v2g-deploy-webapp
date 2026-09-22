@@ -91,6 +91,20 @@ export default async function ExemploPage({
   const agora = new Date();
   const casco = exemplo.CASCO_DE_EXEMPLO;
 
+  // ---- o Inicio de quem acabou de chegar ----
+  // Dois momentos, pelo sufixo da rota:
+  //   /exemplo/chegada          -> falta conectar
+  //   /exemplo/chegada-conectou -> ja conectou, e agora e com a gente
+  if (tela === "chegada" || tela === "chegada-conectou") {
+    const modulo = ehDesenvolvimento ? await import("../_chegada/TelaDeChegada") : null;
+    const fixture = ehDesenvolvimento ? await import("../_chegada/estado-de-chegada") : null;
+    if (!modulo || !fixture) notFound();
+    const momento = tela === "chegada" ? "falta_conectar" : "e_com_a_gente";
+    return (
+      <modulo.TelaDeChegada estado={fixture.estadoDeChegada(agora, momento)} momento={momento} />
+    );
+  }
+
   // ---- a amostra das bordas de cobalto no tema escuro ----
   // As 14 regras consertadas em 20/09 moram no `globals.css` e pintam
   // telas atrás do login. Esta amostra renderiza a marcação real de cada

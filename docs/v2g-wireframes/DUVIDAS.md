@@ -688,3 +688,69 @@ pessoa tinha falado.
 **Quem não tem Web Speech** (Firefox) cai no comportamento da v2: grava,
 espera, e o texto aparece de uma vez. Nada quebra.
 
+---
+
+## DUVIDA-ONB-15 — A cadeia marca uma etapa posterior como feita
+
+**Medido em 21/09/2026**, desenhando o Início de quem acabou de chegar.
+
+Com o cadastro fechado e a conexão pendente, `montarEtapas` devolve:
+
+```
+Seu cadastro          concluída
+A conexão da sua conta  PENDENTE   ← onde a pessoa está
+A peça do seu anúncio   pendente
+A sua aprovação       CONCLUÍDA   ← ela é a quarta
+O anúncio no ar         pendente
+Os primeiros números    pendente
+```
+
+**Do lado do dado, faz sentido:** `pecasParaAprovar: 0` — não há nada
+esperando aprovação, então a etapa não está pendente. **Do lado da tela,
+não faz nenhum:** o dono lê uma lista em ordem e vê a quarta linha
+marcada com a terceira em aberto.
+
+É a mesma família do defeito que a v2 do `Etapa.nome` já tinha
+consertado: uma frase certa para um estado, errada em outro contexto.
+
+**O que eu fiz:** a `/exemplo/chegada` só carimba as etapas ANTERIORES à
+atual. É decisão de EXIBIÇÃO — não corrigi `montarEtapas`, porque o dado
+dela não está errado, está respondendo outra pergunta ("há algo esperando
+aprovação?" em vez de "esta etapa já passou?").
+
+**O que falta decidir:** se a cadeia é uma SEQUÊNCIA — e aí `concluida`
+deveria significar "já passou", e a `/inicio` de produção mostra a mesma
+marca errada hoje — ou se ela é uma lista de pendências independentes, e
+aí a tela é que não deveria desenhá-la em ordem.
+
+Enquanto não for decidido, a `/inicio` de produção continua mostrando "A
+sua aprovação · já está feito" para quem nem tem peça.
+
+---
+
+## DUVIDA-ONB-16 — O material é obrigatório e a tela deixava passar
+
+**O que era.** O passo 10 dizia "sem material, a gente não consegue montar
+o anúncio" com o "Continuar" aceso ao lado. A tela desmentia a si mesma, e
+quem lê é alguém que já foi enganado por agência antes.
+
+**O que eu fiz**, pelo mesmo desenho do "não tenho site": dois caminhos,
+os dois nomeados. Com arquivo, o principal segue. Sem arquivo, o principal
+apaga e aparece **"Não tenho agora — mando depois"**, que grava
+`material_depois` e o resumo passa a dizer "vai mandar depois".
+
+**O que falta decidir:** se "mando depois" é aceitável de verdade. Ele
+resolve a contradição da tela; não resolve o pipeline, que sem nenhuma
+imagem não monta anúncio. As opções:
+
+1. **aceitar e cobrar depois** — alguém precisa lembrar essa pessoa, e não
+   existe quem;
+2. **bloquear mesmo** — quem não tem a logo à mão naquele minuto abandona;
+3. **montar sem material** — o `origem_criativo` do payload é fixo em
+   `"gerar"`, então a IA monta sem foto do cliente. Se isso bastar, a
+   frase "sem material a gente não consegue" é que está errada.
+
+**A 3 merece medição antes das outras duas:** se o anúncio sai sem
+material nenhum, o passo 10 inteiro pode virar opcional e a tela para de
+prometer uma dependência que não existe.
+
