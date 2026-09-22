@@ -105,6 +105,16 @@ export default async function ExemploPage({
     );
   }
 
+  // ---- onde a cobranca do material volta ----
+  // Dois momentos numa tela so, de proposito: eles sao a MESMA divida
+  // cobrada de dois jeitos, e ver os dois lado a lado e o unico jeito de
+  // conferir que o tom muda de lembrete para tranca sem virar bronca.
+  if (tela === "material") {
+    const modulo = ehDesenvolvimento ? await import("../_material/CobrancaDoMaterial") : null;
+    if (!modulo) notFound();
+    return <modulo.CobrancaDoMaterial />;
+  }
+
   // ---- a amostra das bordas de cobalto no tema escuro ----
   // As 14 regras consertadas em 20/09 moram no `globals.css` e pintam
   // telas atrás do login. Esta amostra renderiza a marcação real de cada

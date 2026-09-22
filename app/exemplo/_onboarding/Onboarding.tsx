@@ -14,6 +14,7 @@ import {
   NICHO_OUTRO,
   type Passo,
 } from "./perguntas";
+import { rotuloParaFrase, type Palpite } from "./classificar";
 import { custoDoNicho, frasesDoSlider } from "./custo-por-contato";
 import {
   mascararCep,
@@ -128,6 +129,19 @@ const EXEMPLO: Respostas = {
   [CHAVE_AUDIO]: "descricao",
 };
 
+/**
+ * A volta da classificação do texto livre. Ver `api-classificar-nicho`.
+ *
+ * `palpite` e `humano` não são opostos por acaso: ou eu tenho um nicho
+ * para propor, ou eu tenho uma pessoa para oferecer. Não existe terceiro
+ * caminho em que a tela fica quieta.
+ */
+interface PropostaDeNicho {
+  palpite: Palpite | null;
+  humano: boolean;
+  motivo?: string;
+}
+
 export function Onboarding({
   passoInicial = 0,
   transcricaoLigada,
@@ -192,6 +206,26 @@ export function Onboarding({
    * mostrar nada.
    */
   const [aoVivo, setAoVivo] = useState<Trecho | null>(null);
+  /**
+   * O QUE A CLASSIFICAÇÃO DEVOLVEU para o texto livre do "Outro".
+   *
+   * ============================================================
+   * TRÊS ESTADOS, E O TERCEIRO É O QUE IMPORTA.
+   *
+   * `null`        — ainda não perguntei nada; a tela mostra o campo.
+   * `{palpite}`   — tenho uma proposta para confirmar.
+   * `{humano}`    — não tenho, e a tela diz isso sem enfeitar.
+   *
+   * O terceiro não é fracasso do fluxo, é o fluxo funcionando. Quem
+   * conserta bicicleta não está na lista de oito nichos, e nenhuma IA vai
+   * fazer ele caber. Propor "o seu caso é Advogado" para essa pessoa é
+   * pior do que dizer que não sei — e ela ainda não pagou nada para ter
+   * motivo de relevar.
+   * ============================================================
+   */
+  const [proposta, setProposta] = useState<PropostaDeNicho | null>(null);
+  /** A classificação está em curso — o botão espera, não some. */
+  const [classificando, setClassificando] = useState(false);
   /**
    * As cores tiradas da logo. `null` = ainda não olhou nenhuma logo;
    * lista vazia = olhou e não achou cor, que é resposta e não erro.
@@ -851,7 +885,11 @@ export function Onboarding({
 
       <section className={`${css.palco} ${entrando ? css.entrando : ""}`} key={p.id}>
         <h1 className={css.titulo}>{p.titulo}</h1>
-        {p.ajuda && <p className={css.ajuda}>{p.ajuda}</p>}
+        {/* A ajuda do passo do nicho é "Escolha o mais próximo" — uma
+            instrução sobre a lista. Com a proposta aberta a lista não
+            está mais lá, e a instrução vira ordem para fazer uma coisa
+            que não tem como ser feita. */}
+        {p.ajuda && proposta === null && <p className={css.ajuda}>{p.ajuda}</p>}
 
         {/* ---------- texto, com áudio ou teclado ---------- */}
         {(p.tipo === "texto" || p.tipo === "site") && (
@@ -1000,6 +1038,23 @@ export function Onboarding({
         {/* ---------- nicho: lista fechada ---------- */}
         {p.tipo === "nicho" && (
           <div className={css.forma}>
+            {/* ============================================================
+                COM PROPOSTA NA TELA, A LISTA SAI.
+
+                Olhando a captura de 1280: os nove chips continuavam
+                inteiros e a proposta nascia DEPOIS deles, no fim da
+                página. Em 375 ela ficava abaixo da dobra — a pessoa
+                apertava "Continuar" e parecia que nada tinha acontecido.
+
+                Pior que a rolagem: o chip aceso dizia "Outro" enquanto a
+                frase logo abaixo dizia "o seu caso é Arquiteto". A tela
+                se contradizia em dois centímetros.
+
+                A pergunta já foi feita e respondida. O que está na tela
+                agora é a conferência dela, e conferência com o cardápio
+                aberto do lado convida a pessoa a responder de novo.
+                ============================================================ */}
+            {proposta === null && (
             <div className={css.escolhas}>
               {NICHOS_DA_BANCADA.map((n) => (
                 <button
@@ -1010,6 +1065,10 @@ export function Onboarding({
                   }`}
                   onClick={() => {
                     gravar({ ...respostas, nicho: n.nicho, nicho_outro: "" });
+                    // Escolher da lista apaga qualquer proposta pendente:
+                    // ela era sobre outro texto, e deixar viva faria a
+                    // pergunta reaparecer sobre um nicho já decidido.
+                    setProposta(null);
                     setPasso((x) => x + 1);
                   }}
                 >
@@ -1028,47 +1087,223 @@ export function Onboarding({
                 className={`${css.escolha} ${
                   respostas.nicho === NICHO_OUTRO ? css.escolhida : ""
                 }`}
-                onClick={() => gravar({ ...respostas, nicho: NICHO_OUTRO })}
+                onClick={() => {
+                  gravar({ ...respostas, nicho: NICHO_OUTRO });
+                  // Tocar em "Outro" de novo recomeça a conversa, e não
+                  // devolve o palpite antigo sobre um texto que ela pode
+                  // estar prestes a reescrever.
+                  setProposta(null);
+                  setRecado(null);
+                }}
               >
                 Outro — meu negócio não está aqui
               </button>
             </div>
+            )}
 
-            {respostas.nicho === NICHO_OUTRO && (
+            {/* ============================================================
+                "OUTRO" VIRA CLASSIFICAÇÃO, NÃO CAMPO LIVRE SOLTO.
+
+                Até 22/09 isto era um `input` de uma linha com placeholder
+                "Ex: loja de bicicletas", mínimo de 3 letras, e o texto ia
+                inteiro para uma pessoa ler depois. Funcionava, e desperdiçava
+                a única vez no fluxo em que o dono conta o negócio com as
+                palavras dele.
+
+                Agora são três estados, nesta ordem:
+
+                  1. A PERGUNTA ABERTA — com áudio, como as outras duas
+                     abertas do fluxo. Quem fala conta mais, e aqui contar
+                     mais é exatamente o que decide o resultado.
+                  2. A PROPOSTA — "o seu caso é X. Confere?" A pessoa
+                     confirma ou recusa; ela decide, não a gente.
+                  3. A PESSOA — quando não dá para propor, ou quando ela
+                     recusa. Sem tentar de novo com outro palpite: insistir
+                     depois de um "não é isso" é discutir com o dono sobre
+                     o negócio dele.
+                ============================================================ */}
+            {respostas.nicho === NICHO_OUTRO && proposta === null && (
               <form
                 className={css.forma}
-                onSubmit={(e) => {
+                onSubmit={async (e) => {
                   e.preventDefault();
                   const texto = rascunho.trim();
-                  if (texto.length < 3) {
-                    setRecado("Me conta em duas palavras o que seu negócio faz.");
+                  // O mínimo é o do backend (`minLength: 10`). Pedir mais
+                  // aqui e receber 422 lá seria a tela mentindo sobre o
+                  // que basta.
+                  if (texto.length < 10) {
+                    setRecado(
+                      "Conta um pouco mais: com uma frase curta eu não consigo entender o que você faz.",
+                    );
                     return;
                   }
-                  gravar({ ...respostas, nicho_outro: texto });
-                  setPasso((x) => x + 1);
+                  setRecado(null);
+                  setClassificando(true);
+                  try {
+                    const r = await fetch("/exemplo/api-classificar-nicho", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        descricao: texto,
+                        nomeNegocio: respostas.empresa ?? "",
+                      }),
+                    });
+                    const dados = (await r.json()) as PropostaDeNicho;
+                    gravar({ ...respostas, nicho_outro: texto });
+                    setProposta(dados);
+                  } catch {
+                    // Rede caiu no meio. Não é hora de palpite: é hora de
+                    // gente, que é para onde a recusa também vai.
+                    gravar({ ...respostas, nicho_outro: texto });
+                    setProposta({
+                      palpite: null,
+                      humano: true,
+                      motivo: "não deu para conferir agora",
+                    });
+                  } finally {
+                    setClassificando(false);
+                  }
                 }}
               >
-                <p className={css.rotuloGrupo}>E qual é o seu negócio?</p>
-                <input
-                  className={css.campo}
+                <p className={css.rotuloGrupo}>
+                  Não achou o seu? Conta com detalhes o que você faz.
+                </p>
+                <textarea
+                  className={css.campoLongo}
                   value={rascunho}
                   onChange={(e) => setRascunho(e.target.value)}
-                  placeholder="Ex: loja de bicicletas"
-                  aria-label="Qual é o seu negócio"
+                  placeholder="Ex: conserto bicicleta e monto bike elétrica, atendo em casa e na oficina"
+                  aria-label="O que você faz"
+                  rows={3}
                   autoFocus
                 />
+                {/* As mesmas peças das outras duas perguntas abertas: o
+                    microfone convidativo, o convite abaixo do campo, e o
+                    áudio que sobrevive à transcrição que falha. */}
+                <Convite aberta />
+                <Microfone aberta />
+                <AoVivo />
+                <Refinado />
+                <Ditado />
+                <AudioSemTexto />
                 {recado && <p className={css.recado}>{recado}</p>}
-                <p className={css.dica}>
-                  Uma pessoa vai ler isso antes de montar seu anúncio.
-                </p>
                 <div className={css.acoes}>
-                  <button type="submit" className={`cta ${css.botao}`}>
-                    Continuar
+                  <button
+                    type="submit"
+                    className={`cta ${css.botao}`}
+                    disabled={classificando}
+                  >
+                    {classificando ? "Lendo o que você contou" : "Continuar"}
                   </button>
                 </div>
               </form>
             )}
 
+            {/* ---------- a proposta ---------- */}
+            {proposta?.palpite && (
+              <div className={css.forma}>
+                <p className={css.rotuloGrupo}>
+                  Pelo que você contou, o seu caso é{" "}
+                  <strong>
+                    {rotuloParaFrase(proposta.palpite.nicho) ?? proposta.palpite.rotulo}
+                  </strong>
+                  . Confere?
+                </p>
+                {/* ============================================================
+                    A PROPOSTA DIZ DE ONDE VEIO.
+
+                    "O seu caso é Arquiteto" sozinho é um veredito caído do
+                    céu, e quem discorda não tem no que pegar. Com o termo
+                    que casou, a pessoa vê o raciocínio e sabe o que corrigir.
+
+                    Do backend não vem termo — ele leu a frase inteira —,
+                    então ali a linha não aparece. Inventar uma seria pior
+                    do que não ter.
+                    ============================================================ */}
+                {proposta.palpite.origem === "termos" && (
+                  <p className={css.dica}>
+                    Foi “{proposta.palpite.termo}” no que você contou que me levou até aí.
+                  </p>
+                )}
+                <div className={css.acoes}>
+                  <button
+                    type="button"
+                    className={`cta ${css.botao}`}
+                    onClick={() => {
+                      // Grava o NICHO, não mais o `NICHO_OUTRO`: a pessoa
+                      // acabou de dizer que confere, e o custo por contato
+                      // passa a ser o do nicho de verdade.
+                      gravar({ ...respostas, nicho: proposta.palpite!.nicho });
+                      setProposta(null);
+                      setPasso((x) => x + 1);
+                    }}
+                  >
+                    Confere
+                  </button>
+                  <button
+                    type="button"
+                    className={`cta ghost ${css.botao}`}
+                    onClick={() =>
+                      setProposta({
+                        palpite: null,
+                        humano: true,
+                        motivo: "a pessoa recusou o palpite",
+                      })
+                    }
+                  >
+                    Não é isso, quero falar com alguém
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* ---------- a pessoa ---------- */}
+            {proposta?.humano && (
+              <div className={css.forma}>
+                <p className={css.rotuloGrupo}>Então é com uma pessoa mesmo.</p>
+                {/* ============================================================
+                    SEM PEDIR DESCULPA, E SEM PROMETER PRAZO.
+
+                    A lista tem oito nichos porque são oito os que a gente
+                    sabe quanto custa. Não achar o seu não é falha do
+                    cliente nem acidente: é o tamanho do produto hoje, e
+                    dizer isso direto respeita mais do que "ops".
+
+                    O que a pessoa escreveu FICA GRAVADO — ela não vai
+                    contar duas vezes.
+                    ============================================================ */}
+                <p className={css.dica}>
+                  O que você escreveu fica guardado, e uma pessoa lê antes de montar seu
+                  anúncio. Você não vai precisar contar de novo.
+                </p>
+                <div className={css.acoes}>
+                  <a
+                    className={`cta ${css.botao}`}
+                    href={WHATSAPP_HUMANO}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Falar com a gente
+                  </a>
+                  <button
+                    type="button"
+                    className={`cta ghost ${css.botao}`}
+                    onClick={() => {
+                      setProposta(null);
+                      setPasso((x) => x + 1);
+                    }}
+                  >
+                    Seguir e falar depois
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* A linha do rodapé só faz sentido com a lista na tela: ela
+                explica por que a lista é curta. Com a proposta aberta ela
+                vira uma terceira oferta de falar com alguém, ao lado de
+                duas que já estão ali em forma de botão. */}
+            {proposta === null && (
             <p className={css.dica}>
               A lista é curta de propósito: é ela que diz quanto custa cada contato. Se o seu
               não está aí,{" "}
@@ -1077,6 +1312,7 @@ export function Onboarding({
               </a>
               .
             </p>
+            )}
             <div className={css.acoes}>
               <button type="button" className={css.voltar} onClick={voltar}>
                 Voltar
