@@ -826,7 +826,7 @@ export function Onboarding({
                 key={l.id}
                 rotulo={l.rotulo}
                 valor={l.valor(respostas, nichos)}
-                aoMudar={() => irPara(l.id)}
+                aoMudar={() => irPara(l.passo ?? l.id)}
                 porAudio={falando.includes(l.id)}
               />
             ))}
@@ -1765,7 +1765,34 @@ function wavDeSilencio(segundos: number): Blob {
  * receberia um resumo diferente do que o cliente viu na tela.
  */
 const LINHAS_DO_RESUMO: {
+  /**
+   * IDENTIDADE DA LINHA — é a `key` do React e a marca de "(falado)".
+   *
+   * ============================================================
+   * ELA TEM QUE SER ÚNICA, E DEIXOU DE SER EM 21/09.
+   *
+   * A linha das cores nasceu (commit `cea76bf`) copiando a do material,
+   * e ficou com `id: "material"` também. Duas linhas com a mesma `key`
+   * no `LINHAS_DO_RESUMO.map()` viram um aviso no console do navegador
+   * — "Encountered two children with the same key, `material`" — e, o
+   * que é pior, o React passa a reconciliar as duas como se fossem a
+   * mesma: editar uma pode repintar a outra.
+   *
+   * O id não podia ser simplesmente trocado, porque ele também era o
+   * destino do botão "Mudar", e o destino das cores É o passo do
+   * material (é lá que a logo entra e as cores saem dela). Por isso as
+   * duas coisas se separaram: `id` identifica, `passo` navega.
+   * ============================================================
+   */
   id: string;
+  /**
+   * PARA ONDE O "Mudar" LEVA, quando não é o próprio `id`.
+   *
+   * Só as cores usam: elas não são um passo do fluxo, são um pedaço do
+   * passo do material. Omitido, o destino é o `id` — que é o caso das
+   * outras onze linhas, em que resumo e passo têm o mesmo nome.
+   */
+  passo?: string;
   rotulo: string;
   /**
    * `nichos` entra aqui porque o rótulo do nicho é a ÚNICA linha do
@@ -1817,7 +1844,10 @@ const LINHAS_DO_RESUMO: {
           : undefined,
   },
   {
-    id: "material",
+    id: "cores",
+    // O "Mudar" das cores volta ao passo do material: é lá que a logo é
+    // enviada, e é da logo que as cores saem. Não existe passo "cores".
+    passo: "material",
     rotulo: "Cores da marca",
     valor: (r) => (r.cores ? r.cores.split(",").join(" · ") : undefined),
   },
