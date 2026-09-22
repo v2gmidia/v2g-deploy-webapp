@@ -70,6 +70,7 @@ const CANONICAS: Record<string, "preparando" | "no-ar" | "pausado"> = {
  *   ?microfone=1  desenha o microfone LIGADO;  ?microfone=0 desenha DESLIGADO
  *   ?destino=1    mostra onde cada resposta vai cair em produção
  *   ?falha=<caso> desenha a tela de quando a transcrição não vem
+ *   ?aovivo=1     desenha o bloco da fala ao vivo, com exemplo dentro
  *
  * Eles não existem no fluxo de verdade: quem entra pela porta cai no
  * passo 1 com o que o próprio navegador guardou.
@@ -89,6 +90,20 @@ export default async function ExemploPage({
   const { tela } = await params;
   const agora = new Date();
   const casco = exemplo.CASCO_DE_EXEMPLO;
+
+  // ---- o Inicio de quem acabou de chegar ----
+  // Dois momentos, pelo sufixo da rota:
+  //   /exemplo/chegada          -> falta conectar
+  //   /exemplo/chegada-conectou -> ja conectou, e agora e com a gente
+  if (tela === "chegada" || tela === "chegada-conectou") {
+    const modulo = ehDesenvolvimento ? await import("../_chegada/TelaDeChegada") : null;
+    const fixture = ehDesenvolvimento ? await import("../_chegada/estado-de-chegada") : null;
+    if (!modulo || !fixture) notFound();
+    const momento = tela === "chegada" ? "falta_conectar" : "e_com_a_gente";
+    return (
+      <modulo.TelaDeChegada estado={fixture.estadoDeChegada(agora, momento)} momento={momento} />
+    );
+  }
 
   // ---- a amostra das bordas de cobalto no tema escuro ----
   // As 14 regras consertadas em 20/09 moram no `globals.css` e pintam
@@ -144,6 +159,9 @@ export default async function ExemploPage({
         comExemplo={comExemplo}
         mostrarDestino={
           (Array.isArray(busca.destino) ? busca.destino[0] : busca.destino) === "1"
+        }
+        falaDeExemplo={
+          (Array.isArray(busca.aovivo) ? busca.aovivo[0] : busca.aovivo) === "1"
         }
         falhaDeExemplo={
           ((Array.isArray(busca.falha) ? busca.falha[0] : busca.falha) as

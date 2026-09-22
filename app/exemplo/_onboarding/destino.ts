@@ -97,6 +97,18 @@ const MAPA: Record<string, Destino | null> = {
   local_raio: {
     tabela: "businesses",
     campo: "radius_km",
+    // ============================================================
+    // "BRASIL INTEIRO" NÃO VIRA NÚMERO, e não vira escrita.
+    //
+    // `radius_km` é `int`. Um raio que cubra o país seria número que
+    // parece número e não é — e o backend monta o alvo da Meta como um
+    // círculo em volta de um ponto (`src/meta/graph.py:1166`), então um
+    // raio absurdo é um círculo no mar, não o Brasil.
+    //
+    // `EM_NUMERO` devolve `null` para "brasil", e `escritasDe` descarta.
+    // A resposta EXISTE e fica guardada; o que não existe é a coluna que
+    // saiba recebê-la. DUVIDA-ONB-11.
+    // ============================================================
     converter: EM_NUMERO,
     colunaExiste: true,
     naListaBranca: true,
@@ -130,8 +142,10 @@ const MAPA: Record<string, Destino | null> = {
     colunaExiste: true,
     naListaBranca: true,
   },
-  // Estes três NÃO são coluna, e dizer isso aqui é melhor do que o mapa
-  // ficar quieto sobre eles.
+  // Estes NÃO são coluna, e dizer isso aqui é melhor do que o mapa ficar
+  // quieto sobre eles.
+  nicho_outro: null, // o texto de quem escolheu "Outro" — DUVIDA-ONB-12
+  cores: null, // as cores da logo — as colunas existem, a porta não: DUVIDA-ONB-14
   material: null, // arquivos: Supabase Storage, como a /conta já faz
   conexao: null, // a conexão com a Meta tem tabela própria
   correcao: null, // um recado sobre o cadastro, não um campo — DUVIDA-ONB-9
@@ -172,6 +186,14 @@ export function semOndeCair(respostas: Record<string, string>): Escrita[] {
  * PRECISAM ganhar. Não é lista de pendência minha: é o que falta decidir.
  */
 export const FORA_DE_COLUNA: { pergunta: string; onde: string }[] = [
+  {
+    pergunta: "nicho_outro",
+    onde: "sem destino — não existe nicho genérico no backend (DUVIDA-ONB-12)",
+  },
+  {
+    pergunta: "cores",
+    onde: "identidade_visual.cor_primaria/secundaria/destaque EXISTEM, mas fora da lista branca e ninguém as lê (DUVIDA-ONB-14)",
+  },
   { pergunta: "material", onde: "Supabase Storage, com RLS por business_id — o padrão de lib/identidade/armazenar.ts" },
   { pergunta: "conexao", onde: "meta_connections, que já existe e é escrita pelo callback da Meta" },
   { pergunta: "correcao", onde: "sem destino decidido — DUVIDA-ONB-9" },

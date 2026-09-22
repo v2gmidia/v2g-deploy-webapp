@@ -9,6 +9,9 @@ import {
   RAIOS,
   TOTAL,
   ondeParou,
+  ABRANGENCIA_BRASIL,
+  atendeOBrasilInteiro,
+  NICHO_OUTRO,
   type Passo,
 } from "./perguntas";
 import { custoDoNicho, frasesDoSlider } from "./custo-por-contato";
@@ -26,6 +29,8 @@ import {
 } from "./validacoes";
 import { escritasDe, FORA_DE_COLUNA } from "./destino";
 import { RECADOS, TEM_AUDIO_GUARDADO, type CasoDeFalha } from "./recados";
+import { ouvinteDeFala, temFalaAoVivo, type Ouvinte, type Trecho } from "./fala-ao-vivo";
+import { coresDaLogo, PAPEIS_DA_COR, type CorDaLogo } from "./cores-da-logo";
 import css from "./Onboarding.module.css";
 
 /**
@@ -103,18 +108,24 @@ interface Ditado {
 /** Dado de exemplo, para as capturas dos passos do meio e do resumo. */
 const EXEMPLO: Respostas = {
   pessoa: "Marina",
-  empresa: "Bebidas do Porto",
+  empresa: "Marina Arquitetura",
   local: "18040-000",
   local_raio: "10",
-  descricao: "Distribuidora de bebidas geladas com entrega no mesmo dia.",
-  instagram: "@bebidasdoporto",
-  site: "https://bebidasdoporto.com.br",
-  nicho: "distribuidora-de-bebidas",
+  descricao: "Projeto de interiores para apartamento pequeno, do desenho à obra.",
+  instagram: "@marinaarquiteta",
+  site: "https://marinaarquiteta.com.br",
+  // `arquitetura` existe no GET /nichos e é um dos dois com custo
+  // conhecido — o exemplo precisa de um nicho REAL, senão a captura
+  // mostra uma tela que ninguém consegue reproduzir.
+  nicho: "arquitetura",
   whatsapp: "(15) 99876-5432",
   verba: "1200",
   material: "3",
-  // Duas respondidas falando, para a marca do resumo aparecer na captura.
-  [CHAVE_AUDIO]: "descricao,empresa",
+  // As cores que a extração devolveria para a logo de exemplo.
+  cores: "#1F4B99,#E8A33D",
+  // A descrição é a única que aceita áudio desde 21/09, e é a que aparece
+  // marcada como falada no resumo.
+  [CHAVE_AUDIO]: "descricao",
 };
 
 export function Onboarding({
@@ -125,6 +136,7 @@ export function Onboarding({
   nichoDeExemplo = null,
   mostrarDestino = false,
   falhaDeExemplo = null,
+  falaDeExemplo = false,
 }: {
   passoInicial?: number;
   /** a `OPENAI_API_KEY` existe neste ambiente? Decidido no servidor. */
@@ -147,6 +159,14 @@ export function Onboarding({
    * rota devolve — então a captura não pode divergir da tela real.
    */
   falhaDeExemplo?: CasoDeFalha | null;
+  /**
+   * `?aovivo=1` desenha o bloco da fala ao vivo com um exemplo dentro.
+   *
+   * Existe porque fala nao cabe em captura estatica: sem isto, a unica
+   * forma de olhar essa tela seria falar num microfone. Nenhuma chamada e
+   * feita e nenhum microfone e aberto — sao duas strings no estado.
+   */
+  falaDeExemplo?: boolean;
 }) {
   const [passo, setPasso] = useState(passoInicial);
   const [respostas, setRespostas] = useState<Respostas>(
@@ -164,6 +184,21 @@ export function Onboarding({
    * acabou de falar. Era o defeito: o blob morria dentro da função.
    */
   const [audioGuardado, setAudioGuardado] = useState<{ url: string; quando: number } | null>(null);
+  /**
+   * O QUE O NAVEGADOR ESTÁ OUVINDO, palavra por palavra.
+   *
+   * Separado em fechado e provisório porque a tela mostra os dois com
+   * pesos diferentes — provisório que parece decidido é pior do que não
+   * mostrar nada.
+   */
+  const [aoVivo, setAoVivo] = useState<Trecho | null>(null);
+  /**
+   * As cores tiradas da logo. `null` = ainda não olhou nenhuma logo;
+   * lista vazia = olhou e não achou cor, que é resposta e não erro.
+   */
+  const [cores, setCores] = useState<(CorDaLogo & { usar: boolean })[] | null>(null);
+  /** O texto do navegador já foi substituído pelo da OpenAI? */
+  const [refinado, setRefinado] = useState(false);
   const [gravando, setGravando] = useState(false);
   const [transcrevendo, setTranscrevendo] = useState(false);
   const [entrando, setEntrando] = useState(true);
@@ -171,6 +206,7 @@ export function Onboarding({
   const gravador = useRef<MediaRecorder | null>(null);
   const pedacos = useRef<Blob[]>([]);
   const tetoDeTempo = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ouvinte = useRef<Ouvinte | null>(null);
   const campo = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   const atual: Passo | null = passo < TOTAL ? PASSOS[passo]! : null;
@@ -222,9 +258,20 @@ export function Onboarding({
 
   useEffect(() => {
     // No fim não há passo, e o campo da tela é o da correção do resumo.
-    setRascunho(atual ? (respostas[atual.id] ?? "") : (respostas.correcao ?? ""));
+    // O passo 7 tem DUAS respostas, e o campo de texto e a segunda. Semear
+    // do `atual.id` punha o slug do nicho ("arquitetura") dentro do campo
+    // "e qual e o seu negocio?" — o que a pessoa leria como se ela tivesse
+    // escrito aquilo.
+    const semente = !atual
+      ? (respostas.correcao ?? "")
+      : atual.id === "nicho"
+        ? (respostas.nicho_outro ?? "")
+        : (respostas[atual.id] ?? "");
+    setRascunho(semente);
     setRecado(null);
     setDitado(null);
+    setAoVivo(null);
+    setRefinado(false);
     setAudioGuardado((velho) => {
       // `createObjectURL` segura o blob na memória até alguém revogar.
       if (velho) URL.revokeObjectURL(velho.url);
@@ -245,6 +292,16 @@ export function Onboarding({
    * tocador de verdade sem um arquivo no repositório.
    */
   useEffect(() => {
+    if (!falaDeExemplo) return;
+    setGravando(true);
+    setAoVivo({
+      fechado: "Eu faço projeto de interiores para apartamento pequeno,",
+      provisorio: "do desenho até o acompanhamento",
+    });
+    return () => setGravando(false);
+  }, [falaDeExemplo, passo]);
+
+  useEffect(() => {
     if (!falhaDeExemplo) return;
     setRecado(RECADOS[falhaDeExemplo]);
     if (!TEM_AUDIO_GUARDADO[falhaDeExemplo]) return;
@@ -256,6 +313,17 @@ export function Onboarding({
   const custo = useMemo(() => custoDoNicho(respostas.nicho ?? null), [respostas.nicho]);
   const falando = useMemo(() => lerMarcasDeAudio(respostas), [respostas]);
 
+  /**
+   * O raio escolhido, com o padrão de 10 km, e o caso que muda a tela.
+   *
+   * `atendeOBrasilInteiro` mora em `perguntas.ts` e não aqui porque o
+   * `ondeParou` precisa da mesma resposta para saber se o passo 3 está
+   * completo — se cada um decidisse por conta, a tela e a retomada
+   * discordariam sobre o CEP ser obrigatório.
+   */
+  const raioEscolhido = respostas.local_raio ?? "10";
+  const oBrasilInteiro = atendeOBrasilInteiro({ ...respostas, local_raio: raioEscolhido });
+
   // ---- validação por passo ---------------------------------------------
   function validar(p: Passo, valor: string): Veredito {
     switch (p.id) {
@@ -264,6 +332,10 @@ export function Onboarding({
       case "empresa":
         return validarEmpresa(valor);
       case "local":
+        // Brasil inteiro sem CEP é resposta, não campo em branco: quem
+        // vende online não tem um ponto de onde o raio parta. Com CEP
+        // digitado, o formato continua valendo — meio CEP não passa.
+        if (oBrasilInteiro && valor.trim() === "") return { ok: true, valor: "" };
         return validarCep(valor);
       case "descricao":
         return validarDescricao(valor);
@@ -357,6 +429,27 @@ export function Onboarding({
       gravador.current = rec;
       rec.start();
       setGravando(true);
+
+      // ============================================================
+      // A DO NAVEGADOR COMEÇA JUNTO com a gravação, não depois.
+      //
+      // Ela escuta o mesmo microfone em paralelo e não interfere no
+      // `MediaRecorder`: são dois consumidores do mesmo fluxo. O que ela
+      // devolve vai para a tela na hora, e para o campo quando a pessoa
+      // para — assim existe texto editável mesmo antes de a OpenAI
+      // responder, e mesmo que ela nunca responda.
+      // ============================================================
+      setAoVivo({ fechado: "", provisorio: "" });
+      setRefinado(false);
+      ouvinte.current = ouvinteDeFala(
+        (t) => setAoVivo(t),
+        () => {
+          // Falha da Web Speech NÃO vira recado: a gravação continua, a
+          // OpenAI ainda vai responder, e o que a pessoa não pode é achar
+          // que perdeu o que falou. O que some é só o texto ao vivo.
+          setAoVivo(null);
+        },
+      );
       // Teto de tempo no NAVEGADOR: sem ele, alguém fala oito minutos e só
       // descobre o limite quando o arquivo é recusado do outro lado. Aqui
       // a gravação para sozinha e o que foi dito até ali é transcrito.
@@ -376,7 +469,17 @@ export function Onboarding({
   function pararDeGravar() {
     gravador.current?.stop();
     gravador.current = null;
+    ouvinte.current?.parar();
+    ouvinte.current = null;
     setGravando(false);
+    // O que o navegador entendeu vai para o campo NA HORA. A OpenAI
+    // substitui depois, se vier. Sem isto, a pessoa que falou um minuto
+    // olharia para um campo vazio enquanto a chamada acontece.
+    setAoVivo((t) => {
+      const doNavegador = [t?.fechado, t?.provisorio].filter(Boolean).join(" ").trim();
+      if (doNavegador) setRascunho(doNavegador);
+      return t;
+    });
   }
 
   /**
@@ -401,8 +504,12 @@ export function Onboarding({
         // E NÃO limpa `audioGuardado`: o áudio continua na tela.
         return;
       }
+      // A DA OPENAI SUBSTITUI a do navegador — é para isso que ela existe.
+      // `refinado` marca que a troca aconteceu, e a nota na tela diz isso
+      // em português, porque a pessoa acabou de ver o texto mudar sozinho.
       setDitado({ texto: dados.texto, audio, url: URL.createObjectURL(audio) });
       setRascunho(dados.texto);
+      setRefinado(true);
     } finally {
       setTranscrevendo(false);
     }
@@ -474,7 +581,8 @@ export function Onboarding({
           {gravando
             ? "Estou ouvindo. Toque para parar."
             : aberta
-              ? CONVITE_NO_MICROFONE
+              ? CONVITE_NO_MICROFONE +
+                (temFalaAoVivo() ? " O texto aparece enquanto você fala." : "")
               : "Ou escreva pelo teclado."}
         </span>
       </div>
@@ -512,11 +620,137 @@ export function Onboarding({
     );
   }
 
+  /**
+   * O QUE ESTÁ SENDO OUVIDO, enquanto está sendo ouvido.
+   *
+   * Aparece enquanto o microfone está aberto e some quando a OpenAI
+   * devolve o texto refinado — a partir daí quem manda é o campo, que é
+   * editável. Fica também depois de parar, quando a OpenAI ainda não
+   * respondeu: o silêncio entre "parei de falar" e "apareceu o texto" era
+   * o pedaço em que a tela não dizia nada.
+   */
+  function AoVivo() {
+    if (!aoVivo || refinado) return null;
+    const vazio = !aoVivo.fechado && !aoVivo.provisorio;
+    return (
+      <div className={css.aoVivo}>
+        <p className={css.aoVivoTitulo}>
+          {gravando && <span className={css.pulso} aria-hidden="true" />}
+          {gravando ? "Estou ouvindo" : "Foi isso que eu ouvi"}
+        </p>
+        <p className={css.aoVivoTexto} aria-live="polite">
+          {vazio ? (
+            <span className={css.provisorio}>Pode falar…</span>
+          ) : (
+            <>
+              {aoVivo.fechado}
+              {aoVivo.provisorio && (
+                <>
+                  {aoVivo.fechado ? " " : ""}
+                  <span className={css.provisorio}>{aoVivo.provisorio}</span>
+                </>
+              )}
+            </>
+          )}
+        </p>
+        {!gravando && transcrevendo && (
+          <p className={css.aoVivoNota}>
+            Conferindo o que você falou com mais cuidado — o texto pode mudar um pouco.
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  /** A nota de que o texto do campo foi trocado pelo mais preciso. */
+  function Refinado() {
+    if (!refinado) return null;
+    return (
+      <p className={css.recadoCalmo}>
+        Revisei o que você falou e ajustei o texto. Dá para corrigir no campo antes de seguir.
+      </p>
+    );
+  }
+
+  /**
+   * AS CORES DA EMPRESA, tiradas da logo.
+   *
+   * ============================================================
+   * PERGUNTA, NÃO AFIRMA. O algoritmo conta pixel; ele não sabe qual cor
+   * o dono chamaria de "a nossa". Por isso a frase é uma pergunta e cada
+   * bolinha é um seletor de cor de verdade — o nativo do sistema, que é
+   * melhor do que qualquer roda que eu desenhasse.
+   *
+   * Lista vazia NÃO é falha: logo preta e branca não tem cor de marca, e
+   * a tela diz isso em vez de inventar um azul.
+   * ============================================================
+   */
+  function Cores() {
+    if (cores === null) return null;
+    if (cores.length === 0) {
+      return (
+        <p className={css.recadoCalmo}>
+          Não achei cor de marca nessa logo — ela deve ser preto e branco. Sem problema: a
+          gente escolhe as cores do anúncio com você depois.
+        </p>
+      );
+    }
+
+    /** Muda uma cor e guarda só as que continuam marcadas. */
+    const mexer = (i: number, mudanca: Partial<CorDaLogo & { usar: boolean }>) => {
+      const novas = cores.map((x, j) => (j === i ? { ...x, ...mudanca } : x));
+      setCores(novas);
+      gravar({
+        ...respostas,
+        cores: novas.filter((x) => x.usar).map((x) => x.hex).join(","),
+      });
+    };
+
+    const marcadas = cores.filter((c) => c.usar);
+
+    return (
+      <div className={css.cores}>
+        <p className={css.rotuloGrupo}>Essas são as cores da sua empresa?</p>
+        <div className={css.coresLinha}>
+          {cores.map((c, i) => (
+            <div key={`${c.hex}-${i}`} className={css.cor}>
+              {/* A BOLINHA É O SELETOR DE COR, não uma amostra ao lado de um
+                  botão: tocar nela abre o seletor do sistema, que é onde
+                  quem quer trocar já espera que esteja. */}
+              <input
+                type="color"
+                className={`${css.bolinha} ${c.usar ? "" : css.bolinhaFora}`}
+                value={c.hex}
+                aria-label={`Trocar a cor ${PAPEIS_DA_COR[i] ?? ""} da empresa`}
+                onChange={(e) => mexer(i, { hex: e.target.value.toUpperCase() })}
+              />
+              <span className={css.corPapel}>{PAPEIS_DA_COR[i] ?? "Cor"}</span>
+              <span className={css.corCodigo}>{c.hex}</span>
+              <label className={css.corMarca}>
+                <input
+                  type="checkbox"
+                  checked={c.usar}
+                  onChange={(e) => mexer(i, { usar: e.target.checked })}
+                />
+                <span>é essa</span>
+              </label>
+            </div>
+          ))}
+        </div>
+        <p className={css.dica}>
+          {marcadas.length > 0
+            ? "São essas cores que vamos usar nos seus anúncios. Desmarca a que não for, ou toca na bolinha para trocar."
+            : "Nenhuma marcada — a gente escolhe as cores do anúncio com você depois."}
+        </p>
+      </div>
+    );
+  }
+
   function Ditado() {
     if (!ditado) return null;
     return (
       <div className={css.ditado}>
-        <p className={css.ditadoTitulo}>Foi isso que eu entendi:</p>
+        <p className={css.ditadoTitulo}>Seu áudio, do lado do texto</p>
         <p className={css.ditadoTexto}>{rascunho}</p>
         <audio className={css.ditadoAudio} controls src={ditado.url} />
         <p className={css.ditadoNota}>
@@ -574,6 +808,8 @@ export function Onboarding({
 
             <Convite aberta />
             <Microfone aberta />
+            <AoVivo />
+            <Refinado />
             <Ditado />
             <AudioSemTexto />
             {recado && <p className={css.recadoCalmo}>{recado}</p>}
@@ -662,6 +898,8 @@ export function Onboarding({
 
             <Convite aberta={p.aberta} />
             {p.audio && <Microfone aberta={p.aberta} />}
+            <AoVivo />
+            <Refinado />
             <Ditado />
             <AudioSemTexto />
             {recado && <p className={css.recado}>{recado}</p>}
@@ -698,9 +936,37 @@ export function Onboarding({
             className={css.forma}
             onSubmit={(e) => {
               e.preventDefault();
-              avancar(rascunho, { local_raio: respostas.local_raio ?? "10" });
+              avancar(rascunho, { local_raio: raioEscolhido });
             }}
           >
+            {/* ============================================================
+                A ESCOLHA VEM PRIMEIRO, E O CEP DEPOIS.
+
+                Até a v3 o CEP abria a tela e o raio vinha abaixo. Com o
+                "Brasil inteiro" isso inverteu: quem vende online ia digitar
+                um CEP para só então descobrir que não precisava. A pergunta
+                que MUDA a próxima vem antes.
+                ============================================================ */}
+            <p className={css.rotuloGrupo}>Até onde vale a pena buscar cliente?</p>
+            <div className={css.escolhas}>
+              {RAIOS.map((r) => (
+                <button
+                  key={r.valor}
+                  type="button"
+                  className={`${css.escolha} ${
+                    raioEscolhido === r.valor ? css.escolhida : ""
+                  }`}
+                  onClick={() => gravar({ ...respostas, local_raio: r.valor })}
+                >
+                  {r.rotulo}
+                  <span className={css.escolhaNota}>{r.nota}</span>
+                </button>
+              ))}
+            </div>
+
+            <p className={css.rotuloGrupo}>
+              {oBrasilInteiro ? "CEP (se quiser)" : "De qual CEP o raio parte?"}
+            </p>
             <input
               ref={(el) => {
                 campo.current = el;
@@ -713,22 +979,12 @@ export function Onboarding({
               inputMode="numeric"
               autoComplete="postal-code"
             />
-            <p className={css.rotuloGrupo}>Até onde vale a pena buscar cliente?</p>
-            <div className={css.escolhas}>
-              {RAIOS.map((r) => (
-                <button
-                  key={r.km}
-                  type="button"
-                  className={`${css.escolha} ${
-                    (respostas.local_raio ?? "10") === String(r.km) ? css.escolhida : ""
-                  }`}
-                  onClick={() => gravar({ ...respostas, local_raio: String(r.km) })}
-                >
-                  {r.rotulo}
-                  <span className={css.escolhaNota}>{r.km} km</span>
-                </button>
-              ))}
-            </div>
+            {oBrasilInteiro && (
+              <p className={css.dica}>
+                Quem atende o Brasil inteiro não precisa de CEP — não há um ponto de onde o
+                raio parta. Se quiser deixar o seu, tudo bem: ele ajuda a gente a te conhecer.
+              </p>
+            )}
             {recado && <p className={css.recado}>{recado}</p>}
             <div className={css.acoes}>
               <button type="submit" className={`cta ${css.botao}`}>
@@ -753,20 +1009,73 @@ export function Onboarding({
                     respostas.nicho === n.nicho ? css.escolhida : ""
                   }`}
                   onClick={() => {
-                    gravar({ ...respostas, nicho: n.nicho });
+                    gravar({ ...respostas, nicho: n.nicho, nicho_outro: "" });
                     setPasso((x) => x + 1);
                   }}
                 >
                   {n.rotulo}
                 </button>
               ))}
+              {/* ============================================================
+                  "OUTRO" NÃO AVANÇA SOZINHO, ao contrário dos oito acima.
+
+                  Escolher um nicho da lista já diz tudo o que a gente precisa
+                  saber, então a tela segue. "Outro" não diz nada até a pessoa
+                  escrever o que é — e por isso ele abre o campo e espera.
+                  ============================================================ */}
+              <button
+                type="button"
+                className={`${css.escolha} ${
+                  respostas.nicho === NICHO_OUTRO ? css.escolhida : ""
+                }`}
+                onClick={() => gravar({ ...respostas, nicho: NICHO_OUTRO })}
+              >
+                Outro — meu negócio não está aqui
+              </button>
             </div>
+
+            {respostas.nicho === NICHO_OUTRO && (
+              <form
+                className={css.forma}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const texto = rascunho.trim();
+                  if (texto.length < 3) {
+                    setRecado("Me conta em duas palavras o que seu negócio faz.");
+                    return;
+                  }
+                  gravar({ ...respostas, nicho_outro: texto });
+                  setPasso((x) => x + 1);
+                }}
+              >
+                <p className={css.rotuloGrupo}>E qual é o seu negócio?</p>
+                <input
+                  className={css.campo}
+                  value={rascunho}
+                  onChange={(e) => setRascunho(e.target.value)}
+                  placeholder="Ex: loja de bicicletas"
+                  aria-label="Qual é o seu negócio"
+                  autoFocus
+                />
+                {recado && <p className={css.recado}>{recado}</p>}
+                <p className={css.dica}>
+                  Uma pessoa vai ler isso antes de montar seu anúncio.
+                </p>
+                <div className={css.acoes}>
+                  <button type="submit" className={`cta ${css.botao}`}>
+                    Continuar
+                  </button>
+                </div>
+              </form>
+            )}
+
             <p className={css.dica}>
-              Não achou o seu?{" "}
+              A lista é curta de propósito: é ela que diz quanto custa cada contato. Se o seu
+              não está aí,{" "}
               <a className={css.humanoLinha} href={WHATSAPP_HUMANO} target="_blank" rel="noopener">
-                Fala com a gente
-              </a>{" "}
-              — a lista é fechada de propósito, porque é ela que diz quanto custa cada contato.
+                fala com a gente
+              </a>
+              .
             </p>
             <div className={css.acoes}>
               <button type="button" className={css.voltar} onClick={voltar}>
@@ -810,10 +1119,22 @@ export function Onboarding({
           </form>
         )}
 
-        {/* ---------- a verba, com o texto vivo ---------- */}
+        {/* ============================================================
+            A VERBA COMECA EM ZERO, E NAO EM 900.
+
+            O 900 era o ponto de partida do slider, e num slider isso e
+            inevitavel: a alavanca precisa estar em algum lugar. Num campo
+            digitado vira outra coisa — o campo abriria com um numero que a
+            pessoa nao escolheu, o texto vivo ja calcularia em cima dele, e
+            o "Continuar" ja estaria aceso. Ela podia seguir sem nunca ter
+            decidido quanto quer investir.
+
+            Com zero: campo vazio, sem texto vivo, e o "Continuar" so
+            acende quando ela digita.
+            ============================================================ */}
         {p.tipo === "verba" && (
           <Verba
-            valor={Number(respostas.verba ?? 900)}
+            valor={Number(respostas.verba ?? 0)}
             custo={custo}
             aoMudar={(v) => gravar({ ...respostas, verba: String(v) })}
             aoSeguir={() => setPasso((x) => x + 1)}
@@ -829,9 +1150,38 @@ export function Onboarding({
                 type="file"
                 accept="image/jpeg,image/png"
                 multiple
-                onChange={(e) => {
-                  const quantos = e.target.files?.length ?? 0;
-                  if (quantos > 0) gravar({ ...respostas, material: String(quantos) });
+                onChange={async (e) => {
+                  const arquivos = [...(e.target.files ?? [])];
+                  if (arquivos.length === 0) return;
+                  gravar({ ...respostas, material: String(arquivos.length) });
+                  // ============================================================
+                  // A PRIMEIRA IMAGEM É A LOGO. É o que a pergunta pede
+                  // ("manda sua logo e fotos"), nessa ordem, e é o que o
+                  // seletor devolve na ordem em que a pessoa escolheu.
+                  //
+                  // Tirar cor de uma FOTO do negócio daria a cor da parede.
+                  // Se um dia a tela separar "logo" de "fotos" em dois
+                  // campos, isto deixa de ser suposição.
+                  // ============================================================
+                  const achadas = await coresDaLogo(arquivos[0]!);
+                  // ============================================================
+                  // NASCEM MARCADAS, e isso é uma escolha.
+                  //
+                  // A pergunta é "essas são as cores da sua empresa?", e a
+                  // resposta esperada é sim — a extração acertou na maioria
+                  // das logos. Nascer desmarcada obrigaria todo mundo a
+                  // confirmar o que já está certo.
+                  //
+                  // Desmarcar é um toque, e o que fica guardado é só o que
+                  // sobrou marcado.
+                  // ============================================================
+                  const comMarca = achadas.map((c) => ({ ...c, usar: true }));
+                  setCores(comMarca);
+                  gravar({
+                    ...respostas,
+                    material: String(arquivos.length),
+                    cores: comMarca.filter((c) => c.usar).map((c) => c.hex).join(","),
+                  });
                 }}
               />
               <span className={css.arquivoRotulo}>Escolher arquivos</span>
@@ -841,42 +1191,179 @@ export function Onboarding({
                   : "JPG ou PNG, a partir de 1024px no lado menor"}
               </span>
             </label>
+            <Cores />
             <p className={css.dica}>
-              A logo é a única obrigatória. As fotos do negócio dão à IA de onde escolher — sem
-              nenhum material, a montagem do anúncio para antes de começar.
+              A logo é a que a gente mais precisa. As fotos do negócio dão à IA de onde
+              escolher.
             </p>
+            {/* ============================================================
+                A TELA DIZIA QUE O MATERIAL ERA OBRIGATÓRIO E DEIXAVA PASSAR.
+
+                "Sem material, a gente não consegue montar o anúncio" com um
+                "Continuar" aceso ao lado é a tela desmentindo a si mesma —
+                e quem lê é alguém que já foi enganado por agência antes.
+
+                Agora são dois caminhos, os dois nomeados: com arquivo, o
+                principal segue; sem arquivo, a saída se chama pelo que ela
+                é. É o mesmo desenho do "não tenho site", que também não é
+                recusa nem culpa.
+                ============================================================ */}
             <div className={css.acoes}>
               <button
                 type="button"
                 className={`cta ${css.botao}`}
+                disabled={!respostas.material}
                 onClick={() => setPasso((x) => x + 1)}
               >
                 Continuar
               </button>
+              {!respostas.material && (
+                <button
+                  type="button"
+                  className={`cta ghost ${css.botao}`}
+                  onClick={() => {
+                    gravar({ ...respostas, material_depois: "1" });
+                    setPasso((x) => x + 1);
+                  }}
+                >
+                  Não tenho agora — mando depois
+                </button>
+              )}
               <button type="button" className={css.voltar} onClick={voltar}>
                 Voltar
               </button>
             </div>
+            {!respostas.material && (
+              <p className={css.dica}>
+                Sem nenhum material a montagem do anúncio não começa — mas dá para mandar pelo
+                WhatsApp depois, no seu tempo.
+              </p>
+            )}
           </div>
         )}
 
         {/* ---------- conectar o Facebook ---------- */}
         {p.tipo === "conexao" && (
           <div className={css.forma}>
-            <p className={css.texto}>
-              A conexão é o que autoriza a gente a criar e publicar o anúncio na conta do seu
-              negócio. Sem ela, nada sobe.
-            </p>
-            {/* Na bancada o botão não conecta nada: conexão com a Meta é
-                escrita em conta real, e esta rodada não faz isso. Em
-                produção o destino é `/conectar`. */}
-            <button type="button" className={`cta ${css.botao}`} disabled>
-              Conectar meu Facebook
-            </button>
-            <p className={css.recadoCalmo}>
-              Aqui na bancada este botão não conecta nada — a conexão de verdade mora em
-              /conectar.
-            </p>
+            {/* ============================================================
+                DUAS TRILHAS, E A PERGUNTA QUE SEPARA VEM ANTES DO BOTÃO.
+
+                Até a v3 a tela abria com "Conectar meu Facebook". Quem
+                nunca anunciou lia aquilo como uma exigência — e a metade
+                do público que a V2G quer atender nunca anunciou. A
+                pergunta separa antes de pedir qualquer coisa.
+
+                `ja_anuncia` guarda a resposta: "sim", "nunca" ou
+                "nao_sei". As duas últimas vão para o mesmo lugar, porque
+                "não sei" quase sempre quer dizer "não".
+                ============================================================ */}
+            <p className={css.rotuloGrupo}>Você já anuncia no Facebook ou no Instagram?</p>
+            <div className={css.trilhaEscolha}>
+              {[
+                { valor: "sim", rotulo: "Sim, já tenho conta de anúncios" },
+                { valor: "nunca", rotulo: "Nunca anunciei" },
+                { valor: "nao_sei", rotulo: "Não sei" },
+              ].map((o) => (
+                <button
+                  key={o.valor}
+                  type="button"
+                  className={`${css.escolha} ${
+                    respostas.ja_anuncia === o.valor ? css.escolhida : ""
+                  }`}
+                  onClick={() => gravar({ ...respostas, ja_anuncia: o.valor })}
+                >
+                  {o.rotulo}
+                </button>
+              ))}
+            </div>
+
+            {/* ---------- trilha 1: já anuncia ---------- */}
+            {respostas.ja_anuncia === "sim" && (
+              <>
+                <p className={css.texto}>
+                  A conexão é o que autoriza a gente a criar e publicar o anúncio na conta do
+                  seu negócio. Sem ela, nada sobe.
+                </p>
+                {/* Na bancada o botão não conecta nada: conexão com a Meta é
+                    escrita em conta real, e esta rodada não faz isso. Em
+                    produção o destino é o fluxo que já existe em
+                    `/conectar` — Facebook Login, `app/auth/meta/iniciar`. */}
+                <button type="button" className={`cta ${css.botao}`} disabled>
+                  Conectar meu Facebook
+                </button>
+                <p className={css.recadoCalmo}>
+                  Aqui na bancada este botão não conecta nada — a conexão de verdade mora em
+                  /conectar.
+                </p>
+
+                {/* ============================================================
+                    O PRÉ-VOO, desenhado e não medido.
+
+                    Em produção ele aparece DEPOIS de conectar, e cada linha
+                    é uma leitura da conta na Meta. Na bancada não há
+                    conexão, então ele mostra o que vai ser conferido — com
+                    o traço de "ainda não conferido" em vez de um certo
+                    verde que seria mentira.
+                    ============================================================ */}
+                <p className={css.rotuloGrupo}>Depois de conectar, a gente confere três coisas</p>
+                <ul className={css.checklist}>
+                  {[
+                    ["Conta de anúncios", "se existe uma, e se a gente pode usar"],
+                    ["Forma de pagamento", "o cartão fica na sua conta, não na nossa"],
+                    ["WhatsApp no anúncio", "se o número que você deu pode receber clique"],
+                  ].map(([o, q]) => (
+                    <li key={o} className={css.checkItem}>
+                      <span className={css.checkMarca} aria-hidden="true">
+                        —
+                      </span>
+                      <span>
+                        <strong>{o}</strong> — {q}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+                <p className={css.dica}>
+                  Se faltar alguma, a gente te diz qual é e resolve junto numa conversa de 30
+                  minutos.
+                </p>
+                <div className={css.acoes}>
+                  <a
+                    className={`cta ghost ${css.botao}`}
+                    href={`${WHATSAPP_HUMANO}?text=${encodeURIComponent(
+                      "Oi! Travei na hora de conectar o Facebook e queria marcar os 30 minutos.",
+                    )}`}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Não deu certo? Agendar 30 minutos
+                  </a>
+                </div>
+              </>
+            )}
+
+            {/* ---------- trilha 2: nunca anunciou, ou não sabe ---------- */}
+            {(respostas.ja_anuncia === "nunca" || respostas.ja_anuncia === "nao_sei") && (
+              <>
+                <p className={css.texto}>
+                  Então não tem nada para conectar agora. A gente cria tudo junto com você, em
+                  30 minutos: a conta, o pagamento e o primeiro anúncio.
+                </p>
+                <p className={css.dica}>
+                  Você não precisa saber nada de Facebook para isso. É a nossa parte.
+                </p>
+                <a
+                  className={`cta ${css.botao}`}
+                  href={`${WHATSAPP_HUMANO}?text=${encodeURIComponent(
+                    "Oi! Nunca anunciei e quero marcar os 30 minutos para criar tudo junto.",
+                  )}`}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Agendar os 30 minutos
+                </a>
+              </>
+            )}
+
             <div className={css.acoes}>
               <button
                 type="button"
@@ -998,7 +1485,13 @@ const LINHAS_DO_RESUMO: {
   {
     id: "local",
     rotulo: "Atende",
-    valor: (r) => (r.local ? `${r.local} · até ${r.local_raio ?? "—"} km` : undefined),
+    valor: (r) => {
+      if (r.local_raio === ABRANGENCIA_BRASIL) {
+        return r.local ? `O Brasil inteiro · ${r.local}` : "O Brasil inteiro";
+      }
+      if (!r.local) return undefined;
+      return `${r.local} · até ${r.local_raio ?? "—"} km`;
+    },
   },
   { id: "descricao", rotulo: "Vende", valor: (r) => r.descricao },
   { id: "instagram", rotulo: "Instagram", valor: (r) => r.instagram },
@@ -1007,19 +1500,41 @@ const LINHAS_DO_RESUMO: {
   {
     id: "nicho",
     rotulo: "Tipo de negócio",
-    valor: (r) => NICHOS_DA_BANCADA.find((n) => n.nicho === r.nicho)?.rotulo,
+    valor: (r) => {
+      if (r.nicho === NICHO_OUTRO) {
+        // O que ela escreveu vale mais que a palavra "Outro".
+        return r.nicho_outro ? `${r.nicho_outro} (fora da lista)` : "Fora da lista";
+      }
+      return NICHOS_DA_BANCADA.find((n) => n.nicho === r.nicho)?.rotulo;
+    },
   },
   { id: "whatsapp", rotulo: "WhatsApp", valor: (r) => r.whatsapp },
   { id: "verba", rotulo: "Por mês", valor: (r) => porMes(r.verba) },
   {
     id: "material",
     rotulo: "Material",
-    valor: (r) => (r.material ? `${r.material} arquivo(s)` : undefined),
+    valor: (r) =>
+      r.material
+        ? `${r.material} arquivo(s)`
+        : r.material_depois
+          ? "vai mandar depois"
+          : undefined,
+  },
+  {
+    id: "material",
+    rotulo: "Cores da marca",
+    valor: (r) => (r.cores ? r.cores.split(",").join(" · ") : undefined),
   },
   {
     id: "conexao",
     rotulo: "Facebook",
-    valor: (r) => (r.conexao ? "conectado" : undefined),
+    valor: (r) => {
+      if (r.conexao) return "conectado";
+      if (r.ja_anuncia === "sim") return "já anuncia — falta conectar";
+      if (r.ja_anuncia === "nunca") return "nunca anunciou — cria junto na conversa";
+      if (r.ja_anuncia === "nao_sei") return "não sabe — cria junto na conversa";
+      return undefined;
+    },
   },
 ];
 
@@ -1072,6 +1587,35 @@ export function mensagemDoAgendamento(respostas: Respostas): string {
   }
 
   return linhas.join(String.fromCharCode(10));
+}
+
+/** Reais inteiros, como o campo os mostra: `1.200`. Sem "R$" e sem centavo. */
+const EM_REAIS = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 });
+
+/**
+ * Os dígitos que a pessoa digitou, lidos como REAIS INTEIROS.
+ *
+ * ============================================================
+ * DIVERGE DA `centavosDeDigitos` DE PROPÓSITO, e a diferença é o campo:
+ *
+ *   `lib/dia-seguinte/pergunta.ts`  campo de RECEITA. "1600" → R$ 16,00.
+ *                                   Centavo importa, e o teclado é o de
+ *                                   banco: cada dígito entra pela direita.
+ *   aqui                            campo de VERBA. "1600" → R$ 1.600.
+ *                                   Verba de anúncio não tem centavo, e
+ *                                   quem digita 1600 quer mil e seiscentos.
+ *
+ * O que NÃO diverge é a guarda: número acima do inteiro seguro é recusado,
+ * porque acima disso a aritmética começa a mentir — e mentir sobre
+ * dinheiro em silêncio é o que não pode.
+ * ============================================================
+ */
+function reaisDeDigitos(bruto: string): number | null {
+  const digitos = bruto.replace(/\D/g, "");
+  if (digitos === "") return null;
+  const n = Number(digitos);
+  if (!Number.isSafeInteger(n)) return null;
+  return n;
 }
 
 function porMes(bruto?: string): string | undefined {
@@ -1155,42 +1699,60 @@ function Verba({
   aoVoltar: () => void;
 }) {
   const [v, setV] = useState(valor);
-  const abaixoDoPiso = v < PISO_MENSAL;
+  const [texto, setTexto] = useState(v > 0 ? EM_REAIS.format(v) : "");
+  const abaixoDoPiso = v > 0 && v < PISO_MENSAL;
   const frases = frasesDoSlider(v, custo, PISO_MENSAL);
 
   return (
     <div className={css.forma}>
-      <output className={css.valorGrande}>
-        {new Intl.NumberFormat("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-          maximumFractionDigits: 0,
-        }).format(v)}
+      {/* ============================================================
+          CAMPO DIGITADO, E NÃO SLIDER — pedido do Victor em 21/09/2026.
+
+          O slider tinha mínimo 300, máximo 5000 e passo de 50: ele decidia
+          por quem responde. Quem queria pôr R$ 6.000 não conseguia, e
+          quem queria R$ 1.234 ia parar em R$ 1.250 sem perceber.
+
+          A MÁSCARA É DE REAIS INTEIROS, e aqui ela diverge de propósito da
+          `centavosDeDigitos` da `/inicio`: lá o campo é de receita, onde
+          centavo importa e digitar "1600" vira R$ 16,00 (teclado de
+          banco). Verba de anúncio não tem centavo — digitar "1600" tem que
+          dar R$ 1.600. A guarda de inteiro seguro é a mesma.
+          ============================================================ */}
+      <div className={css.campoDinheiro}>
+        <span className={css.moeda} aria-hidden="true">
+          R$
+        </span>
+        <input
+          className={css.campoValor}
+          value={texto}
+          onChange={(e) => {
+            const reais = reaisDeDigitos(e.target.value);
+            setTexto(reais === null ? "" : EM_REAIS.format(reais));
+            const novo = reais ?? 0;
+            setV(novo);
+            aoMudar(novo);
+          }}
+          placeholder="1.200"
+          aria-label="Quanto investir por mês, em reais"
+          inputMode="numeric"
+          autoComplete="off"
+          autoFocus
+        />
         <span className={css.valorNota}>por mês</span>
-      </output>
-
-      <input
-        className={css.slider}
-        type="range"
-        min={300}
-        max={5000}
-        step={50}
-        value={v}
-        aria-label="Quanto investir por mês"
-        onChange={(e) => {
-          const novo = Number(e.target.value);
-          setV(novo);
-          aoMudar(novo);
-        }}
-      />
-
-      <div className={css.vivo}>
-        {frases.map((f) => (
-          <p key={f} className={css.vivoLinha}>
-            {f}
-          </p>
-        ))}
       </div>
+
+      {/* O texto vivo recalcula a cada dígito — é a parte que o Victor
+          pediu para manter. Com o campo vazio ele não aparece: "R$ 0 por
+          mês são R$ 0 por dia" é ruído, não informação. */}
+      {v > 0 && (
+        <div className={css.vivo}>
+          {frases.map((f) => (
+            <p key={f} className={css.vivoLinha}>
+              {f}
+            </p>
+          ))}
+        </div>
+      )}
 
       {abaixoDoPiso && (
         <p className={css.recado}>
@@ -1204,7 +1766,7 @@ function Verba({
         <button
           type="button"
           className={`cta ${css.botao}`}
-          disabled={abaixoDoPiso}
+          disabled={v <= 0 || abaixoDoPiso}
           onClick={aoSeguir}
         >
           Continuar
