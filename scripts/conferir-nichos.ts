@@ -52,6 +52,27 @@ import {
   resolverConsulta,
 } from "../lib/nichos/busca.ts";
 import type { Nicho } from "../lib/nichos/tipos.ts";
+import {
+  CUSTO_DE_NICHO_APOSENTADO,
+  CUSTO_TIPICO,
+} from "../app/exemplo/_onboarding/custo-por-contato.ts";
+import { readFileSync } from "node:fs";
+
+/**
+ * OS CINCO CHIPS QUE SAÍRAM EM 22/08 — fixos, e é para ficarem fixos.
+ *
+ * Eles não são nichos e nunca mais podem ser aceitos como escolha. Ao
+ * contrário dos nomes de nicho, estes não envelhecem: a decisão é que
+ * eles fiquem de fora para sempre, então citá-los pelo nome é o jeito
+ * certo de conferir.
+ */
+const CHIPS_VELHOS = [
+  "Clínica / Consultório",
+  "Loja física",
+  "Restaurante / Bar",
+  "Serviço (advocacia, arquitetura, contabilidade)",
+  "Beleza e estética",
+] as const;
 
 let falhas = 0;
 let testes = 0;
@@ -92,16 +113,20 @@ secao("1. o validador de fronteira — tudo ou nada");
 {
   const bom = [
     {
-      nicho: "petshop",
-      rotulo: "Petshop",
-      termos_de_busca: ["banho e tosa"],
-      sub_tipos: [{ id: "misto", rotulo: "Os dois", nome_exibicao: "Petshop — Os dois" }],
+      // Nome inventado de propósito: esta é uma fixture de FORMA, e um
+      // nicho real aqui se confunde com a lista viva — foi o que
+      // aconteceu com o `petshop` que estava neste lugar até 22/09, e que
+      // saiu do catálogo em setembro.
+      nicho: "nicho-de-teste",
+      rotulo: "Nicho de teste",
+      termos_de_busca: ["termo de teste"],
+      sub_tipos: [{ id: "um", rotulo: "Um", nome_exibicao: "Nicho de teste — Um" }],
     },
   ];
   const validado = validarListaDeNichos(bom);
   ok(validado !== null, "corpo bem formado passa");
   ok(
-    validado?.[0]?.subTipos[0]?.nomeExibicao === "Petshop — Os dois",
+    validado?.[0]?.subTipos[0]?.nomeExibicao === "Nicho de teste — Um",
     "snake_case vira camelCase na fronteira (`nome_exibicao` → `nomeExibicao`)",
   );
   ok(validado?.[0]?.termosDeBusca.length === 1, "os termos chegam inteiros");
@@ -131,7 +156,7 @@ secao("1. o validador de fronteira — tudo ou nada");
     "sub-tipo sem `nome_exibicao` reprova",
   );
 
-  // Ausência não é tipo errado: nove dos dez nichos não têm sub-tipo.
+  // Ausência não é tipo errado: nenhum dos oito nichos tem sub-tipo hoje.
   const semOpcionais = validarListaDeNichos([{ nicho: "x", rotulo: "X" }]);
   ok(
     semOpcionais?.[0]?.subTipos.length === 0 && semOpcionais?.[0]?.termosDeBusca.length === 0,
@@ -200,36 +225,86 @@ if (!nichos) {
   process.exit(1);
 }
 
+/*
+ * ============================================================
+ * A REGRA DOS §§ 4 A 10: NÃO NOMEIE ITEM DA LISTA.
+ *
+ * Até 22/09/2026 estas seções citavam nichos e termos pelo nome —
+ * `consultorio-medico`, "cardiologista", "martelinho de ouro", "banho de
+ * gel", "pizzaria" -> `restaurante`, `Petshop`, "Clínica de estética" — e
+ * afirmavam contagens: dez nichos, 183 termos.
+ *
+ * Aí o Gabriel encolheu o `knowledge/` para oito nichos e 113 termos, DE
+ * PROPÓSITO. Doze conferências ficaram vermelhas de uma vez, e a leitura
+ * natural do vermelho era "o backend quebrou" ou "a rede caiu". Não
+ * quebrou nada: o conferidor é que estava conferindo uma cópia congelada
+ * da lista de agosto, escrita dentro dele mesmo.
+ *
+ * Um conferidor assim tem dois defeitos, e o segundo é o pior:
+ *
+ *   1. ele fica vermelho quando o backend faz algo LEGÍTIMO;
+ *   2. e vermelho crônico é conferidor que ninguém mais lê — aí o dia em
+ *      que quebrar de verdade, o vermelho não diz nada de novo.
+ *
+ * Então nenhum caso fixo daqui para baixo nomeia nicho ou termo. Cada um
+ * é DERIVADO da lista viva no momento da execução: "para todo nicho, o
+ * próprio rótulo acha ele", "para todo termo acentuado, sem acento
+ * acha", "pegue um termo que hoje deixa um só e confira que o Enter
+ * escolhe". Nomes fixos sobraram só onde eles precisam continuar NÃO
+ * existindo (padaria, os cinco chips velhos) — esses não envelhecem,
+ * porque a decisão é que eles fiquem de fora para sempre.
+ *
+ * O CENSO É IMPRESSO, NÃO ASSERTADO. Quantos nichos e quantos termos é
+ * assunto do backend, não deste repositório. O número aparece no log
+ * toda execução, para quem quiser ver que mudou — e não derruba a suíte
+ * quando muda.
+ * ============================================================
+ */
+
 secao("4. a forma da lista viva");
 {
-  // PISO, não igualdade — mesma forma da contagem de termos logo abaixo, e
-  // pelo mesmo motivo: o catálogo é vivo e cresce. Em 25/08 o backend
-  // acrescentou o 11º (`analise-coloracao-pessoal`) e esta linha, que era
-  // `=== 10`, derrubou a suíte por uma mudança legítima do outro lado.
-  //
-  // O piso continua valendo como alarme: cair abaixo de dez significa que
-  // um nicho SUMIU, e aí a busca deixou de achar quem existia.
-  ok(nichos.length >= 10, `${nichos.length} nichos (piso 10 — abaixo disso um nicho sumiu)`);
+  const termos = nichos.reduce((s, n) => s + n.termosDeBusca.length, 0);
+  const subtipos = nichos.reduce((s, n) => s + n.subTipos.length, 0);
+  console.log(
+    `        CENSO DE HOJE: ${nichos.length} nichos, ${termos} termos, ${subtipos} subtipos.`,
+  );
+  console.log("        (impresso, não assertado — quem decide o tamanho é o backend)");
+
+  // O único piso que não é do backend: lista vazia não serve a tela
+  // nenhuma, e `validarListaDeNichos` já recusa `[]`.
+  ok(nichos.length > 0, "a lista não vem vazia");
+
+  // Nicho sem termo é chip que só se acha pelo rótulo — e o rótulo é uma
+  // palavra só. Quem digita o que FAZ, e não o que É, não acha.
+  const semTermo = nichos.filter((n) => n.termosDeBusca.length === 0);
+  ok(
+    semTermo.length === 0,
+    `todo nicho tem ao menos um termo de busca${semTermo.length ? ` — sem: ${semTermo.map((n) => n.nicho).join(", ")}` : ""}`,
+  );
+
   ok(
     !nichos.some((n) => n.nicho === "generico"),
     "`generico` não vem — é destino de quem não casa, não escolha de lista",
   );
 
-  const termos = nichos.reduce((s, n) => s + n.termosDeBusca.length, 0);
-  // Piso, não igualdade: termo só cresce. 183 é o commit `3b846a1`; 77 é o
-  // deploy anterior a ele. Cair abaixo do piso é deploy atrasado.
-  ok(termos >= 183, `${termos} termos de busca (piso 183 — abaixo disso o deploy está atrasado)`);
+  // ---- a voz de dono, sem citar nicho nenhum ----
+  // O rótulo é o que vai para o chip e para `businesses.niche`. A
+  // regressão que isto pega é o backend passar a mandar o IDENTIFICADOR
+  // embelezado no lugar do rótulo: `clinica-odontologica` virando
+  // "Clínica Odontológica" em vez de "Dentista".
+  //
+  // A prova sem nomear ninguém: o rótulo normalizado não pode ser igual
+  // ao identificador com os hífens virando espaço.
+  const decatalogo = nichos.filter(
+    (n) => normalizar(n.rotulo) === normalizar(n.nicho.replace(/-/g, " ")),
+  );
+  ok(
+    decatalogo.length === 0,
+    `nenhum rótulo é o identificador embelezado (voz de dono)${decatalogo.length ? ` — ${decatalogo.map((n) => n.nicho).join(", ")}` : ""}`,
+  );
 
-  // Rótulo é voz de dono, não de catálogo. Se `clinica-odontologica`
-  // aparecer como "Clínica Odontológica" na tela, o backend regrediu.
-  ok(
-    nichos.find((n) => n.nicho === "clinica-odontologica")?.rotulo === "Dentista",
-    '`clinica-odontologica` -> "Dentista" (voz de dono)',
-  );
-  ok(
-    nichos.find((n) => n.nicho === "consultorio-medico")?.rotulo === "Médico",
-    '`consultorio-medico` -> "Médico"',
-  );
+  const vazios = nichos.filter((n) => !n.nicho.trim() || !n.rotulo.trim());
+  ok(vazios.length === 0, "nenhum nicho ou rótulo em branco");
 
   // Dois nichos com o mesmo rótulo normalizado tornariam `nichoPeloRotulo`
   // ambíguo — e a validação do servidor aceitaria um por outro.
@@ -244,56 +319,76 @@ secao("4. a forma da lista viva");
   );
 }
 
-secao("5. o que a busca TEM que achar");
+secao("5. o que a busca TEM que achar — varrido, não amostrado");
 {
   const acha = (q: string) => filtrarNichos(nichos, q).map((n) => n.nicho);
 
-  const sondas: Array<[string, string]> = [
-    ["siso", "clinica-odontologica"],
-    ["cardiologista", "consultorio-medico"],
-    ["martelinho de ouro", "oficina-mecanica"],
-    ["banho de gel", "manicure"],
-  ];
-  for (const [termo, esperado] of sondas) {
-    const r = acha(termo);
-    ok(
-      r.includes(esperado),
-      `"${termo}" -> ${esperado}${r.includes(esperado) ? "" : `  (achou: ${r.join(", ") || "nada"} — deploy atrasado?)`}`,
-    );
+  // ============================================================
+  // TODO TERMO DO BACKEND ACHA O NICHO DELE. Os 113, um por um.
+  //
+  // Isto substituiu quatro sondas escritas à mão ("cardiologista",
+  // "martelinho de ouro", "banho de gel", "siso"), das quais três
+  // apontavam para nichos que não existem mais. A varredura cobre as
+  // quatro, cobre as outras 109, e cobre as que o backend acrescentar
+  // amanhã sem ninguém tocar neste arquivo.
+  // ============================================================
+  const quebrados: string[] = [];
+  let conferidos = 0;
+  for (const n of nichos) {
+    for (const t of n.termosDeBusca) {
+      conferidos += 1;
+      if (!acha(t).includes(n.nicho)) quebrados.push(`"${t}" (${n.nicho})`);
+    }
   }
+  ok(
+    quebrados.length === 0,
+    `os ${conferidos} termos do backend acham o nicho deles${quebrados.length ? ` — quebrados: ${quebrados.slice(0, 5).join(", ")}` : ""}`,
+  );
 
-  ok(acha("dent").includes("clinica-odontologica"), 'busca por pedaço de palavra ("dent") já acha');
+  // Busca por pedaço de palavra, sem nomear o pedaço: as 4 primeiras
+  // letras do rótulo de cada nicho têm que achar aquele nicho. É o
+  // "digitou 'dent', já achou Dentista" — para todos.
+  const pedacoQuebrado = nichos.filter((n) => {
+    const pedaco = normalizar(n.rotulo).slice(0, 4);
+    return pedaco.length === 4 && !acha(pedaco).includes(n.nicho);
+  });
+  ok(
+    pedacoQuebrado.length === 0,
+    `as 4 primeiras letras do rótulo já acham o nicho${pedacoQuebrado.length ? ` — falhou: ${pedacoQuebrado.map((n) => n.nicho).join(", ")}` : ""}`,
+  );
+
   ok(
     filtrarNichos(nichos, "").length === nichos.length,
-    "consulta vazia mostra os dez (não obriga a digitar, não esconde a lista)",
+    "consulta vazia mostra TODOS (não obriga a digitar, não esconde a lista)",
   );
-  ok(filtrarNichos(nichos, "   ").length === nichos.length, "só espaço também mostra os dez");
+  ok(filtrarNichos(nichos, "   ").length === nichos.length, "só espaço também mostra todos");
 
   // A prova geral da normalização contra o dado REAL: todo termo acentuado
-  // do backend tem que ser achável digitado sem acento. Isto cobre os dez
-  // que existem hoje e qualquer um que o backend acrescente amanhã.
+  // do backend tem que ser achável digitado sem acento.
   const acentuados: string[] = [];
-  const quebrados: string[] = [];
+  const semAcentoQuebrado: string[] = [];
   for (const n of nichos) {
     for (const t of n.termosDeBusca) {
       if (normalizar(t) === t.toLowerCase()) continue;
       acentuados.push(t);
-      if (!acha(normalizar(t)).includes(n.nicho)) quebrados.push(`${t} (${n.nicho})`);
+      if (!acha(normalizar(t)).includes(n.nicho)) semAcentoQuebrado.push(`${t} (${n.nicho})`);
     }
   }
   ok(acentuados.length > 0, `há termo acentuado no dado real para testar (${acentuados.length})`);
   ok(
-    quebrados.length === 0,
-    `todo termo acentuado é achável sem acento${quebrados.length ? ` — quebrados: ${quebrados.join(", ")}` : ""}`,
+    semAcentoQuebrado.length === 0,
+    `todo termo acentuado é achável sem acento${semAcentoQuebrado.length ? ` — quebrados: ${semAcentoQuebrado.join(", ")}` : ""}`,
   );
 }
 
 secao("6. o que a busca NÃO pode achar — a decisão, não a falha");
 {
-  // Sugestão aproximada foi PROPOSTA E RECUSADA: a ressalva na tela seria
-  // interface pedindo desculpa por não ter o que a pessoa precisa. Quem não
-  // acha cai no texto livre. Há dois testes no backend que falham se alguém
-  // casar `padaria` ou a família do varejo de alimento em qualquer nicho.
+  // Estes nomes SÃO fixos de propósito, e não envelhecem: a decisão é que
+  // eles fiquem de fora. Sugestão aproximada foi PROPOSTA E RECUSADA — a
+  // ressalva na tela seria interface pedindo desculpa por não ter o que a
+  // pessoa precisa. Quem não acha cai no texto livre. Há dois testes no
+  // backend que falham se alguém casar `padaria` ou a família do varejo
+  // de alimento em qualquer nicho.
   for (const termo of [
     "padaria",
     "doceria",
@@ -312,31 +407,47 @@ secao("6. o que a busca NÃO pode achar — a decisão, não a falha");
 
 secao("7. `nichoPeloRotulo` — igualdade, não substring");
 {
-  ok(nichoPeloRotulo(nichos, "Dentista")?.nicho === "clinica-odontologica", "rótulo exato acha");
-  ok(nichoPeloRotulo(nichos, "dentista")?.nicho === "clinica-odontologica", "caixa não importa");
+  // ---- o que TEM que ser aceito: todo rótulo vivo, de três formas ----
+  const falhou: string[] = [];
+  for (const n of nichos) {
+    const formas: [string, string][] = [
+      ["exato", n.rotulo],
+      ["caixa baixa", n.rotulo.toLowerCase()],
+      ["com espaço nas pontas", `  ${n.rotulo}  `],
+      ["sem acento", normalizar(n.rotulo)],
+    ];
+    for (const [como, texto] of formas) {
+      if (nichoPeloRotulo(nichos, texto)?.nicho !== n.nicho) falhou.push(`${n.nicho} (${como})`);
+    }
+  }
   ok(
-    nichoPeloRotulo(nichos, "  Dentista  ")?.nicho === "clinica-odontologica",
-    "espaço nas pontas não importa",
+    falhou.length === 0,
+    `todo rótulo acha, nas 4 formas — exato, caixa, espaço e sem acento${falhou.length ? ` — falhou: ${falhou.join(", ")}` : ""}`,
   );
+
+  // A prova de que a forma "sem acento" não passou de graça: precisa
+  // haver rótulo acentuado na lista viva para ela significar alguma coisa.
+  const comAcento = nichos.filter((n) => normalizar(n.rotulo) !== n.rotulo.toLowerCase());
   ok(
-    nichoPeloRotulo(nichos, "Clínica de estética")?.nicho === "clinica-estetica",
-    "rótulo com acento acha",
+    comAcento.length > 0,
+    `há rótulo acentuado para a forma sem acento provar algo (${comAcento.length})`,
   );
+
+  // ---- o que NÃO pode ser aceito ----
+  // Pedaço de rótulo, derivado: metade do rótulo mais longo da lista.
+  const maisLongo = [...nichos].sort((a, b) => b.rotulo.length - a.rotulo.length)[0]!;
+  const metade = maisLongo.rotulo.slice(0, Math.floor(maisLongo.rotulo.length / 2)).trim();
   ok(
-    nichoPeloRotulo(nichos, "clinica de estetica")?.nicho === "clinica-estetica",
-    "e acha digitado sem acento",
+    nichoPeloRotulo(nichos, metade) === undefined,
+    `pedaço de rótulo NÃO é escolha válida ("${metade.slice(0, 24)}…")`,
   );
-  // O outro lado: o que NÃO pode ser aceito como escolha de lista.
-  ok(nichoPeloRotulo(nichos, "Dent") === undefined, "pedaço de rótulo NÃO é escolha válida");
   ok(nichoPeloRotulo(nichos, "") === undefined, "vazio não é escolha válida");
-  ok(
-    nichoPeloRotulo(nichos, "Clínica / Consultório") === undefined,
-    "os chips velhos NÃO são nicho — é o buraco que este lote fecha",
-  );
-  ok(
-    nichoPeloRotulo(nichos, "Loja física") === undefined,
-    '"Loja física" nunca cobriu nicho nenhum',
-  );
+
+  // Os cinco chips velhos: fixos e eternos, porque a decisão é que eles
+  // nunca voltem a ser escolha.
+  for (const velho of CHIPS_VELHOS) {
+    ok(nichoPeloRotulo(nichos, velho) === undefined, `"${velho}" NÃO é nicho`);
+  }
 }
 
 secao("8. a validação do servidor — a que quebraria calada");
@@ -344,27 +455,39 @@ secao("8. a validação do servidor — a que quebraria calada");
   const comLista = (texto: string) => conferirEscolhaDeNicho({ lista: nichos, texto });
   const semLista = (texto: string) => conferirEscolhaDeNicho({ lista: null, texto });
 
-  // ---- com a lista viva ----
-  const r1 = comLista("Dentista");
-  ok(r1.ok && r1.texto === "Dentista", "chip da lista viva passa");
-
-  // O MOTIVO DE TUDO ISTO: antes deste lote, esta linha reprovava. Nenhum
-  // nicho está em `pergunta.opcoes`, então toda escolha válida virava
-  // "essa opção não existe" — e o conserto tentador seria apagar a
+  // ============================================================
+  // TODO NICHO DA LISTA VIVA PASSA — e volta com a grafia do backend.
+  //
+  // O MOTIVO DE TUDO ISTO: antes do lote de 22/08 esta linha reprovava.
+  // Nenhum nicho está em `pergunta.opcoes`, então toda escolha válida
+  // virava "essa opção não existe" — e o conserto tentador seria apagar a
   // checagem, reabrindo o buraco de forjar `origem: "chip"`.
-  ok(comLista("Petshop").ok, "nicho que NUNCA esteve nos chips velhos passa");
-  ok(comLista("Oficina mecânica").ok, "e os outros inalcançáveis também");
-
-  const r2 = comLista("dentista");
-  ok(r2.ok && r2.texto === "Dentista", "caixa diferente passa e volta com a grafia canônica");
-  const r3 = comLista("clinica de estetica");
+  //
+  // Antes isto era conferido em dois nichos escolhidos a dedo, e os dois
+  // morreram em setembro. Agora é a lista inteira, em três grafias.
+  // ============================================================
+  const recusados: string[] = [];
+  const grafiaErrada: string[] = [];
+  for (const n of nichos) {
+    for (const texto of [n.rotulo, n.rotulo.toLowerCase(), normalizar(n.rotulo)]) {
+      const r = comLista(texto);
+      if (!r.ok) recusados.push(`${n.nicho} <- "${texto}"`);
+      else if (r.texto !== n.rotulo) grafiaErrada.push(`${n.nicho}: devolveu "${r.texto}"`);
+    }
+  }
   ok(
-    r3.ok && r3.texto === "Clínica de estética",
-    "sem acento passa e volta ACENTUADO (nunca grava o texto do cliente)",
+    recusados.length === 0,
+    `todo nicho vivo passa, em 3 grafias${recusados.length ? ` — recusados: ${recusados.join(", ")}` : ""}`,
+  );
+  ok(
+    grafiaErrada.length === 0,
+    `e volta SEMPRE com a grafia canônica do backend, nunca o texto do cliente${grafiaErrada.length ? ` — ${grafiaErrada.join(", ")}` : ""}`,
   );
 
   // Os dois lados: o que a lista viva tem que RECUSAR.
-  ok(!comLista("Dent").ok, "pedaço de rótulo é recusado (substring não é escolha)");
+  const maisLongo = [...nichos].sort((a, b) => b.rotulo.length - a.rotulo.length)[0]!;
+  const metade = maisLongo.rotulo.slice(0, Math.floor(maisLongo.rotulo.length / 2)).trim();
+  ok(!comLista(metade).ok, "pedaço de rótulo é recusado (substring não é escolha)");
   ok(!comLista("padaria").ok, "termo sem nicho é recusado como chip");
   ok(!comLista("qualquer coisa forjada").ok, "texto forjado com `origem: chip` é recusado");
   const r4 = comLista("padaria");
@@ -374,18 +497,13 @@ secao("8. a validação do servidor — a que quebraria calada");
   // Decisão do Victor, 22/08. Os cinco chips fixos saíram: eles não eram
   // nichos, e gravar um deles seria palpite com cara de escolha do
   // cliente. Com o catálogo fora, a tela mostra só o texto livre.
-  for (const antigo of [
-    "Clínica / Consultório",
-    "Loja física",
-    "Restaurante / Bar",
-    "Serviço (advocacia, arquitetura, contabilidade)",
-    "Beleza e estética",
-  ]) {
+  for (const antigo of CHIPS_VELHOS) {
     ok(!semLista(antigo).ok, `"${antigo}" NÃO passa mais — a reserva não existe`);
   }
-  ok(!comLista("Clínica / Consultório").ok, "e também não passa com a lista no ar");
+  ok(!comLista(CHIPS_VELHOS[0]!).ok, "e também não passa com a lista no ar");
 
-  const r5 = semLista("Dentista");
+  const umVivo = nichos[0]!.rotulo;
+  const r5 = semLista(umVivo);
   ok(!r5.ok, "com o catálogo fora, nem nicho de verdade pode ser confirmado");
   ok(
     !r5.ok && r5.erro === NAO_DEU_PARA_CONFERIR,
@@ -400,10 +518,10 @@ secao("8. a validação do servidor — a que quebraria calada");
     "os dois recados são diferentes, e têm que continuar sendo",
   );
 
-  // A pergunta `ramo` não pode voltar a ter opção fixa: `actions.ts`
-  // confere chip contra `pergunta.opcoes`, e uma opção ali seria uma
-  // resposta aceita sem passar pelo catálogo — a reserva entrando de novo
-  // pela porta dos fundos.
+  // A pergunta `ramo` não pode ganhar opção fixa: `actions.ts` confere
+  // chip contra `pergunta.opcoes`, e uma opção ali seria uma resposta
+  // aceita sem passar pelo catálogo — a reserva entrando de novo pela
+  // porta dos fundos.
   const ramo = PERGUNTAS.find((q) => q.id === "ramo");
   ok(ramo?.seletorDeNicho === true, "a pergunta `ramo` usa o seletor");
   ok(
@@ -420,34 +538,52 @@ secao("9. o que o Enter faz — `resolverConsulta`");
   ok(r("").tipo === "vazia", "campo vazio: Enter não faz nada");
   ok(r("   ").tipo === "vazia", "só espaço também");
 
+  // ============================================================
   // O CASO QUE MOTIVOU A REGRA (Victor, 22/08): digitou, sobrou um, o
   // instinto é apertar Enter. Antes disto ele ficava preso.
-  const pizza = r("pizzaria");
-  ok(
-    pizza.tipo === "nicho" && pizza.nicho.nicho === "restaurante",
-    `"pizzaria" sobra um -> Enter escolhe restaurante${pizza.tipo === "nicho" ? "" : ` (deu ${pizza.tipo})`}`,
-  );
-  const siso = r("siso");
-  ok(
-    siso.tipo === "nicho" && siso.nicho.nicho === "clinica-odontologica",
-    '"siso" sobra um -> Enter escolhe',
-  );
+  //
+  // Era conferido com "pizzaria" -> `restaurante`. `restaurante` saiu do
+  // catálogo e a linha virou vermelha sem nada ter quebrado. Agora o
+  // termo é DERIVADO: procura-se na lista viva um termo que hoje deixe um
+  // resultado só, e confere-se que o Enter escolhe aquele.
+  // ============================================================
+  const sobraUm = nichos
+    .flatMap((n) => n.termosDeBusca.map((t) => [t, n.nicho] as const))
+    .find(([t]) => filtrarNichos(nichos, t).length === 1);
+  ok(sobraUm !== undefined, "há termo que hoje deixa um resultado só, para testar o Enter");
+  if (sobraUm) {
+    const [termo, esperado] = sobraUm;
+    const res = r(termo);
+    ok(
+      res.tipo === "nicho" && res.nicho.nicho === esperado,
+      `"${termo}" sobra um -> Enter escolhe ${esperado}${res.tipo === "nicho" ? "" : ` (deu ${res.tipo})`}`,
+    );
+  }
 
-  // O outro lado: com vários na tela, Enter NÃO adivinha.
-  const muitos = nichos.filter((n) => filtrarNichos(nichos, "a").includes(n));
-  ok(muitos.length >= 2, `há consulta que deixa vários na tela para testar (${muitos.length})`);
-  ok(r("a").tipo === "escolha", '"a" deixa vários -> Enter não age, a pessoa toca no chip');
+  // O outro lado: com vários na tela, Enter NÃO adivinha. A consulta
+  // também é derivada — a primeira letra que deixe dois ou mais.
+  const letra = "abcdefghijklmnopqrstuvwxyz"
+    .split("")
+    .find((c) => filtrarNichos(nichos, c).length >= 2);
+  ok(letra !== undefined, "há consulta de uma letra que deixa vários na tela");
+  if (letra) {
+    ok(
+      r(letra).tipo === "escolha",
+      `"${letra}" deixa ${filtrarNichos(nichos, letra).length} -> Enter não age, a pessoa toca no chip`,
+    );
+  }
 
   // Sem resultado vira texto livre — o caminho do "Outro" pela busca.
+  // "padaria" é fixo e eterno pelo mesmo motivo do §6.
   const pad = r("padaria");
   ok(pad.tipo === "livre" && pad.texto === "padaria", '"padaria" não acha -> Enter manda texto livre');
   ok(r("  padaria  ").tipo === "livre", "e o texto livre vai aparado");
 
   // ---- a precedência do rótulo exato ----
-  // Assertiva geral, contra o dado real: digitar o rótulo inteiro de
-  // QUALQUER nicho tem que escolher aquele nicho. É isto que segura o dia
-  // em que um rótulo casar com os termos de outro e deixar dois na tela —
-  // aí "sobrou um" falharia e a precedência salva.
+  // Digitar o rótulo inteiro de QUALQUER nicho tem que escolher aquele
+  // nicho. É isto que segura o dia em que um rótulo casar com os termos
+  // de outro e deixar dois na tela — aí "sobrou um" falharia e a
+  // precedência salva.
   const errados: string[] = [];
   for (const n of nichos) {
     const res = r(n.rotulo);
@@ -457,7 +593,7 @@ secao("9. o que o Enter faz — `resolverConsulta`");
   }
   ok(
     errados.length === 0,
-    `digitar o rótulo inteiro escolhe aquele nicho, nos dez${errados.length ? ` — falhou: ${errados.join("; ")}` : ""}`,
+    `digitar o rótulo inteiro escolhe aquele nicho, em todos${errados.length ? ` — falhou: ${errados.join("; ")}` : ""}`,
   );
 
   // E o mesmo digitado sem acento e em caixa baixa.
@@ -470,12 +606,78 @@ secao("9. o que o Enter faz — `resolverConsulta`");
     `o rótulo sem acento e em caixa baixa também escolhe${semAcento.length ? ` — falhou: ${semAcento.map((n) => n.nicho).join(", ")}` : ""}`,
   );
 
-  // Quantos rótulos hoje deixariam MAIS de um na tela? Zero — mas se um dia
-  // deixar, a precedência acima é o que impede a regressão. O número está
-  // no log de propósito, para o dia em que mudar.
+  // Quantos rótulos hoje deixariam MAIS de um na tela? Se um dia deixar, a
+  // precedência acima é o que impede a regressão. O número está no log de
+  // propósito, para o dia em que mudar.
   const ambiguos = nichos.filter((n) => filtrarNichos(nichos, n.rotulo).length > 1);
   console.log(
     `        (rótulos que hoje deixam mais de um resultado: ${ambiguos.length}${ambiguos.length ? ` — ${ambiguos.map((n) => n.nicho).join(", ")}` : ""})`,
+  );
+}
+
+secao("10. o que o WEBAPP escreve à mão sobre a lista");
+{
+  // ============================================================
+  // ESTA SEÇÃO É NOVA, E É A QUE TERIA PEGO O ESTRAGO DE SETEMBRO.
+  //
+  // Os §§ 4 a 9 conferem o backend contra ele mesmo. Nenhum deles
+  // perguntava a coisa que quebrou: **o que o webapp escreveu à mão
+  // continua apontando para nicho que existe?**
+  //
+  // Quando o catálogo encolheu, dois lugares ficaram apontando para o
+  // vazio sem uma linha vermelha em lugar nenhum:
+  //
+  //   - a lista de oito chips da bancada, com SEIS nichos extintos;
+  //   - a tabela de custo por contato, com DOIS dos três.
+  //
+  // Nenhum dos dois é o backend quebrando. É o webapp ficando para trás,
+  // que é um defeito nosso e precisa de alarme nosso.
+  // ============================================================
+
+  // ---- 10.1 a tabela de custo por contato ----
+  const vivos = new Set(nichos.map((n) => n.nicho));
+  const custosMortos = Object.keys(CUSTO_TIPICO).filter((k) => !vivos.has(k));
+  ok(
+    custosMortos.length === 0,
+    `todo nicho com custo por contato existe na lista viva${custosMortos.length ? ` — mortos: ${custosMortos.join(", ")}` : ""}`,
+  );
+
+  // O outro lado: um nicho aposentado que VOLTE ao catálogo precisa sair
+  // da gaveta e voltar para a tabela ativa, senão o número existe e a
+  // tela continua dizendo que não sabe.
+  const ressuscitados = Object.keys(CUSTO_DE_NICHO_APOSENTADO).filter((k) => vivos.has(k));
+  ok(
+    ressuscitados.length === 0,
+    `nenhum custo aposentado voltou ao catálogo${ressuscitados.length ? ` — promova de volta: ${ressuscitados.join(", ")}` : ""}`,
+  );
+
+  // Quantos dos nichos vivos têm custo conhecido? Impresso, não assertado:
+  // é pergunta de produto, não de código. Hoje é 1 de 8.
+  const comCusto = nichos.filter((n) => CUSTO_TIPICO[n.nicho] !== undefined);
+  console.log(
+    `        (nichos com custo por contato conhecido: ${comCusto.length} de ${nichos.length} — nos outros a tela diz que não sabe)`,
+  );
+
+  // ---- 10.2 nenhuma cópia da lista escrita à mão ----
+  // A bancada tinha uma. Ela recebe a lista viva por prop desde 22/09, e
+  // esta trava existe para o dia em que alguém achar mais rápido colar
+  // oito pares do que passar a prop.
+  const fontes = [
+    "app/exemplo/_onboarding/perguntas.ts",
+    "app/exemplo/_onboarding/Onboarding.tsx",
+    "app/(fluxo)/onboarding/perguntas.ts",
+  ];
+  const comCopia: string[] = [];
+  for (const arquivo of fontes) {
+    const texto = readFileSync(new URL(`../${arquivo}`, import.meta.url), "utf8");
+    // `{ nicho: "algo"` só aparece quando alguém escreveu um item de
+    // lista à mão. O tipo (`nicho: string`) não casa, e o acesso
+    // (`n.nicho`) também não.
+    if (/\{\s*nicho:\s*"/.test(texto)) comCopia.push(arquivo);
+  }
+  ok(
+    comCopia.length === 0,
+    `nenhuma tela guarda cópia da lista à mão${comCopia.length ? ` — tem em: ${comCopia.join(", ")}` : ""}`,
   );
 }
 

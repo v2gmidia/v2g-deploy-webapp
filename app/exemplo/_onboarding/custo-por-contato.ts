@@ -76,11 +76,41 @@ export const FOLGA = 0.15;
  * que já existe e já está capturado.
  * ============================================================
  */
-const CUSTO_TIPICO: Record<string, number> = {
+/**
+ * EXPORTADO só para o conferidor. Nenhuma tela lê este objeto direto —
+ * quem lê é `custoDoNicho()`, que devolve `null` para nicho de fora.
+ *
+ * O `conferir:nichos` §10 confere que toda chave daqui existe na lista
+ * viva do `GET /nichos`. Sem essa trava, um nicho aposentado pelo backend
+ * deixa um custo apontando para o vazio, e ninguém fica sabendo — foi o
+ * que aconteceu com dois dos três entre agosto e setembro de 2026.
+ */
+export const CUSTO_TIPICO: Record<string, number> = {
   // informado pelo Victor em 20/09/2026, nicho confirmado no GET /nichos
   arquitetura: 60,
   // o "agência ~R$ 30" do Victor, mapeado por mim — ver DUVIDA-ONB-13
   "gestao-de-trafego": 30,
+};
+
+/**
+ * O NÚMERO QUE NÃO TEVE PARA ONDE IR — guardado, não apagado.
+ *
+ * ============================================================
+ * `distribuidora-de-bebidas` não existe na lista viva e não tem vizinho
+ * plausível: jogar os R$ 7 em cima de outro nicho seria custo de um
+ * negócio valendo para outro. Apagar seria jogar fora medição de
+ * operação real, informada pelo Victor.
+ *
+ * Fica aqui, inerte e visível. `custoDoNicho()` NÃO lê este objeto.
+ *
+ * O `conferir:nichos` §10 confere os dois lados: nenhuma chave ATIVA
+ * pode apontar para nicho morto, e nenhuma chave APOSENTADA pode ter
+ * voltado ao catálogo sem alguém promovê-la de volta — senão o número
+ * existe e a tela continua dizendo que não sabe.
+ * ============================================================
+ */
+export const CUSTO_DE_NICHO_APOSENTADO: Record<string, number> = {
+  "distribuidora-de-bebidas": 7,
 };
 
 /** O que a tela precisa saber para escrever a frase. Nunca inventa. */

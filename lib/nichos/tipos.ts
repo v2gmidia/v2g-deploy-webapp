@@ -13,7 +13,14 @@
 export interface SubTipoDeNicho {
   id: string;
   rotulo: string;
-  /** o rótulo já achatado: "Petshop — Banho, tosa e veterinário" */
+  /**
+   * O rótulo já achatado, no formato "Nicho — Subtipo".
+   *
+   * O exemplo que estava aqui era "Petshop — Banho, tosa e veterinário",
+   * e `petshop` saiu do catálogo em setembro. Sem subtipo nenhum vivo
+   * hoje, qualquer exemplo concreto vira ficção datada — então o formato
+   * fica descrito, e não ilustrado.
+   */
   nomeExibicao: string;
 }
 
@@ -30,10 +37,24 @@ export interface Nicho {
    */
   rotulo: string;
   /**
-   * O que a busca casa além do rótulo. 183 termos nos dez nichos
-   * (medido em 22/08/2026). Vêm com acento — `rodízio`, `japonês`,
-   * `ração` — e é por isso que comparar exige normalizar OS DOIS LADOS.
-   * Ver `busca.ts`.
+   * O que a busca casa além do rótulo.
+   *
+   * ============================================================
+   * NÃO CONTE OS TERMOS AQUI. A LISTA É DO BACKEND.
+   *
+   * Este comentário dizia "183 termos nos dez nichos (medido em
+   * 22/08/2026)". Em 22/09/2026 são **113 termos em 8 nichos** — o
+   * Gabriel encolheu o `knowledge/` de propósito, e o número aqui virou
+   * mentira sem que ninguém escrevesse uma linha errada.
+   *
+   * Um número de catálogo vivo copiado para comentário envelhece
+   * sozinho. Quem quiser a conta de hoje roda `pnpm conferir:nichos`:
+   * ele imprime o censo da lista VIVA a cada execução, e é o único lugar
+   * deste repositório que tem direito de afirmar quantos são.
+   * ============================================================
+   *
+   * Vêm com acento — hoje **35 dos 113** — e é por isso que comparar
+   * exige normalizar OS DOIS LADOS. Ver `busca.ts`.
    */
   termosDeBusca: string[];
   /**
@@ -42,7 +63,10 @@ export interface Nicho {
    * lote que os exibir vai precisar gravar `nicho` E `sub_tipo` — o
    * `CadastroCompleto` não tem nenhum dos dois hoje.
    *
-   * Vazio em nove dos dez; só `petshop` tem três.
+   * **Vazio nos OITO, medido em 22/09/2026 — zero subtipos na lista
+   * inteira.** Já teve: até 22/08 o `petshop` trazia três, e `petshop`
+   * saiu do catálogo. Continuam sendo validados para que uma mudança de
+   * contrato apareça na fronteira, e não três telas adiante.
    */
   subTipos: SubTipoDeNicho[];
 }

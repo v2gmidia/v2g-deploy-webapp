@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   CONVITE_ABAIXO_DO_CAMPO,
   CONVITE_NO_MICROFONE,
-  NICHOS_DA_BANCADA,
+  type NichoDaTela,
   PASSOS,
   RAIOS,
   TOTAL,
@@ -143,6 +143,7 @@ interface PropostaDeNicho {
 }
 
 export function Onboarding({
+  nichos,
   passoInicial = 0,
   transcricaoLigada,
   motivoSemTranscricao,
@@ -152,6 +153,17 @@ export function Onboarding({
   falhaDeExemplo = null,
   falaDeExemplo = false,
 }: {
+  /**
+   * A LISTA VIVA, vinda do `GET /nichos` pelo componente de servidor.
+   *
+   * Lista VAZIA não é acidente nem "ainda carregando": é o backend fora
+   * do ar, e a tela tem um desenho para isso. Ver o bloco dos chips.
+   *
+   * Os `termos` vêm junto porque o fluxo do "Outro" depende deles: é
+   * sobre eles que `classificar.ts` acha o nicho do texto livre antes de
+   * gastar uma chamada ao agente.
+   */
+  nichos: NichoDaTela[];
   passoInicial?: number;
   /** a `OPENAI_API_KEY` existe neste ambiente? Decidido no servidor. */
   transcricaoLigada: boolean;
@@ -813,7 +825,7 @@ export function Onboarding({
               <Linha
                 key={l.id}
                 rotulo={l.rotulo}
-                valor={l.valor(respostas)}
+                valor={l.valor(respostas, nichos)}
                 aoMudar={() => irPara(l.id)}
                 porAudio={falando.includes(l.id)}
               />
@@ -864,7 +876,7 @@ export function Onboarding({
           </p>
           <a
             className={`cta ${css.botao}`}
-            href={`${WHATSAPP_HUMANO}?text=${encodeURIComponent(mensagemDoAgendamento(respostas))}`}
+            href={`${WHATSAPP_HUMANO}?text=${encodeURIComponent(mensagemDoAgendamento(respostas, nichos))}`}
             target="_blank"
             rel="noopener"
           >
@@ -889,7 +901,14 @@ export function Onboarding({
             instrução sobre a lista. Com a proposta aberta a lista não
             está mais lá, e a instrução vira ordem para fazer uma coisa
             que não tem como ser feita. */}
-        {p.ajuda && proposta === null && <p className={css.ajuda}>{p.ajuda}</p>}
+        {/* A ajuda do passo do nicho é "Escolha o mais próximo" — uma
+            instrução sobre a lista. Com a proposta aberta, ou sem lista
+            nenhuma, ela manda fazer uma coisa que não tem como ser feita. */}
+        {p.ajuda &&
+          proposta === null &&
+          !(p.tipo === "nicho" && nichos.length === 0) && (
+            <p className={css.ajuda}>{p.ajuda}</p>
+          )}
 
         {/* ---------- texto, com áudio ou teclado ---------- */}
         {(p.tipo === "texto" || p.tipo === "site") && (
@@ -1054,9 +1073,37 @@ export function Onboarding({
                 agora é a conferência dela, e conferência com o cardápio
                 aberto do lado convida a pessoa a responder de novo.
                 ============================================================ */}
-            {proposta === null && (
+            {/* ============================================================
+                SEM LISTA, A TELA DIZ ISSO — não inventa chip.
+
+                A lista vem do `GET /nichos` pelo servidor. Se ela não
+                vier, `nichos` chega vazio, e aqui NÃO existe reserva:
+                chips de mentira seriam palpite com cara de escolha do
+                cliente (decisão do Victor, 22/08, e é a mesma razão pela
+                qual `app/(fluxo)/onboarding/perguntas.ts` tem
+                `opcoes: []`).
+
+                A saída para gente continua na tela nos dois casos — é a
+                única que funciona com o catálogo fora.
+                ============================================================ */}
+            {proposta === null && nichos.length === 0 && (
+              <p className={css.dica}>
+                A lista de tipos de negócio não carregou agora. Dá para seguir falando com a
+                gente:{" "}
+                <a
+                  className={css.humanoLinha}
+                  href={WHATSAPP_HUMANO}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  me chama no WhatsApp
+                </a>
+                .
+              </p>
+            )}
+            {proposta === null && nichos.length > 0 && (
             <div className={css.escolhas}>
-              {NICHOS_DA_BANCADA.map((n) => (
+              {nichos.map((n) => (
                 <button
                   key={n.nicho}
                   type="button"
@@ -1205,7 +1252,8 @@ export function Onboarding({
                 <p className={css.rotuloGrupo}>
                   Pelo que você contou, o seu caso é{" "}
                   <strong>
-                    {rotuloParaFrase(proposta.palpite.nicho) ?? proposta.palpite.rotulo}
+                    {rotuloParaFrase(proposta.palpite.nicho, nichos) ??
+                      proposta.palpite.rotulo}
                   </strong>
                   . Confere?
                 </p>
@@ -1303,7 +1351,12 @@ export function Onboarding({
                 explica por que a lista é curta. Com a proposta aberta ela
                 vira uma terceira oferta de falar com alguém, ao lado de
                 duas que já estão ali em forma de botão. */}
-            {proposta === null && (
+            {/* Sem lista, esta linha vinha logo abaixo do recado e as duas
+                ofereciam o WhatsApp — dois links iguais, empilhados. Pior,
+                ela pergunta "se o seu não está aí" para quem não recebeu
+                lista nenhuma para procurar. Ela existe para explicar por
+                que a lista é CURTA; sem lista não há o que explicar. */}
+            {proposta === null && nichos.length > 0 && (
             <p className={css.dica}>
               A lista é curta de propósito: é ela que diz quanto custa cada contato. Se o seu
               não está aí,{" "}
@@ -1714,7 +1767,14 @@ function wavDeSilencio(segundos: number): Blob {
 const LINHAS_DO_RESUMO: {
   id: string;
   rotulo: string;
-  valor: (r: Respostas) => string | undefined;
+  /**
+   * `nichos` entra aqui porque o rótulo do nicho é a ÚNICA linha do
+   * resumo que não está nas respostas: elas guardam o identificador
+   * (`clinica-odontologica`), e quem traduz para "Dentista" é a lista
+   * viva. Antes essa tradução saía de uma cópia congelada, e um nicho
+   * aposentado virava linha em branco no resumo — sem dizer por quê.
+   */
+  valor: (r: Respostas, nichos: NichoDaTela[]) => string | undefined;
 }[] = [
   { id: "pessoa", rotulo: "Você", valor: (r) => r.pessoa },
   { id: "empresa", rotulo: "Empresa", valor: (r) => r.empresa },
@@ -1736,12 +1796,12 @@ const LINHAS_DO_RESUMO: {
   {
     id: "nicho",
     rotulo: "Tipo de negócio",
-    valor: (r) => {
+    valor: (r, nichos) => {
       if (r.nicho === NICHO_OUTRO) {
         // O que ela escreveu vale mais que a palavra "Outro".
         return r.nicho_outro ? `${r.nicho_outro} (fora da lista)` : "Fora da lista";
       }
-      return NICHOS_DA_BANCADA.find((n) => n.nicho === r.nicho)?.rotulo;
+      return nichos.find((n) => n.nicho === r.nicho)?.rotulo;
     },
   },
   { id: "whatsapp", rotulo: "WhatsApp", valor: (r) => r.whatsapp },
@@ -1793,7 +1853,10 @@ const LINHAS_DO_RESUMO: {
  */
 const TETO_DA_CORRECAO = 600;
 
-export function mensagemDoAgendamento(respostas: Respostas): string {
+export function mensagemDoAgendamento(
+  respostas: Respostas,
+  nichos: NichoDaTela[],
+): string {
   const empresa = respostas.empresa?.trim();
   const pessoa = respostas.pessoa?.trim();
   const falando = lerMarcasDeAudio(respostas);
@@ -1807,7 +1870,7 @@ export function mensagemDoAgendamento(respostas: Respostas): string {
   ];
 
   for (const l of LINHAS_DO_RESUMO) {
-    const v = l.valor(respostas);
+    const v = l.valor(respostas, nichos);
     const marca = falando.includes(l.id) ? " (falado)" : "";
     linhas.push(`• ${l.rotulo}: ${v && v.length > 0 ? v : "não respondi"}${marca}`);
   }

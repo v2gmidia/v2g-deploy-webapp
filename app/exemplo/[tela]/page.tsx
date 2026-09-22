@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { listarNichos } from "@/lib/backend";
 import type { CasoDeFalha } from "../_onboarding/recados";
 import { Casco } from "@/components/ui/Casco";
 import { TelaDoInicio } from "@/app/(protected)/inicio/TelaDoInicio";
@@ -159,8 +160,40 @@ export default async function ExemploPage({
       ? busca.microfone[0]
       : busca.microfone;
 
+    // ============================================================
+    // A LISTA DE NICHOS VEM DO BACKEND, COMO EM PRODUÇÃO.
+    //
+    // Até 22/09 a bancada usava oito pares escritos à mão, sob a
+    // justificativa de que ela "não tem token do backend". Ela tem: este
+    // arquivo é componente de SERVIDOR e lê o mesmo `.env.local` que a
+    // `/onboarding` de produção, que chama a mesma `listarNichos()` desde
+    // 22/08. Quem não pode ver o token é o navegador — e por isso a lista
+    // desce como prop, já pronta.
+    //
+    // A cópia congelada tinha apodrecido: SEIS dos oito nichos não
+    // existiam mais no `GET /nichos`, e os seis que o backend passou a
+    // servir a bancada nunca ofereceu. Capturar tela ali era capturar
+    // ficção.
+    //
+    // FALHA VIRA LISTA VAZIA, e não lista de reserva. A tela tem desenho
+    // para isso, e é o mesmo desenho de produção com o catálogo fora.
+    // ============================================================
+    const respostaDosNichos = await listarNichos();
+    const nichos = respostaDosNichos.ok
+      ? respostaDosNichos.dados.map((n) => ({
+          nicho: n.nicho,
+          rotulo: n.rotulo,
+          // Os termos descem junto: o fluxo do "Outro" classifica o texto
+          // livre contra eles antes de gastar uma chamada ao agente do
+          // backend. Vivos, são os mesmos 113 da cópia que saiu daqui —
+          // só que sem data de validade.
+          termos: n.termosDeBusca,
+        }))
+      : [];
+
     return (
       <Onboarding
+        nichos={nichos}
         passoInicial={Number.isFinite(passo) ? Math.min(Math.max(passo - 1, 0), 11) : 0}
         transcricaoLigada={
           microfonePedido === "1" ? true : microfonePedido === "0" ? false : temChave

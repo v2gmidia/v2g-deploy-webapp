@@ -909,3 +909,143 @@ quem manda nele, não minha.
 
 **O "(Austrália)" eu deixei aparecer de propósito.** Tapar esconderia que
 ele existe.
+## DUVIDA-NICHO-1 — O que deixou de casar quando o catálogo encolheu
+
+**Medido em 22/09/2026** contra o `GET /nichos` vivo: 8 nichos, 113
+termos, 0 subtipos. Em 22/08 eram 10 e 183.
+
+### Os dez acentuados que `lib/nichos/busca.ts` citava pelo nome
+
+O bloco de `normalizar()` listava os termos acentuados do catálogo, como
+prova de que a normalização tinha o que fazer. **Nove dos dez sumiram:**
+
+| termo | hoje |
+|---|---|
+| rodízio | sumiu |
+| japonês | sumiu |
+| veterinário | sumiu |
+| cílios | sumiu |
+| degradê | sumiu |
+| óleo | sumiu |
+| castração | sumiu |
+| musculação | sumiu |
+| estética | sumiu |
+| ração | **só como pedaço de outras palavras** — ver abaixo |
+
+**A normalização continua tendo o que provar:** hoje há **35 termos
+acentuados de 113**, quase todos de advocacia e odontologia —
+`inventário`, `pensão alimentícia`, `divórcio`, `extração`. O
+`conferir:nichos` §5 varre os 35 e confere que todos são acháveis sem
+acento, sem citar nenhum pelo nome.
+
+### O pior não é o que sumiu — é o que passou a casar errado
+
+`ração` "sobreviveu" por acidente. Ela não é termo de nicho nenhum: ela
+aparece **dentro** de outras palavras, porque a busca casa por substring.
+Medido:
+
+```
+  "ração"  ->  analise-coloracao-pessoal, arquitetura, clinica-odontologica
+```
+
+porque colo**ração**, deco**ração**, ext**ração** e restau**ração**.
+
+**Quem procura comida de cachorro recebe três chips: consultoria de
+imagem, arquiteto e dentista.** Nenhum deles tem nada a ver, e os três
+parecem resposta.
+
+Isso não é regressão do backend. É a regra de `filtrarNichos` — substring
+crua — encontrando um vocabulário novo. O próprio comentário dela previu
+o dia por escrito:
+
+> "O dia de mover é o dia em que casar termo virar mais que substring:
+> sinônimo, erro de digitação, radical. Aí a regra deixa de caber num
+> `includes` e passa a precisar de índice."
+
+**O que depende de decisão:** casar por PALAVRA em vez de por pedaço de
+palavra conserta a "ração" e quebra o "dent" → "Dentista", que é o caso
+que fez a busca ser substring. O meio-termo provável é **prefixo de
+palavra**: "dent" casa porque começa uma palavra do termo; "ração" não
+casa porque termina no meio de "decoração". Não implementei — muda o
+comportamento de uma tela de produção e não estava no pedido.
+
+### Os ramos que deixaram de ser atendidos
+
+Não acham mais nada: `pizzaria`, `restaurante`, `petshop`, `veterinário`,
+`estética`, `barbearia`, `manicure`, `academia`, `oficina-mecanica`,
+`distribuidora-de-bebidas`, `agencia-de-marketing`.
+
+Isso é **decisão do Gabriel**, não defeito — a lista encolheu de
+propósito. Está aqui porque quem ler o `conferir:nichos` verde amanhã
+precisa saber que o verde não significa "a busca acha tudo que achava".
+
+---
+
+## DUVIDA-NICHO-2 — Ninguém reconfere nicho JÁ GRAVADO
+
+**Medido chamador por chamador em 22/09/2026:** `nichoPeloRotulo()` é
+chamada em exatamente dois lugares — `conferirEscolhaDeNicho`
+(`lib/nichos/escolha.ts`) e `resolverConsulta` (`lib/nichos/busca.ts`).
+**Os dois na hora de ESCREVER.** Nenhuma tela a chama na hora de ler.
+
+O comentário da função afirmava o contrário — *"é ela que decide se um
+`niche` já gravado ainda é reconhecido (handoff §5)"* — e isso foi
+corrigido no arquivo.
+
+**A consequência:** quem tiver `businesses.niche` de um nicho extinto
+continua vendo o próprio nicho na `/meu-negocio`, e **nada no webapp
+nota**. Não há tela que avise, nem conferidor que reprove. O cadastro
+segue, o pipeline recebe um nicho que o `knowledge/` não conhece, e o
+primeiro sinal disso vai ser um anúncio ruim ou uma recusa do backend.
+
+**A medição que falta, e é de um minuto.** Eu não consegui rodar: a
+leitura do banco de produção foi recusada pela política desta sessão.
+A consulta:
+
+```sql
+select niche, count(*) as quantos
+from businesses
+where niche is not null and btrim(niche) <> ''
+group by niche
+order by quantos desc, niche;
+```
+
+Cruzar o resultado com os oito `nicho`/`rotulo` do `GET /nichos`. Tudo
+que sobrar é cliente apontando para um nicho que o produto não atende
+mais.
+
+**Vale notar** que o `.env.local` desta máquina nomeia **dois** hosts
+Supabase diferentes, e só um deles está na conta que a sessão enxerga.
+Antes de concluir "não tem ninguém", vale conferir qual dos dois é o
+banco que a `/meu-negocio` escreve.
+
+---
+
+## DUVIDA-NICHO-3 — A `/meu-negocio` convida a escrever o nicho proibido
+
+Não é novo: está medido em
+[`docs/buraco-meu-negocio-nicho-livre.md`](../buraco-meu-negocio-nicho-livre.md)
+desde 22/08, e continua aberto. **O encolhimento da lista piorou.**
+
+`lib/perfil/catalogo-cliente.ts:216` ainda diz, como ajuda do campo:
+
+> "Padaria, salão, clínica — do jeito que você mesmo chama."
+
+Dos três exemplos:
+
+- **`padaria` é o caso canônico do que NÃO pode casar.** O
+  `conferir:nichos` §6 exige que "padaria" não ache nada, e há dois
+  testes no backend que falham se alguém casar a família do varejo de
+  alimento. A tela usa como exemplo justamente o ramo que o produto
+  decidiu não atender;
+- **`salão` saiu do catálogo em setembro**, junto com beleza e estética;
+- **`clínica`** só sobrevive como odontológica.
+
+E o campo é **texto livre**: não passa por `conferirEscolhaDeNicho`. Ou
+seja, a `/meu-negocio` aceita hoje qualquer coisa na mesma coluna que o
+onboarding restringe a oito valores.
+
+**Eu não consertei**, e é de propósito: o conserto é o lote que o
+`buraco-meu-negocio-nicho-livre.md` desenha (pôr o seletor na
+`/meu-negocio`), toca tela de produção e não estava neste pedido. O que
+mudou hoje é que o texto de ajuda ficou mais errado do que era.

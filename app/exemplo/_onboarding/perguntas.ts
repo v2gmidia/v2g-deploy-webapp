@@ -219,92 +219,52 @@ export const CONVITE_NO_MICROFONE =
   "Toque e fale, como se estivesse explicando para um cliente.";
 
 /**
- * OS TIPOS DE NEGÓCIO — cópia fiel do `GET /nichos`, lida em 21/09/2026.
+ * OS NICHOS NÃO MORAM MAIS AQUI — eles vêm do `GET /nichos`.
  *
  * ============================================================
- * A LISTA DA v2 ESTAVA ERRADA, e não por pouco. Ela tinha oito nomes
- * (bebidas, agência, barbearia, manicure, petshop, oficina…) dos quais
- * **só dois existem no backend**: `arquitetura` e `clinica-odontologica`.
- * Os outros seis nunca existiram — inclusive a `distribuidora-de-bebidas`
- * que aparecia em todas as capturas da v2.
+ * ESTA LISTA JÁ APODRECEU UMA VEZ, E FOI RECONGELADA EM SEGUIDA.
  *
- * Medido em 21/09/2026 contra `api.v2gmidia.com.br/nichos`: 8 nichos,
- * 113 termos de busca, campos em snake_case (`termos_de_busca`,
- * `sub_tipos`).
+ * Histórico curto, porque ele é o argumento:
  *
- * A LISTA ABAIXO É CÓPIA, NÃO FONTE. A bancada não tem o token do backend
- * (ele é de servidor), então ela não chama a rota. Em produção quem chama
- * é `app/(fluxo)/onboarding/page.tsx:47`, e `lib/nichos/validar.ts` já
- * confere a escolha contra a lista viva.
+ *   - a v2 escreveu oito pares à mão. Seis nunca existiram no backend;
+ *   - a v4 mediu isso, apagou os oito e escreveu os oito certos, com os
+ *     113 `termos_de_busca` junto. Ficou correta **no dia em que foi
+ *     escrita**, e com um comentário admitindo: "a lista viva MUDA […]
+ *     cópia envelhece";
+ *   - a lista viva mudou de novo entre agosto e setembro, de 10 nichos
+ *     para 8, sem que ninguém escrevesse uma linha errada.
  *
- * A lista viva MUDA — ela encolheu de 10 para 8, que é o vermelho do
- * `pnpm conferir:nichos`. Cópia envelhece: por isso a data está escrita
- * aqui, e por isso esta tela não decide nada sobre nicho.
- * ============================================================
- */
-export const NICHOS_DA_BANCADA: { nicho: string; rotulo: string; termos: string[] }[] = [
-  {
-    nicho: "advocacia",
-    rotulo: "Advogado",
-    termos: ["advogado", "advocacia", "escritório de advocacia", "advogado trabalhista", "advogado previdenciário", "advogado de família", "divórcio", "inventário", "pensão alimentícia", "advogado criminal", "advogado civil", "direito do consumidor", "consultoria jurídica", "assessoria jurídica"],
-  },
-  {
-    nicho: "analise-coloracao-pessoal",
-    rotulo: "Análise de coloração pessoal / consultoria de imagem (Austrália)",
-    termos: ["colour analysis", "color analysis", "personal colour analysis", "colour consultant", "colour consultation", "personal stylist", "image consultant", "style consultant", "seasonal colour analysis", "colour draping", "colour season", "analise de coloracao pessoal", "coloracao pessoal", "consultoria de imagem", "consultor de imagem", "cartela de cores"],
-  },
-  {
-    nicho: "arquitetura",
-    rotulo: "Arquiteto",
-    termos: ["arquiteto", "arquitetura", "escritório de arquitetura", "projeto arquitetônico", "projeto de casa", "projeto de reforma", "arquitetura de interiores", "design de interiores", "decoração de interiores", "paisagismo", "projeto residencial", "projeto comercial"],
-  },
-  {
-    nicho: "clinica-odontologica",
-    rotulo: "Dentista",
-    termos: ["dentista", "odontologia", "ortodontia", "implante", "aparelho", "clareamento", "consultorio odontologico", "prótese", "siso", "canal", "extração", "limpeza", "restauração", "faceta", "lente de contato dental", "dentadura", "aparelho invisível", "periodontia", "endodontia", "odontopediatria", "clareamento a laser"],
-  },
-  {
-    nicho: "gestao-de-trafego",
-    rotulo: "Gestão de tráfego pago / anúncios no Google e no Instagram para pequeno negócio",
-    termos: ["gestão de tráfego", "gestor de tráfego", "agência de tráfego pago", "tráfego pago", "agência de marketing digital", "anúncio no Google", "anúncio no Instagram", "anúncio no Facebook", "campanha de anúncio", "assessoria de marketing", "consultoria de marketing digital", "fazer anúncio para minha empresa"],
-  },
-  {
-    nicho: "rastreamento-veicular",
-    rotulo: "Rastreamento veicular / rastreador para carro, moto e frota",
-    termos: ["rastreamento veicular", "rastreador veicular", "rastreador", "rastreador de carro", "rastreador de moto", "rastreamento de frota", "gestão de frota", "monitoramento veicular", "telemetria veicular", "bloqueador veicular", "localizador de veículo", "segurança veicular"],
-  },
-  {
-    nicho: "reparos",
-    rotulo: "Reparos residenciais",
-    termos: ["reparos residenciais", "marido de aluguel", "manutenção residencial", "pequenos reparos", "conserto em casa", "eletricista", "encanador", "pintor", "vazamento", "desentupimento", "instalação elétrica", "instalação de chuveiro", "montagem de móveis", "pequena reforma"],
-  },
-  {
-    nicho: "venda-de-veiculo",
-    rotulo: "Loja de veículos",
-    termos: ["loja de carros", "loja de motos", "revenda de veículos", "venda de carros", "venda de motos", "seminovos", "carro usado", "moto usada", "concessionária", "multimarcas", "garagem de carros", "compra e venda de veículos"],
-  },
-];
-
-/**
- * OS `sub_tipos` DO BACKEND ESTÃO VAZIOS — medido em 22/09/2026.
+ * Recongelar de novo é assinar o terceiro ciclo. A bancada passa a
+ * receber a lista **viva** como prop, vinda de `listarNichos()` no
+ * componente de servidor `app/exemplo/[tela]/page.tsx`.
  *
- * ============================================================
- * O briefing manda usar os SUBTIPOS que o `GET /nichos` devolve, para
- * "designer de interiores" cair em `arquitetura`. Medido na resposta
- * viva: `sub_tipos` é `[]` nos oito nichos. **Total de subtipos na lista
- * inteira: zero.**
+ * A JUSTIFICATIVA DA CÓPIA ERA FALSA. O comentário anterior dizia "a
+ * bancada não tem o token do backend (ele é de servidor)". A `page.tsx`
+ * da bancada É de servidor e lê o mesmo ambiente que a `/onboarding` de
+ * produção, que chama `listarNichos()` desde 22/08. Quem não pode ver o
+ * token é o navegador — e por isso a lista desce pronta, como prop.
  *
- * O resultado pedido existe, por OUTRO campo: `termos_de_busca` de
- * `arquitetura` contém "design de interiores", "arquitetura de
- * interiores" e "decoração de interiores" — 12 termos ao todo, e 113 na
- * lista inteira.
+ * OS `termos` VÊM JUNTO, e precisam vir: é sobre eles que
+ * `classificar.ts` acha o nicho do texto livre do "Outro" antes de
+ * gastar uma chamada ao agente do backend. Vivos, são os mesmos 113 —
+ * só que sem data de validade.
  *
- * Por isso a busca local lê `termos`, e não `sub_tipos`. Quando o backend
- * preencher os subtipos, eles entram aqui ao lado — não no lugar: termo
- * de busca e subtipo não são a mesma coisa.
+ * NÃO RECRIE A LISTA AQUI, nem como reserva. É a regra que
+ * `app/(fluxo)/onboarding/perguntas.ts` escreve no bloco de `opcoes: []`:
+ * "toda linha nova é uma lista paralela envelhecendo em silêncio". Com o
+ * `GET /nichos` fora, a bancada mostra o estado degradado — reserva não é
+ * degradação, é palpite com cara de escolha do cliente (Victor, 22/08).
+ *
+ * `pnpm conferir:nichos` §10 reprova se alguém colar uma lista de volta
+ * em qualquer arquivo da bancada.
  * ============================================================
  */
-export const TOTAL_DE_TERMOS = 113;
+export interface NichoDaTela {
+  nicho: string;
+  rotulo: string;
+  /** os `termos_de_busca` do backend — `classificar.ts` depende deles */
+  termos: string[];
+}
 
 /**
  * "Outro" NÃO é um nicho do backend — é uma saída da tela.

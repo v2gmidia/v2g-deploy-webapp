@@ -9,12 +9,29 @@ import type { Nicho } from "@/lib/nichos/tipos";
  *
  * READ-ONLY. É a fonte única da lista; este repositório NÃO tem uma cópia
  * dela e não deve ganhar uma. A lista de cinco opções escritas à mão em
- * `perguntas.ts` é exatamente o problema que este lote existe para
+ * `perguntas.ts` é exatamente o problema que este lote existiu para
  * apagar: ela cobria três nichos com uma opção, nenhum com duas, e
- * deixava `academia`, `oficina-mecanica` e `petshop` inalcançáveis.
+ * deixava nichos inteiros inalcançáveis.
  *
- * Medido em 22/08/2026 contra `https://api.v2gmidia.com.br`:
- * dez nichos, 183 termos de busca, 3,8 KB de JSON, mediana de 17 ms.
+ * ============================================================
+ * "NÃO DEVE GANHAR UMA CÓPIA" — E GANHOU DUAS. AS DUAS APODRECERAM.
+ *
+ * 1. A bancada (`app/exemplo/_onboarding/perguntas.ts`) tinha oito pares
+ *    escritos à mão. Em 22/09/2026, **seis dos oito não existiam mais**,
+ *    e os seis nichos novos do backend ela nunca ofereceu. Corrigido: a
+ *    bancada agora recebe a lista viva como prop, deste mesmo módulo.
+ * 2. Os próprios COMENTÁRIOS deste diretório viraram cópia: contavam dez
+ *    nichos e 183 termos, e nomeavam `petshop` e `restaurante`.
+ *
+ * Cópia de lista viva não precisa ser um `const` para apodrecer. Um
+ * número dentro de um comentário apodrece igual, e ninguém roda
+ * comentário.
+ * ============================================================
+ *
+ * Censo de 22/09/2026 contra `https://api.v2gmidia.com.br`:
+ * **8 nichos, 113 termos de busca, 0 subtipos.** Este número também vai
+ * envelhecer — quem tem o de hoje é `pnpm conferir:nichos`, que o lê da
+ * lista viva a cada execução.
  *
  * ============================================================
  * SEM O HEADER ELE DEVOLVE 401, NÃO 404.

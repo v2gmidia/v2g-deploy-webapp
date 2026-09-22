@@ -24,8 +24,16 @@ import type { Nicho } from "./tipos";
  * dado para um teste ruim passar, e quebrar a grafia que o cliente lê na
  * tela.
  *
- * Termos com acento hoje: rodízio, japonês, ração, veterinário, cílios,
- * degradê, óleo, castração, musculação, estética.
+ * ESTA LISTA DE EXEMPLOS JÁ CADUCOU UMA VEZ. Ela dizia "termos com
+ * acento hoje: rodízio, japonês, ração, veterinário, cílios, degradê,
+ * óleo, castração, musculação, estética" — e em 22/09/2026 **nove dos
+ * dez não existem mais**, porque o catálogo encolheu de dez nichos para
+ * oito. Acentuados hoje são 35 de 113, quase todos de advocacia e
+ * odontologia (`inventário`, `pensão alimentícia`, `extração`).
+ *
+ * Por isso não há mais lista de exemplo: quem quiser os acentuados de
+ * hoje roda `pnpm conferir:nichos`, que os lê da lista viva e prova que
+ * todos são acháveis sem acento.
  * ============================================================
  *
  * `NFD` separa a letra do acento e a classe `\p{Diacritic}` remove o
@@ -63,14 +71,30 @@ export function normalizar(texto: string): string {
  * ============================================================
  *
  * Consulta vazia devolve a lista inteira: o campo de busca começa vazio e
- * os dez chips têm que estar visíveis (handoff §2 — não obriga a digitar
- * e não esconde a lista).
+ * TODOS os chips têm que estar visíveis (handoff §2 — não obriga a
+ * digitar e não esconde a lista). Eram dez em agosto e são oito hoje; a
+ * regra é "todos", não um número.
  *
  * `padaria`, `doceria`, `mercearia` e `lavanderia` não acham nada, e ISSO
  * É A DECISÃO FUNCIONANDO, não falha da busca: esses nichos não existem
  * em `knowledge/`, e sugerir o vizinho mais próximo foi recusado — seria
  * interface pedindo desculpa por não ter o que a pessoa precisa. Quem não
  * acha cai no texto livre, que é um caminho digno.
+ *
+ * ============================================================
+ * DESDE 22/09 A LISTA DOS QUE NÃO ACHAM FICOU MUITO MAIOR.
+ *
+ * O catálogo encolheu para oito nichos, e `restaurante`, `petshop`,
+ * beleza e academia saíram. "pizzaria", "petshop", "veterinário" e
+ * "estética" hoje não acham nada — e cada um deles é um ramo que já foi
+ * atendido.
+ *
+ * Pior que não achar: **"ração" acha TRÊS nichos errados**, porque
+ * substring casa dentro de coloração, decoração, extração e restauração.
+ * Quem procura comida de cachorro recebe Arquiteto e Dentista. É o dia
+ * que o bloco de `filtrarNichos` previu — o dia de casar por palavra, e
+ * não por pedaço de palavra. Está em DUVIDAS.md.
+ * ============================================================
  */
 export function filtrarNichos(nichos: Nicho[], consulta: string): Nicho[] {
   const alvo = normalizar(consulta);
@@ -89,8 +113,26 @@ export function filtrarNichos(nichos: Nicho[], consulta: string): Nicho[] {
  * Igualdade normalizada, não substring: aqui a pergunta é "este valor é um
  * nicho da lista viva?", e substring responderia sim para "Dent", que
  * ninguém escolheu. É esta função que a validação do servidor usa
- * (handoff §6) e é ela que decide se um `niche` já gravado ainda é
- * reconhecido (handoff §5).
+ * (handoff §6).
+ *
+ * ============================================================
+ * ELA NÃO DECIDE NADA SOBRE NICHO JÁ GRAVADO. Este bloco dizia que sim.
+ *
+ * O texto anterior afirmava: "é ela que decide se um `niche` já gravado
+ * ainda é reconhecido (handoff §5)". Medido em 22/09/2026, chamador por
+ * chamador: os ÚNICOS são `conferirEscolhaDeNicho` (`escolha.ts`) e
+ * `resolverConsulta`, logo abaixo — os dois na hora de ESCREVER. Nenhuma
+ * tela chama isto na hora de LER.
+ *
+ * O que essa diferença custa: quando o catálogo encolheu de dez nichos
+ * para oito, em setembro, quem tivesse `businesses.niche` de um nicho
+ * extinto continuou vendo o próprio nicho na `/meu-negocio`, e nenhum
+ * lugar do webapp notou. Não existe alarme para esse caso — nem tela, nem
+ * conferidor — e é isso que a função NÃO faz.
+ *
+ * Um comentário que promete uma trava inexistente é pior que comentário
+ * nenhum: quem lê para de procurar a trava.
+ * ============================================================
  */
 export function nichoPeloRotulo(nichos: Nicho[], rotulo: string): Nicho | undefined {
   const alvo = normalizar(rotulo);

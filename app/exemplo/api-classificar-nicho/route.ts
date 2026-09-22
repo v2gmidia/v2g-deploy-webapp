@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { backendConfigurado, enviar } from "@/lib/backend/cliente";
+import { listarNichos } from "@/lib/backend";
 import { acharPorTermos, rotuloDoNicho, type Palpite } from "../_onboarding/classificar";
 
 /**
@@ -105,8 +106,25 @@ export async function POST(request: Request) {
     );
   }
 
+  // ============================================================
+  // A LISTA VIVA, BUSCADA AQUI — não uma cópia congelada.
+  //
+  // Até 22/09 a camada 1 lia `NICHOS_DA_BANCADA`, oito pares escritos no
+  // repositório. Esta rota é de SERVIDOR: ela tem o token e pode
+  // perguntar. Os 113 termos que ela usa para classificar passam a ser os
+  // de hoje, e não os do dia em que alguém colou a lista.
+  //
+  // Se o `GET /nichos` não responder, `nichos` fica vazio: a camada 1
+  // devolve `null` (sem vocabulário não há o que casar) e o fluxo segue
+  // para a camada 2, que é o agente. Nenhum palpite sai de lista velha.
+  // ============================================================
+  const listaViva = await listarNichos();
+  const nichos = listaViva.ok
+    ? listaViva.dados.map((n) => ({ nicho: n.nicho, rotulo: n.rotulo, termos: n.termosDeBusca }))
+    : [];
+
   // ---- camada 1: de graça, e na hora
-  const local = acharPorTermos(descricao);
+  const local = acharPorTermos(descricao, nichos);
   if (local) return responder({ palpite: local, humano: false });
 
   // ---- camada 2: o agente do backend
@@ -133,7 +151,7 @@ export async function POST(request: Request) {
   const nicho = typeof d?.nicho === "string" ? d.nicho : null;
   const confianca = typeof d?.confianca === "number" ? d.confianca : 0;
   const requerRevisao = d?.requer_revisao === true;
-  const rotulo = nicho ? rotuloDoNicho(nicho) : null;
+  const rotulo = nicho ? rotuloDoNicho(nicho, nichos) : null;
 
   // Nicho que a lista viva não reconhece é o mesmo caso de nicho nenhum:
   // a tela não tem rótulo para escrever, e escrever o identificador cru

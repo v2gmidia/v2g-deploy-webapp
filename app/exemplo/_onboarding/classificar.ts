@@ -1,4 +1,4 @@
-import { NICHOS_DA_BANCADA } from "./perguntas";
+import type { NichoDaTela } from "./perguntas";
 import { normalizar } from "@/lib/nichos/busca";
 
 /**
@@ -21,8 +21,20 @@ import { normalizar } from "@/lib/nichos/busca";
  *
  * ============================================================
  * OS `sub_tipos` NÃO SERVEM: medido em 22/09/2026, eles vêm VAZIOS nos
- * oito nichos. Quem carrega o vocabulário é `termos_de_busca`. Ver o
- * bloco de `TOTAL_DE_TERMOS` em `perguntas.ts`.
+ * oito nichos. Quem carrega o vocabulário é `termos_de_busca`.
+ * ============================================================
+ *
+ * ============================================================
+ * A LISTA CHEGA COMO ARGUMENTO, NÃO COMO IMPORT.
+ *
+ * Até 22/09 este arquivo importava `NICHOS_DA_BANCADA`, uma cópia
+ * congelada dos oito nichos com os 113 termos. Cópia de lista viva
+ * envelhece: a mesma constante já tinha apodrecido uma vez antes de ser
+ * recongelada. Agora quem chama passa a lista que veio do `GET /nichos`,
+ * e a classificação trabalha sempre sobre o vocabulário de hoje.
+ *
+ * Lista vazia devolve `null` — que é o certo: sem vocabulário não há
+ * como achar nada, e o chamador cai no caminho de gente.
  * ============================================================
  */
 
@@ -137,14 +149,14 @@ const PISO = 0.5;
  */
 const TETO_POR_PALAVRA = 0.8;
 
-export function acharPorTermos(texto: string): Palpite | null {
+export function acharPorTermos(texto: string, nichos: NichoDaTela[]): Palpite | null {
   const alvo = achatar(texto);
   if (alvo.length < 3) return null;
   const doTexto = new Set(palavras(texto).filter((p) => !CURTAS.has(p)));
 
   let melhor: Palpite | null = null;
 
-  for (const n of NICHOS_DA_BANCADA) {
+  for (const n of nichos) {
     for (const termo of n.termos) {
       const termoAchatado = achatar(termo);
       if (!termoAchatado) continue;
@@ -172,8 +184,8 @@ export function acharPorTermos(texto: string): Palpite | null {
 }
 
 /** O rótulo de um nicho, para a tela escrever a proposta. */
-export function rotuloDoNicho(nicho: string): string | null {
-  return NICHOS_DA_BANCADA.find((n) => n.nicho === nicho)?.rotulo ?? null;
+export function rotuloDoNicho(nicho: string, nichos: NichoDaTela[]): string | null {
+  return nichos.find((n) => n.nicho === nicho)?.rotulo ?? null;
 }
 
 /**
@@ -209,8 +221,8 @@ export function rotuloDoNicho(nicho: string): string | null {
  * eu não tapo, porque tapar esconderia que ele existe.
  * ============================================================
  */
-export function rotuloParaFrase(nicho: string): string | null {
-  const inteiro = rotuloDoNicho(nicho);
+export function rotuloParaFrase(nicho: string, nichos: NichoDaTela[]): string | null {
+  const inteiro = rotuloDoNicho(nicho, nichos);
   if (!inteiro) return null;
   const antesDaBarra = inteiro.split("/")[0]!.trim();
   return antesDaBarra || inteiro;

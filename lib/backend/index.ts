@@ -75,9 +75,13 @@ export {
 /**
  * `GET /nichos` — a lista viva de nichos, e a fonte única dela.
  *
- * Medido em 22/08/2026: responde 200 com dez nichos e 183 termos, em 17 ms
- * de mediana. Sem o `X-V2G-Token` devolve **401, não 404** — o backend não
- * tem caminho que produza 404 para rota existente.
+ * Medido em 22/09/2026: responde 200 com **8 nichos e 113 termos** (eram
+ * dez e 183 em agosto — o catálogo encolheu de propósito). Sem o
+ * `X-V2G-Token` devolve **401, não 404** — o backend não tem caminho que
+ * produza 404 para rota existente.
+ *
+ * A contagem vive aqui só como ordem de grandeza. Quem afirma o número
+ * de hoje é `pnpm conferir:nichos`, contra a lista viva.
  *
  * O TIPO SAI DE `@/lib/nichos/tipos`, que não é `server-only`: o filtro da
  * busca roda no navegador, então o componente de cliente precisa do tipo.

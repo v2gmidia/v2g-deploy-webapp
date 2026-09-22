@@ -23,9 +23,9 @@ function textoNaoVazio(v: unknown): string | null {
 }
 
 function validarSubTipos(bruto: unknown): SubTipoDeNicho[] | null {
-  // Ausente vira lista vazia: nove dos dez nichos não têm sub-tipo, e o
-  // backend pode omitir em vez de mandar `[]`. Outro tipo qualquer é
-  // mudança de contrato, e aí recusa.
+  // Ausente vira lista vazia: NENHUM dos oito nichos tem sub-tipo hoje
+  // (medido em 22/09/2026), e o backend pode omitir em vez de mandar
+  // `[]`. Outro tipo qualquer é mudança de contrato, e aí recusa.
   if (bruto === undefined || bruto === null) return [];
   if (!Array.isArray(bruto)) return null;
 
@@ -52,14 +52,25 @@ function validarSubTipos(bruto: unknown): SubTipoDeNicho[] | null {
  *
  * Um item malformado reprova a lista inteira em vez de ser descartado em
  * silêncio. Descartar seria pior do que parece: o nicho sumido não vira
- * erro em lugar nenhum — vira um dono de petshop que digita "petshop",
- * não acha, e cai no texto livre achando que o produto não atende o ramo
- * dele. Reprovar a lista mostra os chips de reserva, que é um estado
- * degradado VISÍVEL.
+ * erro em lugar nenhum — vira um dono que digita o ramo dele, não acha, e
+ * cai no texto livre achando que o produto não atende quem ele é.
  *
- * Lista vazia também reprova: zero chip na tela é pior que cinco chips
- * imprecisos, e um `[]` do backend é muito mais provável como defeito do
- * que como verdade.
+ * Reprovar a lista leva ao estado degradado, que é VISÍVEL: a tela diz
+ * que a lista não carregou e oferece o texto livre.
+ *
+ * ============================================================
+ * ESTE BLOCO DIZIA "mostra os chips de reserva". NÃO EXISTE RESERVA.
+ *
+ * Os cinco chips fixos saíram em 22/08 (decisão do Victor): reserva não
+ * é degradação, é palpite com cara de escolha do cliente. O comentário
+ * ficou descrevendo um estado que o código já não tinha — e o exemplo
+ * que ele usava, o dono de petshop, ficou datado de novo em 22/09,
+ * quando `petshop` saiu do catálogo.
+ * ============================================================
+ *
+ * Lista vazia também reprova: zero chip é pior do que a tela admitir que
+ * não carregou, e um `[]` do backend é muito mais provável como defeito
+ * do que como verdade.
  * ============================================================
  *
  * O CONFERIDOR exercita esta função direto, com corpos tortos.
