@@ -1,6 +1,30 @@
 # Roteiro do vídeo de App Review — Meta
 
-**Escrito em 22/09/2026, para gravar em 23/09.** Leia inteiro uma vez antes
+## Resumo — leia estas cinco linhas primeiro
+
+1. **Gravável hoje? PARCIALMENTE.** Três das seis permissões têm tela que
+   as exercita (`ads_read`, `business_management`, `pages_show_list`); as
+   outras três (`ads_management`, `pages_manage_ads`,
+   `pages_read_engagement`) **não têm nenhuma ação no produto hoje**, nem
+   pausada — porque nenhuma tela chama `publicarCampanha()`.
+2. **Reserve 1h30:** 20 min de preparo (§5), 3 ensaios de ~5 min, a
+   gravação boa, e 30 min para o texto do formulário (§4, já pronto para
+   colar).
+3. **Só você pode resolver, antes de gravar:** criar a conta de teste da
+   V2G (e-mail e senha novos, não os seus), garantir que essa conta do
+   Facebook tem conta de anúncio ativa e ao menos uma Página, e **mudar o
+   idioma do Facebook para inglês** — a tela de consentimento segue o
+   idioma da conta, e a Meta pede UI em inglês.
+4. **O vídeo é MUDO.** A Meta manda desligar o áudio e usar legendas. Não
+   prepare microfone; prepare a ferramenta de legenda.
+5. **Decida a §0.2 antes de apertar gravar:** submeter agora só as três
+   demonstráveis, ou adiar até a publicação existir. O roteiro serve para
+   as duas, mas o texto do formulário muda.
+
+---
+
+**Escrito em 22/09/2026, revisado e conferido contra a produção em
+23/09/2026.** Leia inteiro uma vez antes
 de abrir o gravador. As duas primeiras seções mudam o plano; o roteiro
 começa na §3.
 
@@ -34,7 +58,7 @@ permissão**. Medido no código hoje:
 |---|---|---|
 | `ads_read` | **sim** | `/conectar/escolher` lista as contas de anúncio |
 | `business_management` | **sim** | a mesma lista alcança contas dentro de um Business Manager |
-| `pages_show_list` | **sim** | a mesma tela lista as Páginas; `/aprovar` mostra "Página conectada: «nome»" |
+| `pages_show_list` | **sim** | `/conectar/escolher` lista as Páginas, e `/conta` as lê de novo |
 | `pages_read_engagement` | **não** | a única leitura de campos da Página é `GET /{page_id}?fields=location`, dentro de `garantirGeo()`, que só roda dentro de `publicarCampanha()` |
 | `ads_management` | **não** | `publicarCampanha()` existe (`lib/meta/publicar.ts:273`) e **nenhuma rota ou action a chama** |
 | `pages_manage_ads` | **não** | declarado em `lib/meta/oauth.ts:98`; o próprio comentário (`:85-86`) diz "NENHUMA linha deste projeto exerce este escopo hoje" |
@@ -72,9 +96,11 @@ Em 15/09, na conta real, o pré-voo devolveu:
 
 (`docs/estado/pre-voo-no-aprovar-15-09.md:17-19`)
 
-Se isso ainda acontecer, a tela `/aprovar` vai mostrar esse texto em
-inglês, com id de conta dentro, **no meio do vídeo**. Confira antes
-(§5, item 8).
+Esse texto aparece no bloco de pré-requisitos da `/aprovar` — e é uma das
+razões de o roteiro **não passar por lá** (ver o Bloco E). Mas o mesmo
+erro `(#200)` derruba a listagem de contas em `/conectar/escolher`, que é
+o centro do Bloco E. **Confira antes** (§5, item 8): se a conta de teste
+não conseguir listar, o vídeo não tem o que mostrar.
 
 ---
 
@@ -87,7 +113,7 @@ Fonte: `lib/meta/oauth.ts:75-99`.
 | 1 | `ads_read` | `:76` | ler as contas de anúncio do cliente e o estado delas | `/conectar/escolher` — a lista de contas |
 | 2 | `ads_management` | `:77` | criar e gerenciar a campanha na conta do cliente | **nenhuma tela hoje** |
 | 3 | `business_management` | `:78` | alcançar contas que pertencem a um Business Manager | a mesma lista, quando a conta é de um BM |
-| 4 | `pages_show_list` | `:79` | listar as Páginas do Facebook do cliente | `/conectar/escolher` e `/aprovar` |
+| 4 | `pages_show_list` | `:79` | listar as Páginas do Facebook do cliente | `/conectar/escolher` e `/conta` |
 | 5 | `pages_read_engagement` | `:80` | ler campos da Página — hoje, o `location`, de onde saem latitude e longitude do raio de 5 km | **nenhuma tela hoje** |
 | 6 | `pages_manage_ads` | `:98` | anunciar em nome da Página | **nenhuma tela hoje** |
 
@@ -144,15 +170,30 @@ anúncio final sendo criado — só campanha e conjunto.
    pede ver.
 2. **LEGENDA:** `V2G — automated ad management for small Brazilian
    businesses. Starting logged out.`
-3. Na barra de endereço, digite a URL de produção do app e dê Enter.
-   → **CONFIRME ESTA URL ANTES** (§5, item 3). A landing page está em
-   `v2gmidia.com.br`; o app fica em outro endereço. O valor certo é o que
-   estiver em `NEXT_PUBLIC_SITE_URL` — **eu não li esse valor**, ele mora
-   no `.env`.
+3. Na barra de endereço, digite **exatamente** isto e dê Enter:
+
+   ```
+   https://v2g-deploy-webapp.vercel.app
+   ```
+
+   → **Medido às 23/09, ao vivo:** essa URL responde **200** e é a
+   landing page do app, com o botão "Começar agora". `/entrar` responde
+   200 e `/conectar` responde 307 (manda para `/entrar` sem sessão, que é
+   o certo).
+   → **NÃO use `v2gmidia.com.br`** — aquilo é a landing page de vendas,
+   um site estático em outro repositório, e não tem cadastro.
+   → **Se você tiver um domínio próprio apontando para o app**, use ele em
+   vez deste endereço — mas só se o `NEXT_PUBLIC_SITE_URL` de produção for
+   esse mesmo domínio. O `redirect_uri` tem que bater caractere por
+   caractere (§5, item 3).
 
 ### Bloco B — criar a conta (0:20 – 1:00)
 
-4. Clique em **"Começar agora"** (ou vá direto para `/entrar`).
+4. Clique em **"Começar agora"** — o do **canto superior direito**, na
+   barra de navegação. (A página repete esse botão mais quatro vezes ao
+   rolar, incluindo um chamado "Ativar meu plano"; qualquer um leva ao
+   mesmo lugar. Se preferir não rolar nem procurar, vá direto para
+   `https://v2g-deploy-webapp.vercel.app/entrar`.)
 5. **LEGENDA:** `Creating a brand-new account. No Facebook Login here —
    e-mail and password.`
 6. Preencha o formulário **"Criar minha conta"**: nome, WhatsApp com DDD,
@@ -168,8 +209,16 @@ anúncio final sendo criado — só campanha e conjunto.
 9. Você cai em `/inicio`. **Deixe a tela parada 3 segundos** — ela mostra
    as quatro fases e o próximo passo.
 10. **LEGENDA:** `The app shows one next step at a time.`
-11. Navegue para **`/conectar`** (pelo botão do próximo passo, se ele
-    apontar para lá; senão, digite a URL).
+11. Vá para a tela de conexão. O jeito que **não depende do estado da
+    conta** é digitar na barra de endereço:
+
+    ```
+    https://v2g-deploy-webapp.vercel.app/conectar
+    ```
+
+    (O botão "Seu próximo passo" da `/inicio` também leva lá, mas o
+    destino dele muda conforme o que falta no cadastro — numa conta nova
+    ele pode apontar para o onboarding. Digitar a URL é previsível.)
 12. **Pare 4 segundos nesta tela.** Ela é importante: é onde o app avisa o
     cliente, antes do popup, de que vai aparecer jargão do Facebook.
 13. **LEGENDA:** `Before the Facebook dialog, the app explains in plain
@@ -178,6 +227,11 @@ anúncio final sendo criado — só campanha e conjunto.
 ### Bloco D — o consentimento, permissão por permissão (1:30 – 2:30)
 
 14. Clique em **"Conectar meu Instagram"**.
+    → **Não estranhe o rótulo.** O botão diz "Instagram", não "Facebook":
+    é decisão de produto registrada em `app/(fluxo)/conectar/page.tsx:11`
+    — *"A PALAVRA 'META' NÃO APARECE. O cliente conecta 'o Instagram do
+    meu negócio' — é assim que ele chama."* É o botão certo; ele vai para
+    `/auth/meta/iniciar`.
 15. O navegador vai para `facebook.com/.../dialog/oauth`. **Não pule esta
     parte — é o centro do vídeo.**
 16. Quando a tela de permissões aparecer, **role devagar até o fim** e
@@ -209,15 +263,26 @@ anúncio final sendo criado — só campanha e conjunto.
 23. Aponte a **lista de Páginas**.
     **ANOTAÇÃO:** `pages_show_list — GET /me/accounts`
 24. Escolha uma conta e uma Página e confirme.
-25. Vá para **`/aprovar`**.
-26. **LEGENDA:** `The app shows which Page the ad will come from, read
-    back from the Graph API.`
-27. Aponte a linha **"Página conectada: «nome»"**.
-    **ANOTAÇÃO:** `pages_show_list — the Page name is read live, not
-    stored text.`
-28. Se o bloco de pré-requisitos aparecer, **mostre-o**. Ele lista o que
-    falta na conta antes de anunciar.
-    **LEGENDA:** `The app checks the ad account before spending anything.`
+25. Vá para:
+
+    ```
+    https://v2g-deploy-webapp.vercel.app/conta
+    ```
+
+26. **LEGENDA:** `The connected account, read back live from the Graph
+    API — not stored text.`
+27. Aponte a **lista de Páginas** e o **nome da conta conectada**.
+    **ANOTAÇÃO:** `pages_show_list — GET /me/accounts, read again on this
+    screen.`
+
+    → **Por que `/conta` e não `/aprovar`.** A `/aprovar` mostra "Página
+    conectada: «nome»", que seria a prova mais bonita — mas numa conta
+    recém-criada **não existe peça para aprovar**, e a tela pode aparecer
+    vazia ou estranha na gravação. Pior: ela própria admite estar
+    incompleta, e o texto está visível na página
+    (`app/(fluxo)/aprovar/page.tsx:143`): *"Falta a parte que guarda a sua
+    resposta e coloca a peça na fila."* Um revisor lendo isso no vídeo tem
+    motivo para desconfiar. **Não passe por `/aprovar` nesta gravação.**
 
 ### Bloco F — o fecho (3:30 – 4:00)
 
@@ -349,23 +414,38 @@ they belong to a dedicated test user, not to a personal account.
    no formulário. **Não** use a sua conta pessoal: a Meta proíbe por
    escrito.
 2. **Janela anônima**, sem sessão antiga da V2G nem do Facebook.
-3. **A URL de produção do app confirmada.** Não é `v2gmidia.com.br` (essa
-   é a landing page). Confira o `NEXT_PUBLIC_SITE_URL` — e confirme que o
-   mesmo valor + `/auth/meta/callback` está cadastrado em **Login do
-   Facebook → Configurações → URIs de redirecionamento válidos**. É a
-   falha nº 1 desse fluxo (`.env.example:39-42`).
+3. **O `redirect_uri` cadastrado no painel da Meta.** A URL do app está
+   medida e é `https://v2g-deploy-webapp.vercel.app` (respondeu 200 em
+   23/09). O que **eu não consigo ler** é o `NEXT_PUBLIC_SITE_URL` de
+   produção — ele mora no `.env` da Vercel. Confirme que ele é essa mesma
+   URL, e que **`<NEXT_PUBLIC_SITE_URL>/auth/meta/callback`**, sem barra
+   no fim, está em **Login do Facebook → Configurações → URIs de
+   redirecionamento do OAuth válidos**. É a falha nº 1 desse fluxo
+   (`.env.example:39-42`). Se estiver errado, o Bloco D morre na frente
+   da câmera com uma tela de erro da Meta.
 4. **NÃO é localhost e NÃO é `/exemplo/`.** A bancada responde 404 em
    produção, mas se você gravar em `localhost` o revisor vê `localhost` na
    barra de endereço.
 5. **Microfone desligado.** A Meta pede áudio desabilitado.
+5b. **Idioma do Facebook em inglês.** A tela de consentimento segue o
+    idioma da **conta do Facebook**, não do navegador. Se a conta estiver
+    em português, o revisor vê "gerenciar suas contas de anúncios" em
+    português — e a Meta pede UI em inglês. Troque em
+    *facebook.com → Configurações → Idioma e região* **antes** de gravar,
+    e devolva depois se quiser.
 6. **Resolução:** monitor com largura de até 1440, gravação em 1080p ou
    mais.
 7. **Ferramenta de legenda/anotação pronta** — o vídeo é mudo e as
    anotações são o que explica.
-8. **Rode o pré-voo antes**: abra `/aprovar` com a conta de teste já
-   conectada, numa gravação de ensaio, e veja se aparece o erro
-   `(#200) Ad account owner has NOT grant ads_management`. Se aparecer,
-   resolva **antes** — ele vai sair no vídeo em inglês, com id de conta.
+8. **Faça o ensaio até o fim, sem gravar** — e o ponto de checagem é o
+   Bloco E: depois de autorizar, a tela `/conectar/escolher` precisa
+   **listar contas de anúncio e Páginas de verdade**. Se ela mostrar
+   "Não achamos nenhuma conta de anúncio" ou um erro
+   `(#200) Ad account owner has NOT grant ads_management`, **pare e
+   resolva antes**: sem essa lista o vídeo não tem o que mostrar, e é
+   justamente ela que prova três das seis permissões.
+   → Esse ensaio consome a conexão da conta de teste. Se precisar repetir
+   do zero, desconecte em `/conta` ou crie outra conta de teste.
 9. **A conta de teste precisa ter**: uma conta de anúncio ativa e pelo
    menos uma Página do Facebook, senão as telas dos blocos D e E mostram
    estado vazio.
