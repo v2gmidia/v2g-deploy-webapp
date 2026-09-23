@@ -821,13 +821,20 @@ export function Onboarding({
           </p>
 
           <dl className={css.resumo}>
-            {LINHAS_DO_RESUMO.map((l) => (
+            {/* ============================================================
+                O `filter` É A ÚNICA DIFERENÇA entre esta tela e a mensagem
+                do WhatsApp, e ele é de EXIBIÇÃO: a linha marcada sai daqui
+                e continua no array, porque é do array que a mensagem de
+                quem atende é montada. Ver `soNaMensagem`, no tipo.
+                ============================================================ */}
+            {LINHAS_DO_RESUMO.filter((l) => !l.soNaMensagem).map((l) => (
               <Linha
                 key={l.id}
                 rotulo={l.rotulo}
                 valor={l.valor(respostas, nichos)}
                 aoMudar={() => irPara(l.passo ?? l.id)}
                 porAudio={falando.includes(l.id)}
+                amostras={l.id === "cores"}
               />
             ))}
           </dl>
@@ -1757,6 +1764,17 @@ function wavDeSilencio(segundos: number): Blob {
 }
 
 /**
+ * O QUE SEPARA UMA COR DA OUTRA na linha das cores.
+ *
+ * Mora numa constante porque duas pessoas precisam concordar sobre ele: a
+ * `valor()` que JUNTA os hexadecimais e a `Amostras` que os SEPARA de novo
+ * para pintar o quadradinho. Dois literais " · " iguais hoje viram um
+ * separador trocado num lugar só amanhã, e aí a tela mostra um quadrado
+ * cinza sem ninguém entender por quê.
+ */
+const SEPARADOR_DAS_CORES = " · ";
+
+/**
  * O RESUMO MOSTRA TUDO QUE FOI PERGUNTADO — as onze, inclusive as que
  * ficaram sem resposta, que aparecem como traço e continuam mudáveis.
  *
@@ -1793,6 +1811,27 @@ const LINHAS_DO_RESUMO: {
    * outras onze linhas, em que resumo e passo têm o mesmo nome.
    */
   passo?: string;
+  /**
+   * SAI DA TELA, FICA NA MENSAGEM.
+   *
+   * ============================================================
+   * ESTA LISTA TEM DOIS CONSUMIDORES, e eles não querem a mesma coisa.
+   *
+   * O resumo da tela é para o CLIENTE conferir o que respondeu. A
+   * mensagem do WhatsApp é para QUEM ATENDE, e hoje é o único canal que
+   * leva o cadastro a uma pessoa (`mensagemDoAgendamento`, abaixo).
+   *
+   * "Material: 3 arquivo(s)" não diz nada ao cliente — ele acabou de
+   * escolher os arquivos e a contagem não o ajuda a decidir nada. Para
+   * quem atende, a mesma linha diz se existe material para montar o
+   * anúncio ou se vai ter que pedir. Decisão do Victor, 22/09/2026.
+   *
+   * Por isso a linha não é APAGADA: ela é marcada. Apagar do array
+   * tiraria dos dois lugares — e tirar de quem atende foi justamente o
+   * que não se quis.
+   * ============================================================
+   */
+  soNaMensagem?: boolean;
   rotulo: string;
   /**
    * `nichos` entra aqui porque o rótulo do nicho é a ÚNICA linha do
@@ -1835,6 +1874,7 @@ const LINHAS_DO_RESUMO: {
   { id: "verba", rotulo: "Por mês", valor: (r) => porMes(r.verba) },
   {
     id: "material",
+    soNaMensagem: true,
     rotulo: "Material",
     valor: (r) =>
       r.material
@@ -1849,7 +1889,7 @@ const LINHAS_DO_RESUMO: {
     // enviada, e é da logo que as cores saem. Não existe passo "cores".
     passo: "material",
     rotulo: "Cores da marca",
-    valor: (r) => (r.cores ? r.cores.split(",").join(" · ") : undefined),
+    valor: (r) => (r.cores ? r.cores.split(",").join(SEPARADOR_DAS_CORES) : undefined),
   },
   {
     id: "conexao",
@@ -1970,13 +2010,17 @@ function Linha({
   valor,
   aoMudar,
   porAudio = false,
+  amostras = false,
 }: {
   rotulo: string;
   valor?: string;
   aoMudar?: () => void;
   /** veio de áudio: a marca fica ao lado, não no lugar do valor */
   porAudio?: boolean;
+  /** o valor é uma lista de `#RRGGBB`: mostra a cor, não só o código */
+  amostras?: boolean;
 }) {
+  const vazio = valor === undefined || valor.length === 0;
   return (
     <div className={css.resumoLinha}>
       <dt className={css.resumoRotulo}>
@@ -1988,7 +2032,7 @@ function Linha({
         )}
       </dt>
       <dd className={css.resumoValor}>
-        <span>{valor && valor.length > 0 ? valor : "—"}</span>
+        {vazio ? <span>—</span> : amostras ? <Amostras texto={valor} /> : <span>{valor}</span>}
         {aoMudar && (
           <button type="button" className={css.mudar} onClick={aoMudar}>
             mudar
@@ -1996,6 +2040,47 @@ function Linha({
         )}
       </dd>
     </div>
+  );
+}
+
+/** Um `#RRGGBB` e nada além disso. */
+const UM_HEXADECIMAL = /^#[0-9A-Fa-f]{6}$/;
+
+/**
+ * O CÓDIGO DA COR COM A COR DO LADO.
+ *
+ * ============================================================
+ * `#1F4B99` NÃO É UMA COR PARA QUEM LÊ. O resumo é a última tela antes de
+ * a pessoa mandar tudo para a gente, e era a única do fluxo em que as
+ * cores apareciam só como código — no passo do material elas já são
+ * bolinhas de 56px que abrem o seletor do sistema.
+ *
+ * O quadrado é DECORATIVO, e por isso `aria-hidden`: quem usa leitor de
+ * tela continua ouvindo o código, que é a informação. Cor sozinha nunca
+ * carrega significado aqui — o texto está sempre junto.
+ *
+ * O `style` inline é a exceção honesta à regra dos tokens: este valor é
+ * DADO DO CLIENTE, não decisão de design. Nenhum token poderia contê-lo.
+ * O `UM_HEXADECIMAL` é o que garante que só um `#RRGGBB` chegue ao CSS —
+ * o que não casar aparece como texto puro, e não vira `background`.
+ * ============================================================
+ */
+function Amostras({ texto }: { texto: string }) {
+  return (
+    <span className={css.amostras}>
+      {texto.split(SEPARADOR_DAS_CORES).map((parte, i) => (
+        <span className={css.amostra} key={`${parte}-${i}`}>
+          {UM_HEXADECIMAL.test(parte) && (
+            <span
+              className={css.amostraCor}
+              style={{ background: parte }}
+              aria-hidden="true"
+            />
+          )}
+          {parte}
+        </span>
+      ))}
+    </span>
   );
 }
 

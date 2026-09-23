@@ -661,6 +661,36 @@
   overflow-wrap: anywhere;
 }
 
+/* As cores da marca no resumo: o código com a cor do lado.
+
+   `justify-content: flex-end` porque `.resumoValor` alinha à direita, e
+   sem isso as amostras se soltavam do resto da coluna. Quebra de linha
+   permitida: três cores a 375px não cabem numa linha só. */
+.amostras {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px 12px;
+}
+
+.amostra {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* O quadrado é pequeno de propósito: ele acompanha o código, não o
+   substitui. A borda existe para uma cor quase branca não sumir dentro
+   do cartão. */
+.amostraCor {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-micro);
+}
+
 /* ------------------------------------------- a partir de 700px de tela */
 
 @media (min-width: 700px) {
