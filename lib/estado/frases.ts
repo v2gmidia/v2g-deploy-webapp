@@ -36,6 +36,10 @@ import {
   fraseDeVeiculacao,
   type EstadoDeVeiculacao,
 } from "../veiculacao/estado.ts";
+// Mesma regra do import acima: relativo e com extensão, porque os
+// conferidores rodam este arquivo direto do Node. `LeituraDosCarimbos` é
+// só tipo, mas vem do mesmo módulo que um dia pode exportar valor daqui.
+import type { LeituraDosCarimbos } from "../campanha/carimbos.ts";
 
 /**
  * De quem é a vez. TRÊS valores, não dois — e a diferença entre os dois
@@ -220,6 +224,23 @@ export interface MedidaDoCliente {
   publicacaoFalhou: boolean;
   /** a publicação mais antiga que está no ar */
   publicadaEm: string | null;
+  /**
+   * O QUE OS QUATRO CARIMBOS DE ATIVAÇÃO DIZEM.
+   *
+   * ============================================================
+   * `publicadaEm` NÃO É "NO AR". É o que esta linha conserta.
+   *
+   * `campaigns.published_at` é gravado quando os objetos sobem ao Meta —
+   * e eles sobem PAUSED (`lib/meta/publicar.ts`, invariante 1). Até
+   * 23/09 a etapa `no_ar` fechava com `publicadaEm !== null`, então a
+   * fase "Publicar" aparecia CONCLUÍDA para o cliente enquanto nada
+   * rodava e nenhum centavo saía.
+   *
+   * Quem sabe se está rodando é o par de carimbos de `campaigns`, lido
+   * por `lerCarimbos()` — a única tradução dos quatro campos em código.
+   * ============================================================
+   */
+  ativacao: LeituraDosCarimbos;
   /** houve gasto nos últimos 7 dias */
   temNumero: boolean;
   /**
@@ -754,17 +775,47 @@ function etapaNoArPorArtefatoLocal(m: MedidaDoCliente, agora: Date): Etapa {
     agora,
   );
 
+  // ============================================================
+  // ESTAR PUBLICADO NÃO É ESTAR NO AR. Foi o que esta etapa dizia.
+  //
+  // Até 23/09 a linha aqui era `concluida: m.publicadaEm !== null`, e
+  // `publicadaEm` é `campaigns.published_at` — gravado quando os objetos
+  // SOBEM ao Meta. Eles sobem PAUSED (`lib/meta/publicar.ts`, invariante
+  // 1), e não havia caminho nenhum para ativá-los.
+  //
+  // Ou seja: a fase "Publicar" aparecia CONCLUÍDA para o cliente
+  // enquanto nada rodava, nenhum centavo saía e a bola estava com a
+  // gente. O cliente lia "pronto" e esperava resultado de um anúncio
+  // parado.
+  //
+  // Agora fecha pelo CARIMBO, que é o nosso registro de ter ativado.
+  // `rodando_desde_sempre` e `rodando` são os dois estados em que alguém
+  // do time tirou do pausado; `parada` e `nunca_ativada`, não.
+  //
+  // A outra porta continua aberta e é a evidência: `concluidasPelaVeiculacao`
+  // fecha `no_ar` quando o BACKEND observa que rodou. As duas dizem a
+  // mesma coisa por caminhos diferentes — uma é o que mandamos, a outra
+  // é o que aconteceu — e qualquer uma basta.
+  // ============================================================
+  const nossoCarimboDizQueRoda =
+    m.ativacao.estado === "rodando" || m.ativacao.estado === "rodando_desde_sempre";
+
   return {
     id: "no_ar",
-    concluida: m.publicadaEm !== null,
+    concluida: nossoCarimboDizQueRoda,
     bola: "nos",
     nome: "O anúncio no ar",
     titulo: admitindo
       ? "Seu anúncio devia estar no ar e não está"
-      : "A gente está colocando seu anúncio no ar",
+      : "A gente está preparando seu anúncio",
     corpo: admitindo
       ? "Você aprovou a peça e ela ainda não subiu. Isso é com a gente, e já passou do tempo — nenhuma verba foi gasta enquanto isso."
-      : "A peça está aprovada e agora é a gente publicando no Facebook. Costuma levar poucos minutos.",
+      : // SEM PRAZO. O texto anterior dizia "costuma levar poucos
+        // minutos", e isso deixou de ser verdade no dia em que subir
+        // passou a depender de alguém do time ativar. Prometer minutos
+        // para uma espera que pode ser de horas é a promessa que este
+        // produto não faz — e o público dele já ouviu de agência.
+        "A peça está aprovada e o anúncio já subiu para o Facebook, parado. A gente confere tudo antes de deixar sua verba começar a rodar, e avisa assim que ele estiver no ar.",
     acao: admitindo ? { rotulo: "Falar com a gente", href: WHATSAPP_PECA } : null,
     desde: m.campanhaCriadaEm ?? undefined,
     admitindo,

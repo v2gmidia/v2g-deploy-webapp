@@ -45,6 +45,11 @@ export const NOMES_DAS_ROTAS = {
   // Exceção à regra 2, mantida por decisão: o título já existia antes dela.
   "/revisar-perfil": "Quem está esperando",
   "/revisar-perfil/[proposta]": "Revisar perfil",
+  // Tela de operador. O título não diz "ativar" sozinho: a aba fica
+  // aberta ao lado das outras, e "Ativação" sem contexto já foi confundido
+  // com ativação de conta.
+  "/ativar-campanha": "Ativação de campanha",
+  "/ativar-campanha/[campanha]": "Ativação de campanha",
 
   // Fluxo.
   "/onboarding": "Sobre o seu negócio",

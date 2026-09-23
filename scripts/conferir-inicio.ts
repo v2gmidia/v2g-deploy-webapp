@@ -22,6 +22,7 @@
  * Puro: não toca rede, banco, nem navegador.
  */
 
+import { lerCarimbos } from "../lib/campanha/carimbos.ts";
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import {
   ETAPAS_NAS_FASES,
@@ -71,6 +72,14 @@ function medida(over: Partial<MedidaDoCliente> = {}): MedidaDoCliente {
   return {
     temNegocio: false,
     cadastro: CADASTRO_VAZIO,
+    // Sem carimbo de ativação: é o estado de quem nunca saiu do pausado,
+    // que é o certo para uma base de teste. Quem testa "no ar" sobrescreve.
+    ativacao: lerCarimbos({
+      ativadaEm: null,
+      ativadaPor: null,
+      pausadaEm: null,
+      pausadaPor: null,
+    }),
     conexaoAtiva: false,
     cadastroEnviadoEm: null,
     execucao: null,

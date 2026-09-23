@@ -354,4 +354,32 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "que ela esteja APLICADA — a presenca da funcao nao distingue a versao 0016 da 0023. So o ledger ou um teste de escrita responde isso",
     ],
   },
+  {
+    arquivo: "0024_ativacao_de_campanha.sql",
+    cria: [
+      { tipo: "coluna", tabela: "campaigns", nome: "ativada_em" },
+      { tipo: "coluna", tabela: "campaigns", nome: "ativada_por" },
+      { tipo: "coluna", tabela: "campaigns", nome: "pausada_em" },
+      { tipo: "coluna", tabela: "campaigns", nome: "pausada_por" },
+      { tipo: "coluna", tabela: "campaigns", nome: "ativando_em" },
+    ],
+    foraDoAlcance: [
+      "os dois estados novos no dominio de `publish_state` ('ativa' e 'pausada') — o conferidor ve a coluna, nao o check",
+      "os dois CHECK do carimbo, que NAO sao copia literal da 0012: ativacao nao e estado terminal, entao a versao bidirecional tornaria impossivel pausar o que foi ativado",
+      "o indice parcial `campaigns_esperando_ativacao_idx`, que e a fila do operador",
+      "os dois CHECK do carimbo de PAUSA, gemeos dos de ativacao",
+      "a TRAVA de concorrencia, que nao e o indice e sim o UPDATE condicional em lib/meta/ativar.ts — o indice `campaigns_ativando_idx` so torna barata a pergunta 'tem ativacao presa?'",
+    ],
+  },
+  {
+    arquivo: "0025_entrevista_sem_transcricao.sql",
+    // Ela nao CRIA objeto: afrouxa uma coluna que ja existe desde a 0010.
+    // Declarada pela coluna, o conferidor confirma que `transcricao` esta
+    // no banco — e nao tem como ver se o NOT NULL caiu, que e a unica
+    // coisa que esta migration muda.
+    cria: [{ tipo: "coluna", tabela: "entrevistas", nome: "transcricao" }],
+    foraDoAlcance: [
+      "o `drop not null`, que e a mudanca inteira: a presenca da coluna nao distingue a versao 0010 da 0025. So o ledger ou um INSERT sem transcricao responde isso",
+    ],
+  },
 ];

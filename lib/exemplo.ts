@@ -38,6 +38,7 @@
  * antes de tocar o backend; mesmo assim, nenhum id real mora aqui.
  */
 import { montarEtapas } from "@/lib/estado/frases";
+import { lerCarimbos } from "@/lib/campanha/carimbos";
 import type { EstadoDoCliente } from "@/lib/estado/cliente";
 import type { ResumoDePendencias } from "@/lib/cadastro/pendencias";
 import type { ConsolidadoDoNegocio, ExecucaoDoNegocio } from "@/lib/dia-seguinte/tipos";
@@ -187,6 +188,27 @@ export function exemploDoInicio(
         temNegocio: true,
         cadastro: CADASTRO_COMPLETO,
         conexaoAtiva: conectou,
+        // ============================================================
+        // O DADO DE EXEMPLO SEGUE A VERDADE DE PRODUÇÃO.
+        //
+        // No estado "no-ar" a campanha foi ATIVADA por alguém do time —
+        // é o único jeito de ela estar no ar. Nos outros, ela subiu
+        // pausada e ninguém ativou, que é onde todo cliente está hoje.
+        // ============================================================
+        ativacao:
+          estado === "no-ar"
+            ? lerCarimbos({
+                ativadaEm: "2026-08-21T14:02:00.000Z",
+                ativadaPor: "gabriel@v2gmidia.com.br",
+                pausadaEm: null,
+                pausadaPor: null,
+              })
+            : lerCarimbos({
+                ativadaEm: null,
+                ativadaPor: null,
+                pausadaEm: null,
+                pausadaPor: null,
+              }),
         cadastroEnviadoEm: "2026-08-19T23:31:49.646Z",
         execucao: null,
         pecasProntas: 0,

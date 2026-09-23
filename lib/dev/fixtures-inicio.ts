@@ -33,6 +33,7 @@
  * de produção em 11/09/2026, o mesmo de
  * `scripts/fixtures/consolidado-negocio-producao.json`.
  */
+import { lerCarimbos } from "@/lib/campanha/carimbos";
 import { montarEtapas, type Etapa } from "@/lib/estado/frases";
 import type { EstadoDoCliente } from "@/lib/estado/cliente";
 import type { ResumoDePendencias } from "@/lib/cadastro/pendencias";
@@ -171,6 +172,14 @@ function etapas(args: {
   temNumero: boolean;
   execucaoDoBackend: ExecucaoDoNegocio | null;
   veiculacao: EstadoDeVeiculacao;
+  /**
+   * A fixture ativa quando a veiculação diz que está no ar.
+   *
+   * Não é atalho: é a verdade do produto. Só chega ao ar o que alguém do
+   * time ativou, então um cenário "no ar" sem carimbo de ativação seria
+   * um estado que não existe em produção — e fixture que desenha estado
+   * impossível é como se aprova tela que ninguém vai ver.
+   */
   agora: Date;
 }): Etapa[] {
   return montarEtapas(
@@ -178,6 +187,20 @@ function etapas(args: {
       temNegocio: true,
       cadastro: CADASTRO_COMPLETO,
       conexaoAtiva: args.conexaoAtiva,
+      ativacao:
+        args.veiculacao === "no_ar"
+          ? lerCarimbos({
+              ativadaEm: "2026-08-21T14:02:00.000Z",
+              ativadaPor: "gabriel@v2gmidia.com.br",
+              pausadaEm: null,
+              pausadaPor: null,
+            })
+          : lerCarimbos({
+              ativadaEm: null,
+              ativadaPor: null,
+              pausadaEm: null,
+              pausadaPor: null,
+            }),
       cadastroEnviadoEm: "2026-08-19T23:31:49.646Z",
       execucao: null,
       pecasProntas: args.pecasProntas,

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { lerCarimbos } from "@/lib/campanha/carimbos";
 import {
   COLUNAS_DO_CADASTRO,
   montarCadastro,
@@ -248,6 +249,14 @@ function vazio(agora: Date): EstadoDoCliente {
       campanhaCriadaEm: null,
       publicacaoFalhou: false,
       publicadaEm: null,
+      // Sem negócio não há campanha, e sem campanha não há carimbo. É a
+      // mesma resposta que a leitura daria com os quatro nulos.
+      ativacao: lerCarimbos({
+        ativadaEm: null,
+        ativadaPor: null,
+        pausadaEm: null,
+        pausadaPor: null,
+      }),
       temNumero: false,
       execucaoDoBackend: null,
       execucaoIlegivel: false,
@@ -344,7 +353,13 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
       .is("arquivado_em", null),
     supabase
       .from("campaigns")
-      .select("id, name, meta_status, created_at, published_at, publish_state")
+      // Os QUATRO CARIMBOS entram aqui, e não num `select` à parte: o
+      // cliente Supabase deste repositório não usa tipos gerados, então
+      // coluna lida e não selecionada vira `undefined` em silêncio — o
+      // defeito de `docs/regra-inerte.md`. `lerCarimbos` lê os quatro.
+      .select(
+        "id, name, meta_status, created_at, published_at, publish_state, ativada_em, ativada_por, pausada_em, pausada_por",
+      )
       .order("created_at", { ascending: false }),
     // A ÚNICA leitura fora da RLS, e ela entra AQUI dentro de propósito.
     //
@@ -382,6 +397,25 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
 
   const listaDeCampanhas = campanhas ?? [];
   const noAr = listaDeCampanhas.filter((c) => c.published_at !== null);
+
+  // ============================================================
+  // A LEITURA DOS CARIMBOS — da campanha mais RECENTE que subiu.
+  //
+  // `listaDeCampanhas` vem ordenada por `created_at desc`, então a
+  // primeira de `noAr` é a última publicada. É dela que a fase "Publicar"
+  // fala: a cadeia do cliente é sobre o anúncio de agora, não sobre o
+  // histórico.
+  //
+  // Sem nenhuma campanha publicada, os quatro carimbos são nulos e
+  // `lerCarimbos` devolve `nunca_ativada` — que é a verdade.
+  // ============================================================
+  const maisRecenteNoAr = noAr[0];
+  const carimbosDaCampanha = lerCarimbos({
+    ativadaEm: maisRecenteNoAr?.ativada_em ?? null,
+    ativadaPor: maisRecenteNoAr?.ativada_por ?? null,
+    pausadaEm: maisRecenteNoAr?.pausada_em ?? null,
+    pausadaPor: maisRecenteNoAr?.pausada_por ?? null,
+  });
   const esperandoPublicacao = listaDeCampanhas.filter((c) => c.published_at === null);
 
   const cadastro = montarCadastro(linha);
@@ -502,6 +536,7 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     campanhaCriadaEm: esperandoPublicacao[0]?.created_at ?? null,
     publicacaoFalhou: listaDeCampanhas.some((c) => c.publish_state === "failed"),
     publicadaEm: noAr[noAr.length - 1]?.published_at ?? null,
+    ativacao: carimbosDaCampanha,
     temNumero: acumuladoTemNumero,
     execucaoDoBackend: execucaoDoDiaSeguinte,
     // ============================================================

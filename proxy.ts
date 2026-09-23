@@ -62,6 +62,9 @@ const PROTECTED_PREFIXES = [
   "/reprovado",
   "/sem-instagram",
   "/whatsapp-business",
+  // Tela de OPERADOR. Precisa estar aqui E em OPERADOR_PREFIXES: esta
+  // lista guarda a sessão, a de baixo guarda o papel.
+  "/ativar-campanha",
 ];
 
 /**
@@ -70,7 +73,7 @@ const PROTECTED_PREFIXES = [
  * Precisam estar TAMBÉM em `PROTECTED_PREFIXES` — a checagem de sessão
  * vem primeiro, e esta é um segundo filtro sobre ela, não um substituto.
  */
-const OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil"];
+const OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil", "/ativar-campanha"];
 
 /** O papel declarado no JWT, ou `null`. */
 function obterPapel(user: { app_metadata?: Record<string, unknown> } | null): string | null {

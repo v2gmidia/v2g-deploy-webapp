@@ -10,6 +10,25 @@ import {
 } from "@/lib/backend";
 
 /**
+ * O que o pré-voo precisa de um cliente Supabase — só `from`.
+ *
+ * Tipado assim, e não com o tipo do `@supabase/ssr`, porque os dois
+ * clientes que entram aqui (o da sessão e o admin) têm o mesmo `from` e
+ * tipos nominais diferentes. O cliente deste repositório não usa tipos
+ * gerados (ver CLAUDE.md), então `any` já é o que os dois devolvem — o
+ * que esta linha acrescenta é a DECLARAÇÃO de que só `from` é usado.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type SupabaseLike = { from: (tabela: string) => any };
+
+/** A forma que o `select` de `ad_accounts` devolve, aqui. */
+interface LinhaDeConta {
+  id: string;
+  external_id: unknown;
+  name: unknown;
+}
+
+/**
  * O PRÉ-VOO: de onde este anúncio sai, e se a subida está liberada.
  *
  * Desenho e medições em `docs/estado/pre-voo-no-aprovar-15-09.md`.
@@ -140,6 +159,44 @@ export async function preVooDoNegocio(): Promise<PreVoo> {
     .maybeSingle();
   if (!negocio) return VAZIO;
 
+  return preVooPorNegocio(negocio.id, supabase);
+}
+
+/**
+ * O MESMO PRÉ-VOO, para um negócio que NÃO é o da sessão.
+ *
+ * ============================================================
+ * POR QUE ISTO É UMA EXTRAÇÃO, E NÃO UM SEGUNDO PRÉ-VOO.
+ *
+ * O bloco do topo deste arquivo diz: "a tela não decide o que é o
+ * pré-voo […] Se a `/aprovar` e uma tela futura lerem a mesma coisa de
+ * dois lugares, elas vão discordar — é o que já aconteceu entre a
+ * `/aprovar` e a cadeia do `/inicio`."
+ *
+ * A tela do operador é exatamente essa "tela futura". Ela precisa do
+ * pré-voo de um negócio que não é dela, e a tentação era escrever uma
+ * consulta parecida do lado de lá. Em vez disso o corpo saiu daqui
+ * inteiro e as duas entradas chamam o MESMO código: `preVooDoNegocio()`
+ * resolve o negócio pela sessão, esta resolve por id.
+ *
+ * QUEM CHAMA ESTA É RESPONSÁVEL PELA AUTORIZAÇÃO. Ela não pergunta quem
+ * é você — recebe um `negocioId` e responde sobre ele. O único chamador
+ * hoje é a ação do operador, que confere `papel === "operador"` antes, e
+ * está declarada em `lib/seguranca/excecoes.ts`.
+ *
+ * O `cliente` entra como parâmetro porque o operador NÃO POSSUI o
+ * negócio: sob RLS normal (`owns_business`) ele não enxerga nenhuma
+ * dessas linhas, e a função devolveria vazio como se o cliente não
+ * tivesse nada. Ele passa o cliente admin; o dono passa o dele.
+ * ============================================================
+ */
+export async function preVooPorNegocio(
+  negocioId: string,
+  cliente: SupabaseLike,
+): Promise<PreVoo> {
+  const supabase = cliente;
+  const negocio = { id: negocioId };
+
   // As três saem juntas: são independentes entre si e todas dependem só do
   // `negocio.id`, que já está na mão.
   const [respConexao, respContas, respMarca] = await Promise.all([
@@ -168,7 +225,10 @@ export async function preVooDoNegocio(): Promise<PreVoo> {
       .maybeSingle(),
   ]);
 
-  const linhasDeConta = respContas.data ?? [];
+  // A anotação existe porque `from()` passou a devolver `any` (ver
+  // `SupabaseLike`): sem ela o `.find()` logo abaixo fica com parâmetro
+  // implícito e o `tsc` reprova. É a forma que o `select` acima pede.
+  const linhasDeConta: LinhaDeConta[] = respContas.data ?? [];
   const nomeDaConta = (linha: { external_id: unknown; name: unknown }): ContaDoNegocio => ({
     externalId: String(linha.external_id),
     nome: (typeof linha.name === "string" ? linha.name.trim() : "") || String(linha.external_id),

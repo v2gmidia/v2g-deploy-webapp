@@ -1,3 +1,4 @@
+import { lerCarimbos } from "@/lib/campanha/carimbos";
 import { montarEtapas } from "@/lib/estado/frases";
 import type { EstadoDoCliente } from "@/lib/estado/cliente";
 import type { ResumoDePendencias } from "@/lib/cadastro/pendencias";
@@ -46,6 +47,14 @@ export function estadoDeChegada(agora: Date, momento: MomentoDaChegada): EstadoD
   const etapas = montarEtapas(
     {
       temNegocio: true,
+      // A tela de chegada é de quem ACABOU de chegar: nada foi publicado,
+      // nada foi ativado. Os quatro carimbos nulos são a verdade dela.
+      ativacao: lerCarimbos({
+        ativadaEm: null,
+        ativadaPor: null,
+        pausadaEm: null,
+        pausadaPor: null,
+      }),
       cadastro: CADASTRO_FECHADO,
       conexaoAtiva: conectou,
       cadastroEnviadoEm: agora.toISOString(),

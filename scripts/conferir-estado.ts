@@ -17,6 +17,7 @@
  * Roda com `pnpm conferir:estado`. Não toca no banco e não precisa de rede.
  */
 
+import { lerCarimbos } from "../lib/campanha/carimbos.ts";
 import { resumirPendencias } from "../lib/cadastro/pendencias.ts";
 import type { Pendencia } from "../lib/cadastro/montar.ts";
 import {
@@ -79,6 +80,14 @@ function base(): MedidaDoCliente {
   return {
     temNegocio: true,
     cadastro: SEM_PENDENCIA,
+    // Sem carimbo de ativação: é o estado de quem nunca saiu do pausado,
+    // que é o certo para uma base de teste. Quem testa "no ar" sobrescreve.
+    ativacao: lerCarimbos({
+      ativadaEm: null,
+      ativadaPor: null,
+      pausadaEm: null,
+      pausadaPor: null,
+    }),
     conexaoAtiva: true,
     cadastroEnviadoEm: T0.toISOString(),
     // Sem execução legível — quem nunca disparou, e o que a cadeia dizia
@@ -216,6 +225,21 @@ secao("5. os números — a bola é do Facebook, até deixar de ser");
   const m = base();
   m.pecasProntas = 1;
   m.publicadaEm = T0.toISOString();
+  // ============================================================
+  // PUBLICADO NÃO BASTA MAIS, E ISSO É O CONSERTO, NÃO O DEFEITO.
+  //
+  // Esta fixture dizia "no ar" só com `publicadaEm`. Desde 23/09 a etapa
+  // `no_ar` fecha pelo CARIMBO de ativação, porque `published_at` é
+  // gravado quando os objetos sobem PAUSED — publicar e estar no ar
+  // deixaram de ser a mesma coisa no produto, e a fixture tinha que
+  // parar de fingir que eram.
+  // ============================================================
+  m.ativacao = lerCarimbos({
+    ativadaEm: T0.toISOString(),
+    ativadaPor: "gabriel@v2gmidia.com.br",
+    pausadaEm: null,
+    pausadaPor: null,
+  });
 
   const antes = proximo(m, maisDias(DIAS_ATE_ADMITIR_NUMEROS - 0.1))!;
   ok(antes.id === "numeros", "no ar e sem número, o próximo são os NÚMEROS");
@@ -233,6 +257,21 @@ secao("6. tudo pronto — nenhuma tela fala de pendência");
   const m = base();
   m.pecasProntas = 1;
   m.publicadaEm = T0.toISOString();
+  // ============================================================
+  // PUBLICADO NÃO BASTA MAIS, E ISSO É O CONSERTO, NÃO O DEFEITO.
+  //
+  // Esta fixture dizia "no ar" só com `publicadaEm`. Desde 23/09 a etapa
+  // `no_ar` fecha pelo CARIMBO de ativação, porque `published_at` é
+  // gravado quando os objetos sobem PAUSED — publicar e estar no ar
+  // deixaram de ser a mesma coisa no produto, e a fixture tinha que
+  // parar de fingir que eram.
+  // ============================================================
+  m.ativacao = lerCarimbos({
+    ativadaEm: T0.toISOString(),
+    ativadaPor: "gabriel@v2gmidia.com.br",
+    pausadaEm: null,
+    pausadaPor: null,
+  });
   m.temNumero = true;
   ok(proximo(m, maisDias(30)) === undefined, "cadeia inteira concluída → não há `proximo`");
 }
@@ -746,6 +785,92 @@ secao("B. a regra de evidência — a VEICULAÇÃO fecha `peca` e `no_ar`");
   ok(
     !/CTR|ROAS|CPM|impress|creative|campaign/i.test(noAr),
     "  e sem jargão de tráfego nem nome de tabela",
+  );
+}
+
+secao("C. PUBLICADO NÃO É NO AR — a etapa fecha pelo carimbo, não por `published_at`");
+{
+  // ============================================================
+  // O DEFEITO QUE ESTA SEÇÃO EXISTE PARA NÃO DEIXAR VOLTAR.
+  //
+  // Até 23/09/2026 `etapaNoAr` fechava com `publicadaEm !== null`. Como
+  // todo objeto sobe ao Meta PAUSED (`lib/meta/publicar.ts`, invariante
+  // 1) e não havia caminho para ativar, a fase "Publicar" do `/inicio`
+  // aparecia CONCLUÍDA para todo cliente cuja campanha tinha subido —
+  // com nada rodando e nenhum centavo saindo.
+  //
+  // O cliente lia "pronto" e ficava esperando resultado de um anúncio
+  // parado. É o tipo de mentira que só aparece quando ele pergunta por
+  // que não vendeu nada.
+  // ============================================================
+  const semCarimbo = base();
+  semCarimbo.pecasProntas = 1;
+  semCarimbo.publicadaEm = T0.toISOString();
+  // veiculação NÃO prova nada aqui: é o caso de quem publicou e ninguém
+  // ativou, então o backend não tem o que observar.
+  semCarimbo.veiculacao = "nunca_foi_ao_ar";
+
+  const etapasSem = montarEtapas(semCarimbo, maisDias(1));
+  const noArSem = etapasSem.find((e) => e.id === "no_ar")!;
+  ok(!noArSem.concluida, "publicado e SEM carimbo -> a etapa NÃO fecha");
+  ok(noArSem.bola === "nos", "  e a bola é nossa, não dele");
+
+  // O texto da espera não promete prazo nenhum.
+  const promessa = /minutos?|horas?|dias?|amanh[ãa]|em breve|logo mais/i;
+  ok(
+    !promessa.test(noArSem.corpo),
+    `  e o corpo não promete prazo: "${noArSem.corpo.slice(0, 60)}…"`,
+  );
+  ok(
+    !promessa.test(noArSem.titulo),
+    `  nem o título: "${noArSem.titulo}"`,
+  );
+
+  // ---- com carimbo, fecha ----
+  for (const caso of [
+    { nome: "rodando_desde_sempre", ativadaEm: T0.toISOString(), pausadaEm: null },
+    { nome: "rodando", ativadaEm: T0.toISOString(), pausadaEm: "2026-08-01T00:00:00.000Z" },
+  ]) {
+    const m = base();
+    m.pecasProntas = 1;
+    m.publicadaEm = T0.toISOString();
+    m.veiculacao = "nunca_foi_ao_ar";
+    m.ativacao = lerCarimbos({
+      ativadaEm: caso.ativadaEm,
+      ativadaPor: "gabriel@v2gmidia.com.br",
+      pausadaEm: caso.pausadaEm,
+      pausadaPor: caso.pausadaEm ? "gabriel@v2gmidia.com.br" : null,
+    });
+    const noAr = montarEtapas(m, maisDias(1)).find((e) => e.id === "no_ar")!;
+    ok(noAr.concluida, `com carimbo (${caso.nome}) -> a etapa FECHA`);
+  }
+
+  // ---- pausada NÃO fecha ----
+  const pausada = base();
+  pausada.pecasProntas = 1;
+  pausada.publicadaEm = T0.toISOString();
+  pausada.veiculacao = "nunca_foi_ao_ar";
+  pausada.ativacao = lerCarimbos({
+    ativadaEm: "2026-08-01T00:00:00.000Z",
+    ativadaPor: "gabriel@v2gmidia.com.br",
+    pausadaEm: T0.toISOString(),
+    pausadaPor: "gabriel@v2gmidia.com.br",
+  });
+  const noArPausada = montarEtapas(pausada, maisDias(1)).find((e) => e.id === "no_ar")!;
+  ok(!noArPausada.concluida, "pausada depois de ativada -> a etapa NÃO fecha");
+
+  // ---- a outra porta continua aberta: a evidência do backend ----
+  // Se o backend OBSERVA que rodou, isso fecha mesmo sem carimbo nosso.
+  // São duas fontes dizendo a mesma coisa por caminhos diferentes — o que
+  // mandamos e o que aconteceu —, e qualquer uma basta.
+  const pelaEvidencia = base();
+  pelaEvidencia.pecasProntas = 1;
+  pelaEvidencia.publicadaEm = T0.toISOString();
+  pelaEvidencia.veiculacao = "no_ar";
+  const noArEvidencia = montarEtapas(pelaEvidencia, maisDias(1)).find((e) => e.id === "no_ar")!;
+  ok(
+    noArEvidencia.concluida,
+    "sem carimbo mas com veiculação `no_ar` -> fecha pela evidência do backend",
   );
 }
 

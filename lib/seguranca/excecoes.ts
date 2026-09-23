@@ -83,6 +83,37 @@ export const EXCECOES: ExcecaoDeIdentidade[] = [
       "escapar. Duas omissões, não uma.",
   },
   {
+    arquivo: "app/(protected)/ativar-campanha/[campanha]/page.tsx",
+    autorizacao: "papel",
+    oQueEntra: "`params.campanha` — o id da campanha, na URL",
+    porque:
+      "Tela de OPERADOR, e operador abre a campanha de qualquer cliente: `conferirAntesDeAtivar` " +
+      "aceita qualquer id de proposito, e a leitura do rastro em `decisions` filtra por " +
+      "`campaign_id` com o mesmo id. O portao e `papel !== 'operador' → notFound()`, e ele vem " +
+      "DUAS vezes nesta rota — `proxy.ts` guarda o prefixo por PROTECTED_PREFIXES e por " +
+      "OPERADOR_PREFIXES, e a pagina checa na primeira coisa que faz, antes de qualquer " +
+      "consulta. O `business_id` do cliente nunca entra pela URL: ele sai da linha da campanha, " +
+      "dentro de `lib/campanha/ativacao.ts`. Esta pagina NAO ativa nada — ela desenha; quem " +
+      "chama o Meta sao as actions ao lado.",
+  },
+  {
+    arquivo: "app/(protected)/ativar-campanha/actions.ts",
+    autorizacao: "papel",
+    oQueEntra: "`campanhaId`, do `formData` — e e o UNICO dado de fora que ela aceita",
+    porque:
+      "Tela de OPERADOR, e operador ativa campanha de qualquer cliente: a leitura usa o " +
+      "cliente ADMIN, porque sob RLS (`owns_business`) ele nao enxerga linha nenhuma de " +
+      "`campaigns`. O portao e `papel !== 'operador'` e vem TRES vezes — `proxy.ts` guarda " +
+      "o prefixo por PROTECTED_PREFIXES e por OPERADOR_PREFIXES, e cada action chama " +
+      "`operadorOuErro()` na PRIMEIRA linha do corpo, antes de ler o `formData`. " +
+      "O QUE SEPARA UM CLIENTE DO OUTRO esta em `lib/campanha/ativacao.ts`, para onde este " +
+      "id e passado: o `business_id` SAI DA LINHA DA CAMPANHA lida por id, e escopa todas " +
+      "as leituras seguintes. O negocio nunca e parametro de entrada. Acrescentar um " +
+      "`negocioId` aqui ou la para poupar uma consulta mataria a trava — passaria a dar " +
+      "para ativar a campanha de um cliente com o contexto de outro. Esta acao NAO chama o " +
+      "Meta: ela so rele o que a pessoa vai ver antes de decidir.",
+  },
+  {
     arquivo: "app/(protected)/conta/identidade-actions.ts",
     autorizacao: "posse",
     oQueEntra: "`id` da imagem, do `formData`",
