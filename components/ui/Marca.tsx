@@ -13,6 +13,15 @@ import Image from "next/image";
  *
  * Para trocar o símbolo: substitua `public/marca.png`. Nada mais —
  * exceto as dimensões abaixo, se a arte nova não for 612×612.
+ *
+ * DESDE 25/09/2026 HÁ UM SEGUNDO LUGAR: `app/icon.png`, o ícone da aba
+ * do navegador. Ele é DERIVADO desta mesma arte — o símbolo em branco
+ * (`--plate-ink`) sobre a placa cobalto (`--plate`) —, mas é um arquivo
+ * separado, porque o navegador não aplica o nosso CSS ao favicon.
+ *
+ * Trocar a arte, portanto, é trocar os DOIS. O ícone tem placa e este
+ * componente não porque em 16px o branco sobre transparente desaparece
+ * na aba clara do Chrome — medido antes de escolher, não suposto.
  * ============================================================
  *
  * O ARQUIVO: `public/marca.png`, 612×612, fundo transparente.
