@@ -79,6 +79,15 @@ export interface OpcoesChamada {
   params?: Record<string, string | number | boolean | undefined | null>;
   /** Nome curto para o log. Sem isto, erro no log não diz de onde veio. */
   contexto?: string;
+  /**
+   * Guarda o corpo da resposta de erro em `FalhaBackend.detalhe`.
+   *
+   * Desligado por padrão, e é o padrão certo: corpo de erro do FastAPI é
+   * inglês com traceback de Pydantic dentro, e ele não tem o que fazer
+   * perto de uma tela de cliente. Ver o bloco do campo em `erros.ts` para
+   * o único caso que precisa dele, e por quê.
+   */
+  corpoDoErro?: boolean;
 }
 
 /**
@@ -163,7 +172,18 @@ async function chamar(
       status: resposta.status,
       categoria,
     });
-    return falha(categoria, resposta.status);
+    const erro = falha(categoria, resposta.status);
+    // Só quem pediu. E `catch` sem ramo: corpo de erro ilegível não pode
+    // transformar uma falha que a gente já classificou noutra coisa — a
+    // categoria e o status acima continuam valendo, com ou sem detalhe.
+    if (opcoes.corpoDoErro) {
+      try {
+        erro.detalhe = await resposta.json();
+      } catch {
+        // sem detalhe; a falha segue como está
+      }
+    }
+    return erro;
   }
 
   try {

@@ -368,8 +368,23 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "os dois CHECK do carimbo, que NAO sao copia literal da 0012: ativacao nao e estado terminal, entao a versao bidirecional tornaria impossivel pausar o que foi ativado",
       "o indice parcial `campaigns_esperando_ativacao_idx`, que e a fila do operador",
       "os dois CHECK do carimbo de PAUSA, gemeos dos de ativacao",
-      "a TRAVA de concorrencia, que nao e o indice e sim o UPDATE condicional em lib/meta/ativar.ts — o indice `campaigns_ativando_idx` so torna barata a pergunta 'tem ativacao presa?'",
+      "a TRAVA de concorrencia: ela nunca foi o indice, e sim o UPDATE condicional que vivia em lib/meta/ativar.ts — arquivo REMOVIDO em 24/09/2026. O indice `campaigns_ativando_idx` so tornava barata a pergunta 'tem ativacao presa?'",
     ],
+    // ============================================================
+    // ESTA MIGRATION FICOU SEM CODIGO QUE A USE — 24/09/2026.
+    //
+    // As cinco colunas estao APLICADAS no banco e continuam declaradas
+    // aqui, porque e isso que o conferidor confere: o que o repositorio
+    // diz que existe, existe. Mas quem as escrevia era a ativacao sobre
+    // `campaigns`, e essa tabela foi descartada — zero linhas, e nenhum
+    // codigo dos dois repositorios insere nela (medido em 23/09).
+    //
+    // Nao foram removidas de proposito: apagar coluna aplicada exige
+    // migration de queda, e o custo de deixar cinco colunas nulas numa
+    // tabela vazia e zero. O que NAO se pode fazer e assumir que elas
+    // significam alguma coisa: `ativada_em` nunca sera preenchida pelo
+    // caminho novo, onde quem carimba e `execucoes.aprovacoes`.
+    // ============================================================
   },
   {
     arquivo: "0025_entrevista_sem_transcricao.sql",

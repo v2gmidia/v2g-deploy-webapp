@@ -57,6 +57,29 @@ export interface FalhaBackend {
   mensagem: string;
   /** código HTTP, quando houve resposta */
   http?: number;
+  /**
+   * O corpo cru da resposta de erro — **só quando quem chamou pediu**, por
+   * `corpoDoErro: true` em `OpcoesChamada`. Ausente em toda chamada que
+   * não pediu, que são todas menos uma.
+   *
+   * ============================================================
+   * ELE EXISTE PARA UM CASO SÓ, E O CASO É MEDIDO.
+   *
+   * `POST /campanhas/{id}/ativar` devolve **409 com o resultado inteiro
+   * dentro de `detail`** quando a Meta aceita uns níveis e recusa outros
+   * (`rotas.py:3595-3600`). É a única rota do backend cujo corpo de erro
+   * carrega informação que alguém precisa LER: qual nível ficou ligado.
+   *
+   * Sem isto, esse caso chega à tela como a frase genérica de `conflito`
+   * — "Esse passo já foi feito" — com metade da estrutura no ar.
+   *
+   * NÃO É PARA VIRAR HÁBITO. A regra do topo deste arquivo continua
+   * valendo: a resposta original não vai para a tela do CLIENTE. Quem
+   * usar este campo está numa tela de operador, e é responsável por
+   * decidir o que dela é seguro mostrar.
+   * ============================================================
+   */
+  detalhe?: unknown;
 }
 
 export interface SucessoBackend<T> {

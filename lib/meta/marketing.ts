@@ -36,51 +36,22 @@ export async function lerMarketing<T>(caminho: string, token: string): Promise<T
   return corpo as T;
 }
 
-/**
- * ATUALIZAR um objeto que já existe no Meta — `POST /{id}`.
- *
- * ============================================================
- * POR QUE NÃO DÁ PARA USAR `criarNoMeta` AQUI.
- *
- * Criar devolve `{"id": "..."}`; atualizar devolve `{"success": true}`.
- * O `criarNoMeta` trata resposta sem `id` como defeito e levanta
- * "O Meta aceitou a criação mas não devolveu id" — o que, numa
- * atualização bem-sucedida, seria falha inventada em cima de acerto.
- *
- * O caminho de erro é o mesmo dos dois: `normalizarErro`, com o
- * `error_user_msg` preservado, porque a mensagem que o Meta escreve para
- * o usuário final costuma ser melhor que qualquer uma nossa.
- * ============================================================
- *
- * Devolve `true` quando o Meta confirmou. Não devolve o objeto: quem
- * precisa do estado depois tem que LER de novo — a resposta de escrita
- * não é leitura, e tratá-la como tal é como o `effective_status` acaba
- * divergindo do que a gente acha que mandou.
- */
-export async function atualizarNoMeta(
-  idDoObjeto: string,
-  token: string,
-  campos: Record<string, string>,
-): Promise<boolean> {
-  const corpoForm = new URLSearchParams({ ...campos, access_token: token });
-
-  const resposta = await fetch(`${GRAPH}/${idDoObjeto}`, {
-    method: "POST",
-    body: corpoForm,
-    cache: "no-store",
-  });
-  const corpo = (await resposta.json()) as Record<string, unknown>;
-  if (!resposta.ok || corpo.error) throw normalizarErro(corpo);
-
-  // O Meta responde `{"success": true}`. Alguns objetos respondem
-  // `{"id": "..."}` no lugar — os dois contam como aceito, e o que NÃO
-  // conta é 200 com `success: false`, que já apareceu em rota de
-  // atualização.
-  if (corpo.success === false) {
-    throw new FalhaMeta("O Meta respondeu 200 com success:false", {});
-  }
-  return true;
-}
+// ============================================================
+// `atualizarNoMeta()` SAIU EM 24/09/2026, junto com `lib/meta/ativar.ts`.
+//
+// Ela existia para um chamador só: a ativação, que fazia `POST /{id}`
+// com `status` nos três níveis. A ativação passou a ser do backend
+// (`rotas.py:3619`), e uma função de ESCRITA na Graph API sem chamador é
+// pior que ausência — é um atalho pronto para alguém religar o caminho
+// que a gente acabou de desligar.
+//
+// O que ela sabia, e que quem for reescrever precisa saber de novo:
+// criar devolve `{"id": ...}`, atualizar devolve `{"success": true}`, e
+// `criarNoMeta` trata resposta sem `id` como defeito. 200 com
+// `success: false` também acontece, e conta como recusa.
+//
+// Está em `git show <commit>^:lib/meta/marketing.ts` se precisar.
+// ============================================================
 
 export interface OpcoesDeCriacao {
   /**

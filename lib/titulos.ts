@@ -49,7 +49,7 @@ export const NOMES_DAS_ROTAS = {
   // aberta ao lado das outras, e "Ativação" sem contexto já foi confundido
   // com ativação de conta.
   "/ativar-campanha": "Ativação de campanha",
-  "/ativar-campanha/[campanha]": "Ativação de campanha",
+  "/ativar-campanha/[execucao]": "Ativação de campanha",
 
   // Fluxo.
   "/onboarding": "Sobre o seu negócio",

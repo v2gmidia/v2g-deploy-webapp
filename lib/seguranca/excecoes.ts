@@ -82,36 +82,39 @@ export const EXCECOES: ExcecaoDeIdentidade[] = [
       "esquecesse a checagem ainda precisaria ser importada de fora do prefixo para " +
       "escapar. Duas omissões, não uma.",
   },
-  {
-    arquivo: "app/(protected)/ativar-campanha/[campanha]/page.tsx",
-    autorizacao: "papel",
-    oQueEntra: "`params.campanha` — o id da campanha, na URL",
-    porque:
-      "Tela de OPERADOR, e operador abre a campanha de qualquer cliente: `conferirAntesDeAtivar` " +
-      "aceita qualquer id de proposito, e a leitura do rastro em `decisions` filtra por " +
-      "`campaign_id` com o mesmo id. O portao e `papel !== 'operador' → notFound()`, e ele vem " +
-      "DUAS vezes nesta rota — `proxy.ts` guarda o prefixo por PROTECTED_PREFIXES e por " +
-      "OPERADOR_PREFIXES, e a pagina checa na primeira coisa que faz, antes de qualquer " +
-      "consulta. O `business_id` do cliente nunca entra pela URL: ele sai da linha da campanha, " +
-      "dentro de `lib/campanha/ativacao.ts`. Esta pagina NAO ativa nada — ela desenha; quem " +
-      "chama o Meta sao as actions ao lado.",
-  },
+  // ============================================================
+  // A EXCEÇÃO DE `ativar-campanha/[execucao]/page.tsx` SAIU EM 24/09/2026,
+  // e o motivo vale mais que a linha que ela ocupava.
+  //
+  // Enquanto a tela lia `campaigns`, ela mesma endereçava linha com o id
+  // da URL: `decisions.select().eq("campaign_id", idDaUrl)`. Precisava de
+  // declaração, e tinha.
+  //
+  // Depois da troca de fonte a página não faz consulta nenhuma: ela pede
+  // a `conferirAntesDeAtivar()`, e o rastro chega junto, lido de DENTRO da
+  // linha que aquela função já carregou por id. Um `.eq()` a menos no app
+  // — e um a menos é exatamente o que esta lista existe para cobrar.
+  //
+  // Se alguém voltar a consultar direto daqui, o conferidor acusa e a
+  // declaração tem que voltar. É esse o pedágio.
+  // ============================================================
   {
     arquivo: "app/(protected)/ativar-campanha/actions.ts",
     autorizacao: "papel",
-    oQueEntra: "`campanhaId`, do `formData` — e e o UNICO dado de fora que ela aceita",
+    oQueEntra: "`idExecucao` e o `motivo` da pausa, do `formData` — e mais nada",
     porque:
       "Tela de OPERADOR, e operador ativa campanha de qualquer cliente: a leitura usa o " +
-      "cliente ADMIN, porque sob RLS (`owns_business`) ele nao enxerga linha nenhuma de " +
-      "`campaigns`. O portao e `papel !== 'operador'` e vem TRES vezes — `proxy.ts` guarda " +
-      "o prefixo por PROTECTED_PREFIXES e por OPERADOR_PREFIXES, e cada action chama " +
-      "`operadorOuErro()` na PRIMEIRA linha do corpo, antes de ler o `formData`. " +
+      "cliente ADMIN, porque `execucoes` tem RLS ligada e ZERO politicas (postura declarada " +
+      "na `0022` do backend) e sob RLS ele nao enxerga linha nenhuma. O portao e " +
+      "`papel !== 'operador'` e vem TRES vezes — `proxy.ts` guarda o prefixo por " +
+      "PROTECTED_PREFIXES e por OPERADOR_PREFIXES, e cada action chama `operadorOuErro()` na " +
+      "PRIMEIRA linha do corpo, antes de ler o `formData`. " +
       "O QUE SEPARA UM CLIENTE DO OUTRO esta em `lib/campanha/ativacao.ts`, para onde este " +
-      "id e passado: o `business_id` SAI DA LINHA DA CAMPANHA lida por id, e escopa todas " +
+      "id e passado: o `business_id` SAI DA LINHA DA EXECUCAO lida por id, e escopa todas " +
       "as leituras seguintes. O negocio nunca e parametro de entrada. Acrescentar um " +
       "`negocioId` aqui ou la para poupar uma consulta mataria a trava — passaria a dar " +
-      "para ativar a campanha de um cliente com o contexto de outro. Esta acao NAO chama o " +
-      "Meta: ela so rele o que a pessoa vai ver antes de decidir.",
+      "para ativar a campanha de um cliente com o contexto de outro. Estas acoes NAO falam " +
+      "com o Meta: elas pedem ao backend, que e quem tem o token e a conta.",
   },
   {
     arquivo: "app/(protected)/conta/identidade-actions.ts",
