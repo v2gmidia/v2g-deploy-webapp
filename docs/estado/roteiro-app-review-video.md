@@ -2,29 +2,32 @@
 
 ## Resumo — leia estas cinco linhas primeiro
 
-1. **Gravável hoje? PARCIALMENTE.** Três das seis permissões têm tela que
-   as exercita (`ads_read`, `business_management`, `pages_show_list`); as
-   outras três (`ads_management`, `pages_manage_ads`,
-   `pages_read_engagement`) **não têm nenhuma ação no produto hoje**, nem
-   pausada — porque nenhuma tela chama `publicarCampanha()`.
-2. **Reserve 1h30:** 20 min de preparo (§5), 3 ensaios de ~5 min, a
-   gravação boa, e 30 min para o texto do formulário (§4, já pronto para
-   colar).
+1. **Gravável hoje? SIM, para cinco das seis.** `ads_read`,
+   `business_management`, `pages_show_list`, **`ads_management`** e
+   **`pages_read_engagement`** têm ação real no produto. Só
+   `pages_manage_ads` continua sem — e ela depende de criar anúncio, que
+   o modo Development bloqueia até a própria revisão passar.
+2. **Reserve 2h:** 30 min de preparo (§5, agora com a tela de operador),
+   3 ensaios de ~6 min, a gravação boa, e 30 min para o texto do
+   formulário (§4, já pronto para colar).
 3. **Só você pode resolver, antes de gravar:** criar a conta de teste da
    V2G (e-mail e senha novos, não os seus), garantir que essa conta do
-   Facebook tem conta de anúncio ativa e ao menos uma Página, e **mudar o
-   idioma do Facebook para inglês** — a tela de consentimento segue o
-   idioma da conta, e a Meta pede UI em inglês.
+   Facebook tem conta de anúncio ativa e ao menos uma Página, **mudar o
+   idioma do Facebook para inglês**, e — novidade — deixar a **tela de
+   operador acessível na sua conta de trabalho**, porque o Bloco E2 grava
+   uma ativação de verdade (§5, itens 13 a 15).
 4. **O vídeo é MUDO.** A Meta manda desligar o áudio e usar legendas. Não
    prepare microfone; prepare a ferramenta de legenda.
-5. **Decida a §0.2 antes de apertar gravar:** submeter agora só as três
-   demonstráveis, ou adiar até a publicação existir. O roteiro serve para
-   as duas, mas o texto do formulário muda.
+5. **A §0.2 deixou de ser uma decisão difícil:** peça as seis de uma vez.
+   O buraco que motivava adiar fechou em 24/09, e o que sobrou
+   (`pages_manage_ads`) é o impasse que a própria revisão desfaz.
 
 ---
 
-**Escrito em 22/09/2026, revisado e conferido contra a produção em
-23/09/2026.** Leia inteiro uma vez antes
+**Escrito em 22/09/2026, conferido contra a produção em 23/09, e
+revisado em 25/09/2026** — quando a ativação de campanha passou a
+existir de verdade e três seções deixaram de ser verdadeiras (§0.2, o
+Bloco E2 novo, e a nota ao revisor na §4). Leia inteiro uma vez antes
 de abrir o gravador. As duas primeiras seções mudam o plano; o roteiro
 começa na §3.
 
@@ -47,45 +50,66 @@ O que ela pede no lugar: **UI em inglês** quando possível e, quando não,
 roteiro diz "LEGENDA:", é isso que entra escrito na tela, não falado.
 Grave sem microfone — sobra uma preocupação a menos.
 
-### 0.2 Três das seis permissões NÃO têm tela que as exerça hoje
+### 0.2 Cinco das seis permissões têm ação real — mudou em 24/09/2026
 
-Isto é o obstáculo real, e ele não se resolve gravando melhor.
+**Esta seção dizia o contrário até 24/09, e a mudança é grande o
+bastante para reescrevê-la em vez de remendá-la.**
 
-A Meta pede que o vídeo mostre **como usar o app para testar cada
-permissão**. Medido no código hoje:
+O que mudou: o `backend_v2g` ganhou duas rotas —
+`POST /campanhas/{id_execucao}/ativar` (`rotas.py:3619`) e
+`.../pausar` (`rotas.py:3640`) — e o webapp ganhou a tela que as chama,
+`/ativar-campanha`. **Testado contra a Meta real em 25/09**, com
+`"mock": false` e 200 nos dois sentidos, na campanha `120251447950510234`
+da conta `act_2818009911919726`. A trilha está no banco, em
+`execucoes.aprovacoes` da execução `aed42ce7`: quatro registros —
+intenção e retorno de cada sentido, os dois com `campanha=ok`.
+
+Medido no código hoje:
 
 | escopo | tem tela que exerce? | onde |
 |---|---|---|
 | `ads_read` | **sim** | `/conectar/escolher` lista as contas de anúncio |
 | `business_management` | **sim** | a mesma lista alcança contas dentro de um Business Manager |
 | `pages_show_list` | **sim** | `/conectar/escolher` lista as Páginas, e `/conta` as lê de novo |
-| `pages_read_engagement` | **não** | a única leitura de campos da Página é `GET /{page_id}?fields=location`, dentro de `garantirGeo()`, que só roda dentro de `publicarCampanha()` |
-| `ads_management` | **não** | `publicarCampanha()` existe (`lib/meta/publicar.ts:273`) e **nenhuma rota ou action a chama** |
-| `pages_manage_ads` | **não** | declarado em `lib/meta/oauth.ts:98`; o próprio comentário (`:85-86`) diz "NENHUMA linha deste projeto exerce este escopo hoje" |
+| `ads_management` | **sim, agora** | `/ativar-campanha/{id}` → `POST /{id}` com `status=ACTIVE` em cada objeto (`graph.py:617`), de cima para baixo (`graph.py:552-558`) |
+| `pages_read_engagement` | **sim, agora** | abrir a tela dispara o pré-voo, que lê campos da Página: `GET /{page_id}?fields=id,name,is_published,whatsapp_number` (`graph.py:738-742`) |
+| `pages_manage_ads` | **não** | só é exercida ao criar anúncio com `object_story_id` na Página — e isso é `POST /campanhas`, que nenhuma tela chama |
 
-**A prova de que nada publica**, escrita no próprio código em
-`app/(fluxo)/verba/page.tsx:172-173`:
+#### A ressalva que você precisa saber antes de gravar
 
-> *"a cascata de `garantirGeo()` só roda dentro de `publicarCampanha()`, e
-> **nada foi publicado**. Ou seja, ninguém nunca perguntou nada à Página."*
+**A ativação usa o token de System User da V2G, não o token que o revisor
+acabou de conceder.** `ativar`/`pausar` chamam `obter_client_meta()` sem
+passar token (`rotas.py:3543-3545`), e o `_token_atual` cai no token do
+processo (`graph.py:154-162`). Só `subir_campanha` injeta o token do
+pedido (`graph.py:271`).
 
-**O que fazer com isso — duas saídas, e a escolha é sua:**
+O que isso significa na prática:
 
-- **A) Submeter só os três demonstráveis agora** (`ads_read`,
-  `business_management`, `pages_show_list`) e pedir os outros três numa
-  segunda leva, quando a publicação estiver ligada. Custo: **duas filas de
-  App Review**, e todo cliente já conectado terá que reconectar quando os
-  escopos novos entrarem (`lib/meta/oauth.ts:92-96` — a Meta não concede
-  permissão retroativamente).
-- **B) Adiar o vídeo** até existir uma tela que dispare
-  `publicarCampanha()`, e submeter os seis de uma vez. Custo: o tempo de
-  construir essa tela.
+- **O vídeo mostra o app usando `ads_management` de verdade.** Isso é o
+  que a Meta pede ver, e é verdade.
+- **Um revisor que refizer o fluxo com o próprio usuário de teste não
+  verá o `ads_management` dele ser usado** — porque ele não tem tela de
+  operador, e porque a chamada sai com a nossa credencial.
+- Não minta sobre isso no formulário. O texto da §4 já foi ajustado para
+  descrever o que acontece, e a nota ao revisor explica o desenho: a V2G
+  é uma agência, e quem opera os anúncios é o time.
 
-O repositório já escolheu **B** por escrito, em
-`docs/oauth-meta.md:47-52`: *"pedir separado significa enfrentar a fila do
-Meta duas vezes — e o segundo pedido poderia ser negado com cliente já
-rodando"*. Se você gravar amanhã assim mesmo, é a opção A, e é uma
-mudança de plano consciente, não um detalhe.
+#### A decisão: peça as seis de uma vez
+
+O repositório já preferia isso por escrito, em `docs/oauth-meta.md:47-52`:
+*"pedir separado significa enfrentar a fila do Meta duas vezes — e o
+segundo pedido poderia ser negado com cliente já rodando"*. O que
+impedia era não haver o que mostrar para três escopos. Agora falta um.
+
+E `pages_manage_ads` é um impasse que a própria revisão desfaz: ela só é
+exercida criando anúncio, e criar anúncio é bloqueado enquanto o App
+estiver em Development — `POST /adcreatives` responde subcode 1885183,
+*"o app está em modo de desenvolvimento"* (`lib/meta/publicar.ts:641-644`).
+Adiar o pedido até conseguir demonstrar é esperar por uma porta cuja
+chave é a própria revisão.
+
+**Peça as seis, mostre cinco, e declare a sexta** — a nota ao revisor na
+§4 já traz o texto.
 
 ### 0.3 Um erro medido que pode derrubar a gravação no meio
 
@@ -111,11 +135,11 @@ Fonte: `lib/meta/oauth.ts:75-99`.
 | # | escopo | linha | para que serve na V2G | onde o vídeo mostra |
 |---|---|---|---|---|
 | 1 | `ads_read` | `:76` | ler as contas de anúncio do cliente e o estado delas | `/conectar/escolher` — a lista de contas |
-| 2 | `ads_management` | `:77` | criar e gerenciar a campanha na conta do cliente | **nenhuma tela hoje** |
+| 2 | `ads_management` | `:77` | criar e gerenciar a campanha na conta do cliente | `/ativar-campanha/{id}` — o botão que liga e o que pausa |
 | 3 | `business_management` | `:78` | alcançar contas que pertencem a um Business Manager | a mesma lista, quando a conta é de um BM |
 | 4 | `pages_show_list` | `:79` | listar as Páginas do Facebook do cliente | `/conectar/escolher` e `/conta` |
-| 5 | `pages_read_engagement` | `:80` | ler campos da Página — hoje, o `location`, de onde saem latitude e longitude do raio de 5 km | **nenhuma tela hoje** |
-| 6 | `pages_manage_ads` | `:98` | anunciar em nome da Página | **nenhuma tela hoje** |
+| 5 | `pages_read_engagement` | `:80` | ler campos da Página: hoje `is_published` e `whatsapp_number` no pré-voo; o `location` do raio de 5 km quando a publicação ligar | `/ativar-campanha/{id}` — o bloco de pré-requisitos, ao abrir a tela |
+| 6 | `pages_manage_ads` | `:98` | anunciar em nome da Página | **nenhuma tela ainda** — depende de criar anúncio, bloqueado em Development |
 
 `public_profile` vem por padrão e não é pedido (`docs/oauth-meta.md:38`).
 
@@ -146,9 +170,11 @@ Tudo desta seção veio da documentação oficial, consultada em 22/09/2026.
 | **duração máxima** | **não encontrado** na documentação oficial | — |
 | **tamanho/formato de arquivo** | **não encontrado** na documentação de App Review (o que se acha é especificação de anúncio, que é outra coisa) | — |
 
-**Não medido:** duração e limite de arquivo. Mire em **2 a 4 minutos** e
+**Não medido:** duração e limite de arquivo. Mire em **4 a 5 minutos** e
 **MP4 / H.264**, que é o denominador comum seguro — mas isso é escolha
-minha, não regra da Meta.
+minha, não regra da Meta. (Eram 2 a 4 antes do Bloco E2; a ativação
+acrescenta cerca de um minuto, e ela é o que prova a permissão mais
+difícil de justificar por escrito.)
 
 **Atenção à contradição do modo do App.** A Meta manda manter em
 Development até a revisão passar. Mas o backend mediu (`backend_v2g/src/
@@ -284,25 +310,76 @@ anúncio final sendo criado — só campanha e conjunto.
     resposta e coloca a peça na fila."* Um revisor lendo isso no vídeo tem
     motivo para desconfiar. **Não passe por `/aprovar` nesta gravação.**
 
-### Bloco F — o fecho (3:30 – 4:00)
+### Bloco E2 — a ativação de verdade (3:30 – 4:30)
 
-29. Vá para **`/conta`**.
-30. **LEGENDA:** `The client can disconnect at any time. Nothing is
+**Este bloco é novo, de 24/09, e é o que fecha `ads_management` e
+`pages_read_engagement`.** Ele é gravado com a **sua conta de trabalho**
+(a que tem `papel: operador`), não com a conta de teste — e é isso que a
+legenda do item 30 explica ao revisor.
+
+> **Antes de gravar este bloco, leia a §5 itens 13 a 15.** Ele liga uma
+> campanha de verdade. A campanha é da conta de teste da própria V2G e o
+> registro no banco diz, por escrito, *"não é de cliente nenhum"* — mas
+> ela **entra no ar**, e você desliga no item 33.
+
+28. Numa aba separada (já logado como operador), vá para:
+
+    ```
+    https://v2g-deploy-webapp.vercel.app/ativar-campanha
+    ```
+
+29. **LEGENDA:** `Internal operator screen. V2G is a managed service —
+    our team turns the client's campaign on, the client never does.`
+30. **LEGENDA:** `This uses a V2G staff account. The client-facing flow
+    you just saw never exposes these controls.`
+31. Clique em **Abrir** na campanha da fila. **Pare 5 segundos** no bloco
+    de pré-requisitos.
+    **ANOTAÇÃO:** `pages_read_engagement — GET /{page_id}?fields=id,name,
+    is_published,whatsapp_number. The pre-flight reads the Page before
+    anything is allowed to spend.`
+32. Aponte o **nome do cliente** e o **valor por dia** acima do botão.
+    **LEGENDA:** `Who it belongs to and what it will spend, both visible
+    before the button exists.`
+33. Clique em **Ativar campanha**. Espere a tela recarregar.
+    **ANOTAÇÃO:** `ads_management — POST /{object_id} with status=ACTIVE,
+    campaign then ad set then ads.`
+34. Aponte o **rastro** no fim da página — as duas linhas novas, com quem
+    pediu e a hora.
+    **LEGENDA:** `Every activation is recorded: who asked, when, and what
+    Meta answered.`
+35. **Clique em Pausar campanha**, escreva `App Review recording` no
+    motivo e confirme.
+    **LEGENDA:** `And turned back off. The reason is mandatory — the
+    system never pauses on its own.`
+    → **Não pule este item.** É a prova de que o controle é bidirecional,
+    e é o que evita deixar a campanha rodando depois da gravação.
+
+### Bloco F — o fecho (4:30 – 5:00)
+
+36. Vá para **`/conta`**.
+37. **LEGENDA:** `The client can disconnect at any time. Nothing is
     permanent.`
-31. Mostre a seção de conexão e a opção de desconectar. **Não clique.**
-32. **LEGENDA final:** `Every ad object the app creates starts PAUSED.
-    Nothing spends money without the client's explicit action.`
-    → Isto é verdade e está no código: `lib/meta/publicar.ts:22-23`.
-33. Pare a gravação.
+38. Mostre a seção de conexão e a opção de desconectar. **Não clique.**
+39. **LEGENDA final:** `Every ad object this app creates starts PAUSED.
+    It only goes live when a V2G operator turns it on, one campaign at a
+    time, with the client's budget shown on screen.`
+    → Isto é verdade e está no código: `lib/meta/publicar.ts:22-23` para o
+    PAUSED, e `graph.py:617` para a ativação deliberada.
+40. Pare a gravação.
 
 ### O que o vídeo NÃO vai conseguir mostrar
 
 Diga isso **no formulário**, não no vídeo:
 
-- `ads_management` e `pages_manage_ads` **em uso** — nenhuma tela chama
-  `publicarCampanha()` ainda.
-- `pages_read_engagement` **em uso** — a leitura de `location` só roda
-  dentro da publicação.
+- **`pages_manage_ads` em uso.** Ela só é exercida ao criar o anúncio com
+  `object_story_id` na Página do cliente, e criar anúncio é o que o modo
+  Development bloqueia (subcode 1885183). É o único dos seis escopos sem
+  demonstração, e o motivo é o impasse que a revisão desfaz.
+- **A criação da campanha, do início ao fim.** O vídeo mostra uma campanha
+  que já existia sendo ligada e desligada — não a subida. Mesma causa.
+- **O `location` da Página**, que é o uso de `pages_read_engagement` que
+  o produto vai precisar para o raio de 5 km. O que o vídeo mostra é a
+  outra leitura da mesma permissão, a do pré-voo, que já está no ar.
 
 ---
 
@@ -335,15 +412,24 @@ out about a problem when publishing failed. Used in
 ### `ads_management`
 
 **PT —** É a permissão que deixa a V2G criar a campanha, o conjunto e o
-anúncio dentro da conta do cliente. Todo objeto que criamos nasce PAUSADO
-— nada gasta sem uma ação explícita do cliente. É o serviço que o cliente
-contrata: ele descreve o negócio e a V2G monta a campanha por ele.
+anúncio dentro da conta do cliente, e depois ligar e desligar a entrega.
+Todo objeto nasce PAUSADO; ele só entra no ar quando alguém do time da
+V2G aperta o botão, numa tela que mostra de quem é a campanha e quanto
+ela vai gastar por dia. É o serviço que o cliente contrata: ele descreve
+o negócio, a V2G monta e opera a campanha por ele. O vídeo mostra uma
+ativação e uma pausa de verdade.
 
 **EN —** This is the permission that lets V2G create the campaign, ad set
-and ad inside the client's own ad account. Every object we create is
-created with `status: PAUSED` — nothing spends money without an explicit
-action by the client. This is the service the client signs up for: they
-describe their business and V2G assembles the campaign for them.
+and ad inside the client's own ad account, and then start and stop
+delivery. Every object is created with `status: PAUSED`; it only goes
+live when a member of the V2G team turns it on, from an internal screen
+that shows whose campaign it is and how much it will spend per day.
+Pausing requires a written reason and is always available — the system
+never pauses on its own. This is the service the client signs up for:
+they describe their business, and V2G builds and operates the campaign
+for them. The screencast shows a real activation and a real pause. Used
+in `POST /{object_id}` with `status=ACTIVE` or `PAUSED`, applied to the
+campaign, the ad set and each ad.
 
 ### `business_management`
 
@@ -372,19 +458,26 @@ approving. Used in `GET /me/accounts?fields=id,name,category`.
 
 ### `pages_read_engagement`
 
-**PT —** Nosso produto é anúncio local: o cliente escolhe um raio a partir
-do próprio negócio, a partir de 5 km. Para isso precisamos da latitude e
-da longitude, e a única fonte é `GET /{page_id}?fields=location` na Página
-do cliente. O alvo por cidade da Meta tem piso medido de 16 km, grande
-demais para uma padaria de bairro. Sem esta permissão o campo volta nulo e
-não conseguimos montar o raio.
+**PT —** Dois usos, e o vídeo mostra o primeiro. **Hoje:** antes de deixar
+qualquer campanha gastar, conferimos a Página do cliente — se ela está
+publicada (anúncio de Página despublicada não entrega) e se tem WhatsApp
+ligado, que é para onde a conversa do anúncio vai. **Quando a publicação
+ligar:** nosso produto é anúncio local, com raio a partir de 5 km em
+volta do negócio, e a latitude e a longitude só existem em
+`GET /{page_id}?fields=location`. O alvo por cidade da Meta tem piso
+medido de 16 km, grande demais para uma padaria de bairro.
 
-**EN —** Our product is local advertising: the client picks a radius
-around their own business, starting at 5 km. That requires latitude and
-longitude, and the only source is `GET /{page_id}?fields=location` on the
-client's Page. Meta's city-level targeting has a measured floor of 16 km,
-far too wide for a neighbourhood bakery. Without this permission the field
-comes back null and we cannot build the radius at all.
+**EN —** Two uses; the screencast shows the first. **Today:** before any
+campaign is allowed to spend, we check the client's Page — whether it is
+published (ads from an unpublished Page do not deliver) and whether it
+has WhatsApp enabled, since that is where the ad's conversation lands.
+Used in `GET /{page_id}?fields=id,name,is_published,whatsapp_number`,
+visible in the pre-flight block of the screencast. **Once publishing is
+enabled:** our product is local advertising, with a radius starting at
+5 km around the business, and latitude and longitude only come from
+`GET /{page_id}?fields=location` on the client's Page. Meta's city-level
+targeting has a measured floor of 16 km, far too wide for a
+neighbourhood bakery.
 
 ### `pages_manage_ads`
 
@@ -398,13 +491,39 @@ approves them. Without it the campaign cannot run from the client's Page.
 
 ### Campo de instruções / observação ao revisor
 
-**EN —** Notes for the reviewer: every ad object this app creates is
-created with `status: PAUSED`; the app contains no code path that sets an
-object to `ACTIVE`. The app is in Development mode, which Meta's own docs
-ask for until review completes; because of that, `POST /ads` is rejected
-and the screencast shows the connection and account/Page selection flows
-rather than a completed ad. Test account credentials are included below —
-they belong to a dedicated test user, not to a personal account.
+**EN —** Notes for the reviewer:
+
+V2G is a managed advertising service for small Brazilian businesses. The
+client connects their own ad account and Page; V2G's team builds and
+operates the campaigns inside that account. The client never gets ad
+controls — that is the product, not a limitation.
+
+Every ad object this app creates is created with `status: PAUSED`. It
+goes live only when a V2G operator activates it from an internal screen
+that shows the client's name and the daily spend before the button
+appears. That activation is what the second half of the screencast shows,
+and it is a real one: a real campaign in our own test ad account
+(`act_2818009911919726`) is turned on and then turned back off.
+
+Because that screen belongs to our staff, it is recorded with a V2G
+employee account rather than the test user whose credentials are below.
+The activation call is made server-side with our Business System User
+token against the client's ad objects — the client's granted
+`ads_management` is what authorises V2G to hold and operate those objects
+in their account.
+
+The app is in Development mode, which Meta's own docs ask for until
+review completes. Because of that, `POST /adcreatives` is rejected with
+subcode 1885183 ("app in development mode"), so the screencast cannot
+show an ad being created — only an existing campaign being operated. That
+is also the single reason `pages_manage_ads` has no demonstration: it is
+exercised when the ad is created on behalf of the Page, which Development
+mode blocks. We are requesting it together with the others so that
+clients do not have to re-authorise a second time; Meta does not grant
+permissions retroactively to accounts that already connected.
+
+Test account credentials are included below — they belong to a dedicated
+test user, not to a personal account.
 
 ---
 
@@ -449,13 +568,29 @@ they belong to a dedicated test user, not to a personal account.
 9. **A conta de teste precisa ter**: uma conta de anúncio ativa e pelo
    menos uma Página do Facebook, senão as telas dos blocos D e E mostram
    estado vazio.
-10. **Decida a §0.2 antes de gravar** — submeter três permissões agora ou
-    os seis depois. O roteiro acima serve para as duas, mas o texto do
-    formulário muda.
+10. **A §0.2 não é mais uma decisão aberta** — peça as seis. O texto do
+    formulário na §4 já está escrito para isso.
 11. **App em modo Development.** Não publique antes da revisão.
 12. Ensaie uma vez inteiro sem gravar. O fluxo tem um salto para fora do
     domínio (Facebook) e outro de volta; é onde a gravação costuma
     quebrar.
+
+**Os três itens do Bloco E2 — a ativação real:**
+
+13. **Duas sessões, dois navegadores.** A conta de teste (anônima, blocos
+    A–F) e a sua conta de operador (janela normal, Bloco E2). Se usar a
+    mesma janela, o login de operador derruba a sessão da conta de teste
+    e o Bloco F fica sem o que mostrar.
+14. **Confirme que `/ativar-campanha` abre e tem fila** antes de gravar.
+    Se a conta não tiver `papel: operador` em `app_metadata`, a rota
+    responde 404 **sem mensagem** e você vai achar que ela não existe.
+    E confirme que a fila lista a execução `aed42ce7` — é a única do
+    banco com campanha registrada.
+15. **Aceite que o Bloco E2 gasta dinheiro de verdade**, por alguns
+    minutos, na conta de teste da própria V2G. Se preferir risco zero,
+    baixe o orçamento diário do conjunto no Gerenciador **antes** de
+    gravar — mudança fora do app, sem efeito no roteiro. E **não pule o
+    item 35**: é ele que desliga.
 
 ---
 
@@ -466,7 +601,19 @@ they belong to a dedicated test user, not to a personal account.
 - [Permissions Reference](https://developers.facebook.com/docs/permissions/)
 
 E, dentro do repositório: `lib/meta/oauth.ts:75-99`,
-`lib/meta/publicar.ts:22-23, 273`, `app/(fluxo)/verba/page.tsx:172-173`,
-`docs/oauth-meta.md:36-105`,
+`lib/meta/publicar.ts:22-23, 273, 641-644`,
+`app/(fluxo)/verba/page.tsx:172-173`, `docs/oauth-meta.md:36-105`,
 `docs/estado/pre-voo-no-aprovar-15-09.md:11-19`,
 `backend_v2g/src/meta/graph.py:96-99`.
+
+Para a ativação (tudo de 24/09/2026 em diante):
+`app/(protected)/ativar-campanha/page.tsx`,
+`app/(protected)/ativar-campanha/[execucao]/page.tsx`,
+`lib/backend/ativacao.ts`, `lib/campanha/ativacao.ts`,
+`lib/campanha/pre-voo.ts:275-284`,
+`backend_v2g/src/api/rotas.py:3483-3646`,
+`backend_v2g/src/meta/graph.py:154-162, 538-663, 735-742`.
+
+**Onde está a prova do teste real:** `execucoes.aprovacoes` da execução
+`aed42ce7-b1cd-49f8-9509-eb772aacb31a`, no projeto `ushccxpoxjikzqnwhgfd`
+— quatro registros de 25/09, ativação e pausa, os dois com `campanha=ok`.
