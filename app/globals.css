@@ -711,6 +711,56 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   line-height: 1.55;
   margin-bottom: 14px;
 }
+/* ---------- o terceiro estado: deu certo COM ressalva ----------
+
+   Existe porque `.form-notice` e `.form-error` não cobrem o caso que a
+   ativação de campanha produz de verdade: o Meta aceitou, mas alguma
+   coisa ficou por dizer — nenhum anúncio foi tocado, o backend respondeu
+   em modo simulado, ou a cascata parou no meio do caminho.
+
+   Verde sobre isso seria a tela afirmando mais do que sabe, logo depois
+   de gastar dinheiro de terceiro. Vermelho seria mandar consertar o que
+   funcionou.
+
+   `--warn` e `--warn-soft` já existiam e já têm contraste medido
+   (4,78 sobre o fundo, linha 114) e par no tema escuro — este bloco não
+   inventa cor nenhuma. */
+.form-warning {
+  background: var(--warn-soft);
+  border: 1.5px solid var(--warn);
+  color: var(--ink);
+  border-radius: var(--raio-selo);
+  padding: 13px 14px;
+  font-size: var(--fs-corpo);
+  line-height: 1.55;
+  margin-bottom: 14px;
+}
+/* Os três passaram a receber `<p>` e `<ul>` dentro, e não só texto solto:
+   a resposta da ativação lista um item por nível do Meta. Sem isto o
+   `<p>` do navegador abriria margem dentro da caixa e a lista nasceria
+   com o recuo de 40px do `user agent`. */
+.form-error p,
+.form-notice p,
+.form-warning p { margin: 0; }
+.form-error ul,
+.form-notice ul,
+.form-warning ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: var(--fs-legenda);
+  line-height: 1.6;
+}
+.form-error li,
+.form-notice li,
+.form-warning li { margin-top: 3px; }
+/* O texto cru do Meta vem aqui dentro, e ele é longo e sem espaço: sem
+   `break-word` ele estoura a caixa no celular. */
+.form-warning li { overflow-wrap: anywhere; }
+.form-warning code,
+.form-error code {
+  font-family: "Consolas", "SFMono-Regular", "Courier New", monospace;
+  font-size: 0.92em;
+}
 
 /* ---------- botão (components/ui/Button.tsx) ---------- */
 .cta {

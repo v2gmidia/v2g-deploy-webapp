@@ -114,7 +114,13 @@ export const EXCECOES: ExcecaoDeIdentidade[] = [
       "as leituras seguintes. O negocio nunca e parametro de entrada. Acrescentar um " +
       "`negocioId` aqui ou la para poupar uma consulta mataria a trava — passaria a dar " +
       "para ativar a campanha de um cliente com o contexto de outro. Estas acoes NAO falam " +
-      "com o Meta: elas pedem ao backend, que e quem tem o token e a conta.",
+      "com o Meta: elas pedem ao backend, que e quem tem o token e a conta. " +
+      "DESDE 26/09/2026 elas devolvem `EstadoDaAtivacao` em vez de `void`, e o retorno vai " +
+      "para um componente de CLIENTE (`AcoesDaCampanha.tsx`) via `useActionState`. Isso NAO " +
+      "afrouxa nada: o `_anterior` do `useActionState` e ignorado por escrito, o unico dado " +
+      "de fora continua sendo o `formData`, e a reconferencia que decide roda DENTRO da " +
+      "action, depois do portao. O que atravessa para o cliente e resposta, nunca permissao " +
+      "— e inclui o texto cru do Meta, exceção declarada em `lib/backend/erros.ts`.",
   },
   {
     arquivo: "app/(protected)/conta/identidade-actions.ts",

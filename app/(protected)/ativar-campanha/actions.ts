@@ -4,7 +4,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { conferirAntesDeAtivar } from "@/lib/campanha/ativacao";
-import { ativarCampanha, pausarCampanha, resumoDosNiveis } from "@/lib/backend/ativacao";
+import {
+  ativarCampanha,
+  pausarCampanha,
+  resumoDosNiveis,
+  type AcaoNaCampanha,
+  type NivelDaAcao,
+} from "@/lib/backend/ativacao";
 
 /**
  * AS AÇÕES DA TELA DE ATIVAÇÃO — a casca, com o portão de papel.
@@ -28,6 +34,81 @@ import { ativarCampanha, pausarCampanha, resumoDosNiveis } from "@/lib/backend/a
  *      antes de ler o `formData`.
  * ============================================================
  */
+
+/**
+ * O QUE A TELA RECEBE DE VOLTA.
+ *
+ * ============================================================
+ * ANTES DE 26/09/2026 ESTAS AÇÕES DEVOLVIAM `void`.
+ *
+ * O resultado do backend chegava aqui, virava linha em `decisions`, e era
+ * jogado fora. Na tela não acontecia nada: o operador clicava num botão
+ * que gasta dinheiro e a única prova de que funcionou era rolar até o
+ * histórico e reparar que tinha linha nova.
+ *
+ * O shape é o da casa (`verba/actions.ts:11-14`), com dois campos a mais
+ * que só esta rota tem: os NÍVEIS e os AVISOS. Sem eles "a campanha
+ * ligou" e "a campanha ligou mas o conjunto recusou" chegariam iguais.
+ * ============================================================
+ *
+ * Exatamente um entre `ok` e `erro` vem preenchido. `niveis` e `avisos`
+ * acompanham qualquer um dos dois quando houver o que dizer.
+ */
+export interface EstadoDaAtivacao {
+  /** deu certo — a frase que vai em `.form-notice` ou `.form-warning` */
+  ok?: string;
+  /** não deu — a frase que vai em `.form-error` */
+  erro?: string;
+  /**
+   * Um item por objeto do Meta, inclusive os NÃO TENTADOS.
+   *
+   * Só vem quando a operação parou no meio. "Parou no conjunto" e "parou
+   * no anúncio" levam a consertos diferentes, e o `erro` de cada nível
+   * carrega o texto cru da Meta — ver a exceção declarada em
+   * `lib/backend/erros.ts`.
+   */
+  niveis?: NivelDaAcao[];
+  /** o que o backend achou que valia dizer mesmo tendo dado certo */
+  avisos?: string[];
+}
+
+/**
+ * Traduz o resultado do backend no que a tela mostra.
+ *
+ * ============================================================
+ * A MENSAGEM NASCE AQUI, E NÃO NA TELA.
+ *
+ * Se a tela montasse a frase, ela precisaria saber o que `completo` e
+ * `niveis` significam — e dois lugares interpretando o mesmo contrato é
+ * como um deles passa a dizer "pronto" sobre meia campanha.
+ * ============================================================
+ *
+ * `mock` VIRA AVISO, e é o mais importante deles: com o backend em
+ * `USE_MOCK_META=true` a chamada responde 200 sem ter tocado na Meta. Um
+ * "campanha ligada" verde sobre isso seria a tela mentindo com a cara
+ * mais convincente que ela tem.
+ */
+function lerResultado(dados: AcaoNaCampanha, verbo: "ligada" | "pausada"): EstadoDaAtivacao {
+  const avisos = [...dados.avisos];
+  if (dados.mock) {
+    avisos.unshift(
+      "O backend respondeu em modo simulado (`mock`): NADA foi alterado no Meta de verdade.",
+    );
+  }
+
+  if (!dados.completo) {
+    return {
+      ok: `A operação parou no meio — parte da estrutura mudou e parte não. Confira cada nível abaixo antes de tentar de novo.`,
+      niveis: dados.niveis,
+      avisos,
+    };
+  }
+
+  return {
+    ok: `Campanha ${verbo} no Meta.`,
+    avisos,
+  };
+}
 
 /**
  * O portão de papel. Devolve o e-mail, que é o que vira o `por` do pedido.
@@ -92,7 +173,10 @@ async function operadorOuErro(): Promise<string> {
  * aqui, pior que "não foi".
  * ============================================================
  */
-export async function ativarAction(formData: FormData): Promise<void> {
+export async function ativarAction(
+  _anterior: EstadoDaAtivacao,
+  formData: FormData,
+): Promise<EstadoDaAtivacao> {
   const quem = await operadorOuErro();
 
   // ============================================================
@@ -102,9 +186,14 @@ export async function ativarAction(formData: FormData): Promise<void> {
   // motivo da pausa. O NEGÓCIO nunca é parâmetro: ele é lido da linha da
   // execução, lá dentro. Ver a trava em `lib/campanha/ativacao.ts` e a
   // declaração em `lib/seguranca/excecoes.ts`.
+  //
+  // `_anterior` é o estado do `useActionState` e é IGNORADO de propósito:
+  // aceitar qualquer coisa dele seria a tela mandando na ação.
   // ============================================================
   const idExecucao = String(formData.get("idExecucao") ?? "").trim();
-  if (!idExecucao) return;
+  if (!idExecucao) {
+    return { erro: "Sem campanha para ativar. Recarregue a página." };
+  }
 
   try {
     // ---------- a reconferência que vale ----------
@@ -114,19 +203,30 @@ export async function ativarAction(formData: FormData): Promise<void> {
     const agora = await conferirAntesDeAtivar(idExecucao);
     if (!agora.ok) {
       await registrar(idExecucao, null, "ativacao_recusada", quem, agora.texto);
-      revalidatePath(`/ativar-campanha/${idExecucao}`);
-      return;
+      revalidar(idExecucao);
+      return { erro: agora.texto };
     }
     if (agora.bloqueios.length > 0) {
+      const motivos = agora.bloqueios.map((b) => b.texto);
       await registrar(
         idExecucao,
         agora.negocioId,
         "ativacao_recusada",
         quem,
-        `bloqueado na reconferência: ${agora.bloqueios.map((b) => b.texto).join(" | ")}`,
+        `bloqueado na reconferência: ${motivos.join(" | ")}`,
       );
-      revalidatePath(`/ativar-campanha/${idExecucao}`);
-      return;
+      revalidar(idExecucao);
+      // ============================================================
+      // ESTE RAMO É O MAIS FÁCIL DE SUBESTIMAR NA TELA.
+      //
+      // Ele quer dizer que a página mostrava o botão e, no instante do
+      // clique, já não devia. Quem lê precisa entender que NADA foi
+      // tentado — e por isso os motivos vão junto, não só "não deu".
+      // ============================================================
+      return {
+        erro: "Entre desenhar a tela e o seu clique, alguma coisa mudou. Nada foi enviado ao Meta.",
+        avisos: motivos,
+      };
     }
 
     const resultado = await ativarCampanha(idExecucao, quem);
@@ -136,14 +236,13 @@ export async function ativarAction(formData: FormData): Promise<void> {
       // dele pode existir (ele grava a intenção antes de chamar a Meta) —
       // mas se a chamada nem chegou lá, este é o único registro que
       // sobra. Por isso ele é escrito mesmo quando parece redundante.
-      await registrar(
-        idExecucao,
-        agora.negocioId,
-        "ativacao_sem_resposta",
-        quem,
-        `${resultado.categoria}${resultado.http ? ` (${resultado.http})` : ""}: ${resultado.mensagem}`,
-      );
-    } else if (!resultado.dados.completo) {
+      const detalhe = `${resultado.categoria}${resultado.http ? ` (${resultado.http})` : ""}: ${resultado.mensagem}`;
+      await registrar(idExecucao, agora.negocioId, "ativacao_sem_resposta", quem, detalhe);
+      revalidar(idExecucao);
+      return { erro: detalhe };
+    }
+
+    if (!resultado.dados.completo) {
       // ============================================================
       // O CASO CARO: PARTE LIGOU, PARTE NÃO.
       //
@@ -160,12 +259,14 @@ export async function ativarAction(formData: FormData): Promise<void> {
         resumoDosNiveis(resultado.dados),
       );
     }
-  } catch (erro) {
-    await registrarQuebra(idExecucao, "ativacao", erro, quem);
-  }
 
-  revalidatePath(`/ativar-campanha/${idExecucao}`);
-  revalidatePath("/ativar-campanha");
+    revalidar(idExecucao);
+    return lerResultado(resultado.dados, "ligada");
+  } catch (erro) {
+    const frase = await registrarQuebra(idExecucao, "ativacao", erro, quem);
+    revalidar(idExecucao);
+    return { erro: frase };
+  }
 }
 
 /**
@@ -180,39 +281,69 @@ export async function ativarAction(formData: FormData): Promise<void> {
  * O `try` aqui vale ainda mais: se pausar quebrar por motivo nosso, o
  * dinheiro continua saindo enquanto ninguém sabe.
  */
-export async function pausarAction(formData: FormData): Promise<void> {
+export async function pausarAction(
+  _anterior: EstadoDaAtivacao,
+  formData: FormData,
+): Promise<EstadoDaAtivacao> {
   const quem = await operadorOuErro();
 
   const idExecucao = String(formData.get("idExecucao") ?? "").trim();
-  if (!idExecucao) return;
+  if (!idExecucao) {
+    return { erro: "Sem campanha para pausar. Recarregue a página." };
+  }
 
   const motivo = String(formData.get("motivo") ?? "").trim();
   if (!motivo) {
     // Sem ida ao backend: ele recusaria com 422, e gastar uma viagem para
     // ouvir de volta o que já se sabe aqui não ajuda ninguém.
     await registrar(idExecucao, null, "pausa_recusada", quem, "pedido sem motivo escrito");
-    revalidatePath(`/ativar-campanha/${idExecucao}`);
-    return;
+    revalidar(idExecucao);
+    return { erro: "Escreva por que está pausando. Sem isso o pedido não sai daqui." };
   }
 
   try {
     const resultado = await pausarCampanha(idExecucao, quem, motivo);
 
     if (!resultado.ok) {
-      await registrar(
-        idExecucao,
-        null,
-        "pausa_sem_resposta",
-        quem,
-        `${resultado.categoria}${resultado.http ? ` (${resultado.http})` : ""}: ${resultado.mensagem}`,
-      );
-    } else if (!resultado.dados.completo) {
+      const detalhe = `${resultado.categoria}${resultado.http ? ` (${resultado.http})` : ""}: ${resultado.mensagem}`;
+      await registrar(idExecucao, null, "pausa_sem_resposta", quem, detalhe);
+      revalidar(idExecucao);
+      // ============================================================
+      // PAUSA QUE NÃO SAIU É PIOR QUE ATIVAÇÃO QUE NÃO SAIU.
+      //
+      // O dinheiro continua saindo enquanto ninguém sabe. Por isso a
+      // frase manda ao Gerenciador em vez de sugerir tentar de novo.
+      // ============================================================
+      return {
+        erro: detalhe,
+        avisos: [
+          "A campanha pode continuar entregando. Se precisar parar agora, desligue a chave no Gerenciador de Anúncios.",
+        ],
+      };
+    }
+
+    if (!resultado.dados.completo) {
       await registrar(idExecucao, null, "pausa_parcial", quem, resumoDosNiveis(resultado.dados));
     }
-  } catch (erro) {
-    await registrarQuebra(idExecucao, "pausa", erro, quem);
-  }
 
+    revalidar(idExecucao);
+    return lerResultado(resultado.dados, "pausada");
+  } catch (erro) {
+    const frase = await registrarQuebra(idExecucao, "pausa", erro, quem);
+    revalidar(idExecucao);
+    return { erro: frase };
+  }
+}
+
+/**
+ * As duas rotas que mudam quando qualquer coisa acontece aqui.
+ *
+ * Existe como função porque estava copiada em seis lugares e as saídas
+ * antecipadas tinham esquecido metade — revalidavam o detalhe e deixavam
+ * a fila velha. Uma linha esquecida num `return` é exatamente o tipo de
+ * coisa que ninguém vê em revisão.
+ */
+function revalidar(idExecucao: string): void {
   revalidatePath(`/ativar-campanha/${idExecucao}`);
   revalidatePath("/ativar-campanha");
 }
@@ -285,7 +416,7 @@ async function registrarQuebra(
   acao: "ativacao" | "pausa",
   erro: unknown,
   quem: string,
-): Promise<void> {
+): Promise<string> {
   console.error(`[ativar-campanha] quebra inesperada em ${idExecucao} ::`, erro);
 
   let negocioId: string | null = null;
@@ -301,12 +432,13 @@ async function registrarQuebra(
     // segue sem negócio: o `registrar` abaixo cai no console
   }
 
-  await registrar(
-    idExecucao,
-    negocioId,
-    `${acao}_quebrou`,
-    quem,
-    "Alguma coisa quebrou do nosso lado no meio da operação. NÃO dá para saber se o Meta chegou a receber a mudança — confira no Gerenciador de Anúncios antes de tentar de novo. Detalhe: " +
-      String(erro),
-  );
+  // A MESMA frase vai para o banco e para a tela. Duas versões da mesma
+  // notícia — uma para o log, outra "amigável" — é como o operador lê uma
+  // coisa e quem investiga depois lê outra.
+  const frase =
+    "Alguma coisa quebrou do nosso lado no meio da operação. NÃO dá para saber se o Meta chegou a receber a mudança — confira no Gerenciador de Anúncios antes de tentar de novo.";
+
+  await registrar(idExecucao, negocioId, `${acao}_quebrou`, quem, `${frase} Detalhe: ${String(erro)}`);
+
+  return frase;
 }

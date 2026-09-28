@@ -17,6 +17,34 @@ import "server-only";
  * certo lá — sem app do Meta, o fluxo de conexão não existe. Aqui não: o
  * app tem que continuar de pé com o backend fora do ar, mostrando o resto
  * das telas. Por isso `Resultado<T>` em vez de exceção.
+ *
+ * ============================================================
+ * A ÚNICA EXCEÇÃO À REGRA 1, DECLARADA — 26/09/2026.
+ *
+ * **`/ativar-campanha/[execucao]` mostra o texto CRU do Meta na tela.**
+ *
+ * ONDE: só ali, e só dentro de `niveis[].erro` da resposta de
+ * `lib/backend/ativacao.ts`. Nenhuma outra rota, nenhum outro campo.
+ *
+ * POR QUE: é tela de OPERADOR, guardada por `papel: operador` em três
+ * camadas — nenhum cliente a alcança. E o que ela mostra não tem
+ * tradução possível: quando a Meta recusa um objeto no meio da cascata,
+ * a frase dela é a única informação que existe sobre o que impediu.
+ * Trocá-la por "não conseguimos ativar agora" apagaria o motivo e
+ * deixaria a pessoa sem nada para consertar — com metade da estrutura no
+ * ar, gastando ou não gastando sem ninguém saber qual das duas.
+ *
+ * É a mesma licença que `/revisar-perfil` e `/saude-meta` já têm para
+ * linguagem técnica, levada um passo adiante: lá a tela fala em jargão
+ * nosso, aqui ela repete o que o outro lado disse.
+ *
+ * O QUE ISTO **NÃO** AUTORIZA: repassar corpo de erro para tela de
+ * cliente, em qualquer rota. A regra 1 continua valendo em todo o resto
+ * do app, e ampliar esta exceção é decisão nova, não consequência desta.
+ *
+ * O transporte é o `detalhe` abaixo, que só é preenchido quando quem
+ * chama pede `corpoDoErro: true`.
+ * ============================================================
  */
 
 export type CategoriaErro =

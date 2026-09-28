@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { conferirAntesDeAtivar } from "@/lib/campanha/ativacao";
 import { tituloDaAba } from "@/lib/titulos";
-import { ativarAction, pausarAction } from "../actions";
+import { AcoesDaCampanha } from "../AcoesDaCampanha";
 
 export const metadata = tituloDaAba("/ativar-campanha/[execucao]");
 
@@ -166,45 +166,17 @@ export default async function CampanhaPage({ params }: Props) {
       )}
 
       {/* ---------- as ações ---------- */}
+      {/* Os botões e a resposta deles moram num componente de cliente —
+          `useActionState` é o que dá pendência e retorno sem recarregar.
+          O que esta página manda são valores JÁ RESOLVIDOS: ela decide,
+          ele desenha. */}
+      <AcoesDaCampanha
+        idExecucao={conferencia.idExecucao}
+        diarioFormatado={DINHEIRO.format(conferencia.diarioCentavos / 100)}
+        podeAtivar={podeAtivar}
+      />
+
       <section className="rev-acoes">
-        {podeAtivar && (
-          <form action={ativarAction}>
-            <input type="hidden" name="idExecucao" value={conferencia.idExecucao} />
-            <button type="submit" className="cta">
-              Ativar campanha — {DINHEIRO.format(conferencia.diarioCentavos / 100)}/dia
-            </button>
-          </form>
-        )}
-
-        {/* ============================================================
-            PAUSAR PEDE MOTIVO, E O CAMPO É DA TELA, NÃO DO BACKEND.
-            O backend recusa motivo vazio com 422 (`rotas.py:3521-3526`).
-            Deixar o operador descobrir isso batendo num erro seria fazer a
-            tela esconder uma regra que ela conhece. Pedir aqui não é
-            confirmação: o freio continua sendo um clique, com uma linha
-            escrita que diz de quem partiu o pedido.
-            ============================================================ */}
-        <form action={pausarAction} className="rev-corrigir">
-          <input type="hidden" name="idExecucao" value={conferencia.idExecucao} />
-          {/* O rótulo existe para quem usa leitor de tela; na tela ele
-              seria uma linha a mais entre o operador e o freio. Mesmo
-              padrão do `.sr-only` que o resto do app já usa. */}
-          <label className="sr-only" htmlFor="motivo-da-pausa">
-            Por que está pausando?
-          </label>
-          <input
-            id="motivo-da-pausa"
-            name="motivo"
-            type="text"
-            required
-            maxLength={280}
-            placeholder="Por que está pausando? ex.: cliente pediu"
-          />
-          <button type="submit" className="cta ghost">
-            Pausar campanha
-          </button>
-        </form>
-
         <Link className="cta ghost" href="/ativar-campanha">
           Voltar para a fila
         </Link>
