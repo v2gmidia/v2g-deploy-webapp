@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { ativarAction, pausarAction, type EstadoDaAtivacao } from "./actions";
 
 /**
@@ -98,16 +98,38 @@ export function AcoesDaCampanha({ idExecucao, diarioFormatado, podeAtivar }: Pro
   const [ativacao, acaoAtivar, ativando] = useActionState(ativarAction, VAZIO);
   const [pausa, acaoPausar, pausando] = useActionState(pausarAction, VAZIO);
 
+  // ============================================================
+  // QUAL FOI A ÚLTIMA — e por que isso não é detalhe de layout.
+  //
+  // MEDIDO em teste real, 28/09/2026: ativar e depois pausar deixava as
+  // DUAS caixas na tela, "Campanha ligada no Meta" em cima e "Campanha
+  // pausada no Meta" embaixo. Quem chega lendo de cima para baixo lê
+  // primeiro a notícia velha — e as duas são afirmações sobre o mesmo
+  // objeto, no presente, dizendo o contrário uma da outra.
+  //
+  // Os dois `useActionState` continuam separados de propósito. O que
+  // muda é só o que se DESENHA: um estado local diz qual ação foi
+  // disparada por último, e só a resposta dela aparece.
+  //
+  // `onSubmit` e não `useEffect` sobre o `pendente`: ele corre no mesmo
+  // instante do clique, antes de a ação começar. A caixa velha some
+  // JUNTO com o botão ficando cinza, e não um quadro depois.
+  //
+  // O estado da outra ação não é apagado — ele fica lá, íntegro, só não
+  // é renderizado. Zerar seria perder informação por causa de layout.
+  // ============================================================
+  const [ultima, setUltima] = useState<"ativar" | "pausar" | null>(null);
+
   return (
     <>
       {/* ACIMA dos botões de propósito: a resposta de uma ação que gasta
           dinheiro não pode nascer abaixo da dobra. */}
-      <Resposta estado={ativacao} />
-      <Resposta estado={pausa} />
+      {ultima === "ativar" && <Resposta estado={ativacao} />}
+      {ultima === "pausar" && <Resposta estado={pausa} />}
 
       <section className="rev-acoes">
         {podeAtivar && (
-          <form action={acaoAtivar}>
+          <form action={acaoAtivar} onSubmit={() => setUltima("ativar")}>
             <input type="hidden" name="idExecucao" value={idExecucao} />
             <button type="submit" className="cta" disabled={ativando || pausando}>
               {ativando ? "Ativando…" : `Ativar campanha — ${diarioFormatado}/dia`}
@@ -127,7 +149,11 @@ export function AcoesDaCampanha({ idExecucao, diarioFormatado, podeAtivar }: Pro
             inclusive quando a nossa leitura diz que já está parada. O
             freio nunca depende de o resto estar em ordem.
             ============================================================ */}
-        <form action={acaoPausar} className="rev-corrigir">
+        {/* O `onSubmit` NÃO corre quando o campo de motivo está vazio: o
+            `required` barra o envio antes, e o evento nem acontece. É o
+            comportamento certo — nada foi executado, então a resposta
+            anterior continua valendo e não deve sumir. */}
+        <form action={acaoPausar} className="rev-corrigir" onSubmit={() => setUltima("pausar")}>
           <input type="hidden" name="idExecucao" value={idExecucao} />
           {/* O rótulo existe para quem usa leitor de tela; na tela ele
               seria uma linha a mais entre o operador e o freio. Mesmo
