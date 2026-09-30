@@ -101,23 +101,61 @@ function validar(bruto: unknown): Cadastrado | null {
 /**
  * Manda o cadastro. Devolve o `id_execucao` quando dá certo.
  *
- * `clienteId` é o **id do nosso `businesses`**, e vai no corpo como
- * `cliente_id`. Ele NÃO é o dono do lado de lá — é a marca de ida, a
- * única coisa nossa que cabe na requisição, e a única forma de
- * reencontrar uma execução cuja resposta se perdeu. A decisão está em
- * `docs/disparo-pipeline.md` §4.2, e ela revisou o `perfil-empresa.md`
- * §4. A regra que sai dali, e que não pode ser esquecida aqui:
+ * ============================================================
+ * O MESMO ID VAI EM DOIS CAMPOS, E ELES NÃO SIGNIFICAM A MESMA COISA.
  *
- *   `business_id` é o vínculo. `cliente_id` é o eco do que a gente
- *   mandou. Nenhuma consulta de produto lê `cliente_id`.
+ *   `business_id`  o VÍNCULO. É por ele que toda consulta de produto
+ *                  encontra a execução de um negócio.
+ *   `cliente_id`   o ECO do que a gente mandou. Serve para reencontrar
+ *                  uma execução cuja RESPOSTA se perdeu no timeout —
+ *                  nenhuma consulta de produto o lê.
+ *
+ * A decisão está em `docs/disparo-pipeline.md` §4.2, e ela revisou o
+ * `perfil-empresa.md` §4.
+ *
+ * MUDOU EM 29/09/2026: o backend (commit `3f42be6`) passou a EXIGIR
+ * `business_id` no corpo e devolve 422 sem ele, salvo com
+ * `fluxo_do_gestor: true` — que é a porta do gestor e o webapp não usa.
+ *
+ * Antes disso o vínculo era feito depois, num `PATCH` separado
+ * (`ligarAoNegocio`, passo 8 de `disparar.ts`). Esse passo CONTINUA aqui,
+ * de propósito: enquanto não se medir que o backend grava o vínculo por
+ * conta, tirá-lo trocaria um problema conhecido por um silencioso. A
+ * limpeza é outra rodada.
+ * ============================================================
  */
 export async function enviarCadastro(
   payload: CadastroCompleto,
-  clienteId: string,
+  /** o id do nosso `businesses` — vira `business_id` E `cliente_id` */
+  negocioId: string,
 ): Promise<Resultado<Cadastrado>> {
+  // ============================================================
+  // SEM NEGÓCIO, NÃO CHAMA. E o motivo é o que esta chamada faz.
+  //
+  // `POST /cadastro` CRIA uma execução, e execução criada pode ser pega
+  // pelo n8n e virar token de LLM e imagem gerada. Uma execução sem dono
+  // custa dinheiro e não pertence a ninguém — foi assim que as 8
+  // execuções sem `business_id` de 23/09 nasceram.
+  //
+  // Bater no 422 do backend também não criaria nada, mas gastaria uma
+  // viagem para ouvir de volta o que dá para saber aqui.
+  //
+  // `dados_invalidos` e não uma categoria nova: é exatamente o que o
+  // backend responderia, e quem lê o log não precisa aprender um
+  // vocabulário só nosso.
+  // ============================================================
+  if (typeof negocioId !== "string" || negocioId.trim() === "") {
+    registrarErroBackend("cadastro", {
+      metodo: "POST",
+      caminho: "/cadastro (sem business_id — não chamado)",
+      categoria: "dados_invalidos",
+    });
+    return falha("dados_invalidos");
+  }
+
   const resposta = await enviar(
     "/cadastro",
-    { ...payload, cliente_id: clienteId },
+    { ...payload, business_id: negocioId, cliente_id: negocioId },
     {
       contexto: "cadastro",
       // `rapido`, e é medido: o endpoint só abre a linha — quem roda os

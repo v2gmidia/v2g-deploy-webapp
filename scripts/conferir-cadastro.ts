@@ -17,6 +17,7 @@
  * `/saude-meta` lê. O envio é assunto do lote E.
  */
 
+import { readFileSync } from "node:fs";
 import { PISO_MENSAL_DA_CASA } from "../lib/verba/limites.ts";
 import {
   COLUNAS_DO_CADASTRO,
@@ -547,6 +548,57 @@ console.log("\n9. o piso da verba trava o DISPARO, não só a tela");
     ok("`cadastro_estado` está em COLUNAS_DO_CADASTRO — a regra retroativa não é inerte");
   } else {
     nok("`cadastro_estado` FORA do select: a regra retroativa nunca vai disparar");
+  }
+}
+
+// ============================================================
+// O CORPO DA REQUISIÇÃO — e não só o que `montarCadastro()` devolve.
+//
+// POR QUE ESTA SEÇÃO EXISTE, escrita no dia em que o defeito aconteceu.
+//
+// Em 29/09/2026 o backend (`3f42be6`) passou a exigir `business_id` no
+// corpo do `POST /cadastro`, com 422 sem ele. O webapp mandava só
+// `cliente_id` e fazia o vínculo depois, num PATCH — então **todo
+// cadastro pelo app quebrou em produção**, e nada aqui ficou vermelho.
+//
+// O resto deste script não pegaria: ele confere `montarCadastro()`
+// contra o schema, e `business_id` nunca fez parte do montador — ele é
+// acrescentado na hora do envio. O schema também não o denuncia, porque
+// o campo é `UUID | None` no modelo: a recusa mora num validador da
+// rota, não na forma do corpo.
+//
+// Por isso a leitura é do CÓDIGO-FONTE, e não do schema. É a mesma
+// escolha de `conferir:veiculacao` §2, e pelo mesmo motivo: o que se
+// quer impedir não é um tipo errado, é um campo que alguém esquece.
+// ============================================================
+console.log("\no corpo do POST /cadastro");
+{
+  const fonte = readFileSync(
+    new URL("../lib/backend/cadastro.ts", import.meta.url),
+    "utf8",
+  );
+
+  if (/business_id:/.test(fonte)) {
+    ok("`business_id` vai no corpo — é o VÍNCULO, e sem ele o backend recusa com 422");
+  } else {
+    nok("`business_id` NÃO está no corpo: o backend vai recusar com 422 (commit 3f42be6)");
+  }
+
+  if (/cliente_id:/.test(fonte)) {
+    ok("`cliente_id` continua indo — é o eco que reencontra execução de resposta perdida");
+  } else {
+    nok("`cliente_id` sumiu: execução cuja resposta se perder fica sem como ser reencontrada");
+  }
+
+  // A trava tem que vir ANTES do `enviar`. Depois dele já custou a
+  // viagem — e, pior, `POST /cadastro` CRIA execução, que o n8n pode
+  // consumir e virar token de LLM.
+  const posGuarda = fonte.indexOf('return falha("dados_invalidos")');
+  const posEnvio = fonte.indexOf('enviar(\n    "/cadastro"');
+  if (posGuarda !== -1 && posEnvio !== -1 && posGuarda < posEnvio) {
+    ok("a recusa por negócio ausente vem ANTES da chamada — nada é criado sem dono");
+  } else {
+    nok("sem trava de negócio ausente antes do `enviar`, ou ela está depois dele");
   }
 }
 
