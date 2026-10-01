@@ -69,8 +69,9 @@ hora:
 - Lista do que se destrava ao assinar (4 itens com cadeado)
 - Card navy com **R$ 490/mês** e a justificativa ("menos de R$ 17 por dia")
 - Escolha entre **cartão** e **Pix**
-- Pix com duas opções — 6 meses (R$ 2.646, economiza R$ 294) e 12 meses
-  (R$ 4.704, economiza R$ 1.176)
+- Pix com duas opções, 6 e 12 meses, com desconto sobre o mensal. Os
+  valores do protótipo saíram deste documento em 01/10/2026: preço de plano
+  é decisão comercial e não mora no repositório do app.
 - **Promessa de reembolso proporcional** escrita no card: "se você cancelar
   antes do fim, devolvemos o valor dos meses que não usou. Está escrito aqui
   e vale como contrato."

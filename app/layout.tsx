@@ -23,6 +23,11 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   title: "V2G",
   description: "V2G — gestão de tráfego pago com IA para pequenos negócios.",
+  // Nenhuma página do app é indexável — a vitrine é v2gmidia.com.br.
+  // Vem junto com `app/robots.ts`: o robots pede para não rastrear, e este
+  // `noindex` vale para quem rastrear assim mesmo (link de fora, outro
+  // buscador). Herdado por toda rota, porque todas passam por este layout.
+  robots: { index: false, follow: false },
 };
 
 export const COOKIE_TEMA = "v2g_tema";

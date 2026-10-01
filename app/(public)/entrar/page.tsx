@@ -153,6 +153,17 @@ function EntrarContent() {
             </div>
           </>
         )}
+
+        {/* Fora do condicional de propósito: vale nos dois modos. Termos e
+            privacidade moram só no site — o app aponta para eles em vez de
+            manter uma cópia que envelhece diferente. */}
+        <nav className="auth-foot" aria-label="Sobre a V2G">
+          <a href="https://www.v2gmidia.com.br">Conheça a V2G</a>
+          {" · "}
+          <a href="https://www.v2gmidia.com.br/termos">Termos de uso</a>
+          {" · "}
+          <a href="https://www.v2gmidia.com.br/privacidade">Política de privacidade</a>
+        </nav>
       </div>
 
       <aside className="auth-aside">
