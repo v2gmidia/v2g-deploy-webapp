@@ -10,6 +10,7 @@ import {
   type NegocioParaCadastro,
 } from "@/lib/cadastro/montar";
 import { MINUTOS_ATE_DESTRAVAR_DISPARO } from "./relogios";
+import { fluxoAguardaReuniao } from "@/lib/onboarding/marca";
 
 /**
  * O disparo do pipeline. Desenho em `docs/disparo-pipeline.md`.
@@ -538,6 +539,16 @@ async function disparar(): Promise<ResultadoDisparo> {
   // ---------- 4. camada 1: já foi ----------
   if (negocio.cadastro_estado === "enviado") {
     return { fez: "nada", porque: "ja_enviado" };
+  }
+
+  // A jornada atual termina em uma reunião ainda sem horário escolhido.
+  // Seus dados podem estar completos para o contrato antigo do /cadastro,
+  // mas isso não autoriza iniciar a geração do primeiro criativo antes da
+  // conversa com o gestor. O documento de onboarding distingue esta jornada
+  // das integrações antigas; a liberação dependerá de um estado persistido
+  // da reunião na entrega de agendamento.
+  if (fluxoAguardaReuniao(negocio.onboarding)) {
+    return { fez: "nada", porque: "reuniao_pendente" };
   }
 
   // ---------- 5. o cadastro está completo? ----------

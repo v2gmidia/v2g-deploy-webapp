@@ -10,7 +10,7 @@
 
 import { MARK, MARK_COLUNAS } from "@/components/ui/PixelMark";
 
-const LABELS = ["1 · Seu negócio", "2 · Sua marca", "3 · Aprovar e decolar"];
+const LABELS = ["1 · Seu negócio", "2 · Sua marca", "3 · Reunião com gestor"];
 
 const Cadeado = () => (
   <svg className="lock" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
@@ -62,7 +62,7 @@ export function Trilha({ passo, blocos, pecas }: TrilhaProps) {
   const titulos: Record<number, string> = {
     1: "Passo 1 de 3 · Sobre o seu negócio",
     2: "Passo 2 de 3 · O visual da sua marca",
-    3: "Passo 3 de 3 · Aprovar e decolar",
+    3: "Passo 3 de 3 · Reunião com gestor",
   };
 
   // A logomark tem 3 grupos de pixels: os já montados ficam lima, o

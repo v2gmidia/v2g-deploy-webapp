@@ -304,13 +304,18 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                         {f}
                       </button>
                     ))}
+                    <button className="chip-opt" type="button" disabled={enviando}
+                      onClick={() => enviar({ conta: "ticket", escolha: "", naoSei: true })}>
+                      Não sei
+                    </button>
                   </div>
                 </>
               )}
 
               {atual === "custo" && (
                 <div className="chips-row">
-                  {SOBRA.map((o) => (
+                  {estado.ticket === null && <p className="conta-hint">Sem o valor médio da venda, esta conta fica para a conversa com o gestor.</p>}
+                  {estado.ticket !== null && SOBRA.map((o) => (
                     <button
                       key={o.id}
                       className="chip-opt"
@@ -340,7 +345,8 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
 
               {atual === "lucro" && (
                 <div className="chips-row">
-                  {POSTURA.map((o) => (
+                  {estado.margem === null && <p className="conta-hint">Sem a sobra por venda, esta conta fica para a conversa com o gestor.</p>}
+                  {estado.margem !== null && POSTURA.map((o) => (
                     <button
                       key={o.id}
                       className="chip-opt"
@@ -392,15 +398,12 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
             </section>
           )}
 
-          {/* O passo 2 (visual da marca) ainda não existe. Botão visível e
-              desabilitado, com o motivo escrito — não um link para 404. */}
           <p className="form-notice">
-            Suas contas estão guardadas. O passo 2 (o visual da sua marca) ainda não está
-            disponível — assim que estiver, é daqui que ele continua.
+            Suas contas estão guardadas. Agora conte como sua marca aparece para os clientes.
           </p>
-          <button className="cta" type="button" disabled>
+          <a className="cta" href="/onboarding/marca">
             Continuar para o visual da marca
-          </button>
+          </a>
         </>
       )}
     </>

@@ -10,11 +10,9 @@ export const metadata = tituloDaAba("/onboarding");
 /**
  * Onboarding — porte de `tela-03-onboarding-desktop.html`.
  *
- * ESCOPO: só o passo 1 (o chat sobre o negócio). Os passos 2 e 3 do
- * protótipo dependem de upload de arquivo, conexão OAuth com o Meta e
- * geração de criativo — tudo fora do escopo desta leva. A trilha lateral
- * mostra 2 e 3 travados, que é exatamente o que o original mostra
- * enquanto se está no passo 1.
+ * Esta rota é o primeiro bloco. As contas, o visual da marca e a conclusão
+ * persistida têm rotas próprias. Upload, conexão OAuth e geração de criativo
+ * seguem fora desta etapa; o primeiro criativo será tratado na reunião.
  *
  * A DÍVIDA QUE MORREU AQUI: no protótipo as respostas ficavam num
  * `var answers = {}` do navegador enquanto o card lateral prometia

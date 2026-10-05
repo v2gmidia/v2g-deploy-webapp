@@ -62,6 +62,9 @@ na seção de baixo.
 
 ## Decididas
 
+### 2026-10-05 — Onboarding termina com reunião pendente; primeiro criativo e campanha são conduzidos pelo gestor
+**Decisão direta do Victor nesta entrega.** Ao concluir as respostas, o próximo passo do cliente é escolher data e horário da reunião com o gestor. Os acessos e o primeiro criativo são tratados na reunião; o gestor publica a primeira campanha manualmente. A conclusão do questionário não marca reunião, pagamento ou campanha no ar. Google Calendar é preferência, mas provedor e origem dos horários continuam em aberto. O WebApp guarda `onboarding.conclusao.proximoPasso = agendamento_pendente` e retém o disparo automático do pipeline desta jornada até existir um estado de reunião confirmado. Contrato proposto em [`estado/onboarding-reuniao-05-10.md`](./estado/onboarding-reuniao-05-10.md).
+
 ### 2026-09-15 — `pages_manage_ads` entra no login; a `/aprovar` passa a disparar a criação da campanha
 **Duas decisões trazidas pelo Victor no chat. A segunda é do Gabriel.**
 

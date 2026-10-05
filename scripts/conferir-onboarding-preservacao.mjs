@@ -11,6 +11,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const allowed = new Set([
   'app/(fluxo)/onboarding/actions.ts', 'app/(fluxo)/onboarding/perguntas.ts',
   'app/(fluxo)/onboarding/contas/actions.ts', 'app/(fluxo)/onboarding/contas/regras.ts',
+  'app/(fluxo)/onboarding/marca/actions.ts', 'lib/onboarding/marca.ts',
   'lib/onboarding/documento.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
   'lib/formato.ts', 'lib/verba/limites.ts', 'lib/nichos/escolha.ts',
   'lib/nichos/busca.ts', 'lib/nichos/tipos.ts',
@@ -44,6 +45,8 @@ const hooks = registerHooks({
 });
 const actions = await import('../app/(fluxo)/onboarding/actions.ts');
 const contas = await import('../app/(fluxo)/onboarding/contas/actions.ts');
+const marca = await import('../app/(fluxo)/onboarding/marca/actions.ts');
+const marcaDoc = await import('../lib/onboarding/marca.ts');
 const { comRespostasDoBlocoUm } = await import('../lib/onboarding/documento.ts');
 const oldTime = '2026-09-01T00:00:00.000Z';
 const resposta = texto => ({texto, echo:texto, origem:'texto', em:oldTime});
@@ -60,7 +63,7 @@ let row, events, loggedIn, fieldFailure, jsonFailure;
 beforeEach(() => {
   row = {id:'negocio-fixture', profile_id:'perfil-fixture', name:'Antes', description:'Descrição anterior',
     avg_ticket_min:100, avg_ticket_max:100, avg_direct_cost:null, target_profit_per_customer:null,
-    monthly_budget:null, onboarding:documentFixture(), procedencia:{}};
+    monthly_budget:null, site_url:null, instagram_handle:null, onboarding:documentFixture(), procedencia:{}};
   events = []; loggedIn = true; fieldFailure = false; jsonFailure = false;
 });
 globalThis.__onboardingOffline = {
@@ -188,4 +191,57 @@ test('zero confirmado nas colunas não vira null ou não sei na retomada', async
   assert.deepEqual(estado.leituras.custo,{estado:'respondida',valor:0});
   assert.deepEqual(estado.leituras.lucro,{estado:'respondida',valor:0});
   assert.equal(estado.contas.custo.naoSei,true); assert.equal(estado.contas.custo.calculado,null);
+});
+
+const entradaMarca = () => ({site:'exemplo.com.br',siteNaoTenho:false,
+  instagram:'@exemplo',aparencia:'Azul escuro e fotos dos produtos',aparenciaNaoSei:false});
+function contasProntas() { row.avg_direct_cost = 20; row.target_profit_per_customer = 10; }
+
+test('marca exige contas fechadas e resposta visual explícita', async () => {
+  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,false);
+  assert.deepEqual(events,[]);
+  contasProntas();
+  assert.equal((await marca.salvarMarcaAction({...entradaMarca(),aparencia:''})).ok,false);
+  assert.deepEqual(events,[]);
+});
+test('marca retoma e preserva respostas, contas, procedência e blocos futuros', async () => {
+  contasProntas(); const before = structuredClone(row.onboarding);
+  const result = await marca.salvarMarcaAction(entradaMarca());
+  assert.equal(result.ok,true); assert.equal(result.estado.concluido,true);
+  assert.deepEqual(row.onboarding.respostas,before.respostas);
+  assert.deepEqual(row.onboarding.contas,before.contas);
+  assert.deepEqual(row.onboarding.futuro,before.futuro);
+  assert.equal(row.procedencia.site_url.origem,'confirmado');
+  assert.equal(row.procedencia.instagram_handle.origem,'confirmado');
+  const retomado = await marca.carregarMarcaAction();
+  assert.equal(retomado.concluido,true);
+  assert.equal(retomado.marca.aparencia,'Azul escuro e fotos dos produtos');
+  assert.equal(retomado.site,'https://exemplo.com.br');
+  assert.equal(events.includes('disparo'),false);
+});
+test('sem site e sem certeza sobre a marca ficam explícitos sem campo inventado', async () => {
+  contasProntas();
+  const r = await marca.salvarMarcaAction({site:'',siteNaoTenho:true,instagram:'',aparencia:'',aparenciaNaoSei:true});
+  assert.equal(r.ok,true); assert.equal(row.site_url,null);
+  assert.equal(row.onboarding.marca.siteNaoTenho,true);
+  assert.equal(row.onboarding.marca.aparenciaNaoSei,true);
+  assert.equal(events.includes('campos'),false);
+});
+test('falhas de coluna e de JSON não marcam conclusão; repetição não duplica', async () => {
+  contasProntas(); fieldFailure = true;
+  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,false);
+  assert.equal(row.onboarding.conclusao,undefined);
+  fieldFailure = false; jsonFailure = true;
+  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,false);
+  assert.equal(row.onboarding.conclusao,undefined);
+  jsonFailure = false; events = [];
+  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,true);
+  const doc = structuredClone(row.onboarding); const count = events.length;
+  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,true);
+  assert.deepEqual(row.onboarding,doc); assert.equal(events.length,count);
+});
+test('jornada de reunião impede envio automático mesmo com cadastro completo', () => {
+  assert.equal(marcaDoc.fluxoAguardaReuniao(documentFixture()),true);
+  assert.equal(marcaDoc.fluxoAguardaReuniao({...documentFixture(),conclusao:{em:oldTime,proximoPasso:'agendamento_pendente'}}),true);
+  assert.equal(marcaDoc.fluxoAguardaReuniao({}),false);
 });

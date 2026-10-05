@@ -284,7 +284,9 @@ export async function salvarContaAction(entrada: {
   // ---------------------------------------------------------------- C1
   if (entrada.conta === "ticket") {
     const faixa = TICKET_FAIXA[entrada.escolha];
-    if (faixa) {
+    if (entrada.naoSei) {
+      contas.ticket = { echo: "Não sei", calculado: null, confirmado: false, naoSei: true, em: agora };
+    } else if (faixa) {
       campos.push({ campo: "avg_ticket_min", valor: faixa.min });
       // Faixa aberta para cima não tem topo. `max` fica como está — a
       // função do banco recusa valor em branco, e mandar null por ali

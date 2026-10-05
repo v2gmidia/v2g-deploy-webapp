@@ -6,6 +6,7 @@ import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
 import { TelaDoInicio } from "./TelaDoInicio";
+import { lerConclusao } from "@/lib/onboarding/marca";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -119,6 +120,17 @@ export default async function InicioPage() {
   // escopo deste lote.
   // ============================================================
   if (!estado.temNegocio) redirect("/onboarding");
+
+  // Enquanto a etapa seguinte ainda não dispõe de horários, voltar ao
+  // aplicativo deve mostrar o estado persistido da jornada, sem deixar a
+  // cadeia antiga sugerir conexão, pagamento ou campanha em andamento.
+  if (!fixture && estado.negocioId) {
+    const { data: jornada, error: erroJornada } = await supabase
+      .from("businesses").select("onboarding")
+      .eq("id", estado.negocioId).eq("profile_id", user!.id).maybeSingle();
+    if (erroJornada) console.error("[inicio] falha ao ler conclusão ::", erroJornada.message);
+    if (jornada && lerConclusao(jornada.onboarding)) redirect("/onboarding/concluido");
+  }
 
   const { data: ultimaDecisao } = await supabase
     .from("decisions")

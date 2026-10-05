@@ -1,0 +1,43 @@
+.campo {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.campo label {
+  font-weight: 600;
+}
+
+.campo input,
+.campo textarea {
+  width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: var(--raio-controle);
+  padding: 11px 12px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.campo textarea {
+  min-height: 104px;
+  resize: vertical;
+}
+
+.campo :is(input, textarea):focus-visible {
+  border-color: var(--cobalt-ink);
+  outline: 2px solid var(--cobalt-ink);
+  outline-offset: 2px;
+}
+
+.opcao {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 12px 0;
+  line-height: 1.45;
+}
+
+.opcao input {
+  margin-top: 4px;
+}
