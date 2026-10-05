@@ -1,5 +1,6 @@
 "use server";
 
+import { comRespostasDoBlocoUm } from "@/lib/onboarding/documento";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
@@ -261,7 +262,7 @@ export async function salvarRespostaAction(entrada: {
   const supabase = await createClient();
   const { error } = await supabase
     .from("businesses")
-    .update({ onboarding: { versao: 1, passo: 1, respostas } })
+    .update({ onboarding: comRespostasDoBlocoUm(linha.onboarding, respostas) })
     .eq("id", linha.id);
 
   if (error) {

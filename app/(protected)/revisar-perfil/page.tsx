@@ -1,3 +1,5 @@
+import { Fichas } from "./Fichas";
+import { LIMITE_FICHAS, coberturaDaConsulta } from "@/lib/perfil/ficha-operador";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -66,14 +68,25 @@ export default async function QuemEstaEsperandoPage() {
   // que esta tela precisa. A checagem de papel acima é o que substitui a
   // RLS aqui, e é por isso que ela vem ANTES da criação do cliente admin.
   const admin = createAdminClient();
-  const { data, error } = await admin
+  const { data, error, count } = await admin
     .from("businesses")
-    .select(COLUNAS_DO_CADASTRO + ", dados_ficticios, updated_at")
+    .select(COLUNAS_DO_CADASTRO + ", dados_ficticios, updated_at, niche, city, radius_km, procedencia", { count: "exact" })
     .eq("dados_ficticios", false)
-    .order("updated_at", { ascending: true });
+    .order("updated_at", { ascending: true })
+    .limit(LIMITE_FICHAS);
 
   if (error) {
     console.error("[revisar-perfil] falha ao listar ::", error.message);
+  }
+
+  if (error) {
+    return (
+      <div className="canvas">
+        <div className="page-head"><h1>Consulta de perfis indisponível</h1></div>
+        <p className="form-error" role="alert">Não conseguimos carregar os negócios.
+          Recarregue esta página para tentar novamente.</p>
+      </div>
+    );
   }
 
   const agora = Date.now();
@@ -116,6 +129,9 @@ export default async function QuemEstaEsperandoPage() {
         </p>
       </div>
 
+      <p className="form-notice">{coberturaDaConsulta((data ?? []).length, count)}</p>
+      <p><a href="#fichas">Consultar fichas retornadas nesta consulta</a></p>
+
       {atrasadas.length > 0 && (
         <section className="pendencia-bloco">
           <b>
@@ -135,11 +151,9 @@ export default async function QuemEstaEsperandoPage() {
 
       {esperas.length === 0 ? (
         <section className="empty-hero">
-          <h3>Ninguém esperando</h3>
+          <h3>Nenhuma pendência nos registros retornados</h3>
           <p>
-            Todo negócio real tem os seis campos do <code>POST /cadastro</code>. Se isso parece
-            bom demais, confira que a lista não está vazia por erro de leitura — o console do
-            servidor registra falha de consulta.
+            Nenhum cadastro incompleto nesta consulta. As fichas disponíveis estão abaixo.
           </p>
         </section>
       ) : (
@@ -176,6 +190,7 @@ export default async function QuemEstaEsperandoPage() {
           ))}
         </section>
       )}
+      <Fichas negocios={(data ?? []) as unknown as Record<string, unknown>[]} />
     </div>
   );
 }

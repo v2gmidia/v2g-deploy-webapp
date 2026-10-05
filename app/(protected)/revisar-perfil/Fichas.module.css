@@ -1,0 +1,10 @@
+.fichas { margin-top: 32px; }
+.ficha { border-bottom: 1px solid var(--line); padding: 16px 0; }
+.ficha summary { cursor: pointer; font-weight: 600; overflow-wrap: anywhere; }
+.ficha summary span { font-weight: 400; }
+.ficha summary:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+.campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.campos dt { font-weight: 600; }
+.campos dd { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.campos .origem { color: var(--ink-mute); font-size: var(--fs-legenda); }
+@media (max-width: 640px) { .campos { grid-template-columns: minmax(0, 1fr); } }
