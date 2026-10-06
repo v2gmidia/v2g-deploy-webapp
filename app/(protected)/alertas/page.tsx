@@ -1,4 +1,3 @@
-import { PixelMark } from "@/components/ui/PixelMark";
 import { createClient } from "@/lib/supabase/server";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { esteveNoAr, estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
@@ -82,18 +81,18 @@ export default async function AlertasPage() {
   const quantasPendentes = pendentes?.length ?? 0;
 
   return (
-    <>
+    <div className="avisos-editorial">
       <div className="page-head">
         <h1>Avisos</h1>
         <p>
-          Farol, não sirene. Primeiro o que precisa de você — com um botão só pra resolver.
-          Depois, o registro das decisões que já foram tomadas.
+          Veja primeiro as pendências que precisam da sua atenção. Abaixo, os registros que
+          não pedem ação sua.
         </p>
       </div>
 
-      <div className="dash-grid">
-        <div className="dash-main">
-          <section>
+      <div className="dash-grid avisos-layout">
+        <div className="dash-main avisos-listas">
+          <section className="avisos-secao">
             <div className="section-title">
               <h2>Precisa de você</h2>
               {quantasPendentes > 0 && (
@@ -108,20 +107,21 @@ export default async function AlertasPage() {
                 <p className="form-error">Não conseguimos carregar seus avisos agora. Tente novamente em instantes.</p>
               </div>
             ) : temPendencia ? (
-              <div className="dash-main">
+              <div className="avisos-pendencias">
                 {pendentes!.map((d) => (
                   <article className="alert-card warn" key={d.id}>
                     <b>{tituloDaDecisao(d.kind)}</b>
                     <p>{resumoDaDecisao(d.payload)}</p>
-                    <time>{formatarData(d.created_at)}</time>
+                    <time dateTime={d.created_at}>{formatarData(d.created_at)}</time>
                   </article>
                 ))}
               </div>
             ) : (
               <div className="empty-hero">
-                <PixelMark px={9} cor="var(--navy)" />
-                <span className="badge">Nada pendente</span>
-                <h3>Tudo em dia por aqui.</h3>
+                <div className="avisos-vazio-titulo">
+                  <h3>Tudo em dia por aqui.</h3>
+                  <span className="badge">Nada pendente</span>
+                </div>
                 <p>
                   Quando houver um aviso registrado para este negócio, ele aparece nesta tela.
                 </p>
@@ -143,7 +143,7 @@ export default async function AlertasPage() {
             )}
           </section>
 
-          <section>
+          <section className="avisos-secao">
             <div className="section-title">
               <h2>Só pra você saber</h2>
               <span className="st-note">Registros que não pedem ação sua.</span>
@@ -154,10 +154,11 @@ export default async function AlertasPage() {
                 <p className="form-error">Não conseguimos carregar o histórico agora. Tente novamente em instantes.</p>
               </div>
             ) : temRegistro ? (
-              <div className="card">
+              <div className="avisos-registros">
                 {registradas!.map((d) => (
                   <div className="log-row" key={d.id}>
-                    {formatarData(d.created_at)} — {resumoDaDecisao(d.payload)}
+                    <time dateTime={d.created_at}>{formatarData(d.created_at)}</time>
+                    <p>{resumoDaDecisao(d.payload)}</p>
                   </div>
                 ))}
               </div>
@@ -173,11 +174,11 @@ export default async function AlertasPage() {
           </section>
         </div>
 
-        <aside className="dash-aside">
-          <section className="card">
-            <b className="pc-title" style={{ display: "block", marginBottom: 6 }}>
+        <aside className="dash-aside avisos-atendimento">
+          <section>
+            <h2 className="pc-title">
               Atendimento pelo WhatsApp
-            </b>
+            </h2>
             <p className="hint">
               Se precisar tratar de uma pendência com a equipe, use o canal de atendimento abaixo.
             </p>
@@ -196,17 +197,17 @@ export default async function AlertasPage() {
           </section>
         </aside>
       </div>
-    </>
+    </div>
   );
 }
 
 const TITULOS: Record<string, string> = {
-  classification: "A IA classificou seu negócio",
-  diagnosis: "A IA fez um diagnóstico",
+  classification: "Revisão do negócio",
+  diagnosis: "Diagnóstico do negócio",
 };
 
 function tituloDaDecisao(kind: string): string {
-  return TITULOS[kind] ?? "A IA precisa de uma resposta sua";
+  return TITULOS[kind] ?? "Pendência para revisar";
 }
 
 /**

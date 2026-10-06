@@ -9,9 +9,9 @@
  * vem antes e depois dele — o dono escolher a foto, a oferta e o destino,
  * e a peça voltar para ele aprovar.
  *
- * Então aqui **não há um único controle**: nenhum `<input>`, nenhum
- * `<button>`, nenhum `<label for>`, nenhum alvo clicável. Três proibições
- * do briefing, e as três são a mesma:
+ * Então aqui não há controle de criação: nenhum `<input>`, nenhum
+ * `<button>`, nenhum `<label for>`. O disclosure apenas abre este desenho
+ * textual, sem enviar dados. Três proibições do briefing continuam:
  *
  *   - botão que parece funcionar e não faz nada
  *   - campo que aceita texto e descarta
@@ -84,34 +84,42 @@ export function CriarPeca() {
         que a gente vai te perguntar.
       </p>
 
-      <div className="casa-desenho" aria-label="Desenho do fluxo de criação, sem função">
-        <ol className="casa-passos">
-          {PASSOS.map((passo, i) => (
-            <li key={passo.titulo}>
-              <span className="casa-passo-num" aria-hidden="true">
-                {i + 1}
-              </span>
-              <span className="casa-passo-texto">
-                <b>{passo.titulo}</b>
-                <span>{passo.corpo}</span>
-              </span>
-            </li>
-          ))}
-        </ol>
+      <details className="criativos-proposta">
+        <summary>
+          Ver o desenho desta função
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <path d="M4 10h12M10 4v12" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+        </summary>
+        <div className="casa-desenho" aria-label="Desenho do fluxo de criação, sem função">
+          <ol className="casa-passos">
+            {PASSOS.map((passo, i) => (
+              <li key={passo.titulo}>
+                <span className="casa-passo-num" aria-hidden="true">
+                  {i + 1}
+                </span>
+                <span className="casa-passo-texto">
+                  <b>{passo.titulo}</b>
+                  <span>{passo.corpo}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
 
-        <div className="casa-volta">
-          <b>E depois a peça volta para você</b>
-          <p>
-            A gente monta as opções e te mostra cada uma antes de qualquer coisa ir ao ar. Você
-            olha, escolhe a que serve e aprova — ou pede outra. Nenhuma peça é publicada sem você
-            dizer que pode.
-          </p>
-          <p className="casa-volta-nota">
-            Você não escreve nada para a IA. Os pedidos acima são sobre o seu negócio, em
-            português, e a gente faz o resto.
-          </p>
+          <div className="casa-volta">
+            <b>E depois a peça volta para você</b>
+            <p>
+              A gente monta as opções e te mostra cada uma antes de qualquer coisa ir ao ar. Você
+              olha, escolhe a que serve e aprova — ou pede outra. Nenhuma peça é publicada sem você
+              dizer que pode.
+            </p>
+            <p className="casa-volta-nota">
+              Você não escreve nada para a IA. Os pedidos acima são sobre o seu negócio, em
+              português, e a gente faz o resto.
+            </p>
+          </div>
         </div>
-      </div>
+      </details>
     </section>
   );
 }

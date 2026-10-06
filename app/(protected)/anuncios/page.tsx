@@ -105,7 +105,7 @@ export default async function AnunciosPage() {
   const reprovadas = pecas.filter(foiReprovada);
 
   return (
-    <>
+    <div className="anuncios-editorial">
       <FaixaReconectar />
       <div className="page-head">
         <h1>Seus anúncios</h1>
@@ -246,7 +246,7 @@ export default async function AnunciosPage() {
           </section>
         </aside>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -711,7 +711,7 @@ const SetaLinha = () => (
 
 function SemAnuncioNenhum({ proximo, fotos }: { proximo: Etapa | null; fotos: number }) {
   return (
-    <>
+    <div className="anuncios-editorial">
       <FaixaReconectar />
       <div className="page-head">
         <h1>Seus anúncios</h1>
@@ -792,7 +792,7 @@ function SemAnuncioNenhum({ proximo, fotos }: { proximo: Etapa | null; fotos: nu
           </section>
         </aside>
       </div>
-    </>
+    </div>
   );
 }
 

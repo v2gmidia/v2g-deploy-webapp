@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { AnaliseDaPeca } from "@/lib/backend";
-import { ACEITOS_NO_INPUT, conferirArquivo, type Recusa } from "@/lib/criativos/envio";
+import { ACEITOS_NO_INPUT, conferirArquivo, LADO_MINIMO_PX, TETO_DO_NAVEGADOR_MB, type Recusa } from "@/lib/criativos/envio";
 import { TETO_DA_ESPERA_MS } from "@/lib/criativos/limites.mjs";
 import { apresentarVeredito } from "@/lib/criativos/veredito";
 import { analisarPecaAction, type ResultadoDaAnalise } from "./actions";
@@ -186,22 +186,38 @@ export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
       {fase.nome !== "pronto" && (
         <div className="analise-envio">
           <label className="analise-alvo" htmlFor="analise-arquivo">
-            <span className="analise-icone" aria-hidden="true">
-              {/* moldura de foto, traço simples — sem robô, sem cérebro */}
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                <rect x="3" y="5" width="18" height="14" rx="2" />
-                <circle cx="8.5" cy="10" r="1.5" />
-                <path d="M21 16l-5-5-5 5-2-2-3 3" />
+            <span className="criativos-imagem-vazia" aria-hidden="true">
+              <svg viewBox="0 0 152 140" fill="none">
+                <path d="M28 35h90v78H28z" stroke="currentColor" strokeWidth="1.5" />
+                <path d="m28 97 24-25 24 21 18-18 24 23" stroke="currentColor" strokeWidth="1.5" />
+                <circle cx="93" cy="57" r="8" stroke="currentColor" strokeWidth="1.5" />
+                <path d="M39 24h90v78" stroke="currentColor" strokeWidth="1.5" opacity=".22" />
+                <path d="M18 16h9v9h-9z" fill="currentColor" />
               </svg>
+              <span>A sua imagem aparece aqui</span>
             </span>
-            <b>Escolha a imagem do seu anúncio</b>
-            <span>JPG ou PNG, do tamanho original — sem reduzir para mandar.</span>
+            <span className="criativos-selecao-copy">
+              <b>Escolha a imagem que quer conferir.</b>
+              <span className="criativos-instrucao">Use o arquivo original do seu anúncio, sem reduzir para enviar.</span>
+              <span className="criativos-escolher">
+                <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+                  <path d="M10 13V3m0 0L6 7m4-4 4 4M3.5 12v4.5h13V12" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+                Selecionar imagem
+              </span>
+              <span id="analise-formatos" className="criativos-formatos">
+                JPG ou PNG · até {TETO_DO_NAVEGADOR_MB} MB.<br />
+                Pelo menos {LADO_MINIMO_PX.toLocaleString("pt-BR")} px no lado menor.
+              </span>
+            </span>
           </label>
           <input
             ref={campo}
             id="analise-arquivo"
             className="sr-only"
             type="file"
+            aria-label="Selecionar imagem"
+            aria-describedby="analise-formatos"
             accept={ACEITOS_NO_INPUT}
             disabled={!podeEnviar || fase.nome === "analisando"}
             onChange={escolheu}

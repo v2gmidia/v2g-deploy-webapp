@@ -1,0 +1,544 @@
+/* Criativos: mesa de trabalho, análise e limites reais da função.
+   Os estados e o input continuam pertencendo ao componente Analisar. */
+.v2g-editorial .criativos-editorial {
+  color: var(--ink);
+}
+
+.v2g-editorial .criativos-editorial .page-head {
+  max-width: 820px;
+}
+
+.v2g-editorial .criativos-editorial .casa-indice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 30px;
+  margin: 0 0 32px;
+  padding: 0 0 15px;
+  border-bottom: 1px solid var(--line);
+}
+
+.v2g-editorial .criativos-editorial .casa-indice a {
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.v2g-editorial .criativos-editorial .casa-indice a:first-child {
+  color: var(--cobalt-ink);
+}
+
+.v2g-editorial .criativos-editorial .casa-indice a:hover {
+  color: var(--cobalt-ink);
+  text-decoration: underline;
+}
+
+.v2g-editorial .criativos-editorial .casa-bloco {
+  margin: 0;
+  scroll-margin-top: 100px;
+}
+
+.v2g-editorial .criativos-editorial .casa-bloco + .casa-bloco {
+  margin-top: 36px;
+  padding-top: 24px;
+  border-top: 1px solid var(--line);
+}
+
+.v2g-editorial .criativos-editorial .casa-bloco-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px 28px;
+  margin: 0 0 24px;
+}
+
+.v2g-editorial .criativos-editorial .casa-bloco-head h2 {
+  flex: none;
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-tela);
+  line-height: 1.3;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  scroll-margin-top: 100px;
+}
+
+.v2g-editorial .criativos-editorial .casa-bloco-head p {
+  max-width: 48ch;
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial .criativos-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: start;
+  gap: 28px;
+}
+
+.v2g-editorial .criativos-editorial .analise {
+  min-width: 0;
+  margin: 0;
+}
+
+.v2g-editorial .criativos-editorial .analise-envio {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.v2g-editorial .criativos-editorial .analise-alvo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.v2g-editorial .criativos-editorial .analise-alvo span {
+  max-width: none;
+}
+
+.v2g-editorial .criativos-editorial .criativos-imagem-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 164px;
+  padding: 16px;
+  background: var(--surface);
+  color: var(--cobalt-ink);
+}
+
+.v2g-editorial .criativos-editorial .criativos-imagem-vazia svg {
+  width: 132px;
+  max-width: 100%;
+  height: auto;
+}
+
+.v2g-editorial .criativos-editorial .criativos-imagem-vazia span {
+  color: var(--ink-soft);
+  font-size: var(--fs-legenda);
+  line-height: 1.5;
+  text-align: center;
+}
+
+.v2g-editorial .criativos-editorial .criativos-selecao-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  color: var(--ink);
+}
+
+.v2g-editorial .criativos-editorial .criativos-selecao-copy > b {
+  max-width: 20ch;
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: var(--fs-tela);
+  line-height: 1.25;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+}
+
+.v2g-editorial .criativos-editorial .criativos-selecao-copy .criativos-instrucao {
+  max-width: 32ch;
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial .criativos-selecao-copy .criativos-escolher {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  width: 100%;
+  margin: 20px 0 0;
+  padding: 12px 20px;
+  border-radius: var(--raio-controle);
+  background: var(--cobalt);
+  color: var(--white);
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.v2g-editorial .criativos-editorial .criativos-escolher svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.v2g-editorial .criativos-editorial .analise-envio:not(:has(#analise-arquivo:disabled)) .analise-alvo:hover .criativos-escolher {
+  background: var(--cobalt-dark);
+}
+
+.v2g-editorial .criativos-editorial .analise-envio:has(#analise-arquivo:focus-visible) .analise-alvo {
+  outline: none;
+}
+
+.v2g-editorial .criativos-editorial .analise-envio:has(#analise-arquivo:focus-visible) .criativos-escolher {
+  outline: 2px solid var(--cobalt-ink);
+  outline-offset: 4px;
+}
+
+.v2g-editorial .criativos-editorial .analise-envio:has(#analise-arquivo:disabled) .analise-alvo {
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.v2g-editorial .criativos-editorial .analise-envio:has(#analise-arquivo:disabled) .criativos-escolher {
+  background: var(--surface);
+  color: var(--ink-mute);
+  box-shadow: inset 0 0 0 1px var(--control-line);
+}
+
+.v2g-editorial .criativos-editorial .criativos-selecao-copy .criativos-formatos {
+  margin-top: 16px;
+  color: var(--ink-soft);
+  font-size: var(--fs-legenda);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial .criativos-contexto {
+  display: grid;
+  gap: 20px;
+}
+
+.v2g-editorial .criativos-editorial .criativos-contexto h3 {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-family: var(--display);
+  font-size: var(--fs-tela);
+  line-height: 1.25;
+  font-weight: 400;
+  letter-spacing: -0.035em;
+}
+
+.v2g-editorial .criativos-editorial .criativos-contexto h4 {
+  margin: 0 0 6px;
+  color: var(--ink);
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.v2g-editorial .criativos-editorial .criativos-contexto p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial :is(.analise-aviso, .analise-recusa, .analise-recado) {
+  margin: 0 0 24px;
+  padding: 14px 16px;
+  border: 1px solid var(--warn);
+  border-radius: var(--raio-controle);
+  background: var(--warn-soft);
+  color: var(--ink);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.v2g-editorial .criativos-editorial .analise-recusa {
+  margin: 24px 0 0;
+}
+
+.v2g-editorial .criativos-editorial .analise-recusa b {
+  color: var(--ink-soft);
+  font-size: var(--fs-legenda);
+}
+
+.v2g-editorial .criativos-editorial .analise-andamento {
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+
+.v2g-editorial .criativos-editorial .analise-previa {
+  border: 1px solid var(--control-line);
+  border-radius: var(--raio-controle);
+}
+
+.v2g-editorial .criativos-editorial .analise-girando {
+  border-color: var(--line);
+  border-top-color: var(--cobalt-ink);
+}
+
+.v2g-editorial .criativos-editorial :is(.analise-espera, .analise-demora) {
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial .analise-saida {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  margin: 0;
+}
+
+.v2g-editorial .criativos-editorial .analise-saida + .analise-saida {
+  margin-top: 28px;
+}
+
+.v2g-editorial .criativos-editorial .analise-cartao {
+  width: 100%;
+  padding: 24px;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: var(--raio-controle);
+  background: var(--surface);
+}
+
+.v2g-editorial .criativos-editorial .analise-cartao.v-bom { border-color: var(--good); }
+.v2g-editorial .criativos-editorial .analise-cartao.v-ajuste { border-color: var(--warn); }
+.v2g-editorial .criativos-editorial .analise-cartao.v-fraco { border-color: var(--ink-mute); }
+.v2g-editorial .criativos-editorial .analise-cartao.v-neutro { border-color: var(--line); }
+
+.v2g-editorial .criativos-editorial .analise-selo {
+  margin-bottom: 16px;
+  border-radius: 2px;
+  font-size: var(--fs-legenda);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.v2g-editorial .criativos-editorial .analise-titulo {
+  color: var(--ink);
+  font-size: var(--fs-tela);
+  line-height: 1.3;
+  font-weight: 400;
+  letter-spacing: -0.025em;
+}
+
+.v2g-editorial .criativos-editorial :is(.analise-apoio, .analise-motivos) {
+  max-width: 72ch;
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.v2g-editorial .criativos-editorial .analise-arquivo-nome {
+  max-width: 100%;
+  margin: 0;
+  color: var(--ink-mute);
+  font-size: var(--fs-legenda);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.v2g-editorial .criativos-editorial .analise-saida > .cta {
+  min-height: 48px;
+  max-width: 100%;
+}
+
+.v2g-editorial .criativos-editorial .casa-vazio {
+  align-items: flex-start;
+  gap: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.v2g-editorial .criativos-editorial .criativos-marca-vazia {
+  width: 12px;
+  height: 12px;
+  margin-top: 4px;
+  flex: none;
+  border: 1px solid var(--ink-mute);
+}
+
+.v2g-editorial .criativos-editorial .casa-vazio-texto b {
+  margin: 0 0 8px;
+  color: var(--ink);
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.v2g-editorial .criativos-editorial .casa-vazio-texto p {
+  max-width: 74ch;
+  margin: 0 0 10px;
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial .casa-vazio-texto .casa-vazio-nota {
+  font-size: var(--fs-legenda);
+}
+
+.v2g-editorial .criativos-editorial .casa-obra {
+  max-width: 74ch;
+  margin: 0 0 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial .casa-obra b {
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.v2g-editorial .criativos-editorial .criativos-proposta summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 48px;
+  padding: 8px 0;
+  list-style: none;
+  color: var(--cobalt-ink);
+  font-size: var(--fs-corpo);
+  cursor: pointer;
+}
+
+.v2g-editorial .criativos-editorial .criativos-proposta summary::-webkit-details-marker { display: none; }
+.v2g-editorial .criativos-editorial .criativos-proposta summary svg { width: 18px; height: 18px; flex: none; }
+.v2g-editorial .criativos-editorial .criativos-proposta[open] summary svg { transform: rotate(45deg); }
+
+.v2g-editorial .criativos-editorial .casa-desenho {
+  margin-top: 12px;
+  padding: 24px;
+  border: 1px dashed var(--control-line);
+  border-radius: var(--raio-controle);
+  background: transparent;
+}
+
+.v2g-editorial .criativos-editorial .casa-passo-num {
+  border-radius: 2px;
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 400;
+}
+
+.v2g-editorial .criativos-editorial .casa-passo-texto b {
+  color: var(--ink);
+  font-size: var(--fs-corpo);
+  font-weight: 500;
+}
+
+.v2g-editorial .criativos-editorial :is(.casa-passo-texto > span, .casa-volta p) {
+  color: var(--ink-soft);
+  font-size: var(--fs-corpo);
+  line-height: 1.65;
+}
+
+.v2g-editorial .criativos-editorial .casa-volta {
+  border-top: 1px solid var(--line);
+}
+
+.v2g-editorial .criativos-editorial .casa-volta b {
+  color: var(--ink);
+  font-size: var(--fs-corpo);
+  font-weight: 500;
+}
+
+@media (min-width: 621px) {
+  .v2g-editorial .criativos-editorial .analise-alvo {
+    grid-template-columns: minmax(140px, 0.8fr) minmax(0, 1fr);
+    gap: 28px;
+  }
+
+  .v2g-editorial .criativos-editorial .criativos-imagem-vazia {
+    min-height: 228px;
+  }
+
+  .v2g-editorial .criativos-editorial .criativos-imagem-vazia svg {
+    width: 152px;
+  }
+
+  .v2g-editorial .criativos-editorial .criativos-selecao-copy .criativos-escolher {
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .v2g-editorial .criativos-editorial .criativos-contexto {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1160px) {
+  .v2g-editorial .criativos-editorial .criativos-workspace {
+    grid-template-columns: minmax(0, 1fr) 248px;
+    gap: 36px;
+  }
+
+  .v2g-editorial .criativos-editorial .criativos-contexto {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+}
+
+@media (max-width: 800px) {
+  .v2g-editorial .criativos-editorial .casa-bloco-head {
+    display: block;
+  }
+
+  .v2g-editorial .criativos-editorial .casa-bloco-head p {
+    max-width: 68ch;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 620px) {
+  .v2g-editorial .criativos-editorial .casa-indice {
+    gap: 0 22px;
+    margin-bottom: 24px;
+  }
+
+  .v2g-editorial .criativos-editorial .casa-bloco + .casa-bloco {
+    margin-top: 28px;
+  }
+
+  .v2g-editorial .criativos-editorial .casa-bloco-head h2 {
+    font-size: var(--fs-bloco);
+  }
+
+  .v2g-editorial .criativos-editorial .analise-andamento {
+    flex-wrap: wrap;
+  }
+
+  .v2g-editorial .criativos-editorial .analise-dizeres {
+    flex-basis: 100%;
+  }
+
+  .v2g-editorial .criativos-editorial .analise-cartao,
+  .v2g-editorial .criativos-editorial .casa-desenho {
+    padding: 20px;
+  }
+}

@@ -2,6 +2,9 @@ import Image from "next/image";
 
 /**
  * A marca da V2G — o símbolo e o logotipo.
+ * A variante editorial do Casco usa `public/marca-editorial.svg`, vetor
+ * da LP aprovada em 06/10/2026. O raster descrito abaixo permanece nas
+ * outras superfícies, sem alterar a marca das páginas públicas.
  *
  * ============================================================
  * ESTE É O ÚNICO LUGAR QUE DESENHA A MARCA.
@@ -50,13 +53,15 @@ interface Props {
   /** Esconde o texto ao lado, para barras estreitas. */
   soSimbolo?: boolean;
   className?: string;
+  /** Identidade editorial aprovada para o produto; outras superfícies preservadas. */
+  editorial?: boolean;
 }
 
-function Simbolo() {
+function Simbolo({ editorial = false }: { editorial?: boolean }) {
   return (
     <Image
       className="glyph-img"
-      src="/marca.png"
+      src={editorial ? "/marca-editorial.svg" : "/marca.png"}
       alt=""
       width={612}
       height={612}
@@ -65,14 +70,14 @@ function Simbolo() {
   );
 }
 
-export function Marca({ href, soSimbolo = false, className = "" }: Props) {
+export function Marca({ href, soSimbolo = false, className = "", editorial = false }: Props) {
   const conteudo = (
     <>
-      <Simbolo />
+      <Simbolo editorial={editorial} />
       {!soSimbolo && (
         <span className="wm">
           V2G
-          <small>Tráfego no piloto</small>
+          <small>{editorial ? "mídia" : "Tráfego no piloto"}</small>
         </span>
       )}
     </>

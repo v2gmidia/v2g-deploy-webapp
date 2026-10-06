@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
 import { DataDeHoje, Saudacao } from "@/components/ui/Saudacao";
+import { PreferenciaDeTema } from "@/components/ui/PreferenciaDeTema";
 
 const IcoInicio = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
@@ -77,11 +78,12 @@ export function Casco({
   children: ReactNode;
 }) {
   return (
-    <div className="app-shell">
+    <div className="app-shell v2g-editorial">
+      <a className="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
       <aside className="sidebar">
-        <Marca href="/inicio" className="side-brand" />
+        <Marca href="/inicio" className="side-brand" editorial />
 
-        <nav className="side-nav">
+        <nav className="side-nav" aria-label="Navegação principal">
           {/* CINCO ITENS, E CINCO É TETO — não meta. É o que cabe numa
               barra inferior de celular, e o produto é para ser usado no
               celular.
@@ -121,7 +123,6 @@ export function Casco({
               que é o que aquela tela já faz. Item de menu para passo
               único vira um lugar que, depois de cumprido, só serve para
               o cliente se perguntar por que ainda está ali. */}
-          <span className="nav-eyebrow">Seu negócio</span>
           <NavItem href="/inicio" icone={<IcoInicio />}>
             Início
           </NavItem>
@@ -187,9 +188,9 @@ export function Casco({
             </div>
           </div>
 
-          {/* AJUDA NO TOPO — só aparece abaixo de 900px, onde a sidebar
-              virou barra inferior e o card `.side-support` não existe
-              mais. Ver docs/navegacao-mobile.md §7.
+          {/* AJUDA NO TOPO — a identidade editorial mantém o canal em
+              todas as larguras. No celular o texto recolhe e o link
+              conserva o nome acessível. A sidebar vira barra inferior.
 
               Por que não confiar no bloco de suporte do corpo das telas:
               porque ele não está em todos os ESTADOS. Medido — o vazio de
@@ -200,20 +201,22 @@ export function Casco({
               O desenho não é invenção: é o mesmo do cabeçalho de
               `(fluxo)` — marca à esquerda, gente de verdade à direita. */}
           <div className="topbar-actions">
+            <PreferenciaDeTema />
             <a
               className="topbar-help"
               href="https://wa.me/5521936182176"
               target="_blank"
               rel="noopener"
+              aria-label="Falar com uma pessoa"
             >
               <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
                 <path d="M6 1a5 5 0 0 0-4.3 7.6L1 11l2.5-.7A5 5 0 1 0 6 1z" />
               </svg>
-              Falar com uma pessoa
+              <span>Falar com uma pessoa</span>
             </a>
           </div>
         </header>
-        <div className="canvas">{children}</div>
+        <main className="canvas" id="conteudo-principal" tabIndex={-1}>{children}</main>
       </div>
     </div>
   );

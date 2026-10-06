@@ -1,0 +1,63 @@
+/* Cada campanha mantém sua moeda, origem e ausência de dados. A apresentação
+   agrupa por linhas; não soma moedas nem transforma presença em desempenho. */
+.v2g-editorial .anuncios-editorial .dash-grid { grid-template-columns: minmax(0, 1fr) 240px; gap: 40px; }
+.v2g-editorial .anuncios-editorial .dash-aside { position: static; }
+.v2g-editorial .anuncios-editorial .res-lista { gap: 0; }
+.v2g-editorial .anuncios-editorial .res-ficha { background: transparent; border: 0; border-radius: 0; padding: 28px 0; border-top: 1px solid var(--line); box-shadow: none; }
+.v2g-editorial .anuncios-editorial .res-ficha-head { align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.v2g-editorial .anuncios-editorial .res-ficha-titulo { font-size: var(--fs-bloco); line-height: 1.35; font-weight: 500; color: var(--ink); overflow-wrap: anywhere; }
+.v2g-editorial .anuncios-editorial .res-periodo { margin: 8px 0 24px; color: var(--ink-mute); font-size: var(--fs-legenda); }
+.v2g-editorial .anuncios-editorial .res-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.v2g-editorial .anuncios-editorial .res-num { padding: 0; border: 0; border-radius: 0; background: transparent; min-width: 0; }
+.v2g-editorial .anuncios-editorial .res-num-ico { display: none; }
+.v2g-editorial .anuncios-editorial .res-num-rotulo { font-size: var(--fs-corpo); line-height: 1.5; margin-bottom: 10px; }
+.v2g-editorial .anuncios-editorial .res-num-valor { font-size: var(--fs-destaque); line-height: 1.25; font-weight: 400; letter-spacing: -.025em; overflow-wrap: anywhere; }
+.v2g-editorial .anuncios-editorial .res-num-vazio-nota { line-height: 1.6; max-width: 30ch; }
+.v2g-editorial .anuncios-editorial .res-nivel { margin-top: 24px; padding: 16px 0 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; }
+.v2g-editorial .anuncios-editorial .res-nivel svg { display: none; }
+.v2g-editorial .anuncios-editorial .res-nivel p { max-width: 72ch; line-height: 1.7; }
+.v2g-editorial .anuncios-editorial .res-do-dono { margin-top: 0; padding: 28px 0; }
+.v2g-editorial .anuncios-editorial .section-title { gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.v2g-editorial .anuncios-editorial .st-note { max-width: 56ch; line-height: 1.6; }
+.v2g-editorial .anuncios-editorial :is(.grp-count, .pill) { font-weight: 400; font-size: var(--fs-legenda); }
+.v2g-editorial .anuncios-editorial .card { background: transparent; padding: 0; border: 0; }
+.v2g-editorial .anuncios-editorial .acct-row { padding: 18px 0; border-top: 1px solid var(--line); gap: 20px; }
+.v2g-editorial .anuncios-editorial .acct-row:hover { background: transparent; }
+.v2g-editorial .anuncios-editorial .ar-text b { font-weight: 500; }
+.v2g-editorial .anuncios-editorial .log-row { padding: 14px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.v2g-editorial .anuncios-editorial .hero-destaque { margin: 0 0 36px; padding: 24px; border-radius: 4px; background: var(--task-surface); color: var(--ink); }
+.v2g-editorial .anuncios-editorial .hero-destaque::before,
+.v2g-editorial .anuncios-editorial .hero-destaque::after { display: none; }
+.v2g-editorial .anuncios-editorial .hero-destaque .eyebrow { color: var(--ink-soft); font-size: var(--fs-corpo); font-weight: 500; letter-spacing: 0; text-transform: none; }
+.v2g-editorial .anuncios-editorial .hero-frase { color: var(--ink); font-size: var(--fs-tela); font-weight: 400; line-height: 1.3; letter-spacing: -.025em; max-width: 38ch; }
+.v2g-editorial .anuncios-editorial .hero-frase .destaque { background: none; color: inherit; padding: 0; }
+.v2g-editorial .anuncios-editorial .hero-note { color: var(--ink-soft); font-size: var(--fs-corpo); line-height: 1.7; max-width: 70ch; }
+.v2g-editorial .anuncios-editorial .hero-destaque .cta { background: var(--cobalt); color: var(--white); max-width: 100%; }
+.v2g-editorial .anuncios-editorial .hero-destaque .cta:hover { background: var(--cobalt-dark); }
+.v2g-editorial .anuncios-editorial :is(.tips-card, .trust) { background: transparent; border: 0; border-radius: 0; padding: 20px 0 0; border-top: 1px solid var(--line); color: var(--ink-soft); font-size: var(--fs-corpo); line-height: 1.7; }
+.v2g-editorial .anuncios-editorial :is(.tips-title, .trust .title) { font-size: var(--fs-titulo); font-weight: 500; line-height: 1.5; color: var(--ink); }
+.v2g-editorial .anuncios-editorial .tips-list { gap: 16px; }
+.v2g-editorial .anuncios-editorial .tick { width: 16px; height: 20px; background: none; color: var(--ink-soft); flex: none; }
+.v2g-editorial .anuncios-editorial :is(.empty-card, .res-falha) { padding: 28px 0; background: transparent; border: 0; border-top: 1px solid var(--line); border-radius: 0; text-align: left; }
+.v2g-editorial .anuncios-editorial :is(.empty-ico, .res-falha-ico) { display: none; }
+.v2g-editorial .anuncios-editorial :is(.empty-head, .res-falha h2) { font-size: var(--fs-tela); font-weight: 400; line-height: 1.35; letter-spacing: -.025em; }
+.v2g-editorial .anuncios-editorial .empty-copy { min-width: 0; }
+.v2g-editorial .anuncios-editorial .empty-body { font-size: var(--fs-corpo); line-height: 1.7; }
+.v2g-editorial .anuncios-editorial .empty-list { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+.v2g-editorial .anuncios-editorial .empty-list li { padding: 12px 0; }
+.v2g-editorial .anuncios-editorial .res-falha p { margin-inline: 0; max-width: 70ch; }
+.v2g-editorial .anuncios-editorial .res-falha-nota { padding: 20px; margin-top: 24px; }
+@media (min-width: 1300px) {
+  .v2g-editorial .anuncios-editorial .res-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .v2g-editorial .anuncios-editorial .res-do-dono .res-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 1100px) {
+  .v2g-editorial .anuncios-editorial .dash-grid { grid-template-columns: minmax(0, 1fr); }
+  .v2g-editorial .anuncios-editorial .dash-aside { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 620px) {
+  .v2g-editorial .anuncios-editorial .dash-aside { grid-template-columns: minmax(0, 1fr); }
+  .v2g-editorial .anuncios-editorial .res-num-valor { font-size: var(--fs-tela); }
+  .v2g-editorial .anuncios-editorial .hero-destaque { padding: 22px; }
+  .v2g-editorial .anuncios-editorial .empty-card .cta { width: 100% !important; max-width: 100%; }
+}

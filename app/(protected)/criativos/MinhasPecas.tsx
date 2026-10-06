@@ -45,19 +45,12 @@ export function MinhasPecas() {
       </div>
 
       <div className="casa-vazio" role="status">
-        <span className="casa-vazio-ico" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <path d="M3 16l5-4 3 2.5 3-2.5 7 5.5" />
-            <circle cx="8" cy="9.5" r="1.4" />
-          </svg>
-        </span>
+        <span className="criativos-marca-vazia" aria-hidden="true" />
         <div className="casa-vazio-texto">
-          <b>Nenhuma peça guardada ainda</b>
+          <b>O histórico ainda não está disponível.</b>
           <p>
-            Quando você manda uma imagem para conferir, a gente responde na hora — mas ainda não
-            guarda a peça numa lista para você abrir depois. Por enquanto, o resultado aparece só
-            na resposta do envio.
+            Por enquanto, o resultado aparece só na resposta do envio. As peças analisadas ainda
+            não ficam em uma lista para abrir depois.
           </p>
           <p className="casa-vazio-nota">
             Se você quiser guardar uma peça, salve a imagem no seu celular junto com o que a

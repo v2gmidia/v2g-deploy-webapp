@@ -2,6 +2,11 @@ import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
+import "./produto-editorial.css";
+import "./inicio-editorial.css";
+import "./criativos-editorial.css";
+import "./anuncios-editorial.css";
+import "./editorial-conta-avisos.css";
 
 // Substitui a Bahnschrift do protótipo original (exclusiva do Windows,
 // não embutida) — ver docs/arquitetura.md, Decisão 6. Auto-hospedada

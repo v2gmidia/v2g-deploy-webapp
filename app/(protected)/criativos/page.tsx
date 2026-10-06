@@ -61,7 +61,7 @@ export default async function CriativosPage() {
     process.env.NODE_ENV !== "production" ? (process.env.V2G_FIXTURE_ANALISE ?? null) : null;
 
   return (
-    <>
+    <div className="criativos-editorial">
       <div className="page-head">
         <h1>Criativos</h1>
         <p>
@@ -98,18 +98,30 @@ export default async function CriativosPage() {
           </p>
         )}
 
-        {/* A lógica da análise não mudou nem uma linha: o mesmo
-            `<Analisar>`, a mesma action, o mesmo `podeEnviar`. Só mudou o
-            lugar dela dentro da página. */}
-        {amostra ? <AmostraDeVereditos qual={amostra} /> : <Analisar podeEnviar={podeEnviar} />}
+        {/* A mesma análise automática ao escolher a imagem. A coluna de
+            contexto explica a diferença entre análise e publicação. */}
+        <div className="criativos-workspace">
+          {amostra ? <AmostraDeVereditos qual={amostra} /> : <Analisar podeEnviar={podeEnviar} />}
 
-        <p className="analise-rodape">
-          A análise não encaminha a peça ao gestor, não publica e não altera a sua imagem.
-        </p>
+          <aside className="criativos-contexto" aria-label="Sobre a análise">
+            <div>
+              <h3>Uma análise da sua imagem.</h3>
+              <p>Ao selecionar um arquivo aceito, a análise começa e a resposta aparece nesta tela.</p>
+            </div>
+            <div>
+              <h4>Antes de uma campanha</h4>
+              <p>A análise não encaminha a peça ao gestor, não publica e não altera a sua imagem.</p>
+            </div>
+            <div>
+              <h4>Para pedir a inclusão</h4>
+              <p>Fale com a equipe pelo WhatsApp. A análise desta aba não cria uma solicitação de publicação.</p>
+            </div>
+          </aside>
+        </div>
       </section>
 
       <MinhasPecas />
       <CriarPeca />
-    </>
+    </div>
   );
 }

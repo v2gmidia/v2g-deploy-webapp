@@ -174,7 +174,7 @@ export default async function ContaPage() {
   }
 
   return (
-    <>
+    <div className="conta-editorial">
       <div className="page-head">
         <h1>Sua conta, sem letra miúda.</h1>
         <p>
@@ -183,8 +183,8 @@ export default async function ContaPage() {
         </p>
       </div>
 
-      <div className="dash-grid">
-        <div className="dash-main">
+      <div className="dash-grid conta-layout">
+        <div className="dash-main conta-ficha">
           <section>
             <div className="section-title">
               <h2>Seu plano</h2>
@@ -355,13 +355,19 @@ export default async function ContaPage() {
             />
           </section>
 
-          <section className="trust support-block">
-            <b className="title">Fala com gente de verdade</b>
-            Dúvida de cobrança, de resultado ou de saída: é a mesma pessoa que responde. WhatsApp,
-            resposta em até 2 horas úteis, sem robô e sem menu de atendimento.
-            <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-              Chamar no WhatsApp &rarr;
-            </a>
+          <section className="conta-atendimento">
+            <div className="section-title">
+              <h2>Fala com gente de verdade</h2>
+            </div>
+            <div className="conta-atendimento-texto">
+              <p>
+                Dúvida de cobrança, de resultado ou de saída: é a mesma pessoa que responde. WhatsApp,
+                resposta em até 2 horas úteis, sem robô e sem menu de atendimento.
+              </p>
+              <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
+                Chamar no WhatsApp &rarr;
+              </a>
+            </div>
           </section>
 
           <section>
@@ -424,7 +430,7 @@ export default async function ContaPage() {
           </section>
         </div>
 
-        <aside className="dash-aside">
+        <aside className="dash-aside conta-notas">
           <section className="card">
             <b className="pc-title" style={{ display: "block", marginBottom: 6 }}>
               O que aparece aqui depois
@@ -447,7 +453,7 @@ export default async function ContaPage() {
           </section>
         </aside>
       </div>
-    </>
+    </div>
   );
 }
 

@@ -107,6 +107,39 @@ function TrilhaDaExecucao({
   );
 }
 
+function CabecalhoDoInicio() {
+  return (
+    <header className="inicio-cabecalho">
+      <h1>Início<span className="inicio-quadrado" aria-hidden="true" /></h1>
+    </header>
+  );
+}
+
+/** As mesmas quatro fases da cadeia, em uma linha de acompanhamento. */
+function FasesDaCampanha({ fases }: { fases: ReturnType<typeof fasesDaCadeia> }) {
+  return (
+    <ol className="inicio-fases" aria-label="Etapas da campanha">
+      {fases.map((f) => (
+        <li
+          className={`inicio-fase f-${f.estado}`}
+          key={f.id}
+          aria-current={f.estado === "atual" ? "step" : undefined}
+        >
+          <span className="inicio-fase-marca" aria-hidden="true">
+            {f.estado === "feita" && (
+              <svg viewBox="0 0 12 12" fill="none">
+                <path d="m2.5 6 2.2 2.2 4.8-4.8" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+            )}
+          </span>
+          <b>{f.nome}</b>
+          <span className="inicio-fase-rotulo">{f.rotulo}</span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function TelaDoInicio({
   estado,
   ultimaDecisao,
@@ -288,26 +321,14 @@ export function TelaDoInicio({
     const diaZero = proximo?.id === "numeros";
 
     return (
-      <>
+      <div className="inicio-editorial">
         {faixa}
+        <CabecalhoDoInicio />
 
-        {/* ============================================================
-            O TOPO SÃO DUAS SUPERFÍCIES, e a divisão é o desenho.
-
-            À esquerda, ONDE VOCÊ ESTÁ — cartão cobalto, as quatro fases.
-            À direita, O QUE FAZER AGORA — cartão claro, uma ação.
-
-            Elas não podem ser o mesmo bloco: a primeira é orientação e se
-            lê de relance; a segunda pede decisão. Juntas numa faixa só, a
-            ação vira detalhe do mapa, e a tela deixa de ter um próximo
-            passo para ter um resumo.
-
-            No celular viram duas linhas, nesta ordem — e é a ordem certa:
-            saber onde está antes de saber o que fazer.
-            ============================================================ */}
+        {/* O estado abre a leitura; a superfície de tarefa destaca a ação.
+            As quatro fases ficam logo abaixo, comuns às duas colunas. */}
         <div className="inicio-topo">
-          <section className="ih">
-            <span className="eyebrow">Sua campanha</span>
+          <section className="inicio-estado" aria-label="Sua campanha">
             {/* ============================================================
                 A MANCHETE DE VEICULAÇÃO VEM DA FONTE ÚNICA. ITEM B3.
 
@@ -328,7 +349,7 @@ export function TelaDoInicio({
                 ? fraseDeVeiculacao(estado.veiculacao, "manchete")
                 : "Sua campanha está sendo preparada"}
             </h2>
-            <p className="ih-sub">
+            <p className="inicio-progresso">
               Você já concluiu{" "}
               <b>
                 {fasesFeitas} de {fases.length}
@@ -336,24 +357,11 @@ export function TelaDoInicio({
               etapas.
             </p>
 
-            {/* As QUATRO fases, sobre as SEIS etapas — a lista de baixo
-                mostra as seis, e nenhuma se perde. Ver `fasesDaCadeia`. */}
-            <ol className="fases">
-              {fases.map((f, i) => (
-                <li className={`fase f-${f.estado}`} key={f.id}>
-                  <span className="fase-marca" aria-hidden="true">
-                    {f.estado === "feita" ? "✓" : f.estado === "atual" ? i + 1 : "•"}
-                  </span>
-                  <b>{f.nome}</b>
-                  <span>{f.rotulo}</span>
-                </li>
-              ))}
-            </ol>
           </section>
 
           {proximo && (
-            <section className="proximo">
-              <span className="eyebrow">Seu próximo passo</span>
+            <section className="inicio-proximo">
+              <h2>Seu próximo passo</h2>
               <h3>{proximo.titulo}</h3>
               <p>{proximo.corpo}</p>
               {/* A ÚNICA ação cheia da tela. O rótulo e o destino vêm da
@@ -373,6 +381,7 @@ export function TelaDoInicio({
             </section>
           )}
         </div>
+        <FasesDaCampanha fases={fases} />
 
         {/* Ver o bloco de `cardDaPergunta`: aqui NÃO é redundância. Sem o
             card nesta tela, o cliente nunca chegaria à outra para poder
@@ -442,7 +451,7 @@ export function TelaDoInicio({
             <Comando verba={estado.verbaMensal} investido={null} />
           </div>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -513,24 +522,14 @@ export function TelaDoInicio({
     acumulado !== null && (acumulado.vendas !== null || acumulado.voltouCentavos !== null);
 
   return (
-    <>
+    <div className="inicio-editorial">
       {faixa}
+      <CabecalhoDoInicio />
 
-      {/* ============================================================
-          O MESMO TOPO DA OUTRA TELA — e a repetição é o desenho.
-
-          Cartão cobalto à esquerda, cartão claro à direita, quatro fases
-          no mesmo lugar. Quem passou três semanas em "preparando" e chega
-          aqui não deveria precisar reaprender onde as coisas ficam: a
-          tela muda de assunto, não de gramática.
-
-          O QUE MUDA: a manchete deixa de ser o estágio e passa a ser a
-          frase do backend sobre o que está acontecendo, e abaixo entram
-          os números. O que não muda é a estrutura.
-          ============================================================ */}
+      {/* A mesma composição do estado sem números: estado, tarefa e
+          acompanhamento. Os números continuam condicionados a temNumero. */}
       <div className="inicio-topo">
-        <section className="ih">
-          <span className="eyebrow">Sua campanha</span>
+        <section className="inicio-estado" aria-label="Sua campanha">
           {/* ============================================================
               UMA REDAÇÃO SÓ PARA VEICULAÇÃO — item N7 do QA.
 
@@ -550,29 +549,18 @@ export function TelaDoInicio({
               como manchete de veiculação.
               ============================================================ */}
           <h2>{fraseDeVeiculacao(estado.veiculacao, "manchete")}</h2>
-          <p className="ih-sub">
+          <p className="inicio-progresso">
             Você já concluiu{" "}
             <b>
               {fasesFeitas} de {fases.length}
             </b>{" "}
             etapas.
           </p>
-          <ol className="fases">
-            {fases.map((f, i) => (
-              <li className={`fase f-${f.estado}`} key={f.id}>
-                <span className="fase-marca" aria-hidden="true">
-                  {f.estado === "feita" ? "✓" : f.estado === "atual" ? i + 1 : "•"}
-                </span>
-                <b>{f.nome}</b>
-                <span>{f.rotulo}</span>
-              </li>
-            ))}
-          </ol>
         </section>
 
         {proximo ? (
-          <section className="proximo">
-            <span className="eyebrow">Seu próximo passo</span>
+          <section className="inicio-proximo">
+            <h2>Seu próximo passo</h2>
             <h3>{proximo.titulo}</h3>
             <p>{proximo.corpo}</p>
             {proximo.acao ? (
@@ -592,8 +580,8 @@ export function TelaDoInicio({
              "não há nada te esperando" é informação — e some-lo faria o
              topo mudar de forma justamente na visita em que está tudo em
              ordem. O que ele não tem é botão: não há ação a oferecer. */
-          <section className="proximo">
-            <span className="eyebrow">Seu próximo passo</span>
+          <section className="inicio-proximo">
+            <h2>Seu próximo passo</h2>
             <h3>Nada está esperando por você</h3>
             <p>
               Todas as etapas do seu anúncio estão fechadas. Quando alguma coisa precisar de
@@ -606,6 +594,7 @@ export function TelaDoInicio({
           </section>
         )}
       </div>
+      <FasesDaCampanha fases={fases} />
 
       {/* ============================================================
           OS PRIMEIROS SINAIS — quatro números, e um deles é uma ausência.
@@ -807,7 +796,7 @@ export function TelaDoInicio({
           />
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

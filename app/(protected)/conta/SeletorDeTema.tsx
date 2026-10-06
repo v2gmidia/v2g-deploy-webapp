@@ -5,11 +5,10 @@ import { definirTemaAction } from "./tema-actions";
 /**
  * Escolha do tema: claro, escuro ou o padrão do aparelho.
  *
- * POR QUE AQUI E NÃO NUM BOTÃO NO CANTO: os mockups aprovados não têm
- * nenhum controle de tema na moldura do app — nem na sidebar, nem na
- * topbar. Enfiar um botãozinho ali seria acrescentar um elemento que o
- * design não pediu, numa região onde a regra é uma coisa gritando por
- * vez. Tema é decisão que se toma uma vez e não se revisita.
+ * A Conta apresenta as três opções com amostras visuais. O Casco também
+ * oferece a preferência compacta no topo, por PreferenciaDeTema/CampoDeTema.
+ * Os dois controles usam definirTemaAction e o mesmo cookie: são duas
+ * apresentações da mesma preferência, sem uma segunda regra de tema.
  *
  * É um Server Component com três botões de submit, sem `useState` e sem
  * `onClick`. Consequência: funciona antes de o JavaScript carregar, e o
@@ -52,8 +51,8 @@ export async function SeletorDeTema() {
 /**
  * A miniatura de cada tema.
  *
- * As cores aqui são LITERAIS, e é a única exceção da folha — de
- * propósito. Elas precisam mostrar o tema que NÃO está ativo: se
+ * As cores aqui são LITERAIS, de propósito, e acompanham os pares de
+ * app/produto-editorial.css. Precisam mostrar o tema que NÃO está ativo: se
  * usassem os tokens, as três amostras ficariam idênticas, pintadas pelo
  * tema atual, e a escolha viraria adivinhação.
  */
@@ -61,11 +60,11 @@ function Amostra({ tema }: { tema: string }) {
   if (tema === "sistema") {
     return (
       <span className="tema-amostra" aria-hidden="true">
-        <span style={{ background: "#F1F6F7" }}>
-          <i style={{ background: "#0743DC" }} />
+        <span style={{ background: "#F8FBFA" }}>
+          <i style={{ background: "#0B40DA" }} />
         </span>
-        <span style={{ background: "#050A13" }}>
-          <i style={{ background: "#D5EF25" }} />
+        <span style={{ background: "#0D1929" }}>
+          <i style={{ background: "#9FBFFF" }} />
         </span>
       </span>
     );
@@ -73,11 +72,11 @@ function Amostra({ tema }: { tema: string }) {
   const claro = tema === "claro";
   return (
     <span className="tema-amostra" aria-hidden="true">
-      <span style={{ background: claro ? "#F1F6F7" : "#050A13" }}>
-        <i style={{ background: claro ? "#0743DC" : "#1B44E5" }} />
+      <span style={{ background: claro ? "#F8FBFA" : "#0D1929" }}>
+        <i style={{ background: claro ? "#0B40DA" : "#9FBFFF" }} />
       </span>
-      <span style={{ background: claro ? "#FFFFFF" : "#0C1523" }}>
-        <i style={{ background: claro ? "#E8FC65" : "#D5EF25" }} />
+      <span style={{ background: claro ? "#ECF5F2" : "#142337" }}>
+        <i style={{ background: "#EAFF64" }} />
       </span>
     </span>
   );
