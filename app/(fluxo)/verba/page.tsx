@@ -29,7 +29,7 @@ export default async function VerbaPage() {
 
   const { data: negocio } = await supabase
     .from("businesses")
-    .select("name, city, cep, radius_km, monthly_budget, geo_lat, geo_key, geo_label, geo_resolved_at")
+    .select("id, name, city, cep, radius_km, monthly_budget, geo_lat, geo_key, geo_label, geo_resolved_at")
     .order("created_at", { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -37,10 +37,13 @@ export default async function VerbaPage() {
   // Só para saber se ALGUÉM chegou a ter uma página para consultar. Sem
   // isso, "a página está sem endereço" é dedução sobre um dado que nunca
   // foi lido — ver `AlcanceReal`.
-  const { data: conexao } = await supabase
-    .from("meta_connections")
-    .select("meta_page_id")
-    .maybeSingle();
+  const { data: conexao } = negocio
+    ? await supabase
+        .from("meta_connections")
+        .select("meta_page_id")
+        .eq("business_id", negocio.id)
+        .maybeSingle()
+    : { data: null };
 
   const teto = negocio?.monthly_budget ? Number(negocio.monthly_budget) : null;
   const diario = teto !== null ? teto / 30 : null;

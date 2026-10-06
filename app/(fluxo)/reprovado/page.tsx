@@ -32,35 +32,23 @@ export const metadata = tituloDaAba("/reprovado");
 export default async function ReprovadoPage() {
   const supabase = await createClient();
 
-  const [{ data: reprovados }, estado] = await Promise.all([
-    // O mesmo filtro da /aprovar, pelo mesmo motivo: `creatives` guarda
-    // logo e foto de identidade junto com peça de anúncio, e "reprovado"
-    // só faz sentido para peça de anúncio vigente.
-    // Ver docs/lote-leitura-de-peca.md.
+  const estado = await estadoDoCliente(new Date());
+  // O mesmo filtro da /aprovar, pelo mesmo motivo: `creatives` guarda
+  // logo e foto de identidade junto com peça de anúncio, e "reprovado"
+  // só faz sentido para peça de anúncio vigente.
+  // Ver docs/lote-leitura-de-peca.md.
+  const { data: reprovados } = estado.negocioId ? await
     apenasPecasDeAnuncio(
       supabase
         .from("creatives")
         .select("id, campaign_id, file_name, meta_status, created_at"),
     )
+      .eq("business_id", estado.negocioId)
       .eq("status", "rejected")
-      .order("created_at", { ascending: false }),
-    // ============================================================
-    // A CONSULTA A `campaigns` SAIU. ITEM B3.
-    //
-    // Era `select(published_at)` e depois `filter(c => c.published_at
-    // !== null)` — e `campaigns` tem ZERO LINHAS na tabela inteira,
-    // medido em 11/09/2026. Ou seja: `noAr.length` era `0` para todo
-    // cliente, sempre, e esta tela NUNCA mostrou a notícia boa que o
-    // bloco de cima diz ser a razão de ela existir ("a informação que
-    // mais importa aparece primeiro e é tranquilizadora").
-    //
-    // Não era uma frase errada: era uma frase MORTA. O ramo do `else`
-    // rodava sempre, e ninguém percebeu porque ele também é verdadeiro.
-    //
-    // Agora vem de `estado.veiculacao`, a fonte única.
-    // ============================================================
-    estadoDoCliente(new Date()),
-  ]);
+      .order("created_at", { ascending: false }) : { data: [] };
+
+  // A consulta antiga a `campaigns.published_at` nunca alimentava esta
+  // tela (tabela vazia em 11/09/2026). A veiculação vem de `estado`.
 
   const lista = reprovados ?? [];
   const outrosNoAr = estaNoArAgora(estado.veiculacao);

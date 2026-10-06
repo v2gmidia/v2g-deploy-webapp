@@ -10,6 +10,7 @@ import {
   type Pendencia,
 } from "@/lib/cadastro/montar";
 import { DIAS_ATE_TROCAR_DE_DONO } from "@/lib/cadastro/pendencias";
+import { triarPendenciasDoGestor } from "@/lib/jev/fila-do-gestor";
 import { tituloDaAba } from "@/lib/titulos";
 
 /**
@@ -46,6 +47,7 @@ interface Espera {
   pendencias: Pendencia[];
   /** dias desde o "não sei" mais antigo; nulo quando não há "não sei" */
   diasEsperando: number | null;
+  triagem?: Awaited<ReturnType<typeof triarPendenciasDoGestor>>;
 }
 
 function diasDesde(iso: string | undefined, agora: number): number | null {
@@ -115,7 +117,17 @@ export default async function QuemEstaEsperandoPage() {
     // travado, só que a bola está com ele.
     .sort((a, b) => (b.diasEsperando ?? -1) - (a.diasEsperando ?? -1));
 
-  const atrasadas = esperas.filter(
+  const comTriagem = await Promise.all(
+    esperas.map(async (espera) => ({
+      ...espera,
+      // A sugestão nunca escolhe quem aparece primeiro: a ordem por idade
+      // continua a regra verificável da fila. Jev só acrescenta contexto
+      // para a pessoa que vai revisar o caso.
+      triagem: await triarPendenciasDoGestor(espera.pendencias, espera.diasEsperando),
+    })),
+  );
+
+  const atrasadas = comTriagem.filter(
     (e) => e.diasEsperando !== null && e.diasEsperando >= DIAS_ATE_TROCAR_DE_DONO,
   );
 
@@ -149,7 +161,7 @@ export default async function QuemEstaEsperandoPage() {
         </section>
       )}
 
-      {esperas.length === 0 ? (
+      {comTriagem.length === 0 ? (
         <section className="empty-hero">
           <h3>Nenhuma pendência nos registros retornados</h3>
           <p>
@@ -158,7 +170,7 @@ export default async function QuemEstaEsperandoPage() {
         </section>
       ) : (
         <section className="lista-espera">
-          {esperas.map((e) => (
+          {comTriagem.map((e) => (
             <article className="espera-row" key={e.id}>
               <div className="espera-quem">
                 <b>{e.nome}</b>
@@ -186,6 +198,12 @@ export default async function QuemEstaEsperandoPage() {
                   </li>
                 ))}
               </ul>
+              {e.triagem && (
+                <p className="espera-neutro">
+                  Prioridade sugerida: <b>{e.triagem.sugestao.prioridade}</b> · {e.triagem.sugestao.motivo}
+                  {e.triagem.origem === "jev" ? " · sugestão Jev para revisar" : " · regra base"}
+                </p>
+              )}
             </article>
           ))}
         </section>

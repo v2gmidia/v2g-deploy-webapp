@@ -11,6 +11,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
   const [instagram, setInstagram] = useState(inicial.instagram);
   const [aparencia, setAparencia] = useState(inicial.marca?.aparencia ?? "");
   const [naoSei, setNaoSei] = useState(inicial.marca?.aparenciaNaoSei ?? false);
+  const [confirmandoNaoSei, setConfirmandoNaoSei] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
@@ -63,7 +64,19 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
           <label htmlFor="aparencia">Como você descreveria as cores e o jeito da sua marca?</label>
           <textarea id="aparencia" value={aparencia} disabled={naoSei} maxLength={500} onChange={(e) => setAparencia(e.target.value)} placeholder="Ex.: azul escuro, fotos dos produtos e letras simples" />
         </div>
-        <label className={styles.opcao}><input type="checkbox" checked={naoSei} onChange={(e) => setNaoSei(e.target.checked)} /> Ainda não sei; quero conversar com o gestor</label>
+        <label className={styles.opcao}><input type="checkbox" checked={naoSei} onChange={(e) => {
+          if (e.target.checked) setConfirmandoNaoSei(true);
+          else setNaoSei(false);
+        }} /> Ainda não sei; quero conversar com o gestor</label>
+        {confirmandoNaoSei && <div className="pendencia-bloco" role="group" aria-label="Confirmar que não sabe descrever a marca">
+          <p>Tem certeza de que não consegue descrever? Pense nas cores, fotos e letras que costuma usar. Uma frase aproximada já ajuda.</p>
+          <button className="chip-opt" type="button" onClick={() => setConfirmandoNaoSei(false)}>Vou tentar descrever</button>
+          <button className="chip-opt" type="button" onClick={() => {
+            setNaoSei(true);
+            setConfirmandoNaoSei(false);
+          }}>Ainda não sei</button>
+          <p className="conta-hint">O gestor verá essa pendência na conversa.</p>
+        </div>}
         <p className="conta-hint">O Instagram é opcional. Sem site, registre “Não tenho site”; isso não cria um endereço fictício.</p>
         <button className="cta" type="button" disabled={enviando} onClick={salvar}>{enviando ? "Salvando…" : "Guardar e concluir"}</button>
       </>}

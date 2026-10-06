@@ -19,6 +19,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
   const [enviando, setEnviando] = useState(false);
   const [ajustando, setAjustando] = useState<ChaveDeConta | null>(null);
   const [rascunho, setRascunho] = useState("");
+  const [confirmandoNaoSei, setConfirmandoNaoSei] = useState<ChaveDeConta | null>(null);
 
   const { contas, leituras } = estado;
 
@@ -75,6 +76,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     setEstado(r.estado);
     setAjustando(null);
     setRascunho("");
+    setConfirmandoNaoSei(null);
   }
 
   async function reabrir(conta: ChaveDeConta) {
@@ -305,7 +307,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       </button>
                     ))}
                     <button className="chip-opt" type="button" disabled={enviando}
-                      onClick={() => enviar({ conta: "ticket", escolha: "", naoSei: true })}>
+                      onClick={() => setConfirmandoNaoSei("ticket")}>
                       Não sei
                     </button>
                   </div>
@@ -336,7 +338,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     className="chip-opt"
                     type="button"
                     disabled={enviando}
-                    onClick={() => enviar({ conta: "custo", escolha: "", naoSei: true })}
+                    onClick={() => setConfirmandoNaoSei("custo")}
                   >
                     Não sei
                   </button>
@@ -367,10 +369,22 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     className="chip-opt"
                     type="button"
                     disabled={enviando}
-                    onClick={() => enviar({ conta: "lucro", escolha: "", naoSei: true })}
+                    onClick={() => setConfirmandoNaoSei("lucro")}
                   >
                     Não sei
                   </button>
+                </div>
+              )}
+              {confirmandoNaoSei === atual && (
+                <div className="pendencia-bloco" role="group" aria-label="Confirmar que não sabe responder">
+                  <p>Tem certeza de que não consegue estimar? Pense em uma venda recente ou num valor aproximado. Não precisa ser exato.</p>
+                  <div className="chips-row">
+                    <button className="chip-opt" type="button" disabled={enviando}
+                      onClick={() => setConfirmandoNaoSei(null)}>Vou tentar responder</button>
+                    <button className="chip-opt" type="button" disabled={enviando}
+                      onClick={() => enviar({ conta: atual, escolha: "", naoSei: true })}>Ainda não sei</button>
+                  </div>
+                  <p className="conta-hint">O gestor verá essa pendência. Você poderá voltar e informar o valor quando souber.</p>
                 </div>
               )}
             </>

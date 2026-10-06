@@ -342,6 +342,13 @@ function Resultado({
       </div>
 
       {nome && <p className="analise-arquivo-nome">{nome}</p>}
+      <p className="analise-apoio">
+        Este resultado é uma análise da imagem. A peça não foi encaminhada ao gestor nem incluída
+        em uma campanha. Para pedir a inclusão agora, fale com a equipe pelo WhatsApp.
+      </p>
+      <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener noreferrer">
+        Falar com a equipe no WhatsApp →
+      </a>
 
       <button type="button" className="cta ghost" onClick={aoRecomecar}>
         Analisar outra imagem

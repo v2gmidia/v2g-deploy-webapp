@@ -26,10 +26,19 @@ export default async function ConectarPage({ searchParams }: Props) {
   const mensagemDeErro = erro ? ERROS_DE_CALLBACK[erro] : undefined;
 
   const supabase = await createClient();
-  const { data: conexao } = await supabase
-    .from("meta_connections")
-    .select("status, connected_at, scopes, meta_page_id")
+  const { data: negocio } = await supabase
+    .from("businesses")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1)
     .maybeSingle();
+  const { data: conexao } = negocio
+    ? await supabase
+        .from("meta_connections")
+        .select("status, connected_at, scopes, meta_page_id")
+        .eq("business_id", negocio.id)
+        .maybeSingle()
+    : { data: null };
 
   const jaConectado = conexao?.status === "connected";
 

@@ -1,9 +1,8 @@
 import type { ReactNode } from "react";
 
 /**
- * Os 4 combinados, na ordem do protótipo
- * (`tela-02-expectativas-desktop.html`). Copy e ícones idênticos ao
- * original — esta tela é conteúdo puro, sem dado nenhum do banco.
+ * Quatro informações da jornada atual. A página não registra aceite
+ * contratual nem inicia pagamento; os ícones vêm da bancada antiga.
  */
 export interface Passo {
   titulo: string;
@@ -11,7 +10,6 @@ export interface Passo {
   icone: ReactNode;
   swapLabel: string;
   swapTexto?: string;
-  outlink?: string;
   recibo?: string[];
 }
 
@@ -26,7 +24,7 @@ export const RECIBO_CHECK = Check;
 export const PASSOS: Passo[] = [
   {
     titulo: "A gente não promete um número de vendas.",
-    sub: "Ninguém consegue garantir isso de verdade — nem a agência mais cara da cidade. Quem promete, está chutando com a sua conta.",
+    sub: "O resultado também depende da oferta e do atendimento aos contatos. A V2G não garante vendas nem retorno financeiro.",
     icone: (
       <svg width="28" height="28" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
         <rect x="4.3" y="0" width="1.4" height="2" />
@@ -39,11 +37,11 @@ export const PASSOS: Passo[] = [
     ),
     swapLabel: "Em compensação",
     swapTexto:
-      "Você vê todo dia quanto entrou e quanto voltou, sem esperar relatório de ninguém.",
+      "Quando houver anúncio em veiculação, você acompanha o investimento e os contatos registrados, sem confundir conversa com venda.",
   },
   {
-    titulo: "A gente não coloca um gerente de conta só seu no telefone.",
-    sub: "Isso é coisa de agência premium — e entra na sua conta todo mês, tenha o seu negócio precisado dele ou não.",
+    titulo: "O primeiro anúncio passa por um gestor.",
+    sub: "Na reunião vocês tratam dos acessos e do primeiro criativo. O gestor confere a estrutura digital e publica a primeira campanha manualmente, quando ela estiver pronta.",
     icone: (
       <svg width="28" height="28" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
         <rect x="3.4" y="0.6" width="3.2" height="3.2" />
@@ -53,11 +51,11 @@ export const PASSOS: Passo[] = [
     ),
     swapLabel: "Em compensação",
     swapTexto:
-      "Quem responde é gente de verdade, sem robô: no WhatsApp, em até 2 horas úteis, quantas vezes você precisar.",
+      "Depois de concluir as perguntas, o próximo passo é escolher um horário. A reunião só estará marcada quando a reserva for confirmada.",
   },
   {
-    titulo: "A gente não atende quem investe mais de R$3 mil por mês em anúncio.",
-    sub: "Se o seu negócio já passa disso, o formato certo é outro, com mais controle manual e estratégia dedicada. E a gente prefere dizer isso agora, não depois de passar o cartão.",
+    titulo: "O negócio precisa ter CNPJ e vender pelo WhatsApp.",
+    sub: "Essas duas condições são declaradas antes da compra. O gestor também avalia o Instagram e pode recomendar ajustes de marca e atendimento.",
     icone: (
       <svg width="28" height="28" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
         <rect x="0" y="4.3" width="10" height="1.4" />
@@ -69,12 +67,11 @@ export const PASSOS: Passo[] = [
     ),
     swapLabel: "Em compensação",
     swapTexto:
-      "Se não é o seu caso agora, ótimo — é exatamente pra esse tamanho que a V2G foi pensada.",
-    outlink: "Já invisto mais que isso por mês →",
+      "Um Instagram que precisa melhorar não impede a compra. A avaliação e a orientação acontecem com o gestor.",
   },
   {
-    titulo: "E o que a gente garante, a gente garante.",
-    sub: "Sem fidelidade, sem multa, sem susto na fatura. Você manda — e cancela quando quiser, direto pelo app.",
+    titulo: "A contratação prevê permanência mínima de seis meses.",
+    sub: "A mensalidade é recorrente. As condições de pagamento, desconto por antecipação e cancelamento devem estar no contrato da sua contratação.",
     icone: (
       <svg width="28" height="28" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
         <rect x="2" y="0" width="6" height="1.6" />
@@ -85,12 +82,12 @@ export const PASSOS: Passo[] = [
         <rect x="3.6" y="7.4" width="2.8" height="1.8" />
       </svg>
     ),
-    swapLabel: "Fica combinado assim",
+    swapLabel: "Em resumo",
     recibo: [
-      "Sem número de vendas garantido",
-      "Suporte humano, sem gerente fixo",
-      "Feito pra investimento de até R$3 mil/mês",
-      "Cancela quando quiser, sem multa",
+      "Vendas e retorno não são garantidos",
+      "Primeira campanha publicada pelo gestor após as conferências",
+      "CNPJ e venda pelo WhatsApp são condições da compra",
+      "Permanência mínima de seis meses; consulte o contrato",
     ],
   },
 ];

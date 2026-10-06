@@ -65,8 +65,8 @@ export default async function CriativosPage() {
       <div className="page-head">
         <h1>Criativos</h1>
         <p>
-          O anúncio que as pessoas veem. Aqui você confere uma peça que já tem e vê as suas
-          peças.
+          Aqui você pode conferir uma imagem que já tem. O envio de novos criativos para a
+          revisão do gestor ainda não está disponível nesta aba.
         </p>
       </div>
 
@@ -104,8 +104,7 @@ export default async function CriativosPage() {
         {amostra ? <AmostraDeVereditos qual={amostra} /> : <Analisar podeEnviar={podeEnviar} />}
 
         <p className="analise-rodape">
-          A análise não publica nem altera a sua imagem. Ela continua sua, do jeito que você
-          mandou.
+          A análise não encaminha a peça ao gestor, não publica e não altera a sua imagem.
         </p>
       </section>
 

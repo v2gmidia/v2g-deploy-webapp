@@ -132,12 +132,13 @@ export default async function InicioPage() {
     if (jornada && lerConclusao(jornada.onboarding)) redirect("/onboarding/concluido");
   }
 
-  const { data: ultimaDecisao } = await supabase
+  const { data: ultimaDecisao } = estado.negocioId ? await supabase
     .from("decisions")
     .select("kind, payload, created_at")
+    .eq("business_id", estado.negocioId)
     .order("created_at", { ascending: false })
     .limit(1)
-    .maybeSingle();
+    .maybeSingle() : { data: null };
 
   const diaDaPergunta = diaDeOntemEmSaoPaulo(agora);
 

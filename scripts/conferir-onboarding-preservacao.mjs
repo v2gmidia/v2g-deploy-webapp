@@ -170,6 +170,8 @@ test('entradas inválidas não gravam nem disparam', async () => {
   assert.deepEqual(events,[]);
 });
 test('contas → voltar ao bloco 1 → retomar mantém não sei reaberto e lucro não confirmado', async () => {
+  row.avg_ticket_min = null;
+  row.avg_ticket_max = null;
   row.onboarding.contas = {lucro:documentFixture().contas.lucro};
   assert.equal((await contas.salvarContaAction({conta:'ticket',escolha:'120'})).ok,true);
   assert.equal((await contas.salvarContaAction({conta:'custo',escolha:'',naoSei:true})).ok,true);
@@ -279,4 +281,23 @@ test('jornada de reunião impede envio automático mesmo com cadastro completo',
   assert.equal(marcaDoc.fluxoAguardaReuniao(documentFixture()),true);
   assert.equal(marcaDoc.fluxoAguardaReuniao({...documentFixture(),conclusao:{em:oldTime,proximoPasso:'agendamento_pendente'}}),true);
   assert.equal(marcaDoc.fluxoAguardaReuniao({}),false);
+});
+test('identificador de conta desconhecido não grava nem chama o cadastro', async () => {
+  const before = structuredClone(row);
+  assert.equal((await contas.salvarContaAction({conta:'desconhecida',escolha:'100'})).ok,false);
+  assert.equal((await contas.reabrirContaAction({conta:'desconhecida'})).ok,false);
+  assert.deepEqual(row,before);
+  assert.deepEqual(events,[]);
+});
+test('ação repetida ou antiga não troca uma conta já fechada por não sei', async () => {
+  const before = structuredClone(row);
+  assert.equal((await contas.salvarContaAction({conta:'ticket',escolha:'',naoSei:true})).ok,false);
+  assert.deepEqual(row,before);
+  assert.deepEqual(events,[]);
+
+  delete row.onboarding.contas.custo.reabertoEm;
+  const depois = structuredClone(row);
+  assert.equal((await contas.salvarContaAction({conta:'custo',escolha:'10',confirmando:true})).ok,false);
+  assert.deepEqual(row,depois);
+  assert.deepEqual(events,[]);
 });

@@ -430,19 +430,19 @@ export default async function ContaPage() {
               O que aparece aqui depois
             </b>
             <p className="hint" style={{ marginBottom: 0 }}>
-              Quando sua campanha estiver rodando, esta coluna mostra quanto você paga de um lado
-              e quanto voltou do outro, lado a lado — para o preço nunca aparecer sozinho, sem o
-              resultado ao lado dele.
+              Quando houver campanha em veiculação e dados disponíveis, você poderá acompanhar
+              investimento e contatos registrados. Uma conversa recebida não equivale a uma venda.
             </p>
           </section>
 
           <section className="card">
             <b className="pc-title" style={{ display: "block", marginBottom: 6 }}>
-              Sem fidelidade, sem multa
+              Sobre a contratação
             </b>
             <p className="hint" style={{ marginBottom: 0 }}>
-              Quando você assinar, cancela em 2 toques direto no app, sem ligar para ninguém. Se
-              sair, os anúncios param e a gente guarda seus dados por 90 dias, caso você volte.
+              A permanência mínima definida para novas contratações é de seis meses. O
+              cancelamento pelo aplicativo ainda não está disponível; fale com a equipe pelo
+              canal de atendimento se precisar tratar disso.
             </p>
           </section>
         </aside>

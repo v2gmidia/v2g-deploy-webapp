@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bubble } from "@/components/ui/Bubble";
 import { PASSOS, RECIBO_CHECK as Check } from "./passos";
 
 /**
@@ -11,8 +10,6 @@ import { PASSOS, RECIBO_CHECK as Check } from "./passos";
  */
 export function Combinados() {
   const [i, setI] = useState(0);
-  const [duvidaAberta, setDuvidaAberta] = useState(false);
-  const [selando, setSelando] = useState(false);
 
   // `focar` distingue a primeira renderização (sem foco) das trocas de
   // passo feitas pelo usuário (com foco no título), como no original.
@@ -33,14 +30,6 @@ export function Combinados() {
     setI(n);
   }
 
-  function selar() {
-    if (selando) return;
-    setSelando(true);
-    // O selo carimba e some; daqui seguiria para o pagamento, que ainda
-    // não existe como rota.
-    setTimeout(() => setSelando(false), 900);
-  }
-
   return (
     <section className="auth-card ec-card">
       <div className="ec-top">
@@ -55,7 +44,7 @@ export function Combinados() {
             <path d="M6.5 1.5 2 5l4.5 3.5" stroke="currentColor" strokeWidth="1.6" fill="none" />
           </svg>
         </button>
-        <span className="ec-label">Antes de pagar</span>
+        <span className="ec-label">Como funciona</span>
         <div className="ec-progress">
           <div className="ec-dots" aria-hidden="true">
             {PASSOS.map((_, n) => (
@@ -91,29 +80,10 @@ export function Combinados() {
             )}
           </div>
 
-          {passo.outlink && (
-            <a className="ec-outlink" href="#">
-              {passo.outlink}
-            </a>
-          )}
-
           {ultimo && (
-            <>
-              <button
-                className="ec-doubt"
-                type="button"
-                onClick={() => setDuvidaAberta((v) => !v)}
-                aria-expanded={duvidaAberta}
-              >
-                Ainda com dúvida? Fala com a gente antes de pagar
-              </button>
-              <div className={`ec-doubt-chat${duvidaAberta ? " open" : ""}`}>
-                <Bubble de="ai">
-                  Oi! Sou do suporte da V2G. Pode perguntar o que quiser sobre os combinados
-                  antes de pagar — respondo por aqui mesmo.
-                </Bubble>
-              </div>
-            </>
+            <a className="ec-outlink" href="https://wa.me/5521936182176" target="_blank" rel="noopener noreferrer">
+              Ficou com dúvida? Fale com a equipe pelo WhatsApp →
+            </a>
           )}
         </article>
       </div>
@@ -129,28 +99,7 @@ export function Combinados() {
             Próximo
           </button>
         )}
-        {ultimo && (
-          <button className="cta ec-final" type="button" onClick={selar}>
-            <svg
-              className={`lockicon${selando ? " open" : ""}`}
-              width="15"
-              height="15"
-              viewBox="0 0 10 10"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <rect x="1" y="4" width="8" height="6" />
-              <rect className="shackle-l" x="3" y="1" width="1.4" height="4" />
-              <rect className="shackle-r" x="5.6" y="1" width="1.4" height="4" />
-              <rect className="shackle-t" x="3" y="1" width="4" height="1.4" />
-            </svg>
-            Combinado, vamos pilotar
-          </button>
-        )}
-      </div>
-
-      <div className={`ec-badge${selando ? " show" : ""}`} aria-hidden="true">
-        Combinado ✓
+        {ultimo && <a className="cta ec-final" href="/inicio">Voltar ao início</a>}
       </div>
     </section>
   );

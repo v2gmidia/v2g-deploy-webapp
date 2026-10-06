@@ -10,7 +10,8 @@ export const metadata = tituloDaAba("/expectativas");
  * Tela de conteúdo puro: não lê nem escreve nada no banco. Serve de
  * padrão mínimo de migração — o que muda de uma tela estática para uma
  * rota do app é a troca do JS imperativo por estado de componente. O
- * conteúdo do card é idêntico ao original.
+ * conteúdo foi atualizado para as decisões comerciais de outubro; não
+ * é aceite de contrato nem etapa de pagamento.
  *
  * Vive no grupo `(fluxo)`: exige sessão, mas sem sidebar. O `.solo` do
  * protótipo era proposital ("nada ao lado que dê fuga do texto") e

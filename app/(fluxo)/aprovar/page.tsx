@@ -41,6 +41,13 @@ export default async function AprovarPage() {
   // do `if (!pendente)`: ele responde "de onde este anúncio sai", que vale
   // igual quando não há nada para aprovar. Os DOIS estados o recebem.
   const preVoo = await preVooDoNegocio();
+  const { data: negocio } = await supabase
+    .from("businesses")
+    .select("id")
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (!negocio) return <NadaParaAprovar preVoo={preVoo} />;
 
   // `apenasPecasDeAnuncio` é o que separa a peça que a IA montou da logo
   // que o cliente subiu na /conta — as duas moram em `creatives` e as duas
@@ -52,6 +59,7 @@ export default async function AprovarPage() {
       .from("creatives")
       .select("id, campaign_id, file_name, copy, status, meta_status, created_at"),
   )
+    .eq("business_id", negocio.id)
     .eq("status", "draft")
     .order("created_at", { ascending: false })
     .limit(1)
@@ -65,6 +73,7 @@ export default async function AprovarPage() {
     ? await apenasPecasDeAnuncio(
         supabase.from("creatives").select("id, file_name, meta_status"),
       )
+        .eq("business_id", negocio.id)
         .eq("campaign_id", pendente.campaign_id)
         .eq("status", "rejected")
         .order("created_at", { ascending: false })

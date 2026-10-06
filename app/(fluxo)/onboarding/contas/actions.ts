@@ -18,6 +18,7 @@ import {
 import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import {
+  ORDEM_DAS_CONTAS,
   TICKET_FAIXA,
   custoDaSobra,
   lucroDaPostura,
@@ -199,6 +200,9 @@ export async function carregarContasAction(): Promise<{ erro: string } | EstadoD
 export async function reabrirContaAction(entrada: {
   conta: ChaveDeConta;
 }): Promise<ResultadoDaConta> {
+  if (!ORDEM_DAS_CONTAS.includes(entrada.conta)) {
+    return { ok: false, erro: "Essa conta não existe." };
+  }
   const r = await obterNegocio();
   if ("erro" in r) return { ok: false, erro: r.erro };
 
@@ -272,11 +276,21 @@ export async function salvarContaAction(entrada: {
   /** só na etapa de confirmação: o valor que ele viu na tela */
   confirmando?: boolean;
 }): Promise<ResultadoDaConta> {
+  if (!ORDEM_DAS_CONTAS.includes(entrada.conta)) {
+    return { ok: false, erro: "Essa conta não existe." };
+  }
   const r = await obterNegocio();
   if ("erro" in r) return { ok: false, erro: r.erro };
 
   const { linha, userId } = r;
   const estado = montarEstado(linha);
+  // A interface só envia a conta aberta, mas uma Server Action antiga ou
+  // chamada direta pode tentar sobrescrever uma conta já fechada. Correções
+  // de valor confirmado passam por /meu-negocio; "não sei" exige reabrir.
+  const leitura = estado.leituras[entrada.conta];
+  if (leitura.estado === "respondida" || leitura.estado === "nao_sei") {
+    return { ok: false, erro: "Esta conta já foi respondida. Reabra a pergunta ou corrija em Meu Negócio." };
+  }
   const contas = { ...estado.contas };
   const agora = new Date().toISOString();
   const campos: CampoParaGravar[] = [];

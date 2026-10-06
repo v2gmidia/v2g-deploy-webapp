@@ -340,7 +340,8 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
 
   const [{ data: conexao }, { data: criativos }, { data: campanhas }, execucao] =
     await Promise.all([
-    supabase.from("meta_connections").select("status").maybeSingle(),
+    supabase.from("meta_connections").select("status")
+      .eq("business_id", linha.id).maybeSingle(),
     // O `is("arquivado_em", null)` fica NO SQL, e não some para o
     // predicado: as três contagens abaixo (foto de identidade, logo
     // vigente, peça de campanha) dependem dele, não só a de peça.
@@ -360,6 +361,7 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
       .select(
         "id, name, meta_status, created_at, published_at, publish_state, ativada_em, ativada_por, pausada_em, pausada_por",
       )
+      .eq("business_id", linha.id)
       .order("created_at", { ascending: false }),
     // A ÚNICA leitura fora da RLS, e ela entra AQUI dentro de propósito.
     //

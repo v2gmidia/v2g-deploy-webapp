@@ -22,21 +22,31 @@ export const metadata = tituloDaAba("/alertas");
  */
 export default async function AlertasPage() {
   const supabase = await createClient();
+  const estado = await estadoDoCliente(new Date());
 
-  // RLS já limita ao negócio do usuário logado — não é preciso filtrar
-  // por business_id aqui (ver private.owns_business na migration 0001).
-  const { data: pendentes } = await supabase
-    .from("decisions")
-    .select("id, kind, payload, created_at")
-    .eq("needs_review", true)
-    .order("created_at", { ascending: false });
+  // A RLS limita aos negócios do perfil, mas um perfil pode ter mais de
+  // um. A tela precisa acompanhar o mesmo negócio do restante do app.
+  const { data: pendentes, error: erroPendentes } = estado.negocioId
+    ? await supabase
+        .from("decisions")
+        .select("id, kind, payload, created_at")
+        .eq("business_id", estado.negocioId)
+        .eq("needs_review", true)
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
 
-  const { data: registradas } = await supabase
-    .from("decisions")
-    .select("id, kind, payload, created_at")
-    .eq("needs_review", false)
-    .order("created_at", { ascending: false })
-    .limit(10);
+  const { data: registradas, error: erroRegistradas } = estado.negocioId
+    ? await supabase
+        .from("decisions")
+        .select("id, kind, payload, created_at")
+        .eq("business_id", estado.negocioId)
+        .eq("needs_review", false)
+        .order("created_at", { ascending: false })
+        .limit(10)
+    : { data: [], error: null };
+
+  if (erroPendentes) console.error("[alertas] falha ao ler pendências ::", erroPendentes.message);
+  if (erroRegistradas) console.error("[alertas] falha ao ler registros ::", erroRegistradas.message);
 
   // ============================================================
   // "NADA PENDENTE" TEM DOIS SIGNIFICADOS, E A FONTE ESTAVA VAZIA.
@@ -54,7 +64,6 @@ export default async function AlertasPage() {
   //
   // Agora vem de `estado.veiculacao` — a fonte única. Item B3.
   // ============================================================
-  const estado = await estadoDoCliente(new Date());
   const veiculacao = estado.veiculacao;
   const temCampanha = esteveNoAr(veiculacao);
   const temPendencia = (pendentes?.length ?? 0) > 0;
@@ -78,7 +87,7 @@ export default async function AlertasPage() {
         <h1>Avisos</h1>
         <p>
           Farol, não sirene. Primeiro o que precisa de você — com um botão só pra resolver.
-          Depois, a prestação de contas do que a IA fez sozinha.
+          Depois, o registro das decisões que já foram tomadas.
         </p>
       </div>
 
@@ -94,7 +103,11 @@ export default async function AlertasPage() {
               )}
             </div>
 
-            {temPendencia ? (
+            {erroPendentes ? (
+              <div className="card">
+                <p className="form-error">Não conseguimos carregar seus avisos agora. Tente novamente em instantes.</p>
+              </div>
+            ) : temPendencia ? (
               <div className="dash-main">
                 {pendentes!.map((d) => (
                   <article className="alert-card warn" key={d.id}>
@@ -110,9 +123,7 @@ export default async function AlertasPage() {
                 <span className="badge">Nada pendente</span>
                 <h3>Tudo em dia por aqui.</h3>
                 <p>
-                  Quando algo precisar de você — uma foto que falta, uma escolha entre dois
-                  anúncios, uma cobrança que não passou — aparece nesta tela e também chega no
-                  seu WhatsApp.
+                  Quando houver um aviso registrado para este negócio, ele aparece nesta tela.
                 </p>
                 {/* A frase do ar vem do módulo; o que esta tela acrescenta
                     é o que ELA sabe — que não há aviso pendente. Repare que
@@ -135,10 +146,14 @@ export default async function AlertasPage() {
           <section>
             <div className="section-title">
               <h2>Só pra você saber</h2>
-              <span className="st-note">O que a IA fez sozinha. Nada aqui pede ação sua.</span>
+              <span className="st-note">Registros que não pedem ação sua.</span>
             </div>
 
-            {temRegistro ? (
+            {erroRegistradas ? (
+              <div className="card">
+                <p className="form-error">Não conseguimos carregar o histórico agora. Tente novamente em instantes.</p>
+              </div>
+            ) : temRegistro ? (
               <div className="card">
                 {registradas!.map((d) => (
                   <div className="log-row" key={d.id}>
@@ -150,8 +165,8 @@ export default async function AlertasPage() {
               <div className="card">
                 <p className="hint" style={{ marginBottom: 0 }}>
                   {temCampanha
-                    ? "A IA ainda não fez nenhum ajuste nesta campanha. Quando fizer — mudar o investimento de um anúncio para outro, pausar o que não está rendendo — vira uma linha aqui, com o motivo em português."
-                    : "A IA ainda não tomou nenhuma decisão, porque ainda não há campanha para ajustar. Quando houver, cada ajuste que ela fizer sozinha vira uma linha aqui, com o motivo em português."}
+                    ? "Ainda não há decisões registradas para este negócio. Quando houver, você poderá consultá-las aqui."
+                    : "Ainda não há decisões registradas para este negócio. A primeira campanha será preparada e publicada pelo gestor após a reunião e as conferências necessárias."}
                 </p>
               </div>
             )}
@@ -161,22 +176,20 @@ export default async function AlertasPage() {
         <aside className="dash-aside">
           <section className="card">
             <b className="pc-title" style={{ display: "block", marginBottom: 6 }}>
-              Também no seu WhatsApp
+              Atendimento pelo WhatsApp
             </b>
             <p className="hint">
-              Você escolhe quais avisos saem do app e chegam no seu WhatsApp. Um deles é fixo e
-              não dá para desligar: campanha parada por pagamento — é dinheiro parado.
+              Se precisar tratar de uma pendência com a equipe, use o canal de atendimento abaixo.
             </p>
             <p className="foot-line">
-              A escolha em si ainda não está no app: falta onde guardar essa preferência. Por
-              enquanto, todos os avisos importantes vão para o WhatsApp que você cadastrou.
+              O envio automático de avisos pelo WhatsApp ainda não está disponível.
             </p>
           </section>
 
           <section className="trust support-block">
             <b className="title">Fala com gente de verdade</b>
             Dúvida de cobrança, de resultado ou de saída: é a mesma pessoa que responde.
-            WhatsApp, resposta em até 2 horas úteis, sem robô e sem menu de atendimento.
+            Você pode falar com a equipe pelo WhatsApp.
             <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
               Chamar no WhatsApp &rarr;
             </a>

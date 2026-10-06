@@ -70,13 +70,16 @@ export default async function AnunciosPage() {
   // enquadramento, não o fato — ver docs/estado-do-cliente.md §3.
   const estado = await estadoDoCliente(new Date());
 
-  const { data: criativos } = await supabase
-    .from("creatives")
-    // `COLUNAS_DO_JULGAMENTO` traz `uso, status, arquivado_em` — sem
-    // `arquivado_em` no select, o `foiReprovada` lá embaixo vira regra
-    // inerte em silêncio.
-    .select(`id, campaign_id, file_name, ${COLUNAS_DO_JULGAMENTO}`)
-    .order("created_at", { ascending: false });
+  const { data: criativos } = estado.negocioId
+    ? await supabase
+        .from("creatives")
+        // `COLUNAS_DO_JULGAMENTO` traz `uso, status, arquivado_em` — sem
+        // `arquivado_em` no select, o `foiReprovada` lá embaixo vira regra
+        // inerte em silêncio.
+        .select(`id, campaign_id, file_name, ${COLUNAS_DO_JULGAMENTO}`)
+        .eq("business_id", estado.negocioId)
+        .order("created_at", { ascending: false })
+    : { data: [] };
 
   const pecas = criativos ?? [];
 
