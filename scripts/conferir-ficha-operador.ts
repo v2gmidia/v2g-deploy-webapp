@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { camposDaFicha, valorDaFicha, pracaOriginal, coberturaDaConsulta, LIMITE_FICHAS } from "../lib/perfil/ficha-operador.ts";
+import { camposDaFicha, valorDaFicha, pracaOriginal, marcaOriginal, coberturaDaConsulta, LIMITE_FICHAS } from "../lib/perfil/ficha-operador.ts";
 
 test("ausência não vira zero e false permanece informação", () => {
   assert.equal(valorDaFicha(null), "Não informado");
@@ -71,4 +71,28 @@ test("praça nova vazia ou nula não ressuscita a legada", () => {
       "3": { texto: "Antiga", origem: "texto" }, praca,
     } } }), null);
   }
+});
+test("descrição visual aparece literalmente com origem e horário do cliente", () => {
+  assert.deepEqual(marcaOriginal({ onboarding: { respostas: { nome: "Preservada" }, marca: {
+    aparencia: "Azul escuro e fotos dos produtos", aparenciaNaoSei: false,
+    siteNaoTenho: true, em: "2026-10-05T17:00:00Z", segredo: "não renderizar",
+  } } }), {
+    texto: "Azul escuro e fotos dos produtos", origem: "Descrição informada pelo cliente",
+    siteNaoTenho: true, em: "2026-10-05T17:00:00Z",
+  });
+});
+test("não sei permanece explícito e não vira cor presumida", () => {
+  assert.deepEqual(marcaOriginal({ onboarding: { marca: {
+    aparencia: "verde", aparenciaNaoSei: true, siteNaoTenho: false,
+    em: "2026-10-05T17:00:00Z",
+  } } }), {
+    texto: "Cliente ainda não sabe como descrever o visual da marca",
+    origem: "Estado “não sei” informado pelo cliente", siteNaoTenho: false,
+    em: "2026-10-05T17:00:00Z",
+  });
+});
+test("marca ausente ou sem carimbo não inventa resposta", () => {
+  assert.equal(marcaOriginal({}), null);
+  assert.equal(marcaOriginal({ onboarding: { marca: { aparencia: "azul" } } }), null);
+  assert.equal(marcaOriginal({ onboarding: { marca: [] } }), null);
 });

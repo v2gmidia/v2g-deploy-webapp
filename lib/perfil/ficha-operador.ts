@@ -47,6 +47,23 @@ export function pracaOriginal(linha: Record<string, unknown>) {
   };
 }
 
+/** Resposta literal do bloco da marca, sem tratá-la como paleta confirmada. */
+export function marcaOriginal(linha: Record<string, unknown>) {
+  const marca = objeto(objeto(linha.onboarding).marca);
+  const em = typeof marca.em === "string" && marca.em.trim() ? marca.em : null;
+  if (!em) return null;
+  const naoSei = marca.aparenciaNaoSei === true;
+  const texto = typeof marca.aparencia === "string" ? marca.aparencia.trim() : "";
+  return {
+    texto: naoSei ? "Cliente ainda não sabe como descrever o visual da marca"
+      : texto || "Nenhuma descrição visual registrada",
+    origem: naoSei ? "Estado “não sei” informado pelo cliente"
+      : texto ? "Descrição informada pelo cliente" : "Resposta sem descrição reconhecida",
+    siteNaoTenho: marca.siteNaoTenho === true,
+    em,
+  };
+}
+
 export function valorDaFicha(valor: unknown): string {
   if (valor === null || valor === undefined || valor === "") return "Não informado";
   if (typeof valor === "boolean") return valor ? "Sim" : "Não";

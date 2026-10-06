@@ -8,8 +8,11 @@ export default async function OnboardingConcluidoPage() {
       <p className="auth-sub">{estado.erro}</p>
       <a className="cta" href="/onboarding/marca">Voltar</a>
     </> : !estado.concluido ? <>
-      <h1 className="auth-h">Falta guardar o visual da sua marca.</h1>
-      <a className="cta" href="/onboarding/marca">Continuar</a>
+      <h1 className="auth-h">Seu onboarding ainda não terminou.</h1>
+      <p className="auth-sub">Suas respostas já dadas continuam guardadas.</p>
+      {estado.faltamBasicas.length ? <a className="cta" href="/onboarding">Continuar perguntas do negócio</a> :
+        !estado.contasProntas ? <a className="cta" href="/onboarding/contas">Continuar contas</a> :
+        <a className="cta" href="/onboarding/marca">Conferir visual da marca</a>}
     </> : <>
       <p className="mission-tag">Sua primeira missão · passo 3 de 3</p>
       <h1 className="auth-h">Suas respostas estão guardadas</h1>

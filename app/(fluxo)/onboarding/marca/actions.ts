@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
 import { lerConta, ticketEscalar, type RespostaDeConta } from "@/lib/cadastro/montar";
 import { documento, lerConclusao, lerMarca, type RespostasDaMarca } from "@/lib/onboarding/marca";
+import { faltamRespostasBasicas, respostasBasicas, type PerguntaBasica } from "@/lib/onboarding/bloco-um";
 
 interface Linha {
   id: string;
@@ -23,6 +24,8 @@ export interface EstadoMarca {
   marca: RespostasDaMarca | null;
   concluido: boolean;
   contasProntas: boolean;
+  respostasBasicas: ReturnType<typeof respostasBasicas>;
+  faltamBasicas: PerguntaBasica[];
 }
 
 export interface ResultadoMarca {
@@ -48,18 +51,22 @@ async function obter(): Promise<{ erro: string } | { linha: Linha; profileId: st
 
 function estado(linha: Linha): EstadoMarca {
   const doc = documento(linha.onboarding);
+  const faltamBasicas = faltamRespostasBasicas(doc);
   const contas = (doc.contas ?? {}) as Partial<Record<"ticket" | "custo" | "lucro", RespostaDeConta>>;
   const numero = (v: number | null) => v === null ? null : Number(v);
+  const contasProntas = (
+    [lerConta(ticketEscalar(numero(linha.avg_ticket_min), numero(linha.avg_ticket_max)), contas.ticket),
+     lerConta(numero(linha.avg_direct_cost), contas.custo),
+     lerConta(numero(linha.target_profit_per_customer), contas.lucro)]
+  ).every((leitura) => leitura.estado === "respondida" || leitura.estado === "nao_sei");
   return {
     site: linha.site_url ?? "",
     instagram: linha.instagram_handle ?? "",
     marca: lerMarca(doc),
-    concluido: lerConclusao(doc) !== null,
-    contasProntas: (
-      [lerConta(ticketEscalar(numero(linha.avg_ticket_min), numero(linha.avg_ticket_max)), contas.ticket),
-       lerConta(numero(linha.avg_direct_cost), contas.custo),
-       lerConta(numero(linha.target_profit_per_customer), contas.lucro)]
-    ).every((leitura) => leitura.estado === "respondida" || leitura.estado === "nao_sei"),
+    concluido: lerConclusao(doc) !== null && faltamBasicas.length === 0 && contasProntas,
+    respostasBasicas: respostasBasicas(doc),
+    faltamBasicas,
+    contasProntas,
   };
 }
 
@@ -93,6 +100,7 @@ export async function salvarMarcaAction(entrada: {
   const r = await obter();
   if ("erro" in r) return { ok: false, erro: r.erro };
   const anterior = estado(r.linha);
+  if (anterior.faltamBasicas.length) return { ok: false, erro: "Termine as perguntas sobre seu negócio antes de concluir." };
   if (!anterior.contasProntas) return { ok: false, erro: "Termine suas contas antes de continuar." };
   if (anterior.concluido) return { ok: true, estado: anterior };
 

@@ -22,6 +22,12 @@ em vez de escolher sozinhas. Removam a linha quando a decisão for registrada
 na seção de baixo.
 -->
 
+- [ ] **Preço exato da mensalidade até dezembro:** Victor indicou R$ 500 como referência e cogitou R$ 499; pediu uma recomendação entre os dois. A periodicidade mensal foi confirmada. Faltam o número exato, eventual taxa inicial, permanência e condições contratuais. Mostrar o preço na LP foi autorizado quando a oferta estiver definida. — 06/10/2026
+- [ ] **Mensagem da oferta tecnológica:** Victor quer vender a tecnologia e espera reduzir erros operacionais. “A máquina não erra” foi uma expectativa expressa na conversa, sem medição que sustente promessa pública de erro zero. Definir benefícios demonstráveis e limites antes de usar essa frase em LP ou checkout. — 06/10/2026
+- [ ] **Como comprovar a qualificação antes do checkout:** CNPJ e venda por WhatsApp continuam travas. Instagram fraco deixa de impedir a compra, inclusive nos primeiros 50 clientes. Falta definir a conferência do CNPJ e da venda por WhatsApp nos caminhos direto e assistido. O gestor avalia o Instagram depois da compra, antes da reunião de acessos; faltam o registro do diagnóstico e a forma de avisar o cliente, sem prometer campanha pronta quando houver pendência. — 06/10/2026
+- [ ] **Operação da agenda:** a janela é de cinco dias úteis, com reuniões de segunda a sexta, das 10h às 18h, e acompanhamento até o cliente marcar. Falta definir antecedência mínima, canal e cadência do acompanhamento sem reserva, e o que fazer se não houver vaga nesses cinco dias. — 06/10/2026
+- [ ] **Agenda e avisos:** confirmar se Google Calendar será o provedor da reserva ou só o destino do convite; quem administra a agenda compartilhada, como combinar disponibilidade de gestores, canais por lembrete, política de remarcação/cancelamento e atendimento automático no WhatsApp. — 06/10/2026
+
 - [ ] **O card só pergunta sobre ONTEM — dia pulado é dia perdido.** Medido
       em 01/09: `diaDeOntemEmSaoPaulo` é fixo, e o componente recebe UM dia.
       Se o dono ficar três dias sem abrir o app, os dias 1 e 2 nunca são
@@ -61,6 +67,21 @@ na seção de baixo.
 ---
 
 ## Decididas
+
+### 2026-10-06 — Instagram fraco não bloqueia a compra; atendimento das 10h às 18h
+**Correção direta do Victor.** O negócio pode comprar pelo self-service ou com o time de vendas mesmo que seu Instagram esteja fraco. Esta decisão substitui a trava de Instagram registrada mais abaixo para os primeiros 50 clientes: a V2G aceita o risco de orientar o cliente após a compra para viabilizar a entrada inicial. Antes da reunião de acessos, o gestor dedica cerca de dez minutos ao diagnóstico da presença digital. Se a estrutura estiver fraca, comunica o problema e orienta o cliente; no caminho assistido, o vendedor também pode antecipar o aviso. Isso não converte diagnóstico em campanha pronta nem autoriza afirmar resultado. CNPJ e venda por WhatsApp continuam requisitos para comprar. Reuniões em dias úteis, das 10h às 18h, no horário de São Paulo.
+
+### 2026-10-06 — Mensalidade, janela de cinco dias úteis e análise prévia do Instagram
+**Esclarecimentos diretos do Victor.** A cobrança da oferta é mensal; o valor exato permanece em aberto. O cliente pode escolher reunião nos cinco dias úteis seguintes, sem sábados e domingos. Se não marcar, a V2G continua o acompanhamento até a marcação; isso não autoriza declarar uma reserva inexistente nem envio de mensagens sem definir canal e cadência. Antes da reunião em que recolhe os acessos, o gestor dedica cerca de dez minutos para olhar a presença digital e decide se o Instagram está minimamente apresentado. A consequência dessa avaliação foi esclarecida na decisão mais nova acima.
+
+### 2026-10-06 — Entrada: dois caminhos, qualificação antes de pagar e acesso só após pagamento
+**Decisão direta do Victor, com a restrição de Instagram substituída acima.** Haverá compra direta e fechamento assistido. Ambos passam pela qualificação antes da compra; o WebApp é liberado somente depois de pagamento confirmado. Sem CNPJ ou sem venda por WhatsApp, o interessado não pode comprar nesta fase. Victor inicialmente restringiu a carteira de até 50 clientes a negócios com Instagram bem estruturado; a decisão mais nova acima retirou essa trava. Branding e processo comercial forte caracterizam o perfil ideal. Processo comercial ainda fraco não é veto automático: pode receber orientação consultiva. A prova de CNPJ e o mecanismo de liberação ainda precisam de contrato operacional. A venda direta não deve ser exposta sem aplicar as mesmas travas do atendimento humano.
+
+### 2026-10-06 — Onboarding e reunião: não sei aceito, equipe compartilha disponibilidade
+**Decisão direta do Victor.** O cliente pode concluir o questionário com “não sei”; antes de aceitar essa resposta, a pergunta deve ajudá-lo a estimar ou pensar de outra forma, sem forçar chute. O gestor vê todas as lacunas e as aprofunda na reunião. Os horários vêm da disponibilidade compartilhada da equipe. O cliente escolhe um horário e recebe o nome do gestor designado; no começo haverá um gestor, com rodízio automático quando a equipe crescer. Duração pretendida de 25 minutos; só dias úteis. Enviar convite de calendário com link de reunião e avisos por e-mail e WhatsApp. Lembretes pretendidos: um dia, duas horas, 30 minutos e cinco minutos antes. Cliente deve poder remarcar e cancelar sozinho; atendimento automatizado no WhatsApp é uma alternativa futura. Limite da janela e regras técnicas constam em aberto acima.
+
+### 2026-10-06 — Primeira campanha e criativos posteriores continuam com o gestor
+**Decisão direta do Victor.** O mesmo gestor que trata acessos na reunião prepara e publica manualmente a primeira campanha. Depois, o cliente envia novo criativo pela aba do WebApp; o gestor recebe uma pendência, analisa, publica manualmente e o cliente é avisado após confirmação. A publicação direta pelo cliente é direção futura, dependente da aprovação e dos controles necessários; não está liberada nesta fase.
 
 ### 2026-10-05 — Onboarding termina com reunião pendente; primeiro criativo e campanha são conduzidos pelo gestor
 **Decisão direta do Victor nesta entrega.** Ao concluir as respostas, o próximo passo do cliente é escolher data e horário da reunião com o gestor. Os acessos e o primeiro criativo são tratados na reunião; o gestor publica a primeira campanha manualmente. A conclusão do questionário não marca reunião, pagamento ou campanha no ar. Google Calendar é preferência, mas provedor e origem dos horários continuam em aberto. O WebApp guarda `onboarding.conclusao.proximoPasso = agendamento_pendente` e retém o disparo automático do pipeline desta jornada até existir um estado de reunião confirmado. Contrato proposto em [`estado/onboarding-reuniao-05-10.md`](./estado/onboarding-reuniao-05-10.md).

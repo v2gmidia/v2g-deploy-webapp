@@ -57,13 +57,13 @@ export const PERGUNTAS: Pergunta[] = [
   {
     id: "inicio",
     texto:
-      "Oi! Sou a IA da V2G. Vou te fazer só algumas perguntas rápidas pra montar sua campanha do jeito certo. Bora?",
+      "Oi! Vamos conhecer seu negócio para preparar a conversa com o gestor. São só algumas perguntas rápidas. Bora?",
     opcoes: [{ echo: "Bora começar", rotulo: "Bora começar" }],
   },
   {
     id: "nome",
     contador: "Pergunta 1 de 4",
-    texto: "Como se chama o seu negócio? É esse nome que vai aparecer no anúncio.",
+    texto: "Como se chama o seu negócio? Vamos usar esse nome para identificar suas respostas.",
     opcoes: [],
     soTexto: true,
     fallbackLabel: "O nome do seu negócio",
@@ -115,7 +115,7 @@ export const PERGUNTAS: Pergunta[] = [
     id: "descricao",
     contador: "Pergunta 3 de 4",
     texto:
-      "Me conta com suas palavras o que você vende ou faz. Pode ser uma frase — é isso que a IA usa pra escrever seu anúncio.",
+      "Me conta com suas palavras o que você vende ou faz. Pode ser uma frase — isso ajuda o gestor a entender sua oferta.",
     opcoes: [],
     soTexto: true,
     fallbackLabel: "O que você vende ou faz",

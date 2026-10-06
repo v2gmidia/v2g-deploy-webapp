@@ -182,7 +182,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
               <p className="hero-phrase">
                 {atual === "custo"
                   ? `Então cada venda de ${dinheiro(estado.ticket ?? 0, "BRL")} te custa uns ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} pra entregar, e sobram ${dinheiro((estado.ticket ?? 0) - (aConfirmar.calculado ?? 0), "BRL")}.`
-                  : `Então ficam ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} com você a cada venda, e a IA pode gastar até ${dinheiro((estado.margem ?? 0) - (aConfirmar.calculado ?? 0), "BRL")} pra trazer esse cliente.`}
+                  : `Então ficam ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} com você a cada venda. Essa conta ajuda o gestor a avaliar a verba antes de preparar a campanha.`}
               </p>
 
               {ajustando === atual ? (

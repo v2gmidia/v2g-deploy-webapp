@@ -13,6 +13,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
   const [naoSei, setNaoSei] = useState(inicial.marca?.aparenciaNaoSei ?? false);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
 
   async function salvar() {
     if (enviando) return;
@@ -32,7 +33,15 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
     <p className="mission-tag">Sua primeira missão · passo 2 de 3</p>
     <h1 className="auth-h">O visual da sua marca</h1>
     <p className="auth-sub">O que você contar fica guardado para a conversa com o gestor. A logo e o primeiro criativo serão tratados nessa reunião.</p>
-    {!estado.contasProntas ? <p className="form-warning">Termine suas contas antes desta etapa. <a href="/onboarding/contas">Voltar às contas</a></p> :
+    <section className="pendencia-bloco">
+      <b>Confira o que você já contou</b>
+      {Object.entries(estado.respostasBasicas).map(([chave, resposta]) =>
+        <p key={chave}><strong>{rotulos[chave as keyof typeof rotulos]}:</strong> {resposta.echo}</p>
+      )}
+      <p><a href="/onboarding">Rever as perguntas do negócio</a> · <a href="/onboarding/contas">Rever as contas</a></p>
+    </section>
+    {estado.faltamBasicas.length ? <p className="form-warning">Faltam respostas sobre seu negócio: {estado.faltamBasicas.map((chave) => rotulos[chave]).join(", ")}. <a href="/onboarding">Continuar perguntas</a></p> :
+    !estado.contasProntas ? <p className="form-warning">Termine suas contas antes desta etapa. <a href="/onboarding/contas">Voltar às contas</a></p> :
       estado.concluido ? <>
         <p className="form-notice">Esta etapa está guardada.</p>
         <a className="cta" href="/onboarding/concluido">Ver o próximo passo</a>

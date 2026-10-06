@@ -12,6 +12,7 @@ const allowed = new Set([
   'app/(fluxo)/onboarding/actions.ts', 'app/(fluxo)/onboarding/perguntas.ts',
   'app/(fluxo)/onboarding/contas/actions.ts', 'app/(fluxo)/onboarding/contas/regras.ts',
   'app/(fluxo)/onboarding/marca/actions.ts', 'lib/onboarding/marca.ts',
+  'lib/onboarding/bloco-um.ts',
   'lib/onboarding/documento.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
   'lib/formato.ts', 'lib/verba/limites.ts', 'lib/nichos/escolha.ts',
   'lib/nichos/busca.ts', 'lib/nichos/tipos.ts',
@@ -51,7 +52,8 @@ const { comRespostasDoBlocoUm } = await import('../lib/onboarding/documento.ts')
 const oldTime = '2026-09-01T00:00:00.000Z';
 const resposta = texto => ({texto, echo:texto, origem:'texto', em:oldTime});
 const documentFixture = () => ({
-  versao:9, passo:2, respostas:{nome:resposta('Antes'), ramo:resposta('Serviços')},
+  versao:9, passo:2, respostas:{nome:resposta('Antes'), ramo:resposta('Serviços'),
+    descricao:resposta('Descrição completa do negócio'), praca:resposta('Na cidade toda')},
   contas:{
     ticket:{echo:'100', calculado:100, confirmado:true, em:oldTime},
     custo:{echo:'Não sei', calculado:null, confirmado:false, naoSei:true, em:oldTime, reabertoEm:'2026-09-02T00:00:00.000Z'},
@@ -203,6 +205,39 @@ test('marca exige contas fechadas e resposta visual explícita', async () => {
   contasProntas();
   assert.equal((await marca.salvarMarcaAction({...entradaMarca(),aparencia:''})).ok,false);
   assert.deepEqual(events,[]);
+});
+test('não conclui se faltar uma resposta básica, mesmo com as contas prontas', async () => {
+  contasProntas();
+  delete row.onboarding.respostas.descricao;
+  const before = structuredClone(row);
+  const result = await marca.salvarMarcaAction(entradaMarca());
+  assert.equal(result.ok,false);
+  assert.deepEqual(row,before);
+  assert.deepEqual(events,[]);
+  const estado = await marca.carregarMarcaAction();
+  assert.deepEqual(estado.faltamBasicas,['descricao']);
+});
+test('conclusão antiga não mascara pergunta básica ausente na retomada', async () => {
+  contasProntas();
+  delete row.onboarding.respostas.nome;
+  row.onboarding.conclusao = {em:oldTime,proximoPasso:'agendamento_pendente'};
+  const estado = await marca.carregarMarcaAction();
+  assert.equal(estado.concluido,false);
+  assert.deepEqual(estado.faltamBasicas,['nome']);
+  assert.deepEqual(events,[]);
+});
+test('respostas legadas de ramo e praça contam sem apagar o histórico', async () => {
+  contasProntas();
+  row.onboarding.respostas['1'] = row.onboarding.respostas.ramo;
+  row.onboarding.respostas['3'] = row.onboarding.respostas.praca;
+  delete row.onboarding.respostas.ramo;
+  delete row.onboarding.respostas.praca;
+  const before = structuredClone(row.onboarding.respostas);
+  const result = await marca.salvarMarcaAction(entradaMarca());
+  assert.equal(result.ok,true);
+  assert.deepEqual(row.onboarding.respostas,before);
+  assert.equal(result.estado.respostasBasicas.ramo.texto,'Serviços');
+  assert.equal(result.estado.respostasBasicas.praca.texto,'Na cidade toda');
 });
 test('marca retoma e preserva respostas, contas, procedência e blocos futuros', async () => {
   contasProntas(); const before = structuredClone(row.onboarding);

@@ -28,6 +28,7 @@ export function Chat({ inicial, nichos }: ChatProps) {
   const [respostas, setRespostas] = useState(inicial);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [editando, setEditando] = useState<string | null>(null);
 
   const [cidade, setCidade] = useState("");
   const [textoAberto, setTextoAberto] = useState(false);
@@ -38,8 +39,9 @@ export function Chat({ inicial, nichos }: ChatProps) {
   const campoCidade = useRef<HTMLInputElement>(null);
 
   const respondidas = ORDEM.filter((id) => respostas[id]);
-  const atual = proximaPergunta(respondidas);
-  const concluido = atual === null;
+  const proxima = proximaPergunta(respondidas);
+  const atual = editando ? PERGUNTAS.find((p) => p.id === editando) ?? proxima : proxima;
+  const concluido = proxima === null;
 
   // Numa pergunta sem chip o campo é a única resposta possível: ele nasce
   // aberto, e não atrás de um "ou digite sua resposta" que só teria uma
@@ -102,6 +104,7 @@ export function Chat({ inicial, nichos }: ChatProps) {
     }
 
     setRespostas(resultado.estado.respostas);
+    setEditando(null);
     setTexto("");
     setTextoAberto(false);
     setCidade("");
@@ -265,12 +268,26 @@ export function Chat({ inicial, nichos }: ChatProps) {
                 </>
               )}
 
-              {resposta && <Bubble de="user">{resposta.echo}</Bubble>}
+              {resposta && <>
+                <Bubble de="user">{resposta.echo}</Bubble>
+                {p.id !== "inicio" && (editando === p.id ?
+                  <button className="text-fallback" type="button" disabled={enviando} onClick={() => {
+                    setEditando(null); setTexto(""); setCidade(""); setTextoAberto(false); setErro(null);
+                  }}>Cancelar correção</button> :
+                  <button className="text-fallback" type="button" disabled={enviando || editando !== null} onClick={() => {
+                    setEditando(p.id);
+                    setTexto(resposta.texto);
+                    setCidade(resposta.cidade ?? "");
+                    setTextoAberto(resposta.origem === "texto");
+                    setErro(null);
+                  }}>Corrigir resposta</button>
+                )}
+              </>}
             </div>
           );
         })}
 
-        {concluido && (
+        {concluido && !editando && (
           <Bubble de="ai">
             Boa. Agora faltam três contas rápidas sobre o seu dinheiro — e se você não
             souber alguma, tudo bem, a gente resolve numa conversa.
@@ -278,7 +295,7 @@ export function Chat({ inicial, nichos }: ChatProps) {
         )}
       </div>
 
-      {concluido && (
+      {concluido && !editando && (
         <>
           {/* NÃO HÁ CONFETE AQUI, e a ausência é a decisão. O bloco 1 não
               termina o passo 1: as contas do bloco 2 são a outra metade de
