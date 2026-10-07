@@ -4,6 +4,7 @@ import { listarContasDeAnuncio, listarPaginas } from "@/lib/meta/graph";
 import { diagnosticar, registrarErroMeta } from "@/lib/meta/erros";
 import { FormularioEscolha } from "./Formulario";
 import { tituloDaAba } from "@/lib/titulos";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 export const metadata = tituloDaAba("/conectar/escolher");
 
@@ -25,15 +26,8 @@ export default async function EscolherPage() {
   } = await supabase.auth.getUser();
   if (!user) return <Aviso titulo="Sua sessão expirou." texto="Entre de novo para continuar." />;
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (!business) {
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") {
     return (
       <Aviso
         titulo="Não encontramos seu negócio."
@@ -45,7 +39,7 @@ export default async function EscolherPage() {
 
   const admin = createAdminClient();
   const { data: token, error: erroToken } = await admin.rpc("obter_token_meta", {
-    p_business_id: business.id,
+    p_business_id: ativo.negocio.id,
   });
 
   if (erroToken || !token) {
@@ -74,7 +68,7 @@ export default async function EscolherPage() {
       // faixa de reconexão aparecer nas outras telas, e não tenta de
       // novo: no Meta um erro 190 não volta a funcionar sozinho.
       await admin.rpc("marcar_conexao_meta_quebrada", {
-        p_business_id: business.id,
+        p_business_id: ativo.negocio.id,
         p_status: diagnostico.motivo,
         p_erro: diagnostico.mensagem ?? null,
       });
@@ -149,15 +143,15 @@ export default async function EscolherPage() {
           rodar e de qual página eles saem.
         </p>
 
-        <FormularioEscolha contas={contas} paginas={paginas} />
+        <FormularioEscolha contas={contas} paginas={paginas} businessId={ativo.negocio.id} />
       </main>
 
       <aside className="auth-aside">
         <section className="proof-card">
-          <b className="title">Dá para mudar depois</b>
+          <b className="title">Confira antes de confirmar</b>
           <p>
-            Se escolher a conta errada, é só conectar de novo e escolher outra. Nada fica
-            travado, e nenhum anúncio sobe antes de você aprovar.
+            Cada conta escolhida ocupa uma unidade contratada. Se precisar trocar uma conta
+            depois, fale com a equipe. A primeira campanha é preparada e publicada pelo gestor.
           </p>
         </section>
       </aside>
@@ -229,7 +223,7 @@ function BecoSemSaida({
           Falar com uma pessoa agora
         </a>
         <p className="card-note" style={{ marginTop: 12 }}>
-          Resposta em até 2 horas úteis, sem robô. A gente resolve isso junto com você — é o
+          A equipe pode ajudar pelo WhatsApp. A gente resolve isso junto com você — é o
           passo que mais trava gente, e ninguém precisa passar por ele sozinho.
         </p>
       </main>

@@ -256,7 +256,7 @@ secao("6. A CAMADA DE CIMA: a Server Action engole até o que ESTOURA");
   // e o módulo não carregar aqui, isso é limitação DESTE arranque — não
   // defeito do produto. Uma exceção não tratada aqui derrubaria a suíte
   // inteira e faria parecer que a ação está quebrada.
-  let acao: ((e: { dia: string }) => Promise<void>) | null = null;
+  let acao: ((e: { dia: string; businessId: string }) => Promise<void>) | null = null;
   try {
     ({ registrarPerguntaApresentadaAction: acao } = await import(
       "../app/(protected)/inicio/actions.ts"
@@ -300,7 +300,7 @@ secao("6. A CAMADA DE CIMA: a Server Action engole até o que ESTOURA");
     let estourou = false;
     let devolveu: unknown = "não chegou a devolver";
     try {
-      devolveu = await registrarPerguntaApresentadaAction({ dia: "2026-09-02" });
+      devolveu = await registrarPerguntaApresentadaAction({ dia: "2026-09-02", businessId: "teste" });
     } catch {
       estourou = true;
     }
@@ -312,7 +312,7 @@ secao("6. A CAMADA DE CIMA: a Server Action engole até o que ESTOURA");
     // janela devolve sem tocar em sessão, banco ou rede.
     let estourouNoFuturo = false;
     try {
-      await registrarPerguntaApresentadaAction({ dia: "2099-01-01" });
+      await registrarPerguntaApresentadaAction({ dia: "2099-01-01", businessId: "teste" });
     } catch {
       estourouNoFuturo = true;
     }

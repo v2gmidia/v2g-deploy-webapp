@@ -7,7 +7,7 @@ import { DIAS, PISO_MENSAL_DA_CASA } from "@/lib/verba/limites";
 
 const inicial: VerbaActionState = {};
 
-export function FormVerba({ atual }: { atual: number | null }) {
+export function FormVerba({ atual, businessId }: { atual: number | null; businessId: string }) {
   const [estado, action, pendente] = useActionState(definirVerbaAction, inicial);
   const [rascunho, setRascunho] = useState(atual !== null ? String(atual) : "");
 
@@ -20,6 +20,7 @@ export function FormVerba({ atual }: { atual: number | null }) {
 
   return (
     <form action={action} className="card form-card">
+      <input type="hidden" name="businessId" value={businessId} />
       {estado.erro && <p className="form-error">{estado.erro}</p>}
       {estado.ok && <p className="form-notice">{estado.ok}</p>}
 

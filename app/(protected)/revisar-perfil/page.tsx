@@ -135,6 +135,7 @@ export default async function QuemEstaEsperandoPage() {
     <div className="canvas">
       <div className="page-head">
         <h1>Quem está esperando</h1>
+        <a href="/pedidos">Ver pedidos assistidos</a>
         <p>
           Negócios com cadastro incompleto. Ordenados pela espera mais longa — o topo é quem
           disse &quot;não sei&quot; há mais tempo e ainda não recebeu ligação.

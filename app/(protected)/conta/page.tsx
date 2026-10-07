@@ -9,6 +9,7 @@ import { listarIdentidade } from "@/lib/identidade/armazenar";
 import { SeletorDeTema } from "./SeletorDeTema";
 import { signOutAction } from "../actions";
 import { tituloDaAba } from "@/lib/titulos";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 export const metadata = tituloDaAba("/conta");
 
@@ -27,16 +28,12 @@ export const metadata = tituloDaAba("/conta");
  * procedência, e um campo que mente sobre a própria origem desarma a trava da
  * 0013.
  *
- * Estado vazio: tudo que depende de assinatura — plano, forma de
- * pagamento, recibos, "já voltou R$ 3,40 por real investido", os 23
- * dias no ar, pausar e cancelar. Não existe tabela de assinatura nem
- * integração de pagamento no projeto; o protótipo mostrava R$ 490/mês e
- * um cartão final 4242, que são dados inventados. Aqui a tela diz que
- * ainda não há assinatura e o que vai aparecer quando houver.
+ * A seção comercial lê o pedido real do negócio selecionado. Aprovação
+ * manual de comprovante não prova liquidação bancária nem recorrência.
+ * Pausa e cancelamento não têm ação self-service implementada.
  *
- * A porta de saída (cancelar) continua visível e no mesmo peso das
- * outras linhas, como no original — só desabilitada, porque não há o
- * que cancelar. Escondê-la seria mudar a intenção da tela.
+ * A porta de saída continua visível e leva ao atendimento existente.
+ * O aplicativo ainda não executa cancelamento nem pausa automaticamente.
  */
 export default async function ContaPage() {
   const supabase = await createClient();
@@ -51,13 +48,24 @@ export default async function ContaPage() {
     .eq("id", user.id)
     .maybeSingle();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id, name")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const ativo = await negocioAtivoDaSessao();
+  const business = ativo.status === "selecionado"
+    ? (await supabase.from("businesses").select("id, name")
+      .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle()).data
+    : null;
+
+  const consultaPedidos = business ? await supabase.from("commercial_orders")
+    .select("id, status, billing_period, unit_count, total_cents, payment_method")
+    .eq("business_id", business.id).eq("buyer_profile_id", user.id)
+    .order("created_at", { ascending: false }).limit(100) : null;
+  const pedidos = consultaPedidos?.data ?? [];
+  const pedidoIlegivel = !!consultaPedidos?.error;
+  const aprovados = pedidos.filter((pedido) => pedido.status === "payment_approved");
+  const consultaContratos = aprovados.length ? await supabase.from("contract_documents")
+    .select("order_id, status").in("order_id", aprovados.map((pedido) => pedido.id)) : null;
+  const contratoIlegivel = !!consultaContratos?.error;
+  const assinados = new Set((consultaContratos?.data ?? [])
+    .filter((contrato) => contrato.status === "signed").map((contrato) => contrato.order_id));
 
   // Logo e fotos do negócio. Uma consulta e uma assinatura de URLs em
   // lote — o bucket é privado, então nada é servido por URL pública.
@@ -176,10 +184,9 @@ export default async function ContaPage() {
   return (
     <div className="conta-editorial">
       <div className="page-head">
-        <h1>Sua conta, sem letra miúda.</h1>
+        <h1>Sua conta</h1>
         <p>
-          Tudo que você paga, recebe e pode mudar — num só lugar. O preço mora ao lado do que ele
-          já trouxe de volta, e a porta de saída fica na mesma lista de todo o resto.
+          Seus dados, o negócio selecionado e o que já está registrado sobre a contratação.
         </p>
       </div>
 
@@ -188,19 +195,21 @@ export default async function ContaPage() {
           <section>
             <div className="section-title">
               <h2>Seu plano</h2>
-              <span className="side-note">Nenhuma cobrança até aqui</span>
+              <span className="side-note">Por negócio</span>
             </div>
             <div className="card">
-              <p className="hint">
-                Você ainda não tem assinatura ativa, então não há nada a pagar e nenhuma cobrança
-                foi feita. Quando você assinar, aparecem aqui: o valor, a data da próxima
-                cobrança, a forma de pagamento e todos os recibos, no mesmo dia em que cada
-                cobrança acontecer.
-              </p>
-              <p className="foot-line">
-                V2G é mês a mês. Você decide quando entra e quando sai — sempre por aqui, sem
-                ligar para ninguém.
-              </p>
+              {pedidoIlegivel ? <p className="hint">Não conseguimos consultar os pedidos agora. Tente novamente.</p>
+                : pedidos.length ? <>
+                  {pedidos.map((pedido) => <p className="hint" key={pedido.id}>
+                    {pedido.status === "payment_approved" ? "Pedido aprovado pela equipe. "
+                      : pedido.status === "proof_received" ? "Comprovante recebido; aprovação pendente. "
+                        : pedido.status === "cancelled" ? "Pedido cancelado. "
+                          : "Pedido aguardando pagamento ou análise. "}
+                    {pedido.unit_count} {pedido.unit_count === 1 ? "conta de anúncio" : "contas de anúncio"} · {pedido.billing_period === "annual_upfront" ? "anual à vista" : "mensal"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}.
+                  </p>)}
+                  {pedidos.length === 100 && <p className="foot-line">Mostrando os 100 pedidos mais recentes deste negócio.</p>}
+                  <p className="foot-line">Estes registros não informam próxima cobrança, recibo nem liquidação bancária.</p>
+                </> : <p className="hint">Não há pedido vinculado a este negócio nesta conta. Se contratou com outro e-mail, fale com a equipe para conferir.</p>}
             </div>
           </section>
 
@@ -265,7 +274,7 @@ export default async function ContaPage() {
                     chama a gente.
                   </p>
                 ) : (
-                  <Identidade logo={identidade.logo} fotos={identidade.fotos} />
+                  <Identidade businessId={business.id} logo={identidade.logo} fotos={identidade.fotos} />
                 )}
               </div>
             </section>
@@ -294,12 +303,12 @@ export default async function ContaPage() {
               </div>
             </section>
           ) : (
-            paginas.length > 0 && (
+            business && paginas.length > 0 && (
               <section>
                 <div className="section-title">
                   <h2>De qual página seus anúncios saem</h2>
                 </div>
-                <TrocarPagina paginas={paginas} atual={paginaAtual} />
+                <TrocarPagina paginas={paginas} atual={paginaAtual} businessId={business.id} />
               </section>
             )
           )}
@@ -361,8 +370,7 @@ export default async function ContaPage() {
             </div>
             <div className="conta-atendimento-texto">
               <p>
-                Dúvida de cobrança, de resultado ou de saída: é a mesma pessoa que responde. WhatsApp,
-                resposta em até 2 horas úteis, sem robô e sem menu de atendimento.
+                Para dúvidas sobre cobrança, resultados ou saída, fale com a equipe pelo WhatsApp.
               </p>
               <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
                 Chamar no WhatsApp &rarr;
@@ -372,27 +380,26 @@ export default async function ContaPage() {
 
           <section>
             <div className="section-title">
-              <h2>Sua assinatura</h2>
+              <h2>Contrato e atendimento</h2>
             </div>
             <div className="card acct-list">
-              <button className="acct-row" type="button" disabled>
+              <p className="hint">
+                {pedidoIlegivel ? "Não conseguimos consultar os pedidos para conferir a assinatura agora."
+                  : !pedidos.length ? "Não há pedido vinculado para consultar um contrato."
+                  : contratoIlegivel ? "Não conseguimos conferir a assinatura agora."
+                    : !aprovados.length ? "Os pedidos deste negócio ainda não foram aprovados para assinatura."
+                      : `${assinados.size} de ${aprovados.length} pedido(s) aprovado(s) entre os exibidos com assinatura registrada. Cada conta só pode ter campanha publicada quando o pedido correspondente estiver assinado.`}
+              </p>
+              <a className="acct-row" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
                 <span className="ar-text">
-                  <b>Pausar os anúncios</b>
-                  <span>Disponível quando houver campanha no ar.</span>
+                  <b>Falar sobre pausa ou cancelamento</b>
+                  <span>A equipe atende pelo WhatsApp. O pedido não é executado automaticamente.</span>
                 </span>
                 <Seta />
-              </button>
-              <button className="acct-row" type="button" disabled>
-                <span className="ar-text">
-                  <b>Cancelar assinatura</b>
-                  <span>Disponível quando houver assinatura ativa. Serão 2 toques, sem ligação.</span>
-                </span>
-                <Seta />
-              </button>
+              </a>
             </div>
             <p className="foot-line">
-              Estas duas ficam aqui desde já, no mesmo peso do resto, para você saber onde
-              procurar no dia em que precisar.
+              A campanha só pode ser publicada depois das conferências e da assinatura concluída.
             </p>
           </section>
 

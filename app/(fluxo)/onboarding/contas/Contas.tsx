@@ -63,11 +63,11 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       ? contas[atual]!
       : null;
 
-  async function enviar(entrada: Parameters<typeof salvarContaAction>[0]) {
+  async function enviar(entrada: Omit<Parameters<typeof salvarContaAction>[0], "businessId">) {
     if (enviando) return;
     setEnviando(true);
     setErro(null);
-    const r = await salvarContaAction(entrada);
+    const r = await salvarContaAction({ ...entrada, businessId: estado.businessId });
     setEnviando(false);
     if (!r.ok || !r.estado) {
       setErro(r.erro ?? "Não conseguimos salvar.");
@@ -83,7 +83,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     if (enviando) return;
     setEnviando(true);
     setErro(null);
-    const r = await reabrirContaAction({ conta });
+    const r = await reabrirContaAction({ conta, businessId: estado.businessId });
     setEnviando(false);
     if (!r.ok || !r.estado) {
       setErro(r.erro ?? "Não conseguimos abrir a pergunta.");

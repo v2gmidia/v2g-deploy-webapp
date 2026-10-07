@@ -264,8 +264,9 @@ export function TelaDoInicio({
   const cabePerguntarSobreOntem = esteveNoAr(estado.veiculacao);
 
   const cardDaPergunta =
-    cabePerguntarSobreOntem && execucaoDoDia !== null ? (
+    cabePerguntarSobreOntem && execucaoDoDia !== null && estado.negocioId ? (
       <PerguntaDoDia
+        businessId={estado.negocioId}
         idExecucao={execucaoDoDia.idExecucao}
         dia={diaDaPergunta}
         vendasAtuais={vendasDeOntem}
@@ -913,7 +914,7 @@ function Comando({ verba, investido }: { verba: number | null; investido: number
       <a className="cta quiet" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
         Falar com uma pessoa
       </a>
-      <p className="note">Gente de verdade, sem robô. Resposta em até 2 horas úteis.</p>
+      <p className="note">Fale com a equipe pelo WhatsApp.</p>
     </section>
   );
 }
@@ -932,7 +933,7 @@ function Suporte() {
   return (
     <section className="trust support-block">
       <b className="title">Travou em alguma parte?</b>
-      Gente de verdade responde, sem robô, em até 2 horas úteis.
+      Fale com a equipe pelo WhatsApp se precisar de ajuda.
       <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
         Chamar no WhatsApp &rarr;
       </a>

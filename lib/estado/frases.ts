@@ -622,10 +622,10 @@ function etapaPeca(m: MedidaDoCliente, agora: Date): Etapa {
       nome: "A peça do seu anúncio",
       titulo: "A gente está devendo o seu primeiro anúncio",
       // A SEGUNDA FRASE VEIO DA `/processando`, e é a única coisa que
-      // aquela tela tinha e esta variante não. Para um cliente de R$490/mês
+      // aquela tela tinha e esta variante não. Para um cliente pagante
       // que ficou dois dias sem anúncio, "não te cobramos por isso" é a
       // primeira pergunta, não a segunda.
-      corpo: `Seu cadastro chegou aqui${quando ? ` em ${quando}` : ""} e a gente ainda não te mandou nenhuma peça para aprovar. Já passou do tempo, e isso é nosso — não é nada que você deixou de fazer. Nada foi cobrado e nenhum anúncio foi ao ar: a montagem parou antes de qualquer anúncio existir. Se quiser puxar agora, é só chamar.`,
+      corpo: `Seu cadastro chegou aqui${quando ? ` em ${quando}` : ""} e a gente ainda não te mandou nenhuma peça para aprovar. Já passou do tempo, e isso é nosso — não é nada que você deixou de fazer. Nenhum anúncio foi ao ar: a montagem parou antes de qualquer anúncio existir. Se quiser puxar agora, é só chamar.`,
       acao: { rotulo: "Falar com a gente", href: WHATSAPP_PECA },
       desde: desdeORelogio ?? undefined,
       admitindo: true,

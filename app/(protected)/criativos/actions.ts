@@ -38,6 +38,9 @@ export async function analisarPecaAction(dados: FormData): Promise<ResultadoDaAn
   }
 
   const estado = await estadoDoCliente(new Date()).catch(() => null);
+  if (!estado?.negocioId || dados.get("businessId") !== estado.negocioId) {
+    return { ok: false, recado: "O negócio selecionado mudou. Atualize esta página antes de enviar." };
+  }
   const idExecucao = estado?.diaSeguinte.execucao?.idExecucao ?? null;
 
   if (!idExecucao) {

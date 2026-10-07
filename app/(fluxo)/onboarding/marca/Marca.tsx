@@ -21,7 +21,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
     setEnviando(true);
     setErro(null);
     try {
-      const r = await salvarMarcaAction({ site, siteNaoTenho: semSite, instagram, aparencia, aparenciaNaoSei: naoSei });
+      const r = await salvarMarcaAction({ businessId: estado.businessId, site, siteNaoTenho: semSite, instagram, aparencia, aparenciaNaoSei: naoSei });
       if (!r.ok) setErro(r.erro ?? "Não conseguimos salvar esta etapa.");
       else if (r.estado) setEstado(r.estado);
       else window.location.href = "/onboarding/concluido";

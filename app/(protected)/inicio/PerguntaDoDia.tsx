@@ -114,6 +114,7 @@ interface PerguntaDoDiaProps {
    * caminho que aceita id vindo do cliente é o que não existe.
    */
   idExecucao: string;
+  businessId: string;
 }
 
 export function PerguntaDoDia({
@@ -124,6 +125,7 @@ export function PerguntaDoDia({
   atrasados,
   valoresPorDia,
   idExecucao,
+  businessId,
 }: PerguntaDoDiaProps) {
   const doDia = (d: string) =>
     d === dia
@@ -229,8 +231,8 @@ export function PerguntaDoDia({
     // tudo do lado do servidor; o `catch` aqui cobre a falha de TRANSPORTE
     // da própria Server Action — rede caída no meio do POST do Next, que
     // rejeita antes de o código de lá rodar.
-    void registrarPerguntaApresentadaAction({ dia: respondendo }).catch(() => {});
-  }, [idExecucao, respondendo, temPerguntaEmAberto]);
+    void registrarPerguntaApresentadaAction({ dia: respondendo, businessId }).catch(() => {});
+  }, [idExecucao, businessId, respondendo, temPerguntaEmAberto]);
 
   async function enviar(naoSei: "vendas" | "receita" | null) {
     if (enviando) return;
@@ -241,6 +243,7 @@ export function PerguntaDoDia({
     // sei" (apaga de propósito). A distinção é o que impede o botão de
     // virar "não mexi" e o abrir-e-salvar de virar apagamento.
     const resultado = await responderPerguntaDoDiaAction({
+      businessId,
       dia: respondendo,
       vendas: naoSei === "vendas" ? null : vendasDoQueFoiDigitado(vendas) ?? undefined,
       receitaCentavos: naoSei === "receita" ? null : (receitaCentavos ?? undefined),

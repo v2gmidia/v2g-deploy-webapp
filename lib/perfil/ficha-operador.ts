@@ -64,6 +64,28 @@ export function marcaOriginal(linha: Record<string, unknown>) {
   };
 }
 
+/** Histórico das três contas; os valores atuais continuam nas colunas da ficha. */
+export function contasOriginais(linha: Record<string, unknown>) {
+  const contas = objeto(objeto(linha.onboarding).contas);
+  const rotulos = [
+    ["ticket", "Ticket médio"], ["custo", "Custo por venda"],
+    ["lucro", "Lucro desejado por venda"],
+  ] as const;
+  return rotulos.flatMap(([chave, rotulo]) => {
+    const resposta = objeto(contas[chave]);
+    const em = typeof resposta.em === "string" && resposta.em.trim() ? resposta.em : null;
+    if (!em) return [];
+    const reabertoEm = typeof resposta.reabertoEm === "string" && resposta.reabertoEm.trim()
+      ? resposta.reabertoEm : null;
+    return [{
+      chave, rotulo, em, reabertoEm,
+      texto: resposta.naoSei === true ? "Cliente respondeu que não sabia nesta etapa"
+        : resposta.confirmado === true ? "Cliente confirmou um valor nesta etapa"
+          : "Resposta desta etapa ainda sem confirmação reconhecida",
+    }];
+  });
+}
+
 export function valorDaFicha(valor: unknown): string {
   if (valor === null || valor === undefined || valor === "") return "Não informado";
   if (typeof valor === "boolean") return valor ? "Sim" : "Não";

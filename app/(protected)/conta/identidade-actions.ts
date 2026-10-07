@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { arquivarImagem, guardarImagem } from "@/lib/identidade/armazenar";
 import type { UsoDeIdentidade } from "@/lib/identidade/regras";
 import { TEXTO_DA_DECLARACAO } from "./declaracao";
@@ -19,30 +19,18 @@ export interface IdentidadeState {
  * verdade: um id que chega pelo corpo é um id que quem chama escolheu, e
  * abaixo dele roda o cliente admin, que ignora RLS.
  */
-async function negocioDaSessao(): Promise<string | null> {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  return data?.id ?? null;
+async function negocioDaSessao(esperado: string): Promise<string | null> {
+  const ativo = await negocioAtivoDaSessao();
+  return ativo.status === "selecionado" && ativo.negocio.id === esperado
+    ? ativo.negocio.id : null;
 }
 
 export async function enviarImagemAction(
   _prev: IdentidadeState,
   formData: FormData,
 ): Promise<IdentidadeState> {
-  const businessId = await negocioDaSessao();
-  if (!businessId) return { erro: "Sua sessão expirou. Entre de novo." };
+  const businessId = await negocioDaSessao(String(formData.get("businessId") ?? ""));
+  if (!businessId) return { erro: "Sua sessão ou o negócio selecionado mudou. Recarregue a página." };
 
   const uso = String(formData.get("uso") ?? "");
   if (uso !== "logo" && uso !== "identidade") return { erro: "Não entendi o pedido." };
@@ -75,8 +63,8 @@ export async function removerImagemAction(
   _prev: IdentidadeState,
   formData: FormData,
 ): Promise<IdentidadeState> {
-  const businessId = await negocioDaSessao();
-  if (!businessId) return { erro: "Sua sessão expirou. Entre de novo." };
+  const businessId = await negocioDaSessao(String(formData.get("businessId") ?? ""));
+  if (!businessId) return { erro: "Sua sessão ou o negócio selecionado mudou. Recarregue a página." };
 
   const id = String(formData.get("id") ?? "");
   if (!id) return { erro: "Não entendi qual imagem remover." };

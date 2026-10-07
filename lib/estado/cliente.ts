@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { lerCarimbos } from "@/lib/campanha/carimbos";
 import {
   COLUNAS_DO_CADASTRO,
@@ -308,6 +309,9 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   } = await supabase.auth.getUser();
   if (!user) return vazio(agora);
 
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return vazio(agora);
+
   const { data: negocio, error } = await supabase
     .from("businesses")
     // `COLUNAS_DO_CADASTRO` + as duas que dizem desde quando a bola é
@@ -317,9 +321,8 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
     // `cadastro_estado` saiu daqui em 25/08: entrou no `COLUNAS_DO_CADASTRO`,
     // porque a trava do piso passou a lê-lo. Repetir daria coluna duplicada.
     .select(`${COLUNAS_DO_CADASTRO}, cadastro_iniciado_em`)
+    .eq("id", ativo.negocio.id)
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
     .maybeSingle();
 
   if (error) {

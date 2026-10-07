@@ -2,15 +2,20 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { temAcessoWebApp } from "../lib/contratacao/acesso.ts";
 
-function cliente({ legado = false, pedido = false, negocioProprio = true, falha = false } = {}) {
+function cliente({ legado = false, pedido = false, negocioProprio = true, falha = false,
+  emailDaCompra = "cliente@exemplo.com" } = {}) {
   const consultas = [];
   return {
     consultas,
     from(tabela) {
       consultas.push(tabela);
+      let emailConsultado = null;
       const query = {
         select: () => query,
-        eq: () => query,
+        eq: (coluna, valor) => {
+          if (tabela === "commercial_orders" && coluna === "buyer_email") emailConsultado = valor;
+          return query;
+        },
         in: () => query,
         not: () => query,
         limit: () => query,
@@ -21,7 +26,7 @@ function cliente({ legado = false, pedido = false, negocioProprio = true, falha 
           error: falha ? { message: "indisponivel" } : null,
         }),
         then: (resolve) => resolve({
-          data: pedido ? [{ business_id: "b1" }] : [],
+          data: pedido && emailConsultado === emailDaCompra ? [{ business_id: "b1" }] : [],
           error: falha ? { message: "indisponivel" } : null,
         }),
       };
@@ -46,6 +51,9 @@ test("compra aprovada libera somente e-mail confirmado", async () => {
   assert.equal(await temAcessoWebApp(cliente({ pedido: true, negocioProprio: false }), usuario), false);
   assert.equal(await temAcessoWebApp(cliente({ pedido: true }), {
     ...usuario, email_confirmed_at: undefined,
+  }), false);
+  assert.equal(await temAcessoWebApp(cliente({ pedido: true }), {
+    ...usuario, email: "outro@exemplo.com",
   }), false);
 });
 

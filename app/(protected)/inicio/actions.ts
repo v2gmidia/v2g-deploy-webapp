@@ -17,6 +17,7 @@ import {
 } from "@/lib/dia-seguinte/dias-em-aberto";
 import { PERGUNTA_GRAVADA } from "@/lib/dia-seguinte/pergunta";
 import { montarRespostaDoDono } from "@/lib/dia-seguinte/resposta";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * A resposta da pergunta diária.
@@ -53,6 +54,7 @@ function diaDaPergunta(): string {
 }
 
 export async function responderPerguntaDoDiaAction(entrada: {
+  businessId: string;
   /**
    * `undefined` = não mexeu neste campo. `null` = disse "não sei".
    *
@@ -74,14 +76,17 @@ export async function responderPerguntaDoDiaAction(entrada: {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, erro: "Sua sessão expirou. Entre de novo." };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado" || entrada.businessId !== ativo.negocio.id) {
+    return { ok: false, erro: "O negócio selecionado mudou. Atualize esta página antes de responder." };
+  }
 
   // Sob RLS: é isto que garante que o negócio é dele.
   const { data: negocio } = await supabase
     .from("businesses")
     .select("id")
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
+    .eq("id", ativo.negocio.id)
     .maybeSingle();
 
   if (!negocio) return { ok: false, erro: "Não encontramos seu negócio." };
@@ -210,6 +215,7 @@ export async function responderPerguntaDoDiaAction(entrada: {
  * ============================================================
  */
 export async function registrarPerguntaApresentadaAction(entrada: {
+  businessId: string;
   dia: string;
 }): Promise<void> {
   try {
@@ -220,13 +226,14 @@ export async function registrarPerguntaApresentadaAction(entrada: {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) return;
+    const ativo = await negocioAtivoDaSessao();
+    if (ativo.status !== "selecionado" || entrada.businessId !== ativo.negocio.id) return;
 
     const { data: negocio } = await supabase
       .from("businesses")
       .select("id")
       .eq("profile_id", user.id)
-      .order("created_at", { ascending: true })
-      .limit(1)
+      .eq("id", ativo.negocio.id)
       .maybeSingle();
     if (!negocio) return;
 

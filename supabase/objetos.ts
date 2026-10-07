@@ -430,4 +430,56 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "a migration entrou no ledger do projeto como pedido_pago_exige_negocio_20261006",
     ],
   },
+  {
+    arquivo: "0029_pix_assistido.sql",
+    cria: [
+      { tipo: "coluna", tabela: "commercial_orders", nome: "proof_reference" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "proof_received_at" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "proof_received_by" },
+      { tipo: "rpc", nome: "registrar_pedido_pix_assistido" },
+      { tipo: "rpc", nome: "registrar_comprovante_pix" },
+      { tipo: "rpc", nome: "aprovar_pix_assistido" },
+    ],
+    foraDoAlcance: [
+      "checks e índice de pedido Pix aberto, que não aparecem no OpenAPI",
+      "corpo transacional das funções e grants exclusivos de service_role",
+      "o estado do ledger remoto, que tem nomes diferentes dos arquivos locais",
+    ],
+  },
+  {
+    arquivo: "0030_vincular_conta_comprada.sql",
+    cria: [{ tipo: "rpc", nome: "registrar_conta_contratada" }],
+    foraDoAlcance: [
+      "grants que impedem a escrita direta em ad_accounts por anon e authenticated",
+      "vinculo atomico entre a conta escolhida e a unidade de pedido aprovado",
+      "corpo e grant da RPC restrita a service_role; ledger remoto vincular_conta_comprada_20261007",
+    ],
+  },
+  {
+    arquivo: "0031_mesclar_blocos_onboarding.sql",
+    cria: [{ tipo: "rpc", nome: "mesclar_blocos_onboarding" }],
+    foraDoAlcance: [
+      "merge atomico no JSON atual do banco, conferido separadamente por teste SQL com rollback",
+      "security invoker, verificacao de profile_id e grant exclusivo de authenticated",
+      "ledger remoto mesclar_blocos_onboarding_20261007",
+    ],
+  },
+  {
+    arquivo: "0032_mesclar_respostas_por_chave.sql",
+    cria: [{ tipo: "rpc", nome: "mesclar_blocos_onboarding" }],
+    foraDoAlcance: [
+      "corpo da RPC: merge por pergunta/conta, lock de negócio e migração das chaves antigas 0, 1 e 3",
+      "o objeto existia na 0031; só teste de comportamento ou ledger distingue as versões",
+      "ledger remoto mesclar_respostas_por_chave_20261007",
+    ],
+  },
+  {
+    arquivo: "0033_unidade_aprovada_com_pedido_pendente.sql",
+    cria: [{ tipo: "rpc", nome: "registrar_conta_contratada" }],
+    foraDoAlcance: [
+      "corpo da RPC: unidade aprovada livre continua utilizavel com outra compra pendente",
+      "a ausencia de unidade aprovada continua bloqueando a conta nova",
+      "ledger remoto unidade_aprovada_com_pedido_pendente_20261007",
+    ],
+  },
 ];

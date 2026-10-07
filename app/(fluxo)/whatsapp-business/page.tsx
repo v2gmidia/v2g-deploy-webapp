@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { tituloDaAba } from "@/lib/titulos";
 
 export const metadata = tituloDaAba("/whatsapp-business");
@@ -29,16 +29,8 @@ export const metadata = tituloDaAba("/whatsapp-business");
  * fez nada errado, o app dele é o normal.
  */
 export default async function WhatsAppBusinessPage() {
-  const supabase = await createClient();
-
-  const { data: negocio } = await supabase
-    .from("businesses")
-    .select("name")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  const nome = negocio?.name?.trim();
+  const ativo = await negocioAtivoDaSessao();
+  const nome = ativo.status === "selecionado" ? ativo.negocio.name.trim() : undefined;
 
   return (
     <div className="auth-grid solo">
@@ -145,4 +137,3 @@ export default async function WhatsAppBusinessPage() {
     </div>
   );
 }
-

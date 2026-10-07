@@ -4,6 +4,7 @@ import { raioValido } from "@/lib/meta/geo";
 import { cidadeParaTela, estadoDoAlcance } from "@/lib/verba/alcance";
 import { FormVerba } from "./FormVerba";
 import { tituloDaAba } from "@/lib/titulos";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 export const metadata = tituloDaAba("/verba");
 
@@ -26,13 +27,13 @@ export const metadata = tituloDaAba("/verba");
  */
 export default async function VerbaPage() {
   const supabase = await createClient();
+  const ativo = await negocioAtivoDaSessao();
 
-  const { data: negocio } = await supabase
-    .from("businesses")
-    .select("id, name, city, cep, radius_km, monthly_budget, geo_lat, geo_key, geo_label, geo_resolved_at")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const { data: negocio } = ativo.status === "selecionado"
+    ? await supabase.from("businesses")
+      .select("id, name, city, cep, radius_km, monthly_budget, geo_lat, geo_key, geo_label, geo_resolved_at")
+      .eq("id", ativo.negocio.id).maybeSingle()
+    : { data: null };
 
   // Só para saber se ALGUÉM chegou a ter uma página para consultar. Sem
   // isso, "a página está sem endereço" é dedução sobre um dado que nunca
@@ -78,7 +79,7 @@ export default async function VerbaPage() {
         </p>
       </section>
 
-      <FormVerba atual={teto} />
+      <FormVerba atual={teto} businessId={negocio?.id ?? ""} />
 
       <AlcanceReal negocio={negocio ?? null} temPagina={Boolean(conexao?.meta_page_id)} />
 

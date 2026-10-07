@@ -2,7 +2,8 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { preVooPorNegocio, type PreVoo } from "@/lib/campanha/pre-voo";
 import { validarOrcamento } from "@/lib/meta/orcamento";
-import { bloqueioContratualDaCampanha } from "@/lib/contratacao/trava-campanha";
+import { bloqueioContaContratada, bloqueioContratualDaCampanha,
+  pedidosAptosParaCampanha } from "@/lib/contratacao/trava-campanha";
 
 /**
  * A TRAVA DE IDENTIDADE DA ATIVAÇÃO DE CAMPANHA.
@@ -298,7 +299,7 @@ export async function conferirAntesDeAtivar(
   // ---------- 3. o cliente, escopado pelo negócio da execução ----------
   const { data: negocio } = await admin
     .from("businesses")
-    .select("id, name, monthly_budget")
+    .select("id, name, monthly_budget, created_at")
     .eq("id", negocioId)
     .maybeSingle();
 
@@ -332,7 +333,46 @@ export async function conferirAntesDeAtivar(
     if (erroContratos || !contratos) {
       bloqueios.push({ motivo: "contrato", texto: "Não consegui conferir as assinaturas desta empresa agora." });
     } else {
-      const motivo = bloqueioContratualDaCampanha(pedidos, contratos);
+      const aptos = pedidosAptosParaCampanha(pedidos, contratos);
+      if (!aptos.length) {
+        const motivo = bloqueioContratualDaCampanha(pedidos, contratos, negocio.created_at, null);
+        bloqueios.push({ motivo: "contrato", texto: motivo ?? "Não há pedido apto para esta campanha." });
+      }
+      else {
+        const { data: unidades, error: erroUnidades } = await admin
+          .from("commercial_order_units")
+          .select("ad_account_id")
+          .in("order_id", aptos.map((pedido) => pedido.id))
+          .not("ad_account_id", "is", null);
+        if (erroUnidades || !unidades?.length) {
+          bloqueios.push({ motivo: "contrato", texto: "Não consegui confirmar a unidade contratada desta campanha." });
+        } else {
+          const { data: contas, error: erroContas } = await admin
+            .from("ad_accounts")
+            .select("external_id")
+            .eq("business_id", negocioId)
+            .in("id", unidades.map((unidade) => unidade.ad_account_id));
+          if (erroContas || !contas) {
+            bloqueios.push({ motivo: "contrato", texto: "Não consegui conferir a conta contratada desta campanha." });
+          } else {
+            const motivoConta = bloqueioContaContratada(meta ? texto(meta.id_conta_anuncio) : null, contas);
+            if (motivoConta) bloqueios.push({ motivo: "contrato", texto: motivoConta });
+          }
+        }
+      }
+    }
+  } else {
+    // Ausência de pedido não prova que o negócio é legado. O marco foi
+    // persistido quando a trava de pagamento entrou em vigor.
+    const { data: legado, error: erroLegado } = await admin
+      .from("webapp_legacy_access")
+      .select("granted_at")
+      .order("granted_at", { ascending: true })
+      .limit(1).maybeSingle();
+    if (erroLegado) {
+      bloqueios.push({ motivo: "contrato", texto: "Não consegui conferir o acesso legado desta empresa agora." });
+    } else {
+      const motivo = bloqueioContratualDaCampanha([], [], negocio.created_at, legado?.granted_at ?? null);
       if (motivo) bloqueios.push({ motivo: "contrato", texto: motivo });
     }
   }

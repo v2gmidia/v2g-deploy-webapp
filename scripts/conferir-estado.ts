@@ -531,17 +531,17 @@ secao("12. O RELÓGIO CONTA DO ÚLTIMO MOVIMENTO — os dois lados");
   }
 }
 
-secao("13. a frase que veio da /processando — o dinheiro");
+secao("13. atraso da peça sem afirmação de cobrança");
 {
   const m = base();
   m.execucao = execucao("cadastro_completo", T0.toISOString());
   const p = proximo(m, maisDias(DIAS_ATE_ADMITIR_PECA))!;
   ok(
-    p.corpo.includes("Nada foi cobrado"),
-    "quando a gente admite a dívida, a tela diz que NADA FOI COBRADO",
+    !p.corpo.includes("Nada foi cobrado") && !p.corpo.includes("nenhuma cobrança"),
+    "o atraso não inventa o estado do pagamento",
   );
   ok(
-    p.corpo.includes("nenhum anúncio foi ao ar"),
+    /nenhum anúncio foi ao ar/i.test(p.corpo),
     "  e que nenhum anúncio foi ao ar",
   );
 }

@@ -10,6 +10,7 @@ import {
 } from "@/lib/perfil/catalogo-cliente";
 import { conferirFaixaDeTicket, converterValor } from "@/lib/perfil/valores";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * As ações da tela `/meu-negocio`.
@@ -93,12 +94,15 @@ interface Contexto {
   businessId: string;
 }
 
-async function sessaoENegocio(): Promise<Contexto | { erro: string }> {
+async function sessaoENegocio(esperado: string): Promise<Contexto | { erro: string }> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { erro: "Sua sessão expirou. Entre de novo." };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return { erro: "Escolha um negócio para continuar." };
+  if (esperado !== ativo.negocio.id) return { erro: "Você trocou de negócio em outra aba. Atualize esta página antes de salvar." };
 
   // Cliente NORMAL, sujeito a RLS. É esta linha que garante que a pessoa só
   // alcança o negócio dela — não a ordem das operações abaixo.
@@ -106,8 +110,7 @@ async function sessaoENegocio(): Promise<Contexto | { erro: string }> {
     .from("businesses")
     .select("id")
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
+    .eq("id", ativo.negocio.id)
     .maybeSingle();
 
   if (!negocio) return { erro: "Não encontramos seu negócio. Comece pelo onboarding." };
@@ -168,7 +171,7 @@ export async function confirmarCampoAction(
   _prev: EstadoDaRevisao,
   formData: FormData,
 ): Promise<EstadoDaRevisao> {
-  const ctx = await sessaoENegocio();
+  const ctx = await sessaoENegocio(String(formData.get("businessId") ?? ""));
   if ("erro" in ctx) return { erro: ctx.erro };
 
   const chave = String(formData.get("chave") ?? "");
@@ -200,7 +203,7 @@ export async function salvarCampoAction(
   _prev: EstadoDaRevisao,
   formData: FormData,
 ): Promise<EstadoDaRevisao> {
-  const ctx = await sessaoENegocio();
+  const ctx = await sessaoENegocio(String(formData.get("businessId") ?? ""));
   if ("erro" in ctx) return { erro: ctx.erro };
 
   const chave = String(formData.get("chave") ?? "");

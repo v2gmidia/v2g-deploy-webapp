@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { urlDeConsentimento } from "@/lib/meta/oauth";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * Início do OAuth do Meta.
@@ -25,15 +26,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/entrar?next=/conectar`);
   }
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (!business) {
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") {
     return NextResponse.redirect(`${origin}/conectar?erro=negocio`);
   }
 
@@ -60,7 +54,7 @@ export async function GET(request: NextRequest) {
 
   resposta.cookies.set({
     name: COOKIE_STATE,
-    value: JSON.stringify({ nonce, businessId: business.id }),
+    value: JSON.stringify({ nonce, businessId: ativo.negocio.id }),
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     // ============================================================

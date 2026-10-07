@@ -61,6 +61,35 @@ export interface ExcecaoDeIdentidade {
 
 export const EXCECOES: ExcecaoDeIdentidade[] = [
   {
+    arquivo: "app/(fluxo)/conectar/escolher/actions.ts",
+    autorizacao: "posse",
+    oQueEntra: "IDs da conta de anúncio e da página escolhidos no formulário",
+    porque:
+      "A action reconfere o negócio ativo da sessão e a conexão sob RLS. " +
+      "Antes da RPC privilegiada, compara ambos os IDs com a lista atual " +
+      "lida da Meta usando o token do mesmo negócio. A RPC confere a conexão " +
+      "e ocupa uma unidade de pedido aprovado sob lock da linha do negócio.",
+  },
+  {
+    arquivo: "app/(public)/escolher-negocio/actions.ts",
+    autorizacao: "posse",
+    oQueEntra: "`businessId` escolhido no formulário",
+    porque:
+      "A action autentica de novo e consulta `businesses` com o ID recebido, " +
+      "`profile_id` da sessão e RLS. Só o ID devolvido por essa leitura vira " +
+      "cookie de preferência; o resolvedor valida a posse outra vez em cada requisição.",
+  },
+  {
+    arquivo: "app/(protected)/pedidos/actions.ts",
+    autorizacao: "papel",
+    oQueEntra: "`orderId` do formulário para as duas RPCs de comprovante e aprovação",
+    porque:
+      "O proxy exige sessão e papel em `/pedidos`; as três actions conferem " +
+      "`app_metadata.papel === 'operador'` com `auth.getUser()` antes de ler " +
+      "o formulário ou criar o cliente admin. As RPCs validam o estado sob " +
+      "lock de linha e não permitem aprovar sem comprovante registrado.",
+  },
+  {
     arquivo: "app/(protected)/revisar-perfil/[proposta]/page.tsx",
     autorizacao: "papel",
     oQueEntra: "`params.proposta` — o id da proposta, na URL",
@@ -123,6 +152,16 @@ export const EXCECOES: ExcecaoDeIdentidade[] = [
       "— e inclui o texto cru do Meta, exceção declarada em `lib/backend/erros.ts`.",
   },
   {
+    arquivo: "app/(protected)/meu-negocio/actions.ts",
+    autorizacao: "posse",
+    oQueEntra: "`businessId` do formulário como prova de que a aba ainda mostra o negócio ativo",
+    porque:
+      "`sessaoENegocio` reconfere o ID recebido contra `negocioAtivoDaSessao`, " +
+      "que valida a preferência sob RLS após `auth.getUser()`, e consulta " +
+      "`businesses` filtrando por esse ID e pelo usuário antes de qualquer RPC ou escrita. " +
+      "Uma aba antiga falha quando a seleção muda.",
+  },
+  {
     arquivo: "app/(protected)/conta/identidade-actions.ts",
     autorizacao: "posse",
     oQueEntra: "`id` da imagem, do `formData`",
@@ -130,18 +169,19 @@ export const EXCECOES: ExcecaoDeIdentidade[] = [
       "É o ARQUÉTIPO da disciplina que o `docs/superficie-do-token.md` descreve: " +
       "`arquivarImagem` usa o cliente ADMIN, que ignora RLS, e o que separa a imagem " +
       "de um cliente da de outro é `.eq('business_id', businessId)` escrito à mão — " +
-      "com `businessId` vindo de `negocioDaSessao()`. Apagar aquela linha não quebra " +
+      "com `businessId` reconferido por `negocioDaSessao()` contra o negócio " +
+      "ativo sob RLS. Apagar aquela linha não quebra " +
       "teste, typecheck nem build. É por casos assim que este conferidor existe.",
   },
   {
     arquivo: "app/auth/meta/callback/route.ts",
     autorizacao: "posse",
-    oQueEntra: "`businessId`, de dentro de um cookie que nós assinamos",
+    oQueEntra: "`businessId`, do cookie httpOnly de estado OAuth",
     porque:
-      "O cookie é nosso e mesmo assim não é acreditado: o id é reconferido com " +
-      "`.eq('id', guardado.businessId)` usando o cliente da SESSÃO, então a RLS " +
-      "decide. Negócio de outro dono volta vazio e a rota recusa. É o modelo do que " +
-      "fazer quando um id precisa atravessar um redirect.",
+      "O nonce do cookie precisa coincidir com o `state` recebido. O ID é " +
+      "comparado com o negócio ativo da sessão e reconferido por " +
+      "`.eq('id', guardado.businessId)` sob RLS antes da troca de token. " +
+      "Negócio de outro dono ou escolha alterada durante o OAuth é recusado.",
   },
   {
     arquivo: "app/auth/meta/desautorizar/route.ts",

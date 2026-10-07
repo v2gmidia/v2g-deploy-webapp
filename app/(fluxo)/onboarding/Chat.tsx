@@ -8,6 +8,7 @@ import { salvarRespostaAction, type RespostaGravada } from "./actions";
 import { ORDEM, PERGUNTAS, proximaPergunta, type Pergunta } from "./perguntas";
 
 interface ChatProps {
+  businessId: string;
   inicial: Record<string, RespostaGravada>;
   /**
    * A lista viva do `GET /nichos`, buscada no servidor e passada por props.
@@ -24,7 +25,7 @@ interface ChatProps {
   nichos: Nicho[] | null;
 }
 
-export function Chat({ inicial, nichos }: ChatProps) {
+export function Chat({ businessId, inicial, nichos }: ChatProps) {
   const [respostas, setRespostas] = useState(inicial);
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -90,6 +91,7 @@ export function Chat({ inicial, nichos }: ChatProps) {
     setErro(null);
 
     const resultado = await salvarRespostaAction({
+      businessId,
       qid: pergunta.id,
       texto: valor,
       origem,

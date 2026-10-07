@@ -34,8 +34,10 @@ client não exporta `metadata`. Por isso o título dessas duas vem de um
 | `/conta` | Conta — V2G | rótulo da barra |
 | `/vendas` | Suas vendas — V2G | `<h1>` da tela |
 | `/meu-negocio` | Seu negócio — V2G | título que já existia antes deste lote |
+| `/escolher-negocio` | Escolher negócio — V2G | seleção explícita para multiconta |
 | `/saude-meta` | Fila de revisão — V2G | título que já existia antes deste lote |
 | `/revisar-perfil` | Quem está esperando — V2G | título que já existia; exceção à regra 2, mantida por decisão |
+| `/pedidos` | Pedidos assistidos — V2G | operação de venda assistida |
 | `/revisar-perfil/[proposta]` | Revisar perfil — V2G | título que já existia antes deste lote |
 | `/onboarding` | Sobre o seu negócio — V2G | `<h1>` da tela, confirmado pelo Victor |
 | `/onboarding/contas` | Suas contas — V2G | `<h1>` da tela |

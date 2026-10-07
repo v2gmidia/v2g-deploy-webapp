@@ -1,6 +1,6 @@
 "use server";
 
-import { comRespostasDoBlocoUm } from "@/lib/onboarding/documento";
+import { patchDoBlocoUm } from "@/lib/onboarding/documento";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
@@ -9,6 +9,7 @@ import { listarNichos } from "@/lib/backend";
 import { conferirEscolhaDeNicho } from "@/lib/nichos/escolha";
 import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * Uma resposta como fica gravada em `businesses.onboarding`.
@@ -60,8 +61,8 @@ function lerRespostas(onboarding: unknown): Record<string, RespostaGravada> {
  * provisório: a pergunta 1 é sobre o ramo, não sobre o nome, e a coluna
  * é `not null`. O nome real vem numa tela posterior.
  *
- * Se houver mais de um negócio (possível pelo schema, ainda não pela
- * interface), assume o mais antigo.
+ * Com mais de um negócio, exige escolha explícita. O cookie é apenas
+ * preferência: o resolvedor o valida sob a RLS da sessão antes da leitura.
  */
 async function obterOuCriarBusiness(): Promise<
   { erro: string } | { linha: LinhaBusiness; userId: string }
@@ -73,19 +74,32 @@ async function obterOuCriarBusiness(): Promise<
 
   if (!user) return { erro: "Sua sessão expirou. Entre de novo." };
 
-  const { data: existente, error: erroBusca } = await supabase
-    .from("businesses")
-    .select("id, onboarding")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status === "sem_sessao") return { erro: "Sua sessão expirou. Entre de novo." };
+  if (ativo.status === "falha_consulta") return { erro: "Não foi possível conferir seus negócios agora." };
+  if (ativo.status === "escolha_necessaria" || ativo.status === "selecao_invalida") {
+    return { erro: "Escolha qual negócio deseja editar antes de continuar." };
+  }
+
+  const { data: existente, error: erroBusca } = ativo.status === "selecionado"
+    ? await supabase.from("businesses").select("id, onboarding")
+      .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle()
+    : { data: null, error: null };
 
   if (erroBusca) {
     console.error("[onboarding] falha ao buscar business ::", erroBusca.message);
     return { erro: "Não foi possível carregar seus dados agora." };
   }
   if (existente) return { linha: existente as LinhaBusiness, userId: user.id };
+  if (ativo.status === "selecionado") return { erro: "Não encontramos esse negócio na sua conta." };
+
+  // `sem_negocio` também acontece se um pedido pendente já tiver criado
+  // uma linha pertencente ao perfil. Não criar outra linha que contornaria
+  // a aprovação daquele pedido.
+  const { count, error: erroContagem } = await supabase.from("businesses")
+    .select("id", { count: "exact", head: true }).eq("profile_id", user.id);
+  if (erroContagem) return { erro: "Não foi possível conferir seu cadastro agora." };
+  if ((count ?? 0) > 0) return { erro: "Este negócio ainda aguarda liberação. Confira o acesso ou fale com a equipe." };
 
   const { data: criado, error: erroCriacao } = await supabase
     .from("businesses")
@@ -127,12 +141,12 @@ export async function carregarEstadoAction(): Promise<
  * consultados sem abrir o jsonb. O jsonb continua com a resposta crua:
  * a coluna é derivada, ele é a fonte.
  *
- * Leitura-modificação-escrita do jsonb: sem transação, porque quem
- * responde é uma pessoa, numa aba, em sequência. Duas abas abertas na
- * mesma conta podem sobrescrever uma à outra — aceitável neste fluxo,
- * e o jeito de resolver seria uma função no banco fazendo o merge.
+ * A RPC mescla este bloco sobre o JSON atual numa única instrução no
+ * banco. Outra aba que salvou contas ou marca depois desta leitura não
+ * perde essas respostas.
  */
 export async function salvarRespostaAction(entrada: {
+  businessId: string;
   qid: string;
   texto: string;
   origem: "chip" | "texto";
@@ -196,6 +210,9 @@ export async function salvarRespostaAction(entrada: {
 
   const resultado = await obterOuCriarBusiness();
   if ("erro" in resultado) return { ok: false, erro: resultado.erro };
+  if (resultado.linha.id !== entrada.businessId) {
+    return { ok: false, erro: "Você mudou de negócio em outra aba. Recarregue para continuar com segurança." };
+  }
 
   const { linha } = resultado;
   const respostas = lerRespostas(linha.onboarding);
@@ -260,13 +277,13 @@ export async function salvarRespostaAction(entrada: {
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("businesses")
-    .update({ onboarding: comRespostasDoBlocoUm(linha.onboarding, respostas) })
-    .eq("id", linha.id);
+  const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
+    p_business_id: linha.id,
+    p_patch: patchDoBlocoUm({ [entrada.qid]: respostas[entrada.qid] }),
+  });
 
-  if (error) {
-    console.error("[onboarding] falha ao salvar resposta ::", error.message);
+  if (error || mesclado !== true) {
+    console.error("[onboarding] falha ao salvar resposta ::", error?.message ?? "negócio indisponível");
     return { ok: false, erro: "Não conseguimos salvar sua resposta. Tente de novo." };
   }
 

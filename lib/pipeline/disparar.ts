@@ -11,6 +11,7 @@ import {
 } from "@/lib/cadastro/montar";
 import { MINUTOS_ATE_DESTRAVAR_DISPARO } from "./relogios";
 import { fluxoAguardaReuniao } from "@/lib/onboarding/marca";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * O disparo do pipeline. Desenho em `docs/disparo-pipeline.md`.
@@ -469,13 +470,14 @@ async function disparar(): Promise<ResultadoDisparo> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { fez: "nada", porque: "sem sessão" };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return { fez: "nada", porque: "sem negócio selecionado" };
 
   const { data, error } = await supabase
     .from("businesses")
     .select(COLUNAS)
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
+    .eq("id", ativo.negocio.id)
     .maybeSingle();
 
   if (error) {

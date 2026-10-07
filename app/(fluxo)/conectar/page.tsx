@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ERROS_DE_CALLBACK } from "@/lib/meta/erros";
 import { ESCOPOS } from "@/lib/meta/oauth";
 import { tituloDaAba } from "@/lib/titulos";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 export const metadata = tituloDaAba("/conectar");
 
@@ -26,17 +27,12 @@ export default async function ConectarPage({ searchParams }: Props) {
   const mensagemDeErro = erro ? ERROS_DE_CALLBACK[erro] : undefined;
 
   const supabase = await createClient();
-  const { data: negocio } = await supabase
-    .from("businesses")
-    .select("id")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  const { data: conexao } = negocio
+  const ativo = await negocioAtivoDaSessao();
+  const { data: conexao } = ativo.status === "selecionado"
     ? await supabase
         .from("meta_connections")
         .select("status, connected_at, scopes, meta_page_id")
-        .eq("business_id", negocio.id)
+        .eq("business_id", ativo.negocio.id)
         .maybeSingle()
     : { data: null };
 

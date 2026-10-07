@@ -39,11 +39,13 @@ export const NOMES_DAS_ROTAS = {
   // App, fora da barra.
   "/vendas": "Suas vendas",
   "/meu-negocio": "Seu negócio",
+  "/escolher-negocio": "Escolher negócio",
 
   // Operador.
   "/saude-meta": "Fila de revisão",
   // Exceção à regra 2, mantida por decisão: o título já existia antes dela.
   "/revisar-perfil": "Quem está esperando",
+  "/pedidos": "Pedidos assistidos",
   "/revisar-perfil/[proposta]": "Revisar perfil",
   // Tela de operador. O título não diz "ativar" sozinho: a aba fica
   // aberta ao lado das outras, e "Ativação" sem contexto já foi confundido

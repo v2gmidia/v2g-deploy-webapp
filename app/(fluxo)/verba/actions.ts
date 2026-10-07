@@ -7,6 +7,7 @@ import { gravarCamposDoCliente } from "@/lib/cadastro/procedencia";
 import { validarOrcamento } from "@/lib/meta/orcamento";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import { DIAS, PISO_MENSAL_DA_CASA } from "@/lib/verba/limites";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 export interface VerbaActionState {
   erro?: string;
@@ -108,15 +109,12 @@ export async function definirVerbaAction(
   // dizer isso em vez de aceitar e falhar lá na frente.
   if (valor <= 0) return { erro: "O valor precisa ser maior que zero." };
 
-  const { data: negocio } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (!negocio) return { erro: "Não encontramos seu negócio. Comece pelo onboarding." };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return { erro: "Escolha um negócio para continuar." };
+  if (formData.get("businessId") !== ativo.negocio.id) {
+    return { erro: "Você trocou de negócio em outra aba. Atualize esta página antes de salvar." };
+  }
+  const negocio = ativo.negocio;
 
   // ---------- O que a gente aceita guardar ----------
   const piso = await pisoConhecidoEmCentavos(supabase, negocio.id);

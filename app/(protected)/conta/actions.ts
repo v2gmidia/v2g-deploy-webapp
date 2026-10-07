@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { listarPaginas } from "@/lib/meta/graph";
 import { registrarErroMeta } from "@/lib/meta/erros";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 export interface ContaActionState {
   erro?: string;
@@ -61,15 +62,12 @@ export async function trocarPaginaAction(
   // O negócio é lido com o cliente NORMAL, sujeito à RLS. É esta linha
   // que garante que o usuário só alcança o negócio dele — não confie na
   // ordem das operações abaixo sem ela.
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-
-  if (!business) return { erro: "Não encontramos seu negócio." };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return { erro: "Escolha um negócio para continuar." };
+  if (formData.get("businessId") !== ativo.negocio.id) {
+    return { erro: "Você trocou de negócio em outra aba. Atualize esta página antes de salvar." };
+  }
+  const business = ativo.negocio;
 
   const admin = createAdminClient();
 

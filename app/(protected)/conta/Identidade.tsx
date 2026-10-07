@@ -14,11 +14,12 @@ import { TEXTO_DA_DECLARACAO } from "./declaracao";
 const inicial: IdentidadeState = {};
 
 interface Props {
+  businessId: string;
   logo: ImagemDeIdentidade | null;
   fotos: ImagemDeIdentidade[];
 }
 
-export function Identidade({ logo, fotos }: Props) {
+export function Identidade({ businessId, logo, fotos }: Props) {
   return (
     <>
       {/* O AVISO VEM ANTES DO SELETOR, e não depois nem em link. Depois do
@@ -40,8 +41,8 @@ export function Identidade({ logo, fotos }: Props) {
         </p>
       </div>
 
-      <BlocoDoLogo logo={logo} />
-      <BlocoDasFotos fotos={fotos} />
+      <BlocoDoLogo businessId={businessId} logo={logo} />
+      <BlocoDasFotos businessId={businessId} fotos={fotos} />
     </>
   );
 }
@@ -56,7 +57,7 @@ export function Identidade({ logo, fotos }: Props) {
  * recusa que não é vista vira "cliquei e não aconteceu nada", que é o
  * pior dos dois mundos: o erro existiu e a pessoa não soube.
  */
-function BlocoDoLogo({ logo }: { logo: ImagemDeIdentidade | null }) {
+function BlocoDoLogo({ businessId, logo }: { businessId: string; logo: ImagemDeIdentidade | null }) {
   const [envio, enviar, enviando] = useActionState(enviarImagemAction, inicial);
   const [remocao, remover] = useActionState(removerImagemAction, inicial);
 
@@ -74,6 +75,7 @@ function BlocoDoLogo({ logo }: { logo: ImagemDeIdentidade | null }) {
           <div className="id-logo-lado">
             <span className="hint">{logo.nomeDoArquivo}</span>
             <form action={remover}>
+              <input type="hidden" name="businessId" value={businessId} />
               <input type="hidden" name="id" value={logo.id} />
               <button type="submit" className="btn-linha fraco">
                 remover
@@ -89,6 +91,7 @@ function BlocoDoLogo({ logo }: { logo: ImagemDeIdentidade | null }) {
       )}
 
       <form action={enviar} className="id-form">
+        <input type="hidden" name="businessId" value={businessId} />
         <input type="hidden" name="uso" value="logo" />
         <input
           type="file"
@@ -114,7 +117,7 @@ function BlocoDoLogo({ logo }: { logo: ImagemDeIdentidade | null }) {
   );
 }
 
-function BlocoDasFotos({ fotos }: { fotos: ImagemDeIdentidade[] }) {
+function BlocoDasFotos({ businessId, fotos }: { businessId: string; fotos: ImagemDeIdentidade[] }) {
   const [envio, enviar, enviando] = useActionState(enviarImagemAction, inicial);
   const [remocao, remover] = useActionState(removerImagemAction, inicial);
 
@@ -135,6 +138,7 @@ function BlocoDasFotos({ fotos }: { fotos: ImagemDeIdentidade[] }) {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={f.url ?? ""} alt={f.nomeDoArquivo ?? "Foto do seu negócio"} />
                 <form action={remover}>
+                  <input type="hidden" name="businessId" value={businessId} />
                   <input type="hidden" name="id" value={f.id} />
                   <button type="submit" className="btn-linha fraco">
                     remover
@@ -155,6 +159,7 @@ function BlocoDasFotos({ fotos }: { fotos: ImagemDeIdentidade[] }) {
       {fotos.length < MAXIMO_DE_FOTOS && (
         <>
           <form action={enviar} className="id-form">
+            <input type="hidden" name="businessId" value={businessId} />
             <input type="hidden" name="uso" value="identidade" />
             <input
               type="file"

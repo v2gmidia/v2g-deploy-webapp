@@ -2,6 +2,9 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { listarContasDeAnuncio, listarPaginas } from "@/lib/meta/graph";
 
 export interface EscolhaState {
   erro?: string;
@@ -10,9 +13,9 @@ export interface EscolhaState {
 /**
  * Grava a conta de anúncio escolhida.
  *
- * Escreve com o cliente NORMAL, não com o admin: quem está escolhendo é
- * o usuário logado, e a RLS já garante que ele só alcança o próprio
- * negócio. Usar `service_role` aqui seria ignorar a proteção sem motivo.
+ * A sessão resolve o negócio antes da escrita. A RPC abaixo é restrita ao
+ * serviço e grava conta, unidade comprada e página numa transação única.
+ * A API autenticada não tem escrita direta em ad_accounts.
  *
  * Grava também `meta_page_id`, que é OBRIGATÓRIO para publicar:
  * `object_story_spec.page_id` não tem valor padrão, e sem ele não existe
@@ -24,8 +27,6 @@ export async function salvarEscolhaAction(
   formData: FormData,
 ): Promise<EscolhaState> {
   const contaExterna = String(formData.get("conta") ?? "").trim();
-  const contaNome = String(formData.get("contaNome") ?? "").trim();
-  const moeda = String(formData.get("moeda") ?? "").trim() || null;
   const paginaId = String(formData.get("pagina") ?? "").trim();
 
   if (!contaExterna) return { erro: "Escolha uma conta de anúncio para continuar." };
@@ -37,14 +38,12 @@ export async function salvarEscolhaAction(
   } = await supabase.auth.getUser();
   if (!user) return { erro: "Sua sessão expirou. Entre de novo." };
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!business) return { erro: "Não encontramos seu negócio." };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return { erro: "Escolha um negócio para continuar." };
+  if (formData.get("businessId") !== ativo.negocio.id) {
+    return { erro: "Você trocou de negócio em outra aba. Atualize esta página antes de salvar." };
+  }
+  const business = ativo.negocio;
 
   const { data: conexao } = await supabase
     .from("meta_connections")
@@ -53,38 +52,47 @@ export async function salvarEscolhaAction(
     .maybeSingle();
   if (!conexao) return { erro: "A conexão não foi encontrada. Conecte de novo." };
 
-  // `ownership: 'cliente'` — a conta é do próprio cliente, não da V2G.
-  // A coluna existe desde a 0005 justamente para essa distinção.
-  const { error: erroConta } = await supabase.from("ad_accounts").upsert(
-    {
-      business_id: business.id,
-      meta_connection_id: conexao.id,
-      external_id: contaExterna,
-      name: contaNome || contaExterna,
-      currency: moeda,
-      ownership: "cliente",
-      status: "ok",
-      is_active: true,
-    },
-    { onConflict: "business_id,external_id" },
-  );
-
-  if (erroConta) {
-    console.error("[conectar] falha ao gravar ad_account ::", erroConta.message);
-    return { erro: "Não conseguimos salvar sua escolha. Tente de novo." };
+  const admin = createAdminClient();
+  const { data: token, error: erroToken } = await admin.rpc("obter_token_meta", {
+    p_business_id: business.id,
+  });
+  if (erroToken || typeof token !== "string" || !token) {
+    return { erro: "A conexão expirou. Conecte de novo para escolher a conta." };
+  }
+  let contaNome = contaExterna;
+  let moeda: string | null = null;
+  try {
+    const [contas, paginas] = await Promise.all([
+      listarContasDeAnuncio(token), listarPaginas(token),
+    ]);
+    const conta = contas.find((item) => item.externalId === contaExterna && item.elegivel);
+    if (!conta || !paginas.some((pagina) => pagina.id === paginaId)) {
+      return { erro: "Essa conta ou página não está disponível na conexão atual. Atualize a lista." };
+    }
+    contaNome = conta.nome || contaExterna;
+    moeda = conta.moeda || null;
+  } catch {
+    return { erro: "Não conseguimos conferir as contas agora. Tente de novo em alguns minutos." };
   }
 
-  // A página é obrigatória para publicar, então a falha aqui NÃO é
-  // silenciosa: sem ela a conexão fica pela metade e o cliente só
-  // descobriria na hora de subir o anúncio.
-  const { error: erroPagina } = await supabase
-    .from("meta_connections")
-    .update({ meta_page_id: paginaId })
-    .eq("id", conexao.id);
+  const { error: erroEscolha } = await admin.rpc("registrar_conta_contratada", {
+    p_business_id: business.id,
+    p_connection_id: conexao.id,
+    p_external_id: contaExterna,
+    p_name: contaNome || contaExterna,
+    p_currency: moeda,
+    p_page_id: paginaId,
+  });
 
-  if (erroPagina) {
-    console.error("[conectar] falha ao gravar meta_page_id ::", erroPagina.message);
-    return { erro: "Salvamos a conta, mas não a página. Tente de novo." };
+  if (erroEscolha) {
+    console.error("[conectar] falha ao gravar escolha ::", erroEscolha.message);
+    if (erroEscolha.message.includes("sem unidade contratada disponivel")) {
+      return { erro: "Todas as contas contratadas já estão em uso. Fale com a equipe para adicionar ou trocar uma conta." };
+    }
+    if (erroEscolha.message.includes("pedido ainda nao aprovado")) {
+      return { erro: "Ainda falta aprovar o pagamento deste negócio para escolher outra conta." };
+    }
+    return { erro: "Não conseguimos salvar sua escolha. Tente de novo." };
   }
 
   redirect("/inicio");

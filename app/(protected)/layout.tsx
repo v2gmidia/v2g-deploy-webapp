@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Casco } from "@/components/ui/Casco";
 import { signOutAction } from "./actions";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 
 /**
@@ -56,20 +57,24 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     .eq("id", user.id)
     .maybeSingle();
 
-  const { data: business } = await supabase
-    .from("businesses")
-    .select("name")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status === "sem_sessao") redirect("/entrar");
+  if (ativo.status === "falha_consulta") redirect("/escolher-negocio");
+  if (ativo.status === "escolha_necessaria" || ativo.status === "selecao_invalida") {
+    redirect("/escolher-negocio");
+  }
+  if (ativo.status === "sem_negocio") {
+    const { count, error } = await supabase.from("businesses")
+      .select("id", { count: "exact", head: true }).eq("profile_id", user.id);
+    if (error || (count ?? 0) > 0) redirect("/escolher-negocio");
+  }
 
   // Sem cair no e-mail. Se o nome não vier, a saudação fica sem nome —
   // "Boa tarde" sozinho é melhor que "Boa tarde, fulano@provedor.com",
   // que além de feio joga o e-mail da pessoa na tela para quem estiver
   // olhando por cima do ombro dela.
   const nome = profile?.full_name?.trim() ?? "";
-  const nomeNegocio = business?.name?.trim();
+  const nomeNegocio = ativo.status === "selecionado" ? ativo.negocio.name.trim() : undefined;
   const inicial = (nomeNegocio || nome || user.email || "?").charAt(0).toUpperCase();
 
   return (
@@ -79,6 +84,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       rotuloDaConta={nomeNegocio || user.email || ""}
       inicial={inicial}
       acaoSair={signOutAction}
+      podeTrocarNegocio={ativo.status === "selecionado" && ativo.negocios.length > 1}
     >
       {children}
     </Casco>

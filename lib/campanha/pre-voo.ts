@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listarPaginas } from "@/lib/meta/graph";
 import { registrarErroMeta } from "@/lib/meta/erros";
@@ -145,21 +146,9 @@ const VAZIO: PreVoo = {
  */
 export async function preVooDoNegocio(): Promise<PreVoo> {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return VAZIO;
-
-  const { data: negocio } = await supabase
-    .from("businesses")
-    .select("id")
-    .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!negocio) return VAZIO;
-
-  return preVooPorNegocio(negocio.id, supabase);
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return VAZIO;
+  return preVooPorNegocio(ativo.negocio.id, supabase);
 }
 
 /**

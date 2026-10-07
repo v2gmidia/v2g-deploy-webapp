@@ -101,7 +101,7 @@ export default async function CriativosPage() {
         {/* A mesma análise automática ao escolher a imagem. A coluna de
             contexto explica a diferença entre análise e publicação. */}
         <div className="criativos-workspace">
-          {amostra ? <AmostraDeVereditos qual={amostra} /> : <Analisar podeEnviar={podeEnviar} />}
+          {amostra ? <AmostraDeVereditos qual={amostra} /> : <Analisar podeEnviar={podeEnviar} businessId={estado.negocioId ?? ""} />}
 
           <aside className="criativos-contexto" aria-label="Sobre a análise">
             <div>

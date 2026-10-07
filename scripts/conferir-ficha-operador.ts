@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { camposDaFicha, valorDaFicha, pracaOriginal, marcaOriginal, coberturaDaConsulta, LIMITE_FICHAS } from "../lib/perfil/ficha-operador.ts";
+import { camposDaFicha, valorDaFicha, pracaOriginal, marcaOriginal,
+  contasOriginais, coberturaDaConsulta, LIMITE_FICHAS } from "../lib/perfil/ficha-operador.ts";
 
 test("ausência não vira zero e false permanece informação", () => {
   assert.equal(valorDaFicha(null), "Não informado");
@@ -95,4 +96,16 @@ test("marca ausente ou sem carimbo não inventa resposta", () => {
   assert.equal(marcaOriginal({}), null);
   assert.equal(marcaOriginal({ onboarding: { marca: { aparencia: "azul" } } }), null);
   assert.equal(marcaOriginal({ onboarding: { marca: [] } }), null);
+});
+test("ficha mostra não sei e reabertura das contas sem confundir com valor atual", () => {
+  const contas = contasOriginais({ onboarding: { contas: {
+    ticket: { naoSei: true, em: "2026-10-05T17:00:00Z", reabertoEm: "2026-10-06T09:00:00Z" },
+    custo: { confirmado: true, em: "2026-10-05T17:10:00Z" },
+    lucro: { naoSei: true },
+  } } });
+  assert.equal(contas.length, 2);
+  assert.match(contas[0]!.texto, /não sabia/);
+  assert.equal(contas[0]!.reabertoEm, "2026-10-06T09:00:00Z");
+  assert.match(contas[1]!.texto, /confirmou/);
+  assert.deepEqual(contasOriginais({ onboarding: { contas: [] } }), []);
 });

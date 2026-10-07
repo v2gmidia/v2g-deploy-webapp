@@ -6,6 +6,7 @@ import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/proc
 import { lerConta, ticketEscalar, type RespostaDeConta } from "@/lib/cadastro/montar";
 import { documento, lerConclusao, lerMarca, type RespostasDaMarca } from "@/lib/onboarding/marca";
 import { faltamRespostasBasicas, respostasBasicas, type PerguntaBasica } from "@/lib/onboarding/bloco-um";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 interface Linha {
   id: string;
@@ -19,6 +20,7 @@ interface Linha {
 }
 
 export interface EstadoMarca {
+  businessId: string;
   site: string;
   instagram: string;
   marca: RespostasDaMarca | null;
@@ -38,9 +40,11 @@ async function obter(): Promise<{ erro: string } | { linha: Linha; profileId: st
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { erro: "Sua sessão expirou. Entre de novo." };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return { erro: "Escolha um negócio para continuar." };
   const { data, error } = await supabase.from("businesses")
     .select("id, onboarding, site_url, instagram_handle, avg_ticket_min, avg_ticket_max, avg_direct_cost, target_profit_per_customer")
-    .eq("profile_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
+    .eq("profile_id", user.id).eq("id", ativo.negocio.id).maybeSingle();
   if (error) {
     console.error("[marca] falha ao buscar negócio ::", error.message);
     return { erro: "Não foi possível carregar seus dados agora." };
@@ -60,6 +64,7 @@ function estado(linha: Linha): EstadoMarca {
      lerConta(numero(linha.target_profit_per_customer), contas.lucro)]
   ).every((leitura) => leitura.estado === "respondida" || leitura.estado === "nao_sei");
   return {
+    businessId: linha.id,
     site: linha.site_url ?? "",
     instagram: linha.instagram_handle ?? "",
     marca: lerMarca(doc),
@@ -91,6 +96,7 @@ function validarSite(bruto: string): string | null {
 }
 
 export async function salvarMarcaAction(entrada: {
+  businessId: string;
   site: string;
   siteNaoTenho: boolean;
   instagram: string;
@@ -99,6 +105,7 @@ export async function salvarMarcaAction(entrada: {
 }): Promise<ResultadoMarca> {
   const r = await obter();
   if ("erro" in r) return { ok: false, erro: r.erro };
+  if (entrada.businessId !== r.linha.id) return { ok: false, erro: "O negócio selecionado mudou. Atualize esta página." };
   const anterior = estado(r.linha);
   if (anterior.faltamBasicas.length) return { ok: false, erro: "Termine as perguntas sobre seu negócio antes de concluir." };
   if (!anterior.contasProntas) return { ok: false, erro: "Termine suas contas antes de continuar." };
@@ -132,16 +139,16 @@ export async function salvarMarcaAction(entrada: {
 
   const agora = new Date().toISOString();
   const supabase = await createClient();
-  const { error } = await supabase.from("businesses").update({
-    onboarding: {
-      ...documento(r.linha.onboarding),
+  const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
+    p_business_id: r.linha.id,
+    p_patch: {
       marca: { aparencia: entrada.aparenciaNaoSei ? "" : aparencia,
         aparenciaNaoSei: entrada.aparenciaNaoSei, siteNaoTenho: entrada.siteNaoTenho, em: agora },
       conclusao: { em: agora, proximoPasso: "agendamento_pendente" },
     },
-  }).eq("id", r.linha.id);
-  if (error) {
-    console.error("[marca] falha ao salvar ::", error.message);
+  });
+  if (error || mesclado !== true) {
+    console.error("[marca] falha ao salvar ::", error?.message ?? "negócio indisponível");
     return { ok: false, erro: "Não conseguimos salvar esta etapa. Tente de novo." };
   }
   revalidatePath("/onboarding/marca");

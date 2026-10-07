@@ -20,6 +20,7 @@ export async function temAcessoWebApp(
     .from("commercial_orders")
     .select("business_id")
     .eq("buyer_profile_id", user.id)
+    .eq("buyer_email", user.email?.trim().toLowerCase() ?? "")
     .eq("status", "payment_approved")
     .not("business_id", "is", null);
   if (pedidos.error || !pedidos.data?.length) return false;

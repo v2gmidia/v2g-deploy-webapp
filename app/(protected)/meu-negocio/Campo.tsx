@@ -21,7 +21,7 @@ const VAZIO: EstadoDaRevisao = {};
  * pendência converte revisão em tarefa, e tarefa com número visível é o que
  * se adia. Ver §6 do desenho antes de acrescentar um.
  */
-export function Campo({ campo }: { campo: CampoNaTela }) {
+export function Campo({ campo, businessId }: { campo: CampoNaTela; businessId: string }) {
   const [editando, setEditando] = useState(false);
   const [confirmado, acaoConfirmar, confirmando] = useActionState(
     confirmarCampoAction,
@@ -50,6 +50,7 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
         campo.opcoes ? (
           <EditorDeOpcoes
             campo={campo}
+            businessId={businessId}
             acao={acaoSalvar}
             salvando={salvando}
             aoDesistir={() => setEditando(false)}
@@ -57,6 +58,7 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
         ) : (
           <Editor
             campo={campo}
+            businessId={businessId}
             acao={acaoSalvar}
             salvando={salvando}
             aoDesistir={() => setEditando(false)}
@@ -96,6 +98,7 @@ export function Campo({ campo }: { campo: CampoNaTela }) {
             ) : (
               <>
                 <form action={acaoConfirmar}>
+                  <input type="hidden" name="businessId" value={businessId} />
                   <input type="hidden" name="chave" value={campo.chave} />
                   <button type="submit" className="btn-linha forte" disabled={ocupado}>
                     tá certo
@@ -212,11 +215,13 @@ function Origem({ campo }: { campo: CampoNaTela }) {
  */
 function EditorDeOpcoes({
   campo,
+  businessId,
   acao,
   salvando,
   aoDesistir,
 }: {
   campo: CampoNaTela;
+  businessId: string;
   acao: (formData: FormData) => void;
   salvando: boolean;
   aoDesistir: () => void;
@@ -227,6 +232,7 @@ function EditorDeOpcoes({
       <div className="rc-acoes">
         {campo.opcoes?.map((o) => (
           <form action={acao} key={o.valor}>
+            <input type="hidden" name="businessId" value={businessId} />
             <input type="hidden" name="chave" value={campo.chave} />
             <input type="hidden" name="valor" value={o.valor} />
             <button
@@ -249,11 +255,13 @@ function EditorDeOpcoes({
 /** O campo aberto. Um por tipo, e o do ticket é dois. */
 function Editor({
   campo,
+  businessId,
   acao,
   salvando,
   aoDesistir,
 }: {
   campo: CampoNaTela;
+  businessId: string;
   acao: (formData: FormData) => void;
   salvando: boolean;
   aoDesistir: () => void;
@@ -267,6 +275,7 @@ function Editor({
 
   return (
     <form action={acao} className="rc-editor">
+      <input type="hidden" name="businessId" value={businessId} />
       <input type="hidden" name="chave" value={campo.chave} />
 
       {par ? (

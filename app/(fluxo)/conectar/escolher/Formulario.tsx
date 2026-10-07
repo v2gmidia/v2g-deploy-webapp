@@ -10,6 +10,7 @@ const inicial: EscolhaState = {};
 interface Props {
   contas: ContaDeAnuncio[];
   paginas: PaginaDoFacebook[];
+  businessId: string;
 }
 
 /**
@@ -26,7 +27,7 @@ interface Props {
  * Rótulo por página seria afirmação sem verificação — o mesmo defeito que
  * derrubou o seletor de Instagram.
  */
-export function FormularioEscolha({ contas, paginas }: Props) {
+export function FormularioEscolha({ contas, paginas, businessId }: Props) {
   const [estado, action, pendente] = useActionState(salvarEscolhaAction, inicial);
 
   const elegiveis = contas.filter((c) => c.elegivel);
@@ -51,11 +52,10 @@ export function FormularioEscolha({ contas, paginas }: Props) {
 
   return (
     <form action={action}>
+      <input type="hidden" name="businessId" value={businessId} />
       {estado.erro && <p className="form-error">{estado.erro}</p>}
 
       <input type="hidden" name="conta" value={contaEscolhida} />
-      <input type="hidden" name="contaNome" value={conta?.nome ?? ""} />
-      <input type="hidden" name="moeda" value={conta?.moeda ?? ""} />
       <input type="hidden" name="pagina" value={paginaEscolhida} />
 
       {contaUnica ? (

@@ -60,7 +60,7 @@ type Fase =
   | { nome: "analisando" }
   | { nome: "pronto"; resultado: ResultadoDaAnalise };
 
-export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
+export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; businessId: string }) {
   const [fase, setFase] = useState<Fase>({ nome: "parado" });
   const [nomeDoArquivo, setNomeDoArquivo] = useState<string | null>(null);
   const [aceito, setAceito] = useState<File | null>(null);
@@ -156,6 +156,7 @@ export function Analisar({ podeEnviar }: { podeEnviar: boolean }) {
 
     try {
       const dados = new FormData();
+      dados.append("businessId", businessId);
       dados.append("arquivos", arquivo);
       resultado = await comTetoDeEspera(analisarPecaAction(dados));
     } catch (motivo) {

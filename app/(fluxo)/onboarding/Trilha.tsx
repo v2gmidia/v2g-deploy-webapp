@@ -150,7 +150,7 @@ export function Trilha({ passo, blocos, pecas }: TrilhaProps) {
               <Tick />
             </span>
             <span>
-              <b>Falar com um humano.</b> Gente de verdade, sem robô, sempre que você travar.
+              <b>Falar com a equipe.</b> O WhatsApp está disponível se você travar.
             </span>
           </li>
           <li>

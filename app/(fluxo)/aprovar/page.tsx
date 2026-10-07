@@ -3,6 +3,7 @@ import { apenasPecasDeAnuncio } from "@/lib/criativos/peca";
 import { tituloDaAba } from "@/lib/titulos";
 import { preVooDoNegocio, type PreVoo } from "@/lib/campanha/pre-voo";
 import type { PreRequisitos, Resultado } from "@/lib/backend";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 export const metadata = tituloDaAba("/aprovar");
 
@@ -41,13 +42,9 @@ export default async function AprovarPage() {
   // do `if (!pendente)`: ele responde "de onde este anúncio sai", que vale
   // igual quando não há nada para aprovar. Os DOIS estados o recebem.
   const preVoo = await preVooDoNegocio();
-  const { data: negocio } = await supabase
-    .from("businesses")
-    .select("id")
-    .order("created_at", { ascending: true })
-    .limit(1)
-    .maybeSingle();
-  if (!negocio) return <NadaParaAprovar preVoo={preVoo} />;
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return <NadaParaAprovar preVoo={preVoo} />;
+  const negocio = ativo.negocio;
 
   // `apenasPecasDeAnuncio` é o que separa a peça que a IA montou da logo
   // que o cliente subiu na /conta — as duas moram em `creatives` e as duas

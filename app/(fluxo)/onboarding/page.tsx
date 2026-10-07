@@ -60,7 +60,7 @@ export default async function OnboardingPage() {
     );
   }
 
-  const { respostas } = estado;
+  const { respostas, businessId } = estado;
 
   // A TRILHA LÊ A MESMA FONTE QUE O RESTO DO APP. Antes ela lia
   // `blocosDoPasso1`/`minutosRestantes`, duas tabelas fixas indexadas pela
@@ -76,7 +76,7 @@ export default async function OnboardingPage() {
   return (
     <div className="auth-grid">
       <section className="auth-card">
-        <Chat inicial={respostas} nichos={nichos.ok ? nichos.dados : null} />
+        <Chat businessId={businessId} inicial={respostas} nichos={nichos.ok ? nichos.dados : null} />
       </section>
 
       <aside className="auth-aside">

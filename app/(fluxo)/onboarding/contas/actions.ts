@@ -17,6 +17,7 @@ import {
 } from "@/lib/cadastro/montar";
 import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import {
   ORDEM_DAS_CONTAS,
   TICKET_FAIXA,
@@ -90,6 +91,8 @@ async function obterNegocio(): Promise<{ erro: string } | { linha: LinhaNegocio;
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { erro: "Sua sessão expirou. Entre de novo." };
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return { erro: "Escolha um negócio para continuar." };
 
   const { data, error } = await supabase
     .from("businesses")
@@ -98,8 +101,7 @@ async function obterNegocio(): Promise<{ erro: string } | { linha: LinhaNegocio;
     // fica como está — ela é o contrato do que `montarCadastro` lê.
     .select(`${COLUNAS_DO_CADASTRO}, procedencia`)
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
+    .eq("id", ativo.negocio.id)
     .maybeSingle();
 
   if (error) {
@@ -199,6 +201,7 @@ export async function carregarContasAction(): Promise<{ erro: string } | EstadoD
  */
 export async function reabrirContaAction(entrada: {
   conta: ChaveDeConta;
+  businessId: string;
 }): Promise<ResultadoDaConta> {
   if (!ORDEM_DAS_CONTAS.includes(entrada.conta)) {
     return { ok: false, erro: "Essa conta não existe." };
@@ -207,6 +210,7 @@ export async function reabrirContaAction(entrada: {
   if ("erro" in r) return { ok: false, erro: r.erro };
 
   const { linha } = r;
+  if (entrada.businessId !== linha.id) return { ok: false, erro: "O negócio selecionado mudou. Atualize esta página." };
   const estado = montarEstado(linha);
 
   // SÓ O "NÃO SEI" REABRE. Uma conta respondida já tem caminho — a
@@ -226,19 +230,14 @@ export async function reabrirContaAction(entrada: {
     [entrada.conta]: { ...anterior, reabertoEm: new Date().toISOString() },
   };
 
-  const onboardingAtual =
-    linha.onboarding && typeof linha.onboarding === "object"
-      ? (linha.onboarding as Record<string, unknown>)
-      : {};
-
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("businesses")
-    .update({ onboarding: { ...onboardingAtual, contas } })
-    .eq("id", linha.id);
+  const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
+    p_business_id: linha.id,
+    p_patch: { contas: { [entrada.conta]: contas[entrada.conta] } },
+  });
 
-  if (error) {
-    console.error("[contas] falha ao reabrir ::", error.message);
+  if (error || mesclado !== true) {
+    console.error("[contas] falha ao reabrir ::", error?.message ?? "negócio indisponível");
     return { ok: false, erro: "Não conseguimos abrir a pergunta agora. Tente de novo." };
   }
 
@@ -270,6 +269,7 @@ export async function reabrirContaAction(entrada: {
  */
 export async function salvarContaAction(entrada: {
   conta: ChaveDeConta;
+  businessId: string;
   /** id de chip, faixa, número digitado, ou o "não sei" */
   escolha: string;
   naoSei?: boolean;
@@ -283,6 +283,7 @@ export async function salvarContaAction(entrada: {
   if ("erro" in r) return { ok: false, erro: r.erro };
 
   const { linha, userId } = r;
+  if (entrada.businessId !== linha.id) return { ok: false, erro: "O negócio selecionado mudou. Atualize esta página." };
   const estado = montarEstado(linha);
   // A interface só envia a conta aberta, mas uma Server Action antiga ou
   // chamada direta pode tentar sobrescrever uma conta já fechada. Correções
@@ -413,19 +414,14 @@ export async function salvarContaAction(entrada: {
     if (!gravacao.ok) return { ok: false, erro: gravacao.erro };
   }
 
-  const onboardingAtual =
-    linha.onboarding && typeof linha.onboarding === "object"
-      ? (linha.onboarding as Record<string, unknown>)
-      : {};
-
   const supabase = await createClient();
-  const { error } = await supabase
-    .from("businesses")
-    .update({ onboarding: { ...onboardingAtual, contas } })
-    .eq("id", linha.id);
+  const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
+    p_business_id: linha.id,
+    p_patch: { contas: { [entrada.conta]: contas[entrada.conta] } },
+  });
 
-  if (error) {
-    console.error("[contas] falha ao salvar ::", error.message);
+  if (error || mesclado !== true) {
+    console.error("[contas] falha ao salvar ::", error?.message ?? "negócio indisponível");
     return { ok: false, erro: "Não conseguimos salvar agora. Tente de novo." };
   }
 

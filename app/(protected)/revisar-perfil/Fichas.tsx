@@ -1,4 +1,5 @@
-import { camposDaFicha, valorDaFicha, pracaOriginal, marcaOriginal } from "@/lib/perfil/ficha-operador";
+import { camposDaFicha, valorDaFicha, pracaOriginal, marcaOriginal,
+  contasOriginais } from "@/lib/perfil/ficha-operador";
 import styles from "./Fichas.module.css";
 
 /** Renderizado apenas pelo servidor, depois da autorização da página. */
@@ -11,6 +12,7 @@ export function Fichas({ negocios }: { negocios: Record<string, unknown>[] }) {
       {negocios.length === 0 ? <p>Nenhum negócio real retornado nesta consulta.</p> : negocios.map((negocio) => {
         const praca = pracaOriginal(negocio);
         const marca = marcaOriginal(negocio);
+        const contas = contasOriginais(negocio);
         return (
         <details key={String(negocio.id)} className={styles.ficha}>
           <summary>{valorDaFicha(negocio.name)} <span>— {String(negocio.id)}</span></summary>
@@ -36,6 +38,14 @@ export function Fichas({ negocios }: { negocios: Record<string, unknown>[] }) {
               </dd>}
               <dd className={styles.origem}>Esta descrição não é uma paleta estruturada nem prova de criativo produzido.</dd>
             </div>
+            {contas.map((conta) => <div key={conta.chave}>
+              <dt>{conta.rotulo} — histórico do onboarding</dt>
+              <dd>{conta.texto}</dd>
+              <dd className={styles.origem}>Resposta em <time dateTime={conta.em}>{conta.em}</time>
+                {conta.reabertoEm && <> · pergunta reaberta em <time dateTime={conta.reabertoEm}>{conta.reabertoEm}</time></>}
+              </dd>
+              <dd className={styles.origem}>Confira o valor atual nos campos estruturados abaixo.</dd>
+            </div>)}
             {camposDaFicha(negocio).map((item) => (
               <div key={item.campo}>
                 <dt>{item.rotulo}</dt>

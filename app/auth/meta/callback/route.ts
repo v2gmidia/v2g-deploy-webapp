@@ -6,6 +6,7 @@ import { trocarCodePorToken,
 } from "@/lib/meta/oauth";
 import { registrarErroMeta } from "@/lib/meta/erros";
 import { COOKIE_STATE } from "../iniciar/route";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * Retorno do consentimento do Meta.
@@ -61,6 +62,10 @@ export async function GET(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return limpar(falhar("sessao"));
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado" || ativo.negocio.id !== guardado.businessId) {
+    return limpar(falhar("negocio"));
+  }
 
   // O cookie é nosso, mas isso não basta: confirmamos contra o banco que
   // este negócio pertence a este usuário. É a mesma regra da RLS, e a

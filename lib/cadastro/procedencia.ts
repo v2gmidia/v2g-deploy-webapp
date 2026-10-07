@@ -69,38 +69,49 @@ export async function gravarCamposDoCliente(args: {
   tabela: TabelaDePerfil;
   campos: CampoParaGravar[];
 }): Promise<ResultadoDaGravacao> {
-  const admin = createAdminClient();
   const atos: AtoRegistrado[] = [];
+  if (!args.campos.length) return { ok: true, atos };
+  let campoAtual = args.campos[0]!.campo;
 
-  for (const { campo, valor } of args.campos) {
-    const { data, error } = await admin.rpc("confirmar_campo_do_cliente", {
-      p_profile_id: args.profileId,
-      p_business_id: args.businessId,
-      p_tabela: args.tabela,
-      p_campo: campo,
-      p_valor: valor,
-    });
+  try {
+    const admin = createAdminClient();
 
-    if (error) {
-      // A mensagem crua da função é para o log, não para a tela: ela cita
-      // nome de tabela e de coluna. Mesma regra do `lib/auth-errors.ts`.
-      console.error(
-        `[procedencia] falha em ${args.tabela}.${campo} :: ${error.message}`,
-      );
-      return {
-        ok: false,
-        erro: "Não conseguimos salvar essa resposta. Tente de novo.",
-        campoQueFalhou: campo,
-        gravados: atos,
-      };
+    for (const { campo, valor } of args.campos) {
+      campoAtual = campo;
+      const { data, error } = await admin.rpc("confirmar_campo_do_cliente", {
+        p_profile_id: args.profileId,
+        p_business_id: args.businessId,
+        p_tabela: args.tabela,
+        p_campo: campo,
+        p_valor: valor,
+      });
+
+      if (error) {
+        // A mensagem crua da função é para o log, não para a tela.
+        console.error(`[procedencia] falha em ${args.tabela}.${campo} :: ${error.message}`);
+        return {
+          ok: false,
+          erro: "Não conseguimos salvar essa resposta. Tente de novo.",
+          campoQueFalhou: campo,
+          gravados: atos,
+        };
+      }
+
+      const bruto = data as { campo?: string; ato?: string; procedencia_anterior?: string } | null;
+      atos.push({
+        campo,
+        ato: (bruto?.ato as AtoRegistrado["ato"]) ?? "preencheu",
+        procedenciaAnterior: bruto?.procedencia_anterior ?? "desconhecida",
+      });
     }
-
-    const bruto = data as { campo?: string; ato?: string; procedencia_anterior?: string } | null;
-    atos.push({
-      campo,
-      ato: (bruto?.ato as AtoRegistrado["ato"]) ?? "preencheu",
-      procedenciaAnterior: bruto?.procedencia_anterior ?? "desconhecida",
-    });
+  } catch {
+    console.error(`[procedencia] gravação indisponível em ${args.tabela}.${campoAtual}`);
+    return {
+      ok: false,
+      erro: "Não conseguimos salvar essa resposta. Tente de novo.",
+      campoQueFalhou: campoAtual,
+      gravados: atos,
+    };
   }
 
   return { ok: true, atos };

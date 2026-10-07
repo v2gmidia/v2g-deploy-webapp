@@ -2,6 +2,7 @@ import { Marca } from "@/components/ui/Marca";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * Layout do grupo de FLUXO — exige sessão, mas sem sidebar e sem topbar.
@@ -34,6 +35,18 @@ export default async function FluxoLayout({ children }: { children: React.ReactN
 
   if (!(await temAcessoWebApp(supabase, user))) {
     redirect("/acesso-pendente");
+  }
+
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status === "sem_sessao") redirect("/entrar");
+  if (ativo.status === "falha_consulta") redirect("/escolher-negocio");
+  if (ativo.status === "escolha_necessaria" || ativo.status === "selecao_invalida") {
+    redirect("/escolher-negocio");
+  }
+  if (ativo.status === "sem_negocio") {
+    const { count, error } = await supabase.from("businesses")
+      .select("id", { count: "exact", head: true }).eq("profile_id", user.id);
+    if (error || (count ?? 0) > 0) redirect("/escolher-negocio");
   }
 
   return (

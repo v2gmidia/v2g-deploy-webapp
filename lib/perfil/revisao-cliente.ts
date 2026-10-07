@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import {
   BLOCOS,
   CAMPOS_DO_CLIENTE,
@@ -131,12 +132,13 @@ export async function carregarPerfilDoCliente(): Promise<PerfilDoCliente | null>
   // acrescentar um campo. A RLS já limita as LINHAS, que é o que importa —
   // `businesses` não tem coluna secreta (o token do Meta vive em
   // `meta_connections`, com revoke de coluna desde a 0003).
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return null;
   const { data: negocio } = await supabase
     .from("businesses")
     .select("*")
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
+    .eq("id", ativo.negocio.id)
     .maybeSingle();
 
   if (!negocio) return null;

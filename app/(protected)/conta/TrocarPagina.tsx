@@ -10,6 +10,7 @@ const inicial: ContaActionState = {};
 interface Props {
   paginas: PaginaDoFacebook[];
   atual: string | null;
+  businessId: string;
 }
 
 /**
@@ -19,7 +20,7 @@ interface Props {
  * possível — e um seletor de um item é uma pergunta com uma resposta,
  * que ensina a clicar sem ler.
  */
-export function TrocarPagina({ paginas, atual }: Props) {
+export function TrocarPagina({ paginas, atual, businessId }: Props) {
   const [estado, action, pendente] = useActionState(trocarPaginaAction, inicial);
   const [escolhida, setEscolhida] = useState(atual ?? paginas[0]?.id ?? "");
 
@@ -44,6 +45,7 @@ export function TrocarPagina({ paginas, atual }: Props) {
 
   return (
     <form action={action}>
+      <input type="hidden" name="businessId" value={businessId} />
       {estado.erro && <p className="form-error">{estado.erro}</p>}
       {estado.ok && <p className="form-ok">{estado.ok}</p>}
 

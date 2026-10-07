@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { COLUNAS_DO_CADASTRO, montarCadastro, type NegocioParaCadastro, type Pendencia } from "./montar";
 
 
@@ -22,13 +23,14 @@ export async function pendenciasDoCliente(): Promise<Pendencia[]> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return [];
 
   const { data, error } = await supabase
     .from("businesses")
     .select(COLUNAS_DO_CADASTRO)
+    .eq("id", ativo.negocio.id)
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true })
-    .limit(1)
     .maybeSingle();
 
   if (error) {
