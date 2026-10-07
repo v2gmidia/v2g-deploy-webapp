@@ -56,7 +56,9 @@ function diasDesde(iso: string | undefined, agora: number): number | null {
   return Number.isFinite(t) ? Math.floor((agora - t) / 86_400_000) : null;
 }
 
-export default async function QuemEstaEsperandoPage() {
+export default async function QuemEstaEsperandoPage({ searchParams }: {
+  searchParams: Promise<{ negocio?: string }>;
+}) {
   // 2ª camada (docs/arquitetura.md, Decisão 3). `notFound()` e não
   // redirect: para quem não é operador esta rota não existe.
   const supabase = await createClient();
@@ -135,6 +137,7 @@ export default async function QuemEstaEsperandoPage() {
     <div className="canvas">
       <div className="page-head">
         <h1>Quem está esperando</h1>
+        <a href="/gestor">Ver carteira do gestor</a>
         <a href="/pedidos">Ver pedidos assistidos</a>
         <p>
           Negócios com cadastro incompleto. Ordenados pela espera mais longa — o topo é quem
@@ -209,7 +212,8 @@ export default async function QuemEstaEsperandoPage() {
           ))}
         </section>
       )}
-      <Fichas negocios={(data ?? []) as unknown as Record<string, unknown>[]} />
+      <Fichas negocios={(data ?? []) as unknown as Record<string, unknown>[]}
+        negocioAberto={(await searchParams).negocio} />
     </div>
   );
 }

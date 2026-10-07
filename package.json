@@ -29,7 +29,7 @@
     "conferir:rota-apresentada": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs --conditions=react-server --env-file-if-exists=.env.local scripts/conferir-rota-apresentada.ts",
     "diagnostico:card": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --env-file-if-exists=.env.local scripts/diagnostico-card-da-pergunta.ts",
     "conferir:admin": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-admin.ts",
-    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:procedencia && pnpm conferir:ficha-operador && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte && pnpm conferir:apresentada && pnpm conferir:signed-request && pnpm conferir:identidade && pnpm conferir:veiculacao && pnpm conferir:resultado && pnpm conferir:campanha-da-sessao && pnpm conferir:envio && pnpm conferir:inicio && pnpm conferir:analise && pnpm conferir:portao && pnpm conferir:escolha-de-campo && pnpm conferir:jev && pnpm conferir:multiconta && pnpm conferir:onboarding-preservacao && pnpm conferir:contratacao && pnpm conferir:asaas-eventos && pnpm conferir:acesso && pnpm conferir:preco-contratacao && pnpm conferir:trava-campanha",
+    "conferir": "pnpm typecheck && pnpm conferir:lista-branca && pnpm conferir:estado && pnpm conferir:verba && pnpm conferir:cadastro && pnpm conferir:procedencia && pnpm conferir:ficha-operador && pnpm conferir:criativos && pnpm conferir:cascata && pnpm conferir:migrations && pnpm conferir:nichos && pnpm conferir:dia-seguinte && pnpm conferir:apresentada && pnpm conferir:signed-request && pnpm conferir:identidade && pnpm conferir:veiculacao && pnpm conferir:resultado && pnpm conferir:campanha-da-sessao && pnpm conferir:envio && pnpm conferir:inicio && pnpm conferir:analise && pnpm conferir:portao && pnpm conferir:escolha-de-campo && pnpm conferir:jev && pnpm conferir:multiconta && pnpm conferir:onboarding-preservacao && pnpm conferir:contratacao && pnpm conferir:asaas-eventos && pnpm conferir:acesso && pnpm conferir:preco-contratacao && pnpm conferir:trava-campanha && pnpm conferir:revops",
     "conferir:procedencia": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-procedencia.mjs",
     "conferir:ficha-operador": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-ficha-operador.ts",
     "conferir:multiconta": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-multiconta.mjs scripts/conferir-multiconta-sessao.mjs",
@@ -48,7 +48,8 @@
     "conferir:inicio": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs scripts/conferir-inicio.ts",
     "conferir:portao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-portao-de-fixture.ts",
     "conferir:analise": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs scripts/conferir-analise.ts",
-    "conferir:jev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-jev.ts"
+    "conferir:jev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-jev.ts",
+    "conferir:revops": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-revops.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.117.1",

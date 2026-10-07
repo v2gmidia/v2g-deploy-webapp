@@ -61,6 +61,15 @@ export interface ExcecaoDeIdentidade {
 
 export const EXCECOES: ExcecaoDeIdentidade[] = [
   {
+    arquivo: "app/(internal)/revops/actions.ts",
+    autorizacao: "papel",
+    oQueEntra: "`opportunityId` e a referencia externa da fonte, vindos dos formularios internos",
+    porque:
+      "A action valida `app_metadata.autorizacoes` contendo `revops` antes de ler " +
+      "o formData e antes de criar o cliente admin. O papel generico de operador nao " +
+      "satisfaz esse portao. A RPC confere a oportunidade e torna a fonte idempotente.",
+  },
+  {
     arquivo: "app/(fluxo)/conectar/escolher/actions.ts",
     autorizacao: "posse",
     oQueEntra: "IDs da conta de anúncio e da página escolhidos no formulário",

@@ -7,6 +7,7 @@ import "./inicio-editorial.css";
 import "./criativos-editorial.css";
 import "./anuncios-editorial.css";
 import "./editorial-conta-avisos.css";
+import "./revops-editorial.css";
 
 // Substitui a Bahnschrift do protótipo original (exclusiva do Windows,
 // não embutida) — ver docs/arquitetura.md, Decisão 6. Auto-hospedada

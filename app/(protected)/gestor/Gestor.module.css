@@ -1,0 +1,24 @@
+.pagina { display: grid; gap: 2rem; max-width: 1200px; margin: 0 auto; }
+.cabecalho { display: flex; justify-content: space-between; align-items: end; gap: 2rem; }
+.cabecalho h1 { margin: .25rem 0 .6rem; }
+.cabecalho p { max-width: 58ch; margin: 0; color: var(--ink-soft); }
+.sobretitulo { font-size: var(--fs-legenda); letter-spacing: .12em; font-weight: 700; }
+.links { display: flex; gap: 1rem; flex-wrap: wrap; }
+.links a, .destinos a { color: var(--cobalt-ink); font-weight: 700; text-decoration: underline; text-underline-offset: .2em; white-space: nowrap; }
+.resumo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.resumo div { display: grid; gap: .2rem; padding: 1.2rem 1rem 1.2rem 0; }
+.resumo strong { font-size: var(--fs-titulo); line-height: 1; }
+.resumo span { color: var(--ink-soft); }
+.introducao { margin-bottom: 1rem; }
+.introducao h2 { margin: 0 0 .3rem; }
+.introducao p, .fonte { color: var(--ink-soft); margin: 0; }
+.lista { display: grid; }
+.linha { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(15rem, 1.5fr) auto; gap: 1rem; align-items: center; border-top: 1px solid var(--line); padding: 1.2rem 0; }
+.linha:last-child { border-bottom: 1px solid var(--line); }
+.linha h3 { margin: 0 0 .25rem; }
+.linha small { overflow-wrap: anywhere; color: var(--ink-mute); }
+.acao { display: grid; gap: .3rem; }
+.acao span { color: var(--ink-soft); }
+.destinos { display: flex; gap: .75rem; flex-wrap: wrap; }
+.fonte { font-size: var(--fs-legenda); }
+@media (max-width: 900px) { .cabecalho { display: grid; } .resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .linha { grid-template-columns: 1fr; } }

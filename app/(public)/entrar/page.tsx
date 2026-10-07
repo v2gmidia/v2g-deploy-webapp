@@ -1,9 +1,10 @@
 "use client";
 
-import { Suspense, useActionState, useState } from "react";
+import { Suspense, useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { ProofCard } from "@/components/ui/ProofCard";
+import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
+import { SITE_PUBLICO_ORIGEM } from "@/lib/site-publico";
 import { signInAction, signUpAction, type AuthActionState } from "./actions";
 
 const initialState: AuthActionState = {};
@@ -19,7 +20,12 @@ export default function EntrarPage() {
 function EntrarContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "";
-  const [mode, setMode] = useState<"cadastro" | "login">("cadastro");
+  const mode = searchParams.get("modo") === "cadastro" ? "cadastro" : "login";
+  const destino = (modo: "cadastro" | "login") => {
+    const busca = new URLSearchParams({ modo });
+    if (next) busca.set("next", next);
+    return `/entrar?${busca.toString()}`;
+  };
 
   const [signUpState, signUpFormAction, signUpPending] = useActionState(
     signUpAction,
@@ -31,15 +37,18 @@ function EntrarContent() {
   );
 
   return (
-    <div className="auth-grid">
-      <div className="auth-card">
+    <EntradaEditorial>
+        <nav className="entrada-modos" aria-label="Acesso à conta">
+          <a href={destino("login")} aria-current={mode === "login" ? "page" : undefined}>Entrar</a>
+          <a href={destino("cadastro")} aria-current={mode === "cadastro" ? "page" : undefined}>Primeiro acesso</a>
+        </nav>
         {mode === "cadastro" ? (
           <>
-            <h1 className="auth-h">Seus anúncios, de volta às suas mãos.</h1>
-            <p className="auth-sub">Após a aprovação do pagamento, crie a conta com o e-mail informado na compra.</p>
+            <h1>Vamos criar seu acesso.</h1>
+            <p className="entrada-introducao">Após a aprovação do pagamento, crie a conta com o e-mail informado na compra.</p>
 
-            {signUpState.error && <p className="form-error">{signUpState.error}</p>}
-            {signUpState.message && <p className="form-notice">{signUpState.message}</p>}
+            {signUpState.error && <p className="form-error" role="alert">{signUpState.error}</p>}
+            {signUpState.message && <p className="form-notice" role="status">{signUpState.message}</p>}
 
             <form action={signUpFormAction}>
               <input type="hidden" name="next" value={next} />
@@ -98,19 +107,14 @@ function EntrarContent() {
               </Button>
             </form>
 
-            <div className="auth-foot">
-              Já tenho conta{" "}
-              <button type="button" className="link-btn" onClick={() => setMode("login")}>
-                &rarr; Entrar
-              </button>
-            </div>
+            <p className="entrada-ajuda">Ainda não contratou? <a href={`${SITE_PUBLICO_ORIGEM}/#plano`}>Conheça o plano V2G.</a></p>
           </>
         ) : (
           <>
-            <h1 className="auth-h">Bom te ver de novo.</h1>
-            <p className="auth-sub">Entre com seu e-mail e senha.</p>
+            <h1>Bom te ver de novo.</h1>
+            <p className="entrada-introducao">Entre para acompanhar seus anúncios e os próximos passos do seu negócio.</p>
 
-            {signInState.error && <p className="form-error">{signInState.error}</p>}
+            {signInState.error && <p className="form-error" role="alert">{signInState.error}</p>}
 
             <form action={signInFormAction}>
               <input type="hidden" name="next" value={next} />
@@ -126,7 +130,10 @@ function EntrarContent() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="senha-login">Senha</label>
+                <div className="entrada-senha-label">
+                  <label htmlFor="senha-login">Senha</label>
+                  <a href="/recuperar">Esqueci minha senha</a>
+                </div>
                 <input
                   id="senha-login"
                   name="senha"
@@ -141,37 +148,9 @@ function EntrarContent() {
               </Button>
             </form>
 
-            <div className="auth-foot">
-              <a href="/recuperar">Esqueci minha senha</a>
-            </div>
-
-            <div className="auth-foot">
-              Novo por aqui?{" "}
-              <button type="button" className="link-btn" onClick={() => setMode("cadastro")}>
-                &rarr; Criar conta
-              </button>
-            </div>
+            <p className="entrada-ajuda">Já contratou e ainda não tem acesso? <a href={destino("cadastro")}>Crie sua conta.</a></p>
           </>
         )}
-
-        {/* Fora do condicional de propósito: vale nos dois modos. Termos e
-            privacidade moram só no site — o app aponta para eles em vez de
-            manter uma cópia que envelhece diferente. */}
-        <nav className="auth-foot" aria-label="Sobre a V2G">
-          <a href="https://www.v2gmidia.com.br">Conheça a V2G</a>
-          {" · "}
-          <a href="https://www.v2gmidia.com.br/termos">Termos de uso</a>
-          {" · "}
-          <a href="https://www.v2gmidia.com.br/privacidade">Política de privacidade</a>
-        </nav>
-      </div>
-
-      <aside className="auth-aside">
-        <ProofCard title="Seus dados protegidos">
-          Protegidos pela LGPD. Usamos seu WhatsApp e e-mail só para avisos da sua conta —
-          nada de spam, nada de vender sua lista.
-        </ProofCard>
-      </aside>
-    </div>
+    </EntradaEditorial>
   );
 }

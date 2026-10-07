@@ -1,0 +1,116 @@
+.revops-shell.app-shell.v2g-editorial {
+  display: block;
+  min-height: 100vh;
+  background: var(--canvas);
+}
+
+.revops-topo {
+  min-height: 76px;
+  padding: 14px clamp(20px, 4vw, 56px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--canvas);
+}
+.revops-marca { color: var(--ink); text-decoration: none; }
+.revops-marca .glyph-img { width: 34px; height: 34px; }
+.revops-marca .wm { font-size: var(--fs-tela); }
+.revops-topo-acoes { display: flex; align-items: center; gap: 24px; color: var(--ink-mute); font-size: var(--fs-legenda); }
+.revops-canvas { width: min(1500px, 100%); margin: 0 auto; padding: 42px clamp(20px, 4vw, 56px) 72px; }
+
+.revops-abertura { display: flex; align-items: end; justify-content: space-between; gap: 32px; margin-bottom: 30px; }
+.revops-abertura h1 { margin: 0 0 10px; font-size: clamp(30px, 3.1vw, 40px); line-height: 1.05; letter-spacing: -.04em; font-weight: 400; }
+.revops-abertura p { margin: 0; color: var(--ink-soft); max-width: 68ch; }
+.revops-acesso { font-size: var(--fs-legenda); text-align: right; }
+
+.revops-resumo { display: grid; grid-template-columns: repeat(3, minmax(120px, 180px)) 1fr; gap: 0; border-block: 1px solid var(--line); margin-bottom: 38px; }
+.revops-resumo > div { padding: 20px 24px 20px 0; }
+.revops-resumo > div + div { padding-left: 24px; border-left: 1px solid var(--line); }
+.revops-resumo strong { display: block; font-size: var(--fs-tela); line-height: 1; font-weight: 450; font-variant-numeric: tabular-nums; }
+.revops-resumo span { display: block; margin-top: 8px; font-size: var(--fs-legenda); color: var(--ink-soft); }
+.revops-resumo > p { align-self: center; justify-self: end; margin: 0; max-width: 38ch; color: var(--ink-mute); font-size: var(--fs-legenda); }
+
+.revops-layout { min-width: 0; display: grid; grid-template-columns: minmax(310px, 390px) minmax(0, 1fr); gap: clamp(32px, 5vw, 72px); align-items: start; }
+.revops-registro { min-width: 0; display: grid; gap: 34px; position: sticky; top: 24px; }
+.revops-formulario { min-width: 0; padding: 24px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--raio-cartao); display: grid; gap: 18px; }
+.revops-form-head { padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.revops-form-head h2 { margin: 0 0 7px; font-size: var(--fs-bloco); font-weight: 450; letter-spacing: -.025em; }
+.revops-form-head p { margin: 0; color: var(--ink-soft); font-size: var(--fs-legenda); line-height: 1.55; }
+.revops-formulario label { display: grid; gap: 7px; color: var(--ink-soft); font-size: var(--fs-legenda); }
+.revops-formulario :is(input, select, textarea) { width: 100%; padding: 10px 12px; color: var(--ink); background: var(--surface); border: 1px solid var(--control-line); border-radius: var(--raio-controle); }
+.revops-formulario textarea { resize: vertical; }
+.revops-formulario .cta { width: 100%; padding-inline: 18px; }
+.revops-registro-inerte p { margin: 0; color: var(--ink-soft); }
+.revops-campos-duplos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; }
+
+.revops-lista { min-width: 0; }
+.revops-section-head { display: flex; justify-content: space-between; gap: 28px; align-items: end; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
+.revops-section-head h2 { margin: 0; font-size: var(--fs-bloco); font-weight: 450; letter-spacing: -.025em; }
+.revops-section-head p { margin: 0; max-width: 42ch; text-align: right; color: var(--ink-mute); font-size: var(--fs-legenda); }
+.revops-vazio { padding: 64px 0; max-width: 60ch; }
+.revops-vazio h3 { margin: 0 0 10px; font-size: var(--fs-tela); font-weight: 400; }
+.revops-vazio p { color: var(--ink-soft); }
+
+.revops-oportunidade { padding: 30px 0 38px; border-bottom: 1px solid var(--line); }
+.revops-oportunidade-head { display: flex; justify-content: space-between; gap: 24px; align-items: start; }
+.revops-oportunidade-head h3 { margin: 0; font-size: var(--fs-tela); font-weight: 400; letter-spacing: -.03em; }
+.revops-oportunidade-head p { margin: 6px 0 0; color: var(--ink-soft); }
+.revops-etapa { padding: 7px 10px; background: var(--ice-soft); color: var(--cobalt-ink); border-radius: var(--raio-selo); font-size: var(--fs-legenda); white-space: nowrap; }
+.revops-proximo { margin: 24px 0; padding: 20px; background: var(--task-surface); border-radius: var(--raio-cartao); display: grid; gap: 4px; }
+.revops-proximo span { color: var(--ink-mute); font-size: var(--fs-legenda); }
+.revops-proximo strong { font-size: var(--fs-titulo); font-weight: 500; }
+.revops-proximo small { color: var(--ink-soft); }
+.revops-evidencia-geral { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin: 0 0 20px; }
+.revops-evidencia-geral div { padding-top: 12px; border-top: 1px solid var(--line); }
+.revops-evidencia-geral dt { color: var(--ink-mute); font-size: var(--fs-legenda); }
+.revops-evidencia-geral dd { margin: 5px 0 0; font-size: var(--fs-corpo); }
+.revops-desconhecido { padding: 12px 14px; margin: 0 0 12px; color: var(--warn); background: var(--warn-soft); font-size: var(--fs-legenda); }
+.revops-alertas { list-style: none; padding: 0; margin: 0 0 20px; display: flex; flex-wrap: wrap; gap: 8px; }
+.revops-alertas li { padding: 7px 10px; color: var(--warn); background: var(--warn-soft); border-radius: var(--raio-selo); font-size: var(--fs-legenda); }
+.revops-timeline { list-style: none; padding: 0; margin: 28px 0 0; }
+.revops-timeline > li { display: grid; grid-template-columns: 118px minmax(0, 1fr); gap: 22px; position: relative; padding-bottom: 24px; }
+.revops-timeline > li:not(:last-child)::after { content: ""; position: absolute; left: 127px; top: 14px; bottom: 0; width: 1px; background: var(--line); }
+.revops-timeline time { color: var(--ink-mute); font-size: var(--fs-legenda); font-variant-numeric: tabular-nums; }
+.revops-evento { min-width: 0; padding-left: 22px; position: relative; }
+.revops-evento::before { content: ""; position: absolute; z-index: 1; left: -14px; top: 7px; width: 7px; height: 7px; background: var(--cobalt-ink); }
+.revops-evento-topo { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+.revops-evento-topo strong { font-weight: 500; }
+.revops-evento-topo span { flex: none; color: var(--good); font-size: var(--fs-legenda); }
+.revops-evento-topo span[data-evidencia="human_report"] { color: var(--warn); }
+.revops-evento-topo span[data-evidencia="inference"] { color: var(--crit); }
+.revops-evento p { margin: 7px 0; max-width: 72ch; }
+.revops-evento small { display: block; color: var(--ink-mute); overflow-wrap: anywhere; }
+.revops-evento em { display: inline-block; margin-top: 8px; color: var(--warn); font-style: normal; font-size: var(--fs-legenda); }
+.revops-sem-evento { color: var(--ink-mute); font-size: var(--fs-corpo); }
+
+@media (max-width: 1100px) {
+  .revops-layout { grid-template-columns: minmax(0, 1fr); }
+  .revops-registro { position: static; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .revops-topo { gap: 12px; }
+  .revops-topo-acoes > span { display: none; }
+  .revops-abertura, .revops-section-head { display: block; }
+  .revops-acesso, .revops-section-head p { margin-top: 12px; text-align: left; }
+  .revops-resumo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .revops-resumo > div { padding: 16px 10px 16px 0; }
+  .revops-resumo > div + div { padding-left: 10px; }
+  .revops-resumo > p { grid-column: 1 / -1; justify-self: start; padding: 14px 0; border-top: 1px solid var(--line); }
+  .revops-registro { grid-template-columns: minmax(0, 1fr); }
+  .revops-lista { grid-row: 1; }
+  .revops-registro { grid-row: 2; }
+  .revops-formulario { padding: 20px; }
+  .revops-campos-duplos { grid-template-columns: minmax(0, 1fr); }
+  .revops-evidencia-geral { grid-template-columns: minmax(0, 1fr); }
+  .revops-timeline > li { grid-template-columns: 1fr; gap: 8px; }
+  .revops-timeline > li::after, .revops-evento::before { display: none; }
+  .revops-evento { padding-left: 0; }
+  .revops-evento-topo { display: grid; gap: 4px; }
+}
+
+:root[data-tema="escuro"] .revops-marca .glyph-img { filter: brightness(0) invert(1); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tema="claro"]) .revops-marca .glyph-img { filter: brightness(0) invert(1); }
+}

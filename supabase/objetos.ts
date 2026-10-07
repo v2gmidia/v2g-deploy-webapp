@@ -482,4 +482,24 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "ledger remoto unidade_aprovada_com_pedido_pendente_20261007",
     ],
   },
+  {
+    arquivo: "20261007160925_revops_v0.sql",
+    cria: [
+      { tipo: "tabela", nome: "revops_people" },
+      { tipo: "tabela", nome: "revops_prospect_organizations" },
+      { tipo: "tabela", nome: "revops_opportunities" },
+      { tipo: "tabela", nome: "revops_opportunity_people" },
+      { tipo: "tabela", nome: "revops_source_references" },
+      { tipo: "tabela", nome: "revops_interactions" },
+      { tipo: "tabela", nome: "revops_interaction_opportunities" },
+      { tipo: "rpc", nome: "revops_register_interest" },
+      { tipo: "rpc", nome: "revops_register_interaction" },
+    ],
+    foraDoAlcance: [
+      "migration somente local e NAO aplicada; nenhuma existencia remota foi verificada",
+      "RLS default deny, revokes de anon/authenticated e grants das RPCs apenas a service_role",
+      "foreign keys opcionais para leads_lp, commercial_orders e businesses e a prova obrigatoria desses vinculos",
+      "unicidade de fonte/interacao, checks de evidencia/transcricao e corpos transacionais das duas RPCs",
+    ],
+  },
 ];

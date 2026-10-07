@@ -78,8 +78,10 @@ Regras que fazem a pasta continuar legível:
 | [`pix-assistido-operador-06-10.md`](./pix-assistido-operador-06-10.md) | 06/10/2026 | Registro e aprovação manual do pedido Pix assistido pelo operador, com transações idempotentes e teste revertido. | **Sim.** Interface autenticada, comunicação ao comprador, conciliação externa, contrato e fiscal. |
 | [`fiscal-contrato-07-10.md`](./fiscal-contrato-07-10.md) | 07/10/2026 | Sequência e dados necessários para NFS-e no Asaas, inclusive Pix direto avulso, competência e idempotência; nenhuma emissão foi ligada. | **Sim.** Contador, conta Asaas, dados do tomador, webhook e sandbox. |
 | [`handoff-outubro-07-10.md`](./handoff-outubro-07-10.md) | 07/10/2026 | Estado local dos blocos de outubro, testes e dependências externas. | **Sim.** Interfaces autenticadas e integrações reais. |
+| [`verificacao-pos-commit-07-10.md`](./verificacao-pos-commit-07-10.md) | 07/10/2026, após publicação | Confere commit de produção, aprovação cadastral Asaas, agenda pública, contagens do banco e testes da ficha/multiconta/acesso. | **Sim.** Jornada autenticada, assinatura eletrônica e sincronização da agenda. |
 | [`agenda-integracao-contrato-06-10.md`](./agenda-integracao-contrato-06-10.md) | 06/10/2026 | Campos, transições, validação de identidade e idempotência para conciliar reservas Google com o WebApp. | **Sim.** OAuth, evento real, remarcação, cancelamento, feriados e WhatsApp. |
 | [`contratos-legados-comparacao-06-10.md`](./contratos-legados-comparacao-06-10.md) | 06/10/2026 | Compara dois contratos históricos com as regras atuais sem copiar dados pessoais ou cláusulas obsoletas. | **Sim.** Revisão jurídica da nova minuta e decisões sobre suporte, relatórios, inadimplência e saída. |
+| [`gestor-agenda-verificacao-07-10.md`](./gestor-agenda-verificacao-07-10.md) | 07/10/2026 | Carteira operacional local, teste do botão de agenda, bloqueio do feriado e limites dos testes de interface. | **Sim.** Carteira autenticada local, dois CNPJs no mesmo login e reserva real com conciliação. |
 
 ---
 

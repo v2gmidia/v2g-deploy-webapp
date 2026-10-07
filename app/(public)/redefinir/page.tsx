@@ -1,4 +1,4 @@
-import { ProofCard } from "@/components/ui/ProofCard";
+import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
 import { createClient } from "@/lib/supabase/server";
 import { RedefinirForm } from "./Form";
 import { tituloDaAba } from "@/lib/titulos";
@@ -25,32 +25,24 @@ export default async function RedefinirPage({ searchParams }: RedefinirPageProps
   const linkInvalido = erro === "invalido" || !user;
 
   return (
-    <div className="auth-grid">
-      <div className="auth-card">
+    <EntradaEditorial>
         {linkInvalido ? (
           <>
-            <h1 className="auth-h">Este link não é mais válido.</h1>
-            <p className="auth-sub">
+            <h1>Este link não é mais válido.</h1>
+            <p className="entrada-introducao">
               Ele pode ter expirado ou já ter sido usado. Peça um novo link de recuperação.
             </p>
-            <div className="auth-foot">
-              <a href="/recuperar">&larr; Pedir novo link</a>
-            </div>
+            <a className="cta" href="/recuperar">Pedir novo link</a>
           </>
         ) : (
           <>
-            <h1 className="auth-h">Defina sua nova senha.</h1>
-            <p className="auth-sub">Escolha uma senha forte para proteger sua conta.</p>
+            <h1>Defina sua nova senha.</h1>
+            <p className="entrada-introducao">Escolha uma senha forte para proteger sua conta.</p>
             <RedefinirForm />
+            <p className="entrada-ajuda">Depois de salvar, sua sessão atual é encerrada e você entra de novo com a senha nova.</p>
           </>
         )}
-      </div>
-
-      <aside className="auth-aside">
-        <ProofCard title="Seus dados protegidos">
-          Depois de salvar, sua sessão atual é encerrada e você entra de novo com a senha nova.
-        </ProofCard>
-      </aside>
-    </div>
+        <a className="entrada-voltar" href="/entrar?modo=login">Voltar para o login</a>
+    </EntradaEditorial>
   );
 }

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { listarNichos } from "@/lib/backend";
 import type { CasoDeFalha } from "../_onboarding/recados";
 import { Casco } from "@/components/ui/Casco";
+import { Marca } from "@/components/ui/Marca";
+import { PreferenciaDeTema } from "@/components/ui/PreferenciaDeTema";
 import { TelaDoInicio } from "@/app/(protected)/inicio/TelaDoInicio";
 import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 
@@ -124,6 +126,29 @@ export default async function ExemploPage({
     const modulo = ehDesenvolvimento ? await import("../_bordas/Amostra") : null;
     if (!modulo) notFound();
     return <modulo.Amostra />;
+  }
+
+  // ---- RevOps com fixtures estritamente ficticias ----
+  if (tela === "revops") {
+    const modulo = ehDesenvolvimento ? await import("@/app/(internal)/revops/TelaRevOps") : null;
+    const fixture = ehDesenvolvimento ? await import("@/lib/dev/fixtures-revops") : null;
+    if (!modulo || !fixture) notFound();
+    return <div className="app-shell v2g-editorial revops-shell">
+      <header className="revops-topo"><Marca className="revops-marca" editorial />
+        <div className="revops-topo-acoes"><span>Prévia fictícia · área interna</span><PreferenciaDeTema /></div>
+      </header>
+      <main className="revops-canvas">
+        <modulo.TelaRevOps oportunidades={fixture.OPORTUNIDADES_REVOPS_FICTICIAS}
+          referencia="f0000000-0000-4000-8000-000000000099" somenteLeitura />
+      </main>
+    </div>;
+  }
+
+  // Estado ficticio para verificar o CTA da agenda sem alterar cadastro real.
+  if (tela === "onboarding-concluido") {
+    const modulo = ehDesenvolvimento ? await import("@/app/(fluxo)/onboarding/concluido/Conclusao") : null;
+    if (!modulo) notFound();
+    return <modulo.Conclusao estado={{ concluido: true, faltamBasicas: [], contasProntas: true }} />;
   }
 
   // ---- o onboarding novo, onze perguntas ----

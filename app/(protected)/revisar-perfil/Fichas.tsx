@@ -3,7 +3,7 @@ import { camposDaFicha, valorDaFicha, pracaOriginal, marcaOriginal,
 import styles from "./Fichas.module.css";
 
 /** Renderizado apenas pelo servidor, depois da autorização da página. */
-export function Fichas({ negocios }: { negocios: Record<string, unknown>[] }) {
+export function Fichas({ negocios, negocioAberto }: { negocios: Record<string, unknown>[]; negocioAberto?: string }) {
   return (
     <section id="fichas" className={styles.fichas} aria-labelledby="titulo-fichas">
       <h2 id="titulo-fichas">Fichas dos negócios</h2>
@@ -14,7 +14,8 @@ export function Fichas({ negocios }: { negocios: Record<string, unknown>[] }) {
         const marca = marcaOriginal(negocio);
         const contas = contasOriginais(negocio);
         return (
-        <details key={String(negocio.id)} className={styles.ficha}>
+        <details id={`ficha-${String(negocio.id)}`} key={String(negocio.id)}
+          className={styles.ficha} open={String(negocio.id) === negocioAberto || undefined}>
           <summary>{valorDaFicha(negocio.name)} <span>— {String(negocio.id)}</span></summary>
           <p>Verba mensal é o valor informado pelo cliente, não o orçamento diário atual da campanha.
             Datas de procedência são exibidas como registradas, com seu fuso quando disponível.</p>

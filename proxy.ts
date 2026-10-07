@@ -46,6 +46,8 @@ const PROTECTED_PREFIXES = [
   // no lugar dela — fora desta lista, o segundo filtro nunca rodaria.
   "/revisar-perfil",
   "/pedidos",
+  "/gestor",
+  "/revops",
   "/escolher-negocio",
   // `/campanhas` e `/criativos` viraram `/anuncios` no lote 8. Ficam aqui
   // porque continuam existindo como redirecionamento — e redirecionar
@@ -76,7 +78,9 @@ const PROTECTED_PREFIXES = [
  * Precisam estar TAMBÉM em `PROTECTED_PREFIXES` — a checagem de sessão
  * vem primeiro, e esta é um segundo filtro sobre ela, não um substituto.
  */
-const OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil", "/pedidos", "/ativar-campanha"];
+const OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil", "/pedidos", "/gestor", "/ativar-campanha"];
+
+const REVOPS_PREFIXES = ["/revops"];
 
 /** O papel declarado no JWT, ou `null`. */
 function obterPapel(user: { app_metadata?: Record<string, unknown> } | null): string | null {
@@ -165,7 +169,8 @@ export async function proxy(request: NextRequest) {
     return redirecionar(redirectUrl);
   }
 
-  if (isProtected && user && !(await temAcessoWebApp(supabase, user))) {
+  const isRevOps = REVOPS_PREFIXES.some((p) => pathname.startsWith(p));
+  if (isProtected && !isRevOps && user && !(await temAcessoWebApp(supabase, user))) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/acesso-pendente";
     redirectUrl.search = "";
@@ -186,6 +191,18 @@ export async function proxy(request: NextRequest) {
   // logado" quando ele está, e ele tentaria logar de novo para sempre.
   if (OPERADOR_PREFIXES.some((p) => pathname.startsWith(p))) {
     if (obterPapel(user) !== "operador") {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = user ? "/inicio" : "/entrar";
+      redirectUrl.search = "";
+      return redirecionar(redirectUrl);
+    }
+  }
+
+  // RevOps e mais restrito que o papel de operador. A lista vive em
+  // app_metadata (assinada pelo Supabase); user_metadata nunca autoriza.
+  if (isRevOps) {
+    const autorizacoes = user?.app_metadata?.autorizacoes;
+    if (!Array.isArray(autorizacoes) || !autorizacoes.includes("revops")) {
       const redirectUrl = request.nextUrl.clone();
       redirectUrl.pathname = user ? "/inicio" : "/entrar";
       redirectUrl.search = "";

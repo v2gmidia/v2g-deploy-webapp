@@ -188,8 +188,9 @@ importadas depois de `app/globals.css` em `app/layout.tsx`.
 **Escopo importa:** tokens e controles compartilhados alcançam todo conteúdo
 renderizado dentro do Casco; as composições das cinco telas dependem também
 de suas classes locais. Isso não equivale a redesenhar todas as rotas
-protegidas. LP, páginas públicas, páginas legais e onboarding fora do Casco
-mantêm suas regras. A marca editorial usa o vetor da LP em
+protegidas. LP, páginas legais e onboarding fora do Casco mantêm suas regras;
+a extensão explícita da entrada pública está documentada em Components.
+A marca editorial usa o vetor da LP em
 `public/marca-editorial.svg`, selecionado por `<Marca editorial />`; a
 variante raster das demais superfícies permanece em `public/marca.png`.
 
@@ -364,6 +365,36 @@ leitura assistiva. O movimento acompanha interação ou processamento, como
 o hover de fundo de 150ms da ação herdada e o progresso da análise.
 `prefers-reduced-motion: reduce` desliga animações, transições e rolagem
 animada no escopo editorial; o texto continua explicando o estado.
+
+### Suplemento de 07/10/2026 — entrada pública
+
+`components/ui/EntradaEditorial.tsx` e `app/entrada-editorial.css` estendem
+a identidade a `/entrar` (login e primeiro acesso), `/recuperar`,
+`/redefinir` e `/acesso-pendente`. O escopo é `.entrada-editorial`; o ajuste
+do invólucro usa `.auth-shell:has(.entrada-editorial)`. O sistema protegido
+acima continua sendo sua própria fonte visual.
+
+A entrada reutiliza a paleta editorial clara/escura, o vetor da marca,
+cobalto para ação e gelo no manifesto. Herda Claro, Escuro e Do aparelho
+sem alterar a preferência salva. A composição tem painel de marca escuro
+e formulário aberto, sem sombra, limitado a 440px. Até 760px, a marca vira
+cabeçalho e o manifesto sai da composição. Campos e ação principal têm
+52px mínimos e raio de 4px; links de navegação, 44px mínimos. Foco visível,
+atalho para o formulário e movimento reduzido permanecem explícitos.
+
+**Tipografia própria da entrada:** o manifesto usa
+`clamp(36px, 3.65vw, 54px)`, peso 400 e entrelinha 1.12; até 1000px usa
+36px. O título do formulário usa `clamp(30px, 2.5vw, 36px)`, peso 400 e
+entrelinha 1.2; até 760px usa 30px. Esses papéis expressivos da entrada
+pública justificam os três avisos de 36/54px na execução do detector deste
+bloco. Não ampliam a escala operacional de 12/14/16/20/24/30px nem autorizam
+esses tamanhos em outros componentes. O catálogo global e o sidecar não
+foram regenerados neste suplemento.
+
+`EntradaEditorial` fornece marca, retorno à LP, links de plano/contato e
+links legais; as ações, os campos e os estados continuam nas rotas reais.
+O registro da jornada e dos limites da validação local está em
+`docs/estado/entrada-lp-07-10.md`.
 
 ## Do's and Don'ts
 
