@@ -2,7 +2,7 @@
 
 ## Estado verificado
 
-O WebApp guarda pedido, unidades contratadas e uma tabela `fiscal_documents` com estado. `/pedidos` mostra ao operador se há autorização registrada, mas **não agenda, emite nem envia nota**. A NFS-e de exemplo recebida indica Curitiba/PR e inscrição municipal 13448418; não determina regime tributário, serviço municipal, alíquotas nem retenções para futuras notas. O Asaas ainda está em aprovação na conta da V2G. Nenhum endpoint fiscal foi chamado nesta entrega.
+O WebApp guarda pedido, unidades contratadas e uma tabela `fiscal_documents` com estado. `/pedidos` mostra ao operador se há autorização registrada, mas **não agenda, emite nem envia nota**. A NFS-e de exemplo recebida indica Curitiba/PR e inscrição municipal 13448418. Em 07/10, Victor trouxe resposta da Contabilizei por Gabriel: Simples Nacional, item 17.06, código municipal 170601000 para os CNAEs 7311-4/00 e 7319-0/04, Anexo V sujeito ao Fator R. Isso é informação atribuída ao contador, ainda não confrontada com o cadastro fiscal no Asaas. A aprovação geral da conta Asaas foi vista em 07/10; habilitação fiscal permanece sem verificação. Nenhum endpoint fiscal foi chamado nesta entrega.
 
 ## Sequência exigida pelo provedor
 
@@ -14,7 +14,8 @@ O [webhook fiscal](https://docs.asaas.com/docs/webhook-para-notas-fiscais) separ
 
 | Origem | Campos/decisão | Situação |
 |---|---|---|
-| V2G e contador | Regime tributário, código do serviço, alíquotas/retenções, credenciais fiscais exigidas pelo município, série e município da prestação | Pendente de confirmação com contador e configuração no Asaas |
+| V2G e contador | Regime Simples Nacional; item 17.06; código municipal 170601000; CNAEs 7311-4/00 e 7319-0/04; Anexo V sujeito ao Fator R | Informado pela Contabilizei via Gabriel em 07/10; falta conferir cadastro efetivo no Asaas |
+| V2G e contador | Alíquotas/retenções aplicáveis, credenciais fiscais exigidas pelo emissor, série, competência e município da prestação | Pendente; não derivar alíquota de “Anexo V” nem do exemplo de NFS-e |
 | Pedido | `order_id`, `business_id`, CNPJ e razão social do tomador, quantidade de contas, preço, desconto, forma e período de pagamento | Parcialmente persistido em `commercial_orders` |
 | Tomador | Endereço e dados fiscais que a API/município efetivamente exigir | Ainda não coletado em fluxo validado |
 | Cobrança | ID da cobrança Asaas quando houver; no Pix direto, vínculo a `customer` e comprovante aprovado pela V2G | Integração externa pendente |
@@ -22,7 +23,7 @@ O [webhook fiscal](https://docs.asaas.com/docs/webhook-para-notas-fiscais) separ
 
 ## Contrato de processamento seguinte
 
-1. Não enviar `POST /v3/invoices` até que a conta Asaas esteja habilitada, o contador aprove a configuração fiscal, o tomador tenha os dados exigidos e exista uma competência/cobrança identificável.
+1. Não enviar `POST /v3/invoices` até que a emissão fiscal da conta Asaas esteja habilitada, o contador aprove os parâmetros fiscais restantes, o tomador tenha os dados exigidos e exista uma competência/cobrança identificável. Consultar `GET /v3/fiscalInfo/services`: usar o ID retornado em `municipalServiceId` se houver lista; só usar `municipalServiceCode` quando a lista não estiver disponível ou o emissor for o Portal Nacional. Não presumir que `170601000` seja o ID interno do Asaas.
 2. Criar chave única interna `(pedido, competencia, tipo_de_nota)` e guardar o ID do provedor. Uma repetição deve consultar a nota anterior, não criar outra.
 3. Associar eventos pelo ID da nota e validar a origem do webhook antes de mudar o estado. `SCHEDULED` e `SYNCHRONIZED` são pendências; somente `AUTHORIZED` comprova emissão. Rejeição e cancelamento exigem estados próprios, histórico e tratamento operacional.
 4. Só enviar PDF/XML ao e-mail verificado da compra depois de autorização e URL/documento confirmado; registrar tentativa de entrega sem dizer que chegou quando não houver prova.

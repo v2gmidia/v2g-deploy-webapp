@@ -69,6 +69,11 @@ export default async function PedidosPage({ searchParams }: {
   return <div className="canvas">
     <div className="page-head"><h1>Pedidos assistidos</h1>
       <p>Qualificação declarada e Pix direto. A equipe registra cada etapa.</p></div>
+    <section className="pendencia-bloco" aria-labelledby="preparacao-fiscal">
+      <h2 id="preparacao-fiscal">Preparação fiscal</h2>
+      <p>Contabilizei informou Simples Nacional, item de serviço 17.06 e código municipal 170601000 para a V2G. Fonte: resposta repassada por Gabriel em 07/10.</p>
+      <p>Antes de emitir: conferir o serviço no cadastro fiscal do Asaas, alíquotas e retenções com a contabilidade, dados do tomador e competência da cobrança. Nenhuma emissão automática está ativa.</p>
+    </section>
     {avisos[registro ?? ""] && <p className="form-notice">{avisos[registro ?? ""]}</p>}
     {!falhaConsulta && <NovoPedidoPix referencia={crypto.randomUUID()} />}
     <h2>Pedidos recentes</h2>

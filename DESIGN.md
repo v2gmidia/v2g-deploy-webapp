@@ -374,10 +374,12 @@ a identidade a `/entrar` (login e primeiro acesso), `/recuperar`,
 do invólucro usa `.auth-shell:has(.entrada-editorial)`. O sistema protegido
 acima continua sendo sua própria fonte visual.
 
-A entrada reutiliza a paleta editorial clara/escura, o vetor da marca,
-cobalto para ação e gelo no manifesto. Herda Claro, Escuro e Do aparelho
-sem alterar a preferência salva. A composição tem painel de marca escuro
-e formulário aberto, sem sombra, limitado a 440px. Até 760px, a marca vira
+A entrada usa sempre a paleta editorial clara, o vetor da marca,
+cobalto para ação e gelo no manifesto. Por escolha posterior do Victor,
+o formulário permanece claro e a lateral azul-marinho, mesmo com tema
+escuro salvo ou no aparelho. Isso não altera a preferência salva nem as
+opções Claro, Escuro e Do aparelho dentro do produto protegido.
+A composição tem formulário aberto, sem sombra, limitado a 440px. Até 760px, a marca vira
 cabeçalho e o manifesto sai da composição. Campos e ação principal têm
 52px mínimos e raio de 4px; links de navegação, 44px mínimos. Foco visível,
 atalho para o formulário e movimento reduzido permanecem explícitos.

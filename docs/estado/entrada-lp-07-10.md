@@ -94,3 +94,25 @@ não precisam entrar no commit de produto.
 
 A lista exata do segundo repositório está em
 [`LP — jornada comercial`](../../../lp/docs/jornada-comercial-07-10.md).
+
+## 5. Ajuste posterior — entrada sempre clara e publicação separada
+
+Victor preferiu o formulário sempre claro com lateral azul-marinho.
+As substituições de tema escuro foram removidas apenas de
+`app/entrada-editorial.css`. A preferência salva e as três opções de
+tema do produto protegido permanecem intactas.
+
+Nesta etapa, Victor informou ter enviado somente o WebApp e pediu que a
+LP não receba novas alterações nem publique a jornada comercial ainda.
+Os repositórios são separados; as alterações anteriores da LP continuam
+locais. Uma publicação de produção da LP pode atualizar também o domínio
+público vinculado. A configuração atual de publicação automática não foi
+consultada no painel.
+
+Validação do ajuste: `pnpm typecheck` e `pnpm build` passaram (o build
+manteve o aviso não fatal de rede em `GET /nichos`). `pnpm conferir`
+voltou a parar na migration RevOps registrada na seção 2, sem mudança no
+banco. No navegador, com o aparelho em modo escuro, a entrada manteve
+`color-scheme: light`, fundo `#F8FBFA` e lateral `#051225`. A emulação foi
+retirada após a conferência. Captura local:
+`.impeccable/review/entrada-sempre-clara-07-10.png`.

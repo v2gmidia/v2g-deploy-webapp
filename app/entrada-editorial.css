@@ -4,6 +4,8 @@
 .auth-shell:has(.entrada-editorial) > .auth-top { display: none; }
 .auth-shell:has(.entrada-editorial) > .auth-wrap { display: block; width: 100%; max-width: none; margin: 0; padding: 0; }
 
+/* A entrada permanece clara por decisão visual; a preferência de tema
+   salva continua valendo no produto protegido. */
 .entrada-editorial {
   --canvas: #F8FBFA;
   --surface: #ECF5F2;
@@ -44,44 +46,6 @@
   font-size: 16px;
   line-height: 1.6;
   color-scheme: light;
-}
-:root[data-tema="escuro"] .entrada-editorial {
-  --canvas: #0D1929;
-  --surface: #142337;
-  --surface-2: #1B2C40;
-  --ink: #ECF5F2;
-  --ink-soft: #BACAD6;
-  --ink-mute: #A7BBCB;
-  --cobalt-ink: #9FBFFF;
-  --line: #354A60;
-  --control-line: #6D859A;
-  --good: #A6D8B5;
-  --good-soft: #18392D;
-  --crit: #FFB3AC;
-  --crit-soft: #422B2F;
-  --warn: #EBC885;
-  --warn-soft: #3B301B;
-  color-scheme: dark;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-tema="claro"]) .entrada-editorial {
-    --canvas: #0D1929;
-    --surface: #142337;
-    --surface-2: #1B2C40;
-    --ink: #ECF5F2;
-    --ink-soft: #BACAD6;
-    --ink-mute: #A7BBCB;
-    --cobalt-ink: #9FBFFF;
-    --line: #354A60;
-    --control-line: #6D859A;
-    --good: #A6D8B5;
-    --good-soft: #18392D;
-    --crit: #FFB3AC;
-    --crit-soft: #422B2F;
-    --warn: #EBC885;
-    --warn-soft: #3B301B;
-    color-scheme: dark;
-  }
 }
 .entrada-editorial ::selection { background: var(--ice); color: var(--plate); }
 .entrada-editorial :focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 4px; }

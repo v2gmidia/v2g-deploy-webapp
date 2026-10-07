@@ -82,6 +82,7 @@ Regras que fazem a pasta continuar legível:
 | [`agenda-integracao-contrato-06-10.md`](./agenda-integracao-contrato-06-10.md) | 06/10/2026 | Campos, transições, validação de identidade e idempotência para conciliar reservas Google com o WebApp. | **Sim.** OAuth, evento real, remarcação, cancelamento, feriados e WhatsApp. |
 | [`contratos-legados-comparacao-06-10.md`](./contratos-legados-comparacao-06-10.md) | 06/10/2026 | Compara dois contratos históricos com as regras atuais sem copiar dados pessoais ou cláusulas obsoletas. | **Sim.** Revisão jurídica da nova minuta e decisões sobre suporte, relatórios, inadimplência e saída. |
 | [`gestor-agenda-verificacao-07-10.md`](./gestor-agenda-verificacao-07-10.md) | 07/10/2026 | Carteira operacional local, teste do botão de agenda, bloqueio do feriado e limites dos testes de interface. | **Sim.** Carteira autenticada local, dois CNPJs no mesmo login e reserva real com conciliação. |
+| [`assinatura-provedor-07-10.md`](./assinatura-provedor-07-10.md) | 07/10/2026 | Confere o alcance da assinatura Google, menor plano Clicksign publicado e contrato técnico para automatizar sem envio real. | **Sim.** Minuta aprovada, conta/termo de assinatura, dados do representante e sandbox. |
 
 ---
 
