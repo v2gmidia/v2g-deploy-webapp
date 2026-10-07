@@ -1,7 +1,7 @@
 # V2G — webapp
 
 App do produto: SaaS que automatiza gestão de tráfego pago via IA para PMEs
-brasileiras ("a Contabilizei do marketing", R$ 490/mês). Este repositório é o
+brasileiras (oferta vigente em `docs/decisoes.md`: R$ 500 mensais por conta de anúncios). Não usar nomes de outras empresas como comparação ou argumento de venda. Este repositório é o
 **produto real**. Mockups e design system ficam em outro lugar (ver mapa abaixo).
 
 ---

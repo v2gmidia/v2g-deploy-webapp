@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 
 /**
  * 1ª camada de proteção (ver docs/arquitetura.md, Decisão 3).
@@ -159,6 +160,13 @@ export async function proxy(request: NextRequest) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/entrar";
     redirectUrl.searchParams.set("next", pathname);
+    return redirecionar(redirectUrl);
+  }
+
+  if (isProtected && user && !(await temAcessoWebApp(supabase, user))) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/acesso-pendente";
+    redirectUrl.search = "";
     return redirecionar(redirectUrl);
   }
 

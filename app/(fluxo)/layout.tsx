@@ -1,6 +1,7 @@
 import { Marca } from "@/components/ui/Marca";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 
 /**
  * Layout do grupo de FLUXO — exige sessão, mas sem sidebar e sem topbar.
@@ -29,6 +30,10 @@ export default async function FluxoLayout({ children }: { children: React.ReactN
 
   if (!user) {
     redirect("/entrar");
+  }
+
+  if (!(await temAcessoWebApp(supabase, user))) {
+    redirect("/acesso-pendente");
   }
 
   return (

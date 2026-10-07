@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { preVooPorNegocio, type PreVoo } from "@/lib/campanha/pre-voo";
 import { validarOrcamento } from "@/lib/meta/orcamento";
+import { bloqueioContratualDaCampanha } from "@/lib/contratacao/trava-campanha";
 
 /**
  * A TRAVA DE IDENTIDADE DA ATIVAÇÃO DE CAMPANHA.
@@ -85,7 +86,9 @@ export type MotivoDeBloqueio =
   /** o teto mensal não dá um diário válido */
   | "orcamento"
   /** o pré-voo devolveu bloqueio da Meta */
-  | "pre_voo";
+  | "pre_voo"
+  /** uma nova compra ainda não tem pagamento ou assinatura comprovados */
+  | "contrato";
 
 /**
  * Uma linha de `execucoes.aprovacoes` — o rastro que o BACKEND escreve.
@@ -311,6 +314,28 @@ export async function conferirAntesDeAtivar(
 
   // ---------- 6. o que impede ----------
   const bloqueios: ConfirmacaoDeAtivacao["bloqueios"] = [];
+
+  // A primeira campanha dos novos pedidos continua manual, mas esta tela
+  // não oferece o botão antes de pagamento e assinatura verificados.
+  const { data: pedidos, error: erroPedidos } = await admin
+    .from("commercial_orders")
+    .select("id, status")
+    .eq("business_id", negocioId)
+    .neq("status", "cancelled");
+  if (erroPedidos || !pedidos) {
+    bloqueios.push({ motivo: "contrato", texto: "Não consegui conferir a contratação desta empresa agora." });
+  } else if (pedidos.length) {
+    const { data: contratos, error: erroContratos } = await admin
+      .from("contract_documents")
+      .select("order_id, status")
+      .in("order_id", pedidos.map((pedido) => pedido.id));
+    if (erroContratos || !contratos) {
+      bloqueios.push({ motivo: "contrato", texto: "Não consegui conferir as assinaturas desta empresa agora." });
+    } else {
+      const motivo = bloqueioContratualDaCampanha(pedidos, contratos);
+      if (motivo) bloqueios.push({ motivo: "contrato", texto: motivo });
+    }
+  }
 
   if (!orcamento.ok) {
     bloqueios.push({ motivo: "orcamento", texto: orcamento.mensagem });

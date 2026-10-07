@@ -171,9 +171,8 @@
   /* Raio — escala de três (14/09/2026, lote raio): controle, cartão, pílula.
      --raio-pilula já existia com esse nome e valor. Os antigos abaixo
      continuam definidos; quem ficou fora da escala ainda lê alguns.
-     15/09/2026, lote 2b: controle 8 → 12 e cartão 12 → 16. Contra as
-     referências que o Victor mandou (Mercado Pago, PicPay, Nubank,
-     Santander, Contabilizei), 8 e 12 ficaram quadrados demais.
+     15/09/2026, lote 2b: controle 8 → 12 e cartão 12 → 16. Nas
+     referências de interface avaliadas, 8 e 12 ficaram quadrados demais.
      Antes e depois: docs/tokens.md, "Raio: lote 2b". */
   --raio-controle: 12px;  /* botão, campo, item de lista e de nav */
   --raio-cartao: 16px;    /* card, caixa, bloco */

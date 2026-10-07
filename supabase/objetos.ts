@@ -397,4 +397,37 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "o `drop not null`, que e a mudanca inteira: a presenca da coluna nao distingue a versao 0010 da 0025. So o ledger ou um INSERT sem transcricao responde isso",
     ],
   },
+  {
+    arquivo: "0026_contratacao_multiconta.sql",
+    cria: [
+      { tipo: "tabela", nome: "business_memberships" },
+      { tipo: "tabela", nome: "commercial_orders" },
+      { tipo: "tabela", nome: "commercial_order_units" },
+      { tipo: "tabela", nome: "commercial_events" },
+      { tipo: "tabela", nome: "contract_documents" },
+      { tipo: "tabela", nome: "fiscal_documents" },
+    ],
+    foraDoAlcance: [
+      "RLS e policies de leitura por usuario; os grants negam escrita direta a anon e authenticated",
+      "checks de qualificacao, preco, estado e assinatura, foreign keys, indices e unicidade dos eventos",
+      "a migration entrou no ledger do projeto como contratacao_multiconta_20261006",
+    ],
+  },
+  {
+    arquivo: "0027_acesso_legado.sql",
+    cria: [{ tipo: "tabela", nome: "webapp_legacy_access" }],
+    foraDoAlcance: [
+      "o INSERT dos perfis existentes e a contagem de linhas preservadas",
+      "RLS, policy de leitura propria e revogacao da escrita direta",
+      "a migration entrou no ledger do projeto como acesso_legado_20261006",
+    ],
+  },
+  {
+    arquivo: "0028_pedido_pago_exige_negocio.sql",
+    cria: [{ tipo: "coluna", tabela: "commercial_orders", nome: "business_id" }],
+    foraDoAlcance: [
+      "o CHECK que exige business_id em pedido aprovado: presença da coluna não prova a constraint",
+      "a migration entrou no ledger do projeto como pedido_pago_exige_negocio_20261006",
+    ],
+  },
 ];

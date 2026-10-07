@@ -1,5 +1,7 @@
 # Multiconta — contrato de implementação, 06/10/2026
 
+> **Avanço local posterior:** `lib/multiconta/escolha.ts` agora decide entre seleção automática de um único negócio, escolha obrigatória com vários e preferência inválida/revogada. `lib/multiconta/ativo.ts` consulta os negócios da sessão sob RLS e valida uma preferência de cookie. O resolvedor ainda não substituiu os `limit(1)` das telas; não há seletor nem persistência da escolha na interface. O teste puro `scripts/conferir-multiconta.mjs` cobre os casos de acesso forjado e revogado, sem provar o banco real.
+
 ## Fato encontrado
 
 O banco já permite várias linhas `businesses` para um `profile_id`, mas o produto costuma escolher silenciosamente a primeira por `created_at`. Exemplos: `app/(protected)/layout.tsx`, `app/(protected)/conta/page.tsx`, `app/(protected)/conta/identidade-actions.ts` e `lib/estado/cliente.ts`. A ação de identidade resolve a primeira linha pelo usuário e depois usa cliente administrador para gravar, portanto um seletor visual isolado não bastaria. O fluxo de cobrança por conta de anúncios ainda não existe. Assim, multiconta **não está pronta**, mesmo que um login alcance dois CNPJs no banco.
@@ -20,4 +22,4 @@ O banco já permite várias linhas `businesses` para um `profile_id`, mas o prod
 
 ## Critérios de aceite para habilitar
 
-Dois CNPJs no mesmo e-mail; duas contas de anúncio em um CNPJ; troca em duas abas; URL/ID forjado; negócio revogado; sessão expirada; falha de gravação; respostas antigas e procedência preservadas; cobrança por unidade sem duplicidade; ficha do gestor isolada. O seletor só deve ir à interface depois que os consumidores e ações estiverem resolvidos pelo mesmo contexto. Nenhuma migration ou vinculação real foi executada neste registro.
+Dois CNPJs no mesmo e-mail; duas contas de anúncio em um CNPJ; troca em duas abas; URL/ID forjado; negócio revogado; sessão expirada; falha de gravação; respostas antigas e procedência preservadas; cobrança por unidade sem duplicidade; ficha do gestor isolada. O seletor só deve ir à interface depois que os consumidores e ações estiverem resolvidos pelo mesmo contexto. A migration `0026` criou a tabela de vínculos, ainda sem linhas e sem seletor ativo. Não houve vinculação real de cliente nesta etapa.

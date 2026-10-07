@@ -2,9 +2,12 @@
 
 ## 1. O que é
 
-A V2G é um SaaS que cuida dos anúncios de PMEs brasileiras com IA — "a
-Contabilizei do marketing", R$ 490/mês. **Este repositório é o produto
+A V2G é um SaaS que cuida dos anúncios de PMEs brasileiras com IA. A oferta vigente de outubro de 2026 é R$ 500
+mensais por conta de anúncios, conforme `docs/decisoes.md`. **Este repositório é o produto
 real**: as telas do cliente e as telas do operador.
+
+**Comunicação:** não usar nomes de outras empresas como comparação, slogan,
+referência estética ou argumento de venda em telas e materiais da V2G.
 
 Duas coisas que decidem quase tudo aqui:
 

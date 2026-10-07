@@ -2,6 +2,7 @@ import { type EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { registrarErroAuth } from "@/lib/auth-errors";
+import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 
 /**
  * Alvo do link enviado por e-mail (cadastro e recuperação de senha).
@@ -86,15 +87,21 @@ export async function GET(request: NextRequest) {
   // PKCE completo primeiro: quando vem `code`, é ele que vale, mesmo que
   // por algum motivo venha um `token` junto.
   if (code) {
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      if (data.user) await vincularComprasAprovadas(data.user);
+      return NextResponse.redirect(`${origin}${next}`);
+    }
     registrarErroAuth(error, "confirmacao", "/auth/confirmar");
     return recusar(origin);
   }
 
   if (tokenHash && type) {
-    const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (!error) return NextResponse.redirect(`${origin}${next}`);
+    const { data, error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
+    if (!error) {
+      if (data.user) await vincularComprasAprovadas(data.user);
+      return NextResponse.redirect(`${origin}${next}`);
+    }
     registrarErroAuth(error, "confirmacao", "/auth/confirmar");
     return recusar(origin);
   }

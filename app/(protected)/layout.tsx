@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Casco } from "@/components/ui/Casco";
 import { signOutAction } from "./actions";
+import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 
 
 /**
@@ -43,6 +44,10 @@ export default async function ProtectedLayout({ children }: { children: React.Re
 
   if (!user) {
     redirect("/entrar");
+  }
+
+  if (!(await temAcessoWebApp(supabase, user))) {
+    redirect("/acesso-pendente");
   }
 
   const { data: profile } = await supabase

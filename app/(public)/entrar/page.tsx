@@ -36,7 +36,7 @@ function EntrarContent() {
         {mode === "cadastro" ? (
           <>
             <h1 className="auth-h">Seus anúncios, de volta às suas mãos.</h1>
-            <p className="auth-sub">Crie sua conta em 30 segundos.</p>
+            <p className="auth-sub">Após a aprovação do pagamento, crie a conta com o e-mail informado na compra.</p>
 
             {signUpState.error && <p className="form-error">{signUpState.error}</p>}
             {signUpState.message && <p className="form-notice">{signUpState.message}</p>}

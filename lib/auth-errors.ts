@@ -33,8 +33,8 @@ export const MENSAGEM_GENERICA =
  * verificador de quais e-mails estão na base.
  */
 export const MENSAGEM_CADASTRO_NEUTRA =
-  "Se este e-mail ainda não tiver conta, enviamos um link de confirmação. " +
-  "Confira sua caixa de entrada e também o spam.";
+  "Se este e-mail tiver acesso liberado e ainda não tiver conta, você receberá " +
+  "um link de confirmação. Confira sua caixa de entrada e também o spam.";
 
 const MSG_EMAIL_INVALIDO = "Esse e-mail não parece válido. Confira e tente de novo.";
 const MSG_SENHA_FRACA =

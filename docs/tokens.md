@@ -333,8 +333,7 @@ para 8px. Os 4 cantos saíram iguais em todas as 101 leituras.
 ## Raio: lote 2b — APLICADA
 
 Aplicada em 15/09/2026, por pedido do Victor: `--raio-controle` de 8px para
-**12px** e `--raio-cartao` de 12px para **16px**. Contra as referências que
-ele mandou (Mercado Pago, PicPay, Nubank, Santander, Contabilizei), 8 e 12
+**12px** e `--raio-cartao` de 12px para **16px**. Nas referências de interface avaliadas, 8 e 12
 ficaram quadrados demais. `--raio-pilula` não mudou.
 
 ```

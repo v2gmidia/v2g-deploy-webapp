@@ -2,6 +2,8 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import {
   ehContaJaExistente,
   mensagemDeErroAuth,
@@ -44,7 +46,7 @@ export async function signUpAction(
 ): Promise<AuthActionState> {
   const nome = String(formData.get("nome") ?? "").trim();
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const senha = String(formData.get("senha") ?? "");
 
   if (!nome || !email || !senha) {
@@ -69,6 +71,24 @@ export async function signUpAction(
     return { error: "A senha precisa ter pelo menos 6 caracteres." };
   }
 
+  // Nunca criar conta nova sem pedido aprovado. O mesmo retorno neutro evita
+  // revelar se um e-mail pertence a um comprador ou a uma conta existente.
+  try {
+    const admin = createAdminClient();
+    const { data: pedido, error: erroPedido } = await admin
+      .from("commercial_orders")
+      .select("id")
+      .eq("buyer_email", email)
+      .eq("status", "payment_approved")
+      .not("business_id", "is", null)
+      .limit(1)
+      .maybeSingle();
+    if (erroPedido) return { error: "Não foi possível conferir seu acesso. Tente novamente." };
+    if (!pedido) return { message: MENSAGEM_CADASTRO_NEUTRA };
+  } catch {
+    return { error: "Não foi possível conferir seu acesso. Tente novamente." };
+  }
+
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -91,6 +111,8 @@ export async function signUpAction(
     return { message: MENSAGEM_CADASTRO_NEUTRA };
   }
 
+  if (data.user) await vincularComprasAprovadas(data.user);
+
   redirect(safeNextPath(formData));
 }
 
@@ -98,7 +120,7 @@ export async function signInAction(
   _prevState: AuthActionState,
   formData: FormData,
 ): Promise<AuthActionState> {
-  const email = String(formData.get("email") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const senha = String(formData.get("senha") ?? "");
 
   if (!email || !senha) {
@@ -106,11 +128,13 @@ export async function signInAction(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password: senha });
 
   if (error) {
     return { error: mensagemDeErroAuth(error, "login", "/entrar") };
   }
+
+  if (data.user) await vincularComprasAprovadas(data.user);
 
   redirect(safeNextPath(formData));
 }
