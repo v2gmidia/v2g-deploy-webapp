@@ -1,6 +1,8 @@
 /** Regras locais para avaliar um horário proposto; não consulta nem reserva agenda. */
 
 const FUSO = "America/Sao_Paulo";
+export const DURACAO_REUNIAO_MIN = 25;
+export const ANTECEDENCIA_REMACAR_MIN = 25;
 const INICIO_DIA_MIN = 10 * 60;
 const FIM_DIA_MIN = 18 * 60;
 const ANTECEDENCIA_MIN = 30;
@@ -84,7 +86,7 @@ export function limiteDeAgendamento(agora: Date): string | null {
 /**
  * Filtra uma sugestão de horário. `ocupacoes` deve vir da agenda autorizada
  * do gestor escolhido; ausência da lista não é prova de disponibilidade.
- * A duração é parâmetro porque Victor mencionou 20 e 25 minutos, sem fechar.
+ * A duração é fixa em 25 minutos pela decisão de 06/10/2026.
  */
 export function avaliarHorario({
   inicio,
@@ -102,7 +104,7 @@ export function avaliarHorario({
   if (!Number.isFinite(inicioMs) || !Number.isFinite(agoraMs)) {
     return { ok: false, motivo: "data_invalida" };
   }
-  if (!Number.isInteger(duracaoMinutos) || duracaoMinutos <= 0 || duracaoMinutos > 480) {
+  if (duracaoMinutos !== DURACAO_REUNIAO_MIN) {
     return { ok: false, motivo: "duracao_invalida" };
   }
   const fimMs = inicioMs + duracaoMinutos * 60_000;
@@ -138,4 +140,12 @@ export function avaliarHorario({
   }
 
   return { ok: true };
+}
+
+/** Avisar ausência continua permitido; esta regra limita somente remarcar. */
+export function podeRemarcar(inicio: Date, agora: Date): boolean {
+  const inicioMs = inicio.getTime();
+  const agoraMs = agora.getTime();
+  return Number.isFinite(inicioMs) && Number.isFinite(agoraMs)
+    && inicioMs >= agoraMs + ANTECEDENCIA_REMACAR_MIN * 60_000;
 }

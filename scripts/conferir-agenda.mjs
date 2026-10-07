@@ -1,7 +1,7 @@
 // node --test scripts/conferir-agenda.mjs
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { avaliarHorario, limiteDeAgendamento } from "../lib/agenda/regras.ts";
+import { avaliarHorario, limiteDeAgendamento, podeRemarcar } from "../lib/agenda/regras.ts";
 
 const data = (iso) => new Date(iso);
 const agora = data("2026-10-09T12:00:00Z"); // sexta, 09h em São Paulo
@@ -36,10 +36,17 @@ test("o intervalo de 15 minutos vale antes e depois de outra reunião", () => {
   assert.deepEqual(avaliar("2026-10-09T13:20:00Z", { ocupacoes: depois }), { ok: true });
 });
 
-test("duração é parâmetro e datas inválidas são recusadas", () => {
-  assert.deepEqual(avaliar("2026-10-09T20:40:00Z", { duracaoMinutos: 20 }), { ok: true });
+test("a reunião dura exatamente 25 minutos e datas inválidas são recusadas", () => {
+  assert.deepEqual(avaliar("2026-10-09T20:40:00Z", { duracaoMinutos: 20 }), { ok: false, motivo: "duracao_invalida" });
   assert.deepEqual(avaliar("2026-10-09T20:40:00Z", { duracaoMinutos: 25 }), { ok: false, motivo: "fora_do_horario" });
   assert.deepEqual(avaliar("invalida"), { ok: false, motivo: "data_invalida" });
   assert.deepEqual(avaliar("2026-10-09T13:00:00Z", { duracaoMinutos: 0 }), { ok: false, motivo: "duracao_invalida" });
   assert.deepEqual(avaliar("2026-10-09T13:00:00Z", { ocupacoes: [{ inicio: data("invalida"), fim: data("2026-10-09T13:25:00Z") }] }), { ok: false, motivo: "data_invalida" });
+});
+
+test("remarcação permite até 25 minutos antes, inclusive; ausência não depende desta regra", () => {
+  const inicio = data("2026-10-09T14:00:00Z");
+  assert.equal(podeRemarcar(inicio, data("2026-10-09T13:35:00Z")), true);
+  assert.equal(podeRemarcar(inicio, data("2026-10-09T13:35:01Z")), false);
+  assert.equal(podeRemarcar(inicio, data("invalida")), false);
 });

@@ -1,6 +1,6 @@
 /** Condições aprovadas para novas contratações em outubro de 2026. */
 export const OFERTA_OUTUBRO = {
-  precoMensalPorContaCentavos: 49_500,
+  precoMensalPorContaCentavos: 50_000,
   permanenciaMinimaMeses: 6,
   unidade: "conta_de_anuncios",
   descontoAntecipacaoPercentual: null,

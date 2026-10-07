@@ -2,6 +2,8 @@
 
 Este documento separa decisões diretas, código local e dependências externas. Não confirma produção, assinatura, pagamento, nota, reserva ou campanha. O recorte pedido por Victor termina em outubro; metas e frentes de dezembro ficam fora.
 
+**Atualização posterior no mesmo dia:** o valor foi corrigido por Victor para **R$ 500 por conta de anúncios**, após a passagem intermediária de R$ 495. Asaas, Pix assistido por comprovante aprovado manualmente, acesso após pagamento antes da assinatura, reunião de 25 minutos e piloto de página Google estão em [`oferta-integracoes-outubro-06-10.md`](./oferta-integracoes-outubro-06-10.md) e `docs/decisoes.md`. As menções abaixo a preço/provedor indefinidos, prova bancária obrigatória, contrato antes do acesso e duração variável são o retrato anterior e não devem orientar implementação nova.
+
 ## Decisões recebidas
 
 - Dois caminhos de venda: direto e assistido. Em ambos, o interessado declara CNPJ e venda por WhatsApp antes de comprar. Instagram fraco não bloqueia a compra.

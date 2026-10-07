@@ -5,8 +5,8 @@ import { OFERTA_OUTUBRO, avaliarQualificacao, mensalidadeBaseCentavos } from "..
 test("a cobrança base é mensal por conta de anúncios e não aplica desconto indefinido", () => {
   assert.equal(OFERTA_OUTUBRO.permanenciaMinimaMeses, 6);
   assert.equal(OFERTA_OUTUBRO.descontoAntecipacaoPercentual, null);
-  assert.equal(mensalidadeBaseCentavos(1), 49_500);
-  assert.equal(mensalidadeBaseCentavos(2), 99_000);
+  assert.equal(mensalidadeBaseCentavos(1), 50_000);
+  assert.equal(mensalidadeBaseCentavos(2), 100_000);
   assert.equal(mensalidadeBaseCentavos(0), null);
   assert.equal(mensalidadeBaseCentavos(1.5), null);
   assert.equal(mensalidadeBaseCentavos(Number.MAX_SAFE_INTEGER), null);

@@ -1,0 +1,82 @@
+{
+  "tipo": "prompt_para_minuta_parametrica_v2g",
+  "versao": "rascunho-2026-10-06",
+  "status": "para_revisao_juridica",
+  "objetivo": "Redigir uma minuta padrao de prestacao de servicos da V2G, com campos variaveis para cada contratacao. Entregar tambem um mapa de variaveis, validacoes e lacunas juridicas. Nao enviar para assinatura enquanto a versao juridica nao for aprovada.",
+  "instrucao_para_redator": [
+    "Use linguagem clara em portugues do Brasil e separe obrigacoes da V2G e do contratante.",
+    "Nao invente multa, carencia, reajuste, prazo de suspensao, renovacao, foro, garantia de resultado ou percentual de desconto.",
+    "Marque cada decisao juridica ou comercial ausente como [DECISAO PENDENTE] e explique qual aprovacao falta.",
+    "Nao trate o comprovante Pix enviado pelo comprador como prova bancaria de liquidacao; a liberacao assistida depende de aprovacao humana registrada pela V2G.",
+    "Nao afirme que a V2G publica campanha automaticamente. O gestor prepara e publica manualmente a primeira campanha depois da reuniao, dos acessos, das conferencias e da assinatura concluida.",
+    "Separe o preco do servico da verba de anuncios paga pelo cliente a plataforma de midia. Nao prometa vendas, retorno, numero de contatos ou prazo de publicacao sem base.",
+    "Inclua regras de tratamento dos dados e autorizacoes de acesso apenas como minuta para revisao juridica; nao suponha que o cliente transfere titularidade da conta de anuncios a V2G."
+  ],
+  "prestador": {
+    "razao_social": "V2G AGENCIAS DE PUBLICIDADE LTDA",
+    "cnpj": "68.105.468/0001-84",
+    "municipio": "Curitiba",
+    "uf": "PR",
+    "inscricao_municipal": "13448418",
+    "endereco_contratual": "{{prestador.endereco_contratual_validado}}",
+    "representante_legal": "{{prestador.representante_legal_validado}}"
+  },
+  "variaveis_por_contratacao": {
+    "pedido_id": "{{pedido.id}}",
+    "contratante_razao_social": "{{contratante.razao_social}}",
+    "contratante_cnpj": "{{contratante.cnpj}}",
+    "contratante_endereco": "{{contratante.endereco}}",
+    "signatario_nome": "{{signatario.nome}}",
+    "signatario_cpf": "{{signatario.cpf}}",
+    "signatario_papel_e_poderes": "{{signatario.papel_e_poderes}}",
+    "email_da_compra_e_assinatura": "{{contratante.email_da_compra}}",
+    "whatsapp": "{{contratante.whatsapp}}",
+    "quantidade_de_contas_de_anuncios": "{{pedido.quantidade_de_contas}}",
+    "valor_mensal_total_centavos": "{{pedido.quantidade_de_contas}} * 50000",
+    "data_de_inicio_da_vigencia": "{{contrato.data_inicio_aprovada}}",
+    "dia_de_vencimento": "{{pedido.dia_de_vencimento}}",
+    "forma_de_pagamento": "{{pedido.forma_de_pagamento}}",
+    "negocios_e_cnpjs_vinculados": "{{pedido.negocios_vinculados}}",
+    "contas_de_anuncios_vinculadas": "{{pedido.contas_de_anuncios_vinculadas_quando_identificadas}}"
+  },
+  "regras_comerciais_aprovadas": {
+    "preco_mensal_por_conta_de_anuncios_centavos": 50000,
+    "permanencia_minima_meses": 6,
+    "verba_de_midia_separada_da_mensalidade": true,
+    "desconto_antecipacao_percentual": null,
+    "pagamento_cartao_recorrente": "objetivo_futuro_via_asaas",
+    "pagamento_pix_assistido": "chave_pix_direta_com_comprovante_e_aprovacao_humana",
+    "acesso_webapp": "apos_pagamento_aprovado",
+    "assinatura": "no_webapp_apos_liberacao_de_acesso",
+    "reuniao_permitida_antes_da_assinatura": true,
+    "primeira_campanha": "publicacao_manual_pelo_gestor_apos_assinatura_e_conferencias",
+    "contas_de_anuncios": "pertencem_ao_cliente_operadas_com_autorizacao"
+  },
+  "decisoes_pendentes": {
+    "saida_antes_de_seis_meses": null,
+    "multa_rescisoria": null,
+    "renovacao_apos_prazo_minimo": null,
+    "reajuste": null,
+    "desconto_pagamento_antecipado": null,
+    "prazo_e_procedimento_de_suspensao_por_atraso": null,
+    "tratamento_de_valores_pagos_antecipadamente": null,
+    "prazo_de_inicio_da_vigencia": null,
+    "foro_e_forma_de_resolucao_de_conflitos": null,
+    "versao_final_do_tratamento_de_dados": null
+  },
+  "automacao_apos_minuta_aprovada": {
+    "geracao": "preencher_somente_campos_de_origem_validada_e_arquivar_versao_da_minuta",
+    "assinatura": "enviar_ao_provedor_de_assinatura_com_signatarios_identificados",
+    "confirmacao": "aceitar_somente_evento_verificado_de_todos_os_signatarios_exigidos",
+    "entrega": "enviar_copia_assinada_ao_cliente_e_arquivar_documento_e_trilha_de_auditoria",
+    "idempotencia": "pedido_id_mais_versao_da_minuta_e_id_do_documento_no_provedor",
+    "trava_operacional": "nao_publicar_primeira_campanha_sem_assinatura_confirmada",
+    "falha": "manter_contrato_pendente_e_exibir_pendencia_ao_cliente_e_ao_gestor"
+  },
+  "saida_solicitada_ao_redator": [
+    "minuta_em_portugues_com_placeholders_literais",
+    "tabela_de_campos_obrigatorios_origem_e_validacao",
+    "lista_de_clausulas_pendentes_com_opcoes_e_riscos_para_decisao_dos_socios_e_advogado",
+    "checklist_de_aprovacao_juridica_antes_de_automatizar"
+  ]
+}
