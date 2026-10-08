@@ -12,6 +12,11 @@
 .introducao { margin-bottom: 1rem; }
 .introducao h2 { margin: 0 0 .3rem; }
 .introducao p, .fonte { color: var(--ink-soft); margin: 0; }
+.filtros { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; margin: 0 0 .75rem; }
+.filtros label { display: grid; gap: .35rem; color: var(--ink-soft); font-size: var(--fs-legenda); }
+.filtros input, .filtros select { min-height: 2.75rem; min-width: 15rem; max-width: 100%; padding: .5rem .7rem; border: 1px solid var(--line); border-radius: .4rem; background: var(--plate); color: var(--plate-ink); font: inherit; }
+.filtros button { min-height: 2.75rem; padding: .5rem 1rem; border: 1px solid var(--line); border-radius: .4rem; background: var(--plate); color: var(--plate-ink); font: inherit; font-weight: 700; cursor: pointer; }
+.contagem { margin: 0; color: var(--ink-soft); font-size: var(--fs-legenda); }
 .lista { display: grid; }
 .linha { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(15rem, 1.5fr) auto; gap: 1rem; align-items: center; border-top: 1px solid var(--line); padding: 1.2rem 0; }
 .linha:last-child { border-bottom: 1px solid var(--line); }
@@ -19,6 +24,11 @@
 .linha small { overflow-wrap: anywhere; color: var(--ink-mute); }
 .acao { display: grid; gap: .3rem; }
 .acao span { color: var(--ink-soft); }
+.contas { margin-top: .25rem; }
+.contas summary { color: var(--cobalt-ink); font-weight: 700; cursor: pointer; }
+.contas ul { list-style: none; margin: .6rem 0 0; padding: 0; display: grid; gap: .55rem; }
+.contas li { display: grid; gap: .1rem; padding: .55rem 0; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.contas code { font-size: var(--fs-legenda); }
 .destinos { display: flex; gap: .75rem; flex-wrap: wrap; }
 .fonte { font-size: var(--fs-legenda); }
 @media (max-width: 900px) { .cabecalho { display: grid; } .resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .linha { grid-template-columns: 1fr; } }

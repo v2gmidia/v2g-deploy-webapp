@@ -67,6 +67,7 @@ export function Casco({
   inicial,
   acaoSair,
   podeTrocarNegocio,
+  ehOperador,
   children,
 }: {
   nome: string;
@@ -77,6 +78,7 @@ export function Casco({
   /** a action de sair; sem ela (na bancada), o formulário não sai de lugar nenhum */
   acaoSair?: () => void | Promise<void>;
   podeTrocarNegocio?: boolean;
+  ehOperador?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -166,6 +168,7 @@ export function Casco({
           <span className="avatar">{inicial}</span>
           <div className="who">
             <b>{rotuloDaConta}</b>
+            {ehOperador && <a className="link-btn" href="/gestor">Carteira do gestor</a>}
             {podeTrocarNegocio && <a className="link-btn" href="/escolher-negocio">Trocar negócio</a>}
             <form action={acaoSair}>
               <button type="submit" className="link-btn">
@@ -204,6 +207,7 @@ export function Casco({
               O desenho não é invenção: é o mesmo do cabeçalho de
               `(fluxo)` — marca à esquerda, gente de verdade à direita. */}
           <div className="topbar-actions">
+            {ehOperador && <a className="link-btn" href="/gestor">Gestor</a>}
             {podeTrocarNegocio && <a className="link-btn" href="/escolher-negocio">Trocar negócio</a>}
             <PreferenciaDeTema />
             <a

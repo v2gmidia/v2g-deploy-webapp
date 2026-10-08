@@ -23,6 +23,24 @@ export interface ContratoDoPortfolio {
 export interface ContaDoPortfolio {
   business_id: string;
   id: string;
+  external_id?: string;
+  name?: string | null;
+  is_active?: boolean;
+}
+
+export interface UnidadeDoPortfolio {
+  order_id: string;
+  ad_account_id: string | null;
+}
+
+export interface ExecucaoDoPortfolio {
+  id: string;
+  business_id: string | null;
+  status: string;
+  campanha_meta: unknown;
+  status_na_plataforma: string | null;
+  status_lido_em: string | null;
+  criado_em: string;
 }
 
 export interface LinhaDoPortfolio {
@@ -30,6 +48,14 @@ export interface LinhaDoPortfolio {
   nome: string;
   atualizadoEm: string;
   contas: number;
+  contasDetalhe: {
+    id: string;
+    nome: string;
+    identificador: string;
+    ativa: boolean;
+    vinculo: "pedido_aprovado" | "sem_unidade_aprovada";
+  }[];
+  unidadesAprovadasLivres: number;
   pedido: string | null;
   contrato: string | null;
   pendenciasCadastro: number;
@@ -37,6 +63,17 @@ export interface LinhaDoPortfolio {
   prioridade: number;
   proximaAcao: string;
   origem: "pedido" | "cadastro" | "onboarding" | "operacao";
+  execucoes: number;
+  ultimaExecucao: {
+    id: string;
+    estado: string;
+    criadaEm: string;
+  } | null;
+  ultimaCampanha: {
+    idExecucao: string;
+    estadoNaPlataforma: string | null;
+    plataformaLidaEm: string | null;
+  } | null;
 }
 
 /** Fila operacional: só estados comprovados no banco; reunião e campanha exigem fonte externa. */
@@ -45,11 +82,43 @@ export function montarPortfolio(
   pedidos: PedidoDoPortfolio[],
   contratos: ContratoDoPortfolio[],
   contas: ContaDoPortfolio[],
+  execucoes: ExecucaoDoPortfolio[] = [],
+  unidades: UnidadeDoPortfolio[] = [],
 ): LinhaDoPortfolio[] {
-  const contratosPorPedido = new Map(contratos.map((c) => [c.order_id, c.status]));
-  const contasPorNegocio = new Map<string, number>();
-  for (const conta of contas) contasPorNegocio.set(conta.business_id, (contasPorNegocio.get(conta.business_id) ?? 0) + 1);
+  // A consulta vem do mais novo para o mais antigo; reprocessar um documento
+  // antigo não pode substituir o estado do contrato vigente.
+  const contratosPorPedido = new Map<string, string>();
+  for (const contrato of contratos) {
+    if (!contratosPorPedido.has(contrato.order_id)) contratosPorPedido.set(contrato.order_id, contrato.status);
+  }
+  const contasPorNegocio = new Map<string, ContaDoPortfolio[]>();
+  for (const conta of contas) {
+    const lista = contasPorNegocio.get(conta.business_id) ?? [];
+    lista.push(conta);
+    contasPorNegocio.set(conta.business_id, lista);
+  }
+  const pedidoPorId = new Map(pedidos.map((pedido) => [pedido.id, pedido]));
+  const contaPorId = new Map(contas.map((conta) => [conta.id, conta]));
+  const contasComUnidadeAprovada = new Set<string>();
+  const unidadesLivresPorNegocio = new Map<string, number>();
+  for (const unidade of unidades) {
+    const pedido = pedidoPorId.get(unidade.order_id);
+    if (!pedido?.business_id || pedido.status !== "payment_approved") continue;
+    if (unidade.ad_account_id) {
+      const conta = contaPorId.get(unidade.ad_account_id);
+      if (conta?.business_id === pedido.business_id) contasComUnidadeAprovada.add(conta.id);
+    } else {
+      unidadesLivresPorNegocio.set(pedido.business_id, (unidadesLivresPorNegocio.get(pedido.business_id) ?? 0) + 1);
+    }
+  }
   const pedidosPorNegocio = new Map<string, PedidoDoPortfolio[]>();
+  const execucoesPorNegocio = new Map<string, ExecucaoDoPortfolio[]>();
+  for (const execucao of execucoes) {
+    if (!execucao.business_id) continue;
+    const lista = execucoesPorNegocio.get(execucao.business_id) ?? [];
+    lista.push(execucao);
+    execucoesPorNegocio.set(execucao.business_id, lista);
+  }
   for (const pedido of pedidos) {
     if (!pedido.business_id) continue;
     const lista = pedidosPorNegocio.get(pedido.business_id) ?? [];
@@ -64,7 +133,19 @@ export function montarPortfolio(
     const cadastro = montarCadastro(negocio);
     const pendenciasCadastro = cadastro.completo ? 0 : cadastro.pendencias.length;
     const onboardingConcluido = lerConclusao(negocio.onboarding) !== null;
-    const quantidadeContas = contasPorNegocio.get(negocio.id) ?? 0;
+    const contasDoNegocio = contasPorNegocio.get(negocio.id) ?? [];
+    const quantidadeContas = contasDoNegocio.length;
+    const contasDetalhe: LinhaDoPortfolio["contasDetalhe"] = contasDoNegocio.map((conta) => ({
+      id: conta.id,
+      nome: conta.name?.trim() || conta.external_id || "Conta sem nome",
+      identificador: conta.external_id ?? conta.id,
+      ativa: conta.is_active ?? true,
+      vinculo: contasComUnidadeAprovada.has(conta.id) ? "pedido_aprovado" : "sem_unidade_aprovada",
+    }));
+    const execucoesDoNegocio = (execucoesPorNegocio.get(negocio.id) ?? [])
+      .sort((a, b) => Date.parse(b.criado_em) - Date.parse(a.criado_em));
+    const ultima = execucoesDoNegocio[0] ?? null;
+    const ultimaCampanha = execucoesDoNegocio.find((e) => e.campanha_meta != null) ?? null;
     const contrato = pedido ? contratosPorPedido.get(pedido.id) ?? null : null;
 
     let prioridade = 5;
@@ -92,6 +173,8 @@ export function montarPortfolio(
       nome: negocio.name?.trim() || "Negócio sem nome",
       atualizadoEm: negocio.updated_at,
       contas: quantidadeContas,
+      contasDetalhe,
+      unidadesAprovadasLivres: unidadesLivresPorNegocio.get(negocio.id) ?? 0,
       pedido: pedido?.status ?? null,
       contrato,
       pendenciasCadastro,
@@ -99,6 +182,32 @@ export function montarPortfolio(
       prioridade,
       proximaAcao,
       origem,
+      execucoes: execucoesDoNegocio.length,
+      ultimaExecucao: ultima ? {
+        id: ultima.id,
+        estado: ultima.status,
+        criadaEm: ultima.criado_em,
+      } : null,
+      ultimaCampanha: ultimaCampanha ? {
+        idExecucao: ultimaCampanha.id,
+        estadoNaPlataforma: ultimaCampanha.status_na_plataforma,
+        plataformaLidaEm: ultimaCampanha.status_lido_em,
+      } : null,
     };
   }).sort((a, b) => a.prioridade - b.prioridade || a.nome.localeCompare(b.nome, "pt-BR"));
+}
+
+export type FiltroDoPortfolio = "todos" | "pedidos" | "onboarding" | "cadastro" | "contas" | "campanhas";
+
+export function filtrarPortfolio(linhas: LinhaDoPortfolio[], busca: string, filtro: FiltroDoPortfolio) {
+  const termo = busca.trim().toLocaleLowerCase("pt-BR");
+  return linhas.filter((linha) => {
+    if (termo && !`${linha.nome} ${linha.id}`.toLocaleLowerCase("pt-BR").includes(termo)) return false;
+    if (filtro === "pedidos") return linha.origem === "pedido";
+    if (filtro === "onboarding") return !linha.onboardingConcluido;
+    if (filtro === "cadastro") return linha.pendenciasCadastro > 0;
+    if (filtro === "contas") return linha.unidadesAprovadasLivres > 0 || linha.contasDetalhe.some((conta) => conta.vinculo === "sem_unidade_aprovada");
+    if (filtro === "campanhas") return linha.ultimaCampanha !== null;
+    return true;
+  });
 }

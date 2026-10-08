@@ -85,6 +85,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       inicial={inicial}
       acaoSair={signOutAction}
       podeTrocarNegocio={ativo.status === "selecionado" && ativo.negocios.length > 1}
+      ehOperador={user.app_metadata?.papel === "operador"}
     >
       {children}
     </Casco>
