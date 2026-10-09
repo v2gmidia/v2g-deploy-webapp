@@ -35,6 +35,8 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`auditoria-sem-repeticao-09-10.md`](./auditoria-sem-repeticao-09-10.md) | 09/10/2026 | Corte atual das provas de compra no Asaas Sandbox e próximo marco, para evitar repetição do guia de 08/10. | **Sim.** Link Auth/login, bordas do pagamento, assinatura, NFS-e e jornada autenticada. |
+| [`qa-primeiro-deploy-09-10.md`](./qa-primeiro-deploy-09-10.md) | 09/10/2026 | Primeiro deployment HTTPS do projeto QA a partir do commit remoto, build Ready, domínio e tela de entrada verificados. | **Sim.** Entrega de e-mail, checkout Sandbox com webhook e teste autenticado. |
 | [`retorno-auth-local-09-10.md`](./retorno-auth-local-09-10.md) | 09/10/2026 | Redirecionamento local seguro e consistente em login, cadastro e confirmação de e-mail. | **Sim.** Falta percorrer o link real pelo SMTP/HTTPS de QA. |
 | [`marca-retomada-apos-conclusao-09-10.md`](./marca-retomada-apos-conclusao-09-10.md) | 09/10/2026 | Cliente atualiza resposta visual após concluir, sem refazer conclusão nem apagar blocos. | **Sim.** Falta percurso autenticado e persistência real por RLS. |
 | [`qa-auth-contrato-seguimento-09-10.md`](./qa-auth-contrato-seguimento-09-10.md) | 09/10/2026 | SMTP e templates salvos no Supabase QA, variável pública ainda ausente e zero deployments no Vercel QA; minuta recebida continua sem aprovação jurídica comprovada. | **Sim.** Primeiro deployment de QA após revisão, teste real de e-mail e contrato final aprovado. |
