@@ -14,6 +14,18 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-08 — Pagamento dentro da V2G por API do Asaas
+
+**Decisão direta do Victor.** Pix e cartão devem ser pagos em telas da V2G, com o Asaas processando pela API. O motivo é manter a experiência e a identidade da V2G durante a compra. Victor ativou a tokenização no Sandbox e consultou Letícia sobre habilitações de produção; a resposta dela ainda não chegou. Em testes locais, a criação da cobrança, a confirmação por webhook e a abertura de acesso continuam separadas. Um desafio do banco emissor no cartão pode exigir uma passagem pelo ambiente do banco. NFS-e, recibos e configuração de produção permanecem sujeitos a provas próprias. O checkout hospedado anterior só continua como referência de pedidos de teste já emitidos.
+
+### 2026-10-08 — Ir diretamente ao pagamento após criar o checkout
+
+**Correção direta do Victor.** Ao aceitar os dados da contratação e vincular o checkout ao pedido, o WebApp deve levar o comprador diretamente à página de pagamento, sem exibir uma mensagem intermediária com outro link. A confirmação financeira continua dependente do evento do Asaas; a navegação não aprova o pedido. Victor também quer a identidade da V2G em toda a jornada tanto quanto o provedor permitir, com transparência sobre a intermediação do Asaas. A forma exata de apresentação da marca no checkout hospedado e a eventual adoção de um checkout dentro do WebApp seguem em avaliação.
+
+### 2026-10-08 — Nome completo, CNPJ e opção semestral no checkout de teste
+
+**Correções diretas do Victor.** A identificação do comprador pede nome completo para a futura jornada contratual. O CNPJ continua obrigatório e seus dígitos são validados, mas a pergunta separada “CNPJ ativo?” sai do formulário; possuir um número de CNPJ não comprova situação cadastral ativa, e esta etapa não consulta a Receita. A declaração de venda por conversa no WhatsApp permanece. Além do mensal e do anual à vista com 12%, o checkout de teste oferece semestral à vista com 5% de desconto (R$ 2.850 por conta sobre seis mensalidades de R$ 500). São ajustes da jornada local de teste; contrato, nota fiscal e liberação pública ainda exigem as verificações próprias.
+
 ## Em aberto — dependem de decisão humana
 
 <!--

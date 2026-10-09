@@ -1,0 +1,102 @@
+# Etapa 01 — entrada e checkout de teste (08/10/2026)
+
+## Banco de QA configurado nesta etapa
+
+- Victor criou `v2g-webapp-qa` (`zskpijnqgkqwxksqmzmf`) na região `ca-central-1` do Supabase. É um projeto separado de `V2G-SITE`; a região canadense não impede o teste, mas pode aumentar a latência. Usar somente dados fictícios neste projeto.
+- Foram aplicadas **somente no QA**, nesta ordem, as migrations `0001`, `0002`, `0003`, `0026`, `0027`, `0028`, `0029` e `0034`. O ledger contém as oito entradas. As tabelas comerciais estão com RLS e sem registros. Nenhuma migration foi aplicada ao projeto real.
+- O `.env.local` aponta agora para o QA com URL, chave pública legada, chave secreta de servidor e `V2G_CHECKOUT_SANDBOX_DB_REF`. As referências anteriores foram preservadas no mesmo arquivo sob nomes `V2G_PROD_*`. Nenhum valor de chave deve ser copiado para relatório ou chat. `ASAAS_ENVIRONMENT=sandbox` e `V2G_CHECKOUT_ENABLED=true` foram confirmados sem expor valores de segredo.
+- A chave de servidor do QA respondeu HTTP 200 em consulta vazia. A RPC `registrar_pedido_self_service` rejeitou corretamente um pedido inválido (HTTP 400); um teste SQL com dados fictícios validou a criação de pedido semestral e unidade dentro de uma subtransação revertida. Naquele momento havia zero pedidos; depois foram criados pedidos fictícios para o teste integrado descrito abaixo. A leitura anônima de `commercial_orders` foi negada (HTTP 401), como esperado.
+- O consultor de segurança do Supabase apontou `commercial_events` com RLS sem policy e `claim_businesses()` como função `SECURITY DEFINER` executável por usuário autenticado. São características do esquema existente, não aprovação de segurança integral; revisar antes de produção.
+- Um token aleatório de webhook foi salvo apenas no `.env.local`. A rota local recusou POST sem token (HTTP 401) e, com o token correto, rejeitou evento incompleto (HTTP 422). Um túnel HTTPS e webhook temporários permitiram verificar o pagamento no Sandbox; ambos foram desligados depois. Retorno do navegador, e-mail e NFS-e continuam **não verificados**.
+
+## Estado comprovado
+
+- `/contratar` existe apenas no servidor de desenvolvimento. Em produção responde 404; a LP publicada em `v2gmidia.com.br` não foi alterada.
+- A qualificação pede nome completo, CNPJ com dígitos verificadores válidos e declaração de venda por WhatsApp. A pergunta separada sobre CNPJ ativo foi removida por decisão de Victor; **não** há consulta de situação cadastral na Receita.
+- O preço local de teste é R$ 500 por conta/mês, com permanência mínima informada de seis meses. Semestral à vista: R$ 2.850 por conta, desconto de 5%. Anual à vista: R$ 5.280 por conta, desconto de 12%. Mensal de teste usa cartão recorrente; antecipações permitem Pix ou cartão. A minuta contratual ainda precisa de revisão jurídica antes de oferta real.
+- O formulário chama uma action que só opera em desenvolvimento, no sandbox Asaas e num **projeto Supabase de QA separado**. A action grava pedido e unidades por RPC, reserva uma única tentativa de checkout para a referência, envia o pedido ao checkout hospedado e salva o identificador/link retornado. Falha ou resposta ambígua deixa o pedido pendente para revisão; não cria outra tentativa automaticamente.
+- O webhook de teste valida `asaas-access-token`, checkout, status, valor e pedido. `CHECKOUT_PAID` aprova o pedido por RPC transacional e evento idempotente; cancelamento e expiração encerram pedido aberto. O retorno do navegador não aprova compra. Os eventos `CHECKOUT_CREATED` e `CHECKOUT_PAID` foram recebidos do Asaas Sandbox no teste integrado abaixo.
+- `/entrar?modo=cadastro` agora pede o CNPJ do pedido aprovado junto do e-mail. Se não há pedido aprovado para o par, não solicita criação de conta nem e-mail de confirmação. A resposta continua neutra para não expor contas existentes, mas não promete envio quando ele não ocorreu.
+
+## Por que o e-mail de Victor não chegou
+
+Consulta somente leitura em 08/10 encontrou zero pedidos e zero usuário Auth para `victor.cabral@v2gmidia.com.br` no projeto do WebApp. `signUpAction` consulta pedido aprovado antes de chamar Supabase Auth. Sem pedido, não há solicitação de e-mail. Isto não prova falha do SMTP. O Pix assistido existente é registrado e aprovado por operador em `/pedidos`; mero comprovante não muda o status para aprovado sozinho.
+
+## Para testar sem cobrança real
+
+1. Projeto Supabase de QA isolado e migrations mínimas estão preparados, conforme acima. A migration `20261007160925_revops_v0.sql` de outro trabalho continua fora do QA e pendente no banco real consultado; **não** rodar `pnpm db:migrate` cegamente.
+2. A conta e a chave do Sandbox já existem. Para outro teste integrado, criar novo webhook temporário de Checkout para `/api/webhooks/asaas-checkout` com eventos `CHECKOUT_PAID`, `CHECKOUT_CANCELED`, `CHECKOUT_EXPIRED`. Guardar chave e token apenas no ambiente local/seguro; não enviar no chat.
+3. No ambiente apontado ao projeto QA, configurar os nomes `V2G_CHECKOUT_ENABLED`, `ASAAS_ENVIRONMENT`, `ASAAS_API_KEY`, `ASAAS_WEBHOOK_TOKEN`, `V2G_CHECKOUT_RETURN_BASE_URL`, `V2G_CHECKOUT_SANDBOX_DB_REF`. O código recusa a ref do banco real. O retorno precisa ser acessível ao sandbox; localhost não recebe webhook remoto sem túnel aprovado.
+4. Pedido, Pix simulado e repetição da aprovação foram verificados no QA. Ainda testar cancelamento, expiração, retomada após erro de gravação e criação de Auth no banco QA. Conferir se cartão recorrente usa a data da primeira cobrança e os limites esperados.
+5. Antes de liberar produção: aprovar minuta e cobrança recorrente, configurar Asaas real, antiabuso/rate limit, checkout e webhook de produção, comunicação de acesso, monitor de eventos e reconciliação. Remover os gates de produção somente após testes e autorização de Victor.
+
+### Preparação do banco de QA
+
+O projeto novo começou vazio. `0034_checkout_self_service.sql` depende das tabelas criadas em `0001_init.sql` e `0026_contratacao_multiconta.sql`, além dos ajustes em `0028_pedido_pago_exige_negocio.sql` e `0029_pix_assistido.sql`. Aplicar só a `0034` falha. Também não se deve aplicar cegamente toda a pasta: `0009_backend_execucoes_criativos.sql` é um registro histórico sem DDL, enquanto `0010_perfil_empresa.sql` altera `public.execucoes`, tabela que não nasce nesse projeto limpo. A sequência mínima do teste de compra foi aplicada e verificada no projeto QA: `0001`, `0002`, `0003`, `0026`, `0027`, `0028`, `0029`, `0034`. Isso não comprova que a aplicação completa funcione com esse subconjunto.
+
+## Testes nesta passagem
+
+- `corepack pnpm conferir:checkout`: 6/6 testes locais (validação, preço, evento, isolamento QA, cadastro, guarda SQL).
+- `corepack pnpm typecheck`: passou.
+- `corepack pnpm build`: passou após as correções finais, com o dev parado. Teste HTTP da build de produção: `/contratar` e `/contratar/retorno` responderam 404; o webhook recusou com 503. O servidor de desenvolvimento foi reiniciado depois.
+- `corepack pnpm conferir`: passou até migrations e parou por objetos ausentes da migration RevOps já pendente e da `0034` ainda não aplicada. Não é veredito de falha do restante da suíte.
+- Interface local: `/contratar` vista em 1280px e 390px; valor anual para 2 e 3 contas; erro por ausência do banco QA; formulário preservou todos os campos após erro. `/entrar?modo=cadastro` foi aberto e inspecionado: mostra CNPJ e explica o vínculo ao pedido aprovado. Nenhum checkout Asaas, cadastro Auth ou e-mail real foi testado.
+
+### Verificação adicional de integração no Sandbox (08/10)
+
+- A chave de API guardada localmente autenticou uma consulta somente leitura ao Asaas Sandbox (HTTP 200). Seu valor não foi exibido.
+- A conta Sandbox tinha zero chaves Pix. Uma chave aleatória foi criada pela API no **Sandbox** e a listagem retornou uma chave `ACTIVE`; o valor da chave não foi exibido.
+- Um checkout fictício de R$ 1 foi recusado: o Asaas exigiu mínimo de R$ 5 e uma chave Pix. Após a criação da chave, checkout fictício de R$ 5 para Pix e outro para cartão retornaram HTTP 200, ID e link, com callbacks HTTPS. Nenhum pagamento foi feito.
+- O Asaas recusou callbacks `http://localhost:3000` como inválidos. Nos dois testes isolados aceitos, os callbacks apontaram para o site público da V2G apenas para validar o formato da requisição; esses checkouts não estão ligados a pedidos no WebApp. A jornada completa requer uma URL HTTPS de QA alcançável pelo Asaas, além do banco QA e do webhook configurado.
+- A consulta das informações fiscais da conta Sandbox retornou HTTP 404 (configuração inexistente segundo a referência da API). Portanto, a emissão automática de NFS-e ainda não foi testada nem está configurada nesse ambiente.
+- Após os ajustes de nome, CNPJ e semestral, `corepack pnpm conferir:checkout` passou 7/7, `corepack pnpm conferir:preco-contratacao` passou 3/3 e `corepack pnpm typecheck` passou. A rota local `/contratar` respondeu HTTP 200 com nome completo e semestral visíveis, sem a pergunta “CNPJ ativo?”. Esses testes não provam o fluxo remoto de pagamento, webhook, Auth ou e-mail.
+
+### Teste integrado posterior no Sandbox (08/10)
+
+- Um túnel HTTPS temporário recebeu apenas o webhook e os caminhos de retorno do checkout; as demais rotas receberam 404. O webhook Sandbox foi criado para o teste e removido depois. O túnel foi encerrado e `V2G_CHECKOUT_RETURN_BASE_URL` temporário foi retirado do `.env.local`. Outro teste completo exigirá novo endereço e webhook.
+- A chave Sandbox começa com `$aact_`. O carregador de ambiente do Next.js interpretava esse prefixo como expansão de variável e a chave chegava vazia ao servidor. O primeiro `$` foi escapado no `.env.local`; `.env.example` explica o formato sem conter segredo.
+- O Asaas recusou o nome inicial do item por exceder 30 caracteres. O nome foi encurtado. Também recusou `customerData` parcial por faltar endereço e outros campos; nesta versão de Sandbox o checkout hospedado coleta os dados do pagador. Antes da produção, decidir preenchimento completo e validar a correspondência entre comprador do pedido e pagador, inclusive e-mail.
+- Pedido fictício `72118e14-772c-42f1-99ed-b577f3925e56`: Pix semestral de R$ 2.850; checkout `9724e80c-e7e2-4bdf-934b-a7e8844158ba` criado e vinculado ao pedido de QA. O Asaas entregou `CHECKOUT_CREATED` ao webhook com HTTP 200; o WebApp o ignorou, conforme desenho.
+- O checkout hospedado gerou QR Pix no Sandbox. A API exclusiva do Sandbox confirmou o pagamento fictício. A cobrança passou de `PENDING` para `RECEIVED`; o evento `CHECKOUT_PAID` mudou `commercial_orders.status` para `payment_approved` e preencheu `payment_approved_at`. Existe um único `commercial_events` desse tipo para o pedido. Repetir a RPC com o mesmo ID de evento retornou sucesso e manteve a contagem em um.
+- Dois pedidos fictícios anteriores ficaram sem checkout depois das recusas do Asaas. Permanecem para revisão no QA, sem cobrança. Nenhum pagamento real, migration no banco real, NFS-e ou e-mail ao cliente foi executado ou verificado.
+- O dev continuou ativo durante este teste; `pnpm build` não foi repetido para não derrubar `.next`. O retorno visível ao comprador, cadastro Auth após compra, cancelamento, expiração, cartão recorrente e notas fiscais continuam pendentes de verificação integrada.
+
+### E-mails de cobrança no Sandbox (08/10)
+
+- Victor autorizou usar uma caixa própria da V2G para o teste. Foi criado diretamente no Asaas Sandbox um pagador fictício, com esse e-mail e documento fictício, e uma cobrança Pix fictícia de R$ 5 (`pay_g2gvkc9xl03nan4v`). A simulação exclusiva do Sandbox mudou a cobrança de `PENDING` para `RECEIVED`. Esse teste é do mecanismo de notificações do Asaas; não passou pelo checkout do WebApp nem representa pagamento real.
+- O pagador foi criado com notificações habilitadas. A consulta às configurações retornou `PAYMENT_CREATED` e `PAYMENT_RECEIVED` habilitados para e-mail do cliente. Na caixa autorizada, chegaram os dois e-mails correspondentes, com indicação de teste Sandbox. O e-mail de confirmação informou Pix, valor, data e um link para acessar o comprovante; não trouxe PDF anexo.
+- A entrega desses e-mails não verifica NFS-e, envio automático de nota, comunicação própria do WebApp, nem reconciliação entre o e-mail coletado no formulário e o informado pelo pagador no checkout hospedado. A definição fiscal e o teste de NFS-e aguardam resposta do contador.
+
+### Navegação e identidade do checkout (08/10)
+
+- Victor identificou que o estado "Checkout de teste criado" seguido de um segundo link gerava atrito. A action local agora redireciona diretamente para a URL HTTPS do Asaas Sandbox **após** salvar seu vínculo com o pedido. URLs já armazenadas também são validadas contra o domínio Sandbox antes da retomada. A criação/navegação não confirma pagamento.
+- Teste de interface com dados fictícios: um único clique em "Continuar para o checkout de teste" abriu diretamente a página `sandbox.asaas.com` para o checkout `2b02d3d8-5e5d-4cb7-91f1-d9eef5780c0d`, sem mensagem intermediária. O teste criou um checkout fictício pendente; não houve pagamento desse novo pedido.
+- O checkout `395ba2dd-e10d-4ba6-888a-1b03abc42dc4`, mostrado por Victor, tinha cobrança Pix `PENDING` na consulta do Sandbox. QR Pix do ambiente de teste não é uma cobrança para pagar por um app bancário real; a aprovação pode ser simulada no próprio Sandbox. Não foi simulada para este pedido nesta passagem.
+- O `paymentCheckoutConfig` consultado na conta Sandbox estava desabilitado. A documentação do Asaas descreve esse recurso como personalização da **Fatura**; não há evidência de que altere a página do **Checkout hospedado**. O checkout transparente por API permitiria desenhar o pagamento dentro do WebApp, mas exige implementação e validação próprias. Nenhuma personalização foi gravada na conta Asaas nesta passagem.
+
+### Mudança local posterior — pagamento por API na V2G (08/10)
+
+- Victor escolheu Pix e cartão em telas V2G e ativou tokenização de cartão no Sandbox. A confirmação de Letícia sobre habilitações de produção está pendente.
+- A nova rota `/contratar/pagamento` e a action de pagamento foram construídas **somente no código local**. Para Pix, o primeiro envio do formulário cria cliente/cobrança por API e abre QR/copia e cola na V2G. Para cartão, a tela coleta dados fictícios sob HTTPS, cria cobrança avulsa ou assinatura mensal por API e acompanha o estado no WebApp. Dados do cartão não são persistidos no Supabase nem devolvidos no estado da action.
+- O novo webhook `/api/webhooks/asaas-payment` aceita `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED` com token, IDs, forma, valor e pedido conferidos; a nova RPC aprova a primeira compra de maneira transacional e idempotente. A migration `20261008223000_checkout_transparente_sandbox.sql` é **aditiva e ainda não foi aplicada**. O Supabase CLI não estava instalado no projeto, por isso o arquivo foi criado manualmente. O checkout hospedado existente mantém sua rota e seus eventos próprios para pedidos antigos.
+- A reserva `payment_creation_started_at` bloqueia segunda tentativa automática se o Asaas responder de forma ambígua ou o vínculo falhar. Esse caso exige conciliação humana; a interface não o trata como compra aprovada.
+- O novo caminho tem a chave local `V2G_CHECKOUT_API_ENABLED=false` por padrão. Enquanto a migration não for aplicada ao QA e os testes não passarem, `/contratar` continua criando o checkout hospedado anterior; pedidos com link já emitido continuam indo para o link original. Ao ligar a chave depois da revisão, novas compras usam a API.
+- Este código ainda não prova pagamento ponta a ponta no QA. O outro chat assumirá os testes de integração e interface. Antes de qualquer produção: revisar captura de cartão/HTTPS, autenticação 3DS, cobrança recorrente e falhas, estorno/chargeback, reconciliação, segurança do endpoint público, NFS-e, e-mails e autorização fiscal. Eventos de renovação posteriores à primeira compra ainda não têm ledger próprio.
+
+### Revisão local do pagamento por API (08/10)
+
+- A documentação atual do Asaas confirma que criar a assinatura valida o cartão, mas não comprova pagamento. A primeira cobrança é processada em `nextDueDate` e pode ocorrer no mesmo dia; o webhook de cobrança carrega `payment.subscription`, `payment.dueDate`, `payment.customer`, `payment.value`, `payment.billingType` e `payment.status`. Referências: [assinatura no cartão](https://docs.asaas.com/docs/criando-assinatura-com-cartao-de-credito), [FAQ de assinaturas](https://docs.asaas.com/docs/faq-assinaturas), [eventos de cobrança](https://docs.asaas.com/docs/webhook-para-cobrancas).
+- Corrigida a retomada de pedido antigo: `/contratar/pagamento` redireciona um pedido pendente com checkout hospedado existente somente para uma URL HTTPS do domínio Sandbox do Asaas. URL de outro domínio é recusada.
+- A reserva local da primeira tentativa mensal agora grava `provider_first_due_date`; o webhook e a RPC exigem que `payment.dueDate` seja esse vencimento antes de aprovar o pedido. Uma mensalidade posterior não pode substituir a primeira. A migration ainda não foi aplicada ao QA.
+- Revisão estática: o formulário envia dados do cartão à action e a action os envia ao Asaas Sandbox, sem gravar número ou CCV em `commercial_orders` ou `commercial_events`, sem retorná-los no estado da action e sem `console` no caminho novo. Isso **não** verifica logs de infraestrutura, proxy, telemetria nem política de retenção do provedor.
+- `corepack pnpm typecheck`, `conferir:checkout-api` (4/4), `conferir:checkout` (7/7), `conferir:preco-contratacao` (3/3) e `git diff --check` passaram após os ajustes. São testes locais, sem chamada de pagamento por API, webhook recebido ou e-mail.
+- Ainda dependem de prova ponta a ponta no QA: Pix, cartão à vista, primeira cobrança mensal, webhook repetido, tentativa duplicada, pendente versus aprovado, pedido antigo, cadastro e e-mails separados. Permanecem pendentes próximas mensalidades, estorno/chargeback, 3DS em produção, NFS-e e liberação pública.
+- Ledger do projeto `v2g-webapp-qa` consultado em modo somente leitura: contém exatamente as oito migrations QA listadas no início deste documento e não contém a migration `20261008223000_checkout_transparente_sandbox.sql`. A coluna `payment_creation_started_at` e a RPC nova também não existem nesse banco. Nenhuma migration foi aplicada nesta revisão; a próxima ação depende de autorização específica de Victor para aplicar somente esse arquivo ao projeto QA.
+- Com a flag da API desligada no servidor local, `/contratar` respondeu HTTP 200 e `/contratar/pagamento` respondeu 404. Esse teste verifica a trava de navegação atual; não executa pagamento.
+
+### Habilitação do QA para teste integrado (08/10)
+
+- Com autorização direta de Victor, foi aplicada **somente** a migration `20261008223000_checkout_transparente_sandbox.sql` ao projeto Supabase `v2g-webapp-qa` (`zskpijnqgkqwxksqmzmf`). O ledger remoto registrou `20261009010911_qa_checkout_transparente_sandbox`. O projeto de produção não foi alterado.
+- Conferência remota: as colunas `provider_subscription_id`, `payment_creation_started_at` e `provider_first_due_date` existem; a RPC `aprovar_pagamento_api_self_service` existe, retorna `false` para entrada inválida e concede execução a `service_role`, não a `anon` ou `authenticated`.
+- `V2G_CHECKOUT_API_ENABLED=true` foi acrescentada ao `.env.local` para novas compras locais usarem o pagamento por API. Nenhum valor de segredo foi exibido. `corepack pnpm typecheck` passou.
+- A rota local `/contratar` respondeu HTTP 200 e exibiu “Continuar para pagar na V2G”, confirmando que o servidor de desenvolvimento carregou a flag nova sem reinicialização manual. O teste integrado de Pix, cartão, primeira assinatura, webhook e cadastro continua **não verificado**. Não inferir aprovação de pagamento pela criação de cobrança ou assinatura.

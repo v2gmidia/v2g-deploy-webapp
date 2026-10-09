@@ -483,6 +483,24 @@ export const MIGRATIONS: MigrationDeclarada[] = [
     ],
   },
   {
+    arquivo: "0034_checkout_self_service.sql",
+    cria: [
+      { tipo: "coluna", tabela: "commercial_orders", nome: "provider_checkout_id" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "provider_checkout_url" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "checkout_creation_started_at" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "buyer_name" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "buyer_whatsapp" },
+      { tipo: "rpc", nome: "registrar_pedido_self_service" },
+      { tipo: "rpc", nome: "aprovar_checkout_self_service" },
+      { tipo: "rpc", nome: "encerrar_checkout_self_service" },
+    ],
+    foraDoAlcance: [
+      "migration preparada localmente e nao aplicada; conferir ledger antes de aplicar",
+      "idempotencia, RLS, grants de service_role e vinculo com checkout exigem teste no banco",
+      "sandbox, webhook assinado e retorno do navegador exigem teste ponta a ponta",
+    ],
+  },
+  {
     arquivo: "20261007160925_revops_v0.sql",
     cria: [
       { tipo: "tabela", nome: "revops_people" },

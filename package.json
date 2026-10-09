@@ -38,6 +38,8 @@
     "conferir:asaas-eventos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-asaas-eventos.mjs",
     "conferir:acesso": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-acesso.mjs",
     "conferir:preco-contratacao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-preco-contratacao.mjs",
+    "conferir:checkout": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-checkout-self-service.mjs",
+    "conferir:checkout-api": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-checkout-api.mjs",
     "conferir:trava-campanha": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-trava-campanha.mjs",
     "conferir:escolha-de-campo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-escolha-de-campo.ts",
     "medir:peca": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/medir-peca.mjs",

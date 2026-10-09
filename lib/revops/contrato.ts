@@ -10,6 +10,11 @@ export const TIPOS_DE_INTERACAO = [
 ] as const;
 export type TipoDeInteracao = (typeof TIPOS_DE_INTERACAO)[number];
 
+// Confirmações operacionais exigem integração e evidência verificável.
+export const TIPOS_MANUAIS_DE_INTERACAO = TIPOS_DE_INTERACAO.filter(
+  (tipo) => tipo !== "payment_approved" && tipo !== "campaign_live",
+);
+
 export const TIPOS_DE_EVIDENCIA = ["source_fact", "human_report", "inference"] as const;
 export type TipoDeEvidencia = (typeof TIPOS_DE_EVIDENCIA)[number];
 
@@ -67,4 +72,3 @@ export function diagnosticoInstagramPermiteCompra(
   void diagnostico;
   return true;
 }
-

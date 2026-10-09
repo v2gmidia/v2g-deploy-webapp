@@ -70,7 +70,6 @@ export function FormInteracao({ oportunidades }: {
         <option value="message">Interação</option><option value="meeting_scheduled">Reunião agendada</option>
         <option value="meeting_held">Reunião realizada</option><option value="proposal_sent">Proposta enviada</option>
         <option value="proposal_liked">Gostou da proposta</option><option value="purchase_reported">Compra relatada</option>
-        <option value="payment_approved">Pagamento aprovado</option><option value="campaign_live">Campanha no ar</option>
         <option value="diagnosis">Diagnóstico</option><option value="guidance">Orientação</option><option value="other">Outro</option>
       </select></label>
       <label>Sistema da fonte<select name="sourceSystem" defaultValue="manual">
@@ -108,4 +107,3 @@ export function FormInteracao({ oportunidades }: {
     </button>
   </form>;
 }
-

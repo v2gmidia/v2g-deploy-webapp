@@ -47,6 +47,7 @@ export async function signUpAction(
   const nome = String(formData.get("nome") ?? "").trim();
   const whatsapp = String(formData.get("whatsapp") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  const cnpj = String(formData.get("cnpj") ?? "").replace(/\D/g, "");
   const senha = String(formData.get("senha") ?? "");
 
   if (!nome || !email || !senha) {
@@ -70,6 +71,9 @@ export async function signUpAction(
   if (senha.length < 6) {
     return { error: "A senha precisa ter pelo menos 6 caracteres." };
   }
+  if (!/^\d{14}$/.test(cnpj)) {
+    return { error: "Informe o CNPJ de 14 dígitos da empresa contratante." };
+  }
 
   // Nunca criar conta nova sem pedido aprovado. O mesmo retorno neutro evita
   // revelar se um e-mail pertence a um comprador ou a uma conta existente.
@@ -79,6 +83,7 @@ export async function signUpAction(
       .from("commercial_orders")
       .select("id")
       .eq("buyer_email", email)
+      .eq("cnpj", cnpj)
       .eq("status", "payment_approved")
       .not("business_id", "is", null)
       .limit(1)

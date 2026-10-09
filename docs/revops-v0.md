@@ -59,6 +59,8 @@ Jev ou outro classificador futuro pode sugerir `interaction_type`, objeção ou 
 
 Nenhum evento implica automaticamente o seguinte. O estágio atual da oportunidade é uma síntese operacional; a evidência permanece nos eventos.
 
+O cadastro manual da V0 aceita `purchase_reported`, mas bloqueia `payment_approved` e `campaign_live` tanto na ação do servidor quanto na RPC. Esses dois estados aguardam integração com a fonte competente e vínculo verificável. A existência dos tipos no contrato não significa que a V0 já confirme pagamento ou veiculação.
+
 ## 6. Métricas e denominadores
 
 | métrica | definição | não significa |

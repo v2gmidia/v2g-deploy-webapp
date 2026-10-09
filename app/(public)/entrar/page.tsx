@@ -45,7 +45,7 @@ function EntrarContent() {
         {mode === "cadastro" ? (
           <>
             <h1>Vamos criar seu acesso.</h1>
-            <p className="entrada-introducao">Após a aprovação do pagamento, crie a conta com o e-mail informado na compra.</p>
+            <p className="entrada-introducao">O primeiro acesso é liberado após a aprovação da compra. Use o e-mail e o CNPJ informados no pedido.</p>
 
             {signUpState.error && <p className="form-error" role="alert">{signUpState.error}</p>}
             {signUpState.message && <p className="form-notice" role="status">{signUpState.message}</p>}
@@ -89,6 +89,12 @@ function EntrarContent() {
                   autoComplete="email"
                   required
                 />
+              </div>
+              <div className="field">
+                <label htmlFor="cnpj-cadastro">CNPJ da empresa contratante</label>
+                <input id="cnpj-cadastro" name="cnpj" type="text" inputMode="numeric"
+                  placeholder="00.000.000/0000-00" autoComplete="off" required />
+                <p className="note">Use o mesmo CNPJ informado na compra. Um login pode acessar mais de uma empresa.</p>
               </div>
               <div className="field">
                 <label htmlFor="senha-cadastro">Crie uma senha</label>

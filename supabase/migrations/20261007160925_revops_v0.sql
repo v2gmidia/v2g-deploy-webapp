@@ -264,6 +264,10 @@ declare
   v_source_id uuid;
   v_interaction_id uuid;
 begin
+  if p_interaction_type in ('payment_approved', 'campaign_live') then
+    raise exception 'confirmacao_exige_fonte_verificavel';
+  end if;
+
   perform pg_advisory_xact_lock(hashtextextended(
     'revops:' || p_source_system || ':' || p_source_external_id, 0
   ));

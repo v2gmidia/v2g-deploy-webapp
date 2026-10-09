@@ -1,0 +1,140 @@
+.contratar-shell {
+  min-height: 100svh;
+  background: var(--offwhite);
+  color: var(--ink);
+  padding: 0 max(24px, calc((100vw - 1180px) / 2));
+}
+.contratar-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 96px;
+  border-bottom: 1px solid var(--line);
+}
+.contratar-topo > a { color: var(--cobalt-ink); text-underline-offset: 4px; }
+.contratar-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 500px);
+  gap: clamp(32px, 7vw, 116px);
+  align-items: start;
+  padding: clamp(36px, 6vw, 88px) 0 80px;
+}
+.contratar-intro { max-width: 590px; position: sticky; top: 44px; }
+.contratar-intro h1 {
+  font-family: var(--font-archivo), sans-serif;
+  font-size: clamp(36px, 4.4vw, 64px);
+  font-weight: 580;
+  letter-spacing: -0.04em;
+  line-height: 1.06;
+  margin: 0 0 28px;
+}
+.contratar-intro > p { font-size: 18px; line-height: 1.55; max-width: 48ch; }
+.contratar-proximo { margin-top: 38px; }
+.contratar-limite { color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 20px; }
+.contratar-formulario {
+  background: var(--surface);
+  padding: clamp(24px, 3vw, 40px);
+  border-radius: 16px;
+  box-shadow: 0 14px 42px rgb(var(--navy-rgb) / 0.08);
+}
+.contratar-formulario h2 { font-size: 28px; margin: 0 0 12px; letter-spacing: -0.03em; }
+.contratar-formulario > p { color: var(--ink-soft); line-height: 1.55; }
+.contratar-campos, .contratar-declaracoes, .contratar-opcoes { display: grid; gap: 16px; }
+.contratar-formulario label { display: grid; gap: 7px; font-size: 14px; font-weight: 600; }
+.contratar-formulario input, .contratar-formulario select {
+  width: 100%; min-height: 46px; padding: 10px 13px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--ink); font: inherit;
+}
+.contratar-formulario input:focus-visible, .contratar-formulario select:focus-visible,
+.contratar-formulario button:focus-visible { outline: 3px solid var(--cobalt-ink); outline-offset: 2px; }
+.contratar-formulario fieldset { border: 0; margin: 24px 0 0; padding: 0; }
+.contratar-formulario legend { font-size: 18px; font-weight: 650; margin-bottom: 14px; }
+.contratar-opcoes { margin-top: 28px; padding-top: 22px; border-top: 1px solid var(--line); }
+.contratar-resumo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin: 28px 0; }
+.contratar-resumo strong { font-size: 30px; letter-spacing: -0.03em; }
+.contratar-resumo span { color: var(--ink-soft); }
+.contratar-formulario button {
+  width: 100%; min-height: 52px; border: 0; border-radius: 8px;
+  background: var(--cobalt); color: var(--white); font: inherit; font-weight: 700;
+  cursor: pointer;
+}
+.contratar-formulario button:hover:not(:disabled) { background: var(--cobalt-dark); }
+.contratar-formulario button:disabled { opacity: 0.55; cursor: wait; }
+.contratar-rodape { color: var(--ink-soft); font-size: 13px; line-height: 1.5; margin: 18px 0 0; }
+.contratar-formulario .form-error, .contratar-formulario .form-notice { margin: 18px 0; }
+.contratar-formulario .form-notice a { color: var(--cobalt-ink); font-weight: 700; }
+@media (max-width: 850px) {
+  .contratar-grid { grid-template-columns: 1fr; gap: 24px; }
+  .contratar-intro { position: static; }
+  .contratar-intro h1 { max-width: 14ch; }
+}
+@media (max-width: 480px) {
+  .contratar-shell { padding: 0 16px; }
+  .contratar-topo { min-height: 76px; }
+  .contratar-intro > p { font-size: 16px; }
+  .contratar-formulario { margin: 0 -16px; border-radius: 0; box-shadow: none; }
+}
+
+.contratar-pagamento { padding: clamp(32px, 5vw, 70px) 0 84px; }
+.contratar-pagamento-cabecalho h1 {
+  font-family: var(--font-archivo), sans-serif;
+  font-size: var(--fs-hero-frase);
+  font-weight: 580;
+  letter-spacing: -0.04em;
+  margin: 0 0 8px;
+}
+.contratar-pagamento-cabecalho p { color: var(--ink-soft); margin: 0; }
+.contratar-pagamento-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(270px, 0.7fr);
+  align-items: start;
+  gap: clamp(24px, 4vw, 60px);
+  margin-top: 38px;
+}
+.contratar-pagamento-principal, .contratar-pagamento-resumo {
+  background: var(--surface);
+  border-radius: 16px;
+  padding: clamp(24px, 3vw, 38px);
+  box-shadow: 0 14px 42px rgb(var(--navy-rgb) / 0.08);
+}
+.contratar-pagamento-principal > .form-warning,
+.contratar-pagamento-principal > .form-notice { margin: 0 0 28px; }
+.contratar-pagamento-principal a { color: var(--cobalt-ink); font-weight: 650; }
+.contratar-pagamento h2 { font-size: var(--fs-bloco); margin: 0 0 12px; letter-spacing: -0.02em; }
+.contratar-pagamento-form > p, .contratar-pix > p { color: var(--ink-soft); line-height: 1.55; }
+.contratar-pagamento-form form { margin-top: 24px; }
+.contratar-cartao-campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-bottom: 24px; }
+.contratar-cartao-campos label, .contratar-pix label { display: grid; gap: 7px; font-size: 14px; font-weight: 600; }
+.contratar-campo-largo { grid-column: 1 / -1; }
+.contratar-cartao-campos input, .contratar-pix input {
+  width: 100%; min-height: 46px; padding: 10px 13px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--ink); font: inherit;
+}
+.contratar-cartao-campos input:focus-visible, .contratar-pix input:focus-visible,
+.contratar-pagamento button:focus-visible { outline: 3px solid var(--cobalt-ink); outline-offset: 2px; }
+.contratar-pagamento-form button, .contratar-copiar {
+  min-height: 50px; padding: 10px 22px; border: 0; border-radius: 8px;
+  background: var(--cobalt); color: var(--white); font: inherit; font-weight: 700;
+  cursor: pointer;
+}
+.contratar-pagamento-form button:hover:not(:disabled), .contratar-copiar:hover { background: var(--cobalt-dark); }
+.contratar-pagamento-form button:disabled { opacity: 0.55; cursor: wait; }
+.contratar-pix img { display: block; margin: 22px 0; max-width: 100%; height: auto; }
+.contratar-pix input { overflow: hidden; text-overflow: ellipsis; }
+.contratar-copiar { margin-top: 14px; }
+.contratar-pagamento-resumo strong { display: block; margin: 28px 0; font-size: 30px; letter-spacing: -0.03em; }
+.contratar-pagamento-resumo .contratar-rodape { padding-top: 18px; border-top: 1px solid var(--line); }
+@media (max-width: 780px) {
+  .contratar-pagamento-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 480px) {
+  .contratar-pagamento { padding-top: 30px; }
+  .contratar-pagamento-principal, .contratar-pagamento-resumo {
+    margin: 0 -16px; border-radius: 0; box-shadow: none;
+  }
+  .contratar-cartao-campos { grid-template-columns: 1fr; }
+  .contratar-campo-largo { grid-column: auto; }
+}

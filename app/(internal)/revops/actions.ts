@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { usuarioRevOps } from "@/lib/revops/sessao";
-import { CANAIS_REVOPS, TIPOS_DE_EVIDENCIA, TIPOS_DE_INTERACAO } from "@/lib/revops/contrato";
+import { CANAIS_REVOPS, TIPOS_DE_EVIDENCIA, TIPOS_MANUAIS_DE_INTERACAO } from "@/lib/revops/contrato";
 
 export type RevOpsActionState = { ok?: string; erro?: string };
 
@@ -94,7 +94,7 @@ export async function registrarInteracaoAction(
   const transcricoes = ["not_applicable", "pending", "available", "unavailable"] as const;
   if (!ehUuid(opportunityId) || !em(sourceSystem, sistemas) || sourceExternalId.length < 1
     || sourceExternalId.length > 300 || !em(channel, CANAIS_REVOPS)
-    || !em(interactionType, TIPOS_DE_INTERACAO) || !em(evidenceKind, TIPOS_DE_EVIDENCIA)
+    || !em(interactionType, TIPOS_MANUAIS_DE_INTERACAO) || !em(evidenceKind, TIPOS_DE_EVIDENCIA)
     || summary.length < 2 || !occurredAt || !em(transcriptStatus, transcricoes)) {
     return { erro: "Confira oportunidade, fonte, data, tipo e evidência." };
   }
@@ -126,4 +126,3 @@ export async function registrarInteracaoAction(
   revalidatePath("/revops");
   return { ok: "Interação registrada. A fonte repetida mantém um único evento." };
 }
-

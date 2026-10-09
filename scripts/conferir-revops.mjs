@@ -6,6 +6,7 @@ import {
   contagemDeVendasConfirmadas,
   diagnosticoInstagramPermiteCompra,
   ROTULOS_INTERACAO,
+  TIPOS_MANUAIS_DE_INTERACAO,
 } from "../lib/revops/contrato.ts";
 import { temAutorizacaoRevOps } from "../lib/revops/autorizacao.ts";
 
@@ -39,6 +40,17 @@ test("aceite, relato, pagamento e campanha permanecem estados distintos", () => 
     ROTULOS_INTERACAO.payment_approved,
     ROTULOS_INTERACAO.campaign_live,
   ]).size, 4);
+});
+
+test("registro manual nao pode declarar pagamento ou campanha confirmados", () => {
+  assert.equal(TIPOS_MANUAIS_DE_INTERACAO.includes("purchase_reported"), true);
+  assert.equal(TIPOS_MANUAIS_DE_INTERACAO.includes("payment_approved"), false);
+  assert.equal(TIPOS_MANUAIS_DE_INTERACAO.includes("campaign_live"), false);
+  const migration = readFileSync(new URL(
+    "../supabase/migrations/20261007160925_revops_v0.sql", import.meta.url,
+  ), "utf8");
+  assert.match(migration, /if p_interaction_type in \('payment_approved', 'campaign_live'\) then/);
+  assert.match(migration, /raise exception 'confirmacao_exige_fonte_verificavel'/);
 });
 
 test("reuniao sem transcricao e venda relatada geram alertas honestos", () => {
