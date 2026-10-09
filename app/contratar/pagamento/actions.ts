@@ -67,7 +67,8 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
     const cliente = await asaasSandbox("/customers", { method: "POST", body: {
       name: pedido.legal_name, cpfCnpj: pedido.cnpj, email: pedido.buyer_email,
       mobilePhone: pedido.buyer_whatsapp, externalReference: pedido.id,
-      notificationDisabled: false,
+      // No Sandbox, contatos sinteticos nao devem receber SMS ou e-mail.
+      notificationDisabled: true,
     } });
     const corpo = cliente.body && typeof cliente.body === "object" ? cliente.body as Record<string, unknown> : null;
     clienteId = cliente.ok ? idAsaas(corpo?.id, "cus") : null;

@@ -10,7 +10,7 @@ export default function ContratarPage() {
   // A rota não entra em produção até existir teste em sandbox e liberação explícita.
   if (process.env.NODE_ENV === "production") notFound();
   return <main className="contratar-shell">
-    <header className="contratar-topo"><Marca href="/entrar" /><a href="/entrar">Já tenho acesso</a></header>
+    <header className="contratar-topo"><Marca href="/entrar" editorial /><a href="/entrar">Já tenho acesso</a></header>
     <div className="contratar-grid">
       <section className="contratar-intro" aria-labelledby="contratar-titulo">
         <h1 id="contratar-titulo">Seus anúncios, com acompanhamento de perto.</h1>

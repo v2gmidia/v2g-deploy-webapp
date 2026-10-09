@@ -47,7 +47,7 @@ export default async function PagamentoPage({ searchParams }: Params) {
   const metodo = pedido.payment_method === "asaas_pix" || pedido.payment_method === "asaas_card"
     ? pedido.payment_method : null;
   return <main className="contratar-shell">
-    <header className="contratar-topo"><Marca href="/contratar" /><Link href="/contratar">Voltar à contratação</Link></header>
+    <header className="contratar-topo"><Marca href="/contratar" editorial /><Link href="/contratar">Voltar à contratação</Link></header>
     <div className="contratar-pagamento">
       <div className="contratar-pagamento-cabecalho">
         <h1>Pagamento</h1>
@@ -62,13 +62,13 @@ export default async function PagamentoPage({ searchParams }: Params) {
             <h2>Seu Pix está pronto</h2>
             <p>Leia o QR Code pelo aplicativo do banco ou copie o código abaixo. No Sandbox, use a simulação de pagamento do Asaas.</p>
             <img src={`data:image/png;base64,${pix.imagem}`} width="230" height="230" alt="QR Code Pix deste pedido" />
-            <label>Código Pix<input readOnly value={pix.codigo} onFocus={e => e.currentTarget.select()} /></label>
+            <label>Código Pix<input readOnly value={pix.codigo} /></label>
             <CopiarPix codigo={pix.codigo} />
           </div>}
           {estado === "awaiting_payment" && tentativaCriada && !pix && <p className="form-warning">
             {pedido.payment_method === "asaas_pix"
-              ? "O Pix foi solicitado, mas o código ainda não está disponível. Atualize a página; se continuar assim, procure a V2G."
-              : "A cobrança foi solicitada. Aguarde a confirmação nesta página. Se demorar, procure a V2G antes de tentar outra vez."}
+              ? "Ainda não foi possível mostrar o código Pix. Atualize a página; se continuar assim, procure a V2G antes de tentar outra vez."
+              : "Ainda não há confirmação de pagamento. Acompanhe esta página e procure a V2G antes de tentar outra vez."}
           </p>}
           {estado === "awaiting_payment" && !tentativaCriada && metodo
             && <PagamentoFormulario referencia={referencia} metodo={metodo} />}
