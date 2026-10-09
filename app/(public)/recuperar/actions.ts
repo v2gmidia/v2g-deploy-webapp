@@ -25,10 +25,11 @@ export async function recuperarAction(
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  if (!siteUrl) return { error: "O endereço de recuperação está indisponível. Tente novamente mais tarde." };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl.replace(/\/+$/, "")}/auth/confirmar?next=/redefinir`,
+    redirectTo: `${siteUrl.replace(/\/+$/, "")}/auth/confirmar`,
   });
 
   // Erros de rede/config do provedor de e-mail são reais e merecem

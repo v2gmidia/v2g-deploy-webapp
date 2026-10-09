@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { esteveNoAr, estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import { tituloDaAba } from "@/lib/titulos";
+import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
 
 export const metadata = tituloDaAba("/alertas");
 
@@ -44,6 +45,16 @@ export default async function AlertasPage() {
         .limit(10)
     : { data: [], error: null };
 
+  // A solicitação é a fonte do aviso dentro do app. Revisão aprovada não
+  // significa publicação: só o gestor pode confirmar o anúncio no ar.
+  const revisoes = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true" && estado.negocioId
+    ? await supabase.from("creative_review_requests")
+        .select("id, original_name, status, review_note, created_at, reviewed_at")
+        .eq("business_id", estado.negocioId)
+        .in("status", ["awaiting_review", "approved_for_manual_publish", "changes_requested", "rejected"])
+        .order("created_at", { ascending: false }).limit(20)
+    : { data: [], error: null };
+
   if (erroPendentes) console.error("[alertas] falha ao ler pendências ::", erroPendentes.message);
   if (erroRegistradas) console.error("[alertas] falha ao ler registros ::", erroRegistradas.message);
 
@@ -67,6 +78,7 @@ export default async function AlertasPage() {
   const temCampanha = esteveNoAr(veiculacao);
   const temPendencia = (pendentes?.length ?? 0) > 0;
   const temRegistro = (registradas?.length ?? 0) > 0;
+  const ajustesDeCriativo = (revisoes.data ?? []).filter((r) => r.status === "changes_requested");
 
   // A CONTAGEM VIVE NO TÍTULO DA SEÇÃO, não numa faixa.
   //
@@ -78,7 +90,7 @@ export default async function AlertasPage() {
   // o assunto da tela — usado para contar itens de uma lista.
   //
   // Ver docs/padrao-visual.md §5 para o critério de reabertura.
-  const quantasPendentes = pendentes?.length ?? 0;
+  const quantasPendentes = (pendentes?.length ?? 0) + ajustesDeCriativo.length;
 
   return (
     <div className="avisos-editorial">
@@ -106,8 +118,13 @@ export default async function AlertasPage() {
               <div className="card">
                 <p className="form-error">Não conseguimos carregar seus avisos agora. Tente novamente em instantes.</p>
               </div>
-            ) : temPendencia ? (
+            ) : temPendencia || ajustesDeCriativo.length > 0 ? (
               <div className="avisos-pendencias">
+                {ajustesDeCriativo.map((r) => <article className="alert-card warn" key={r.id}>
+                  <b>Ajustes pedidos na peça {r.original_name}</b>
+                  <p>{r.review_note || "Abra Criativos para ver a revisão do gestor."}</p>
+                  <a href="/criativos#casa-revisao">Ver meus criativos</a>
+                </article>)}
                 {pendentes!.map((d) => (
                   <article className="alert-card warn" key={d.id}>
                     <b>{tituloDaDecisao(d.kind)}</b>
@@ -142,6 +159,20 @@ export default async function AlertasPage() {
               </div>
             )}
           </section>
+
+          {process.env.V2G_CREATIVE_REVIEW_ENABLED === "true" && <section className="avisos-secao">
+            <div className="section-title"><h2>Retorno dos criativos</h2></div>
+            {revisoes.error ? <p className="form-warning">Não conseguimos carregar o retorno das peças agora.</p>
+              : (revisoes.data?.length ?? 0) === 0 ? <p className="hint">Nenhuma peça enviada para revisão nesta conta.</p>
+              : <div className="avisos-registros">{revisoes.data!.map((r) => <div className="log-row" key={r.id}>
+                  <time dateTime={r.reviewed_at || r.created_at}>{formatarData(r.reviewed_at || r.created_at)}</time>
+                  <p><b>{r.original_name}</b>: {rotuloDaRevisao(r.status as StatusRevisao)}.
+                    {r.status === "approved_for_manual_publish" && " A publicação pelo gestor ainda precisa ser confirmada."}
+                    {r.review_note && ` ${r.review_note}`}</p>
+                </div>)}</div>}
+            {(revisoes.data?.length ?? 0) === 20 && <p className="form-warning">Mostrando as 20 peças mais recentes.</p>}
+            <p className="foot-line">Esses avisos aparecem no app ao abrir a página; não confirmam entrega por e-mail ou WhatsApp.</p>
+          </section>}
 
           <section className="avisos-secao">
             <div className="section-title">

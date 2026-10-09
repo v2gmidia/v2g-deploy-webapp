@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`qa-jornada-alertas-email-09-10.md`](./qa-jornada-alertas-email-09-10.md) | 09/10/2026 | QA autenticado com dois negócios, compra pendente, isolamento de avisos, fila do operador e templates locais de Auth. | **Sim.** HTTPS estável, instalar/testar templates e SMTP no QA, clique completo de upload/revisão. |
 | [`operacao-multiconta-noite-08-10.md`](./operacao-multiconta-noite-08-10.md) | 08/10/2026, noite | Fila interna de contratações antes do vínculo ao negócio, menu multiconta e rótulos fiéis de compra. | **Sim.** Interface autenticada com dois CNPJs/operador, assinatura, fiscal e agenda. |
 | [`checkout-self-service-08-10.md`](./checkout-self-service-08-10.md) | 08/10/2026 | Banco QA, checkout hospedado testado e nova estrutura local de pagamento por API dentro da V2G. | **Sim.** Migrations do checkout por API e da retentativa aplicadas só em QA; cadastro Auth/URL do e-mail, retentativa completa, mensalidades seguintes, estornos, NFS-e e produção pendentes. |
 | [`guia-outubro-08-10.md`](./guia-outubro-08-10.md) | 08/10/2026 | Recorte de outubro do fluxo FigJam e do plano até dezembro, com estado por etapa, critério de conclusão e preparação para 28–31/10. | **Sim.** Testes autenticados, compra direta, assinatura, NFS-e, reserva conciliada, fila do gestor/criativos, leitura autorizada de resultados e demonstração completa. |

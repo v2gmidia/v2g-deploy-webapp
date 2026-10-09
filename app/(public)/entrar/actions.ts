@@ -95,10 +95,15 @@ export async function signUpAction(
   }
 
   const supabase = await createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  if (!siteUrl) return { error: "O endereço de acesso está indisponível. Tente novamente mais tarde." };
   const { data, error } = await supabase.auth.signUp({
     email,
     password: senha,
-    options: { data: { full_name: nome, whatsapp } },
+    options: {
+      data: { full_name: nome, whatsapp },
+      emailRedirectTo: `${siteUrl}/auth/confirmar`,
+    },
   });
 
   if (error) {

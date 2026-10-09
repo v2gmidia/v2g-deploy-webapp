@@ -65,7 +65,13 @@ export async function GET(request: NextRequest) {
   const tokenHash = searchParams.get("token_hash") ?? searchParams.get("token");
   const code = searchParams.get("code");
   const type = searchParams.get("type") as EmailOtpType | null;
-  const next = searchParams.get("next") ?? "/";
+  const destinoPedido = searchParams.get("next");
+  let next = type === "recovery" ? "/redefinir" : "/inicio";
+  if (destinoPedido?.startsWith("/") && !destinoPedido.startsWith("//") &&
+      !destinoPedido.includes("\\")) {
+    const destino = new URL(destinoPedido, origin);
+    if (destino.origin === origin) next = destino.pathname + destino.search + destino.hash;
+  }
 
   // NOMES, NUNCA VALORES. Um token de recuperação é credencial: quem lê o
   // log entra na conta. O que diagnostica é QUAIS parâmetros chegaram, e
