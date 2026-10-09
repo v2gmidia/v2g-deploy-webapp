@@ -336,6 +336,39 @@ test('sem site e sem certeza sobre a marca ficam explícitos sem campo inventado
   assert.equal(row.onboarding.marca.aparenciaNaoSei,true);
   assert.equal(events.includes('campos'),false);
 });
+test('cliente pode trocar não sei por descrição após concluir, sem refazer a conclusão', async () => {
+  contasProntas();
+  const semResposta = {...entradaMarca(),site:'',siteNaoTenho:true,instagram:'',aparencia:'',aparenciaNaoSei:true};
+  assert.equal((await marca.salvarMarcaAction(semResposta)).ok,true);
+  const conclusao = structuredClone(row.onboarding.conclusao);
+  const contasAntes = structuredClone(row.onboarding.contas);
+  const respostasAntes = structuredClone(row.onboarding.respostas);
+  events = [];
+  const atualizada = {...semResposta,aparencia:'Azul escuro e fotos dos produtos',aparenciaNaoSei:false};
+  assert.equal((await marca.salvarMarcaAction(atualizada)).ok,true);
+  assert.equal(row.onboarding.marca.aparencia,atualizada.aparencia);
+  assert.equal(row.onboarding.marca.aparenciaNaoSei,false);
+  assert.deepEqual(row.onboarding.conclusao,conclusao);
+  assert.deepEqual(row.onboarding.contas,contasAntes);
+  assert.deepEqual(row.onboarding.respostas,respostasAntes);
+  assert.equal(events.includes('disparo'),false);
+  const gravacoes = events.length;
+  assert.equal((await marca.salvarMarcaAction(atualizada)).ok,true);
+  assert.equal(events.length,gravacoes);
+});
+test('falha ao atualizar marca concluída preserva resposta anterior para retomar', async () => {
+  contasProntas();
+  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,true);
+  const anterior = structuredClone(row.onboarding);
+  const atualizada = {...entradaMarca(),aparencia:'Verde e fotografias dos produtos'};
+  jsonFailure = true;
+  assert.equal((await marca.salvarMarcaAction(atualizada)).ok,false);
+  assert.deepEqual(row.onboarding,anterior);
+  jsonFailure = false;
+  assert.equal((await marca.salvarMarcaAction(atualizada)).ok,true);
+  assert.equal(row.onboarding.marca.aparencia,atualizada.aparencia);
+  assert.deepEqual(row.onboarding.conclusao,anterior.conclusao);
+});
 test('falhas de coluna e de JSON não marcam conclusão; repetição não duplica', async () => {
   contasProntas(); fieldFailure = true;
   assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,false);

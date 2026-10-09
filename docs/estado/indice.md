@@ -35,6 +35,8 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`retorno-auth-local-09-10.md`](./retorno-auth-local-09-10.md) | 09/10/2026 | Redirecionamento local seguro e consistente em login, cadastro e confirmação de e-mail. | **Sim.** Falta percorrer o link real pelo SMTP/HTTPS de QA. |
+| [`marca-retomada-apos-conclusao-09-10.md`](./marca-retomada-apos-conclusao-09-10.md) | 09/10/2026 | Cliente atualiza resposta visual após concluir, sem refazer conclusão nem apagar blocos. | **Sim.** Falta percurso autenticado e persistência real por RLS. |
 | [`qa-auth-contrato-seguimento-09-10.md`](./qa-auth-contrato-seguimento-09-10.md) | 09/10/2026 | SMTP e templates salvos no Supabase QA, variável pública ainda ausente e zero deployments no Vercel QA; minuta recebida continua sem aprovação jurídica comprovada. | **Sim.** Primeiro deployment de QA após revisão, teste real de e-mail e contrato final aprovado. |
 | [`qa-resend-assinatura-09-10.md`](./qa-resend-assinatura-09-10.md) | 09/10/2026 | Domínio Resend já verificado, SMTP e chaves faltantes no QA, limite da eSignature nativa do Google e rota de assinatura por API. | **Sim.** Chave de envio exclusiva de QA, chaves Supabase no Vercel QA e arquivo final aprovado pelo advogado. |
 | [`qa-jornada-alertas-email-09-10.md`](./qa-jornada-alertas-email-09-10.md) | 09/10/2026 | QA autenticado com dois negócios, compra pendente, isolamento de avisos, fila do operador e templates locais de Auth. | **Sim.** HTTPS estável, instalar/testar templates e SMTP no QA, clique completo de upload/revisão. |

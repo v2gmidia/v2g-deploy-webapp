@@ -109,7 +109,6 @@ export async function salvarMarcaAction(entrada: {
   const anterior = estado(r.linha);
   if (anterior.faltamBasicas.length) return { ok: false, erro: "Termine as perguntas sobre seu negócio antes de concluir." };
   if (!anterior.contasProntas) return { ok: false, erro: "Termine suas contas antes de continuar." };
-  if (anterior.concluido) return { ok: true, estado: anterior };
 
   const aparencia = entrada.aparencia.trim();
   if (!entrada.aparenciaNaoSei && !aparencia) {
@@ -132,6 +131,12 @@ export async function salvarMarcaAction(entrada: {
   const campos: CampoParaGravar[] = [];
   if (site && site !== anterior.site) campos.push({ campo: "site_url", valor: site });
   if (instagram && instagram !== anterior.instagram) campos.push({ campo: "instagram_handle", valor: instagram });
+  const visual = entrada.aparenciaNaoSei ? "" : aparencia;
+  if (anterior.concluido && campos.length === 0 && anterior.marca &&
+      anterior.marca.aparencia === visual &&
+      anterior.marca.aparenciaNaoSei === entrada.aparenciaNaoSei &&
+      anterior.marca.siteNaoTenho === entrada.siteNaoTenho)
+    return { ok: true, estado: anterior };
   if (campos.length) {
     const gravacao = await gravarCamposDoCliente({ profileId: r.profileId, businessId: r.linha.id, tabela: "businesses", campos });
     if (!gravacao.ok) return { ok: false, erro: gravacao.erro };
@@ -142,9 +147,9 @@ export async function salvarMarcaAction(entrada: {
   const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
     p_business_id: r.linha.id,
     p_patch: {
-      marca: { aparencia: entrada.aparenciaNaoSei ? "" : aparencia,
+      marca: { aparencia: visual,
         aparenciaNaoSei: entrada.aparenciaNaoSei, siteNaoTenho: entrada.siteNaoTenho, em: agora },
-      conclusao: { em: agora, proximoPasso: "agendamento_pendente" },
+      ...(anterior.concluido ? {} : { conclusao: { em: agora, proximoPasso: "agendamento_pendente" } }),
     },
   });
   if (error || mesclado !== true) {

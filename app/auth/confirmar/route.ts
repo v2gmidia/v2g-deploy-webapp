@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { registrarErroAuth } from "@/lib/auth-errors";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
+import { destinoLocalSeguro } from "@/lib/auth-destino";
 
 /**
  * Alvo do link enviado por e-mail (cadastro e recuperação de senha).
@@ -66,12 +67,7 @@ export async function GET(request: NextRequest) {
   const code = searchParams.get("code");
   const type = searchParams.get("type") as EmailOtpType | null;
   const destinoPedido = searchParams.get("next");
-  let next = type === "recovery" ? "/redefinir" : "/inicio";
-  if (destinoPedido?.startsWith("/") && !destinoPedido.startsWith("//") &&
-      !destinoPedido.includes("\\")) {
-    const destino = new URL(destinoPedido, origin);
-    if (destino.origin === origin) next = destino.pathname + destino.search + destino.hash;
-  }
+  const next = destinoLocalSeguro(destinoPedido, type === "recovery" ? "/redefinir" : "/inicio");
 
   // NOMES, NUNCA VALORES. Um token de recuperação é credencial: quem lê o
   // log entra na conta. O que diagnostica é QUAIS parâmetros chegaram, e

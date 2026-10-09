@@ -13,6 +13,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
   const [naoSei, setNaoSei] = useState(inicial.marca?.aparenciaNaoSei ?? false);
   const [confirmandoNaoSei, setConfirmandoNaoSei] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [salvo, setSalvo] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
 
@@ -20,10 +21,11 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
     if (enviando) return;
     setEnviando(true);
     setErro(null);
+    setSalvo(false);
     try {
       const r = await salvarMarcaAction({ businessId: estado.businessId, site, siteNaoTenho: semSite, instagram, aparencia, aparenciaNaoSei: naoSei });
       if (!r.ok) setErro(r.erro ?? "Não conseguimos salvar esta etapa.");
-      else if (r.estado) setEstado(r.estado);
+      else if (r.estado) { setEstado(r.estado); setSalvo(true); }
       else window.location.href = "/onboarding/concluido";
     } catch {
       setErro("Não conseguimos salvar esta etapa. Tente de novo.");
@@ -43,10 +45,10 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
     </section>
     {estado.faltamBasicas.length ? <p className="form-warning">Faltam respostas sobre seu negócio: {estado.faltamBasicas.map((chave) => rotulos[chave]).join(", ")}. <a href="/onboarding">Continuar perguntas</a></p> :
     !estado.contasProntas ? <p className="form-warning">Termine suas contas antes desta etapa. <a href="/onboarding/contas">Voltar às contas</a></p> :
-      estado.concluido ? <>
-        <p className="form-notice">Esta etapa está guardada.</p>
-        <a className="cta" href="/onboarding/concluido">Ver o próximo passo</a>
-      </> : <>
+      <>
+        {estado.concluido && <p className="form-notice">Questionário concluído. Você pode atualizar suas respostas sobre a marca antes da reunião.</p>}
+        {salvo && <p className="form-notice" role="status">Respostas da marca guardadas.</p>}
+        {estado.concluido && <p><a href="/onboarding/concluido">Ver o próximo passo</a></p>}
         {erro && <p className="form-error" role="alert">{erro}</p>}
         <div className={styles.campo}>
           <label htmlFor="instagram">Instagram da marca (se tiver)</label>
@@ -78,7 +80,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
           <p className="conta-hint">O gestor verá essa pendência na conversa.</p>
         </div>}
         <p className="conta-hint">O Instagram é opcional. Sem site, registre “Não tenho site”; isso não cria um endereço fictício.</p>
-        <button className="cta" type="button" disabled={enviando} onClick={salvar}>{enviando ? "Salvando…" : "Guardar e concluir"}</button>
+        <button className="cta" type="button" disabled={enviando} onClick={salvar}>{enviando ? "Salvando…" : estado.concluido ? "Salvar alterações" : "Guardar e concluir"}</button>
       </>}
   </>;
 }

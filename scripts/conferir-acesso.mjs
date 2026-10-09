@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { temAcessoWebApp } from "../lib/contratacao/acesso.ts";
+import { destinoLocalSeguro } from "../lib/auth-destino.ts";
 
 function cliente({ legado = false, pedido = false, negocioProprio = true, falha = false,
   emailDaCompra = "cliente@exemplo.com" } = {}) {
@@ -66,4 +67,13 @@ test("papel interno assinado pelo servidor continua com acesso", async () => {
   assert.equal(await temAcessoWebApp(cliente(), {
     ...usuario, app_metadata: { papel: "operador" },
   }), true);
+});
+
+test("retorno do login preserva somente rotas locais seguras", () => {
+  assert.equal(destinoLocalSeguro("/gestor/tarefas?filtro=minhas#fila"),
+    "/gestor/tarefas?filtro=minhas#fila");
+  for (const destino of ["https://outro.example", "//outro.example", "/\\outro.example",
+    "/entrar?next=/inicio", "/inicio\nLocation: https://outro.example", ""])
+    assert.equal(destinoLocalSeguro(destino), "/inicio");
+  assert.equal(destinoLocalSeguro("//outro.example", "/redefinir"), "/redefinir");
 });

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
+import { destinoLocalSeguro } from "@/lib/auth-destino";
 import {
   ehContaJaExistente,
   mensagemDeErroAuth,
@@ -23,11 +24,7 @@ export interface AuthActionState {
  * quando houver mais de uma rota protegida.
  */
 function safeNextPath(formData: FormData): string {
-  const next = String(formData.get("next") ?? "");
-  if (next.startsWith("/") && !next.startsWith("//") && next !== "/entrar") {
-    return next;
-  }
-  return "/inicio";
+  return destinoLocalSeguro(formData.get("next"));
 }
 
 /**
