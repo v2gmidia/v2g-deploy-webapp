@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import { destinoLocalSeguro } from "@/lib/auth-destino";
+import { validarNovaSenha } from "@/lib/auth-senha";
 import {
   ehContaJaExistente,
   mensagemDeErroAuth,
@@ -46,6 +47,7 @@ export async function signUpAction(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const cnpj = String(formData.get("cnpj") ?? "").replace(/\D/g, "");
   const senha = String(formData.get("senha") ?? "");
+  const confirmarSenha = String(formData.get("confirmarSenha") ?? "");
 
   if (!nome || !email || !senha) {
     return { error: "Preencha nome, e-mail e senha." };
@@ -65,9 +67,8 @@ export async function signUpAction(
     return { error: "Esse WhatsApp parece incompleto. Inclua o DDD." };
   }
 
-  if (senha.length < 6) {
-    return { error: "A senha precisa ter pelo menos 6 caracteres." };
-  }
+  const erroSenha = validarNovaSenha(senha, confirmarSenha);
+  if (erroSenha) return { error: erroSenha };
   if (!/^\d{14}$/.test(cnpj)) {
     return { error: "Informe o CNPJ de 14 dígitos da empresa contratante." };
   }

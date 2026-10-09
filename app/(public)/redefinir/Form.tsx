@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
+import { TAMANHO_MINIMO_SENHA } from "@/lib/auth-senha";
 import { redefinirAction, redefinirInitialState } from "./actions";
 
 export function RedefinirForm() {
@@ -18,11 +19,13 @@ export function RedefinirForm() {
             id="senha-nova"
             name="senha"
             type="password"
-            placeholder="8 caracteres, com letra e número"
+            placeholder="Uma frase longa e única"
             autoComplete="new-password"
-            minLength={8}
+            minLength={TAMANHO_MINIMO_SENHA}
+            aria-describedby="orientacao-senha-nova"
             required
           />
+          <p className="note" id="orientacao-senha-nova">Use pelo menos {TAMANHO_MINIMO_SENHA} caracteres. Você pode usar espaços; evite dados pessoais e senhas de outros sites.</p>
         </div>
         <div className="field">
           <label htmlFor="senha-confirmar">Confirme a nova senha</label>
@@ -32,7 +35,7 @@ export function RedefinirForm() {
             type="password"
             placeholder="Repita a senha"
             autoComplete="new-password"
-            minLength={8}
+            minLength={TAMANHO_MINIMO_SENHA}
             required
           />
         </div>

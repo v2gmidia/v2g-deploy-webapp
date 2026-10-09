@@ -3,22 +3,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { mensagemDeErroAuth } from "@/lib/auth-errors";
+import { validarNovaSenha } from "@/lib/auth-senha";
 
 export interface RedefinirActionState {
   error?: string;
 }
 
 const initialState: RedefinirActionState = {};
-
-function validarForca(senha: string): string | null {
-  if (senha.length < 8) {
-    return "A senha precisa ter pelo menos 8 caracteres.";
-  }
-  if (!/[a-zA-Z]/.test(senha) || !/[0-9]/.test(senha)) {
-    return "A senha precisa ter letras e números.";
-  }
-  return null;
-}
 
 export async function redefinirAction(
   _prevState: RedefinirActionState,
@@ -27,13 +18,8 @@ export async function redefinirAction(
   const senha = String(formData.get("senha") ?? "");
   const confirmarSenha = String(formData.get("confirmarSenha") ?? "");
 
-  const erroForca = validarForca(senha);
-  if (erroForca) {
-    return { error: erroForca };
-  }
-  if (senha !== confirmarSenha) {
-    return { error: "As senhas não coincidem." };
-  }
+  const erroSenha = validarNovaSenha(senha, confirmarSenha);
+  if (erroSenha) return { error: erroSenha };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password: senha });

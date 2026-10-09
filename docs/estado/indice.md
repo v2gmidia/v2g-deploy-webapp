@@ -35,6 +35,8 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`senha-forte-09-10.md`](./senha-forte-09-10.md) | 09/10/2026 | Confirmação de senha e regra comum no primeiro acesso/redefinição, com testes locais e prova visual. | **Sim.** Publicar no QA e alinhar a política do Supabase Auth; e-mail/login continuam pendentes. |
+| [`qa-primeiro-acesso-09-10.md`](./qa-primeiro-acesso-09-10.md) | 09/10/2026 | Duas fixtures fictícias para testar e-mail, login e multiconta no QA, com identificadores e limpeza restrita. | **Sim.** Victor cria a senha de teste; faltam confirmação, login, vínculo e troca entre CNPJs. |
 | [`auditoria-sem-repeticao-09-10.md`](./auditoria-sem-repeticao-09-10.md) | 09/10/2026 | Corte atual das provas de compra no Asaas Sandbox e próximo marco, para evitar repetição do guia de 08/10. | **Sim.** Link Auth/login, bordas do pagamento, assinatura, NFS-e e jornada autenticada. |
 | [`qa-primeiro-deploy-09-10.md`](./qa-primeiro-deploy-09-10.md) | 09/10/2026 | Primeiro deployment HTTPS do projeto QA a partir do commit remoto, build Ready, domínio e tela de entrada verificados. | **Sim.** Entrega de e-mail, checkout Sandbox com webhook e teste autenticado. |
 | [`retorno-auth-local-09-10.md`](./retorno-auth-local-09-10.md) | 09/10/2026 | Redirecionamento local seguro e consistente em login, cadastro e confirmação de e-mail. | **Sim.** Falta percorrer o link real pelo SMTP/HTTPS de QA. |

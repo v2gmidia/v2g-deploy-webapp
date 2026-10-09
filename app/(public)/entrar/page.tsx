@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
 import { SITE_PUBLICO_ORIGEM } from "@/lib/site-publico";
+import { TAMANHO_MINIMO_SENHA } from "@/lib/auth-senha";
 import { signInAction, signUpAction, type AuthActionState } from "./actions";
 
 const initialState: AuthActionState = {};
@@ -102,9 +103,23 @@ function EntrarContent() {
                   id="senha-cadastro"
                   name="senha"
                   type="password"
-                  placeholder="Pelo menos 6 caracteres"
+                  placeholder="Uma frase longa e única"
                   autoComplete="new-password"
-                  minLength={6}
+                  minLength={TAMANHO_MINIMO_SENHA}
+                  aria-describedby="orientacao-senha"
+                  required
+                />
+                <p className="note" id="orientacao-senha">Use pelo menos {TAMANHO_MINIMO_SENHA} caracteres. Você pode usar espaços; evite dados pessoais e senhas de outros sites.</p>
+              </div>
+              <div className="field">
+                <label htmlFor="senha-confirmar-cadastro">Repita a senha</label>
+                <input
+                  id="senha-confirmar-cadastro"
+                  name="confirmarSenha"
+                  type="password"
+                  placeholder="Digite a mesma senha"
+                  autoComplete="new-password"
+                  minLength={TAMANHO_MINIMO_SENHA}
                   required
                 />
               </div>
