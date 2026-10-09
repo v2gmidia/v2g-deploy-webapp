@@ -61,5 +61,9 @@ export default async function EscolherNegocioPage() {
     <p className="auth-sub">Cada negócio tem suas próprias respostas, anúncios e próximos passos.</p>
     <FormularioNegocio negocios={negocios}
       selecionado={ativo.status === "selecionado" ? ativo.negocio.id : null} />
+    <p className="auth-sub">Para adicionar outro CNPJ, use o mesmo e-mail da sua conta na nova contratação. O negócio aparece aqui depois da confirmação do pagamento e do vínculo ao e-mail verificado.</p>
+    {process.env.NODE_ENV !== "production"
+      ? <a className="cta" href="/contratar">Adicionar negócio pelo checkout de teste</a>
+      : <a className="cta" href="https://wa.me/5521936182176?text=Quero%20adicionar%20outro%20neg%C3%B3cio%20%C3%A0%20minha%20conta%20V2G" target="_blank" rel="noopener">Pedir outro negócio</a>}
   </section>;
 }

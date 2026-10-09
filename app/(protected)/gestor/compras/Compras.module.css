@@ -1,0 +1,39 @@
+.lista {
+  display: grid;
+  gap: 14px;
+  margin: 20px 0 28px;
+}
+
+.filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 20px 0 10px;
+}
+
+.filtros label {
+  display: grid;
+  gap: 5px;
+  min-width: min(100%, 240px);
+}
+
+.cartao {
+  padding: 20px 22px;
+}
+
+.cartao h2 {
+  font-size: 1.1rem;
+  margin: 0 0 8px;
+}
+
+.cartao p {
+  margin: 7px 0;
+}
+
+.cartao small {
+  display: block;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+  opacity: .7;
+}

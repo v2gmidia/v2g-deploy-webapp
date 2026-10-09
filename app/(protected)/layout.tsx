@@ -81,10 +81,11 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     <Casco
       nome={nome}
       nomeNegocio={nomeNegocio}
+      negocioAtivoId={ativo.status === "selecionado" ? ativo.negocio.id : undefined}
       rotuloDaConta={nomeNegocio || user.email || ""}
       inicial={inicial}
       acaoSair={signOutAction}
-      podeTrocarNegocio={ativo.status === "selecionado" && ativo.negocios.length > 1}
+      negocios={"negocios" in ativo ? ativo.negocios.map((negocio) => ({ id: negocio.id, name: negocio.name })) : []}
       ehOperador={user.app_metadata?.papel === "operador"}
     >
       {children}

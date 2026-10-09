@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { tituloDaAba } from "@/lib/titulos";
+import { ultimoDocumentoPorPedido, type DocumentoPorPedido } from "@/lib/contratacao/documentos";
 import { AprovarPix, ComprovantePix, NovoPedidoPix } from "./Formularios";
 
 export const metadata = tituloDaAba("/pedidos");
@@ -27,8 +28,8 @@ export default async function PedidosPage({ searchParams }: {
     status: string; proof_reference: string | null;
   }> | null = null;
   let falhaConsulta = false;
-  let contratos: Array<{ order_id: string; status: string; template_version: string }> = [];
-  let notas: Array<{ order_id: string; status: string; provider_invoice_id: string | null }> = [];
+  let contratos = new Map<string, string>();
+  let notas = new Map<string, string>();
   let falhaDocumentos = false;
   try {
     const admin = createAdminClient();
@@ -43,16 +44,18 @@ export default async function PedidosPage({ searchParams }: {
       const ids = data.map((pedido) => pedido.id);
       const [respostaContratos, respostaNotas] = await Promise.all([
         admin.from("contract_documents")
-          .select("order_id, status, template_version")
-          .in("order_id", ids).order("created_at", { ascending: false }),
+          .select("order_id, status, created_at")
+          .in("order_id", ids).order("created_at", { ascending: false }).limit(1000),
         admin.from("fiscal_documents")
-          .select("order_id, status, provider_invoice_id")
-          .in("order_id", ids).order("created_at", { ascending: false }),
+          .select("order_id, status, created_at")
+          .in("order_id", ids).order("created_at", { ascending: false }).limit(1000),
       ]);
-      if (respostaContratos.error || respostaNotas.error) falhaDocumentos = true;
+      if (respostaContratos.error || respostaNotas.error || !respostaContratos.data || !respostaNotas.data
+          || (respostaContratos.data?.length ?? 0) === 1000
+          || (respostaNotas.data?.length ?? 0) === 1000) falhaDocumentos = true;
       else {
-        contratos = respostaContratos.data ?? [];
-        notas = respostaNotas.data ?? [];
+        contratos = ultimoDocumentoPorPedido((respostaContratos.data ?? []) as DocumentoPorPedido[]);
+        notas = ultimoDocumentoPorPedido((respostaNotas.data ?? []) as DocumentoPorPedido[]);
       }
     }
   } catch (error) {
@@ -82,13 +85,15 @@ export default async function PedidosPage({ searchParams }: {
     {!falhaConsulta && (data ?? []).map((pedido) => <section className="auth-card" key={pedido.id}>
       <h3>{pedido.legal_name}</h3>
       <p>{pedido.buyer_email} · CNPJ {pedido.cnpj}</p>
-      <p>{pedido.unit_count} conta(s) · {pedido.billing_period === "monthly" ? "mensal" : "anual à vista"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}</p>
+      <p>{pedido.unit_count} conta(s) · {pedido.billing_period === "monthly" ? "mensal"
+        : pedido.billing_period === "semiannual_upfront" ? "semestral à vista"
+          : pedido.billing_period === "annual_upfront" ? "anual à vista" : "período a conferir"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}</p>
       <p><strong>{estados[pedido.status] ?? "Estado indisponível"}</strong></p>
       {pedido.status === "payment_approved" && (falhaDocumentos ?
         <p className="form-warning">Não foi possível consultar contrato e nota agora.</p> : <>
-          <p>Contrato: {contratos.find((documento) => documento.order_id === pedido.id)?.status === "signed"
+          <p>Contrato: {contratos.get(pedido.id) === "signed"
             ? "assinatura registrada no WebApp" : "sem assinatura registrada no WebApp"}.</p>
-          <p>Nota fiscal: {notas.find((documento) => documento.order_id === pedido.id)?.status === "authorized"
+          <p>Nota fiscal: {notas.get(pedido.id) === "authorized"
             ? "autorização registrada no WebApp" : "sem autorização registrada no WebApp"}.</p>
         </>)}
       {pedido.proof_reference && <p>Comprovante: {pedido.proof_reference}</p>}

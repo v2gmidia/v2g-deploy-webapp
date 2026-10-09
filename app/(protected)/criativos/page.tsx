@@ -4,6 +4,9 @@ import { AmostraDeVereditos } from "./Amostra";
 import { MinhasPecas } from "./MinhasPecas";
 import { CriarPeca } from "./CriarPeca";
 import { tituloDaAba } from "@/lib/titulos";
+import { createClient } from "@/lib/supabase/server";
+import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
+import { PedirRevisao } from "./PedirRevisao";
 
 export const metadata = tituloDaAba("/criativos");
 
@@ -41,6 +44,14 @@ export const metadata = tituloDaAba("/criativos");
  */
 export default async function CriativosPage() {
   const estado = await estadoDoCliente(new Date());
+  const revisaoHabilitada = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true";
+  const supabase = revisaoHabilitada ? await createClient() : null;
+  const revisoes = revisaoHabilitada && estado.negocioId && supabase
+    ? await supabase.from("creative_review_requests")
+      .select("id, original_name, status, review_note, created_at")
+      .eq("business_id", estado.negocioId).order("created_at", { ascending: false }).limit(30)
+    : null;
+  const dataDaRevisao = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
 
   // ============================================================
   // SEM EXECUÇÃO A TELA NÃO QUEBRA — ela explica.
@@ -65,8 +76,9 @@ export default async function CriativosPage() {
       <div className="page-head">
         <h1>Criativos</h1>
         <p>
-          Aqui você pode conferir uma imagem que já tem. O envio de novos criativos para a
-          revisão do gestor ainda não está disponível nesta aba.
+          {revisaoHabilitada
+            ? "Confira uma imagem que já tem e acompanhe as peças enviadas ao gestor."
+            : "Aqui você pode conferir uma imagem que já tem. O envio para revisão do gestor ainda não está disponível."}
         </p>
       </div>
 
@@ -75,6 +87,7 @@ export default async function CriativosPage() {
           que ele mais quer, é o último. Âncora e não rota: nenhuma URL
           nova, e o alvo tem 44px de altura mínima. */}
       <nav className="casa-indice" aria-label="Blocos desta página">
+        {revisaoHabilitada && <a href="#casa-revisao">Revisão do gestor</a>}
         <a href="#casa-analise">Tenho uma peça pronta</a>
         <a href="#casa-pecas">Minhas peças</a>
         <a href="#casa-criar">Criar uma peça nova</a>
@@ -119,6 +132,20 @@ export default async function CriativosPage() {
           </aside>
         </div>
       </section>
+
+      {revisaoHabilitada && <section className="casa-bloco" aria-labelledby="casa-revisao">
+        <div className="casa-bloco-head"><h2 id="casa-revisao" className="section-title">Revisão do gestor</h2>
+          <p>Envie a peça do negócio selecionado. O gestor decide se ela pode seguir para publicação manual.</p></div>
+        {estado.negocioId && <PedirRevisao businessId={estado.negocioId} />}
+        {revisoes?.error && <p className="form-warning">Não foi possível carregar as peças enviadas. Tente novamente mais tarde.</p>}
+        {revisoes?.data?.length === 0 && <p>Nenhuma peça enviada para revisão nesta conta.</p>}
+        {revisoes?.data?.map((revisao) => <article className="auth-card" key={revisao.id}>
+          <h3>{revisao.original_name}</h3>
+          <p>{rotuloDaRevisao(revisao.status as StatusRevisao)} · {dataDaRevisao.format(new Date(revisao.created_at))}</p>
+          {revisao.review_note && <p>Retorno do gestor: {revisao.review_note}</p>}
+        </article>)}
+        {revisoes?.data?.length === 30 && <p className="form-warning">Mostrando as 30 peças mais recentes desta conta.</p>}
+      </section>}
 
       <MinhasPecas />
       <CriarPeca />

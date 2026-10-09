@@ -1,6 +1,41 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { filtrarPortfolio, montarPortfolio } from "../lib/gestor/portfolio.ts";
+import { filtrarPortfolio, instagramParaRevisao, montarPortfolio } from "../lib/gestor/portfolio.ts";
+import { filtrarCompras, periodoDaCompra, situacaoDaCompra } from "../lib/gestor/compras.ts";
+import { ultimoDocumentoPorPedido } from "../lib/contratacao/documentos.ts";
+
+test("fila de compras prioriza comprovante e erro ambíguo sem incluir cancelado em atenção", () => {
+  const pedido = (id, status, extra = {}) => ({ id, status, legal_name: `Empresa ${id}`,
+    buyer_email: `${id}@example.test`, cnpj: "12345678000195", created_at: "2026-10-08T12:00:00Z", ...extra });
+  const pedidos = [pedido("cancelado", "cancelled"), pedido("aprovado", "payment_approved", { buyer_profile_id: "perfil" }),
+    pedido("aguardando", "awaiting_payment"), pedido("ambiguo", "awaiting_payment", {
+      payment_creation_started_at: "2026-10-08T12:00:00Z", provider_charge_id: null,
+    }), pedido("comprovante", "proof_received")];
+  assert.deepEqual(filtrarCompras(pedidos, "", "todas").map((p) => p.id),
+    ["comprovante", "ambiguo", "aguardando", "aprovado", "cancelado"]);
+  assert.deepEqual(filtrarCompras(pedidos, "", "atencao").map((p) => p.id), ["comprovante", "ambiguo"]);
+  assert.deepEqual(filtrarCompras(pedidos, "EMPRESA APROVADO", "aprovadas").map((p) => p.id), ["aprovado"]);
+});
+
+test("fila de compras distingue tentativa ambigua, comprovante e pagamento", () => {
+  const base = { origin: "self_service", status: "awaiting_payment", payment_creation_started_at: "2026-10-08T12:00:00Z",
+    provider_charge_id: null, provider_subscription_id: null };
+  assert.equal(situacaoDaCompra(base), "Tentativa de pagamento a conciliar");
+  assert.equal(situacaoDaCompra({ ...base, status: "payment_approved" }), "Pagamento confirmado pelo provedor");
+  assert.equal(situacaoDaCompra({ ...base, origin: "assisted", status: "proof_received" }),
+    "Comprovante recebido; aprovação pendente");
+  assert.equal(periodoDaCompra("semiannual_upfront"), "Semestral à vista");
+});
+
+test("fila de compras usa estado do documento mais recente por pedido", () => {
+  const estados = ultimoDocumentoPorPedido([
+    { order_id: "a", status: "signed", created_at: "2026-10-01T00:00:00Z" },
+    { order_id: "b", status: "authorized", created_at: "2026-10-03T00:00:00Z" },
+    { order_id: "a", status: "voided", created_at: "2026-10-04T00:00:00Z" },
+  ]);
+  assert.equal(estados.get("a"), "voided");
+  assert.equal(estados.get("b"), "authorized");
+});
 
 const negocio = (id, extra = {}) => ({
   id, name: id, description: "Servico de teste valido", avg_ticket_min: 100,
@@ -8,6 +43,19 @@ const negocio = (id, extra = {}) => ({
   monthly_budget: 1000, cadastro_estado: "enviado", onboarding: {},
   dados_ficticios: false, created_at: "2026-10-01T00:00:00Z",
   updated_at: "2026-10-02T00:00:00Z", ...extra,
+});
+
+test("preparo da reunião mostra Instagram válido sem seguir URL arbitrária", () => {
+  assert.deepEqual(instagramParaRevisao("@v2gmidia"), {
+    rotulo: "@v2gmidia", url: "https://www.instagram.com/v2gmidia/",
+  });
+  assert.equal(instagramParaRevisao("javascript:alert(1)"), null);
+  assert.equal(instagramParaRevisao("https://instagram.com.evil.test/v2gmidia"), null);
+  const [linha] = montarPortfolio([negocio("a", { instagram_handle: "@v2gmidia",
+    description: "Venda por conversa", differentiators: ["Entrega rápida"] })], [], [], []);
+  assert.equal(linha.instagram.rotulo, "@v2gmidia");
+  assert.equal(linha.descricaoParaReuniao, "Venda por conversa");
+  assert.deepEqual(linha.diferenciaisParaReuniao, ["Entrega rápida"]);
 });
 
 test("comprovante recebido sobe na fila sem virar pagamento aprovado", () => {

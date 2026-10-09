@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { lerPagamentoConfirmado } from "../lib/contratacao/pagamento-evento.ts";
 import { validarDadosCartao } from "../lib/contratacao/dados-cartao.ts";
 import { urlCheckoutHospedadoSandbox } from "../lib/contratacao/url-checkout.ts";
+import { cartaoRecusadoSemCobranca, MAX_TENTATIVAS_CARTAO } from "../lib/contratacao/retentativa-cartao.ts";
 
 const eventoPix = { id: "evt_teste_0001", event: "PAYMENT_RECEIVED", payment: {
   id: "pay_teste001", customer: "cus_teste001", subscription: null,
@@ -49,4 +50,15 @@ test("pedido antigo so retoma no checkout hospedado do Sandbox", () => {
     "https://sandbox.asaas.com/checkout/abc");
   assert.equal(urlCheckoutHospedadoSandbox("https://sandbox.asaas.com.evil.test/checkout"), null);
   assert.equal(urlCheckoutHospedadoSandbox("http://sandbox.asaas.com/checkout"), null);
+});
+
+test("nova tentativa so segue recusa explicita sem cobranca persistida", () => {
+  assert.equal(cartaoRecusadoSemCobranca(400, "invalid_creditCard"), true);
+  assert.equal(cartaoRecusadoSemCobranca(400, "invalid_action",
+    "Transação não autorizada. Verifique os dados do cartão de crédito e tente novamente."), true);
+  assert.equal(cartaoRecusadoSemCobranca(400, "invalid_action", "Ação inválida."), false);
+  assert.equal(cartaoRecusadoSemCobranca(400, "outro_codigo"), false);
+  assert.equal(cartaoRecusadoSemCobranca(0, null), false);
+  assert.equal(cartaoRecusadoSemCobranca(500, null), false);
+  assert.equal(MAX_TENTATIVAS_CARTAO, 3);
 });

@@ -10,6 +10,7 @@ import { SeletorDeTema } from "./SeletorDeTema";
 import { signOutAction } from "../actions";
 import { tituloDaAba } from "@/lib/titulos";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { ultimoDocumentoPorPedido } from "@/lib/contratacao/documentos";
 
 export const metadata = tituloDaAba("/conta");
 
@@ -55,17 +56,20 @@ export default async function ContaPage() {
     : null;
 
   const consultaPedidos = business ? await supabase.from("commercial_orders")
-    .select("id, status, billing_period, unit_count, total_cents, payment_method")
+    .select("id, status, origin, billing_period, unit_count, total_cents, payment_method")
     .eq("business_id", business.id).eq("buyer_profile_id", user.id)
     .order("created_at", { ascending: false }).limit(100) : null;
   const pedidos = consultaPedidos?.data ?? [];
   const pedidoIlegivel = !!consultaPedidos?.error;
   const aprovados = pedidos.filter((pedido) => pedido.status === "payment_approved");
   const consultaContratos = aprovados.length ? await supabase.from("contract_documents")
-    .select("order_id, status").in("order_id", aprovados.map((pedido) => pedido.id)) : null;
-  const contratoIlegivel = !!consultaContratos?.error;
-  const assinados = new Set((consultaContratos?.data ?? [])
-    .filter((contrato) => contrato.status === "signed").map((contrato) => contrato.order_id));
+    .select("order_id, status, created_at").in("order_id", aprovados.map((pedido) => pedido.id))
+    .order("created_at", { ascending: false }).limit(1000) : null;
+  const contratoIlegivel = !!consultaContratos?.error || (consultaContratos?.data?.length ?? 0) === 1000;
+  const ultimoContrato = contratoIlegivel ? new Map<string, string>()
+    : ultimoDocumentoPorPedido(consultaContratos?.data ?? []);
+  const assinados = new Set([...ultimoContrato].filter(([, status]) => status === "signed")
+    .map(([orderId]) => orderId));
 
   // Logo e fotos do negócio. Uma consulta e uma assinatura de URLs em
   // lote — o bucket é privado, então nada é servido por URL pública.
@@ -201,11 +205,12 @@ export default async function ContaPage() {
               {pedidoIlegivel ? <p className="hint">Não conseguimos consultar os pedidos agora. Tente novamente.</p>
                 : pedidos.length ? <>
                   {pedidos.map((pedido) => <p className="hint" key={pedido.id}>
-                    {pedido.status === "payment_approved" ? "Pedido aprovado pela equipe. "
+                    {pedido.status === "payment_approved" ? pedido.origin === "self_service"
+                      ? "Pagamento confirmado pelo provedor. " : "Pedido aprovado pela equipe. "
                       : pedido.status === "proof_received" ? "Comprovante recebido; aprovação pendente. "
                         : pedido.status === "cancelled" ? "Pedido cancelado. "
                           : "Pedido aguardando pagamento ou análise. "}
-                    {pedido.unit_count} {pedido.unit_count === 1 ? "conta de anúncio" : "contas de anúncio"} · {pedido.billing_period === "annual_upfront" ? "anual à vista" : "mensal"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}.
+                    {pedido.unit_count} {pedido.unit_count === 1 ? "conta de anúncio" : "contas de anúncio"} · {pedido.billing_period === "annual_upfront" ? "anual à vista" : pedido.billing_period === "semiannual_upfront" ? "semestral à vista" : "mensal"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}.
                   </p>)}
                   {pedidos.length === 100 && <p className="foot-line">Mostrando os 100 pedidos mais recentes deste negócio.</p>}
                   <p className="foot-line">Estes registros não informam próxima cobrança, recibo nem liquidação bancária.</p>

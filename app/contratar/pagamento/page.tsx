@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 import { asaasSandbox, idAsaas } from "@/lib/contratacao/asaas-sandbox";
 import { urlCheckoutHospedadoSandbox } from "@/lib/contratacao/url-checkout";
+import { MAX_TENTATIVAS_CARTAO } from "@/lib/contratacao/retentativa-cartao";
 import { PagamentoFormulario } from "./PagamentoFormulario";
 import { EstadoPagamento } from "./EstadoPagamento";
 import { CopiarPix } from "./CopiarPix";
@@ -21,7 +22,7 @@ export default async function PagamentoPage({ searchParams }: Params) {
   if (!/^[0-9a-f-]{36}$/i.test(referencia)) notFound();
   const admin = createAdminClient();
   const { data: pedido, error } = await admin.from("commercial_orders")
-    .select("id, status, origin, payment_method, billing_period, unit_count, total_cents, provider_checkout_id, provider_checkout_url, checkout_creation_started_at, provider_charge_id, provider_subscription_id, payment_creation_started_at")
+    .select("id, status, origin, payment_method, billing_period, unit_count, total_cents, provider_checkout_id, provider_checkout_url, checkout_creation_started_at, provider_charge_id, provider_subscription_id, payment_creation_started_at, payment_attempt_count")
     .eq("external_ref", referencia).maybeSingle();
   if (error || !pedido || pedido.origin !== "self_service") notFound();
   if (pedido.provider_checkout_id && pedido.provider_checkout_url && pedido.status === "awaiting_payment") {
@@ -46,6 +47,7 @@ export default async function PagamentoPage({ searchParams }: Params) {
     || pedido.provider_charge_id || pedido.provider_subscription_id);
   const metodo = pedido.payment_method === "asaas_pix" || pedido.payment_method === "asaas_card"
     ? pedido.payment_method : null;
+  const limiteCartao = metodo === "asaas_card" && pedido.payment_attempt_count >= MAX_TENTATIVAS_CARTAO;
   return <main className="contratar-shell">
     <header className="contratar-topo"><Marca href="/contratar" editorial /><Link href="/contratar">Voltar à contratação</Link></header>
     <div className="contratar-pagamento">
@@ -70,7 +72,10 @@ export default async function PagamentoPage({ searchParams }: Params) {
               ? "Ainda não foi possível mostrar o código Pix. Atualize a página; se continuar assim, procure a V2G antes de tentar outra vez."
               : "Ainda não há confirmação de pagamento. Acompanhe esta página e procure a V2G antes de tentar outra vez."}
           </p>}
-          {estado === "awaiting_payment" && !tentativaCriada && metodo
+          {estado === "awaiting_payment" && !tentativaCriada && limiteCartao && <p className="form-warning">
+            O cartão foi recusado após três tentativas. Procure a V2G para continuar com segurança.
+          </p>}
+          {estado === "awaiting_payment" && !tentativaCriada && metodo && !limiteCartao
             && <PagamentoFormulario referencia={referencia} metodo={metodo} />}
         </section>
         <aside className="contratar-pagamento-resumo">

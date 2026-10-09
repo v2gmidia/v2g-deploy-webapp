@@ -49,3 +49,9 @@ export async function limparNegocioAction(): Promise<void> {
   revalidatePath("/", "layout");
   redirect("/inicio");
 }
+
+/** Mesmo portão da tela de escolha, usado pelo menu da conta. */
+export async function trocarNegocioRapidoAction(formData: FormData): Promise<void> {
+  const resultado = await escolherNegocioAction({}, formData);
+  if (resultado.erro) redirect("/escolher-negocio");
+}

@@ -47,6 +47,10 @@ export interface LinhaDoPortfolio {
   id: string;
   nome: string;
   atualizadoEm: string;
+  instagram: { rotulo: string; url: string } | null;
+  instagramInformadoSemLink: boolean;
+  descricaoParaReuniao: string | null;
+  diferenciaisParaReuniao: string[];
   contas: number;
   contasDetalhe: {
     id: string;
@@ -74,6 +78,16 @@ export interface LinhaDoPortfolio {
     estadoNaPlataforma: string | null;
     plataformaLidaEm: string | null;
   } | null;
+}
+
+/** Aceita apenas perfil público; um valor livre do cadastro nunca vira URL arbitrária. */
+export function instagramParaRevisao(valor: string | null | undefined): { rotulo: string; url: string } | null {
+  const texto = valor?.trim() ?? "";
+  const perfil = /^(?:@)?([A-Za-z0-9._]{1,30})$/.exec(texto)
+    ?? /^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([A-Za-z0-9._]{1,30})\/?(?:\?.*)?$/i.exec(texto);
+  if (!perfil || perfil[1] === ".") return null;
+  const nome = perfil[1];
+  return { rotulo: `@${nome}`, url: `https://www.instagram.com/${nome}/` };
 }
 
 /** Fila operacional: só estados comprovados no banco; reunião e campanha exigem fonte externa. */
@@ -147,6 +161,7 @@ export function montarPortfolio(
     const ultima = execucoesDoNegocio[0] ?? null;
     const ultimaCampanha = execucoesDoNegocio.find((e) => e.campanha_meta != null) ?? null;
     const contrato = pedido ? contratosPorPedido.get(pedido.id) ?? null : null;
+    const instagram = instagramParaRevisao(negocio.instagram_handle);
 
     let prioridade = 5;
     let proximaAcao = "Conferir ficha e situação da operação";
@@ -172,6 +187,11 @@ export function montarPortfolio(
       id: negocio.id,
       nome: negocio.name?.trim() || "Negócio sem nome",
       atualizadoEm: negocio.updated_at,
+      instagram,
+      instagramInformadoSemLink: !!negocio.instagram_handle?.trim() && !instagram,
+      descricaoParaReuniao: negocio.description?.trim() || null,
+      diferenciaisParaReuniao: Array.isArray(negocio.differentiators)
+        ? negocio.differentiators.filter((valor): valor is string => typeof valor === "string" && !!valor.trim()) : [],
       contas: quantidadeContas,
       contasDetalhe,
       unidadesAprovadasLivres: unidadesLivresPorNegocio.get(negocio.id) ?? 0,

@@ -1109,6 +1109,15 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 }
 .side-account .who b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--texto-sobre-escuro); }
 .side-account .who span { font-size: var(--fs-legenda); color: var(--sidebar-ink); }
+.side-account-menu { width: 100%; min-width: 0; }
+.side-account-menu summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.side-account-menu summary::-webkit-details-marker { display: none; }
+.side-account-menu summary .who { min-width: 0; }
+.side-account-menu summary .who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.side-account-menu summary .who small { display: block; color: var(--sidebar-ink); }
+.side-account-opcoes { display: grid; gap: 2px; max-height: 45vh; overflow-y: auto; padding-top: 10px; }
+.side-account-opcoes .link-btn { width: 100%; text-align: left; overflow-wrap: anywhere; }
+.side-account-opcoes [aria-current="page"] { color: var(--texto-sobre-escuro); font-weight: 700; }
 
 /* ---------- tudo que vive DENTRO da sidebar cobalto ----------
    Estas regras existem porque a sidebar é a única região com fundo

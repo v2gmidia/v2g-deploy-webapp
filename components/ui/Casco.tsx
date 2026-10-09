@@ -3,6 +3,7 @@ import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
 import { DataDeHoje, Saudacao } from "@/components/ui/Saudacao";
 import { PreferenciaDeTema } from "@/components/ui/PreferenciaDeTema";
+import { trocarNegocioRapidoAction } from "@/app/(public)/escolher-negocio/actions";
 
 const IcoInicio = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
@@ -63,21 +64,23 @@ const IcoConversa = () => (
 export function Casco({
   nome,
   nomeNegocio,
+  negocioAtivoId,
   rotuloDaConta,
   inicial,
   acaoSair,
-  podeTrocarNegocio,
+  negocios = [],
   ehOperador,
   children,
 }: {
   nome: string;
   nomeNegocio?: string;
+  negocioAtivoId?: string;
   /** o nome que aparece no bloco da conta: o do negócio, ou o e-mail */
   rotuloDaConta: string;
   inicial: string;
   /** a action de sair; sem ela (na bancada), o formulário não sai de lugar nenhum */
   acaoSair?: () => void | Promise<void>;
-  podeTrocarNegocio?: boolean;
+  negocios?: Array<{ id: string; name: string }>;
   ehOperador?: boolean;
   children: ReactNode;
 }) {
@@ -165,17 +168,22 @@ export function Casco({
         </a>
 
         <div className="side-account">
-          <span className="avatar">{inicial}</span>
-          <div className="who">
-            <b>{rotuloDaConta}</b>
-            {ehOperador && <a className="link-btn" href="/gestor">Carteira do gestor</a>}
-            {podeTrocarNegocio && <a className="link-btn" href="/escolher-negocio">Trocar negócio</a>}
-            <form action={acaoSair}>
-              <button type="submit" className="link-btn">
-                Sair
-              </button>
-            </form>
-          </div>
+          <details className="side-account-menu">
+            <summary><span className="avatar">{inicial}</span><span className="who"><b>{rotuloDaConta}</b><small>Meus negócios</small></span></summary>
+            <div className="side-account-opcoes">
+              {negocios.map((negocio) => <form action={trocarNegocioRapidoAction} key={negocio.id}>
+                <input type="hidden" name="businessId" value={negocio.id} />
+                <button type="submit" className="link-btn" aria-current={negocio.id === negocioAtivoId ? "page" : undefined}>{negocio.name}</button>
+              </form>)}
+              {negocios.length === 0 && <span>Nenhum negócio disponível</span>}
+              <a className="link-btn" href="/escolher-negocio">Ver todas as contas</a>
+              {process.env.NODE_ENV !== "production"
+                ? <a className="link-btn" href="/contratar">Adicionar negócio pelo checkout de teste</a>
+                : <a className="link-btn" href="https://wa.me/5521936182176?text=Quero%20adicionar%20outro%20neg%C3%B3cio%20%C3%A0%20minha%20conta%20V2G" target="_blank" rel="noopener">Pedir outro negócio</a>}
+              {ehOperador && <a className="link-btn" href="/gestor">Carteira do gestor</a>}
+              {acaoSair && <form action={acaoSair}><button type="submit" className="link-btn">Sair</button></form>}
+            </div>
+          </details>
         </div>
       </aside>
 
@@ -208,7 +216,7 @@ export function Casco({
               `(fluxo)` — marca à esquerda, gente de verdade à direita. */}
           <div className="topbar-actions">
             {ehOperador && <a className="link-btn" href="/gestor">Gestor</a>}
-            {podeTrocarNegocio && <a className="link-btn" href="/escolher-negocio">Trocar negócio</a>}
+            <a className="link-btn" href="/escolher-negocio">Meus negócios</a>
             <PreferenciaDeTema />
             <a
               className="topbar-help"

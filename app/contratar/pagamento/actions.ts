@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 import { asaasSandbox, idAsaas } from "@/lib/contratacao/asaas-sandbox";
 import { validarDadosCartao } from "@/lib/contratacao/dados-cartao";
+import { MAX_TENTATIVAS_CARTAO } from "@/lib/contratacao/retentativa-cartao";
 
 export type PagamentoState = { erro?: string };
 
@@ -25,7 +26,7 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
   if (!/^[0-9a-f-]{36}$/i.test(referencia)) return { erro: "Pedido inválido. Volte ao início da contratação." };
   const admin = createAdminClient();
   const { data: pedido, error: erroPedido } = await admin.from("commercial_orders")
-    .select("id, origin, status, buyer_email, buyer_name, buyer_whatsapp, legal_name, cnpj, payment_method, billing_period, total_cents, provider_customer_id, provider_charge_id, provider_subscription_id, provider_checkout_id, checkout_creation_started_at, payment_creation_started_at")
+    .select("id, origin, status, buyer_email, buyer_name, buyer_whatsapp, legal_name, cnpj, payment_method, billing_period, total_cents, provider_customer_id, provider_charge_id, provider_subscription_id, provider_checkout_id, checkout_creation_started_at, payment_creation_started_at, payment_attempt_count")
     .eq("external_ref", referencia).maybeSingle();
   if (erroPedido || !pedido || pedido.origin !== "self_service")
     return { erro: "Não foi possível localizar o pedido de teste." };
@@ -35,6 +36,8 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
     return { erro: "Este pedido já está em processamento. Atualize a página para ver o estado." };
   if (pedido.payment_method !== "asaas_pix" && pedido.payment_method !== "asaas_card")
     return { erro: "A forma de pagamento deste pedido não está disponível aqui." };
+  if (pedido.payment_method === "asaas_card" && pedido.payment_attempt_count >= MAX_TENTATIVAS_CARTAO)
+    return { erro: "Este cartão já teve três tentativas. Procure a V2G para continuar com segurança." };
 
   const cartao = pedido.payment_method === "asaas_card" ? validarDadosCartao(form) : null;
   if (cartao && !cartao.dados) return { erro: cartao.erro };
@@ -52,10 +55,14 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
   // conciliacao antes de repetir, pois o Asaas pode ter criado a cobranca.
   const hoje = hojeEmSaoPaulo();
   const assinatura = pedido.billing_period === "monthly";
+  const reservadoEm = new Date().toISOString();
+  const tentativasUsadas = pedido.payment_attempt_count + (cartao ? 1 : 0);
   const { data: reservado, error: erroReserva } = await admin.from("commercial_orders")
-    .update({ payment_creation_started_at: new Date().toISOString(),
-      provider_first_due_date: assinatura ? hoje : null })
+    .update({ payment_creation_started_at: reservadoEm,
+      provider_first_due_date: assinatura ? hoje : null,
+      payment_attempt_count: tentativasUsadas })
     .eq("id", pedido.id).eq("status", "awaiting_payment")
+    .eq("payment_attempt_count", pedido.payment_attempt_count)
     .is("payment_creation_started_at", null).is("provider_charge_id", null)
     .is("provider_subscription_id", null).is("checkout_creation_started_at", null)
     .select("id").maybeSingle();
@@ -105,7 +112,23 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
   });
   const corpo = resposta.body && typeof resposta.body === "object" ? resposta.body as Record<string, unknown> : null;
   const id = resposta.ok ? idAsaas(corpo?.id, assinatura ? "sub" : "pay") : null;
-  if (!id) return { erro: "O Asaas não confirmou a criação. A V2G precisa conferir antes de tentar novamente." };
+  if (!id) {
+    if (cartao && resposta.cardDeclined) {
+      // O Asaas confirma que essa recusa 400 nao persiste cobranca nem
+      // assinatura. A reserva so e liberada se nenhum ID chegou ao pedido.
+      const { data: liberado, error: erroLiberacao } = await admin.from("commercial_orders")
+        .update({ payment_creation_started_at: null, provider_first_due_date: null })
+        .eq("id", pedido.id).eq("status", "awaiting_payment")
+        .eq("payment_creation_started_at", reservadoEm)
+        .is("provider_charge_id", null).is("provider_subscription_id", null)
+        .select("id").maybeSingle();
+      if (!erroLiberacao && liberado)
+        return { erro: tentativasUsadas >= MAX_TENTATIVAS_CARTAO
+          ? "O cartão foi recusado. Após três tentativas, procure a V2G para continuar."
+          : "O cartão foi recusado. Confira os dados ou tente outro cartão." };
+    }
+    return { erro: "O Asaas não confirmou a criação. A V2G precisa conferir antes de tentar novamente." };
+  }
 
   const { data: salvo, error: erroSalvar } = await admin.from("commercial_orders")
     .update(assinatura ? { provider_subscription_id: id } : { provider_charge_id: id })
