@@ -3,7 +3,8 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TIPOS_DE_TAREFA } from "@/lib/gestor/tarefas";
-import { assumirContaAction, concluirTarefaAction, criarTarefaAction, type EstadoTarefa } from "./actions";
+import { assumirContaAction, concluirTarefaAction, criarTarefaAction,
+  prepararContaAction, type EstadoTarefa } from "./actions";
 
 export function CriarTarefa({ negocios, negocioInicial }: {
   negocios: { id: string; name: string }[]; negocioInicial: string | null;
@@ -57,6 +58,20 @@ export function AssumirConta({ businessId }: { businessId: string }) {
   return <form action={acao}>
     <input type="hidden" name="businessId" value={businessId} />
     <button type="submit" disabled={pendente}>Assumir conta</button>
+    {estado.ok && <p className="form-notice" role="status">{estado.ok}</p>}
+    {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
+  </form>;
+}
+
+export function PrepararConta({ businessId }: { businessId: string }) {
+  const router = useRouter();
+  const [estado, acao, pendente] = useActionState<EstadoTarefa, FormData>(prepararContaAction, {});
+  useEffect(() => { if (estado.ok) router.refresh(); }, [estado, router]);
+  return <form action={acao} className="auth-card">
+    <h2>Preparação da reunião</h2>
+    <p>Registra três pendências para o gestor responsável: avaliar Instagram, conferir acessos e definir o primeiro criativo. Nenhuma reunião ou campanha será marcada como concluída.</p>
+    <input type="hidden" name="businessId" value={businessId} />
+    <button type="submit" disabled={pendente}>{pendente ? "Preparando..." : "Criar pendências iniciais"}</button>
     {estado.ok && <p className="form-notice" role="status">{estado.ok}</p>}
     {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
   </form>;

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TIPOS_DE_TAREFA, type TipoDeTarefa } from "@/lib/gestor/tarefas";
+import { tarefasDaPreparacao } from "@/lib/gestor/preparacao";
 
 export type EstadoTarefa = { ok?: string; erro?: string };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -96,6 +97,56 @@ export async function assumirContaAction(_anterior: EstadoTarefa, dados: FormDat
     return { ok: "Você assumiu a responsabilidade operacional desta conta." };
   } catch {
     return { erro: "Não foi possível atribuir a conta agora." };
+  }
+}
+
+/** Cria só as pendências iniciais ausentes, sem marcar reunião ou publicação. */
+export async function prepararContaAction(_anterior: EstadoTarefa, dados: FormData): Promise<EstadoTarefa> {
+  if (process.env.V2G_MANAGER_WORK_ENABLED !== "true") return { erro: "A fila não está ativa." };
+  const user = await operador();
+  if (!user) return { erro: "Acesso não autorizado." };
+  const businessId = dados.get("businessId");
+  if (typeof businessId !== "string" || !UUID.test(businessId)) return { erro: "Negócio inválido." };
+  try {
+    const admin = createAdminClient();
+    const [negocio, atribuicao] = await Promise.all([
+      admin.from("businesses").select("id").eq("id", businessId)
+        .eq("dados_ficticios", false).maybeSingle(),
+      admin.from("manager_accounts").select("operator_profile_id")
+        .eq("business_id", businessId).maybeSingle(),
+    ]);
+    if (negocio.error || !negocio.data) return { erro: "Negócio não encontrado." };
+    if (atribuicao.error || !atribuicao.data)
+      return { erro: "Atribua um gestor à conta antes de preparar as pendências." };
+    const itens = tarefasDaPreparacao(businessId);
+    const existentes = await admin.from("manager_tasks").select("task_type, title")
+      .eq("business_id", businessId).in("title", itens.map((item) => item.titulo));
+    if (existentes.error || !existentes.data)
+      return { erro: "Não foi possível conferir as pendências existentes. Tente novamente." };
+    const jaRegistradas = new Set(existentes.data.map((item) => `${item.task_type}:${item.title}`));
+    let criadas = 0;
+    for (const item of itens) {
+      if (jaRegistradas.has(`${item.tipo}:${item.titulo}`)) continue;
+      const insercao = await admin.from("manager_tasks").insert({
+        id: item.id, business_id: businessId, task_type: item.tipo,
+        title: item.titulo, description: item.descricao,
+        assigned_to: atribuicao.data.operator_profile_id, created_by: user.id,
+      });
+      if (!insercao.error) { criadas++; continue; }
+      if (insercao.error.code === "23505") {
+        const existente = await admin.from("manager_tasks")
+          .select("business_id, task_type, title").eq("id", item.id).maybeSingle();
+        if (!existente.error && existente.data?.business_id === businessId &&
+            existente.data.task_type === item.tipo && existente.data.title === item.titulo) continue;
+      }
+      return { erro: "Parte da preparação pode ter sido registrada. Atualize a fila e tente novamente; as tarefas existentes não serão duplicadas." };
+    }
+    revalidatePath("/gestor/tarefas");
+    revalidatePath("/gestor");
+    return { ok: criadas ? `${criadas} pendência(s) de preparação registrada(s).` :
+      "As pendências desta preparação já estavam registradas." };
+  } catch {
+    return { erro: "Não foi possível preparar a conta agora. Confira a fila antes de tentar novamente." };
   }
 }
 

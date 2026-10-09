@@ -53,14 +53,29 @@ export default async function GestorPage({ searchParams }: {
     const parcial = (negocios.count ?? 0) > negocios.data.length || pedidos.data.length === 1000 || contas.data.length === 1000 || contratos.data.length === 1000 || execucoes.data.length === 1000 || unidades.data.length === 1000;
     const parametros = await searchParams;
     const busca = typeof parametros.q === "string" ? parametros.q.slice(0, 120) : "";
-    const filtro: FiltroDoPortfolio = ["pedidos", "onboarding", "cadastro", "contas", "campanhas"].includes(parametros.filtro ?? "")
+    const trabalhoAtivo = process.env.V2G_MANAGER_WORK_ENABLED === "true";
+    const filtrosDisponiveis = trabalhoAtivo
+      ? ["minhas", "pedidos", "onboarding", "cadastro", "contas", "campanhas"]
+      : ["pedidos", "onboarding", "cadastro", "contas", "campanhas"];
+    const filtro: FiltroDoPortfolio = filtrosDisponiveis.includes(parametros.filtro ?? "")
       ? parametros.filtro as FiltroDoPortfolio : "todos";
-    const visiveis = filtrarPortfolio(linhas, busca, filtro);
     const revisoes = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true"
       ? await admin.from("creative_review_requests").select("id", { count: "exact", head: true })
         .eq("status", "awaiting_review")
       : null;
-    const trabalhoAtivo = process.env.V2G_MANAGER_WORK_ENABLED === "true";
+    const revisoesDaCarteira = revisoes && ids.length
+      ? await admin.from("creative_review_requests")
+        .select("business_id", { count: "exact" }).in("business_id", ids)
+        .eq("status", "awaiting_review").limit(1000)
+      : null;
+    const revisoesParciais = !!revisoesDaCarteira && !revisoesDaCarteira.error &&
+      (revisoesDaCarteira.count === null || revisoesDaCarteira.count > (revisoesDaCarteira.data?.length ?? 0));
+    const revisoesPorNegocio = new Map<string, number>();
+    if (revisoesDaCarteira && !revisoesDaCarteira.error && !revisoesParciais) {
+      for (const revisao of revisoesDaCarteira.data ?? []) {
+        revisoesPorNegocio.set(revisao.business_id, (revisoesPorNegocio.get(revisao.business_id) ?? 0) + 1);
+      }
+    }
     const [responsaveis, tarefasAbertas] = trabalhoAtivo && ids.length ? await Promise.all([
       admin.from("manager_accounts").select("business_id, operator_profile_id")
         .in("business_id", ids).limit(1000),
@@ -68,7 +83,13 @@ export default async function GestorPage({ searchParams }: {
         .in("business_id", ids).eq("status", "open").limit(1000),
     ]) : [{ data: [], error: null }, { data: [], error: null }];
     const trabalhoIndisponivel = !!(responsaveis.error || tarefasAbertas.error || !responsaveis.data || !tarefasAbertas.data);
+    const trabalhoParcial = (responsaveis.data?.length ?? 0) === 1000 || (tarefasAbertas.data?.length ?? 0) === 1000;
+    const minhasIndisponiveis = filtro === "minhas" &&
+      (!!responsaveis.error || !responsaveis.data || responsaveis.data.length === 1000);
     const gestorPorNegocio = new Map((responsaveis.data ?? []).map((item) => [item.business_id, item.operator_profile_id]));
+    const minhasContas = new Set((responsaveis.data ?? [])
+      .filter((item) => item.operator_profile_id === user.id).map((item) => item.business_id));
+    const visiveis = minhasIndisponiveis ? [] : filtrarPortfolio(linhas, busca, filtro, minhasContas);
     const tarefasPorNegocio = new Map<string, number>();
     for (const tarefa of tarefasAbertas.data ?? []) tarefasPorNegocio.set(tarefa.business_id, (tarefasPorNegocio.get(tarefa.business_id) ?? 0) + 1);
 
@@ -88,8 +109,10 @@ export default async function GestorPage({ searchParams }: {
         </nav>
       </header>
       {revisoes?.error && <p className="form-warning">A fila de criativos não pôde ser consultada agora.</p>}
+      {revisoesDaCarteira?.error && <p className="form-warning">As pendências de criativos por negócio não puderam ser consultadas agora.</p>}
+      {revisoesParciais && <p className="form-warning">A contagem de peças por negócio está parcial ou indisponível. Confira a fila de cada negócio.</p>}
       {trabalhoAtivo && trabalhoIndisponivel && <p className="form-warning">Responsáveis ou tarefas indisponíveis agora; esses estados não serão inferidos.</p>}
-      {trabalhoAtivo && !trabalhoIndisponivel && ((responsaveis.data?.length ?? 0) === 1000 || (tarefasAbertas.data?.length ?? 0) === 1000) && <p className="form-warning">A lista de responsáveis ou tarefas chegou ao limite da consulta. Confira a fila específica.</p>}
+      {trabalhoAtivo && !trabalhoIndisponivel && trabalhoParcial && <p className="form-warning">A lista de responsáveis ou tarefas chegou ao limite da consulta. Confira a fila específica.</p>}
       {parcial && <p className="form-warning">Consulta parcial: há registros além do limite de 1.000 por tabela. Use as telas específicas antes de decidir.</p>}
       <div className={styles.resumo} aria-label="Resumo da carteira">
         <div><strong>{linhas.length}</strong><span>negócios retornados</span></div>
@@ -104,6 +127,7 @@ export default async function GestorPage({ searchParams }: {
           <label>Buscar negócio <input type="search" name="q" defaultValue={busca} placeholder="Nome ou identificador" /></label>
           <label>Mostrar <select name="filtro" defaultValue={filtro}>
             <option value="todos">Toda a carteira</option>
+            {trabalhoAtivo && <option value="minhas">Minhas contas</option>}
             <option value="pedidos">Pedidos para acompanhar</option>
             <option value="onboarding">Onboarding pendente</option>
             <option value="cadastro">Cadastro com pendência</option>
@@ -112,8 +136,10 @@ export default async function GestorPage({ searchParams }: {
           </select></label>
           <button type="submit">Filtrar</button>
         </form>
-        <p className={styles.contagem}>{visiveis.length} de {linhas.length} negócios nesta consulta</p>
-        {linhas.length === 0 ? <p>Nenhum negócio real retornado nesta consulta.</p> :
+        {minhasIndisponiveis
+          ? <p className="form-warning">Não foi possível confirmar todas as atribuições. O filtro das suas contas está indisponível agora.</p>
+          : <p className={styles.contagem}>{visiveis.length} de {linhas.length} negócios nesta consulta</p>}
+        {minhasIndisponiveis ? null : linhas.length === 0 ? <p>Nenhum negócio real retornado nesta consulta.</p> :
           visiveis.length === 0 ? <p>Nenhum negócio corresponde aos filtros.</p> :
           <div className={styles.lista}>{visiveis.map((linha) =>
             <article className={styles.linha} key={linha.id}>
@@ -121,6 +147,8 @@ export default async function GestorPage({ searchParams }: {
               <div className={styles.acao}><b>{linha.proximaAcao}</b>
                 <span>{linha.contas} conta(s) vinculada(s) · {linha.pendenciasCadastro} campo(s) pendente(s)</span>
                 {trabalhoAtivo && !trabalhoIndisponivel && <span>Gestor responsável: {gestorPorNegocio.get(linha.id) === user.id ? "você" : gestorPorNegocio.has(linha.id) ? "outro operador" : "não atribuído"} · {tarefasPorNegocio.get(linha.id) ?? 0} tarefa(s) aberta(s)</span>}
+                {revisoesDaCarteira && !revisoesDaCarteira.error && !revisoesParciais && (revisoesPorNegocio.get(linha.id) ?? 0) > 0 &&
+                  <span>{revisoesPorNegocio.get(linha.id)} peça(s) aguardando revisão</span>}
                 <span>{linha.ultimaExecucao
                   ? `Última execução: ${linha.ultimaExecucao.estado} · ${linha.execucoes} vinculada(s)`
                   : "Nenhuma execução vinculada nesta consulta"}</span>
@@ -150,6 +178,7 @@ export default async function GestorPage({ searchParams }: {
                 <a href={`/revisar-perfil?negocio=${encodeURIComponent(linha.id)}#ficha-${encodeURIComponent(linha.id)}`}>Abrir ficha</a>
                 {linha.origem === "pedido" && <a href="/pedidos">Ver pedido</a>}
                 {trabalhoAtivo && <a href={`/gestor/tarefas?negocio=${encodeURIComponent(linha.id)}`}>Tarefas da conta</a>}
+                {revisoes && <a href={`/gestor/criativos?negocio=${encodeURIComponent(linha.id)}`}>Criativos da conta</a>}
                 {linha.ultimaCampanha && <a href={`/ativar-campanha/${encodeURIComponent(linha.ultimaCampanha.idExecucao)}`}>Ver campanha</a>}
               </div>
             </article>)}</div>}

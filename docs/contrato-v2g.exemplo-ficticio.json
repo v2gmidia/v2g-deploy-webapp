@@ -1,0 +1,111 @@
+{
+  "prestador": {
+    "razao_social": "PRESTADORA MODELO FICTÍCIA LTDA",
+    "cnpj": "98765432000198",
+    "endereco_contratual_validado": {
+      "logradouro": "Rua Exemplo Institucional",
+      "numero": "100",
+      "complemento": "Conjunto 10",
+      "bairro": "Centro",
+      "cidade": "Curitiba",
+      "uf": "PR",
+      "cep": "80000000",
+      "pais": "Brasil"
+    },
+    "representante_nome": "Vítor Representante Exemplo",
+    "representante_qualificacao_validada": "representante legal — qualificação fictícia para teste"
+  },
+  "contratante": {
+    "razao_social": "HORIZONTE AZUL SERVIÇOS FICTÍCIOS LTDA",
+    "nome_fantasia": "Horizonte Azul Teste",
+    "cnpj": "12345678000195",
+    "endereco": {
+      "logradouro": "Avenida dos Exemplos",
+      "numero": "250",
+      "complemento": "Sala 3",
+      "bairro": "Bairro Modelo",
+      "cidade": "São Paulo",
+      "uf": "SP",
+      "cep": "01001000",
+      "pais": "Brasil"
+    },
+    "email_da_compra": "contratos@example.com",
+    "whatsapp": "+5511900000000"
+  },
+  "signatario": {
+    "nome": "Ana Pessoa Exemplo",
+    "cpf": "12345678909",
+    "email": "ana.exemplo@example.com",
+    "papel_e_poderes": "sócia administradora — declaração fictícia pendente de validação",
+    "criterio_representacao": "socio_dono_ou_representante_com_poderes",
+    "procedencia_poderes": "declarado_pendente_validacao"
+  },
+  "pedido": {
+    "id": "11111111-2222-4333-8444-555555555555",
+    "referencia_externa": "pedido-ficticio-2026-0001",
+    "periodicidade": "annual_upfront",
+    "forma_de_pagamento": "asaas_pix",
+    "quantidade_de_contas": 2,
+    "valor_unitario_centavos": 528000,
+    "desconto_percentual": 12,
+    "valor_total_centavos": 1056000,
+    "valor_unitario_formatado": "R$ 5.280,00",
+    "valor_mensal_total_formatado": "R$ 1.000,00",
+    "valor_anual_total_formatado": "R$ 10.560,00",
+    "valor_total_formatado": "R$ 10.560,00",
+    "status_pagamento": "payment_approved",
+    "pagamento_aprovado_em": "2026-10-09T15:00:00-03:00",
+    "dia_de_vencimento": null,
+    "unidades": [
+      {
+        "id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee1",
+        "ordinal": 1,
+        "negocio_id": "10000000-0000-4000-8000-000000000001",
+        "operacao_nome": "Operação Fictícia Unidade Centro",
+        "conta_anuncios": {
+          "nome": "Conta Fictícia Centro",
+          "id_externo": "999999999999001",
+          "plataforma": "meta",
+          "titularidade": "cliente",
+          "estado_identificacao": "vinculada"
+        }
+      },
+      {
+        "id": "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeee2",
+        "ordinal": 2,
+        "negocio_id": "10000000-0000-4000-8000-000000000001",
+        "operacao_nome": "Operação Fictícia Unidade Norte",
+        "conta_anuncios": {
+          "nome": null,
+          "id_externo": null,
+          "plataforma": "meta",
+          "titularidade": "cliente",
+          "estado_identificacao": "pendente"
+        }
+      }
+    ]
+  },
+  "contrato": {
+    "versao_minuta": "minuta-interna-2026-10-09-v1",
+    "versao_documento": 1,
+    "status_juridico": "draft_not_reviewed",
+    "status_documento": "ready_for_review",
+    "gerado_em": "2026-10-09T15:10:00-03:00",
+    "hash_conteudo": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    "data_inicio_aprovada": null,
+    "local_e_data_assinatura": null,
+    "provedor_assinatura": null,
+    "documento_substituido_id": null,
+    "motivo_nova_versao": null
+  },
+  "assinatura": {
+    "v2g": {
+      "status": "pending",
+      "confirmado_em": null
+    },
+    "contratante": {
+      "status": "pending",
+      "confirmado_em": null
+    }
+  }
+}

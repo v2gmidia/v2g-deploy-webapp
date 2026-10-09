@@ -1,0 +1,771 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://v2gmidia.com.br/schemas/contrato-v2g.schema.json",
+  "title": "Dados para geração do contrato parametrizado V2G",
+  "description": "Schema de dados para gerar uma minuta versionada. Uma instância válida não comprova aprovação jurídica, pagamento, poderes de representação ou assinatura.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "prestador",
+    "contratante",
+    "signatario",
+    "pedido",
+    "contrato",
+    "assinatura"
+  ],
+  "properties": {
+    "prestador": {
+      "$ref": "#/$defs/prestador"
+    },
+    "contratante": {
+      "$ref": "#/$defs/contratante"
+    },
+    "signatario": {
+      "$ref": "#/$defs/signatario"
+    },
+    "pedido": {
+      "$ref": "#/$defs/pedido"
+    },
+    "contrato": {
+      "$ref": "#/$defs/contrato"
+    },
+    "assinatura": {
+      "$ref": "#/$defs/assinatura"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "pedido": {
+            "properties": {
+              "periodicidade": {
+                "const": "monthly"
+              }
+            },
+            "required": [
+              "periodicidade"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "pedido": {
+            "properties": {
+              "valor_unitario_centavos": {
+                "const": 50000
+              },
+              "desconto_percentual": {
+                "const": 0
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "pedido": {
+            "properties": {
+              "periodicidade": {
+                "const": "annual_upfront"
+              }
+            },
+            "required": [
+              "periodicidade"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "pedido": {
+            "properties": {
+              "valor_unitario_centavos": {
+                "const": 528000
+              },
+              "desconto_percentual": {
+                "const": 12
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "cnpj": {
+      "type": "string",
+      "pattern": "^[0-9]{14}$",
+      "x-validacao": "Validar também os dígitos verificadores e o vínculo com a razão social pelo procedimento aprovado. Não considerar a máscara como validação cadastral."
+    },
+    "cpf": {
+      "type": "string",
+      "pattern": "^[0-9]{11}$",
+      "x-validacao": "Validar dígitos verificadores. Tratar com acesso restrito e não registrar em logs."
+    },
+    "endereco": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "logradouro",
+        "numero",
+        "bairro",
+        "cidade",
+        "uf",
+        "cep",
+        "pais"
+      ],
+      "properties": {
+        "logradouro": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 150
+        },
+        "numero": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "complemento": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100
+        },
+        "bairro": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "cidade": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 100
+        },
+        "uf": {
+          "type": "string",
+          "pattern": "^[A-Z]{2}$"
+        },
+        "cep": {
+          "type": "string",
+          "pattern": "^[0-9]{8}$"
+        },
+        "pais": {
+          "type": "string",
+          "const": "Brasil"
+        }
+      }
+    },
+    "prestador": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "razao_social",
+        "cnpj",
+        "endereco_contratual_validado",
+        "representante_nome",
+        "representante_qualificacao_validada"
+      ],
+      "properties": {
+        "razao_social": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 200,
+          "x-origem": "configuracao_versionada_prestador",
+          "x-obrigatoriedade": "obrigatorio",
+          "x-valor-producao-esperado": "V2G AGÊNCIAS DE PUBLICIDADE LTDA"
+        },
+        "cnpj": {
+          "$ref": "#/$defs/cnpj",
+          "x-origem": "configuracao_versionada_prestador",
+          "x-obrigatoriedade": "obrigatorio",
+          "x-valor-producao-esperado": "68105468000184"
+        },
+        "endereco_contratual_validado": {
+          "$ref": "#/$defs/endereco",
+          "x-origem": "documento_societario_validado",
+          "x-obrigatoriedade": "obrigatorio_para_assinatura"
+        },
+        "representante_nome": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 150,
+          "x-origem": "configuracao_versionada_prestador",
+          "x-valor-producao-esperado": "Victor Cabral Nascimento Silva"
+        },
+        "representante_qualificacao_validada": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 120,
+          "x-origem": "documento_societario_validado",
+          "x-validacao": "Conferir os poderes de representação antes de aprovar a versão jurídica."
+        }
+      }
+    },
+    "contratante": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "razao_social",
+        "cnpj",
+        "endereco",
+        "email_da_compra",
+        "whatsapp"
+      ],
+      "properties": {
+        "razao_social": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 200,
+          "x-origem": "commercial_orders.legal_name",
+          "x-validacao": "Revisão pelo comprador e procedimento cadastral definido; não inferir pelo nome fantasia."
+        },
+        "nome_fantasia": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200,
+          "x-origem": "cadastro_contratual_validado",
+          "x-obrigatoriedade": "opcional"
+        },
+        "cnpj": {
+          "$ref": "#/$defs/cnpj",
+          "x-origem": "commercial_orders.cnpj",
+          "x-validacao": "Um documento contratual por CNPJ. A aplicação deve conferir que todas as unidades pertencem a este pedido e a este CNPJ."
+        },
+        "endereco": {
+          "$ref": "#/$defs/endereco",
+          "x-origem": "formulario_contratual_revisado_pelo_contratante"
+        },
+        "email_da_compra": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254,
+          "x-origem": "commercial_orders.buyer_email",
+          "x-validacao": "Normalizar para minúsculas e exigir e-mail verificado antes do envio."
+        },
+        "whatsapp": {
+          "type": "string",
+          "pattern": "^\\+[1-9][0-9]{7,14}$",
+          "x-origem": "formulario_contratual_ou_pedido",
+          "x-validacao": "Normalizar para E.164."
+        }
+      }
+    },
+    "signatario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nome",
+        "cpf",
+        "email",
+        "papel_e_poderes",
+        "criterio_representacao",
+        "procedencia_poderes"
+      ],
+      "properties": {
+        "nome": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 150,
+          "x-origem": "formulario_contratual_e_provedor_assinatura"
+        },
+        "cpf": {
+          "$ref": "#/$defs/cpf",
+          "x-origem": "formulario_contratual_e_provedor_assinatura"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254,
+          "x-origem": "formulario_contratual",
+          "x-validacao": "Verificar antes de enviar o convite. Pode ser diferente do e-mail da compra."
+        },
+        "papel_e_poderes": {
+          "type": "string",
+          "minLength": 3,
+          "maxLength": 200,
+          "x-origem": "declaracao_e_evidencia_definida_pelo_juridico",
+          "x-validacao": "Não inferir poderes pela posse do e-mail, pelo pagamento ou pelo acesso ao WebApp."
+        },
+        "criterio_representacao": {
+          "type": "string",
+          "const": "socio_dono_ou_representante_com_poderes"
+        },
+        "procedencia_poderes": {
+          "type": "string",
+          "enum": [
+            "declarado_pendente_validacao",
+            "documento_conferido",
+            "validado_pelo_juridico"
+          ],
+          "x-validacao": "A versão para assinatura exige o nível definido pelo advogado."
+        }
+      }
+    },
+    "contaAnuncios": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "nome",
+        "id_externo",
+        "plataforma",
+        "titularidade",
+        "estado_identificacao"
+      ],
+      "properties": {
+        "nome": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200,
+          "x-origem": "ad_accounts.name_quando_vinculada"
+        },
+        "id_externo": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100,
+          "x-origem": "ad_accounts.external_id_quando_vinculada"
+        },
+        "plataforma": {
+          "type": "string",
+          "enum": [
+            "meta"
+          ],
+          "x-origem": "escopo_do_pedido"
+        },
+        "titularidade": {
+          "type": "string",
+          "const": "cliente",
+          "x-origem": "declaracao_contratual_e_vinculo_operacional"
+        },
+        "estado_identificacao": {
+          "type": "string",
+          "enum": [
+            "pendente",
+            "identificada",
+            "vinculada"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "estado_identificacao": {
+                "enum": [
+                  "identificada",
+                  "vinculada"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "nome": {
+                "type": "string",
+                "minLength": 1
+              },
+              "id_externo": {
+                "type": "string",
+                "minLength": 3
+              }
+            }
+          }
+        }
+      ]
+    },
+    "unidade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "ordinal",
+        "negocio_id",
+        "operacao_nome",
+        "conta_anuncios"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid",
+          "x-origem": "commercial_order_units.id"
+        },
+        "ordinal": {
+          "type": "integer",
+          "minimum": 1,
+          "x-origem": "commercial_order_units.ordinal"
+        },
+        "negocio_id": {
+          "$ref": "#/$defs/uuid",
+          "x-origem": "commercial_orders.business_id"
+        },
+        "operacao_nome": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "x-origem": "businesses.name_revisado",
+          "x-validacao": "Serve para identificar a operação; não substitui a razão social."
+        },
+        "conta_anuncios": {
+          "$ref": "#/$defs/contaAnuncios"
+        }
+      }
+    },
+    "pedido": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "referencia_externa",
+        "periodicidade",
+        "forma_de_pagamento",
+        "quantidade_de_contas",
+        "valor_unitario_centavos",
+        "desconto_percentual",
+        "valor_total_centavos",
+        "valor_unitario_formatado",
+        "valor_mensal_total_formatado",
+        "valor_anual_total_formatado",
+        "valor_total_formatado",
+        "status_pagamento",
+        "pagamento_aprovado_em",
+        "dia_de_vencimento",
+        "unidades"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/uuid",
+          "x-origem": "commercial_orders.id"
+        },
+        "referencia_externa": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "x-origem": "commercial_orders.external_ref"
+        },
+        "periodicidade": {
+          "type": "string",
+          "enum": [
+            "monthly",
+            "annual_upfront"
+          ],
+          "x-origem": "commercial_orders.billing_period"
+        },
+        "forma_de_pagamento": {
+          "type": "string",
+          "enum": [
+            "direct_pix",
+            "asaas_pix",
+            "asaas_card"
+          ],
+          "x-origem": "commercial_orders.payment_method"
+        },
+        "quantidade_de_contas": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 100,
+          "x-origem": "commercial_orders.unit_count",
+          "x-validacao": "Deve ser igual ao tamanho de pedido.unidades; validação cruzada obrigatória na aplicação."
+        },
+        "valor_unitario_centavos": {
+          "type": "integer",
+          "enum": [
+            50000,
+            528000
+          ],
+          "x-origem": "commercial_orders.unit_price_cents_ou_calculo_versionado"
+        },
+        "desconto_percentual": {
+          "type": "integer",
+          "enum": [
+            0,
+            12
+          ],
+          "x-origem": "commercial_orders.discount_percent"
+        },
+        "valor_total_centavos": {
+          "type": "integer",
+          "minimum": 1,
+          "x-origem": "commercial_orders.total_cents",
+          "x-validacao": "Deve ser quantidade_de_contas multiplicada pelo valor unitário aplicável. Nunca aceitar total digitado sem reconciliação."
+        },
+        "valor_unitario_formatado": {
+          "type": "string",
+          "pattern": "^R\\$ [0-9.]+,[0-9]{2}$",
+          "x-origem": "derivado_de_valor_unitario_centavos",
+          "x-validacao": "Gerar por formatador monetário pt-BR; não aceitar entrada livre."
+        },
+        "valor_mensal_total_formatado": {
+          "type": "string",
+          "pattern": "^R\\$ [0-9.]+,[0-9]{2}$",
+          "x-origem": "quantidade_de_contas_multiplicada_por_50000",
+          "x-validacao": "Gerar por formatador monetário pt-BR; não aceitar entrada livre."
+        },
+        "valor_anual_total_formatado": {
+          "type": "string",
+          "pattern": "^R\\$ [0-9.]+,[0-9]{2}$",
+          "x-origem": "quantidade_de_contas_multiplicada_por_528000",
+          "x-validacao": "Gerar por formatador monetário pt-BR; não aceitar entrada livre."
+        },
+        "valor_total_formatado": {
+          "type": "string",
+          "pattern": "^R\\$ [0-9.]+,[0-9]{2}$",
+          "x-origem": "derivado_de_valor_total_centavos",
+          "x-validacao": "Gerar por formatador monetário pt-BR e reconciliar com a periodicidade selecionada."
+        },
+        "status_pagamento": {
+          "type": "string",
+          "const": "payment_approved",
+          "x-origem": "commercial_orders.status"
+        },
+        "pagamento_aprovado_em": {
+          "$ref": "#/$defs/dateTime",
+          "x-origem": "commercial_orders.payment_approved_at"
+        },
+        "dia_de_vencimento": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 31,
+          "x-origem": "regra_de_cobranca_aprovada",
+          "x-validacao": "Obrigatoriedade e tratamento de meses curtos dependem da decisão operacional e jurídica."
+        },
+        "unidades": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {
+            "$ref": "#/$defs/unidade"
+          },
+          "x-origem": "commercial_order_units_com_ad_accounts_quando_vinculada",
+          "x-validacao": "IDs e ordinais não podem se repetir; todas as unidades devem pertencer ao mesmo pedido e ao CNPJ deste contrato."
+        }
+      }
+    },
+    "contrato": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "versao_minuta",
+        "versao_documento",
+        "status_juridico",
+        "status_documento",
+        "gerado_em",
+        "hash_conteudo",
+        "data_inicio_aprovada",
+        "local_e_data_assinatura",
+        "provedor_assinatura",
+        "documento_substituido_id",
+        "motivo_nova_versao"
+      ],
+      "properties": {
+        "versao_minuta": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9._-]{2,79}$",
+          "x-origem": "registro_de_templates",
+          "x-validacao": "O envio para assinatura exige versão expressamente aprovada pelo advogado."
+        },
+        "versao_documento": {
+          "type": "integer",
+          "minimum": 1,
+          "x-origem": "gerador_de_documentos",
+          "x-validacao": "Crescente por pedido e minuta; nunca sobrescrever versão anterior."
+        },
+        "status_juridico": {
+          "type": "string",
+          "enum": [
+            "draft_not_reviewed",
+            "under_legal_review",
+            "legally_approved"
+          ],
+          "x-origem": "registro_de_aprovacao_juridica"
+        },
+        "status_documento": {
+          "type": "string",
+          "enum": [
+            "draft",
+            "ready_for_review",
+            "sent",
+            "partially_signed",
+            "signed",
+            "superseded",
+            "voided",
+            "failed"
+          ],
+          "x-origem": "contract_documents_e_eventos_verificados"
+        },
+        "gerado_em": {
+          "$ref": "#/$defs/dateTime",
+          "x-origem": "gerador_de_documentos"
+        },
+        "hash_conteudo": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "x-origem": "sha256_do_arquivo_exato",
+          "x-validacao": "Recalcular antes do envio e comparar com o arquivo arquivado."
+        },
+        "data_inicio_aprovada": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date",
+          "x-origem": "evento_de_inicio_definido_na_versao_juridica",
+          "x-validacao": "Deve permanecer nulo enquanto o marco inicial não for aprovado."
+        },
+        "local_e_data_assinatura": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 200,
+          "x-origem": "provedor_de_assinatura_ou_documento_final",
+          "x-validacao": "Permanece nulo na versão de revisão; não antecipar data de assinatura."
+        },
+        "provedor_assinatura": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 100,
+          "x-origem": "configuracao_de_integracao",
+          "x-validacao": "Permanece nulo enquanto o provedor não for identificado e configurado. Asaas não é presumido como provedor de assinatura."
+        },
+        "documento_substituido_id": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/uuid"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-origem": "gerador_de_documentos"
+        },
+        "motivo_nova_versao": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "maxLength": 500,
+          "x-origem": "ator_que_solicitou_a_correcao",
+          "x-validacao": "Obrigatório quando documento_substituido_id não for nulo."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status_documento": {
+                "enum": [
+                  "sent",
+                  "partially_signed",
+                  "signed"
+                ]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "status_juridico": {
+                "const": "legally_approved"
+              },
+              "provedor_assinatura": {
+                "type": "string",
+                "minLength": 1
+              },
+              "data_inicio_aprovada": {
+                "type": "string",
+                "format": "date"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "documento_substituido_id": {
+                "type": "string"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "motivo_nova_versao": {
+                "type": "string",
+                "minLength": 3
+              }
+            }
+          }
+        }
+      ]
+    },
+    "assinante": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "confirmado_em"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "pending",
+            "sent",
+            "signed",
+            "declined",
+            "failed"
+          ],
+          "x-origem": "evento_verificado_do_provedor_de_assinatura"
+        },
+        "confirmado_em": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/dateTime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "x-validacao": "Deve existir somente quando status for signed e o evento tiver sido validado."
+        }
+      }
+    },
+    "assinatura": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "v2g",
+        "contratante"
+      ],
+      "properties": {
+        "v2g": {
+          "$ref": "#/$defs/assinante"
+        },
+        "contratante": {
+          "$ref": "#/$defs/assinante"
+        }
+      },
+      "x-validacao": "O contrato só pode chegar a signed quando ambos os assinantes obrigatórios estiverem signed e o provedor confirmar o mesmo documento e hash."
+    }
+  }
+}

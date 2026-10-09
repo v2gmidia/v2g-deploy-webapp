@@ -37,6 +37,11 @@ export function ordenarTarefas(tarefas: TarefaDoGestor[], agora: number): Tarefa
     || a.created_at.localeCompare(b.created_at));
 }
 
+export function ordenarTarefasConcluidas(tarefas: TarefaDoGestor[]): TarefaDoGestor[] {
+  return [...tarefas].sort((a, b) => (b.completed_at ?? b.created_at)
+    .localeCompare(a.completed_at ?? a.created_at));
+}
+
 export function vencimentoDaTarefa(tarefa: TarefaDoGestor, agora: number): string {
   if (tarefa.status === "done") return "Concluída pelo operador";
   if (!tarefa.assigned_to) return "Sem responsável";

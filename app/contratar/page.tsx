@@ -1,14 +1,15 @@
 import { randomUUID } from "node:crypto";
 import { notFound } from "next/navigation";
 import { Marca } from "@/components/ui/Marca";
+import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 import { FormularioContratar } from "./FormularioContratar";
 import "./contratar.css";
 
 export const metadata = { title: "Contratar | V2G", robots: { index: false, follow: false } };
 
 export default function ContratarPage() {
-  // A rota não entra em produção até existir teste em sandbox e liberação explícita.
-  if (process.env.NODE_ENV === "production") notFound();
+  // Somente o projeto isolado de QA pode oferecer o sandbox em um build HTTPS.
+  if (!checkoutSandboxSeguroNesteServidor()) notFound();
   return <main className="contratar-shell">
     <header className="contratar-topo"><Marca href="/entrar" editorial /><a href="/entrar">Já tenho acesso</a></header>
     <div className="contratar-grid">

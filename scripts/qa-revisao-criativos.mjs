@@ -83,6 +83,9 @@ try {
   assert.equal(resposta.status, 200);
   assert.deepEqual(Buffer.from(await resposta.arrayBuffer()), png);
   console.log("QA: arquivo privado e URL temporaria do gestor OK");
+  const arquivoDisponivel = await admin.storage.from("creative-review").download(caminho);
+  assert.ifError(arquivoDisponivel.error);
+  assert.deepEqual(Buffer.from(await arquivoDisponivel.data.arrayBuffer()), png);
 
   const repeticao = await admin.from("creative_review_requests").insert({
     id: submissaoId, business_id: a.negocioId, submitted_by: a.id,
@@ -92,9 +95,21 @@ try {
   });
   assert.ok(repeticao.error, "ID duplicado deveria ser recusado");
   console.log("QA: identificador duplicado bloqueado OK");
+  const remocao = await admin.storage.from("creative-review").remove([caminho]);
+  assert.ifError(remocao.error);
+  const arquivoAusente = await admin.storage.from("creative-review").download(caminho);
+  assert.ok(arquivoAusente.error, "Arquivo ausente nao pode ser validado para decisao");
+  console.log("QA: verificacao de existencia bloqueia decisao sem imagem OK");
 } finally {
   if (caminho) await admin.storage.from("creative-review").remove([caminho]);
   if (submissaoId) await admin.from("creative_review_requests").delete().eq("id", submissaoId);
   for (const id of negocios) await admin.from("businesses").delete().eq("id", id);
   for (const id of usuarios) await admin.auth.admin.deleteUser(id);
 }
+if (submissaoId) {
+  const restos = await admin.from("creative_review_requests")
+    .select("id").eq("id", submissaoId);
+  assert.ifError(restos.error);
+  assert.equal(restos.data.length, 0, "A fixture de revisao precisa ser removida");
+}
+console.log("QA: registro sintetico removido OK");

@@ -217,12 +217,13 @@ export function montarPortfolio(
   }).sort((a, b) => a.prioridade - b.prioridade || a.nome.localeCompare(b.nome, "pt-BR"));
 }
 
-export type FiltroDoPortfolio = "todos" | "pedidos" | "onboarding" | "cadastro" | "contas" | "campanhas";
+export type FiltroDoPortfolio = "todos" | "minhas" | "pedidos" | "onboarding" | "cadastro" | "contas" | "campanhas";
 
-export function filtrarPortfolio(linhas: LinhaDoPortfolio[], busca: string, filtro: FiltroDoPortfolio) {
+export function filtrarPortfolio(linhas: LinhaDoPortfolio[], busca: string, filtro: FiltroDoPortfolio, minhasContas?: ReadonlySet<string>) {
   const termo = busca.trim().toLocaleLowerCase("pt-BR");
   return linhas.filter((linha) => {
     if (termo && !`${linha.nome} ${linha.id}`.toLocaleLowerCase("pt-BR").includes(termo)) return false;
+    if (filtro === "minhas") return minhasContas?.has(linha.id) ?? false;
     if (filtro === "pedidos") return linha.origem === "pedido";
     if (filtro === "onboarding") return !linha.onboardingConcluido;
     if (filtro === "cadastro") return linha.pendenciasCadastro > 0;

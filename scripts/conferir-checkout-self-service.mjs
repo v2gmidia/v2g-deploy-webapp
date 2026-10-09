@@ -76,3 +76,17 @@ test("sandbox jamais usa o banco real, mesmo com a flag de checkout ligada", () 
   assert.equal(checkoutSandboxSeguro({ ...base, supabaseUrl: "https://aaaaaaaaaaaaaaaaaaaa.supabase.co",
     qaRef: "aaaaaaaaaaaaaaaaaaaa" }), true);
 });
+
+test("build HTTPS só permite checkout no projeto Vercel e Supabase de QA", () => {
+  const qa = { nodeEnv: "production", habilitado: "true", asaasAmbiente: "sandbox",
+    supabaseUrl: "https://zskpijnqgkqwxksqmzmf.supabase.co", qaRef: "zskpijnqgkqwxksqmzmf",
+    qaDeployEnabled: "true", vercelProjectId: "prj_1IAiggJ2vbiT2h4kmbTW3UZIAStn",
+    vercelProjectProductionUrl: "v2g-webapp-qa.vercel.app",
+    siteUrl: "https://v2g-webapp-qa.vercel.app" };
+  assert.equal(checkoutSandboxSeguro(qa), true);
+  assert.equal(checkoutSandboxSeguro({ ...qa, vercelProjectId: "prj_prod" }), false);
+  assert.equal(checkoutSandboxSeguro({ ...qa, qaDeployEnabled: "false" }), false);
+  assert.equal(checkoutSandboxSeguro({ ...qa, siteUrl: "https://v2gmidia.com.br" }), false);
+  assert.equal(checkoutSandboxSeguro({ ...qa, asaasAmbiente: "production" }), false);
+  assert.equal(checkoutSandboxSeguro({ ...qa, supabaseUrl: "https://ushccxpoxjikzqnwhgfd.supabase.co" }), false);
+});

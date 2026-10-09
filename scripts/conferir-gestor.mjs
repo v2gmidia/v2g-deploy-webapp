@@ -142,6 +142,10 @@ test("busca e filtros não misturam negócios nem inventam campanha", () => {
   assert.deepEqual(filtrarPortfolio(linhas, "águia", "todos").map((l) => l.id), ["Oficina Águia"]);
   assert.deepEqual(filtrarPortfolio(linhas, "", "campanhas").map((l) => l.id), ["Loja B"]);
   assert.deepEqual(filtrarPortfolio(linhas, "águia", "campanhas"), []);
+  assert.deepEqual(filtrarPortfolio(linhas, "", "minhas", new Set(["Loja B"]))
+    .map((l) => l.id), ["Loja B"]);
+  assert.deepEqual(filtrarPortfolio(linhas, "", "minhas"), [],
+    "Sem atribuições confirmadas, o filtro não pode mostrar outra conta");
 });
 
 test("unidade aprovada identifica só a conta do mesmo negócio", () => {

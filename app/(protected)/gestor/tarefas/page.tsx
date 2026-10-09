@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ordenarTarefas, prioridadeDaTarefa, TIPOS_DE_TAREFA,
+import { ordenarTarefas, ordenarTarefasConcluidas, prioridadeDaTarefa, TIPOS_DE_TAREFA,
   vencimentoDaTarefa, type TarefaDoGestor } from "@/lib/gestor/tarefas";
-import { AssumirConta, ConcluirTarefa, CriarTarefa } from "./Formularios";
+import { AssumirConta, ConcluirTarefa, CriarTarefa, PrepararConta } from "./Formularios";
 
 export const metadata = { title: "Tarefas do gestor | V2G", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -18,15 +18,41 @@ export default async function TarefasDoGestorPage({ searchParams }: {
     return <div className="canvas"><h1>Tarefas do gestor</h1><p>A fila interna ainda não foi ativada neste ambiente.</p></div>;
   try {
     const admin = createAdminClient();
-    const [negocios, tarefas, atribuicoes] = await Promise.all([
-      admin.from("businesses").select("id, name").eq("dados_ficticios", false).order("name").limit(1000),
-      admin.from("manager_tasks").select("id, business_id, task_type, title, description, status, assigned_to, due_at, created_at, completed_at, completion_note")
-        .order("created_at", { ascending: false }).limit(1000),
-      admin.from("manager_accounts").select("business_id, operator_profile_id, assigned_at").limit(1000),
-    ]);
-    if (negocios.error || tarefas.error || atribuicoes.error ||
-        !negocios.data || !tarefas.data || !atribuicoes.data) throw new Error("fila indisponível");
+    const parametros = await searchParams;
+    const negocios = await admin.from("businesses").select("id, name")
+      .eq("dados_ficticios", false).order("name").limit(1000);
+    if (negocios.error || !negocios.data) throw new Error("negócios indisponíveis");
     const negociosPorId = new Map(negocios.data.map((negocio) => [negocio.id, negocio.name]));
+    const negocioPedido = typeof parametros.negocio === "string" ? parametros.negocio.trim() : "";
+    if (negocioPedido && !negociosPorId.has(negocioPedido))
+      return <div className="canvas"><h1>Tarefas do gestor</h1>
+        <p className="form-warning">A conta informada não está disponível nesta consulta.</p>
+        <p><a href="/gestor/tarefas">Ver todas as tarefas</a></p></div>;
+    const negocioInicial = negocioPedido || null;
+    const busca = typeof parametros.q === "string" ? parametros.q.trim().slice(0, 120) : "";
+    const filtro = ["abertas", "minhas", "sem_responsavel", "concluidas"].includes(parametros.filtro ?? "")
+      ? parametros.filtro! : "abertas";
+    let consultaTarefas = admin.from("manager_tasks")
+      .select("id, business_id, task_type, title, description, status, assigned_to, due_at, created_at, completed_at, completion_note", { count: "exact" });
+    if (negocioInicial) consultaTarefas = consultaTarefas.eq("business_id", negocioInicial);
+    if (filtro === "concluidas") consultaTarefas = consultaTarefas.eq("status", "done");
+    else consultaTarefas = consultaTarefas.eq("status", "open");
+    if (filtro === "minhas") consultaTarefas = consultaTarefas.eq("assigned_to", user.id);
+    if (filtro === "sem_responsavel") consultaTarefas = consultaTarefas.is("assigned_to", null);
+    let consultaAbertas = admin.from("manager_tasks")
+      .select("id", { count: "exact", head: true }).eq("status", "open");
+    if (negocioInicial) consultaAbertas = consultaAbertas.eq("business_id", negocioInicial);
+    const consultaAtribuicoes = admin.from("manager_accounts")
+      .select("business_id, operator_profile_id, assigned_at");
+    const [tarefas, atribuicoes, abertas] = await Promise.all([
+      consultaTarefas.order(filtro === "concluidas" ? "completed_at" : "created_at",
+        { ascending: filtro !== "concluidas" }).limit(1000),
+      (negocioInicial ? consultaAtribuicoes.eq("business_id", negocioInicial) : consultaAtribuicoes)
+        .limit(1000),
+      consultaAbertas,
+    ]);
+    if (tarefas.error || atribuicoes.error || !tarefas.data || !atribuicoes.data)
+      throw new Error("fila indisponível");
     const responsaveis = [...new Set([
       ...atribuicoes.data.map((atribuicao) => atribuicao.operator_profile_id),
       ...tarefas.data.map((tarefa) => tarefa.assigned_to).filter((id): id is string => !!id),
@@ -36,15 +62,14 @@ export default async function TarefasDoGestorPage({ searchParams }: {
     const nomes = new Map((perfis.data ?? []).map((perfil) => [perfil.id, perfil.full_name]));
     const responsavelPorNegocio = new Map(atribuicoes.data.map((atribuicao) =>
       [atribuicao.business_id, atribuicao.operator_profile_id]));
-    const semResponsavel = negocios.data.filter((negocio) => !responsavelPorNegocio.has(negocio.id));
-    const parametros = await searchParams;
-    const negocioInicial = negociosPorId.has(parametros.negocio ?? "") ? parametros.negocio! : null;
-    const busca = typeof parametros.q === "string" ? parametros.q.trim().slice(0, 120) : "";
-    const filtro = ["abertas", "minhas", "sem_responsavel", "concluidas"].includes(parametros.filtro ?? "")
-      ? parametros.filtro! : "abertas";
+    const semResponsavel = negocios.data.filter((negocio) =>
+      (!negocioInicial || negocio.id === negocioInicial) && !responsavelPorNegocio.has(negocio.id));
     const agora = Date.now();
-    const linhas = ordenarTarefas(tarefas.data as TarefaDoGestor[], agora);
+    const linhas = filtro === "concluidas"
+      ? ordenarTarefasConcluidas(tarefas.data as TarefaDoGestor[])
+      : ordenarTarefas(tarefas.data as TarefaDoGestor[], agora);
     const visiveis = linhas.filter((tarefa) => {
+      if (negocioInicial && tarefa.business_id !== negocioInicial) return false;
       if (filtro === "abertas" && tarefa.status !== "open") return false;
       if (filtro === "minhas" && (tarefa.status !== "open" || tarefa.assigned_to !== user.id)) return false;
       if (filtro === "sem_responsavel" && (tarefa.status !== "open" || !!tarefa.assigned_to)) return false;
@@ -52,16 +77,26 @@ export default async function TarefasDoGestorPage({ searchParams }: {
       const texto = `${negociosPorId.get(tarefa.business_id) ?? ""} ${tarefa.title}`.toLocaleLowerCase("pt-BR");
       return !busca || texto.includes(busca.toLocaleLowerCase("pt-BR"));
     });
-    const parcial = negocios.data.length === 1000 || tarefas.data.length === 1000 ||
+    const tarefasParciais = tarefas.count === null || tarefas.count > tarefas.data.length;
+    const parcial = negocios.data.length === 1000 || tarefasParciais ||
       atribuicoes.data.length === 1000 || !!perfis.error;
     const formatarData = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
     return <div className="canvas">
       <div className="page-head"><p>OPERAÇÃO · USO INTERNO</p><h1>Tarefas e responsáveis</h1>
         <p>Acompanhe a preparação de cada conta. Estas tarefas são registros da equipe, não estados confirmados da Meta ou de pagamentos.</p></div>
-      <p><a href="/gestor">Voltar à carteira</a> · <a href="/gestor/criativos">Peças para revisar</a></p>
-      {parcial && <p className="form-warning">Consulta parcial ou nomes de responsáveis indisponíveis. Confira o registro antes de decidir.</p>}
-      <div className="auth-card"><strong>{linhas.filter((t) => t.status === "open").length} abertas</strong> · {linhas.filter((t) => t.status === "open" && prioridadeDaTarefa(t, agora) === 0).length} vencidas ou sem responsável · {atribuicoes.data.length} contas com responsável registrado</div>
-      <CriarTarefa negocios={negocios.data} negocioInicial={negocioInicial} />
+      <p><a href="/gestor">Voltar à carteira</a> · <a href="/gestor/criativos">Peças para revisar</a>
+        {negocioInicial && <> · <a href="/gestor/tarefas">Ver todas as tarefas</a></>}</p>
+      {negocioInicial && <p>Conta selecionada: <strong>{negociosPorId.get(negocioInicial)}</strong></p>}
+      {parcial && <p className="form-warning">Consulta parcial ou nomes de responsáveis indisponíveis. Busca e prioridades podem cobrir somente os itens exibidos; confira a fonte antes de decidir.</p>}
+      {(abertas.error || abertas.count === null) && <p className="form-warning">O total de tarefas abertas não pôde ser confirmado agora.</p>}
+      <div className="auth-card"><strong>{abertas.error || abertas.count === null ? "—" : abertas.count} abertas</strong>
+        {filtro === "abertas" && <> · {linhas.filter((t) => prioridadeDaTarefa(t, agora) === 0).length} vencidas ou sem responsável {tarefasParciais ? "entre as exibidas" : ""}</>}
+        {" · "}{atribuicoes.data.length} atribuição(ões) retornada(s)</div>
+      {negocioInicial && (responsavelPorNegocio.has(negocioInicial)
+        ? <PrepararConta businessId={negocioInicial} />
+        : <p className="form-warning">Esta conta ainda não tem gestor responsável. Atribua um responsável antes de criar as pendências iniciais.</p>)}
+      <CriarTarefa negocios={negocioInicial ? negocios.data.filter((negocio) => negocio.id === negocioInicial) : negocios.data}
+        negocioInicial={negocioInicial} />
       <section aria-labelledby="contas-sem-responsavel"><h2 id="contas-sem-responsavel">Responsável por conta</h2>
         {negocios.data.length === 0 && <p>Nenhum negócio retornado nesta consulta.</p>}
         <details><summary>{semResponsavel.length} conta(s) sem responsável registrado</summary>
@@ -74,13 +109,14 @@ export default async function TarefasDoGestorPage({ searchParams }: {
       </section>
       <section aria-labelledby="lista-tarefas"><h2 id="lista-tarefas">Fila de trabalho</h2>
         <form action="/gestor/tarefas" method="get" className="auth-card">
+          {negocioInicial && <input type="hidden" name="negocio" value={negocioInicial} />}
           <label>Buscar <input type="search" name="q" defaultValue={busca} placeholder="Negócio ou tarefa" /></label>
           <label>Mostrar <select name="filtro" defaultValue={filtro}>
             <option value="abertas">Abertas</option><option value="minhas">Minhas abertas</option>
             <option value="sem_responsavel">Sem responsável</option><option value="concluidas">Concluídas</option>
           </select></label><button type="submit">Filtrar</button>
         </form>
-        <p>{visiveis.length} de {linhas.length} tarefas nesta consulta.</p>
+        <p>{visiveis.length} exibida(s) de {tarefas.count ?? "total indisponível"} tarefa(s) no filtro {negocioInicial ? "desta conta" : "da carteira"}.</p>
         {visiveis.length === 0 && <p>Nenhuma tarefa corresponde ao filtro.</p>}
         {visiveis.map((tarefa) => <article className="auth-card" key={tarefa.id}>
           <p>{TIPOS_DE_TAREFA[tarefa.task_type]} · {negociosPorId.get(tarefa.business_id) ?? "Negócio não encontrado"}</p>
