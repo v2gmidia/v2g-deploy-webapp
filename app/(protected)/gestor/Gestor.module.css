@@ -9,6 +9,13 @@
 .resumo div { display: grid; gap: .2rem; padding: 1.2rem 1rem 1.2rem 0; }
 .resumo strong { font-size: var(--fs-titulo); line-height: 1; }
 .resumo span { color: var(--ink-soft); }
+.filaPessoal { display: grid; gap: .75rem; }
+.acoesPessoais { list-style: none; display: grid; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+.acoesPessoais li { display: grid; grid-template-columns: 6rem minmax(0, 1fr) auto; gap: 1rem; align-items: center; border-bottom: 1px solid var(--line); padding: .85rem 0; }
+.acoesPessoais li div { display: grid; gap: .2rem; }
+.acoesPessoais li div span { color: var(--ink-soft); }
+.acoesPessoais li a { color: var(--cobalt-ink); font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
+.acaoTipo { color: var(--ink-mute); font-size: var(--fs-legenda); font-weight: 700; letter-spacing: .08em; }
 .introducao { margin-bottom: 1rem; }
 .introducao h2 { margin: 0 0 .3rem; }
 .introducao p, .fonte { color: var(--ink-soft); margin: 0; }
@@ -31,4 +38,4 @@
 .contas code { font-size: var(--fs-legenda); }
 .destinos { display: flex; gap: .75rem; flex-wrap: wrap; }
 .fonte { font-size: var(--fs-legenda); }
-@media (max-width: 900px) { .cabecalho { display: grid; } .resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .linha { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .cabecalho { display: grid; } .resumo { grid-template-columns: repeat(2, minmax(0, 1fr)); } .linha { grid-template-columns: 1fr; } .acoesPessoais li { grid-template-columns: 1fr; gap: .3rem; } }

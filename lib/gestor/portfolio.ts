@@ -1,5 +1,5 @@
-import { montarCadastro, type NegocioParaCadastro } from "../cadastro/montar";
-import { lerConclusao } from "../onboarding/marca";
+import { montarCadastro, type NegocioParaCadastro } from "../cadastro/montar.ts";
+import { lerConclusao } from "../onboarding/marca.ts";
 
 export interface NegocioDoPortfolio extends NegocioParaCadastro {
   dados_ficticios: boolean;

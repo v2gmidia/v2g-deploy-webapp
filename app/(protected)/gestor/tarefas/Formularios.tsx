@@ -3,7 +3,7 @@
 import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TIPOS_DE_TAREFA } from "@/lib/gestor/tarefas";
-import { assumirContaAction, concluirTarefaAction, criarTarefaAction,
+import { assumirContaAction, assumirTarefaAction, concluirTarefaAction, criarTarefaAction,
   prepararContaAction, type EstadoTarefa } from "./actions";
 
 export function CriarTarefa({ negocios, negocioInicial }: {
@@ -21,6 +21,7 @@ export function CriarTarefa({ negocios, negocioInicial }: {
     form.current?.reset();
     router.refresh();
   }, [estado, router]);
+  if (negocios.length === 0) return <p className="form-warning">Assuma uma conta para registrar tarefas sob sua responsabilidade.</p>;
   return <form ref={form} action={acao} className="auth-card">
     <h2>Nova tarefa interna</h2>
     <input type="hidden" name="id" value={id} />
@@ -58,6 +59,18 @@ export function AssumirConta({ businessId }: { businessId: string }) {
   return <form action={acao}>
     <input type="hidden" name="businessId" value={businessId} />
     <button type="submit" disabled={pendente}>Assumir conta</button>
+    {estado.ok && <p className="form-notice" role="status">{estado.ok}</p>}
+    {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
+  </form>;
+}
+
+export function AssumirTarefa({ id }: { id: string }) {
+  const router = useRouter();
+  const [estado, acao, pendente] = useActionState<EstadoTarefa, FormData>(assumirTarefaAction, {});
+  useEffect(() => { if (estado.ok) router.refresh(); }, [estado, router]);
+  return <form action={acao}>
+    <input type="hidden" name="id" value={id} />
+    <button type="submit" disabled={pendente}>{pendente ? "Atribuindo..." : "Assumir tarefa"}</button>
     {estado.ok && <p className="form-notice" role="status">{estado.ok}</p>}
     {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
   </form>;

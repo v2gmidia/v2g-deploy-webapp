@@ -35,6 +35,9 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`fila-pessoal-gestor-10-10.md`](./fila-pessoal-gestor-10-10.md) | 10/10/2026 | Fila pessoal na carteira, isolamento por gestor, peça sem tarefa e deduplicação. | **Sim.** Somente código local; interface autenticada, QA e Figma sem verificação. |
+| [`reconciliacao-gestor-10-10.md`](./reconciliacao-gestor-10-10.md) | 10/10/2026 | Retomada da tarefa após falha parcial ou decisão anterior, link para peça específica e carteira visível quando execuções estão indisponíveis. | **Sim.** Interface autenticada bloqueada pelo navegador, QA operacional incompleto e Figma no limite do conector. |
+| [`criativo-tarefa-gestor-10-10.md`](./criativo-tarefa-gestor-10-10.md) | 10/10/2026 | Tarefa interna para peça recebida, encerramento após decisão e atribuição posterior ao gestor da conta. | **Sim.** Interface autenticada, falhas de banco e QA completo não verificados. |
 | [`tarefas-gestor-10-10.md`](./tarefas-gestor-10-10.md) | 10/10/2026 | Retomada das pendências iniciais por ID e acesso direto a tarefas de negócio fora da primeira página da carteira. | **Sim.** Interface autenticada e banco QA não verificados. |
 | [`senha-forte-09-10.md`](./senha-forte-09-10.md) | 09/10/2026 | Confirmação de senha e regra comum no primeiro acesso/redefinição, com testes locais e prova visual. | **Sim.** Publicar no QA e alinhar a política do Supabase Auth; e-mail/login continuam pendentes. |
 | [`qa-primeiro-acesso-09-10.md`](./qa-primeiro-acesso-09-10.md) | 09/10/2026 | Duas fixtures fictícias para testar e-mail, login e multiconta no QA, com identificadores e limpeza restrita. | **Sim.** Victor cria a senha de teste; faltam confirmação, login, vínculo e troca entre CNPJs. |

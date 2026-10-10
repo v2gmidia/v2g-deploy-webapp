@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ordenarTarefas, ordenarTarefasConcluidas, prioridadeDaTarefa, TIPOS_DE_TAREFA,
   vencimentoDaTarefa, type TarefaDoGestor } from "@/lib/gestor/tarefas";
-import { AssumirConta, ConcluirTarefa, CriarTarefa, PrepararConta } from "./Formularios";
+import { solicitacaoDaTarefaDeRevisao } from "@/lib/gestor/revisao-pendente";
+import { AssumirConta, AssumirTarefa, ConcluirTarefa, CriarTarefa, PrepararConta } from "./Formularios";
 
 export const metadata = { title: "Tarefas do gestor | V2G", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -101,11 +102,12 @@ export default async function TarefasDoGestorPage({ searchParams }: {
       <div className="auth-card"><strong>{abertas.error || abertas.count === null ? "—" : abertas.count} abertas</strong>
         {filtro === "abertas" && <> · {linhas.filter((t) => prioridadeDaTarefa(t, agora) === 0).length} vencidas ou sem responsável {tarefasParciais ? "entre as exibidas" : ""}</>}
         {" · "}{atribuicoes.data.length} atribuição(ões) retornada(s)</div>
-      {negocioInicial && (responsavelPorNegocio.has(negocioInicial)
+      {negocioInicial && (responsavelPorNegocio.get(negocioInicial) === user.id
         ? <PrepararConta businessId={negocioInicial} />
-        : <p className="form-warning">Esta conta ainda não tem gestor responsável. Atribua um responsável antes de criar as pendências iniciais.</p>)}
-      <CriarTarefa negocios={negocioInicial ? negocios.data.filter((negocio) => negocio.id === negocioInicial) : negocios.data}
-        negocioInicial={negocioInicial} />
+        : <p className="form-warning">As pendências iniciais são criadas pelo gestor responsável desta conta.</p>)}
+      <CriarTarefa negocios={negocios.data.filter((negocio) =>
+        (!negocioInicial || negocio.id === negocioInicial) && responsavelPorNegocio.get(negocio.id) === user.id)}
+        negocioInicial={responsavelPorNegocio.get(negocioInicial ?? "") === user.id ? negocioInicial : null} />
       <section aria-labelledby="contas-sem-responsavel"><h2 id="contas-sem-responsavel">Responsável por conta</h2>
         {negocios.data.length === 0 && <p>Nenhum negócio retornado nesta consulta.</p>}
         <details><summary>{semResponsavel.length} conta(s) sem responsável registrado</summary>
@@ -134,7 +136,12 @@ export default async function TarefasDoGestorPage({ searchParams }: {
           <p><strong>{vencimentoDaTarefa(tarefa, agora)}</strong> · Responsável: {tarefa.assigned_to === user.id ? "você" : tarefa.assigned_to ? nomes.get(tarefa.assigned_to) ?? "operador sem nome disponível" : "não atribuído"}</p>
           <p>{tarefa.due_at ? `Prazo: ${formatarData.format(new Date(tarefa.due_at))}` : "Sem prazo"} · Registrada: {formatarData.format(new Date(tarefa.created_at))}</p>
           {tarefa.status === "done" && <p>Registro de conclusão: {tarefa.completion_note ?? "indisponível"}</p>}
-          {tarefa.status === "open" && tarefa.assigned_to === user.id && <ConcluirTarefa id={tarefa.id} />}
+          {tarefa.status === "open" && !tarefa.assigned_to &&
+            responsavelPorNegocio.get(tarefa.business_id) === user.id && <AssumirTarefa id={tarefa.id} />}
+          {tarefa.status === "open" && tarefa.assigned_to === user.id &&
+            (solicitacaoDaTarefaDeRevisao(tarefa.id, tarefa.business_id, tarefa.description)
+              ? <p><a href={`/gestor/criativos?negocio=${encodeURIComponent(tarefa.business_id)}&peca=${encodeURIComponent(solicitacaoDaTarefaDeRevisao(tarefa.id, tarefa.business_id, tarefa.description)!)}`}>Conferir peça e registrar decisão</a></p>
+              : <ConcluirTarefa id={tarefa.id} />)}
         </article>)}
       </section>
       <p className="foot-line">Concluir uma tarefa registra a ação do operador. Pagamento, assinatura, reserva e campanha exigem confirmação nas respectivas fontes.</p>

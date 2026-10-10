@@ -3,6 +3,40 @@ import test from "node:test";
 import { filtrarPortfolio, instagramParaRevisao, montarPortfolio } from "../lib/gestor/portfolio.ts";
 import { filtrarCompras, periodoDaCompra, situacaoDaCompra } from "../lib/gestor/compras.ts";
 import { ultimoDocumentoPorPedido } from "../lib/contratacao/documentos.ts";
+import { proximasAcoesDoGestor } from "../lib/gestor/proximas-acoes.ts";
+import { descricaoDaTarefaDeRevisao, idDaTarefaDeRevisao } from "../lib/gestor/revisao-pendente.ts";
+
+test("fila pessoal isola contas e operadores, recupera peça sem tarefa e evita duplicata", () => {
+  const peca = "018f8980-6c3e-46d5-8b39-37f19465e4ea";
+  const negocio = "c9adc12e-3b40-4206-9aa4-cfda217ff376";
+  const tarefaRevisao = { id: idDaTarefaDeRevisao(peca), business_id: negocio,
+    title: "Revisar criativo enviado", description: descricaoDaTarefaDeRevisao(peca, negocio),
+    assigned_to: "gestor-a", due_at: null, created_at: "2026-10-10T10:00:00Z" };
+  const fila = proximasAcoesDoGestor("gestor-a", new Set([negocio]), new Map([[negocio, "Loja A"]]),
+    [{ id: peca, business_id: negocio, created_at: "2026-10-10T09:00:00Z" },
+      { id: "peca-sem-tarefa", business_id: negocio, created_at: "2026-10-10T08:00:00Z" },
+      { id: "outra-conta", business_id: "outro", created_at: "2026-10-10T07:00:00Z" }],
+    [tarefaRevisao, { ...tarefaRevisao, id: "tarefa-minha", title: "Conferir acesso", description: null },
+      { ...tarefaRevisao, id: "tarefa-outro-gestor", assigned_to: "gestor-b" },
+      { ...tarefaRevisao, id: "tarefa-outra-conta", business_id: "outro" }],
+    Date.parse("2026-10-10T12:00:00Z"));
+  assert.deepEqual(fila.map((a) => a.id), ["revisao:peca-sem-tarefa", `revisao:${peca}`, "tarefa:tarefa-minha"]);
+  assert.equal(fila[1].href, `/gestor/criativos?negocio=${negocio}&peca=${peca}`);
+});
+
+test("fila pessoal prioriza tarefa vencida ou sem responsável e não inventa prazo inválido", () => {
+  const negocio = "conta";
+  const base = { business_id: negocio, title: "Tarefa", description: null,
+    assigned_to: "gestor", created_at: "2026-10-10T10:00:00Z" };
+  const fila = proximasAcoesDoGestor("gestor", new Set([negocio]), new Map(), [], [
+    { ...base, id: "futura", due_at: "2026-10-12T10:00:00Z" },
+    { ...base, id: "vencida", due_at: "2026-10-09T10:00:00Z" },
+    { ...base, id: "sem-responsavel", assigned_to: null, due_at: null },
+    { ...base, id: "prazo-invalido", due_at: "invalido" },
+  ], Date.parse("2026-10-10T12:00:00Z"));
+  assert.deepEqual(fila.slice(0, 2).map((a) => a.id), ["tarefa:vencida", "tarefa:sem-responsavel"]);
+  assert.equal(fila.find((a) => a.id === "tarefa:prazo-invalido").situacao, "Sem prazo registrado");
+});
 
 test("fila de compras prioriza comprovante e erro ambíguo sem incluir cancelado em atenção", () => {
   const pedido = (id, status, extra = {}) => ({ id, status, legal_name: `Empresa ${id}`,

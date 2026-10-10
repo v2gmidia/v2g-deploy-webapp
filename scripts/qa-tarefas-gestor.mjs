@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 import { randomBytes, randomUUID } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import { tarefasDaPreparacao } from "../lib/gestor/preparacao.ts";
+import { idDaTarefaDeRevisao, TITULO_TAREFA_REVISAO } from "../lib/gestor/revisao-pendente.ts";
+import { sincronizarTarefaDeRevisao } from "../lib/gestor/sincronizar-revisao.ts";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
@@ -22,13 +24,17 @@ let tarefaId = null;
 let outraTarefaId = null;
 let preparacaoIds = [];
 let historicoIds = [];
+let solicitacaoId = null;
+let tarefaDeRevisaoId = null;
+let outraSolicitacaoId = null;
+let outraRevisaoTarefaId = null;
 
 try {
-  for (const papel of ["operador", "cliente"]) {
+  for (const papel of ["operador", "cliente", "operador2"]) {
     const email = `qa-gestor-${papel}-${marcador}@example.invalid`;
     const criado = await admin.auth.admin.createUser({
       email, password: senha, email_confirm: true,
-      app_metadata: papel === "operador" ? { papel: "operador" } : {},
+      app_metadata: papel.startsWith("operador") ? { papel: "operador" } : {},
     });
     assert.ifError(criado.error);
     usuarios.push({ id: criado.data.user.id, email, papel });
@@ -182,6 +188,100 @@ try {
   assert.equal(preparadas.data.length, 3);
   assert.ok(preparadas.data.every((item) => item.assigned_to === operador.id));
   console.log("QA: três pendências iniciais atribuídas sem duplicação OK");
+
+  solicitacaoId = randomUUID();
+  tarefaDeRevisaoId = idDaTarefaDeRevisao(solicitacaoId);
+  const solicitacao = await admin.from("creative_review_requests").insert({
+    id: solicitacaoId, business_id: negocioId, submitted_by: operador.id,
+    file_path: `${negocioId}/${solicitacaoId}`, original_name: "qa.png",
+    mime_type: "image/png", size_bytes: 8, sha256: "0".repeat(64),
+    status: "awaiting_review",
+  });
+  assert.ifError(solicitacao.error);
+  const semGestor = await admin.from("manager_accounts").delete().eq("business_id", negocioId);
+  assert.ifError(semGestor.error);
+  let falharInsercao = true;
+  const adminComFalhaPontual = new Proxy(admin, {
+    get(alvo, propriedade) {
+      if (propriedade !== "from") return Reflect.get(alvo, propriedade);
+      return (tabela) => {
+        const consulta = alvo.from(tabela);
+        if (tabela !== "manager_tasks") return consulta;
+        return new Proxy(consulta, {
+          get(objeto, metodo) {
+            if (metodo === "insert" && falharInsercao) return () => {
+              falharInsercao = false;
+              return Promise.resolve({ error: { message: "falha QA simulada" } });
+            };
+            return Reflect.get(objeto, metodo);
+          },
+        });
+      };
+    },
+  });
+  await assert.rejects(() => sincronizarTarefaDeRevisao(adminComFalhaPontual, solicitacaoId, negocioId));
+  const aposFalha = await admin.from("manager_tasks").select("id", { count: "exact", head: true })
+    .eq("id", tarefaDeRevisaoId);
+  assert.ifError(aposFalha.error);
+  assert.equal(aposFalha.count, 0);
+  const inicial = await sincronizarTarefaDeRevisao(admin, solicitacaoId, negocioId);
+  assert.equal(inicial.status, "open");
+  assert.equal(inicial.assignedTo, null);
+  const repeticao = await sincronizarTarefaDeRevisao(admin, solicitacaoId, negocioId);
+  assert.equal(repeticao.status, "open");
+  const novaAtribuicao = await admin.from("manager_accounts").insert({
+    business_id: negocioId, operator_profile_id: operador.id, assigned_by: operador.id,
+  });
+  assert.ifError(novaAtribuicao.error);
+  const aposAtribuicao = await sincronizarTarefaDeRevisao(admin, solicitacaoId, negocioId);
+  assert.equal(aposAtribuicao.assignedTo, operador.id);
+  const trocaGestor = await admin.from("manager_accounts").update({
+    operator_profile_id: usuarios[2].id, updated_at: new Date().toISOString(),
+  }).eq("business_id", negocioId);
+  assert.ifError(trocaGestor.error);
+  const aposTroca = await sincronizarTarefaDeRevisao(admin, solicitacaoId, negocioId);
+  assert.equal(aposTroca.assignedTo, usuarios[2].id);
+  const devolucao = await admin.from("manager_accounts").update({
+    operator_profile_id: operador.id, updated_at: new Date().toISOString(),
+  }).eq("business_id", negocioId);
+  assert.ifError(devolucao.error);
+  const aposDevolucao = await sincronizarTarefaDeRevisao(admin, solicitacaoId, negocioId);
+  assert.equal(aposDevolucao.assignedTo, operador.id);
+  const duplicada = await admin.from("manager_tasks").insert({
+    id: tarefaDeRevisaoId, business_id: negocioId, task_type: "other",
+    title: TITULO_TAREFA_REVISAO, created_by: operador.id,
+  });
+  assert.equal(duplicada.error?.code, "23505");
+  const decidida = await admin.from("creative_review_requests").update({
+    status: "approved_for_manual_publish", reviewed_by: operador.id,
+    reviewed_at: new Date().toISOString(),
+  }).eq("id", solicitacaoId).eq("status", "awaiting_review").select("id").single();
+  assert.ifError(decidida.error);
+  const encerrada = await sincronizarTarefaDeRevisao(admin, solicitacaoId, negocioId);
+  assert.equal(encerrada.status, "done");
+  const repeticaoDaDecisao = await sincronizarTarefaDeRevisao(admin, solicitacaoId, negocioId);
+  assert.equal(repeticaoDaDecisao.status, "done");
+  const quantidade = await admin.from("manager_tasks").select("id", { count: "exact", head: true })
+    .eq("id", tarefaDeRevisaoId);
+  assert.ifError(quantidade.error);
+  assert.equal(quantidade.count, 1);
+  await assert.rejects(() => sincronizarTarefaDeRevisao(admin, solicitacaoId, outroNegocioId));
+  console.log("QA: falha pontual, retomada, troca de gestor e decisão repetida sem duplicar OK");
+
+  // A decisao pode vencer a tentativa de criar a tarefa auxiliar.
+  outraSolicitacaoId = randomUUID();
+  outraRevisaoTarefaId = idDaTarefaDeRevisao(outraSolicitacaoId);
+  const decididaAntes = await admin.from("creative_review_requests").insert({
+    id: outraSolicitacaoId, business_id: outroNegocioId, submitted_by: operador.id,
+    file_path: `${outroNegocioId}/${outraSolicitacaoId}`, original_name: "qa-corrida.png",
+    mime_type: "image/png", size_bytes: 8, sha256: "0".repeat(64),
+    status: "changes_requested", reviewed_by: operador.id,
+    reviewed_at: new Date().toISOString(),
+  });
+  assert.ifError(decididaAntes.error);
+  const recuperada = await sincronizarTarefaDeRevisao(admin, outraSolicitacaoId, outroNegocioId);
+  assert.equal(recuperada.status, "done");
+  console.log("QA: decisão anterior à criação também resulta em tarefa concluída OK");
 } finally {
   const falhasDaLimpeza = [];
   const conferirLimpeza = (resultado, etapa) => {
@@ -191,6 +291,10 @@ try {
   if (outraTarefaId) conferirLimpeza(await admin.from("manager_tasks").delete().eq("id", outraTarefaId), "outra tarefa");
   if (preparacaoIds.length) conferirLimpeza(await admin.from("manager_tasks").delete().in("id", preparacaoIds), "preparação");
   if (historicoIds.length) conferirLimpeza(await admin.from("manager_tasks").delete().in("id", historicoIds), "histórico");
+  if (tarefaDeRevisaoId) conferirLimpeza(await admin.from("manager_tasks").delete().eq("id", tarefaDeRevisaoId), "tarefa de criativo");
+  if (outraRevisaoTarefaId) conferirLimpeza(await admin.from("manager_tasks").delete().eq("id", outraRevisaoTarefaId), "outra tarefa de criativo");
+  if (solicitacaoId) conferirLimpeza(await admin.from("creative_review_requests").delete().eq("id", solicitacaoId), "solicitação de criativo");
+  if (outraSolicitacaoId) conferirLimpeza(await admin.from("creative_review_requests").delete().eq("id", outraSolicitacaoId), "outra solicitação de criativo");
   if (negocioId) {
     conferirLimpeza(await admin.from("manager_accounts").delete().eq("business_id", negocioId), "atribuição");
     conferirLimpeza(await admin.from("businesses").delete().eq("id", negocioId), "negócio");

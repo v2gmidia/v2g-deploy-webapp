@@ -1,9 +1,11 @@
 "use server";
 
 import { createHash } from "node:crypto";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { sincronizarTarefaDeRevisao } from "@/lib/gestor/sincronizar-revisao";
 import { BUCKET_REVISAO, caminhoDaRevisao, podeRepetirEnvio,
   TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem, type StatusRevisao } from "@/lib/criativos/revisao";
 
@@ -13,6 +15,21 @@ export type ResultadoDaSolicitacao =
 
 const RECADO_FALHA = "Não foi possível registrar a peça agora. Ela não foi publicada. Tente novamente.";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** A fila de peças continua sendo a fonte mesmo quando a tarefa auxiliar falha. */
+async function garantirTarefaDeRevisao(negocioId: string, submissaoId: string) {
+  if (process.env.V2G_MANAGER_WORK_ENABLED !== "true") return;
+  try {
+    await sincronizarTarefaDeRevisao(createAdminClient(), submissaoId, negocioId);
+    revalidatePath("/gestor/tarefas");
+    revalidatePath("/gestor");
+    revalidatePath("/gestor/criativos");
+  } catch {
+    // A peça já pode estar salva para revisão. Uma repetição do mesmo envio
+    // tenta novamente registrar a tarefa, sem criar segunda solicitação.
+    console.error("[criativos] tarefa interna de revisão indisponível");
+  }
+}
 
 /** Persistência separada da análise automática e da publicação na Meta. */
 export async function solicitarRevisaoAction(dados: FormData): Promise<ResultadoDaSolicitacao> {
@@ -48,8 +65,11 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
       if (atual.data.business_id !== businessId || atual.data.submitted_by !== user.id ||
           atual.data.sha256 !== sha256) return { ok: false, recado: "Este envio pertence a outra peça. Escolha o arquivo novamente." };
       if (atual.data.status === "awaiting_review" ||
-          ["approved_for_manual_publish", "changes_requested", "rejected"].includes(atual.data.status))
+          ["approved_for_manual_publish", "changes_requested", "rejected"].includes(atual.data.status)) {
+        if (atual.data.status === "awaiting_review")
+          await garantirTarefaDeRevisao(businessId, id);
         return { ok: true, id, repetido: true };
+      }
       if (!podeRepetirEnvio(atual.data.status as StatusRevisao, atual.data.updated_at, Date.now()))
         return { ok: false, recado: "Este envio ainda está em andamento. Aguarde e confira a lista antes de tentar novamente." };
       const retomar = await admin.from("creative_review_requests")
@@ -80,6 +100,7 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
       .update({ status: "awaiting_review", updated_at: new Date().toISOString() })
       .eq("id", id).eq("status", "uploading").select("id").maybeSingle();
     if (concluido.error || !concluido.data) return { ok: false, recado: RECADO_FALHA };
+    await garantirTarefaDeRevisao(businessId, id);
     return { ok: true, id, repetido: false };
   } catch {
     return { ok: false, recado: RECADO_FALHA };

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TIPOS_DE_TAREFA, type TipoDeTarefa } from "@/lib/gestor/tarefas";
 import { tarefasDaPreparacao } from "@/lib/gestor/preparacao";
+import { ehTarefaDeRevisao } from "@/lib/gestor/revisao-pendente";
 
 export type EstadoTarefa = { ok?: string; erro?: string };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -35,9 +36,16 @@ export async function criarTarefaAction(_anterior: EstadoTarefa, dados: FormData
     return { erro: "Confira negócio, tipo, título e prazo da tarefa." };
   try {
     const admin = createAdminClient();
-    const negocio = await admin.from("businesses").select("id").eq("id", businessId)
-      .eq("dados_ficticios", false).maybeSingle();
+    const [negocio, conta] = await Promise.all([
+      admin.from("businesses").select("id").eq("id", businessId)
+        .eq("dados_ficticios", false).maybeSingle(),
+      admin.from("manager_accounts").select("operator_profile_id")
+        .eq("business_id", businessId).maybeSingle(),
+    ]);
     if (negocio.error || !negocio.data) return { erro: "Negócio não encontrado. Atualize a carteira." };
+    if (conta.error) return { erro: "Não foi possível conferir o responsável desta conta." };
+    if (conta.data?.operator_profile_id !== user.id)
+      return { erro: "Assuma a responsabilidade por esta conta antes de criar tarefas." };
     const gravacao = await admin.from("manager_tasks").insert({
       id, business_id: businessId, task_type: tipo as TipoDeTarefa,
       title: titulo.trim(), description: descricao.trim() || null,
@@ -82,21 +90,62 @@ export async function assumirContaAction(_anterior: EstadoTarefa, dados: FormDat
     const gravacao = await admin.from("manager_accounts").insert({
       business_id: businessId, operator_profile_id: user.id, assigned_by: user.id,
     });
+    let jaEraSua = false;
     if (gravacao.error) {
       if (gravacao.error.code === "23505") {
         const existente = await admin.from("manager_accounts").select("operator_profile_id")
           .eq("business_id", businessId).maybeSingle();
-        if (!existente.error && existente.data?.operator_profile_id === user.id)
-          return { ok: "Esta conta já está sob sua responsabilidade." };
-        return { erro: "Esta conta já tem responsável. Consulte a equipe antes de alterar." };
+        if (existente.error || existente.data?.operator_profile_id !== user.id)
+          return { erro: "Esta conta já tem responsável. Consulte a equipe antes de alterar." };
+        jaEraSua = true;
+      } else {
+        return { erro: "Não foi possível atribuir a conta agora." };
       }
-      return { erro: "Não foi possível atribuir a conta agora." };
     }
+    // Recupera inclusive uma atribuição anterior que tenha parado após a
+    // gravação da conta. Nunca retira tarefas já atribuídas a outra pessoa.
+    const pendentes = await admin.from("manager_tasks").update({
+      assigned_to: user.id, updated_at: new Date().toISOString(),
+    }).eq("business_id", businessId).eq("status", "open").is("assigned_to", null);
     revalidatePath("/gestor/tarefas");
     revalidatePath("/gestor");
-    return { ok: "Você assumiu a responsabilidade operacional desta conta." };
+    if (pendentes.error) return { erro: "A conta já está sob sua responsabilidade, mas as tarefas pendentes não foram atribuídas. Tente novamente; a conta não será duplicada." };
+    return { ok: jaEraSua ? "Esta conta já estava sob sua responsabilidade; pendências sem responsável foram atribuídas a você." :
+      "Você assumiu a conta e as pendências sem responsável." };
   } catch {
     return { erro: "Não foi possível atribuir a conta agora." };
+  }
+}
+
+export async function assumirTarefaAction(_anterior: EstadoTarefa, dados: FormData): Promise<EstadoTarefa> {
+  if (process.env.V2G_MANAGER_WORK_ENABLED !== "true") return { erro: "A fila não está ativa." };
+  const user = await operador();
+  if (!user) return { erro: "Acesso não autorizado." };
+  const id = dados.get("id");
+  if (typeof id !== "string" || !UUID.test(id)) return { erro: "Tarefa inválida." };
+  try {
+    const admin = createAdminClient();
+    const tarefa = await admin.from("manager_tasks")
+      .select("id, business_id, status, assigned_to").eq("id", id).maybeSingle();
+    if (tarefa.error || !tarefa.data) return { erro: "Tarefa não encontrada. Atualize a fila." };
+    if (tarefa.data.status !== "open") return { erro: "Esta tarefa já foi concluída. Atualize a fila." };
+    if (tarefa.data.assigned_to === user.id) return { ok: "Esta tarefa já está com você." };
+    if (tarefa.data.assigned_to) return { erro: "Esta tarefa já tem outro responsável. Atualize a fila." };
+    const conta = await admin.from("manager_accounts").select("operator_profile_id")
+      .eq("business_id", tarefa.data.business_id).maybeSingle();
+    if (conta.error || conta.data?.operator_profile_id !== user.id)
+      return { erro: "Assuma primeiro a responsabilidade por esta conta." };
+    const gravacao = await admin.from("manager_tasks").update({
+      assigned_to: user.id, updated_at: new Date().toISOString(),
+    }).eq("id", id).eq("business_id", tarefa.data.business_id).eq("status", "open")
+      .is("assigned_to", null).select("id").maybeSingle();
+    if (gravacao.error) return { erro: "Não foi possível assumir a tarefa. Tente novamente." };
+    if (!gravacao.data) return { erro: "A tarefa mudou enquanto você a assumia. Atualize a fila." };
+    revalidatePath("/gestor/tarefas");
+    revalidatePath("/gestor");
+    return { ok: "Tarefa atribuída a você." };
+  } catch {
+    return { erro: "Não foi possível assumir a tarefa. Tente novamente." };
   }
 }
 
@@ -116,8 +165,9 @@ export async function prepararContaAction(_anterior: EstadoTarefa, dados: FormDa
         .eq("business_id", businessId).maybeSingle(),
     ]);
     if (negocio.error || !negocio.data) return { erro: "Negócio não encontrado." };
-    if (atribuicao.error || !atribuicao.data)
-      return { erro: "Atribua um gestor à conta antes de preparar as pendências." };
+    if (atribuicao.error) return { erro: "Não foi possível conferir o responsável desta conta." };
+    if (atribuicao.data?.operator_profile_id !== user.id)
+      return { erro: "Assuma a responsabilidade por esta conta antes de preparar as pendências." };
     const itens = tarefasDaPreparacao(businessId);
     // A identidade da pendência inicial é o ID determinístico. Uma tarefa
     // manual com o mesmo título não deve esconder a preparação desta conta.
@@ -169,6 +219,11 @@ export async function concluirTarefaAction(_anterior: EstadoTarefa, dados: FormD
     return { erro: "Registre em pelo menos cinco caracteres o que foi feito." };
   try {
     const admin = createAdminClient();
+    const tarefa = await admin.from("manager_tasks")
+      .select("id, business_id, description").eq("id", id).maybeSingle();
+    if (tarefa.error || !tarefa.data) return { erro: "Não foi possível conferir esta tarefa. Atualize a fila." };
+    if (ehTarefaDeRevisao(tarefa.data.id, tarefa.data.business_id, tarefa.data.description))
+      return { erro: "Decida esta peça na fila de criativos; a tarefa será encerrada após o registro da decisão." };
     const agora = new Date().toISOString();
     const gravacao = await admin.from("manager_tasks").update({
       status: "done", completion_note: nota.trim(), completed_by: user.id,
