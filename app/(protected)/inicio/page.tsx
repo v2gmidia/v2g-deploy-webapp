@@ -7,6 +7,7 @@ import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
 import { TelaDoInicio } from "./TelaDoInicio";
 import { lerConclusao } from "@/lib/onboarding/marca";
+import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -132,13 +133,17 @@ export default async function InicioPage() {
     if (jornada && lerConclusao(jornada.onboarding)) redirect("/onboarding/concluido");
   }
 
-  const { data: ultimaDecisao } = estado.negocioId ? await supabase
+  const { data: ultimaDecisao, error: erroDecisao } = estado.negocioId ? await supabase
     .from("decisions")
     .select("kind, payload, created_at")
     .eq("business_id", estado.negocioId)
+    .in("kind", [...TIPOS_VISIVEIS_AO_CLIENTE])
+    .eq("status", "done")
+    .eq("needs_review", false)
     .order("created_at", { ascending: false })
     .limit(1)
-    .maybeSingle() : { data: null };
+    .maybeSingle() : { data: null, error: null };
+  if (erroDecisao) console.error("[inicio] falha ao ler atualizações ::", erroDecisao.message);
 
   const diaDaPergunta = diaDeOntemEmSaoPaulo(agora);
 
@@ -169,6 +174,7 @@ export default async function InicioPage() {
     <TelaDoInicio
       estado={estado}
       ultimaDecisao={ultimaDecisao}
+      falhaAtualizacoes={Boolean(erroDecisao)}
       diaDaPergunta={diaDaPergunta}
       atrasados={atrasados}
       faixa={<FaixaReconectar />}

@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`tarefas-gestor-10-10.md`](./tarefas-gestor-10-10.md) | 10/10/2026 | Retomada das pendências iniciais por ID e acesso direto a tarefas de negócio fora da primeira página da carteira. | **Sim.** Interface autenticada e banco QA não verificados. |
 | [`senha-forte-09-10.md`](./senha-forte-09-10.md) | 09/10/2026 | Confirmação de senha e regra comum no primeiro acesso/redefinição, com testes locais e prova visual. | **Sim.** Publicar no QA e alinhar a política do Supabase Auth; e-mail/login continuam pendentes. |
 | [`qa-primeiro-acesso-09-10.md`](./qa-primeiro-acesso-09-10.md) | 09/10/2026 | Duas fixtures fictícias para testar e-mail, login e multiconta no QA, com identificadores e limpeza restrita. | **Sim.** Victor cria a senha de teste; faltam confirmação, login, vínculo e troca entre CNPJs. |
 | [`auditoria-sem-repeticao-09-10.md`](./auditoria-sem-repeticao-09-10.md) | 09/10/2026 | Corte atual das provas de compra no Asaas Sandbox e próximo marco, para evitar repetição do guia de 08/10. | **Sim.** Link Auth/login, bordas do pagamento, assinatura, NFS-e e jornada autenticada. |

@@ -119,14 +119,22 @@ export async function prepararContaAction(_anterior: EstadoTarefa, dados: FormDa
     if (atribuicao.error || !atribuicao.data)
       return { erro: "Atribua um gestor à conta antes de preparar as pendências." };
     const itens = tarefasDaPreparacao(businessId);
-    const existentes = await admin.from("manager_tasks").select("task_type, title")
-      .eq("business_id", businessId).in("title", itens.map((item) => item.titulo));
+    // A identidade da pendência inicial é o ID determinístico. Uma tarefa
+    // manual com o mesmo título não deve esconder a preparação desta conta.
+    const existentes = await admin.from("manager_tasks").select("id, business_id, task_type, title")
+      .in("id", itens.map((item) => item.id));
     if (existentes.error || !existentes.data)
       return { erro: "Não foi possível conferir as pendências existentes. Tente novamente." };
-    const jaRegistradas = new Set(existentes.data.map((item) => `${item.task_type}:${item.title}`));
+    const jaRegistradas = new Map(existentes.data.map((item) => [item.id, item]));
     let criadas = 0;
     for (const item of itens) {
-      if (jaRegistradas.has(`${item.tipo}:${item.titulo}`)) continue;
+      const existente = jaRegistradas.get(item.id);
+      if (existente) {
+        if (existente.business_id !== businessId || existente.task_type !== item.tipo ||
+            existente.title !== item.titulo)
+          return { erro: "Há um conflito na identificação de uma pendência inicial. Confira a fila antes de continuar." };
+        continue;
+      }
       const insercao = await admin.from("manager_tasks").insert({
         id: item.id, business_id: businessId, task_type: item.tipo,
         title: item.titulo, description: item.descricao,

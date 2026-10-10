@@ -21,3 +21,8 @@
 - Ainda falta uma sessão cliente e outra de operador percorrer upload pela interface, retomada, decisão e visualização posterior. O banco QA de checkout contém somente a base mínima de compras; faltam colunas da `businesses` que `/criativos` usa em `estadoDoCliente()`, então não serve para provar essa tela sem provisionar um ambiente de QA completo. Os testes de Storage/RLS não provam a action ou a interface autenticada.
 - A migration precisa de revisão de segurança, incluindo políticas Storage efetivas do ambiente alvo, antes de qualquer produção. A fila não designa responsável nem envia aviso; o gestor precisa abrir a tela. Retenção/exclusão do arquivo ainda não foi definida.
 - A campanha inicial continua publicada manualmente pelo gestor, após as travas de pagamento, contrato, conta e acesso. A aprovação de peça não comprova campanha no ar.
+
+## Continuação local: carteira grande no filtro de peças
+
+- O filtro “Minhas contas” de `/gestor/criativos` buscava no máximo 1.000 atribuições, avisava sobre o recorte, mas ainda montava a fila parcial. Isso podia exibir “Nenhuma peça registrada” apesar de haver peça em uma conta omitida. Ao atingir o teto, a tela agora interrompe o filtro e oferece a fila completa e a carteira; não apresenta uma lista parcial como carteira inteira.
+- `pnpm conferir:revisao-criativos` (4/4), `pnpm typecheck` e `pnpm build` passaram sem servidor dev concorrente. O caso com 1.000 atribuições não foi exercitado em navegador ou banco QA; a alteração está somente no código local. Não altera RLS, responsável, estado de revisão nem publicação.

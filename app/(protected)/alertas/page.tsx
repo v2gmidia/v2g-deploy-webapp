@@ -3,6 +3,7 @@ import { estadoDoCliente } from "@/lib/estado/cliente";
 import { esteveNoAr, estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import { tituloDaAba } from "@/lib/titulos";
 import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
+import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 
 export const metadata = tituloDaAba("/alertas");
 
@@ -31,6 +32,7 @@ export default async function AlertasPage() {
         .from("decisions")
         .select("id, kind, payload, created_at")
         .eq("business_id", estado.negocioId)
+        .in("kind", [...TIPOS_VISIVEIS_AO_CLIENTE])
         .eq("needs_review", true)
         .order("created_at", { ascending: false })
     : { data: [], error: null };
@@ -40,6 +42,8 @@ export default async function AlertasPage() {
         .from("decisions")
         .select("id, kind, payload, created_at")
         .eq("business_id", estado.negocioId)
+        .in("kind", [...TIPOS_VISIVEIS_AO_CLIENTE])
+        .eq("status", "done")
         .eq("needs_review", false)
         .order("created_at", { ascending: false })
         .limit(10)

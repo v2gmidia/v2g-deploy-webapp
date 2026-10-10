@@ -33,3 +33,8 @@ O quadro FigJam de outubro chegou ao limite de chamadas da conexão Figma. A exe
 - A minuta não foi aprovada, assinatura e NFS-e não foram integradas, e o link da agenda não comprova reserva. A primeira campanha continua manual e não foi publicada.
 - A fila de compras lê no máximo 200 pedidos e 1.000 documentos por tabela; exibe aviso quando alcança esse limite. Uma consulta com erro mostra indisponibilidade, não zero.
 - Nenhum commit, push, deploy, migration no banco real, pagamento real ou escrita na Meta foi feito.
+
+## Continuação local — seleção de negócio com CNPJ indisponível (09/10)
+
+- A tela `/escolher-negocio` ignorava erro ao ler `commercial_orders` e, nesse caso, trocava silenciosamente todos os CNPJs pelo prefixo do ID do cadastro. Para negócios de mesmo nome, isso podia levar o cliente a escolher a conta errada. A consulta continua restrita ao perfil autenticado e aos negócios liberados; se ela falhar, agora a tela mostra indisponibilidade e oferece nova tentativa antes da escolha. Negócio legado sem pedido aprovado ainda pode aparecer pelo código quando a consulta funciona.
+- `pnpm conferir:multiconta` (12/12), `pnpm typecheck` e `pnpm build` passaram sem servidor dev concorrente. A falha de consulta não foi reproduzida em navegador autenticado nem no banco QA; não afirmar prova de dois CNPJs na interface por estes testes.

@@ -46,10 +46,18 @@ export default async function EscolherNegocioPage() {
     <form action={limparNegocioAction}><button className="cta" type="submit">Continuar</button></form>
   </section>;
 
-  const { data: pedidos } = await supabase.from("commercial_orders")
+  const { data: pedidos, error: erroPedidos } = await supabase.from("commercial_orders")
     .select("business_id, cnpj")
     .eq("buyer_profile_id", user.id).eq("status", "payment_approved")
     .in("business_id", data.map((negocio) => negocio.id));
+  if (erroPedidos) {
+    console.error("[escolher-negocio] falha ao ler CNPJs das compras ::", erroPedidos.message);
+    return <section className="auth-card">
+      <h1 className="auth-h">Não conseguimos carregar seus negócios por completo.</h1>
+      <p className="auth-sub">A identificação das contas está indisponível agora. Tente novamente antes de escolher.</p>
+      <a className="cta" href="/escolher-negocio">Tentar novamente</a>
+    </section>;
+  }
   const cnpjPorNegocio = new Map((pedidos ?? []).map((pedido) => [pedido.business_id, pedido.cnpj]));
   const negocios = data.map((negocio) => ({ ...negocio,
     cnpj: cnpjPorNegocio.get(negocio.id) ?? null, codigo: negocio.id.slice(0, 8),

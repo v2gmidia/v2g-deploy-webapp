@@ -7,6 +7,7 @@ import { AssumirConta, ConcluirTarefa, CriarTarefa, PrepararConta } from "./Form
 
 export const metadata = { title: "Tarefas do gestor | V2G", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function TarefasDoGestorPage({ searchParams }: {
   searchParams: Promise<{ negocio?: string; q?: string; filtro?: string }>;
@@ -19,11 +20,19 @@ export default async function TarefasDoGestorPage({ searchParams }: {
   try {
     const admin = createAdminClient();
     const parametros = await searchParams;
-    const negocios = await admin.from("businesses").select("id, name")
-      .eq("dados_ficticios", false).order("name").limit(1000);
+    const negocioPedido = typeof parametros.negocio === "string" ? parametros.negocio.trim() : "";
+    if (negocioPedido && !UUID.test(negocioPedido))
+      return <div className="canvas"><h1>Tarefas do gestor</h1>
+        <p className="form-warning">A conta informada é inválida.</p>
+        <p><a href="/gestor/tarefas">Ver todas as tarefas</a></p></div>;
+    // Uma conta escolhida deve ser buscada pelo ID, mesmo que esteja além das
+    // primeiras 1.000 linhas da carteira geral.
+    let consultaNegocios = admin.from("businesses").select("id, name")
+      .eq("dados_ficticios", false);
+    if (negocioPedido) consultaNegocios = consultaNegocios.eq("id", negocioPedido);
+    const negocios = await consultaNegocios.order("name").limit(1000);
     if (negocios.error || !negocios.data) throw new Error("negócios indisponíveis");
     const negociosPorId = new Map(negocios.data.map((negocio) => [negocio.id, negocio.name]));
-    const negocioPedido = typeof parametros.negocio === "string" ? parametros.negocio.trim() : "";
     if (negocioPedido && !negociosPorId.has(negocioPedido))
       return <div className="canvas"><h1>Tarefas do gestor</h1>
         <p className="form-warning">A conta informada não está disponível nesta consulta.</p>
@@ -78,7 +87,7 @@ export default async function TarefasDoGestorPage({ searchParams }: {
       return !busca || texto.includes(busca.toLocaleLowerCase("pt-BR"));
     });
     const tarefasParciais = tarefas.count === null || tarefas.count > tarefas.data.length;
-    const parcial = negocios.data.length === 1000 || tarefasParciais ||
+    const parcial = (!negocioInicial && negocios.data.length === 1000) || tarefasParciais ||
       atribuicoes.data.length === 1000 || !!perfis.error;
     const formatarData = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
     return <div className="canvas">

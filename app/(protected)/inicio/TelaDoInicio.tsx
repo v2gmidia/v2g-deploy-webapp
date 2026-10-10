@@ -143,12 +143,14 @@ function FasesDaCampanha({ fases }: { fases: ReturnType<typeof fasesDaCadeia> })
 export function TelaDoInicio({
   estado,
   ultimaDecisao,
+  falhaAtualizacoes = false,
   diaDaPergunta,
   atrasados,
   faixa,
 }: {
   estado: EstadoDoCliente;
   ultimaDecisao: { payload: unknown } | null;
+  falhaAtualizacoes?: boolean;
   /** o dia que a pergunta pergunta — ONTEM em São Paulo, calculado na busca */
   diaDaPergunta: string;
   atrasados: string[];
@@ -448,7 +450,7 @@ export function TelaDoInicio({
           </div>
 
           <div className="inicio-col">
-            {diaZero ? <Noturno decisao={ultimaDecisao} /> : <Suporte />}
+            {diaZero ? <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} /> : <Suporte />}
             <Comando verba={estado.verbaMensal} investido={null} />
           </div>
         </div>
@@ -781,7 +783,7 @@ export function TelaDoInicio({
         </div>
 
         <div className="inicio-col">
-          <Noturno decisao={ultimaDecisao} />
+          <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
           {/* O investido só vai para o Comando quando ele é comparável
               com a verba, que é em reais. Em outra moeda, o card mostra
               só o teto. */}
@@ -873,25 +875,26 @@ function Melhoras({ fotos }: { fotos: number }) {
   );
 }
 
-function Noturno({ decisao }: { decisao: { payload: unknown } | null }) {
+function Noturno({ decisao, falha }: { decisao: { payload: unknown } | null; falha: boolean }) {
   return (
     <section className="card noturno">
       <div className="nc-head">
         <svg width="16" height="16" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
           <path d="M9 1a5 5 0 1 0 2 8.5A5.5 5.5 0 0 1 9 1z" />
         </svg>
-        Enquanto você dormia
+        Atualizações deste negócio
       </div>
-      {decisao ? (
+      {falha ? (
+        <p>Não conseguimos carregar as atualizações agora. Tente novamente em instantes.</p>
+      ) : decisao ? (
         <p>{resumoDaDecisao(decisao.payload)}</p>
       ) : (
         <p>
-          A IA ainda não tomou nenhuma decisão. Quando tomar — remanejar investimento, pausar o
-          que não rende — aparece aqui, com data, hora e motivo.
+          Ainda não há atualizações concluídas para mostrar nesta conta.
         </p>
       )}
       <p className="nc-foot">
-        <a href="/alertas">ver tudo que a IA já fez</a>
+        <a href="/alertas">ver todos os avisos</a>
       </p>
     </section>
   );

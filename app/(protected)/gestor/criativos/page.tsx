@@ -26,6 +26,10 @@ export default async function CriativosDoGestorPage({ searchParams }: {
     const atribuicoes = minhas ? await admin.from("manager_accounts")
       .select("business_id").eq("operator_profile_id", user.id).limit(1000) : null;
     if (atribuicoes?.error) throw new Error("atribuições indisponíveis");
+    if (minhas && atribuicoes?.data?.length === 1000)
+      return <div className="canvas"><h1>Revisão de criativos</h1>
+        <p className="form-warning">A carteira ultrapassou o limite desta consulta. A lista de peças das suas contas poderia ficar incompleta.</p>
+        <p><a href="/gestor/criativos">Ver toda a fila</a> · <a href="/gestor">Voltar à carteira</a></p></div>;
     const meusNegocios = (atribuicoes?.data ?? []).map((item) => item.business_id);
     if (minhas && negocioId && !meusNegocios.includes(negocioId))
       return <div className="canvas"><h1>Revisão de criativos</h1>
@@ -68,8 +72,6 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       <p><a href="/gestor/criativos?filtro=minhas" aria-current={minhas ? "page" : undefined}>Minhas contas</a> · <a href="/gestor/criativos" aria-current={!minhas ? "page" : undefined}>Toda a fila</a></p>
       {negocioId && <p>Conta selecionada: {nomes.get(negocioId) ?? negocioId}</p>}
       {minhas && meusNegocios.length === 0 && <p>Nenhuma conta atribuída a você. Consulte a carteira ou assuma uma conta na fila de tarefas.</p>}
-      {atribuicoes?.data?.length === 1000 &&
-        <p className="form-warning">A lista de contas atribuídas pode estar incompleta. Confira a carteira antes de concluir que não há peças suas.</p>}
       {(pendentes.count === null || pendentes.count > pendentes.data.length || negocios.error) &&
         <p className="form-warning">Há pendências além das exibidas ou nomes de negócios indisponíveis. Continue a revisão pela fila e confira a fonte antes de decidir.</p>}
       {historico.data.length === 30 && <p>Histórico: mostrando os 30 envios mais recentes que não aguardam revisão.</p>}
