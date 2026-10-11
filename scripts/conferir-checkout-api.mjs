@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { lerPagamentoConfirmado } from "../lib/contratacao/pagamento-evento.ts";
+import { lerEventoFinanceiro } from "../lib/contratacao/evento-financeiro.ts";
 import { validarDadosCartao } from "../lib/contratacao/dados-cartao.ts";
 import { urlCheckoutHospedadoSandbox } from "../lib/contratacao/url-checkout.ts";
 import { cartaoRecusadoSemCobranca, MAX_TENTATIVAS_CARTAO } from "../lib/contratacao/retentativa-cartao.ts";
@@ -29,6 +30,24 @@ test("assinatura de cartao preserva o vinculo de origem", () => {
   assert.equal(lerPagamentoConfirmado({ ...cartao, payment: { ...cartao.payment, status: "RECEIVED" } }), null);
   assert.equal(lerPagamentoConfirmado({ ...cartao, payment: { ...cartao.payment, subscription: "outra" } }), null);
   assert.equal(lerPagamentoConfirmado({ ...cartao, payment: { ...cartao.payment, dueDate: null } }), null);
+});
+
+test("cobranca seguinte e estorno sao eventos registraveis, sem aprovar compra", () => {
+  const seguinte = { ...eventoPix, id: "evt_teste_0002", event: "PAYMENT_RECEIVED", payment: {
+    ...eventoPix.payment, id: "pay_teste002", subscription: "sub_teste001",
+    billingType: "CREDIT_CARD", dueDate: "2026-11-08", status: "RECEIVED",
+  } };
+  assert.equal(lerEventoFinanceiro(seguinte)?.cobrancaId, "pay_teste002");
+  assert.equal(lerEventoFinanceiro(seguinte)?.vencimento, "2026-11-08");
+  const estorno = { ...seguinte, id: "evt_teste_0003", event: "PAYMENT_REFUNDED",
+    payment: { ...seguinte.payment, status: "REFUNDED" } };
+  assert.equal(lerEventoFinanceiro(estorno)?.tipo, "PAYMENT_REFUNDED");
+  assert.equal(lerPagamentoConfirmado(estorno), null);
+  const disputa = { ...seguinte, id: "evt_teste_0004", event: "PAYMENT_CHARGEBACK_REQUESTED" };
+  assert.equal(lerEventoFinanceiro(disputa)?.tipo, "PAYMENT_CHARGEBACK_REQUESTED");
+  assert.equal(lerEventoFinanceiro({ ...disputa, payment: { ...disputa.payment, value: 499 } })?.valorCentavos, 49900);
+  assert.equal(lerEventoFinanceiro({ ...disputa, payment: { ...disputa.payment, dueDate: null } }), null);
+  assert.equal(lerEventoFinanceiro({ ...disputa, payment: { ...disputa.payment, subscription: "sub_outro!" } }), null);
 });
 
 test("formulario do cartao rejeita documento e validade invalidos antes da API", () => {

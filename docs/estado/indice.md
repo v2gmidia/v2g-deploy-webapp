@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`etapa-01-cobrancas-seguintes-11-10.md`](./etapa-01-cobrancas-seguintes-11-10.md) | 11/10/2026 | LP e entrada observadas, registro de eventos de renovação, estorno e contestação aplicado somente ao QA. | **Sim.** Webhook e sessão real não verificados; 3DS depende de confirmação específica do Asaas. |
 | [`verificacao-local-11-10.md`](./verificacao-local-11-10.md) | 11/10/2026 | Conferência conjunta dos blocos locais e correção do simulador offline da sessão multiconta. | **Sim.** QA pausado e interface autenticada não verificada. |
 | [`alertas-sem-negocio-11-10.md`](./alertas-sem-negocio-11-10.md) | 11/10/2026 | Avisos não afirmam ausência de pendências quando o negócio não foi identificado. | **Sim.** Sessão autenticada e QA não verificados. |
 | [`alertas-pendencias-parciais-11-10.md`](./alertas-pendencias-parciais-11-10.md) | 11/10/2026 | Avisos contam peças antigas com ajuste e deixam de afirmar ausência quando as leituras estão parciais. | **Sim.** Interface autenticada e QA não verificados. |

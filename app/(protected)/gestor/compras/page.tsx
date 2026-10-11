@@ -74,11 +74,32 @@ export default async function ComprasDoGestorPage({ searchParams }: {
       : ultimoDocumentoPorPedido(contratos.data as DocumentoPorPedido[]);
     const fiscais = documentosIndisponiveis ? new Map<string, string>()
       : ultimoDocumentoPorPedido(notas.data as DocumentoPorPedido[]);
+    // Somente no checkout de Sandbox com schema novo. Eventos adversos nao
+    // mudam acesso automaticamente: o operador precisa conciliar no Asaas.
+    const tiposDeAtencao = ["PAYMENT_OVERDUE", "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+      "PAYMENT_REFUND_IN_PROGRESS", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_REFUNDED",
+      "PAYMENT_CHARGEBACK_REQUESTED", "PAYMENT_CHARGEBACK_DISPUTE",
+      "PAYMENT_AWAITING_CHARGEBACK_REVERSAL"];
+    const movimentos = colunasDaApi && ids.length ? await admin.from("commercial_payment_events")
+      .select("order_id, provider_charge_id, event_type, due_date, received_at")
+      .in("order_id", ids)
+      .order("received_at", { ascending: false }).limit(1000)
+      : { data: [], error: null };
+    const movimentosIndisponiveis = !!(movimentos.error || !movimentos.data);
+    const movimentoPorPedido = new Map<string, { event_type: string; provider_charge_id: string; due_date: string }>();
+    const cobrancasVistas = new Set<string>();
+    for (const movimento of movimentos.data ?? []) {
+      const chave = `${movimento.order_id}:${movimento.provider_charge_id}`;
+      if (cobrancasVistas.has(chave)) continue;
+      cobrancasVistas.add(chave);
+      if (tiposDeAtencao.includes(movimento.event_type) && !movimentoPorPedido.has(movimento.order_id))
+        movimentoPorPedido.set(movimento.order_id, movimento);
+    }
     const contratosParciais = (contratos.data?.length ?? 0) === 1000;
     const notasParciais = (notas.data?.length ?? 0) === 1000;
     const consultaParcial = selecao.parcial || resposta.data.length === 200 || (comprovantes.data?.length ?? 0) === 200 ||
       (semPerfil.data?.length ?? 0) === 200 || (ambiguos.data?.length ?? 0) === 200 ||
-      contratosParciais || notasParciais;
+      contratosParciais || notasParciais || (movimentos.data?.length ?? 0) === 1000;
     const busca = typeof parametros.q === "string" ? parametros.q.slice(0, 120) : "";
     const filtro: FiltroDeCompras = ["atencao", "pagamento", "aprovadas", "canceladas"].includes(parametros.filtro ?? "")
       ? parametros.filtro as FiltroDeCompras : "todas";
@@ -94,6 +115,8 @@ export default async function ComprasDoGestorPage({ searchParams }: {
       {consultaParcial && <p className="form-warning">Consulta parcial: há registros no limite de leitura. Confira a fonte antes de decidir.</p>}
       {atencaoIndisponivel && <p className="form-warning">A busca adicional por pedidos que precisam de atenção falhou. Os pedidos recentes ainda aparecem; confira a fonte antes de concluir que não há pendências antigas.</p>}
       {documentosIndisponiveis && <p className="form-warning">Não foi possível consultar contratos ou notas agora. Esses estados não serão inferidos.</p>}
+      {movimentosIndisponiveis && <p className="form-warning">Não foi possível consultar as ocorrências financeiras. Confira o Asaas antes de concluir que não há estorno, atraso ou contestação.</p>}
+      {movimentoPorPedido.size > 0 && <p className="form-warning">{movimentoPorPedido.size} pedido(s) com ocorrência financeira registrada nesta consulta. Confira a cobrança e a data no Asaas antes de decidir sobre acesso ou campanha.</p>}
       <form className={styles.filtros} action="/gestor/compras" method="get">
         {negocioId && <input type="hidden" name="negocio" value={negocioId} />}
         <label>Buscar pedido <input type="search" name="q" defaultValue={busca} placeholder="Empresa, e-mail, CNPJ ou pedido" /></label>
@@ -116,6 +139,7 @@ export default async function ComprasDoGestorPage({ searchParams }: {
         <p>{pedido.unit_count} {pedido.unit_count === 1 ? "conta" : "contas"} · {periodoDaCompra(pedido.billing_period)} · {dinheiro.format(pedido.total_cents / 100)} · {data.format(new Date(pedido.created_at))}</p>
         <p>{pedido.business_id ? "Negócio vinculado" : "Negócio ainda não vinculado"} · {pedido.buyer_profile_id ? "Perfil vinculado ao pedido" : "Perfil ainda não vinculado"}</p>
         {!documentosIndisponiveis && <p>Contrato: {situacaoDoContrato(assinaturas.get(pedido.id), contratosParciais)} · NFS-e: {situacaoDaNota(fiscais.get(pedido.id), notasParciais)}</p>}
+        {movimentoPorPedido.has(pedido.id) && <p className="form-warning">Ocorrência financeira: {movimentoPorPedido.get(pedido.id)?.event_type} · vencimento {movimentoPorPedido.get(pedido.id)?.due_date} · cobrança {movimentoPorPedido.get(pedido.id)?.provider_charge_id}. Confira no Asaas; o registro não cancela automaticamente o acesso.</p>}
         {pedido.business_id && <p><a href={`/revisar-perfil?negocio=${encodeURIComponent(pedido.business_id)}#ficha-${encodeURIComponent(pedido.business_id)}`}>Abrir ficha do negócio</a></p>}
         <small>Pedido {pedido.id}</small>
       </section>)}</div>
