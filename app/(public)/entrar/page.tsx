@@ -3,6 +3,7 @@
 import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { CriteriosSenha } from "@/components/ui/CriteriosSenha";
 import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
 import { SITE_PUBLICO_ORIGEM } from "@/lib/site-publico";
 import { forcaDaSenha } from "@/lib/auth-senha";
@@ -134,7 +135,7 @@ function EntrarContent() {
                   id="senha-cadastro" name="senha" type={mostrarSenha ? "text" : "password"}
                   placeholder="Crie sua senha" autoComplete="new-password"
                   value={senhaNova} onChange={evento => setSenhaNova(evento.target.value)}
-                  aria-describedby={forca === "vazia" ? undefined : "forca-senha"} required
+                  aria-describedby="forca-senha criterios-senha" required
                 /><button type="button" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
                   aria-pressed={mostrarSenha} onClick={() => setMostrarSenha(valor => !valor)}>
                   <IconeVisibilidade visivel={mostrarSenha} /></button></span>
@@ -143,6 +144,7 @@ function EntrarContent() {
                   <strong>Senha {forca === "media" ? "média" : forca}</strong>
                   {forca !== "forte" && <small>Continue até ficar forte para criar o acesso.</small>}
                 </div>}
+                <CriteriosSenha senha={senhaNova} id="criterios-senha" />
               </div>
               <div className="field">
                 <label htmlFor="senha-confirmar-cadastro">Repita a senha</label>

@@ -9,6 +9,7 @@ import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
 import { FormularioNegocio } from "./Formulario";
 import { limparNegocioAction } from "./actions";
 import { tituloDaAba } from "@/lib/titulos";
+import "@/app/entrada-editorial.css";
 
 export const dynamic = "force-dynamic";
 export const metadata = tituloDaAba("/escolher-negocio");
@@ -79,15 +80,14 @@ export default async function EscolherNegocioPage() {
     cnpj: cnpjPorNegocio.get(negocio.id) ?? null, codigo: negocio.id.slice(0, 8),
   }));
 
-  return <section className="auth-card">
-    <p className="mission-tag">Sua conta</p>
+  return <section className="auth-card seletor-negocio">
     <h1 className="auth-h">Qual negócio você quer abrir?</h1>
     <p className="auth-sub">Cada negócio tem suas próprias respostas, anúncios e próximos passos.</p>
     <FormularioNegocio negocios={negocios}
       selecionado={ativo.status === "selecionado" ? ativo.negocio.id : null} />
-    <p className="auth-sub">Para adicionar outro CNPJ, use o mesmo e-mail da sua conta na nova contratação. O negócio aparece aqui depois da confirmação do pagamento e do vínculo ao e-mail verificado.</p>
+    <p className="seletor-ajuda">Para adicionar outro CNPJ, use o mesmo e-mail na nova contratação. O negócio aparecerá após a confirmação do pagamento e do vínculo ao e-mail verificado.</p>
     {process.env.NODE_ENV !== "production"
-      ? <a className="cta" href="/contratar">Adicionar negócio pelo checkout de teste</a>
-      : <a className="cta" href="https://wa.me/5521936182176?text=Quero%20adicionar%20outro%20neg%C3%B3cio%20%C3%A0%20minha%20conta%20V2G" target="_blank" rel="noopener">Pedir outro negócio</a>}
+      ? <a className="seletor-link" href="/contratar">Adicionar negócio pelo checkout de teste <span aria-hidden="true">→</span></a>
+      : <a className="seletor-link" href="https://wa.me/5521936182176?text=Quero%20adicionar%20outro%20neg%C3%B3cio%20%C3%A0%20minha%20conta%20V2G" target="_blank" rel="noopener">Pedir outro negócio <span aria-hidden="true">→</span></a>}
   </section>;
 }

@@ -102,6 +102,10 @@
 .entrada-editorial .entrada-forca-forte i { background: var(--good); }
 .entrada-editorial .entrada-forca strong { color: var(--ink); font-weight: 600; }
 .entrada-editorial .entrada-forca small { color: var(--ink-soft); font-size: 12px; }
+.entrada-editorial .criterios-senha { margin: 12px 0 0; padding: 0; list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 5px 14px; color: var(--ink-soft); font-size: 12px; }
+.entrada-editorial .criterios-senha li { display: flex; align-items: baseline; gap: 7px; }
+.entrada-editorial .criterios-senha li span { color: var(--ink-mute); font-weight: 700; }
+.entrada-editorial .criterios-senha li.atendido, .entrada-editorial .criterios-senha li.atendido span { color: var(--good); }
 .entrada-editorial .entrada-senha-label { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
 .entrada-editorial .entrada-senha-label a { font-size: 12px; line-height: 1.8; }
 .entrada-editorial .cta { width: 100%; min-height: 52px; margin-top: 8px; padding: 12px 20px; border: 1px solid transparent; border-radius: 4px; background: var(--cobalt); color: #FFFFFF; font-family: var(--body); font-size: 16px; font-weight: 500; line-height: 1.5; box-shadow: none; text-align: center; text-decoration: none; }
@@ -147,6 +151,7 @@
   .entrada-editorial .entrada-legal { margin-top: auto; padding-top: 0; }
 }
 @media (max-width: 380px) {
+  .entrada-editorial .criterios-senha { grid-template-columns: 1fr; }
   .entrada-editorial .entrada-marca { padding-inline: 20px; }
   .entrada-editorial .entrada-acesso { padding-inline: 20px; }
   .entrada-editorial .entrada-conhecer a svg { display: none; }
@@ -154,4 +159,33 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .entrada-editorial *, .entrada-editorial *::before, .entrada-editorial *::after { animation: none; transition: none; scroll-behavior: auto; }
+}
+
+/* A seleção de negócios pertence à mesma entrada editorial, inclusive
+   quando o usuário escolheu o tema escuro para o produto protegido. */
+.auth-shell:has(.seletor-negocio) { background: #F8FBFA; color-scheme: light; }
+.auth-shell:has(.seletor-negocio) .auth-top { max-width: 1040px; padding-top: 32px; }
+.auth-shell:has(.seletor-negocio) .auth-top .wordmark { color: #102A35; }
+.auth-shell:has(.seletor-negocio) .auth-top .wm { color: #102A35; }
+.auth-shell:has(.seletor-negocio) .auth-top .wm small { color: #49606A; }
+.auth-shell:has(.seletor-negocio) .auth-wrap { max-width: 1040px; padding-top: clamp(32px, 7vh, 96px); }
+.seletor-negocio { width: min(100%, 720px); margin-inline: auto; padding: clamp(24px, 4vw, 48px); border: 1px solid #CCD9D6; border-radius: 4px; background: #FFFFFF; color: #102A35; }
+.seletor-negocio .auth-h { margin-bottom: 12px; color: #102A35; font-size: clamp(30px, 4vw, 42px); font-weight: 500; line-height: 1.14; letter-spacing: -.035em; text-transform: none; }
+.seletor-negocio .auth-sub { margin-bottom: 28px; color: #49606A; }
+.seletor-negocio .escolha-lista { gap: 10px; margin-bottom: 22px; }
+.seletor-negocio .escolha-item { min-height: 76px; align-items: center; border: 1px solid #CCD9D6; border-radius: 4px; padding: 14px 18px; background: #F8FBFA; }
+.seletor-negocio .escolha-item:hover, .seletor-negocio .escolha-item:has(input:checked) { border-color: #0B40DA; background: #EEF4FF; }
+.seletor-negocio .escolha-item:focus-within { outline: 2px solid #0B40DA; outline-offset: 3px; }
+.seletor-negocio .escolha-item input { width: 18px; height: 18px; accent-color: #0B40DA; }
+.seletor-negocio .esc-texto b { color: #102A35; font-family: var(--body); font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.seletor-negocio .esc-texto span { color: #49606A; font-size: 13px; }
+.seletor-negocio .cta { width: 100%; min-height: 52px; border-radius: 4px; background: #0B40DA; color: #FFFFFF; font-family: var(--body); font-size: 16px; font-weight: 500; }
+.seletor-negocio .cta:hover:not(:disabled) { background: #092EAA; }
+.seletor-negocio .seletor-ajuda { margin: 28px 0 12px; padding-top: 22px; border-top: 1px solid #CCD9D6; color: #49606A; font-size: 14px; line-height: 1.6; }
+.seletor-negocio .seletor-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; color: #0B40DA; font-size: 14px; font-weight: 600; text-underline-offset: 4px; }
+.seletor-negocio .seletor-link:hover { color: #092EAA; }
+@media (max-width: 600px) {
+  .auth-shell:has(.seletor-negocio) .auth-top { padding: 20px 20px 4px; }
+  .auth-shell:has(.seletor-negocio) .auth-wrap { padding: 20px 16px 48px; }
+  .seletor-negocio { padding: 24px 20px; }
 }

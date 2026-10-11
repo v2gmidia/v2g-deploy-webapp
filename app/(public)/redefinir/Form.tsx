@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Button } from "@/components/ui/Button";
+import { CriteriosSenha } from "@/components/ui/CriteriosSenha";
 import { TAMANHO_MINIMO_SENHA } from "@/lib/auth-senha";
 import { redefinirAction, redefinirInitialState } from "./actions";
 
 export function RedefinirForm() {
   const [state, formAction, pending] = useActionState(redefinirAction, redefinirInitialState);
+  const [senha, setSenha] = useState("");
 
   return (
     <>
@@ -22,10 +24,12 @@ export function RedefinirForm() {
             placeholder="Uma frase longa e única"
             autoComplete="new-password"
             minLength={TAMANHO_MINIMO_SENHA}
-            aria-describedby="orientacao-senha-nova"
+            value={senha}
+            onChange={evento => setSenha(evento.target.value)}
+            aria-describedby="criterios-senha-nova"
             required
           />
-          <p className="note" id="orientacao-senha-nova">Use pelo menos {TAMANHO_MINIMO_SENHA} caracteres. Você pode usar espaços; evite dados pessoais e senhas de outros sites.</p>
+          <CriteriosSenha senha={senha} id="criterios-senha-nova" />
         </div>
         <div className="field">
           <label htmlFor="senha-confirmar">Confirme a nova senha</label>

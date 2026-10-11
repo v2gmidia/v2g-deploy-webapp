@@ -7,7 +7,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
   return (
     <div className="auth-shell">
       <header className="auth-top">
-        <Marca href="/entrar" />
+        <Marca href="/entrar" editorial />
       </header>
       <main className="auth-wrap">{children}</main>
     </div>

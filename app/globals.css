@@ -2494,6 +2494,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .escolha-item.off:hover { border-color: var(--line); }
 .escolha-item input { margin-top: 3px; flex: none; accent-color: var(--cobalt); }
 .esc-texto { min-width: 0; flex: 1; }
+.criterios-senha { margin: 8px 0 0; padding-left: 20px; color: var(--ink-soft); font-size: var(--fs-corpo); }
+.criterios-senha li.atendido { color: var(--good); }
 
 /* Escolha única: mostra o que foi escolhido sem fingir que é pergunta.
    Sem radio, sem borda de item clicável — o que ele NÃO parece é tão
