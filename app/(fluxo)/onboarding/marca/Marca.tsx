@@ -58,7 +58,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
           <label htmlFor="site">Site</label>
           <input id="site" value={site} disabled={semSite} onChange={(e) => setSite(e.target.value)} placeholder="seunegocio.com.br" />
         </div>
-        <label className={styles.opcao}><input type="checkbox" checked={semSite} disabled={!!inicial.site} onChange={(e) => {
+        <label className={styles.opcao}><input type="checkbox" checked={semSite} disabled={!!inicial.site && !semSite} onChange={(e) => {
           setSemSite(e.target.checked);
           if (e.target.checked) setSite("");
         }} /> Não tenho site</label>

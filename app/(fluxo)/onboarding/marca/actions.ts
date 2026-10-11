@@ -3,9 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
-import { lerConta, ticketEscalar, type RespostaDeConta } from "@/lib/cadastro/montar";
-import { documento, lerConclusao, lerMarca, type RespostasDaMarca } from "@/lib/onboarding/marca";
-import { faltamRespostasBasicas, respostasBasicas, type PerguntaBasica } from "@/lib/onboarding/bloco-um";
+import { documento, type RespostasDaMarca } from "@/lib/onboarding/marca";
+import { respostasBasicas, type PerguntaBasica } from "@/lib/onboarding/bloco-um";
+import { estadoDaConclusao } from "@/lib/onboarding/conclusao";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 interface Linha {
@@ -55,20 +55,13 @@ async function obter(): Promise<{ erro: string } | { linha: Linha; profileId: st
 
 function estado(linha: Linha): EstadoMarca {
   const doc = documento(linha.onboarding);
-  const faltamBasicas = faltamRespostasBasicas(doc);
-  const contas = (doc.contas ?? {}) as Partial<Record<"ticket" | "custo" | "lucro", RespostaDeConta>>;
-  const numero = (v: number | null) => v === null ? null : Number(v);
-  const contasProntas = (
-    [lerConta(ticketEscalar(numero(linha.avg_ticket_min), numero(linha.avg_ticket_max)), contas.ticket),
-     lerConta(numero(linha.avg_direct_cost), contas.custo),
-     lerConta(numero(linha.target_profit_per_customer), contas.lucro)]
-  ).every((leitura) => leitura.estado === "respondida" || leitura.estado === "nao_sei");
+  const { marca, faltamBasicas, contasProntas, concluido } = estadoDaConclusao(linha);
   return {
     businessId: linha.id,
     site: linha.site_url ?? "",
     instagram: linha.instagram_handle ?? "",
-    marca: lerMarca(doc),
-    concluido: lerConclusao(doc) !== null && faltamBasicas.length === 0 && contasProntas,
+    marca,
+    concluido,
     respostasBasicas: respostasBasicas(doc),
     faltamBasicas,
     contasProntas,

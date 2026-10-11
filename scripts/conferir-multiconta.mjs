@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { escolherNegocio } from "../lib/multiconta/escolha.ts";
 import { negociosLiberados } from "../lib/multiconta/elegibilidade.ts";
+import { cnpjsDoComprador } from "../lib/multiconta/identificacao.ts";
 
 const empresas = [
   { id: "empresa-a", name: "Empresa A" },
@@ -83,4 +84,18 @@ test("legado sem negócio anterior consegue iniciar um cadastro próprio", () =>
   assert.deepEqual(negociosLiberados({
     ...base, legadoEm: "data inválida", negocios: [novo], pedidos: [],
   }), []);
+});
+
+test("seletor mostra CNPJ de compra aprovada ainda vinculada só por e-mail verificado", () => {
+  const pedidos = [
+    { business_id: "empresa-a", cnpj: "11111111000111", buyer_email: "CLIENTE@EXEMPLO.COM", buyer_profile_id: null },
+    { business_id: "empresa-a", cnpj: "99999999000199", buyer_email: "cliente@exemplo.com", buyer_profile_id: null },
+    { business_id: "empresa-b", cnpj: "22222222000122", buyer_email: "outro@exemplo.com", buyer_profile_id: null },
+    { business_id: "fora", cnpj: "33333333000133", buyer_email: "cliente@exemplo.com", buyer_profile_id: null },
+  ];
+  assert.deepEqual([...cnpjsDoComprador(["empresa-a", "empresa-b"], pedidos, "pessoa-a", "cliente@exemplo.com")],
+    [["empresa-a", "11111111000111"]]);
+  assert.equal(cnpjsDoComprador(["empresa-a"], pedidos, "pessoa-a", null).size, 0);
+  assert.equal(cnpjsDoComprador(["empresa-a"], [{ ...pedidos[0], buyer_profile_id: "outra-pessoa" }],
+    "pessoa-a", "cliente@exemplo.com").size, 0);
 });

@@ -35,6 +35,13 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`cnpj-seletor-multiconta-11-10.md`](./cnpj-seletor-multiconta-11-10.md) | 11/10/2026 | CNPJ visível para pedido aprovado ligado pelo e-mail verificado antes de gravar o perfil. | **Sim.** Somente código local; dois CNPJs autenticados e QA não verificados. |
+| [`conclusao-onboarding-marca-11-10.md`](./conclusao-onboarding-marca-11-10.md) | 11/10/2026 | Veredito único de conclusão na marca, entrada e carteira do gestor, com site consistente. | **Sim.** Somente código local; QA e interface autenticada não verificados. |
+| [`conclusao-tarefa-responsavel-11-10.md`](./conclusao-tarefa-responsavel-11-10.md) | 11/10/2026 | Conclusão de tarefa condicionada ao gestor atual da conta. | **Sim.** QA, transação estrita e transferência operacional pendentes. |
+| [`historico-criativos-cliente-11-10.md`](./historico-criativos-cliente-11-10.md) | 11/10/2026 | Histórico de peças paginado por negócio e orientação correta para envio à revisão. | **Sim.** Somente código local; QA e interface autenticada sem verificação. |
+| [`paginacao-criativos-11-10.md`](./paginacao-criativos-11-10.md) | 11/10/2026 | Fila de criativos paginada além das primeiras 100 pendências, com link direto preservado. | **Sim.** Código local; QA e interface autenticada não verificados. |
+| [`link-direto-tarefa-11-10.md`](./link-direto-tarefa-11-10.md) | 11/10/2026 | Link da fila pessoal para tarefa exata, inclusive após mudança de estado. | **Sim.** Código local; interface autenticada e QA não verificados. |
+| [`retomada-fila-gestor-11-10.md`](./retomada-fila-gestor-11-10.md) | 11/10/2026 | Tarefa de revisão aberta após a peça sair das pendências direciona para conferência e sincronização. | **Sim.** Somente código local; QA pausado e interface não verificada. |
 | [`fila-pessoal-gestor-10-10.md`](./fila-pessoal-gestor-10-10.md) | 10/10/2026 | Fila pessoal na carteira, isolamento por gestor, peça sem tarefa e deduplicação. | **Sim.** Somente código local; interface autenticada, QA e Figma sem verificação. |
 | [`reconciliacao-gestor-10-10.md`](./reconciliacao-gestor-10-10.md) | 10/10/2026 | Retomada da tarefa após falha parcial ou decisão anterior, link para peça específica e carteira visível quando execuções estão indisponíveis. | **Sim.** Interface autenticada bloqueada pelo navegador, QA operacional incompleto e Figma no limite do conector. |
 | [`criativo-tarefa-gestor-10-10.md`](./criativo-tarefa-gestor-10-10.md) | 10/10/2026 | Tarefa interna para peça recebida, encerramento após decisão e atribuição posterior ao gestor da conta. | **Sim.** Interface autenticada, falhas de banco e QA completo não verificados. |

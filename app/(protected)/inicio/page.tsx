@@ -6,6 +6,7 @@ import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
 import { TelaDoInicio } from "./TelaDoInicio";
+import { estadoDaConclusao } from "@/lib/onboarding/conclusao";
 import { lerConclusao } from "@/lib/onboarding/marca";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 
@@ -127,10 +128,16 @@ export default async function InicioPage() {
   // cadeia antiga sugerir conexão, pagamento ou campanha em andamento.
   if (!fixture && estado.negocioId) {
     const { data: jornada, error: erroJornada } = await supabase
-      .from("businesses").select("onboarding")
+      .from("businesses").select("onboarding, site_url, avg_ticket_min, avg_ticket_max, avg_direct_cost, target_profit_per_customer")
       .eq("id", estado.negocioId).eq("profile_id", user!.id).maybeSingle();
     if (erroJornada) console.error("[inicio] falha ao ler conclusão ::", erroJornada.message);
-    if (jornada && lerConclusao(jornada.onboarding)) redirect("/onboarding/concluido");
+    if (jornada && lerConclusao(jornada.onboarding)) {
+      const conclusao = estadoDaConclusao(jornada);
+      if (conclusao.concluido) redirect("/onboarding/concluido");
+      if (conclusao.faltamBasicas.length) redirect("/onboarding");
+      if (!conclusao.contasProntas) redirect("/onboarding/contas");
+      redirect("/onboarding/marca");
+    }
   }
 
   const { data: ultimaDecisao, error: erroDecisao } = estado.negocioId ? await supabase

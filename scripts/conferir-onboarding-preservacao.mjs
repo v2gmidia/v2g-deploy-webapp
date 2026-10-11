@@ -11,7 +11,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const allowed = new Set([
   'app/(fluxo)/onboarding/actions.ts', 'app/(fluxo)/onboarding/perguntas.ts',
   'app/(fluxo)/onboarding/contas/actions.ts', 'app/(fluxo)/onboarding/contas/regras.ts',
-  'app/(fluxo)/onboarding/marca/actions.ts', 'lib/onboarding/marca.ts',
+  'app/(fluxo)/onboarding/marca/actions.ts', 'lib/onboarding/marca.ts', 'lib/onboarding/conclusao.ts',
   'lib/onboarding/bloco-um.ts',
   'lib/onboarding/documento.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
   'lib/formato.ts', 'lib/verba/limites.ts', 'lib/nichos/escolha.ts',
@@ -291,6 +291,35 @@ test('conclusão antiga não mascara pergunta básica ausente na retomada', asyn
   assert.equal(estado.concluido,false);
   assert.deepEqual(estado.faltamBasicas,['nome']);
   assert.deepEqual(events,[]);
+});
+test('conclusão isolada não mascara marca ausente ou incompleta na retomada', async () => {
+  contasProntas();
+  row.onboarding.conclusao = {em:oldTime,proximoPasso:'agendamento_pendente'};
+  assert.equal((await marca.carregarMarcaAction()).concluido,false);
+  row.onboarding.marca = {em:oldTime,aparencia:'',aparenciaNaoSei:false,siteNaoTenho:true};
+  assert.equal((await marca.carregarMarcaAction()).concluido,false);
+  row.onboarding.marca.aparenciaNaoSei = true;
+  row.onboarding.marca.siteNaoTenho = false;
+  assert.equal((await marca.carregarMarcaAction()).concluido,false);
+  row.onboarding.marca.siteNaoTenho = true;
+  assert.equal((await marca.carregarMarcaAction()).concluido,true);
+  row.site_url = 'https://exemplo.com.br';
+  assert.equal((await marca.carregarMarcaAction()).concluido,false);
+  row.onboarding.marca.siteNaoTenho = false;
+  assert.equal((await marca.carregarMarcaAction()).concluido,true);
+  assert.deepEqual(events,[]);
+});
+test('cliente recupera declaração sem site inconsistente com endereço salvo', async () => {
+  contasProntas();
+  row.site_url = 'https://exemplo.com.br';
+  row.onboarding.marca = {em:oldTime,aparencia:'Azul',aparenciaNaoSei:false,siteNaoTenho:true};
+  row.onboarding.conclusao = {em:oldTime,proximoPasso:'agendamento_pendente'};
+  assert.equal((await marca.carregarMarcaAction()).concluido,false);
+  const result = await marca.salvarMarcaAction({...entradaMarca(),site:'https://exemplo.com.br'});
+  assert.equal(result.ok,true);
+  assert.equal(result.estado.concluido,true);
+  assert.equal(row.onboarding.marca.siteNaoTenho,false);
+  assert.equal(row.site_url,'https://exemplo.com.br');
 });
 test('respostas legadas de ramo e praça contam sem apagar o histórico', async () => {
   contasProntas();

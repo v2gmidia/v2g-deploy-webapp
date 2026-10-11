@@ -23,6 +23,13 @@ export type TarefaDoGestor = {
   completion_note: string | null;
 };
 
+/** A atribuição da tarefa e a da conta precisam coincidir no momento da ação. */
+export function podeConcluirTarefa(tarefa: Pick<TarefaDoGestor, "status" | "assigned_to">,
+  responsavelDaConta: string | null, operadorId: string): boolean {
+  return tarefa.status === "open" && tarefa.assigned_to === operadorId &&
+    responsavelDaConta === operadorId;
+}
+
 export function prioridadeDaTarefa(tarefa: TarefaDoGestor, agora: number): number {
   if (tarefa.status === "done") return 4;
   if (!tarefa.assigned_to) return 0;

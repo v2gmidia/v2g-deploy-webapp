@@ -6,6 +6,7 @@ import { CriarPeca } from "./CriarPeca";
 import { tituloDaAba } from "@/lib/titulos";
 import { createClient } from "@/lib/supabase/server";
 import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
+import { faixaDeCriativos, paginaDeCriativos, ultimaPaginaCriativos } from "@/lib/criativos/paginacao";
 import { PedirRevisao } from "./PedirRevisao";
 
 export const metadata = tituloDaAba("/criativos");
@@ -42,15 +43,26 @@ export const metadata = tituloDaAba("/criativos");
  * pela barra cairia primeiro no que não existe.
  * ============================================================
  */
-export default async function CriativosPage() {
+export default async function CriativosPage({ searchParams }: {
+  searchParams: Promise<{ revisoes?: string }>;
+}) {
   const estado = await estadoDoCliente(new Date());
   const revisaoHabilitada = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true";
+  const parametros = await searchParams;
+  const paginaInformada = paginaDeCriativos(parametros.revisoes);
+  const paginaRevisoes = paginaInformada.numero;
+  const tamanhoPagina = 30;
+  const { inicio, fim } = faixaDeCriativos(paginaRevisoes, tamanhoPagina);
   const supabase = revisaoHabilitada ? await createClient() : null;
   const revisoes = revisaoHabilitada && estado.negocioId && supabase
     ? await supabase.from("creative_review_requests")
-      .select("id, original_name, status, review_note, created_at")
-      .eq("business_id", estado.negocioId).order("created_at", { ascending: false }).limit(30)
+      .select("id, original_name, status, review_note, created_at", { count: "exact" })
+      .eq("business_id", estado.negocioId).order("created_at", { ascending: false })
+      .order("id", { ascending: false }).range(inicio, fim)
     : null;
+  const ultimaPagina = revisoes?.count === null || revisoes?.count === undefined
+    ? null : ultimaPaginaCriativos(revisoes.count, tamanhoPagina);
+  const destinoRevisoes = (pagina: number) => `/criativos?revisoes=${pagina}#casa-revisao`;
   const dataDaRevisao = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
 
   // ============================================================
@@ -127,7 +139,9 @@ export default async function CriativosPage() {
             </div>
             <div>
               <h4>Para pedir a inclusão</h4>
-              <p>Fale com a equipe pelo WhatsApp. A análise desta aba não cria uma solicitação de publicação.</p>
+              <p>{revisaoHabilitada && estado.negocioId
+                ? "Use Revisão do gestor nesta página para enviar a peça. A análise isolada não encaminha nada à equipe."
+                : "Fale com a equipe pelo WhatsApp. A análise desta aba não cria uma solicitação de publicação."}</p>
             </div>
           </aside>
         </div>
@@ -138,13 +152,26 @@ export default async function CriativosPage() {
           <p>Envie a peça do negócio selecionado. O gestor decide se ela pode seguir para publicação manual.</p></div>
         {estado.negocioId && <PedirRevisao businessId={estado.negocioId} />}
         {revisoes?.error && <p className="form-warning">Não foi possível carregar as peças enviadas. Tente novamente mais tarde.</p>}
-        {revisoes?.data?.length === 0 && <p>Nenhuma peça enviada para revisão nesta conta.</p>}
+        {paginaInformada.invalida && <p className="form-warning">Página inválida; mostrando os envios mais recentes.</p>}
+        {revisoes && !revisoes.error && revisoes.count === null &&
+          <p className="form-warning">O total de peças desta conta está indisponível nesta consulta.</p>}
+        {revisoes?.data?.length === 0 && <p>{paginaRevisoes > 1
+          ? "Não há peças nesta página. Volte aos envios mais recentes."
+          : "Nenhuma peça enviada para revisão nesta conta."}</p>}
+        {revisoes && !revisoes.error && (revisoes.count ?? 0) > 0 &&
+          <p>{revisoes.count} peça(s) registrada(s) nesta conta · página {paginaRevisoes} de {ultimaPagina}</p>}
+        {paginaRevisoes > 1 && revisoes && !revisoes.error && <p><a href={destinoRevisoes(paginaRevisoes - 1)}>Envios mais recentes</a></p>}
         {revisoes?.data?.map((revisao) => <article className="auth-card" key={revisao.id}>
           <h3>{revisao.original_name}</h3>
           <p>{rotuloDaRevisao(revisao.status as StatusRevisao)} · {dataDaRevisao.format(new Date(revisao.created_at))}</p>
           {revisao.review_note && <p>Retorno do gestor: {revisao.review_note}</p>}
         </article>)}
-        {revisoes?.data?.length === 30 && <p className="form-warning">Mostrando as 30 peças mais recentes desta conta.</p>}
+        {ultimaPagina !== null && paginaRevisoes < ultimaPagina && paginaRevisoes < 1000 &&
+          <p><a href={destinoRevisoes(paginaRevisoes + 1)}>Ver envios anteriores</a></p>}
+        {ultimaPagina !== null && paginaRevisoes > ultimaPagina &&
+          <p className="form-warning">Esta página ficou além do histórico atual. <a href={destinoRevisoes(1)}>Voltar ao início</a>.</p>}
+        {ultimaPagina !== null && ultimaPagina > 1000 && paginaRevisoes === 1000 &&
+          <p className="form-warning">O histórico atingiu o limite desta consulta. Fale com a equipe para localizar peças mais antigas.</p>}
       </section>}
 
       <MinhasPecas />

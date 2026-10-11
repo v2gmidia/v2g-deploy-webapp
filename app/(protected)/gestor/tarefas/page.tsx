@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ordenarTarefas, ordenarTarefasConcluidas, prioridadeDaTarefa, TIPOS_DE_TAREFA,
-  vencimentoDaTarefa, type TarefaDoGestor } from "@/lib/gestor/tarefas";
+  podeConcluirTarefa, vencimentoDaTarefa, type TarefaDoGestor } from "@/lib/gestor/tarefas";
 import { solicitacaoDaTarefaDeRevisao } from "@/lib/gestor/revisao-pendente";
 import { AssumirConta, AssumirTarefa, ConcluirTarefa, CriarTarefa, PrepararConta } from "./Formularios";
 
@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export default async function TarefasDoGestorPage({ searchParams }: {
-  searchParams: Promise<{ negocio?: string; q?: string; filtro?: string }>;
+  searchParams: Promise<{ negocio?: string; tarefa?: string; q?: string; filtro?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -22,9 +22,14 @@ export default async function TarefasDoGestorPage({ searchParams }: {
     const admin = createAdminClient();
     const parametros = await searchParams;
     const negocioPedido = typeof parametros.negocio === "string" ? parametros.negocio.trim() : "";
+    const tarefaPedido = typeof parametros.tarefa === "string" ? parametros.tarefa.trim() : "";
     if (negocioPedido && !UUID.test(negocioPedido))
       return <div className="canvas"><h1>Tarefas do gestor</h1>
         <p className="form-warning">A conta informada é inválida.</p>
+        <p><a href="/gestor/tarefas">Ver todas as tarefas</a></p></div>;
+    if (tarefaPedido && (!UUID.test(tarefaPedido) || !negocioPedido))
+      return <div className="canvas"><h1>Tarefas do gestor</h1>
+        <p className="form-warning">O endereço da tarefa precisa identificar uma tarefa válida e sua conta.</p>
         <p><a href="/gestor/tarefas">Ver todas as tarefas</a></p></div>;
     // Uma conta escolhida deve ser buscada pelo ID, mesmo que esteja além das
     // primeiras 1.000 linhas da carteira geral.
@@ -45,10 +50,13 @@ export default async function TarefasDoGestorPage({ searchParams }: {
     let consultaTarefas = admin.from("manager_tasks")
       .select("id, business_id, task_type, title, description, status, assigned_to, due_at, created_at, completed_at, completion_note", { count: "exact" });
     if (negocioInicial) consultaTarefas = consultaTarefas.eq("business_id", negocioInicial);
-    if (filtro === "concluidas") consultaTarefas = consultaTarefas.eq("status", "done");
-    else consultaTarefas = consultaTarefas.eq("status", "open");
-    if (filtro === "minhas") consultaTarefas = consultaTarefas.eq("assigned_to", user.id);
-    if (filtro === "sem_responsavel") consultaTarefas = consultaTarefas.is("assigned_to", null);
+    if (tarefaPedido) consultaTarefas = consultaTarefas.eq("id", tarefaPedido);
+    else {
+      if (filtro === "concluidas") consultaTarefas = consultaTarefas.eq("status", "done");
+      else consultaTarefas = consultaTarefas.eq("status", "open");
+      if (filtro === "minhas") consultaTarefas = consultaTarefas.eq("assigned_to", user.id);
+      if (filtro === "sem_responsavel") consultaTarefas = consultaTarefas.is("assigned_to", null);
+    }
     let consultaAbertas = admin.from("manager_tasks")
       .select("id", { count: "exact", head: true }).eq("status", "open");
     if (negocioInicial) consultaAbertas = consultaAbertas.eq("business_id", negocioInicial);
@@ -80,6 +88,7 @@ export default async function TarefasDoGestorPage({ searchParams }: {
       : ordenarTarefas(tarefas.data as TarefaDoGestor[], agora);
     const visiveis = linhas.filter((tarefa) => {
       if (negocioInicial && tarefa.business_id !== negocioInicial) return false;
+      if (tarefaPedido) return tarefa.id === tarefaPedido;
       if (filtro === "abertas" && tarefa.status !== "open") return false;
       if (filtro === "minhas" && (tarefa.status !== "open" || tarefa.assigned_to !== user.id)) return false;
       if (filtro === "sem_responsavel" && (tarefa.status !== "open" || !!tarefa.assigned_to)) return false;
@@ -97,6 +106,7 @@ export default async function TarefasDoGestorPage({ searchParams }: {
       <p><a href="/gestor">Voltar à carteira</a> · <a href="/gestor/criativos">Peças para revisar</a>
         {negocioInicial && <> · <a href="/gestor/tarefas">Ver todas as tarefas</a></>}</p>
       {negocioInicial && <p>Conta selecionada: <strong>{negociosPorId.get(negocioInicial)}</strong></p>}
+      {tarefaPedido && <p><a href={`/gestor/tarefas?negocio=${encodeURIComponent(negocioInicial!)}`}>Ver todas as tarefas desta conta</a></p>}
       {parcial && <p className="form-warning">Consulta parcial ou nomes de responsáveis indisponíveis. Busca e prioridades podem cobrir somente os itens exibidos; confira a fonte antes de decidir.</p>}
       {(abertas.error || abertas.count === null) && <p className="form-warning">O total de tarefas abertas não pôde ser confirmado agora.</p>}
       <div className="auth-card"><strong>{abertas.error || abertas.count === null ? "—" : abertas.count} abertas</strong>
@@ -119,16 +129,16 @@ export default async function TarefasDoGestorPage({ searchParams }: {
         </details>
       </section>
       <section aria-labelledby="lista-tarefas"><h2 id="lista-tarefas">Fila de trabalho</h2>
-        <form action="/gestor/tarefas" method="get" className="auth-card">
+        {!tarefaPedido && <form action="/gestor/tarefas" method="get" className="auth-card">
           {negocioInicial && <input type="hidden" name="negocio" value={negocioInicial} />}
           <label>Buscar <input type="search" name="q" defaultValue={busca} placeholder="Negócio ou tarefa" /></label>
           <label>Mostrar <select name="filtro" defaultValue={filtro}>
             <option value="abertas">Abertas</option><option value="minhas">Minhas abertas</option>
             <option value="sem_responsavel">Sem responsável</option><option value="concluidas">Concluídas</option>
           </select></label><button type="submit">Filtrar</button>
-        </form>
-        <p>{visiveis.length} exibida(s) de {tarefas.count ?? "total indisponível"} tarefa(s) no filtro {negocioInicial ? "desta conta" : "da carteira"}.</p>
-        {visiveis.length === 0 && <p>Nenhuma tarefa corresponde ao filtro.</p>}
+        </form>}
+        <p>{tarefaPedido ? "Tarefa específica da conta" : `${visiveis.length} exibida(s) de ${tarefas.count ?? "total indisponível"} tarefa(s) no filtro ${negocioInicial ? "desta conta" : "da carteira"}.`}</p>
+        {visiveis.length === 0 && <p>{tarefaPedido ? "Tarefa não encontrada nesta conta." : "Nenhuma tarefa corresponde ao filtro."}</p>}
         {visiveis.map((tarefa) => <article className="auth-card" key={tarefa.id}>
           <p>{TIPOS_DE_TAREFA[tarefa.task_type]} · {negociosPorId.get(tarefa.business_id) ?? "Negócio não encontrado"}</p>
           <h3>{tarefa.title}</h3>
@@ -139,6 +149,9 @@ export default async function TarefasDoGestorPage({ searchParams }: {
           {tarefa.status === "open" && !tarefa.assigned_to &&
             responsavelPorNegocio.get(tarefa.business_id) === user.id && <AssumirTarefa id={tarefa.id} />}
           {tarefa.status === "open" && tarefa.assigned_to === user.id &&
+            responsavelPorNegocio.get(tarefa.business_id) !== user.id &&
+            <p className="form-warning">Esta conta não está mais sob sua responsabilidade. Confira a atribuição antes de agir.</p>}
+          {podeConcluirTarefa(tarefa, responsavelPorNegocio.get(tarefa.business_id) ?? null, user.id) &&
             (solicitacaoDaTarefaDeRevisao(tarefa.id, tarefa.business_id, tarefa.description)
               ? <p><a href={`/gestor/criativos?negocio=${encodeURIComponent(tarefa.business_id)}&peca=${encodeURIComponent(solicitacaoDaTarefaDeRevisao(tarefa.id, tarefa.business_id, tarefa.description)!)}`}>Conferir peça e registrar decisão</a></p>
               : <ConcluirTarefa id={tarefa.id} />)}

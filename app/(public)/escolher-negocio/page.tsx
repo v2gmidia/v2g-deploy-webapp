@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { cnpjsDoComprador, type PedidoParaIdentificarNegocio } from "@/lib/multiconta/identificacao";
 import { FormularioNegocio } from "./Formulario";
 import { limparNegocioAction } from "./actions";
 import { tituloDaAba } from "@/lib/titulos";
@@ -46,19 +48,30 @@ export default async function EscolherNegocioPage() {
     <form action={limparNegocioAction}><button className="cta" type="submit">Continuar</button></form>
   </section>;
 
-  const { data: pedidos, error: erroPedidos } = await supabase.from("commercial_orders")
-    .select("business_id, cnpj")
-    .eq("buyer_profile_id", user.id).eq("status", "payment_approved")
-    .in("business_id", data.map((negocio) => negocio.id));
-  if (erroPedidos) {
-    console.error("[escolher-negocio] falha ao ler CNPJs das compras ::", erroPedidos.message);
+  // O vínculo por e-mail verificado pode anteceder a gravação de buyer_profile_id.
+  // A leitura administrativa fica restrita aos IDs já liberados e os dados
+  // só aparecem se o comprador do pedido corresponder à sessão atual.
+  let pedidos: PedidoParaIdentificarNegocio[] | null = null;
+  try {
+    const consulta = await createAdminClient().from("commercial_orders")
+      .select("business_id, cnpj, buyer_email, buyer_profile_id")
+      .eq("status", "payment_approved")
+      .in("business_id", data.map((negocio) => negocio.id))
+      .order("created_at", { ascending: false });
+    if (consulta.error || !consulta.data) throw consulta.error ?? new Error("pedidos indisponíveis");
+    pedidos = consulta.data;
+  } catch {
+    console.error("[escolher-negocio] falha ao ler CNPJs das compras");
     return <section className="auth-card">
       <h1 className="auth-h">Não conseguimos carregar seus negócios por completo.</h1>
       <p className="auth-sub">A identificação das contas está indisponível agora. Tente novamente antes de escolher.</p>
       <a className="cta" href="/escolher-negocio">Tentar novamente</a>
     </section>;
   }
-  const cnpjPorNegocio = new Map((pedidos ?? []).map((pedido) => [pedido.business_id, pedido.cnpj]));
+  const cnpjPorNegocio = cnpjsDoComprador(
+    data.map((negocio) => negocio.id), pedidos ?? [], user.id,
+    user.email_confirmed_at ? user.email ?? null : null,
+  );
   const negocios = data.map((negocio) => ({ ...negocio,
     cnpj: cnpjPorNegocio.get(negocio.id) ?? null, codigo: negocio.id.slice(0, 8),
   }));

@@ -9,6 +9,7 @@ import { descricaoDaTarefaDeRevisao, idDaTarefaDeRevisao } from "../lib/gestor/r
 test("fila pessoal isola contas e operadores, recupera peça sem tarefa e evita duplicata", () => {
   const peca = "018f8980-6c3e-46d5-8b39-37f19465e4ea";
   const negocio = "c9adc12e-3b40-4206-9aa4-cfda217ff376";
+  const tarefaMinha = "293de644-55d6-4e3c-9c38-35816e90dffd";
   const tarefaRevisao = { id: idDaTarefaDeRevisao(peca), business_id: negocio,
     title: "Revisar criativo enviado", description: descricaoDaTarefaDeRevisao(peca, negocio),
     assigned_to: "gestor-a", due_at: null, created_at: "2026-10-10T10:00:00Z" };
@@ -16,12 +17,13 @@ test("fila pessoal isola contas e operadores, recupera peça sem tarefa e evita 
     [{ id: peca, business_id: negocio, created_at: "2026-10-10T09:00:00Z" },
       { id: "peca-sem-tarefa", business_id: negocio, created_at: "2026-10-10T08:00:00Z" },
       { id: "outra-conta", business_id: "outro", created_at: "2026-10-10T07:00:00Z" }],
-    [tarefaRevisao, { ...tarefaRevisao, id: "tarefa-minha", title: "Conferir acesso", description: null },
+    [tarefaRevisao, { ...tarefaRevisao, id: tarefaMinha, title: "Conferir acesso", description: null },
       { ...tarefaRevisao, id: "tarefa-outro-gestor", assigned_to: "gestor-b" },
       { ...tarefaRevisao, id: "tarefa-outra-conta", business_id: "outro" }],
     Date.parse("2026-10-10T12:00:00Z"));
-  assert.deepEqual(fila.map((a) => a.id), ["revisao:peca-sem-tarefa", `revisao:${peca}`, "tarefa:tarefa-minha"]);
+  assert.deepEqual(fila.map((a) => a.id), ["revisao:peca-sem-tarefa", `revisao:${peca}`, `tarefa:${tarefaMinha}`]);
   assert.equal(fila[1].href, `/gestor/criativos?negocio=${negocio}&peca=${peca}`);
+  assert.equal(fila[2].href, `/gestor/tarefas?negocio=${negocio}&tarefa=${tarefaMinha}`);
 });
 
 test("fila pessoal prioriza tarefa vencida ou sem responsável e não inventa prazo inválido", () => {
@@ -36,6 +38,20 @@ test("fila pessoal prioriza tarefa vencida ou sem responsável e não inventa pr
   ], Date.parse("2026-10-10T12:00:00Z"));
   assert.deepEqual(fila.slice(0, 2).map((a) => a.id), ["tarefa:vencida", "tarefa:sem-responsavel"]);
   assert.equal(fila.find((a) => a.id === "tarefa:prazo-invalido").situacao, "Sem prazo registrado");
+});
+
+test("tarefa de revisão aberta após sumir da fila pendente encaminha à peça para reconciliar", () => {
+  const peca = "018f8980-6c3e-46d5-8b39-37f19465e4ea";
+  const negocio = "c9adc12e-3b40-4206-9aa4-cfda217ff376";
+  const fila = proximasAcoesDoGestor("gestor-a", new Set([negocio]), new Map([[negocio, "Loja A"]]), [], [{
+    id: idDaTarefaDeRevisao(peca), business_id: negocio, title: "Revisar criativo enviado",
+    description: descricaoDaTarefaDeRevisao(peca, negocio), assigned_to: "gestor-a",
+    due_at: null, created_at: "2026-10-10T10:00:00Z",
+  }], Date.parse("2026-10-10T12:00:00Z"));
+  assert.equal(fila.length, 1);
+  assert.equal(fila[0].href, `/gestor/criativos?negocio=${negocio}&peca=${peca}`);
+  assert.match(fila[0].situacao, /conferir e sincronizar/);
+  assert.doesNotMatch(fila[0].situacao, /aprovad|publicad|rejeitad/i);
 });
 
 test("fila de compras prioriza comprovante e erro ambíguo sem incluir cancelado em atenção", () => {
@@ -132,9 +148,20 @@ test("documento antigo não substitui o estado do contrato mais recente", () => 
 test("onboarding concluido não afirma reserva", () => {
   const linhas = montarPortfolio([negocio("a", { onboarding: {
     conclusao: { em: "2026-10-02T00:00:00Z", proximoPasso: "agendamento_pendente" },
+    marca: { em: "2026-10-02T00:00:00Z", aparencia: "Azul", aparenciaNaoSei: false, siteNaoTenho: true },
+    respostas: Object.fromEntries(["nome", "ramo", "descricao", "praca"].map((chave) =>
+      [chave, { texto: "Descrição completa", echo: "Descrição completa", em: "2026-10-02T00:00:00Z" }])),
   }, cadastro_estado: "pendente" })], [], [], [{ id: "c1", business_id: "a" }]);
   assert.match(linhas[0].proximaAcao, /confirmar no Google/);
   assert.doesNotMatch(linhas[0].proximaAcao, /marcada|reservada/);
+});
+
+test("marcador de conclusão sozinho não fecha a ficha do gestor", () => {
+  const [linha] = montarPortfolio([negocio("a", { onboarding: {
+    conclusao: { em: "2026-10-02T00:00:00Z", proximoPasso: "agendamento_pendente" },
+  } })], [], [], []);
+  assert.equal(linha.onboardingConcluido, false);
+  assert.doesNotMatch(linha.proximaAcao, /confirmar no Google/);
 });
 
 test("conta legada não é classificada como novo onboarding pendente", () => {

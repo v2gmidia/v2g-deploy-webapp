@@ -1,5 +1,5 @@
 import { montarCadastro, type NegocioParaCadastro } from "../cadastro/montar.ts";
-import { lerConclusao } from "../onboarding/marca.ts";
+import { estadoDaConclusao } from "../onboarding/conclusao.ts";
 
 export interface NegocioDoPortfolio extends NegocioParaCadastro {
   dados_ficticios: boolean;
@@ -146,7 +146,7 @@ export function montarPortfolio(
     const pedido = lista[0] ?? null;
     const cadastro = montarCadastro(negocio);
     const pendenciasCadastro = cadastro.completo ? 0 : cadastro.pendencias.length;
-    const onboardingConcluido = lerConclusao(negocio.onboarding) !== null;
+    const onboardingConcluido = estadoDaConclusao(negocio).concluido;
     const contasDoNegocio = contasPorNegocio.get(negocio.id) ?? [];
     const quantidadeContas = contasDoNegocio.length;
     const contasDetalhe: LinhaDoPortfolio["contasDetalhe"] = contasDoNegocio.map((conta) => ({

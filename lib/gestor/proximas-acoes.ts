@@ -47,6 +47,22 @@ export function proximasAcoesDoGestor(
     if (tarefa.assigned_to && tarefa.assigned_to !== gestorId) continue;
     const revisao = solicitacaoDaTarefaDeRevisao(tarefa.id, tarefa.business_id, tarefa.description);
     if (revisao && idsRevisao.has(revisao)) continue;
+    // Uma tarefa de revisão ainda aberta sem solicitação pendente pode ser
+    // falha parcial após a decisão. Abrir a fonte permite reconciliar, sem
+    // afirmar que a peça foi aprovada ou que uma campanha foi publicada.
+    if (revisao) {
+      acoes.push({
+        id: `tarefa:${tarefa.id}`,
+        tipo: "tarefa",
+        negocio: nomes.get(tarefa.business_id) ?? "Negócio sem nome nesta consulta",
+        titulo: "Conferir estado do criativo",
+        situacao: "Tarefa de revisão aberta sem peça pendente; conferir e sincronizar",
+        href: `/gestor/criativos?negocio=${encodeURIComponent(tarefa.business_id)}&peca=${encodeURIComponent(revisao)}`,
+        prioridade: 0,
+        ordenacao: Date.parse(tarefa.created_at) || 0,
+      });
+      continue;
+    }
     const vencimento = tarefa.due_at ? Date.parse(tarefa.due_at) : NaN;
     const vencida = Number.isFinite(vencimento) && vencimento < agora;
     acoes.push({
@@ -56,7 +72,7 @@ export function proximasAcoesDoGestor(
       titulo: tarefa.title,
       situacao: !tarefa.assigned_to ? "Sem responsável na tarefa" : vencida ? "Prazo vencido" :
         Number.isFinite(vencimento) ? "Com prazo registrado" : "Sem prazo registrado",
-      href: `/gestor/tarefas?negocio=${encodeURIComponent(tarefa.business_id)}&filtro=abertas`,
+      href: `/gestor/tarefas?negocio=${encodeURIComponent(tarefa.business_id)}&tarefa=${encodeURIComponent(tarefa.id)}`,
       prioridade: !tarefa.assigned_to || vencida ? 1 : 2,
       ordenacao: Number.isFinite(vencimento) ? vencimento : Date.parse(tarefa.created_at) || 0,
     });

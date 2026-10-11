@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { BUCKET_REVISAO, rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
+import { destinoPaginaCriativos, faixaDeCriativos, paginaDeCriativos,
+  ultimaPaginaCriativos, MAX_PAGINA_CRIATIVOS } from "@/lib/criativos/paginacao";
 import { DecidirPeca } from "./DecidirPeca";
 import { SincronizarTarefa } from "./SincronizarTarefa";
 
@@ -9,7 +11,7 @@ export const metadata = { title: "Revisão de criativos | V2G", robots: { index:
 export const dynamic = "force-dynamic";
 
 export default async function CriativosDoGestorPage({ searchParams }: {
-  searchParams: Promise<{ negocio?: string; peca?: string }>;
+  searchParams: Promise<{ negocio?: string; peca?: string; pagina?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -25,6 +27,9 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       ? parametros.negocio : null;
     const pecaId = typeof parametros.peca === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parametros.peca)
       ? parametros.peca : null;
+    const paginaInformada = paginaDeCriativos(parametros.pagina);
+    const pagina = pecaId ? 1 : paginaInformada.numero;
+    const { inicio, fim } = faixaDeCriativos(pagina);
     if (parametros.negocio && !negocioId) return <div className="canvas"><h1>Revisão de criativos</h1>
       <p className="form-warning">O negócio informado não é válido.</p><p><a href="/gestor/criativos">{tituloFila}</a></p></div>;
     if (parametros.peca && !pecaId) return <div className="canvas"><h1>Revisão de criativos</h1>
@@ -56,7 +61,8 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       ? [{ data: [], count: 0, error: null }, { data: [], error: null }]
       : await Promise.all([
         (pecaId ? pendentesDaConta.eq("id", pecaId) : pendentesDaConta)
-          .order("created_at", { ascending: true }).limit(100),
+          .order("created_at", { ascending: true }).order("id", { ascending: true })
+          .range(inicio, fim),
         (pecaId ? historicoDaConta.eq("id", pecaId) : historicoDaConta)
           .order("created_at", { ascending: false }).limit(30),
       ]);
@@ -74,16 +80,32 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       return url.error ? null : url.data.signedUrl;
     }));
     const data = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
+    const totalPendentes = pendentes.count;
+    const ultimaPagina = totalPendentes === null ? null : ultimaPaginaCriativos(totalPendentes);
     return <div className="canvas"><div className="page-head"><p>OPERAÇÃO · USO INTERNO</p><h1>Revisão de criativos</h1>
       <p>Peças enviadas pelos clientes, por negócio. Aprovação interna não publica uma campanha.</p></div>
       <p><a href="/gestor">Voltar à carteira</a>{negocioId && <> · <a href="/gestor/criativos">{tituloFila}</a></>}</p>
       {negocioId && <p>Conta selecionada: {nomes.get(negocioId) ?? negocioId}</p>}
       {trabalhoAtivo && meusNegocios.length === 0 && <p>Nenhuma conta atribuída a você. Consulte a carteira ou assuma uma conta na fila de tarefas.</p>}
-      {(pendentes.count === null || pendentes.count > pendentes.data.length || negocios.error) &&
-        <p className="form-warning">Há pendências além das exibidas ou nomes de negócios indisponíveis. Continue a revisão pela fila e confira a fonte antes de decidir.</p>}
+      {paginaInformada.invalida && !pecaId && <p className="form-warning">Página inválida; mostrando a primeira página.</p>}
+      {!pecaId && pagina > 1 && (totalPendentes === null || totalPendentes === 0) &&
+        <p><a href={destinoPaginaCriativos(negocioId, 1)}>Voltar à primeira página de peças</a></p>}
+      {(totalPendentes === null || negocios.error) &&
+        <p className="form-warning">O total de pendências ou os nomes de negócios estão indisponíveis. Confira a fonte antes de decidir.</p>}
+      {!pecaId && totalPendentes !== null && totalPendentes > 0 && <nav aria-label="Páginas de peças pendentes">
+        <p>{totalPendentes} peça(s) pendente(s) na consulta · página {pagina} de {ultimaPagina}</p>
+        {pagina > 1 && <a href={destinoPaginaCriativos(negocioId, pagina - 1)}>Página anterior</a>}
+        {pagina > 1 && ultimaPagina !== null && pagina < ultimaPagina && pagina < MAX_PAGINA_CRIATIVOS && " · "}
+        {ultimaPagina !== null && pagina < ultimaPagina && pagina < MAX_PAGINA_CRIATIVOS &&
+          <a href={destinoPaginaCriativos(negocioId, pagina + 1)}>Próxima página</a>}
+        {ultimaPagina !== null && ultimaPagina > MAX_PAGINA_CRIATIVOS && pagina === MAX_PAGINA_CRIATIVOS &&
+          <p className="form-warning">Esta consulta chegou ao limite. Filtre por negócio para continuar a revisão.</p>}
+        {ultimaPagina !== null && pagina > ultimaPagina && <p className="form-warning">Esta página está além das pendências atuais. <a href={destinoPaginaCriativos(negocioId, 1)}>Voltar ao início</a>.</p>}
+      </nav>}
       {historico.data.length === 30 && <p>Histórico: mostrando os 30 envios mais recentes que não aguardam revisão.</p>}
       {pedidos.length === 0 && <p>{pecaId ? "Peça não encontrada nesta conta ou fora da sua carteira." :
-        "Nenhuma peça registrada para revisão."}</p>}
+        pagina > 1 ? "Nenhuma peça nesta página; volte à primeira para conferir as pendências atuais." :
+          "Nenhuma peça registrada para revisão."}</p>}
       {pedidos.map((pedido, indice) => <section className="auth-card" key={pedido.id}>
         <h2>{nomes.get(pedido.business_id) ?? "Negócio sem nome disponível"}</h2>
         <p>{pedido.original_name} · {rotuloDaRevisao(pedido.status as StatusRevisao)} · {data.format(new Date(pedido.created_at))}</p>

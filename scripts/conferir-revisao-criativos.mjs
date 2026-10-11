@@ -4,6 +4,28 @@ import { BUCKET_REVISAO, caminhoDaRevisao, podeRepetirEnvio,
   rotuloDaRevisao, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem } from "../lib/criativos/revisao.ts";
 import { descricaoDaTarefaDeRevisao, ehTarefaDeRevisao, idDaTarefaDeRevisao,
   solicitacaoDaTarefaDeRevisao } from "../lib/gestor/revisao-pendente.ts";
+import { destinoPaginaCriativos, faixaDeCriativos, paginaDeCriativos,
+  ultimaPaginaCriativos } from "../lib/criativos/paginacao.ts";
+
+test("fila de criativos pagina todas as pendências sem repetir o limite anterior", () => {
+  assert.deepEqual(faixaDeCriativos(1), { inicio: 0, fim: 99 });
+  assert.deepEqual(faixaDeCriativos(2), { inicio: 100, fim: 199 });
+  assert.deepEqual(faixaDeCriativos(3), { inicio: 200, fim: 299 });
+  assert.deepEqual(faixaDeCriativos(2, 30), { inicio: 30, fim: 59 });
+  assert.equal(ultimaPaginaCriativos(0), 1);
+  assert.equal(ultimaPaginaCriativos(100), 1);
+  assert.equal(ultimaPaginaCriativos(101), 2);
+  assert.equal(ultimaPaginaCriativos(31, 30), 2);
+  assert.equal(destinoPaginaCriativos("negocio-1", 2), "/gestor/criativos?negocio=negocio-1&pagina=2");
+  assert.equal(destinoPaginaCriativos(null, 2), "/gestor/criativos?pagina=2");
+});
+
+test("pagina externa inválida ou repetida volta à primeira com aviso", () => {
+  for (const valor of ["0", "-1", "1.5", "1001", "999999999999", ["1", "2"], null, "abc"])
+    assert.deepEqual(paginaDeCriativos(valor), { numero: 1, invalida: true });
+  assert.deepEqual(paginaDeCriativos(undefined), { numero: 1, invalida: false });
+  assert.deepEqual(paginaDeCriativos("1000"), { numero: 1000, invalida: false });
+});
 
 test("somente assinatura de JPEG e PNG e aceita", () => {
   assert.equal(tipoRealDaImagem(new Uint8Array([0xff, 0xd8, 0xff, 0x01])), "image/jpeg");

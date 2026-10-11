@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { ordenarTarefas, ordenarTarefasConcluidas, prioridadeDaTarefa, TIPOS_DE_TAREFA,
+import { ordenarTarefas, ordenarTarefasConcluidas, podeConcluirTarefa, prioridadeDaTarefa, TIPOS_DE_TAREFA,
   vencimentoDaTarefa } from "../lib/gestor/tarefas.ts";
 import { tarefasDaPreparacao } from "../lib/gestor/preparacao.ts";
 
@@ -8,6 +8,14 @@ const agora = Date.parse("2026-10-09T15:00:00Z");
 const base = { id: "a", business_id: "negocio", task_type: "collect_access",
   title: "Conferir acesso", description: null, status: "open", assigned_to: "gestor",
   due_at: null, created_at: "2026-10-09T12:00:00Z", completed_at: null, completion_note: null };
+
+test("conclusão exige tarefa aberta e operador ainda responsável pela conta", () => {
+  assert.equal(podeConcluirTarefa(base, "gestor", "gestor"), true);
+  assert.equal(podeConcluirTarefa(base, "novo-gestor", "gestor"), false);
+  assert.equal(podeConcluirTarefa(base, null, "gestor"), false);
+  assert.equal(podeConcluirTarefa({ ...base, assigned_to: "outro" }, "gestor", "gestor"), false);
+  assert.equal(podeConcluirTarefa({ ...base, status: "done" }, "gestor", "gestor"), false);
+});
 
 test("fila prioriza sem responsavel e prazo vencido", () => {
   const tarefas = [

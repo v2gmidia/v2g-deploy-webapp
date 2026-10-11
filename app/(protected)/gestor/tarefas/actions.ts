@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { TIPOS_DE_TAREFA, type TipoDeTarefa } from "@/lib/gestor/tarefas";
+import { podeConcluirTarefa, TIPOS_DE_TAREFA, type TipoDeTarefa } from "@/lib/gestor/tarefas";
 import { tarefasDaPreparacao } from "@/lib/gestor/preparacao";
 import { ehTarefaDeRevisao } from "@/lib/gestor/revisao-pendente";
 
@@ -220,10 +220,15 @@ export async function concluirTarefaAction(_anterior: EstadoTarefa, dados: FormD
   try {
     const admin = createAdminClient();
     const tarefa = await admin.from("manager_tasks")
-      .select("id, business_id, description").eq("id", id).maybeSingle();
+      .select("id, business_id, description, status, assigned_to").eq("id", id).maybeSingle();
     if (tarefa.error || !tarefa.data) return { erro: "Não foi possível conferir esta tarefa. Atualize a fila." };
     if (ehTarefaDeRevisao(tarefa.data.id, tarefa.data.business_id, tarefa.data.description))
       return { erro: "Decida esta peça na fila de criativos; a tarefa será encerrada após o registro da decisão." };
+    const conta = await admin.from("manager_accounts").select("operator_profile_id")
+      .eq("business_id", tarefa.data.business_id).maybeSingle();
+    if (conta.error) return { erro: "Não foi possível conferir o gestor responsável. Tente novamente." };
+    if (!podeConcluirTarefa(tarefa.data, conta.data?.operator_profile_id ?? null, user.id))
+      return { erro: "A tarefa ou a responsabilidade da conta mudou. Atualize a fila antes de concluir." };
     const agora = new Date().toISOString();
     const gravacao = await admin.from("manager_tasks").update({
       status: "done", completion_note: nota.trim(), completed_by: user.id,
