@@ -28,7 +28,7 @@ const archivo = Archivo({
 
 export const metadata: Metadata = {
   title: "V2G",
-  description: "V2G — gestão de tráfego pago com IA para pequenos negócios.",
+  description: "V2G — acompanhe seus anúncios, as informações do seu negócio e os próximos passos em um só lugar.",
   // Nenhuma página do app é indexável — a vitrine é v2gmidia.com.br.
   // Vem junto com `app/robots.ts`: o robots pede para não rastrear, e este
   // `noindex` vale para quem rastrear assim mesmo (link de fora, outro

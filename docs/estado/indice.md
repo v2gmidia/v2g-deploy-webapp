@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`qa-posicionamento-onboarding-11-10.md`](./qa-posicionamento-onboarding-11-10.md) | 11/10/2026 | Vault de posicionamento, migrações específicas aplicadas no QA, duas respostas fictícias por negócio verificadas na interface local e no banco, copy interna precisa. | **Sim.** Publicação específica no QA HTTPS e percurso completo; autorização Vercel indisponível nesta sessão. |
 | [`qa-identidade-onboarding-11-10.md`](./qa-identidade-onboarding-11-10.md) | 11/10/2026 | Critérios de senha e identidade locais, template de confirmação salvo no QA, falha real do onboarding por RPCs ausentes e deployment HTTPS antigo. | **Sim.** Migrar esquema do onboarding no QA após reconciliar ledger, verificar e-mail recebido e atualizar deployment de QA. |
 | [`etapa-01-cobrancas-seguintes-11-10.md`](./etapa-01-cobrancas-seguintes-11-10.md) | 11/10/2026 | LP e entrada observadas, registro de eventos de renovação, estorno e contestação aplicado somente ao QA. | **Sim.** Webhook e sessão real não verificados; 3DS depende de confirmação específica do Asaas. |
 | [`verificacao-local-11-10.md`](./verificacao-local-11-10.md) | 11/10/2026 | Conferência conjunta dos blocos locais e correção do simulador offline da sessão multiconta. | **Sim.** QA pausado e interface autenticada não verificada. |

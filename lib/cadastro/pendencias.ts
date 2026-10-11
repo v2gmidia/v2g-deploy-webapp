@@ -178,8 +178,8 @@ export function resumirPendencias(
     titulo: soAjuste
       ? "Falta ajustar sua verba"
       : soUm
-        ? "Falta uma coisa pro seu anúncio começar"
-        : "Falta pouco pro seu anúncio começar",
+        ? "Falta uma informação para preparar seu anúncio"
+        : "Vamos completar as informações para preparar seu anúncio",
     corpo: frases.join(" "),
     acao: {
       rotulo:

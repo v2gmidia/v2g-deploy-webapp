@@ -126,7 +126,7 @@ export const PERGUNTAS: Pergunta[] = [
     // do schema de qualquer jeito.
     minimo: {
       tamanho: 10,
-      recado: "Conta um pouco mais — uma frase inteira ajuda a IA a entender o que você vende.",
+      recado: "Conte um pouco mais — uma frase inteira ajuda a equipe a entender o que você vende.",
     },
   },
   {

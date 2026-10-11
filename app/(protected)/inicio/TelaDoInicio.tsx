@@ -418,9 +418,8 @@ export function TelaDoInicio({
                 >
                   <b className="title">O que não fazer agora</b>
                   <p>
-                    Não pause e não mexa no investimento nestes primeiros dias. Cada mudança
-                    reinicia o aprendizado do zero, e o que já foi gasto nele se perde. É a
-                    coisa mais cara que dá para fazer aqui — e a mais tentadora.
+                    Evite pausar ou mudar o investimento sem conversar com a equipe.
+                    Mudanças frequentes podem dificultar a leitura dos primeiros resultados.
                   </p>
                 </div>
 
@@ -432,9 +431,8 @@ export function TelaDoInicio({
                   <span className="ms-tag">Enquanto isso</span>
                   <b>Adiante o que vai fazer falta depois</b>
                   <p>
-                    O melhor uso destes dias não é olhar a campanha — é deixar pronto o que ela
-                    vai pedir a seguir: mais fotos para a IA ter de onde escolher, e seus dados
-                    de negócio conferidos, que é de onde ela decide para quem mostrar.
+                    Separe fotos que representem seu negócio e confira as informações que você
+                    nos passou. A equipe usa esse contexto para preparar e acompanhar os anúncios.
                   </p>
                 </section>
               </>
@@ -827,8 +825,8 @@ function Melhoras({ fotos }: { fotos: number }) {
             <b>Separar fotos do seu negócio</b>
             <span>
               {fotos === 0
-                ? "Você ainda não mandou nenhuma. Quanto mais material, mais a IA tem de onde escolher."
-                : `Você já mandou ${fotos} ${fotos === 1 ? "foto" : "fotos"}. Quanto mais material, mais a IA tem de onde escolher.`}
+                ? "Você ainda não mandou nenhuma. As fotos ajudam a equipe a conhecer seu negócio."
+                : `Você já mandou ${fotos} ${fotos === 1 ? "foto" : "fotos"}. Elas ajudam a equipe a conhecer seu negócio.`}
             </span>
           </span>
           <Seta />
