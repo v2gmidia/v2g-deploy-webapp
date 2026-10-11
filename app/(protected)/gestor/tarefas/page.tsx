@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ordenarTarefas, ordenarTarefasConcluidas, prioridadeDaTarefa, TIPOS_DE_TAREFA,
   podeConcluirTarefa, vencimentoDaTarefa, type TarefaDoGestor } from "@/lib/gestor/tarefas";
 import { solicitacaoDaTarefaDeRevisao } from "@/lib/gestor/revisao-pendente";
+import { negociosSemResponsavel } from "@/lib/gestor/limites-carteira";
 import { AssumirConta, AssumirTarefa, ConcluirTarefa, CriarTarefa, PrepararConta } from "./Formularios";
 
 export const metadata = { title: "Tarefas do gestor | V2G", robots: { index: false, follow: false } };
@@ -80,8 +81,9 @@ export default async function TarefasDoGestorPage({ searchParams }: {
     const nomes = new Map((perfis.data ?? []).map((perfil) => [perfil.id, perfil.full_name]));
     const responsavelPorNegocio = new Map(atribuicoes.data.map((atribuicao) =>
       [atribuicao.business_id, atribuicao.operator_profile_id]));
-    const semResponsavel = negocios.data.filter((negocio) =>
-      (!negocioInicial || negocio.id === negocioInicial) && !responsavelPorNegocio.has(negocio.id));
+    const atribuicoesParciais = atribuicoes.data.length === 1000;
+    // Sem todas as atribuições, ausência no mapa não comprova ausência no banco.
+    const semResponsavel = negociosSemResponsavel(negocios.data, atribuicoes.data, atribuicoesParciais);
     const agora = Date.now();
     const linhas = filtro === "concluidas"
       ? ordenarTarefasConcluidas(tarefas.data as TarefaDoGestor[])
@@ -98,7 +100,7 @@ export default async function TarefasDoGestorPage({ searchParams }: {
     });
     const tarefasParciais = tarefas.count === null || tarefas.count > tarefas.data.length;
     const parcial = (!negocioInicial && negocios.data.length === 1000) || tarefasParciais ||
-      atribuicoes.data.length === 1000 || !!perfis.error;
+      atribuicoesParciais || !!perfis.error;
     const formatarData = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
     return <div className="canvas">
       <div className="page-head"><p>OPERAÇÃO · USO INTERNO</p><h1>Tarefas e responsáveis</h1>
@@ -120,13 +122,14 @@ export default async function TarefasDoGestorPage({ searchParams }: {
         negocioInicial={responsavelPorNegocio.get(negocioInicial ?? "") === user.id ? negocioInicial : null} />
       <section aria-labelledby="contas-sem-responsavel"><h2 id="contas-sem-responsavel">Responsável por conta</h2>
         {negocios.data.length === 0 && <p>Nenhum negócio retornado nesta consulta.</p>}
-        <details><summary>{semResponsavel.length} conta(s) sem responsável registrado</summary>
+        {atribuicoesParciais ? <p className="form-warning">Não foi possível confirmar quais contas estão sem responsável: a consulta de atribuições chegou ao limite. Abra uma conta específica para conferir.</p> :
+        <details><summary>{semResponsavel.length} conta(s) sem responsável entre as retornadas</summary>
           <div>{semResponsavel.slice(0, 20).map((negocio) => <article className="auth-card" key={negocio.id}>
             <h3>{negocio.name}</h3><AssumirConta businessId={negocio.id} />
             <p><a href={`/revisar-perfil?negocio=${encodeURIComponent(negocio.id)}#ficha-${encodeURIComponent(negocio.id)}`}>Abrir ficha</a> · <a href={`/gestor/tarefas?negocio=${encodeURIComponent(negocio.id)}`}>Criar tarefa desta conta</a></p>
           </article>)}</div>
           {semResponsavel.length > 20 && <p className="form-warning">Mostrando 20 contas sem responsável; use a carteira para localizar as demais.</p>}
-        </details>
+        </details>}
       </section>
       <section aria-labelledby="lista-tarefas"><h2 id="lista-tarefas">Fila de trabalho</h2>
         {!tarefaPedido && <form action="/gestor/tarefas" method="get" className="auth-card">
@@ -150,7 +153,9 @@ export default async function TarefasDoGestorPage({ searchParams }: {
             responsavelPorNegocio.get(tarefa.business_id) === user.id && <AssumirTarefa id={tarefa.id} />}
           {tarefa.status === "open" && tarefa.assigned_to === user.id &&
             responsavelPorNegocio.get(tarefa.business_id) !== user.id &&
-            <p className="form-warning">Esta conta não está mais sob sua responsabilidade. Confira a atribuição antes de agir.</p>}
+            <p className="form-warning">{atribuicoesParciais && !responsavelPorNegocio.has(tarefa.business_id)
+              ? "A responsabilidade desta conta não foi confirmada nesta consulta parcial. Abra a conta para conferir antes de agir."
+              : "Esta conta não está mais sob sua responsabilidade. Confira a atribuição antes de agir."}</p>}
           {podeConcluirTarefa(tarefa, responsavelPorNegocio.get(tarefa.business_id) ?? null, user.id) &&
             (solicitacaoDaTarefaDeRevisao(tarefa.id, tarefa.business_id, tarefa.description)
               ? <p><a href={`/gestor/criativos?negocio=${encodeURIComponent(tarefa.business_id)}&peca=${encodeURIComponent(solicitacaoDaTarefaDeRevisao(tarefa.id, tarefa.business_id, tarefa.description)!)}`}>Conferir peça e registrar decisão</a></p>

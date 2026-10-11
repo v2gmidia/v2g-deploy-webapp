@@ -28,6 +28,7 @@ interface ChatProps {
 export function Chat({ businessId, inicial, nichos }: ChatProps) {
   const [respostas, setRespostas] = useState(inicial);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
 
@@ -73,7 +74,7 @@ export function Chat({ businessId, inicial, nichos }: ChatProps) {
     valor: string,
     origem: "chip" | "texto",
   ) {
-    if (enviando) return;
+    if (enviando || aviso) return;
 
     const cidadeLimpa = cidade.trim();
     if (pergunta.pedeCidade && origem === "chip" && !cidadeLimpa) {
@@ -89,27 +90,38 @@ export function Chat({ businessId, inicial, nichos }: ChatProps) {
 
     setEnviando(true);
     setErro(null);
+    try {
+      const resultado = await salvarRespostaAction({
+        businessId,
+        qid: pergunta.id,
+        texto: valor,
+        origem,
+        ...(pergunta.pedeCidade && origem === "chip" ? { cidade: cidadeLimpa } : {}),
+      });
 
-    const resultado = await salvarRespostaAction({
-      businessId,
-      qid: pergunta.id,
-      texto: valor,
-      origem,
-      ...(pergunta.pedeCidade && origem === "chip" ? { cidade: cidadeLimpa } : {}),
-    });
+      if (!resultado.ok && resultado.recarregar) {
+        setAviso("Não conseguimos confirmar a gravação. Parte da resposta pode ter sido salva. Recarregue para conferir antes de enviar de novo.");
+        return;
+      }
+      if (!resultado.ok) {
+        setErro(resultado.erro ?? "Não conseguimos salvar sua resposta.");
+        return;
+      }
+      if (!resultado.estado) {
+        setAviso("Resposta enviada, mas não conseguimos atualizar a tela. Recarregue para conferir antes de continuar.");
+        return;
+      }
 
-    setEnviando(false);
-
-    if (!resultado.ok || !resultado.estado) {
-      setErro(resultado.erro ?? "Não conseguimos salvar sua resposta.");
-      return;
+      setRespostas(resultado.estado.respostas);
+      setEditando(null);
+      setTexto("");
+      setTextoAberto(false);
+      setCidade("");
+    } catch {
+      setAviso("Não conseguimos confirmar se a resposta foi salva. Recarregue para conferir antes de enviar de novo.");
+    } finally {
+      setEnviando(false);
     }
-
-    setRespostas(resultado.estado.respostas);
-    setEditando(null);
-    setTexto("");
-    setTextoAberto(false);
-    setCidade("");
   }
 
   return (
@@ -122,6 +134,7 @@ export function Chat({ businessId, inicial, nichos }: ChatProps) {
       </p>
 
       {erro && <p className="form-error">{erro}</p>}
+      {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
 
       <div className="chat">
         {PERGUNTAS.map((p) => {
@@ -184,7 +197,7 @@ export function Chat({ businessId, inicial, nichos }: ChatProps) {
               {ehAtual && p.seletorDeNicho && nichos && (
                 <SeletorDeNicho
                   nichos={nichos}
-                  ocupado={enviando}
+                  ocupado={enviando || !!aviso}
                   aoEscolher={(n) => enviar(p, n.rotulo, "chip")}
                   aoEscreverLivre={(t) => enviar(p, t, "texto")}
                   rotuloOutro={p.chipAbreTexto ?? "Outro"}
@@ -207,7 +220,7 @@ export function Chat({ businessId, inicial, nichos }: ChatProps) {
                     key={o.echo}
                     className="chip-opt"
                     type="button"
-                    disabled={!ehAtual || enviando}
+                    disabled={!ehAtual || enviando || !!aviso}
                     onClick={() => enviar(p, o.echo, "chip")}
                   >
                     {o.rotulo}
@@ -217,7 +230,7 @@ export function Chat({ businessId, inicial, nichos }: ChatProps) {
                   <button
                     className="chip-opt"
                     type="button"
-                    disabled={!ehAtual || enviando}
+                    disabled={!ehAtual || enviando || !!aviso}
                     onClick={() => setTextoAberto(true)}
                   >
                     {p.chipAbreTexto}
@@ -260,7 +273,7 @@ export function Chat({ businessId, inicial, nichos }: ChatProps) {
                       <button
                         className="mini-send"
                         type="button"
-                        disabled={enviando}
+                        disabled={enviando || !!aviso}
                         onClick={() => enviar(p, texto, "texto")}
                       >
                         {enviando ? "…" : "Enviar"}

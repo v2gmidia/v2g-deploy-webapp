@@ -36,7 +36,29 @@ export function periodoDaCompra(periodo: string): string {
   return "Período a conferir";
 }
 
+export function situacaoDoContrato(status: string | undefined, consultaParcial: boolean): string {
+  if (status === "signed") return "assinatura registrada";
+  if (status) return `estado ${status}`;
+  return consultaParcial ? "documento não confirmado nesta consulta parcial" : "nenhum documento registrado";
+}
+
+export function situacaoDaNota(status: string | undefined, consultaParcial: boolean): string {
+  if (status === "authorized") return "autorização registrada";
+  if (status) return `estado ${status}`;
+  return consultaParcial ? "emissão não confirmada nesta consulta parcial" : "sem emissão registrada";
+}
+
 export type FiltroDeCompras = "todas" | "atencao" | "pagamento" | "aprovadas" | "canceladas";
+
+/** Busca operacional: prioriza pendências antigas antes de limitar a lista e deduplica o mesmo pedido. */
+export function selecionarPedidosDaFila(grupos: PedidoDaFila[][], limite = 200): {
+  pedidos: PedidoDaFila[];
+  parcial: boolean;
+} {
+  const candidatos = [...new Map(grupos.flat().map((pedido) => [pedido.id, pedido])).values()];
+  const pedidos = filtrarCompras(candidatos, "", "todas").slice(0, limite);
+  return { pedidos, parcial: candidatos.length > pedidos.length };
+}
 
 export function prioridadeDaCompra(pedido: PedidoDaFila): number {
   if (pedido.status === "proof_received") return 0;

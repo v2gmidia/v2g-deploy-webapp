@@ -3,11 +3,36 @@ import { test } from "node:test";
 import { escolherNegocio } from "../lib/multiconta/escolha.ts";
 import { negociosLiberados } from "../lib/multiconta/elegibilidade.ts";
 import { cnpjsDoComprador } from "../lib/multiconta/identificacao.ts";
+import { lerTodasPaginas } from "../lib/multiconta/paginacao.ts";
+import { pedidosAutorizadosParaVinculo, vincularComprasAprovadasComCliente } from "../lib/contratacao/vincular-core.ts";
 
 const empresas = [
   { id: "empresa-a", name: "Empresa A" },
   { id: "empresa-b", name: "Empresa B" },
 ];
+
+test("paginação reúne pedidos além do limite e preserva a autorização", async () => {
+  const registros = Array.from({ length: 1001 }, (_, indice) => ({
+    ...pendente, business_id: `outro-${indice}`,
+  }));
+  registros[1000] = { ...pendente, business_id: "b", status: "payment_approved" };
+  const faixas = [];
+  const pedidos = await lerTodasPaginas(async (inicio, fim) => {
+    faixas.push([inicio, fim]);
+    return { data: registros.slice(inicio, fim + 1), error: null };
+  });
+  assert.deepEqual(faixas, [[0, 999], [1000, 1999]]);
+  assert.equal(pedidos.length, 1001);
+  assert.deepEqual(negociosLiberados({ ...base, negocios: [antigo, novo], pedidos })
+    .map((negocio) => negocio.id), ["a", "b"]);
+});
+
+test("erro na segunda página invalida toda a leitura", async () => {
+  const resultado = await lerTodasPaginas(async (inicio) => inicio === 0
+    ? { data: Array(1000).fill({ id: "negocio" }), error: null }
+    : { data: null, error: new Error("falha de consulta") });
+  assert.equal(resultado, null);
+});
 
 test("uma empresa entra sem escolha; duas exigem escolha explícita", () => {
   assert.deepEqual(escolherNegocio([], null), { status: "sem_negocio", negocios: [] });
@@ -98,4 +123,92 @@ test("seletor mostra CNPJ de compra aprovada ainda vinculada só por e-mail veri
   assert.equal(cnpjsDoComprador(["empresa-a"], pedidos, "pessoa-a", null).size, 0);
   assert.equal(cnpjsDoComprador(["empresa-a"], [{ ...pedidos[0], buyer_profile_id: "outra-pessoa" }],
     "pessoa-a", "cliente@exemplo.com").size, 0);
+});
+
+test("vínculo de compra só alcança negócio confirmado do perfil, sem tomar pedido alheio", () => {
+  const pedidos = [
+    { id: "novo", business_id: "meu", buyer_profile_id: null },
+    { id: "repetido", business_id: "meu", buyer_profile_id: "pessoa-a" },
+    { id: "outro-dono", business_id: "alheio", buyer_profile_id: null },
+    { id: "outro-perfil", business_id: "meu", buyer_profile_id: "pessoa-b" },
+    { id: "sem-negocio", business_id: null, buyer_profile_id: null },
+  ];
+  assert.deepEqual(pedidosAutorizadosParaVinculo(pedidos, ["meu"], "pessoa-a"), ["novo", "repetido"]);
+  assert.deepEqual(pedidosAutorizadosParaVinculo(pedidos, [], "pessoa-a"), []);
+});
+
+function clienteDeTeste(respostas) {
+  const chamadas = [];
+  return {
+    chamadas,
+    from(tabela) {
+      const chamada = { tabela, operacao: null, filtros: [] };
+      chamadas.push(chamada);
+      const consulta = {
+        select(colunas) { chamada.operacao = ["select", colunas]; return this; },
+        update(valores) { chamada.operacao = ["update", valores]; return this; },
+        eq(...argumentos) { chamada.filtros.push(["eq", ...argumentos]); return this; },
+        not(...argumentos) { chamada.filtros.push(["not", ...argumentos]); return this; },
+        in(...argumentos) { chamada.filtros.push(["in", ...argumentos]); return this; },
+        is(...argumentos) { chamada.filtros.push(["is", ...argumentos]); return this; },
+        then(resolve, reject) {
+          if (!respostas.length) return Promise.reject(new Error("Consulta inesperada")).then(resolve, reject);
+          return Promise.resolve(respostas.shift()).then(resolve, reject);
+        },
+      };
+      return consulta;
+    },
+  };
+}
+
+const usuarioVerificado = { id: "pessoa-a", email: "Cliente@Exemplo.com", email_confirmed_at: "2026-10-11T00:00:00Z" };
+
+test("reivindicação parcial só grava pedido do negócio que passou a pertencer ao perfil", async () => {
+  const cliente = clienteDeTeste([
+    { data: [
+      { id: "pedido-meu", business_id: "meu", buyer_profile_id: null },
+      { id: "pedido-alheio", business_id: "alheio", buyer_profile_id: null },
+      { id: "pedido-outro", business_id: "meu", buyer_profile_id: "pessoa-b" },
+    ], error: null },
+    { error: null },
+    { data: [{ id: "meu" }], error: null },
+    { error: null },
+  ]);
+  await vincularComprasAprovadasComCliente(cliente, usuarioVerificado);
+  assert.equal(cliente.chamadas.length, 4);
+  assert.deepEqual(cliente.chamadas[0].filtros.slice(0, 2), [
+    ["eq", "buyer_email", "cliente@exemplo.com"], ["eq", "status", "payment_approved"],
+  ]);
+  assert.deepEqual(cliente.chamadas[3].filtros, [
+    ["in", "id", ["pedido-meu"]], ["in", "business_id", ["meu"]], ["is", "buyer_profile_id", null],
+  ]);
+});
+
+test("falha na conferência de propriedade mantém pedido sem vínculo", async () => {
+  const pedido = { id: "pedido", business_id: "meu", buyer_profile_id: null };
+  const semPropriedade = clienteDeTeste([
+    { data: [pedido], error: null }, { error: null }, { data: [], error: null },
+  ]);
+  await vincularComprasAprovadasComCliente(semPropriedade, usuarioVerificado);
+  assert.equal(semPropriedade.chamadas.length, 3);
+
+  const falhaConsulta = clienteDeTeste([
+    { data: [pedido], error: null }, { error: null }, { data: null, error: new Error("indisponível") },
+  ]);
+  await vincularComprasAprovadasComCliente(falhaConsulta, usuarioVerificado);
+  assert.equal(falhaConsulta.chamadas.length, 3);
+});
+
+test("pedido já atribuído a outra pessoa não reivindica negócio", async () => {
+  const cliente = clienteDeTeste([{ data: [
+    { id: "pedido", business_id: "meu", buyer_profile_id: "pessoa-b" },
+  ], error: null }]);
+  await vincularComprasAprovadasComCliente(cliente, usuarioVerificado);
+  assert.equal(cliente.chamadas.length, 1);
+});
+
+test("e-mail não verificado não reivindica negócio nem pedido", async () => {
+  const cliente = clienteDeTeste([]);
+  await vincularComprasAprovadasComCliente(cliente, { ...usuarioVerificado, email_confirmed_at: null });
+  assert.equal(cliente.chamadas.length, 0);
 });

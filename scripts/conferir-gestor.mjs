@@ -1,10 +1,48 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { filtrarPortfolio, instagramParaRevisao, montarPortfolio } from "../lib/gestor/portfolio.ts";
-import { filtrarCompras, periodoDaCompra, situacaoDaCompra } from "../lib/gestor/compras.ts";
+import { filtrarCompras, selecionarPedidosDaFila, periodoDaCompra, situacaoDaCompra, situacaoDaNota, situacaoDoContrato } from "../lib/gestor/compras.ts";
 import { ultimoDocumentoPorPedido } from "../lib/contratacao/documentos.ts";
 import { proximasAcoesDoGestor } from "../lib/gestor/proximas-acoes.ts";
 import { descricaoDaTarefaDeRevisao, idDaTarefaDeRevisao } from "../lib/gestor/revisao-pendente.ts";
+import { negociosSemResponsavel, proximaAcaoConfiavel, resumoDoTrabalhoDaConta } from "../lib/gestor/limites-carteira.ts";
+
+test("fila não oferece assumir conta quando atribuições atingem o limite", () => {
+  const negocios = [{ id: "a", name: "A" }, { id: "b", name: "B" }];
+  const retornadas = [{ business_id: "a" }];
+  assert.deepEqual(negociosSemResponsavel(negocios, retornadas, false), [negocios[1]]);
+  assert.deepEqual(negociosSemResponsavel(negocios, retornadas, true), []);
+});
+
+test("carteira não transforma consulta truncada em ausência de gestor ou de tarefas", () => {
+  const base = { operadorId: "gestor-a", responsavelId: undefined,
+    atribuicoesParciais: false, tarefasAbertasRetornadas: 0, tarefasParciais: false };
+  assert.equal(resumoDoTrabalhoDaConta(base),
+    "Gestor responsável: não atribuído · 0 tarefa(s) aberta(s)");
+  assert.equal(resumoDoTrabalhoDaConta({ ...base, atribuicoesParciais: true, tarefasParciais: true }),
+    "Gestor responsável: não confirmado nesta consulta parcial · quantidade não confirmada de tarefa(s) aberta(s)");
+  assert.equal(resumoDoTrabalhoDaConta({ ...base, responsavelId: "gestor-a",
+    atribuicoesParciais: true, tarefasAbertasRetornadas: 2, tarefasParciais: true }),
+    "Gestor responsável: você · ao menos 2 tarefa(s) aberta(s)");
+  assert.equal(resumoDoTrabalhoDaConta({ ...base, responsavelId: "gestor-b" }),
+    "Gestor responsável: outro operador · 0 tarefa(s) aberta(s)");
+});
+
+test("carteira não recomenda ação derivada de fonte operacional incompleta", () => {
+  const acao = "Aguardar pagamento; não há compra aprovada neste negócio";
+  assert.equal(proximaAcaoConfiavel(acao, false), acao);
+  assert.equal(proximaAcaoConfiavel(acao, true),
+    "Conferir pedidos, contas e execução nas telas específicas");
+});
+
+test("contratação não afirma ausência de contrato ou nota em consulta truncada", () => {
+  assert.equal(situacaoDoContrato(undefined, false), "nenhum documento registrado");
+  assert.equal(situacaoDoContrato(undefined, true), "documento não confirmado nesta consulta parcial");
+  assert.equal(situacaoDoContrato("signed", true), "assinatura registrada");
+  assert.equal(situacaoDaNota(undefined, false), "sem emissão registrada");
+  assert.equal(situacaoDaNota(undefined, true), "emissão não confirmada nesta consulta parcial");
+  assert.equal(situacaoDaNota("authorized", true), "autorização registrada");
+});
 
 test("fila pessoal isola contas e operadores, recupera peça sem tarefa e evita duplicata", () => {
   const peca = "018f8980-6c3e-46d5-8b39-37f19465e4ea";
@@ -65,6 +103,21 @@ test("fila de compras prioriza comprovante e erro ambíguo sem incluir cancelado
     ["comprovante", "ambiguo", "aguardando", "aprovado", "cancelado"]);
   assert.deepEqual(filtrarCompras(pedidos, "", "atencao").map((p) => p.id), ["comprovante", "ambiguo"]);
   assert.deepEqual(filtrarCompras(pedidos, "EMPRESA APROVADO", "aprovadas").map((p) => p.id), ["aprovado"]);
+});
+
+test("fila preserva comprovante antigo e aprovação sem perfil além dos 200 pedidos recentes", () => {
+  const recentes = Array.from({ length: 200 }, (_, i) => ({ id: `recente-${i}`, status: "cancelled",
+    created_at: "2026-10-10T00:00:00Z", legal_name: "Recente", buyer_email: "r@example.test", cnpj: "123" }));
+  const comprovante = { ...recentes[0], id: "comprovante-antigo", status: "proof_received",
+    created_at: "2026-09-01T00:00:00Z" };
+  const aprovadoSemPerfil = { ...recentes[0], id: "aprovado-antigo", status: "payment_approved",
+    buyer_profile_id: null, created_at: "2026-09-02T00:00:00Z" };
+  const selecao = selecionarPedidosDaFila([recentes, [comprovante], [aprovadoSemPerfil], [comprovante]]);
+  assert.deepEqual(selecao.pedidos.slice(0, 2).map((pedido) => pedido.id),
+    ["comprovante-antigo", "aprovado-antigo"]);
+  assert.equal(selecao.pedidos.length, 200);
+  assert.equal(selecao.parcial, true);
+  assert.equal(selecao.pedidos.filter((pedido) => pedido.id === "comprovante-antigo").length, 1);
 });
 
 test("fila de compras distingue tentativa ambigua, comprovante e pagamento", () => {
@@ -133,6 +186,34 @@ test("sem contrato não afirma que o cliente deixou de assinar", () => {
     { id: "p1", business_id: "a", status: "payment_approved", created_at: "2026-10-02T00:00:00Z" },
   ], [], []);
   assert.equal(linhas[0].proximaAcao, "Preparar contrato após revisão jurídica");
+});
+
+test("pedido adicional pendente não fecha acesso nem esconde contrato da compra aprovada", () => {
+  const pedidos = [
+    { id: "novo", business_id: "a", status: "awaiting_payment", created_at: "2026-10-04T00:00:00Z" },
+    { id: "aprovado", business_id: "a", status: "payment_approved", created_at: "2026-10-02T00:00:00Z" },
+  ];
+  const [semAssinatura] = montarPortfolio([negocio("a")], pedidos, [], []);
+  assert.equal(semAssinatura.proximaAcao, "Preparar contrato após revisão jurídica");
+  assert.equal(semAssinatura.origem, "pedido");
+  const [assinado] = montarPortfolio([negocio("a")], pedidos,
+    [{ order_id: "aprovado", status: "signed" }], []);
+  assert.match(assinado.proximaAcao, /Pedido adicional aguardando pagamento/);
+  assert.doesNotMatch(assinado.proximaAcao, /acesso ainda fechado/);
+  assert.equal(assinado.prioridade, 4);
+  assert.equal(assinado.contrato, "signed");
+  const [apenasPendente] = montarPortfolio([negocio("a")], [pedidos[0]], [], []);
+  assert.match(apenasPendente.proximaAcao, /não há compra aprovada neste negócio/);
+  assert.doesNotMatch(apenasPendente.proximaAcao, /acesso ainda fechado/);
+});
+
+test("comprovante de compra anterior continua na fila mesmo após pedido novo", () => {
+  const [linha] = montarPortfolio([negocio("a")], [
+    { id: "novo", business_id: "a", status: "awaiting_payment", created_at: "2026-10-04T00:00:00Z" },
+    { id: "comprovante", business_id: "a", status: "proof_received", created_at: "2026-10-02T00:00:00Z" },
+  ], [], []);
+  assert.match(linha.proximaAcao, /Conferir comprovante/);
+  assert.equal(linha.prioridade, 1);
 });
 
 test("documento antigo não substitui o estado do contrato mais recente", () => {

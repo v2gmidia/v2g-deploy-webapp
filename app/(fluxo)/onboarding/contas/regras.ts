@@ -11,9 +11,23 @@
  * a escolha recebida contra as opções que existem de verdade.
  */
 
-import type { ChaveDeConta } from "@/lib/cadastro/montar";
+import type { ChaveDeConta, RespostaDeConta } from "@/lib/cadastro/montar";
 
 export const ORDEM_DAS_CONTAS: readonly ChaveDeConta[] = ["ticket", "custo", "lucro"];
+
+/** A confirmação só pode seguir uma estimativa que o cliente acabou de ver. */
+export function transicaoDaContaPermitida(
+  conta: ChaveDeConta,
+  anterior: RespostaDeConta | undefined,
+  naoSei: boolean,
+  confirmando: boolean,
+): boolean {
+  if (naoSei && confirmando) return false;
+  if (conta === "ticket") return !naoSei && !confirmando;
+  if (!confirmando) return true;
+  return !!anterior && anterior.confirmado === false && !anterior.naoSei
+    && typeof anterior.calculado === "number" && Number.isFinite(anterior.calculado);
+}
 
 /** Centavos, não frações de centavo. Dinheiro guardado com 7 casas é ruído. */
 export function emReais(n: number): number {

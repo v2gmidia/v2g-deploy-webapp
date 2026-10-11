@@ -13,22 +13,25 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
   const [naoSei, setNaoSei] = useState(inicial.marca?.aparenciaNaoSei ?? false);
   const [confirmandoNaoSei, setConfirmandoNaoSei] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [salvo, setSalvo] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
 
   async function salvar() {
-    if (enviando) return;
+    if (enviando || aviso) return;
     setEnviando(true);
     setErro(null);
+    setAviso(null);
     setSalvo(false);
     try {
       const r = await salvarMarcaAction({ businessId: estado.businessId, site, siteNaoTenho: semSite, instagram, aparencia, aparenciaNaoSei: naoSei });
-      if (!r.ok) setErro(r.erro ?? "Não conseguimos salvar esta etapa.");
+      if (!r.ok && r.recarregar) setAviso("Não conseguimos confirmar a gravação. Algumas respostas podem ter sido salvas. Recarregue para conferir antes de enviar de novo.");
+      else if (!r.ok) setErro(r.erro ?? "Não conseguimos salvar esta etapa.");
       else if (r.estado) { setEstado(r.estado); setSalvo(true); }
-      else window.location.href = "/onboarding/concluido";
+      else setAviso("Respostas enviadas, mas não conseguimos atualizar a tela. Recarregue para conferir o próximo passo.");
     } catch {
-      setErro("Não conseguimos salvar esta etapa. Tente de novo.");
+      setAviso("Não conseguimos confirmar se as respostas foram salvas. Recarregue para conferir antes de enviar de novo.");
     } finally { setEnviando(false); }
   }
 
@@ -50,6 +53,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
         {salvo && <p className="form-notice" role="status">Respostas da marca guardadas.</p>}
         {estado.concluido && <p><a href="/onboarding/concluido">Ver o próximo passo</a></p>}
         {erro && <p className="form-error" role="alert">{erro}</p>}
+        {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
         <div className={styles.campo}>
           <label htmlFor="instagram">Instagram da marca (se tiver)</label>
           <input id="instagram" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@seunegocio" />
@@ -58,9 +62,10 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
           <label htmlFor="site">Site</label>
           <input id="site" value={site} disabled={semSite} onChange={(e) => setSite(e.target.value)} placeholder="seunegocio.com.br" />
         </div>
-        <label className={styles.opcao}><input type="checkbox" checked={semSite} disabled={!!inicial.site && !semSite} onChange={(e) => {
+        <label className={styles.opcao}><input type="checkbox" checked={semSite} onChange={(e) => {
           setSemSite(e.target.checked);
           if (e.target.checked) setSite("");
+          else if (!site) setSite(estado.site);
         }} /> Não tenho site</label>
         <div className={styles.campo}>
           <label htmlFor="aparencia">Como você descreveria as cores e o jeito da sua marca?</label>
@@ -80,7 +85,7 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
           <p className="conta-hint">O gestor verá essa pendência na conversa.</p>
         </div>}
         <p className="conta-hint">O Instagram é opcional. Sem site, registre “Não tenho site”; isso não cria um endereço fictício.</p>
-        <button className="cta" type="button" disabled={enviando} onClick={salvar}>{enviando ? "Salvando…" : estado.concluido ? "Salvar alterações" : "Guardar e concluir"}</button>
+        <button className="cta" type="button" disabled={enviando || !!aviso} onClick={salvar}>{enviando ? "Salvando…" : estado.concluido ? "Salvar alterações" : "Guardar e concluir"}</button>
       </>}
   </>;
 }

@@ -5,6 +5,7 @@ import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { cnpjsDoComprador, type PedidoParaIdentificarNegocio } from "@/lib/multiconta/identificacao";
+import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
 import { FormularioNegocio } from "./Formulario";
 import { limparNegocioAction } from "./actions";
 import { tituloDaAba } from "@/lib/titulos";
@@ -53,13 +54,15 @@ export default async function EscolherNegocioPage() {
   // só aparecem se o comprador do pedido corresponder à sessão atual.
   let pedidos: PedidoParaIdentificarNegocio[] | null = null;
   try {
-    const consulta = await createAdminClient().from("commercial_orders")
+    const admin = createAdminClient();
+    pedidos = await lerTodasPaginas((inicio, fim) => admin.from("commercial_orders")
       .select("business_id, cnpj, buyer_email, buyer_profile_id")
       .eq("status", "payment_approved")
       .in("business_id", data.map((negocio) => negocio.id))
-      .order("created_at", { ascending: false });
-    if (consulta.error || !consulta.data) throw consulta.error ?? new Error("pedidos indisponíveis");
-    pedidos = consulta.data;
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(inicio, fim));
+    if (!pedidos) throw new Error("pedidos indisponíveis");
   } catch {
     console.error("[escolher-negocio] falha ao ler CNPJs das compras");
     return <section className="auth-card">

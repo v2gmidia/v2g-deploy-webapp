@@ -3,31 +3,65 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 import { ultimoDocumentoPorPedido, type DocumentoPorPedido } from "@/lib/contratacao/documentos";
-import { filtrarCompras, periodoDaCompra, situacaoDaCompra,
+import { filtrarCompras, selecionarPedidosDaFila, periodoDaCompra, situacaoDaCompra, situacaoDaNota, situacaoDoContrato,
   type FiltroDeCompras, type PedidoDaFila } from "@/lib/gestor/compras";
 import styles from "./Compras.module.css";
 
 export const metadata = { title: "Contratações | V2G", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /** Fila interna: inclui pedidos ainda sem negócio, ausentes da carteira /gestor. */
 export default async function ComprasDoGestorPage({ searchParams }: {
-  searchParams: Promise<{ q?: string; filtro?: string }>;
+  searchParams: Promise<{ q?: string; filtro?: string; negocio?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (user?.app_metadata?.papel !== "operador") notFound();
+  const parametros = await searchParams;
+  const negocioId = typeof parametros.negocio === "string" ? parametros.negocio : null;
+  if (negocioId && !UUID.test(negocioId)) notFound();
 
   try {
     const admin = createAdminClient();
     // As três colunas da tentativa por API existem no QA, mas ainda não no banco real.
     const colunasDaApi = process.env.V2G_CHECKOUT_API_ENABLED === "true" && checkoutSandboxSeguroNesteServidor()
       ? ", provider_charge_id, provider_subscription_id, payment_creation_started_at" : "";
-    const resposta = await admin.from("commercial_orders")
-      .select(`id, buyer_email, legal_name, cnpj, origin, payment_method, billing_period, unit_count, total_cents, status, business_id, buyer_profile_id, created_at${colunasDaApi}`)
+    const colunas = `id, buyer_email, legal_name, cnpj, origin, payment_method, billing_period, unit_count, total_cents, status, business_id, buyer_profile_id, created_at${colunasDaApi}`;
+    let consulta = admin.from("commercial_orders").select(colunas)
       .order("created_at", { ascending: false }).limit(200);
+    if (negocioId) consulta = consulta.eq("business_id", negocioId);
+    let consultaComprovantes = admin.from("commercial_orders").select(colunas)
+      .eq("status", "proof_received").order("created_at", { ascending: false }).limit(200);
+    if (negocioId) consultaComprovantes = consultaComprovantes.eq("business_id", negocioId);
+    let consultaSemPerfil = admin.from("commercial_orders").select(colunas)
+      .eq("status", "payment_approved").is("buyer_profile_id", null)
+      .order("created_at", { ascending: false }).limit(200);
+    if (negocioId) consultaSemPerfil = consultaSemPerfil.eq("business_id", negocioId);
+    const consultaAmbigua = colunasDaApi ? (() => {
+      let tentativa = admin.from("commercial_orders").select(colunas)
+        .eq("status", "awaiting_payment").not("payment_creation_started_at", "is", null)
+        .is("provider_charge_id", null).is("provider_subscription_id", null)
+        .order("created_at", { ascending: false }).limit(200);
+      if (negocioId) tentativa = tentativa.eq("business_id", negocioId);
+      return tentativa;
+    })() : null;
+    const [resposta, comprovantes, semPerfil, ambiguos] = await Promise.all([
+      consulta, consultaComprovantes, consultaSemPerfil,
+      consultaAmbigua ?? Promise.resolve({ data: [], error: null }),
+    ]);
     if (resposta.error || !resposta.data) throw resposta.error ?? new Error("pedidos indisponíveis");
-    const pedidos = resposta.data as unknown as PedidoDaFila[];
+    const atencaoIndisponivel = !!(comprovantes.error || semPerfil.error || ambiguos.error ||
+      !comprovantes.data || !semPerfil.data || !ambiguos.data);
+    const selecao = selecionarPedidosDaFila([
+      resposta.data as unknown as PedidoDaFila[],
+      comprovantes.data as unknown as PedidoDaFila[] ?? [],
+      semPerfil.data as unknown as PedidoDaFila[] ?? [],
+      ambiguos.data as unknown as PedidoDaFila[] ?? [],
+    ]);
+    // Mantém o recorte de 200 para as consultas de documentos, mas seleciona
+    // pela prioridade operacional antes de cortar os pedidos recentes.
+    const pedidos = selecao.pedidos;
     const ids = pedidos.map((pedido) => pedido.id);
     const [contratos, notas] = ids.length ? await Promise.all([
       admin.from("contract_documents").select("order_id, status, created_at")
@@ -40,8 +74,11 @@ export default async function ComprasDoGestorPage({ searchParams }: {
       : ultimoDocumentoPorPedido(contratos.data as DocumentoPorPedido[]);
     const fiscais = documentosIndisponiveis ? new Map<string, string>()
       : ultimoDocumentoPorPedido(notas.data as DocumentoPorPedido[]);
-    const consultaParcial = pedidos.length === 200 || (contratos.data?.length ?? 0) === 1000 || (notas.data?.length ?? 0) === 1000;
-    const parametros = await searchParams;
+    const contratosParciais = (contratos.data?.length ?? 0) === 1000;
+    const notasParciais = (notas.data?.length ?? 0) === 1000;
+    const consultaParcial = selecao.parcial || resposta.data.length === 200 || (comprovantes.data?.length ?? 0) === 200 ||
+      (semPerfil.data?.length ?? 0) === 200 || (ambiguos.data?.length ?? 0) === 200 ||
+      contratosParciais || notasParciais;
     const busca = typeof parametros.q === "string" ? parametros.q.slice(0, 120) : "";
     const filtro: FiltroDeCompras = ["atencao", "pagamento", "aprovadas", "canceladas"].includes(parametros.filtro ?? "")
       ? parametros.filtro as FiltroDeCompras : "todas";
@@ -53,9 +90,12 @@ export default async function ComprasDoGestorPage({ searchParams }: {
       <div className="page-head"><p>OPERAÇÃO · USO INTERNO</p><h1>Contratações</h1>
         <p>Pedidos assistidos e diretos, inclusive os que ainda não criaram um negócio no WebApp.</p></div>
       <p><a href="/gestor">Voltar à carteira</a> · <a href="/pedidos">Conferir Pix assistido</a></p>
+      {negocioId && <p>Mostrando apenas pedidos do negócio {negocioId}. <a href="/gestor/compras">Ver todas as contratações</a></p>}
       {consultaParcial && <p className="form-warning">Consulta parcial: há registros no limite de leitura. Confira a fonte antes de decidir.</p>}
+      {atencaoIndisponivel && <p className="form-warning">A busca adicional por pedidos que precisam de atenção falhou. Os pedidos recentes ainda aparecem; confira a fonte antes de concluir que não há pendências antigas.</p>}
       {documentosIndisponiveis && <p className="form-warning">Não foi possível consultar contratos ou notas agora. Esses estados não serão inferidos.</p>}
       <form className={styles.filtros} action="/gestor/compras" method="get">
+        {negocioId && <input type="hidden" name="negocio" value={negocioId} />}
         <label>Buscar pedido <input type="search" name="q" defaultValue={busca} placeholder="Empresa, e-mail, CNPJ ou pedido" /></label>
         <label>Mostrar <select name="filtro" defaultValue={filtro}>
           <option value="todas">Todas as contratações</option>
@@ -66,7 +106,7 @@ export default async function ComprasDoGestorPage({ searchParams }: {
         </select></label>
         <button type="submit">Filtrar</button>
       </form>
-      <p>{visiveis.length} de {pedidos.length} pedidos retornados nesta consulta. Comprovantes e tentativas ambíguas aparecem primeiro.</p>
+      <p>{visiveis.length} de {pedidos.length} pedidos retornados nesta consulta. Comprovantes, tentativas ambíguas e compras aprovadas sem perfil aparecem primeiro.</p>
       {pedidos.length === 0 ? <p>Nenhum pedido registrado nesta consulta.</p>
         : visiveis.length === 0 ? <p>Nenhum pedido corresponde aos filtros.</p> : null}
       <div className={styles.lista}>{visiveis.map((pedido) => <section className={`auth-card ${styles.cartao}`} key={pedido.id}>
@@ -75,7 +115,7 @@ export default async function ComprasDoGestorPage({ searchParams }: {
         <p><strong>{situacaoDaCompra(pedido)}</strong> · {pedido.origin === "self_service" ? "Compra direta" : "Venda assistida"} · {pedido.payment_method === "asaas_card" ? "Cartão" : "Pix"}</p>
         <p>{pedido.unit_count} {pedido.unit_count === 1 ? "conta" : "contas"} · {periodoDaCompra(pedido.billing_period)} · {dinheiro.format(pedido.total_cents / 100)} · {data.format(new Date(pedido.created_at))}</p>
         <p>{pedido.business_id ? "Negócio vinculado" : "Negócio ainda não vinculado"} · {pedido.buyer_profile_id ? "Perfil vinculado ao pedido" : "Perfil ainda não vinculado"}</p>
-        {!documentosIndisponiveis && <p>Contrato: {assinaturas.get(pedido.id) === "signed" ? "assinatura registrada" : assinaturas.has(pedido.id) ? `estado ${assinaturas.get(pedido.id)}` : "nenhum documento registrado"} · NFS-e: {fiscais.get(pedido.id) === "authorized" ? "autorização registrada" : fiscais.has(pedido.id) ? `estado ${fiscais.get(pedido.id)}` : "sem emissão registrada"}</p>}
+        {!documentosIndisponiveis && <p>Contrato: {situacaoDoContrato(assinaturas.get(pedido.id), contratosParciais)} · NFS-e: {situacaoDaNota(fiscais.get(pedido.id), notasParciais)}</p>}
         {pedido.business_id && <p><a href={`/revisar-perfil?negocio=${encodeURIComponent(pedido.business_id)}#ficha-${encodeURIComponent(pedido.business_id)}`}>Abrir ficha do negócio</a></p>}
         <small>Pedido {pedido.id}</small>
       </section>)}</div>

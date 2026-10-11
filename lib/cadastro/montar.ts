@@ -80,6 +80,8 @@ export interface RespostaDeConta {
   calculado: number | null;
   /** ele viu o valor em reais e disse que está certo */
   confirmado: boolean;
+  /** Atualização de ticket iniciada, mas ainda não finalizada em todas as colunas. */
+  emGravacao?: true;
   /** ele viu a pergunta e não soube — ver §5, é diferente de não perguntado */
   naoSei?: true;
   /**
@@ -306,6 +308,9 @@ export function lerConta(
   coluna: number | null,
   conta: RespostaDeConta | undefined,
 ): LeituraDaConta {
+  // O ticket usa duas colunas. Enquanto a gravação delas não terminar,
+  // nenhuma média parcial pode contar como resposta confirmada.
+  if (conta?.emGravacao) return { estado: "nao_perguntado" };
   // A ORDEM É A REGRA. Trocar estas duas linhas de lugar reintroduz o
   // defeito inteiro.
   if (coluna !== null) return { estado: "respondida", valor: coluna };
@@ -437,7 +442,7 @@ export function montarCadastro(negocio: NegocioParaCadastro): Cadastro {
   if (!descricaoValida) anotar("descricao_livre", "nao_perguntado", "/onboarding");
 
   // ---- ticket: exclusiveMinimum 0
-  const ticket = ticketEscalar(
+  const ticket = contas.ticket?.emGravacao ? null : ticketEscalar(
     numero(negocio.avg_ticket_min),
     numero(negocio.avg_ticket_max),
   );

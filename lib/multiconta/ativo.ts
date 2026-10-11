@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { escolherNegocio, type EscolhaDeNegocio } from "./escolha";
 import { negociosLiberados, type PedidoDoNegocio } from "./elegibilidade";
+import { lerTodasPaginas } from "./paginacao";
 
 export const COOKIE_NEGOCIO_ATIVO = "v2g_negocio_ativo";
 
@@ -21,13 +22,15 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
   const { data: { user }, error: erroSessao } = await supabase.auth.getUser();
   if (erroSessao || !user) return { status: "sem_sessao" };
 
-  const { data, error } = await supabase
+  const data = await lerTodasPaginas((inicio, fim) => supabase
     .from("businesses")
     .select("id, name, created_at")
     .eq("profile_id", user.id)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
+    .range(inicio, fim));
 
-  if (error || !data) return { status: "falha_consulta" };
+  if (!data) return { status: "falha_consulta" };
   const operador = user.app_metadata?.papel === "operador";
   let legadoEm: string | null = null;
   if (!operador) {
@@ -47,11 +50,13 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
   if (precisaPedidos && data.length) {
     try {
       const admin = createAdminClient();
-      const resultado = await admin.from("commercial_orders")
+      const resultado = await lerTodasPaginas((inicio, fim) => admin.from("commercial_orders")
         .select("business_id, status, buyer_email, buyer_profile_id")
-        .in("business_id", data.map((negocio) => negocio.id));
-      if (resultado.error || !resultado.data) return { status: "falha_consulta" };
-      pedidos = resultado.data;
+        .in("business_id", data.map((negocio) => negocio.id))
+        .order("id", { ascending: true })
+        .range(inicio, fim));
+      if (!resultado) return { status: "falha_consulta" };
+      pedidos = resultado;
     } catch {
       return { status: "falha_consulta" };
     }

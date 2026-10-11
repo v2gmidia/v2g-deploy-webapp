@@ -16,6 +16,7 @@ import { POSTURA, SOBRA, TICKET_FAIXA } from "./regras";
 export function Contas({ inicial }: { inicial: EstadoDasContas }) {
   const [estado, setEstado] = useState(inicial);
   const [erro, setErro] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [ajustando, setAjustando] = useState<ChaveDeConta | null>(null);
   const [rascunho, setRascunho] = useState("");
@@ -64,32 +65,60 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       : null;
 
   async function enviar(entrada: Omit<Parameters<typeof salvarContaAction>[0], "businessId">) {
-    if (enviando) return;
+    if (enviando || aviso) return;
     setEnviando(true);
     setErro(null);
-    const r = await salvarContaAction({ ...entrada, businessId: estado.businessId });
-    setEnviando(false);
-    if (!r.ok || !r.estado) {
-      setErro(r.erro ?? "Não conseguimos salvar.");
-      return;
+    setAviso(null);
+    try {
+      const r = await salvarContaAction({ ...entrada, businessId: estado.businessId });
+      if (!r.ok && r.recarregar) {
+        setAviso("Não conseguimos confirmar a gravação. Parte da resposta pode ter sido salva. Recarregue para conferir antes de enviar de novo.");
+        return;
+      }
+      if (!r.ok) {
+        setErro(r.erro ?? "Não conseguimos salvar.");
+        return;
+      }
+      if (!r.estado) {
+        setAviso("Sua resposta foi salva, mas a tela não conseguiu carregar o estado atualizado. Recarregue para continuar.");
+        return;
+      }
+      setEstado(r.estado);
+      setAjustando(null);
+      setRascunho("");
+      setConfirmandoNaoSei(null);
+    } catch {
+      setAviso("Não conseguimos confirmar se a resposta foi salva. Recarregue para conferir antes de enviar de novo.");
+    } finally {
+      setEnviando(false);
     }
-    setEstado(r.estado);
-    setAjustando(null);
-    setRascunho("");
-    setConfirmandoNaoSei(null);
   }
 
   async function reabrir(conta: ChaveDeConta) {
-    if (enviando) return;
+    if (enviando || aviso) return;
     setEnviando(true);
     setErro(null);
-    const r = await reabrirContaAction({ conta, businessId: estado.businessId });
-    setEnviando(false);
-    if (!r.ok || !r.estado) {
-      setErro(r.erro ?? "Não conseguimos abrir a pergunta.");
-      return;
+    setAviso(null);
+    try {
+      const r = await reabrirContaAction({ conta, businessId: estado.businessId });
+      if (!r.ok && r.recarregar) {
+        setAviso("Não conseguimos confirmar se a pergunta foi reaberta. Recarregue para conferir antes de tentar novamente.");
+        return;
+      }
+      if (!r.ok) {
+        setErro(r.erro ?? "Não conseguimos abrir a pergunta.");
+        return;
+      }
+      if (!r.estado) {
+        setAviso("A pergunta foi reaberta, mas a tela não conseguiu carregar o estado atualizado. Recarregue para continuar.");
+        return;
+      }
+      setEstado(r.estado);
+    } catch {
+      setAviso("Não conseguimos confirmar se a pergunta foi reaberta. Recarregue para conferir antes de tentar novamente.");
+    } finally {
+      setEnviando(false);
     }
-    setEstado(r.estado);
   }
 
   const pergunta: Record<ChaveDeConta, string> = {
@@ -106,6 +135,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     custo: "Conta 2 de 3",
     lucro: "Conta 3 de 3 · última",
   };
+  const indisponivel = enviando || !!aviso;
 
   return (
     <>
@@ -117,6 +147,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       </p>
 
       {erro && <p className="form-error">{erro}</p>}
+      {aviso && <p className="form-warning" role="status">{aviso} <button type="button" onClick={() => window.location.reload()}>Recarregar</button></p>}
 
       {/* ---- o que já fechou ---- */}
       {(["ticket", "custo", "lucro"] as ChaveDeConta[])
@@ -164,7 +195,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                 <button
                   className="text-fallback"
                   type="button"
-                  disabled={enviando}
+                  disabled={indisponivel}
                   onClick={() => reabrir(c)}
                 >
                   Agora eu sei
@@ -209,7 +240,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   <button
                     className="mini-send"
                     type="button"
-                    disabled={enviando}
+                    disabled={indisponivel}
                     onClick={() => enviar({ conta: atual, escolha: rascunho, confirmando: true })}
                   >
                     {enviando ? "…" : "Salvar"}
@@ -220,7 +251,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   <button
                     className="cta"
                     type="button"
-                    disabled={enviando}
+                    disabled={indisponivel}
                     onClick={() =>
                       enviar({
                         conta: atual,
@@ -287,7 +318,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     <button
                       className="mini-send"
                       type="button"
-                      disabled={enviando}
+                      disabled={indisponivel}
                       onClick={() => enviar({ conta: "ticket", escolha: rascunho })}
                     >
                       {enviando ? "…" : "Enviar"}
@@ -300,13 +331,13 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                         key={f}
                         className="chip-opt"
                         type="button"
-                        disabled={enviando}
+                        disabled={indisponivel}
                         onClick={() => enviar({ conta: "ticket", escolha: f })}
                       >
                         {f}
                       </button>
                     ))}
-                    <button className="chip-opt" type="button" disabled={enviando}
+                    <button className="chip-opt" type="button" disabled={indisponivel}
                       onClick={() => setConfirmandoNaoSei("ticket")}>
                       Não sei
                     </button>
@@ -322,7 +353,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       key={o.id}
                       className="chip-opt"
                       type="button"
-                      disabled={enviando}
+                      disabled={indisponivel}
                       onClick={() => enviar({ conta: "custo", escolha: o.id })}
                     >
                       {o.rotulo}
@@ -337,7 +368,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   <button
                     className="chip-opt"
                     type="button"
-                    disabled={enviando}
+                    disabled={indisponivel}
                     onClick={() => setConfirmandoNaoSei("custo")}
                   >
                     Não sei
@@ -353,7 +384,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       key={o.id}
                       className="chip-opt"
                       type="button"
-                      disabled={enviando}
+                      disabled={indisponivel}
                       onClick={() => enviar({ conta: "lucro", escolha: o.id })}
                     >
                       {o.rotulo}
@@ -368,7 +399,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   <button
                     className="chip-opt"
                     type="button"
-                    disabled={enviando}
+                    disabled={indisponivel}
                     onClick={() => setConfirmandoNaoSei("lucro")}
                   >
                     Não sei
@@ -379,9 +410,9 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                 <div className="pendencia-bloco" role="group" aria-label="Confirmar que não sabe responder">
                   <p>Tem certeza de que não consegue estimar? Pense em uma venda recente ou num valor aproximado. Não precisa ser exato.</p>
                   <div className="chips-row">
-                    <button className="chip-opt" type="button" disabled={enviando}
+                    <button className="chip-opt" type="button" disabled={indisponivel}
                       onClick={() => setConfirmandoNaoSei(null)}>Vou tentar responder</button>
-                    <button className="chip-opt" type="button" disabled={enviando}
+                    <button className="chip-opt" type="button" disabled={indisponivel}
                       onClick={() => enviar({ conta: atual, escolha: "", naoSei: true })}>Ainda não sei</button>
                   </div>
                   <p className="conta-hint">O gestor verá essa pendência. Você poderá voltar e informar o valor quando souber.</p>

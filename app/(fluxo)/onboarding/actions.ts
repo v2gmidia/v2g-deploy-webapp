@@ -36,11 +36,14 @@ export interface SalvarResultado {
   ok: boolean;
   erro?: string;
   estado?: EstadoOnboarding;
+  recarregar?: boolean;
 }
 
 interface LinhaBusiness {
   id: string;
   onboarding: unknown;
+  city: string | null;
+  radius_km: number | null;
 }
 
 function lerRespostas(onboarding: unknown): Record<string, RespostaGravada> {
@@ -82,7 +85,7 @@ async function obterOuCriarBusiness(): Promise<
   }
 
   const { data: existente, error: erroBusca } = ativo.status === "selecionado"
-    ? await supabase.from("businesses").select("id, onboarding")
+    ? await supabase.from("businesses").select("id, onboarding, city, radius_km")
       .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle()
     : { data: null, error: null };
 
@@ -104,7 +107,7 @@ async function obterOuCriarBusiness(): Promise<
   const { data: criado, error: erroCriacao } = await supabase
     .from("businesses")
     .insert({ profile_id: user.id, name: NOME_PROVISORIO })
-    .select("id, onboarding")
+    .select("id, onboarding, city, radius_km")
     .single();
 
   if (erroCriacao || !criado) {
@@ -154,6 +157,8 @@ export async function salvarRespostaAction(entrada: {
 }): Promise<SalvarResultado> {
   const pergunta = perguntaPorId(entrada.qid);
   if (!pergunta) return { ok: false, erro: "Pergunta desconhecida." };
+  if (entrada.origem !== "chip" && entrada.origem !== "texto")
+    return { ok: false, erro: "Origem da resposta inválida." };
 
   // `let` porque a conferência do nicho pode reescrever isto com a grafia
   // canônica do backend — ver `conferirEscolhaDeNicho`.
@@ -203,7 +208,7 @@ export async function salvarRespostaAction(entrada: {
     return { ok: false, erro: pergunta.minimo.recado };
   }
 
-  const cidade = entrada.cidade?.trim();
+  const cidade = pergunta.pedeCidade && entrada.origem === "chip" ? entrada.cidade?.trim() : undefined;
   if (pergunta.pedeCidade && entrada.origem === "chip" && !cidade) {
     return { ok: false, erro: "Escreva sua cidade antes de escolher." };
   }
@@ -216,6 +221,7 @@ export async function salvarRespostaAction(entrada: {
 
   const { linha } = resultado;
   const respostas = lerRespostas(linha.onboarding);
+  const pracaAnterior = respostas.praca;
 
   const echo = cidade && entrada.origem === "chip" ? `${cidade} · ${texto}` : texto;
   respostas[entrada.qid] = {
@@ -261,6 +267,16 @@ export async function salvarRespostaAction(entrada: {
     }
   }
 
+  // Uma resposta livre substitui a antiga escolha por raio. Se cidade e
+  // raio ainda coincidem com aquela escolha, deixam de ser fatos atuais:
+  // não inferimos números nem município da nova frase. Uma correção feita
+  // depois em outra tela, com valor diferente, é preservada.
+  const esvaziar = entrada.qid === "praca" && entrada.origem === "texto" &&
+    pracaAnterior?.origem === "chip" ? [
+      ...(pracaAnterior.cidade && linha.city === pracaAnterior.cidade ? ["city"] : []),
+      ...(RAIO_KM[pracaAnterior.texto] === linha.radius_km ? ["radius_km"] : []),
+    ] : [];
+
   // PRIMEIRO as colunas, DEPOIS o jsonb. Se uma gravação falhar no meio,
   // a resposta não é marcada como dada e a pergunta continua aberta —
   // ele responde de novo e as colunas são reescritas juntas. Marcar o
@@ -273,10 +289,19 @@ export async function salvarRespostaAction(entrada: {
       tabela: "businesses",
       campos,
     });
-    if (!gravacao.ok) return { ok: false, erro: gravacao.erro };
+    if (!gravacao.ok) return { ok: false, erro: gravacao.erro, recarregar: true };
   }
 
   const supabase = await createClient();
+  if (esvaziar.length) {
+    const limpeza = await supabase.rpc("esvaziar_campos_do_cliente", {
+      p_business_id: linha.id, p_campos: esvaziar,
+    });
+    if (limpeza.error || limpeza.data !== esvaziar.length) {
+      console.error("[onboarding] falha ao esvaziar praça ::", limpeza.error?.message ?? "resultado inesperado");
+      return { ok: false, erro: "Não conseguimos confirmar a atualização da região de atendimento.", recarregar: true };
+    }
+  }
   const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
     p_business_id: linha.id,
     p_patch: patchDoBlocoUm({ [entrada.qid]: respostas[entrada.qid] }),
@@ -284,7 +309,7 @@ export async function salvarRespostaAction(entrada: {
 
   if (error || mesclado !== true) {
     console.error("[onboarding] falha ao salvar resposta ::", error?.message ?? "negócio indisponível");
-    return { ok: false, erro: "Não conseguimos salvar sua resposta. Tente de novo." };
+    return { ok: false, erro: "Não conseguimos confirmar a gravação da resposta.", recarregar: true };
   }
 
   revalidatePath("/onboarding");

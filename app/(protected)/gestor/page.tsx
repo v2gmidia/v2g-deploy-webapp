@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { COLUNAS_DO_CADASTRO } from "@/lib/cadastro/montar";
 import { filtrarPortfolio, montarPortfolio, type ExecucaoDoPortfolio, type FiltroDoPortfolio, type NegocioDoPortfolio } from "@/lib/gestor/portfolio";
 import { proximasAcoesDoGestor, type RevisaoAberta, type TarefaAberta } from "@/lib/gestor/proximas-acoes";
+import { proximaAcaoConfiavel, resumoDoTrabalhoDaConta } from "@/lib/gestor/limites-carteira";
 import { tituloDaAba } from "@/lib/titulos";
 import styles from "./Gestor.module.css";
 
@@ -55,14 +56,20 @@ export default async function GestorPage({ searchParams }: {
       execucoesIndisponiveis ? [] : execucoes.data as ExecucaoDoPortfolio[], unidades.data);
     const parcial = (negocios.count ?? 0) > negocios.data.length || pedidos.data.length === 1000 || contas.data.length === 1000 || contratos.data.length === 1000 ||
       (!execucoesIndisponiveis && execucoes.data.length === 1000) || unidades.data.length === 1000;
+    const fonteOperacionalIncompleta = pedidos.data.length === 1000 || contas.data.length === 1000 ||
+      contratos.data.length === 1000 || unidades.data.length === 1000 || execucoesIndisponiveis ||
+      execucoes.data?.length === 1000;
+    const vinculoContratualIncompleto = pedidos.data.length === 1000 || contas.data.length === 1000 ||
+      unidades.data.length === 1000;
     const parametros = await searchParams;
     const busca = typeof parametros.q === "string" ? parametros.q.slice(0, 120) : "";
     const trabalhoAtivo = process.env.V2G_MANAGER_WORK_ENABLED === "true";
     const filtrosDisponiveis = trabalhoAtivo
-      ? ["minhas", "pedidos", "onboarding", "cadastro", "contas", "campanhas"]
-      : ["pedidos", "onboarding", "cadastro", "contas", "campanhas"];
-    const filtroCampanhaIndisponivel = execucoesIndisponiveis && parametros.filtro === "campanhas";
-    const filtro: FiltroDoPortfolio = !filtroCampanhaIndisponivel && filtrosDisponiveis.includes(parametros.filtro ?? "")
+      ? ["minhas", "onboarding", "cadastro"] : ["onboarding", "cadastro"];
+    if (!fonteOperacionalIncompleta) filtrosDisponiveis.push("pedidos", "contas", "campanhas");
+    const filtroOperacionalIndisponivel = fonteOperacionalIncompleta &&
+      ["pedidos", "contas", "campanhas"].includes(parametros.filtro ?? "");
+    const filtro: FiltroDoPortfolio = filtrosDisponiveis.includes(parametros.filtro ?? "")
       ? parametros.filtro as FiltroDoPortfolio : "todos";
     const revisoes = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true"
       ? await admin.from("creative_review_requests").select("id", { count: "exact", head: true })
@@ -88,9 +95,11 @@ export default async function GestorPage({ searchParams }: {
         .in("business_id", ids).eq("status", "open").limit(1000),
     ]) : [{ data: [], error: null }, { data: [], error: null }];
     const trabalhoIndisponivel = !!(responsaveis.error || tarefasAbertas.error || !responsaveis.data || !tarefasAbertas.data);
-    const trabalhoParcial = (responsaveis.data?.length ?? 0) === 1000 || (tarefasAbertas.data?.length ?? 0) === 1000;
+    const responsaveisParciais = (responsaveis.data?.length ?? 0) === 1000;
+    const tarefasParciais = (tarefasAbertas.data?.length ?? 0) === 1000;
+    const trabalhoParcial = responsaveisParciais || tarefasParciais;
     const minhasIndisponiveis = filtro === "minhas" &&
-      (!!responsaveis.error || !responsaveis.data || responsaveis.data.length === 1000);
+      (!!responsaveis.error || !responsaveis.data || responsaveisParciais);
     const gestorPorNegocio = new Map((responsaveis.data ?? []).map((item) => [item.business_id, item.operator_profile_id]));
     const minhasContas = new Set((responsaveis.data ?? [])
       .filter((item) => item.operator_profile_id === user.id).map((item) => item.business_id));
@@ -101,7 +110,9 @@ export default async function GestorPage({ searchParams }: {
         new Map(negocios.data.map((negocio) => [negocio.id, negocio.name])),
         revisoesDaCarteira?.data as RevisaoAberta[] ?? [], tarefasAbertas.data as TarefaAberta[], Date.now())
       : [];
-    const visiveis = minhasIndisponiveis ? [] : filtrarPortfolio(linhas, busca, filtro, minhasContas);
+    const linhasParaExibir = fonteOperacionalIncompleta ?
+      [...linhas].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")) : linhas;
+    const visiveis = minhasIndisponiveis ? [] : filtrarPortfolio(linhasParaExibir, busca, filtro, minhasContas);
     const tarefasPorNegocio = new Map<string, number>();
     for (const tarefa of tarefasAbertas.data ?? []) tarefasPorNegocio.set(tarefa.business_id, (tarefasPorNegocio.get(tarefa.business_id) ?? 0) + 1);
 
@@ -115,7 +126,8 @@ export default async function GestorPage({ searchParams }: {
           <a href="/revisar-perfil#fichas">Fichas completas</a>
           <a href="/gestor/compras">Todas as contratações</a>
           {revisoes && <a href="/gestor/criativos">{trabalhoAtivo ? "Revisar peças das minhas contas" : "Revisar peças recebidas"}</a>}
-          {trabalhoAtivo && <a href="/gestor/tarefas">Tarefas da equipe{trabalhoIndisponivel ? "" : ` (${tarefasAbertas.data?.length ?? 0})`}</a>}
+          {trabalhoAtivo && <a href="/gestor/tarefas">Tarefas da equipe{trabalhoIndisponivel ? "" :
+            tarefasParciais ? " (ao menos 1.000)" : ` (${tarefasAbertas.data?.length ?? 0})`}</a>}
           <a href="/pedidos">Pedidos Pix</a>
           <a href="/saude-meta">Fila de revisão</a>
         </nav>
@@ -125,12 +137,13 @@ export default async function GestorPage({ searchParams }: {
       {revisoesParciais && <p className="form-warning">A contagem de peças por negócio está parcial ou indisponível. Confira a fila de cada negócio.</p>}
       {trabalhoAtivo && trabalhoIndisponivel && <p className="form-warning">Responsáveis ou tarefas indisponíveis agora; esses estados não serão inferidos.</p>}
       {execucoesIndisponiveis && <p className="form-warning">Execuções e campanhas não puderam ser consultadas agora. A carteira mostra os demais dados, sem afirmar ausência de campanhas.</p>}
-      {filtroCampanhaIndisponivel && <p className="form-warning">O filtro de campanhas não pôde ser aplicado; a carteira completa está exibida.</p>}
+      {filtroOperacionalIndisponivel && <p className="form-warning">Este filtro depende de fontes operacionais incompletas; a carteira completa está exibida.</p>}
       {trabalhoAtivo && !trabalhoIndisponivel && trabalhoParcial && <p className="form-warning">A lista de responsáveis ou tarefas chegou ao limite da consulta. Confira a fila específica.</p>}
       {parcial && <p className="form-warning">Consulta parcial: há registros além do limite de 1.000 por tabela. Use as telas específicas antes de decidir.</p>}
+      {fonteOperacionalIncompleta && <p className="form-warning">As prioridades por negócio não podem ser confirmadas com as fontes operacionais incompletas. Confira as fichas e filas específicas.</p>}
       <div className={styles.resumo} aria-label="Resumo da carteira">
         <div><strong>{linhas.length}</strong><span>negócios retornados</span></div>
-        <div><strong>{linhas.filter((l) => l.prioridade <= 2).length}</strong><span>pedidos para acompanhar</span></div>
+        <div><strong>{fonteOperacionalIncompleta ? "—" : linhas.filter((l) => l.prioridade <= 2).length}</strong><span>{fonteOperacionalIncompleta ? "prioridade de pedidos não confirmada" : "pedidos para acompanhar"}</span></div>
         <div><strong>{linhas.filter((l) => !l.onboardingConcluido).length}</strong><span>onboardings pendentes</span></div>
         <div><strong>{linhas.filter((l) => l.pendenciasCadastro > 0).length}</strong><span>cadastros com campos pendentes</span></div>
       </div>
@@ -152,18 +165,19 @@ export default async function GestorPage({ searchParams }: {
             </>}
       </section>}
       <section aria-labelledby="titulo-fila">
-        <div className={styles.introducao}><h2 id="titulo-fila">Próxima ação por negócio</h2>
-          <p>A ordem começa por comprovantes para conferir. A ficha guarda respostas e procedência.</p></div>
+        <div className={styles.introducao}><h2 id="titulo-fila">{fonteOperacionalIncompleta ? "Negócios para conferir" : "Próxima ação por negócio"}</h2>
+          <p>{fonteOperacionalIncompleta ? "A ordem é alfabética até as fontes voltarem a oferecer um recorte completo." :
+            "A ordem começa por comprovantes para conferir. A ficha guarda respostas e procedência."}</p></div>
         <form className={styles.filtros} action="/gestor" method="get">
           <label>Buscar negócio <input type="search" name="q" defaultValue={busca} placeholder="Nome ou identificador" /></label>
           <label>Mostrar <select name="filtro" defaultValue={filtro}>
             <option value="todos">Toda a carteira</option>
             {trabalhoAtivo && <option value="minhas">Minhas contas</option>}
-            <option value="pedidos">Pedidos para acompanhar</option>
+            {!fonteOperacionalIncompleta && <option value="pedidos">Pedidos para acompanhar</option>}
             <option value="onboarding">Onboarding pendente</option>
             <option value="cadastro">Cadastro com pendência</option>
-            <option value="contas">Contas para conferir</option>
-            {!execucoesIndisponiveis && <option value="campanhas">Campanha criada no pipeline</option>}
+            {!fonteOperacionalIncompleta && <option value="contas">Contas para conferir</option>}
+            {!fonteOperacionalIncompleta && <option value="campanhas">Campanha criada no pipeline</option>}
           </select></label>
           <button type="submit">Filtrar</button>
         </form>
@@ -175,9 +189,15 @@ export default async function GestorPage({ searchParams }: {
           <div className={styles.lista}>{visiveis.map((linha) =>
             <article className={styles.linha} key={linha.id}>
               <div><h3>{linha.nome}</h3><small>{linha.id}</small></div>
-              <div className={styles.acao}><b>{linha.proximaAcao}</b>
-                <span>{linha.contas} conta(s) vinculada(s) · {linha.pendenciasCadastro} campo(s) pendente(s)</span>
-                {trabalhoAtivo && !trabalhoIndisponivel && <span>Gestor responsável: {gestorPorNegocio.get(linha.id) === user.id ? "você" : gestorPorNegocio.has(linha.id) ? "outro operador" : "não atribuído"} · {tarefasPorNegocio.get(linha.id) ?? 0} tarefa(s) aberta(s)</span>}
+              <div className={styles.acao}><b>{proximaAcaoConfiavel(linha.proximaAcao, fonteOperacionalIncompleta)}</b>
+                <span>{linha.contas} conta(s) retornada(s) · {linha.pendenciasCadastro} campo(s) pendente(s)</span>
+                {trabalhoAtivo && !trabalhoIndisponivel && <span>{resumoDoTrabalhoDaConta({
+                  operadorId: user.id,
+                  responsavelId: gestorPorNegocio.get(linha.id),
+                  atribuicoesParciais: responsaveisParciais,
+                  tarefasAbertasRetornadas: tarefasPorNegocio.get(linha.id) ?? 0,
+                  tarefasParciais,
+                })}</span>}
                 {revisoesDaCarteira && !revisoesDaCarteira.error && !revisoesParciais && (revisoesPorNegocio.get(linha.id) ?? 0) > 0 &&
                   <span>{revisoesPorNegocio.get(linha.id)} peça(s) aguardando revisão</span>}
                 <span>{execucoesIndisponiveis ? "Execuções indisponíveis nesta consulta" : linha.ultimaExecucao
@@ -202,12 +222,13 @@ export default async function GestorPage({ searchParams }: {
                   <summary>Ver contas de anúncios</summary>
                   <ul>{linha.contasDetalhe.map((conta) => <li key={conta.id}>
                     <b>{conta.nome}</b> <code>{conta.identificador}</code>
-                    <span>{conta.ativa ? "Ativa no cadastro" : "Inativa no cadastro"} · {conta.vinculo === "pedido_aprovado" ? "Unidade de pedido aprovado" : "Sem unidade aprovada vinculada"}</span>
+                    <span>{conta.ativa ? "Ativa no cadastro" : "Inativa no cadastro"} · {conta.vinculo === "pedido_aprovado" ? "Unidade de pedido aprovado" :
+                      vinculoContratualIncompleto ? "Vínculo contratual não confirmado nesta consulta parcial" : "Sem unidade aprovada vinculada"}</span>
                   </li>)}</ul>
                 </details>}</div>
               <div className={styles.destinos}>
                 <a href={`/revisar-perfil?negocio=${encodeURIComponent(linha.id)}#ficha-${encodeURIComponent(linha.id)}`}>Abrir ficha</a>
-                {linha.origem === "pedido" && <a href="/pedidos">Ver pedido</a>}
+                {(linha.origem === "pedido" || fonteOperacionalIncompleta) && <a href={`/gestor/compras?negocio=${encodeURIComponent(linha.id)}`}>Ver contratações</a>}
                 {trabalhoAtivo && <a href={`/gestor/tarefas?negocio=${encodeURIComponent(linha.id)}`}>Tarefas da conta</a>}
                 {revisoes && <a href={`/gestor/criativos?negocio=${encodeURIComponent(linha.id)}`}>Criativos da conta</a>}
                 {linha.ultimaCampanha && <a href={`/ativar-campanha/${encodeURIComponent(linha.ultimaCampanha.idExecucao)}`}>Ver campanha</a>}

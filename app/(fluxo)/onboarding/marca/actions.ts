@@ -34,6 +34,7 @@ export interface ResultadoMarca {
   ok: boolean;
   erro?: string;
   estado?: EstadoMarca;
+  recarregar?: boolean;
 }
 
 async function obter(): Promise<{ erro: string } | { linha: Linha; profileId: string }> {
@@ -108,15 +109,12 @@ export async function salvarMarcaAction(entrada: {
     return { ok: false, erro: "Conte como é sua marca ou marque que ainda não sabe." };
   }
   if (aparencia.length > 500) return { ok: false, erro: "Resuma o visual da marca em até 500 caracteres." };
-  if (entrada.siteNaoTenho && anterior.site) {
-    return { ok: false, erro: "Há um site salvo no seu perfil. Corrija esse endereço antes de marcar que não tem site." };
-  }
   if (entrada.siteNaoTenho && entrada.site.trim()) {
     return { ok: false, erro: "Para marcar que não tem site, deixe o endereço vazio." };
   }
   const site = entrada.site.trim() ? validarSite(entrada.site.trim()) : null;
   if (entrada.site.trim() && !site) return { ok: false, erro: "Confira o endereço do site." };
-  if (!entrada.siteNaoTenho && !site && !anterior.site) {
+  if (!entrada.siteNaoTenho && !site) {
     return { ok: false, erro: "Informe o site ou marque que não tem um." };
   }
   const instagram = entrada.instagram.trim() ? validarInstagram(entrada.instagram) : null;
@@ -124,19 +122,32 @@ export async function salvarMarcaAction(entrada: {
   const campos: CampoParaGravar[] = [];
   if (site && site !== anterior.site) campos.push({ campo: "site_url", valor: site });
   if (instagram && instagram !== anterior.instagram) campos.push({ campo: "instagram_handle", valor: instagram });
+  const esvaziar = [
+    ...(entrada.siteNaoTenho && anterior.site ? ["site_url"] : []),
+    ...(!instagram && anterior.instagram ? ["instagram_handle"] : []),
+  ];
   const visual = entrada.aparenciaNaoSei ? "" : aparencia;
-  if (anterior.concluido && campos.length === 0 && anterior.marca &&
+  if (anterior.concluido && campos.length === 0 && esvaziar.length === 0 && anterior.marca &&
       anterior.marca.aparencia === visual &&
       anterior.marca.aparenciaNaoSei === entrada.aparenciaNaoSei &&
       anterior.marca.siteNaoTenho === entrada.siteNaoTenho)
     return { ok: true, estado: anterior };
   if (campos.length) {
     const gravacao = await gravarCamposDoCliente({ profileId: r.profileId, businessId: r.linha.id, tabela: "businesses", campos });
-    if (!gravacao.ok) return { ok: false, erro: gravacao.erro };
+    if (!gravacao.ok) return { ok: false, erro: gravacao.erro, recarregar: true };
   }
 
   const agora = new Date().toISOString();
   const supabase = await createClient();
+  if (esvaziar.length) {
+    const limpeza = await supabase.rpc("esvaziar_campos_do_cliente", {
+      p_business_id: r.linha.id, p_campos: esvaziar,
+    });
+    if (limpeza.error || limpeza.data !== esvaziar.length) {
+      console.error("[marca] falha ao esvaziar campos ::", limpeza.error?.message ?? "resultado inesperado");
+      return { ok: false, erro: "Não conseguimos confirmar a atualização do site ou Instagram.", recarregar: true };
+    }
+  }
   const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
     p_business_id: r.linha.id,
     p_patch: {
@@ -147,7 +158,7 @@ export async function salvarMarcaAction(entrada: {
   });
   if (error || mesclado !== true) {
     console.error("[marca] falha ao salvar ::", error?.message ?? "negócio indisponível");
-    return { ok: false, erro: "Não conseguimos salvar esta etapa. Tente de novo." };
+    return { ok: false, erro: "Não conseguimos confirmar a gravação desta etapa.", recarregar: true };
   }
   revalidatePath("/onboarding/marca");
   revalidatePath("/onboarding/concluido");

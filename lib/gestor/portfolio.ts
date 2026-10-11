@@ -144,6 +144,13 @@ export function montarPortfolio(
     const lista = (pedidosPorNegocio.get(negocio.id) ?? [])
       .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
     const pedido = lista[0] ?? null;
+    // Uma segunda compra pendente não desfaz a primeira aprovada. A ação da
+    // carteira deve considerar todos os pedidos deste negócio, não só o novo.
+    const comprovante = lista.find((item) => item.status === "proof_received");
+    const aprovado = lista.find((item) => item.status === "payment_approved");
+    const assinaturaPendente = lista.find((item) => item.status === "payment_approved" &&
+      contratosPorPedido.get(item.id) !== "signed");
+    const aguardando = lista.find((item) => item.status === "awaiting_payment");
     const cadastro = montarCadastro(negocio);
     const pendenciasCadastro = cadastro.completo ? 0 : cadastro.pendencias.length;
     const onboardingConcluido = estadoDaConclusao(negocio).concluido;
@@ -160,18 +167,24 @@ export function montarPortfolio(
       .sort((a, b) => Date.parse(b.criado_em) - Date.parse(a.criado_em));
     const ultima = execucoesDoNegocio[0] ?? null;
     const ultimaCampanha = execucoesDoNegocio.find((e) => e.campanha_meta != null) ?? null;
-    const contrato = pedido ? contratosPorPedido.get(pedido.id) ?? null : null;
+    // O pedido mais novo pode ser apenas uma compra adicional pendente.
+    // O estado contratual exibido pertence à compra aprovada mais recente.
+    const contrato = aprovado ? contratosPorPedido.get(aprovado.id) ?? null : null;
     const instagram = instagramParaRevisao(negocio.instagram_handle);
 
     let prioridade = 5;
     let proximaAcao = "Conferir ficha e situação da operação";
     let origem: LinhaDoPortfolio["origem"] = "operacao";
-    if (pedido?.status === "proof_received") {
+    if (comprovante) {
       prioridade = 1; proximaAcao = "Conferir comprovante Pix no pedido"; origem = "pedido";
-    } else if (pedido?.status === "awaiting_payment") {
-      prioridade = 2; proximaAcao = "Aguardar pagamento; acesso ainda fechado"; origem = "pedido";
-    } else if (pedido?.status === "payment_approved" && contrato !== "signed") {
-      prioridade = 2; proximaAcao = contrato ? "Conferir assinatura do contrato" : "Preparar contrato após revisão jurídica"; origem = "pedido";
+    } else if (assinaturaPendente) {
+      prioridade = 2; proximaAcao = contratosPorPedido.has(assinaturaPendente.id)
+        ? "Conferir assinatura do contrato" : "Preparar contrato após revisão jurídica"; origem = "pedido";
+    } else if (aguardando) {
+      prioridade = aprovado ? 4 : 2;
+      proximaAcao = aprovado ? "Pedido adicional aguardando pagamento; há compra anterior aprovada"
+        : "Aguardar pagamento; não há compra aprovada neste negócio";
+      origem = "pedido";
     } else if (!pedido && negocio.cadastro_estado === "enviado") {
       prioridade = 4; proximaAcao = "Conta anterior ao fluxo de compra: conferir ficha e operação"; origem = "operacao";
     } else if (!onboardingConcluido) {

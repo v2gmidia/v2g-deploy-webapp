@@ -48,6 +48,7 @@ const hooks = registerHooks({
 const actions = await import('../app/(fluxo)/onboarding/actions.ts');
 const contas = await import('../app/(fluxo)/onboarding/contas/actions.ts');
 const marca = await import('../app/(fluxo)/onboarding/marca/actions.ts');
+const cadastro = await import('../lib/cadastro/montar.ts');
 const marcaDoc = await import('../lib/onboarding/marca.ts');
 const { patchDoBlocoUm } = await import('../lib/onboarding/documento.ts');
 const oldTime = '2026-09-01T00:00:00.000Z';
@@ -62,12 +63,14 @@ const documentFixture = () => ({
   },
   futuro:{lista:[0, null, false], ativo:false},
 });
-let row, events, loggedIn, fieldFailure, jsonFailure, beforeMerge;
+let row, events, loggedIn, fieldFailure, fieldFailureAfter, clearFailure, jsonFailure, beforeMerge, readCount, failReadAt;
 beforeEach(() => {
   row = {id:'negocio-fixture', profile_id:'perfil-fixture', name:'Antes', description:'Descrição anterior',
     avg_ticket_min:100, avg_ticket_max:100, avg_direct_cost:null, target_profit_per_customer:null,
-    monthly_budget:null, site_url:null, instagram_handle:null, onboarding:documentFixture(), procedencia:{}};
-  events = []; loggedIn = true; fieldFailure = false; jsonFailure = false; beforeMerge = null;
+    monthly_budget:null, site_url:null, instagram_handle:null, city:null, radius_km:null,
+    onboarding:documentFixture(), procedencia:{}};
+  events = []; loggedIn = true; fieldFailure = false; fieldFailureAfter = null; clearFailure = false; jsonFailure = false; beforeMerge = null;
+  readCount = 0; failReadAt = null;
 });
 globalThis.__onboardingOffline = {
   activeBusiness() { return loggedIn
@@ -77,6 +80,13 @@ globalThis.__onboardingOffline = {
     return {
       auth:{getUser:async () => ({data:{user:loggedIn ? {id:'perfil-fixture'} : null}})},
       async rpc(name, args) {
+        if (name === 'esvaziar_campos_do_cliente') {
+          assert.equal(args.p_business_id,row.id);
+          events.push('esvaziar');
+          if (clearFailure) return {data:null,error:{message:'falha simulada'}};
+          for (const campo of args.p_campos) { row[campo] = null; delete row.procedencia[campo]; }
+          return {data:args.p_campos.length,error:null};
+        }
         assert.equal(name,'mesclar_blocos_onboarding');
         assert.equal(args.p_business_id,row.id);
         events.push('json');
@@ -109,7 +119,11 @@ globalThis.__onboardingOffline = {
                 return query;
               },
               order() { return query; }, limit() { return query; },
-              async maybeSingle() { return {data:structuredClone(row), error:null}; },
+              async maybeSingle() {
+                readCount++;
+                if (readCount === failReadAt) return {data:null,error:{message:'leitura indisponível'}};
+                return {data:structuredClone(row), error:null};
+              },
             };
             return query;
           },
@@ -123,7 +137,8 @@ globalThis.__onboardingOffline = {
     assert.equal(args.profileId,'perfil-fixture'); assert.equal(args.businessId,row.id);
     assert.equal(args.tabela,'businesses'); events.push('campos');
     if (fieldFailure) return {ok:false, erro:'Falha simulada de campo'};
-    for (const {campo,valor} of args.campos) {
+    for (const [index,{campo,valor}] of args.campos.entries()) {
+      if (index === fieldFailureAfter) return {ok:false,erro:'Falha parcial simulada',gravados:[]};
       row[campo] = valor; row.procedencia[campo] = {origem:'confirmado',em:oldTime};
     }
     return {ok:true, atos:[]};
@@ -194,14 +209,21 @@ for (const invalid of [null, undefined, false, 0, 'texto', [{contas:'inválido'}
 }
 test('falha de campo impede JSON, revalidação e disparo', async () => {
   const before = structuredClone(row); fieldFailure = true;
-  assert.equal((await save()).ok,false);
+  const result = await save();
+  assert.equal(result.ok,false); assert.equal(result.recarregar,true);
   assert.deepEqual(row,before); assert.deepEqual(events,['campos']);
 });
 test('falha JSON não retorna sucesso nem dispara; coluna já gravada permanece', async () => {
   const before = structuredClone(row.onboarding); jsonFailure = true;
-  assert.equal((await save()).ok,false);
+  const result = await save();
+  assert.equal(result.ok,false); assert.equal(result.recarregar,true);
   assert.deepEqual(row.onboarding,before); assert.equal(row.name,'Nome corrigido');
   assert.deepEqual(events,['campos','json']);
+  jsonFailure = false;
+  const retomado = await actions.carregarEstadoAction();
+  assert.equal(retomado.respostas.nome.texto,'Antes');
+  assert.equal((await save()).ok,true);
+  assert.equal(row.onboarding.respostas.nome.texto,'Nome corrigido');
 });
 test('sem sessão não grava', async () => {
   loggedIn = false; assert.equal((await save()).ok,false); assert.deepEqual(events,[]);
@@ -211,8 +233,51 @@ test('entradas inválidas não gravam nem disparam', async () => {
     {qid:'inexistente',texto:'abc',origem:'texto'}, {qid:'nome',texto:' ',origem:'texto'},
     {qid:'descricao',texto:'curta',origem:'texto'}, {qid:'nome',texto:'forjado',origem:'chip'},
     {qid:'praca',texto:'Na cidade toda',origem:'chip'}, {qid:'ramo',texto:'forjado',origem:'chip'},
+    {qid:'praca',texto:'Na cidade toda',origem:'forjada'},
   ]) assert.equal((await actions.salvarRespostaAction({businessId:row.id,...entrada})).ok,false);
   assert.deepEqual(events,[]);
+});
+function pracaComRaio() {
+  row.onboarding.respostas.praca = {texto:'Na cidade toda',origem:'chip',cidade:'Curitiba',
+    echo:'Curitiba · Na cidade toda',em:oldTime};
+  row.city = 'Curitiba'; row.radius_km = 25;
+  row.procedencia.city = {origem:'confirmado',em:oldTime};
+  row.procedencia.radius_km = {origem:'confirmado',em:oldTime};
+}
+test('praça livre retira cidade e raio derivados da escolha anterior, junto com procedência', async () => {
+  pracaComRaio();
+  const result = await save('praca','Atendo clientes em todo o Brasil');
+  assert.equal(result.ok,true);
+  assert.equal(row.city,null); assert.equal(row.radius_km,null);
+  assert.equal(row.procedencia.city,undefined); assert.equal(row.procedencia.radius_km,undefined);
+  assert.equal(row.onboarding.respostas.praca.texto,'Atendo clientes em todo o Brasil');
+  assert.deepEqual(events,['esvaziar','json','revalidate:/onboarding','disparo']);
+});
+test('praça livre preserva valor divergente corrigido depois em outra tela', async () => {
+  pracaComRaio(); row.city = 'Pinhais'; row.radius_km = 30;
+  assert.equal((await save('praca','Atendo clientes em todo o Brasil')).ok,true);
+  assert.equal(row.city,'Pinhais'); assert.equal(row.radius_km,30);
+  assert.equal(events.includes('esvaziar'),false);
+});
+test('falha de limpeza da praça impede novo texto e pode ser retomada', async () => {
+  pracaComRaio(); clearFailure = true;
+  const result = await save('praca','Atendo clientes em todo o Brasil');
+  assert.equal(result.ok,false); assert.equal(result.recarregar,true);
+  assert.equal(row.onboarding.respostas.praca.origem,'chip');
+  assert.deepEqual(events,['esvaziar']);
+  clearFailure = false;
+  assert.equal((await save('praca','Atendo clientes em todo o Brasil')).ok,true);
+  assert.equal(row.city,null); assert.equal(row.radius_km,null);
+});
+test('falha do JSON após limpeza da praça retoma sem inventar município', async () => {
+  pracaComRaio(); jsonFailure = true;
+  assert.equal((await save('praca','Atendo clientes em todo o Brasil')).ok,false);
+  assert.equal(row.city,null); assert.equal(row.radius_km,null);
+  assert.equal(row.onboarding.respostas.praca.origem,'chip');
+  jsonFailure = false;
+  assert.equal((await save('praca','Atendo clientes em todo o Brasil')).ok,true);
+  assert.equal(row.onboarding.respostas.praca.origem,'texto');
+  assert.equal(row.city,null); assert.equal(row.radius_km,null);
 });
 test('contas → voltar ao bloco 1 → retomar mantém não sei reaberto e lucro não confirmado', async () => {
   row.avg_ticket_min = null;
@@ -249,6 +314,106 @@ test('zero confirmado nas colunas não vira null ou não sei na retomada', async
   assert.deepEqual(estado.leituras.custo,{estado:'respondida',valor:0});
   assert.deepEqual(estado.leituras.lucro,{estado:'respondida',valor:0});
   assert.equal(estado.contas.custo.naoSei,true); assert.equal(estado.contas.custo.calculado,null);
+});
+
+test('ticket não aceita não sei nem confirmação forjada fora da pergunta', async () => {
+  row.avg_ticket_min = null; row.avg_ticket_max = null;
+  delete row.onboarding.contas.ticket;
+  assert.equal((await saveConta({conta:'ticket',escolha:'',naoSei:true})).ok,false);
+  assert.equal((await saveConta({conta:'ticket',escolha:'100',confirmando:true})).ok,false);
+  assert.deepEqual(events,[]);
+  assert.equal((await saveConta({conta:'ticket',escolha:'100'})).ok,true);
+});
+test('ticket parcialmente gravado não vira média falsa e retoma as duas colunas', async () => {
+  row.avg_ticket_min = null;
+  row.avg_ticket_max = 100;
+  delete row.onboarding.contas.ticket;
+  fieldFailureAfter = 1;
+  const primeira = await saveConta({conta:'ticket',escolha:'R$ 300 a R$ 800'});
+  assert.equal(primeira.ok,false);
+  assert.equal(primeira.recarregar,true);
+  assert.equal(row.avg_ticket_min,300);
+  assert.equal(row.avg_ticket_max,100);
+  assert.equal(row.onboarding.contas.ticket.emGravacao,true);
+  const retomada = await contas.carregarContasAction();
+  assert.equal(retomada.ticket,null);
+  assert.equal(retomada.leituras.ticket.estado,'nao_perguntado');
+  assert.equal(cadastro.montarCadastro(row).pendencias.some(p => p.campo === 'ticket_medio'),true);
+  fieldFailureAfter = null;
+  const segunda = await saveConta({conta:'ticket',escolha:'R$ 300 a R$ 800'});
+  assert.equal(segunda.ok,true);
+  assert.equal(segunda.estado.ticket,550);
+  assert.equal(row.onboarding.contas.ticket.emGravacao,undefined);
+  assert.equal(row.avg_ticket_max,800);
+});
+test('faixa aberta limpa teto antigo antes de confirmar ticket', async () => {
+  row.avg_ticket_min = null;
+  row.avg_ticket_max = 100;
+  delete row.onboarding.contas.ticket;
+  const result = await saveConta({conta:'ticket',escolha:'Acima de R$ 800'});
+  assert.equal(result.ok,true);
+  assert.equal(row.avg_ticket_min,800);
+  assert.equal(row.avg_ticket_max,null);
+  assert.equal(result.estado.ticket,800);
+  assert.deepEqual(events.slice(0,4),['json','campos','esvaziar','json']);
+});
+
+test('custo só pode ser confirmado após estimativa registrada, inclusive na retomada', async () => {
+  delete row.onboarding.contas.custo;
+  assert.equal((await saveConta({conta:'custo',escolha:'50',confirmando:true})).ok,false);
+  assert.deepEqual(events,[]);
+  assert.equal((await saveConta({conta:'custo',escolha:'metade'})).ok,true);
+  assert.equal(row.onboarding.contas.custo.calculado,50);
+  assert.equal((await saveConta({conta:'custo',escolha:'50',confirmando:true})).ok,true);
+  assert.equal(row.avg_direct_cost,50);
+  assert.equal(row.onboarding.contas.custo.confirmado,true);
+});
+
+test('confirmação e não sei simultâneos não substituem a estimativa', async () => {
+  const antes = structuredClone(row.onboarding.contas.lucro);
+  assert.equal((await saveConta({conta:'lucro',escolha:'0',confirmando:true,naoSei:true})).ok,false);
+  assert.deepEqual(row.onboarding.contas.lucro,antes);
+  assert.deepEqual(events,[]);
+});
+
+test('falha da leitura posterior não transforma resposta já gravada em falha de gravação', async () => {
+  row.avg_ticket_min = null; row.avg_ticket_max = null;
+  delete row.onboarding.contas.ticket;
+  failReadAt = 2;
+  const resultado = await saveConta({conta:'ticket',escolha:'120'});
+  assert.equal(resultado.ok,true);
+  assert.equal(resultado.estado,undefined);
+  assert.equal(row.avg_ticket_min,120);
+  assert.equal(row.onboarding.contas.ticket.confirmado,true);
+  assert.deepEqual(events,['json','campos','json','revalidate:/onboarding/contas','disparo']);
+});
+
+test('falha da leitura posterior preserva reabertura gravada para recarregar', async () => {
+  delete row.onboarding.contas.custo.reabertoEm;
+  failReadAt = 2;
+  const resultado = await reabrirConta({conta:'custo'});
+  assert.equal(resultado.ok,true);
+  assert.equal(resultado.estado,undefined);
+  assert.ok(row.onboarding.contas.custo.reabertoEm);
+  assert.deepEqual(events,['json','revalidate:/onboarding/contas']);
+});
+test('contas sinaliza gravação incerta quando a coluna grava e o JSON falha', async () => {
+  delete row.onboarding.contas.custo;
+  assert.equal((await saveConta({conta:'custo',escolha:'metade'})).ok,true);
+  jsonFailure = true;
+  const result = await saveConta({conta:'custo',escolha:'50',confirmando:true});
+  assert.equal(result.ok,false);
+  assert.equal(result.recarregar,true);
+  assert.equal(row.avg_direct_cost,50);
+  assert.equal(row.onboarding.contas.custo.confirmado,false);
+});
+test('reabertura incerta exige releitura antes de novo envio', async () => {
+  delete row.onboarding.contas.custo.reabertoEm;
+  jsonFailure = true;
+  const result = await reabrirConta({conta:'custo'});
+  assert.equal(result.ok,false);
+  assert.equal(result.recarregar,true);
+  assert.equal(row.onboarding.contas.custo.reabertoEm,undefined);
 });
 
 const entradaMarca = () => ({businessId:row.id,site:'exemplo.com.br',siteNaoTenho:false,
@@ -320,6 +485,54 @@ test('cliente recupera declaração sem site inconsistente com endereço salvo',
   assert.equal(result.estado.concluido,true);
   assert.equal(row.onboarding.marca.siteNaoTenho,false);
   assert.equal(row.site_url,'https://exemplo.com.br');
+});
+test('cliente remove site antigo e Instagram pela etapa da marca com procedência limpa', async () => {
+  contasProntas();
+  row.site_url = 'https://exemplo.com.br';
+  row.instagram_handle = '@exemplo';
+  row.procedencia.site_url = {origem:'confirmado'};
+  row.procedencia.instagram_handle = {origem:'confirmado'};
+  const result = await marca.salvarMarcaAction({
+    ...entradaMarca(), site:'', siteNaoTenho:true, instagram:'',
+  });
+  assert.equal(result.ok,true);
+  assert.equal(result.estado.concluido,true);
+  assert.equal(row.site_url,null);
+  assert.equal(row.instagram_handle,null);
+  assert.equal(row.procedencia.site_url,undefined);
+  assert.equal(row.procedencia.instagram_handle,undefined);
+  assert.equal(row.onboarding.marca.siteNaoTenho,true);
+  assert.deepEqual(events.slice(0,2),['esvaziar','json']);
+});
+test('site apagado no campo sem marcar ausência não retorna sucesso falso', async () => {
+  contasProntas();
+  row.site_url = 'https://exemplo.com.br';
+  const result = await marca.salvarMarcaAction({
+    ...entradaMarca(), site:'', siteNaoTenho:false,
+  });
+  assert.equal(result.ok,false);
+  assert.match(result.erro,/site ou marque/);
+  assert.equal(row.site_url,'https://exemplo.com.br');
+  assert.deepEqual(events,[]);
+});
+test('falha ao limpar site não conclui e falha posterior do JSON permite repetição', async () => {
+  contasProntas();
+  row.site_url = 'https://exemplo.com.br';
+  const entrada = {...entradaMarca(),site:'',siteNaoTenho:true,instagram:''};
+  clearFailure = true;
+  assert.equal((await marca.salvarMarcaAction(entrada)).ok,false);
+  assert.equal(row.site_url,'https://exemplo.com.br');
+  assert.deepEqual(events,['esvaziar']);
+  clearFailure = false;
+  events = [];
+  jsonFailure = true;
+  assert.equal((await marca.salvarMarcaAction(entrada)).ok,false);
+  assert.equal(row.site_url,null);
+  assert.equal((await marca.carregarMarcaAction()).concluido,false);
+  jsonFailure = false;
+  events = [];
+  assert.equal((await marca.salvarMarcaAction(entrada)).estado.concluido,true);
+  assert.equal(row.onboarding.marca.siteNaoTenho,true);
 });
 test('respostas legadas de ramo e praça contam sem apagar o histórico', async () => {
   contasProntas();
@@ -410,6 +623,31 @@ test('falhas de coluna e de JSON não marcam conclusão; repetição não duplic
   const doc = structuredClone(row.onboarding); const count = events.length;
   assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,true);
   assert.deepEqual(row.onboarding,doc); assert.equal(events.length,count);
+});
+test('marca relata gravação parcial e permite retomar após releitura', async () => {
+  contasProntas();
+  jsonFailure = true;
+  const primeira = await marca.salvarMarcaAction(entradaMarca());
+  assert.equal(primeira.ok,false);
+  assert.equal(primeira.recarregar,true);
+  assert.equal(row.site_url,'https://exemplo.com.br');
+  assert.equal(row.instagram_handle,'@exemplo');
+  assert.equal(row.onboarding.conclusao,undefined);
+  jsonFailure = false;
+  const retomada = await marca.carregarMarcaAction();
+  assert.equal(retomada.site,'https://exemplo.com.br');
+  const segunda = await marca.salvarMarcaAction(entradaMarca());
+  assert.equal(segunda.ok,true);
+  assert.equal(segunda.estado.concluido,true);
+});
+test('marca distingue gravação concluída de erro na leitura seguinte', async () => {
+  contasProntas();
+  failReadAt = 2;
+  const result = await marca.salvarMarcaAction(entradaMarca());
+  assert.equal(result.ok,true);
+  assert.equal(result.estado,undefined);
+  assert.equal(row.onboarding.marca.aparencia,'Azul escuro e fotos dos produtos');
+  assert.equal((await marca.carregarMarcaAction()).concluido,true);
 });
 test('jornada de reunião impede envio automático mesmo com cadastro completo', () => {
   assert.equal(marcaDoc.fluxoAguardaReuniao(documentFixture()),true);

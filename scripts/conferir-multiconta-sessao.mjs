@@ -8,7 +8,7 @@ import path from "node:path";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const allowed = new Set([
   "lib/multiconta/ativo.ts", "lib/multiconta/escolha.ts",
-  "lib/multiconta/elegibilidade.ts",
+  "lib/multiconta/elegibilidade.ts", "lib/multiconta/paginacao.ts",
 ].map((p) => pathToFileURL(path.join(root, p)).href));
 const mocks = {
   "server-only": "export {};",
@@ -45,7 +45,7 @@ beforeEach(() => {
   estado = {
     user: { id: "p1", email: "cliente@exemplo.com", email_confirmed_at: "2026-10-01T00:00:00Z", app_metadata: {} },
     businesses: [antigo, novo], legacy: { granted_at: "2026-10-06T00:00:00Z" },
-    orders: [pendente], cookie: null, adminFails: false,
+    orders: [pendente], cookie: null, adminFails: false, ordersPage2Fails: false,
   };
 });
 
@@ -60,7 +60,11 @@ globalThis.__multicontaOffline = {
             assert.equal(columns, "id, name, created_at");
             return { eq: (column, value) => {
               assert.equal(column, "profile_id"); assert.equal(value, estado.user.id);
-              return { order: async () => ({ data: estado.businesses, error: null }) };
+              const query = {
+                order: () => query,
+                range: async (inicio, fim) => ({ data: estado.businesses.slice(inicio, fim + 1), error: null }),
+              };
+              return query;
             } };
           },
         };
@@ -83,11 +87,16 @@ globalThis.__multicontaOffline = {
       assert.equal(table, "commercial_orders");
       return { select: (columns) => {
         assert.equal(columns, "business_id, status, buyer_email, buyer_profile_id");
-        return { in: async (column, ids) => {
+        const query = { in: (column, ids) => {
           assert.equal(column, "business_id");
           assert.deepEqual(ids, estado.businesses.map((b) => b.id));
-          return { data: estado.orders, error: null };
-        } };
+          return query;
+        }, order: () => query,
+        range: async (inicio, fim) => ({
+          data: estado.orders.slice(inicio, fim + 1),
+          error: estado.ordersPage2Fails && inicio === 1000 ? { message: "falha de página" } : null,
+        }) };
+        return query;
       } };
     } };
   },
@@ -124,6 +133,16 @@ test("pedido antigo não libera o negócio após mudar o e-mail verificado", asy
 
 test("falha da consulta de pedidos mantém acesso fechado", async () => {
   estado.adminFails = true;
+  assert.equal((await negocioAtivoDaSessao()).status, "falha_consulta");
+});
+
+test("pedido aprovado depois da primeira página libera e falha posterior fecha", async () => {
+  estado.orders = [
+    ...Array.from({ length: 1000 }, () => ({ ...pendente, business_id: "a" })),
+    { ...pendente, status: "payment_approved" },
+  ];
+  assert.equal((await negocioAtivoDaSessao()).status, "escolha_necessaria");
+  estado.ordersPage2Fails = true;
   assert.equal((await negocioAtivoDaSessao()).status, "falha_consulta");
 });
 

@@ -26,6 +26,7 @@ import {
   numeroDoTexto,
   opcaoDePostura,
   opcaoDeSobra,
+  transicaoDaContaPermitida,
 } from "./regras";
 
 export interface EstadoDasContas {
@@ -60,6 +61,7 @@ export interface ResultadoDaConta {
   ok: boolean;
   erro?: string;
   estado?: EstadoDasContas;
+  recarregar?: boolean;
 }
 
 /** Tudo que `montarCadastro` lê — ver `COLUNAS_DO_CADASTRO`. */
@@ -133,10 +135,10 @@ function confirmadoEmDe(
 }
 
 function montarEstado(linha: LinhaNegocio): EstadoDasContas {
-  const ticket = ticketEscalar(num(linha.avg_ticket_min), num(linha.avg_ticket_max));
+  const contas = lerContas(linha.onboarding);
+  const ticket = contas.ticket?.emGravacao ? null : ticketEscalar(num(linha.avg_ticket_min), num(linha.avg_ticket_max));
   const custo = num(linha.avg_direct_cost);
   const lucro = num(linha.target_profit_per_customer);
-  const contas = lerContas(linha.onboarding);
   const cadastro = montarCadastro(linha);
   const proc = (linha as { procedencia?: unknown }).procedencia;
 
@@ -238,7 +240,7 @@ export async function reabrirContaAction(entrada: {
 
   if (error || mesclado !== true) {
     console.error("[contas] falha ao reabrir ::", error?.message ?? "negócio indisponível");
-    return { ok: false, erro: "Não conseguimos abrir a pergunta agora. Tente de novo." };
+    return { ok: false, erro: "Não conseguimos confirmar se a pergunta foi reaberta.", recarregar: true };
   }
 
   revalidatePath("/onboarding/contas");
@@ -293,8 +295,13 @@ export async function salvarContaAction(entrada: {
     return { ok: false, erro: "Esta conta já foi respondida. Reabra a pergunta ou corrija em Meu Negócio." };
   }
   const contas = { ...estado.contas };
+  if (!transicaoDaContaPermitida(entrada.conta, contas[entrada.conta],
+      entrada.naoSei === true, entrada.confirmando === true)) {
+    return { ok: false, erro: "Esta resposta não corresponde à etapa atual. Atualize a página e tente novamente." };
+  }
   const agora = new Date().toISOString();
   const campos: CampoParaGravar[] = [];
+  let limparTetoDoTicket = false;
 
   // ---------------------------------------------------------------- C1
   if (entrada.conta === "ticket") {
@@ -303,10 +310,10 @@ export async function salvarContaAction(entrada: {
       contas.ticket = { echo: "Não sei", calculado: null, confirmado: false, naoSei: true, em: agora };
     } else if (faixa) {
       campos.push({ campo: "avg_ticket_min", valor: faixa.min });
-      // Faixa aberta para cima não tem topo. `max` fica como está — a
-      // função do banco recusa valor em branco, e mandar null por ali
-      // seria pedir para "confirmar" um campo vazio.
+      // Faixa aberta não tem teto. Se uma tentativa antiga deixou `max`
+      // preenchido, ele precisa ser limpo antes de finalizar a resposta.
       if (faixa.max !== null) campos.push({ campo: "avg_ticket_max", valor: faixa.max });
+      else limparTetoDoTicket = linha.avg_ticket_max !== null;
       contas.ticket = {
         echo: entrada.escolha,
         calculado: ticketEscalar(faixa.min, faixa.max),
@@ -404,6 +411,22 @@ export async function salvarContaAction(entrada: {
   // do banco é atômica por campo, não por lote, e o par
   // `avg_ticket_min`/`avg_ticket_max` meio gravado faria `ticketEscalar`
   // calcular um ponto médio entre um valor novo e um velho.
+  const supabase = await createClient();
+  if (entrada.conta === "ticket") {
+    // A primeira escrita marca o lote como incompleto. Se a segunda coluna
+    // falhar, a leitura não usa uma média do valor novo com o antigo.
+    const preparacao = await supabase.rpc("mesclar_blocos_onboarding", {
+      p_business_id: linha.id,
+      p_patch: { contas: { ticket: {
+        echo: entrada.escolha, calculado: null, confirmado: false,
+        emGravacao: true, em: agora,
+      } } },
+    });
+    if (preparacao.error || preparacao.data !== true) {
+      console.error("[contas] falha ao preparar ticket ::", preparacao.error?.message ?? "negócio indisponível");
+      return { ok: false, erro: "Não conseguimos confirmar a preparação do valor de venda.", recarregar: true };
+    }
+  }
   if (campos.length > 0) {
     const gravacao = await gravarCamposDoCliente({
       profileId: userId,
@@ -411,10 +434,18 @@ export async function salvarContaAction(entrada: {
       tabela: "businesses",
       campos,
     });
-    if (!gravacao.ok) return { ok: false, erro: gravacao.erro };
+    if (!gravacao.ok) return { ok: false, erro: gravacao.erro, recarregar: true };
   }
 
-  const supabase = await createClient();
+  if (limparTetoDoTicket) {
+    const limpeza = await supabase.rpc("esvaziar_campos_do_cliente", {
+      p_business_id: linha.id, p_campos: ["avg_ticket_max"],
+    });
+    if (limpeza.error || limpeza.data !== 1) {
+      console.error("[contas] falha ao limpar teto do ticket ::", limpeza.error?.message ?? "resultado inesperado");
+      return { ok: false, erro: "Não conseguimos confirmar a atualização do valor de venda.", recarregar: true };
+    }
+  }
   const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
     p_business_id: linha.id,
     p_patch: { contas: { [entrada.conta]: contas[entrada.conta] } },
@@ -422,7 +453,7 @@ export async function salvarContaAction(entrada: {
 
   if (error || mesclado !== true) {
     console.error("[contas] falha ao salvar ::", error?.message ?? "negócio indisponível");
-    return { ok: false, erro: "Não conseguimos salvar agora. Tente de novo." };
+    return { ok: false, erro: "Não conseguimos confirmar a gravação desta conta.", recarregar: true };
   }
 
   revalidatePath("/onboarding/contas");

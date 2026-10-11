@@ -4,6 +4,7 @@ import { esteveNoAr, estaNoArAgora, fraseDeVeiculacao } from "@/lib/veiculacao/e
 import { tituloDaAba } from "@/lib/titulos";
 import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
+import { resumirPendencias } from "@/lib/alertas/pendencias";
 
 export const metadata = tituloDaAba("/alertas");
 
@@ -24,18 +25,23 @@ export const metadata = tituloDaAba("/alertas");
 export default async function AlertasPage() {
   const supabase = await createClient();
   const estado = await estadoDoCliente(new Date());
+  if (!estado.negocioId) return <div className="avisos-editorial">
+    <div className="page-head"><h1>Avisos</h1><p>Os avisos são separados por negócio.</p></div>
+    <div className="card"><p>Não conseguimos identificar um negócio nesta consulta. Se acabou de entrar, escolha ou cadastre seu negócio; se já tinha um selecionado, tente novamente.</p>
+      <a href="/escolher-negocio">Conferir meus negócios</a></div>
+  </div>;
 
   // A RLS limita aos negócios do perfil, mas um perfil pode ter mais de
   // um. A tela precisa acompanhar o mesmo negócio do restante do app.
-  const { data: pendentes, error: erroPendentes } = estado.negocioId
+  const { data: pendentes, error: erroPendentes, count: totalDecisoes } = estado.negocioId
     ? await supabase
         .from("decisions")
-        .select("id, kind, payload, created_at")
+        .select("id, kind, payload, created_at", { count: "exact" })
         .eq("business_id", estado.negocioId)
         .in("kind", [...TIPOS_VISIVEIS_AO_CLIENTE])
         .eq("needs_review", true)
         .order("created_at", { ascending: false })
-    : { data: [], error: null };
+    : { data: [], error: null, count: 0 };
 
   const { data: registradas, error: erroRegistradas } = estado.negocioId
     ? await supabase
@@ -58,6 +64,12 @@ export default async function AlertasPage() {
         .in("status", ["awaiting_review", "approved_for_manual_publish", "changes_requested", "rejected"])
         .order("created_at", { ascending: false }).limit(20)
     : { data: [], error: null };
+
+  const ajustes = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true" && estado.negocioId
+    ? await supabase.from("creative_review_requests")
+        .select("id", { count: "exact", head: true })
+        .eq("business_id", estado.negocioId).eq("status", "changes_requested")
+    : { count: 0, error: null };
 
   if (erroPendentes) console.error("[alertas] falha ao ler pendências ::", erroPendentes.message);
   if (erroRegistradas) console.error("[alertas] falha ao ler registros ::", erroRegistradas.message);
@@ -83,6 +95,12 @@ export default async function AlertasPage() {
   const temPendencia = (pendentes?.length ?? 0) > 0;
   const temRegistro = (registradas?.length ?? 0) > 0;
   const ajustesDeCriativo = (revisoes.data ?? []).filter((r) => r.status === "changes_requested");
+  const resumoPendencias = resumirPendencias({
+    decisoesExibidas: pendentes?.length ?? 0,
+    decisoesTotal: erroPendentes ? null : totalDecisoes,
+    ajustesExibidos: ajustesDeCriativo.length,
+    ajustesTotal: ajustes.error ? null : ajustes.count,
+  });
 
   // A CONTAGEM VIVE NO TÍTULO DA SEÇÃO, não numa faixa.
   //
@@ -94,7 +112,7 @@ export default async function AlertasPage() {
   // o assunto da tela — usado para contar itens de uma lista.
   //
   // Ver docs/padrao-visual.md §5 para o critério de reabertura.
-  const quantasPendentes = (pendentes?.length ?? 0) + ajustesDeCriativo.length;
+  const quantasPendentes = resumoPendencias.total;
 
   return (
     <div className="avisos-editorial">
@@ -111,25 +129,31 @@ export default async function AlertasPage() {
           <section className="avisos-secao">
             <div className="section-title">
               <h2>Precisa de você</h2>
-              {quantasPendentes > 0 && (
+              {quantasPendentes !== null && quantasPendentes > 0 && (
                 <span className="grp-count">
                   {quantasPendentes} {quantasPendentes === 1 ? "coisa" : "coisas"}
                 </span>
               )}
             </div>
 
-            {erroPendentes ? (
+            {!resumoPendencias.leituraCompleta && (
               <div className="card">
-                <p className="form-error">Não conseguimos carregar seus avisos agora. Tente novamente em instantes.</p>
+                <p className="form-warning">Não conseguimos conferir todas as pendências agora. Os itens abaixo são apenas os que retornaram nesta consulta.</p>
               </div>
-            ) : temPendencia || ajustesDeCriativo.length > 0 ? (
+            )}
+            {temPendencia || ajustesDeCriativo.length > 0 || (ajustes.count ?? 0) > 0 ? (
               <div className="avisos-pendencias">
                 {ajustesDeCriativo.map((r) => <article className="alert-card warn" key={r.id}>
                   <b>Ajustes pedidos na peça {r.original_name}</b>
                   <p>{r.review_note || "Abra Criativos para ver a revisão do gestor."}</p>
                   <a href="/criativos#casa-revisao">Ver meus criativos</a>
                 </article>)}
-                {pendentes!.map((d) => (
+                {resumoPendencias.ajustesNaoExibidos > 0 && <article className="alert-card warn">
+                  <b>Há mais {resumoPendencias.ajustesNaoExibidos} peça(s) com ajustes pedidos</b>
+                  <p>A lista abaixo mostra só as peças recentes. Abra Criativos para conferir todas as pendências.</p>
+                  <a href="/criativos#casa-revisao">Ver meus criativos</a>
+                </article>}
+                {(pendentes ?? []).map((d) => (
                   <article className="alert-card warn" key={d.id}>
                     <b>{tituloDaDecisao(d.kind)}</b>
                     <p>{resumoDaDecisao(d.payload)}</p>
@@ -137,7 +161,7 @@ export default async function AlertasPage() {
                   </article>
                 ))}
               </div>
-            ) : (
+            ) : resumoPendencias.leituraCompleta ? (
               <div className="empty-hero">
                 <div className="avisos-vazio-titulo">
                   <h3>Tudo em dia por aqui.</h3>
@@ -161,7 +185,7 @@ export default async function AlertasPage() {
                       : "Então não há o que avisar. Assim que a primeira campanha começar a rodar, é aqui que você acompanha."}
                 </p>
               </div>
-            )}
+            ) : null}
           </section>
 
           {process.env.V2G_CREATIVE_REVIEW_ENABLED === "true" && <section className="avisos-secao">
