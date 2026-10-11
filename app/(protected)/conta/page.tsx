@@ -51,7 +51,7 @@ export default async function ContaPage() {
 
   const ativo = await negocioAtivoDaSessao();
   const business = ativo.status === "selecionado"
-    ? (await supabase.from("businesses").select("id, name")
+    ? (await supabase.from("businesses").select("id, name, dados_ficticios")
       .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle()).data
     : null;
 
@@ -205,7 +205,8 @@ export default async function ContaPage() {
               {pedidoIlegivel ? <p className="hint">Não conseguimos consultar os pedidos agora. Tente novamente.</p>
                 : pedidos.length ? <>
                   {pedidos.map((pedido) => <p className="hint" key={pedido.id}>
-                    {pedido.status === "payment_approved" ? pedido.origin === "self_service"
+                    {business?.dados_ficticios ? "Pedido de teste: aprovação simulada, sem pagamento. "
+                      : pedido.status === "payment_approved" ? pedido.origin === "self_service"
                       ? "Pagamento confirmado pelo provedor. " : "Pedido aprovado pela equipe. "
                       : pedido.status === "proof_received" ? "Comprovante recebido; aprovação pendente. "
                         : pedido.status === "cancelled" ? "Pedido cancelado. "

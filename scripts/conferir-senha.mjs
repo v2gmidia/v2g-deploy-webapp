@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { TAMANHO_MINIMO_SENHA, validarNovaSenha } from "../lib/auth-senha.ts";
+import { TAMANHO_MINIMO_SENHA, forcaDaSenha, validarNovaSenha } from "../lib/auth-senha.ts";
+
+test("o indicador só chama forte uma senha que a regra do servidor aceita", () => {
+  assert.equal(forcaDaSenha(""), "vazia");
+  assert.equal(forcaDaSenha("123456"), "fraca");
+  assert.equal(forcaDaSenha("Frase curta"), "media");
+  assert.equal(forcaDaSenha("aaaaaaaaaaaaaaa"), "fraca");
+  assert.equal(forcaDaSenha("Meu caderno azul dança"), "forte");
+  assert.equal(validarNovaSenha("Meu caderno azul dança", "Meu caderno azul dança"), null);
+});
 
 test("primeiro acesso recusa a senha curta sugerida para QA", () => {
   assert.equal(TAMANHO_MINIMO_SENHA, 15);

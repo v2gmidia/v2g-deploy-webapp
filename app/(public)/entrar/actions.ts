@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import { destinoLocalSeguro } from "@/lib/auth-destino";
 import { validarNovaSenha } from "@/lib/auth-senha";
+import { cnpjTemDigitosValidos } from "@/lib/contratacao/qualificacao";
 import {
   ehContaJaExistente,
   mensagemDeErroAuth,
@@ -67,11 +68,10 @@ export async function signUpAction(
     return { error: "Esse WhatsApp parece incompleto. Inclua o DDD." };
   }
 
+  if (!cnpjTemDigitosValidos(cnpj))
+    return { error: "Confira os 14 dígitos do CNPJ da empresa contratante." };
   const erroSenha = validarNovaSenha(senha, confirmarSenha);
   if (erroSenha) return { error: erroSenha };
-  if (!/^\d{14}$/.test(cnpj)) {
-    return { error: "Informe o CNPJ de 14 dígitos da empresa contratante." };
-  }
 
   // Nunca criar conta nova sem pedido aprovado. O mesmo retorno neutro evita
   // revelar se um e-mail pertence a um comprador ou a uma conta existente.

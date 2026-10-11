@@ -1,14 +1,23 @@
 "use client";
 
-import { Suspense, useActionState } from "react";
+import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
 import { SITE_PUBLICO_ORIGEM } from "@/lib/site-publico";
-import { TAMANHO_MINIMO_SENHA } from "@/lib/auth-senha";
+import { forcaDaSenha } from "@/lib/auth-senha";
+import { cnpjTemDigitosValidos } from "@/lib/contratacao/qualificacao";
 import { signInAction, signUpAction, type AuthActionState } from "./actions";
 
 const initialState: AuthActionState = {};
+
+function IconeVisibilidade({ visivel }: { visivel: boolean }) {
+  return <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M2.5 12s3.4-5.5 9.5-5.5 9.5 5.5 9.5 5.5-3.4 5.5-9.5 5.5S2.5 12 2.5 12Z" />
+    <circle cx="12" cy="12" r="2.5" />
+    {visivel && <path d="M3 21 21 3" />}
+  </svg>;
+}
 
 export default function EntrarPage() {
   return (
@@ -22,6 +31,17 @@ function EntrarContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "";
   const mode = searchParams.get("modo") === "cadastro" ? "cadastro" : "login";
+  const [nomeCadastro, setNomeCadastro] = useState("");
+  const [whatsappCadastro, setWhatsappCadastro] = useState("");
+  const [emailCadastro, setEmailCadastro] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [senhaNova, setSenhaNova] = useState("");
+  const [senhaRepetida, setSenhaRepetida] = useState("");
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarRepeticao, setMostrarRepeticao] = useState(false);
+  const cnpjInvalido = cnpj.length === 14 && !cnpjTemDigitosValidos(cnpj);
+  const forca = forcaDaSenha(senhaNova);
+  const repeticaoDiferente = senhaRepetida.length > 0 && senhaNova !== senhaRepetida;
   const destino = (modo: "cadastro" | "login") => {
     const busca = new URLSearchParams({ modo });
     if (next) busca.set("next", next);
@@ -61,6 +81,8 @@ function EntrarContent() {
                   type="text"
                   placeholder="Como você gosta de ser chamado?"
                   autoComplete="name"
+                  value={nomeCadastro}
+                  onChange={evento => setNomeCadastro(evento.target.value)}
                   required
                 />
               </div>
@@ -73,6 +95,8 @@ function EntrarContent() {
                   inputMode="tel"
                   placeholder="(11) 91234-5678"
                   autoComplete="tel"
+                  value={whatsappCadastro}
+                  onChange={evento => setWhatsappCadastro(evento.target.value)}
                   required
                 />
                 <p className="note">
@@ -88,42 +112,53 @@ function EntrarContent() {
                   type="email"
                   placeholder="voce@seunegocio.com.br"
                   autoComplete="email"
+                  value={emailCadastro}
+                  onChange={evento => setEmailCadastro(evento.target.value)}
                   required
                 />
               </div>
               <div className="field">
                 <label htmlFor="cnpj-cadastro">CNPJ da empresa contratante</label>
                 <input id="cnpj-cadastro" name="cnpj" type="text" inputMode="numeric"
-                  placeholder="00.000.000/0000-00" autoComplete="off" required />
+                  pattern="[0-9]{14}" maxLength={14} value={cnpj}
+                  onChange={evento => setCnpj(evento.target.value.replace(/\D/g, "").slice(0, 14))}
+                  placeholder="Somente os 14 números" autoComplete="off"
+                  aria-invalid={cnpjInvalido} aria-describedby="cnpj-ajuda" required />
+                {cnpjInvalido && <p className="entrada-validacao entrada-validacao-erro" id="cnpj-ajuda" role="status">Os dígitos deste CNPJ não conferem.</p>}
+                {!cnpjInvalido && <p className="note" id="cnpj-ajuda">Digite somente números. Confira o CNPJ usado na compra.</p>}
                 <p className="note">Use o mesmo CNPJ informado na compra. Um login pode acessar mais de uma empresa.</p>
               </div>
               <div className="field">
                 <label htmlFor="senha-cadastro">Crie uma senha</label>
-                <input
-                  id="senha-cadastro"
-                  name="senha"
-                  type="password"
-                  placeholder="Uma frase longa e única"
-                  autoComplete="new-password"
-                  minLength={TAMANHO_MINIMO_SENHA}
-                  aria-describedby="orientacao-senha"
-                  required
-                />
-                <p className="note" id="orientacao-senha">Use pelo menos {TAMANHO_MINIMO_SENHA} caracteres. Você pode usar espaços; evite dados pessoais e senhas de outros sites.</p>
+                <span className="entrada-campo-senha"><input
+                  id="senha-cadastro" name="senha" type={mostrarSenha ? "text" : "password"}
+                  placeholder="Crie sua senha" autoComplete="new-password"
+                  value={senhaNova} onChange={evento => setSenhaNova(evento.target.value)}
+                  aria-describedby={forca === "vazia" ? undefined : "forca-senha"} required
+                /><button type="button" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                  aria-pressed={mostrarSenha} onClick={() => setMostrarSenha(valor => !valor)}>
+                  <IconeVisibilidade visivel={mostrarSenha} /></button></span>
+                {forca !== "vazia" && <div className={`entrada-forca entrada-forca-${forca}`} id="forca-senha" role="status">
+                  <span aria-hidden="true"><i /><i /><i /></span>
+                  <strong>Senha {forca === "media" ? "média" : forca}</strong>
+                  {forca !== "forte" && <small>Continue até ficar forte para criar o acesso.</small>}
+                </div>}
               </div>
               <div className="field">
                 <label htmlFor="senha-confirmar-cadastro">Repita a senha</label>
-                <input
-                  id="senha-confirmar-cadastro"
-                  name="confirmarSenha"
-                  type="password"
-                  placeholder="Digite a mesma senha"
-                  autoComplete="new-password"
-                  minLength={TAMANHO_MINIMO_SENHA}
-                  required
-                />
+                <span className="entrada-campo-senha"><input
+                  id="senha-confirmar-cadastro" name="confirmarSenha"
+                  type={mostrarRepeticao ? "text" : "password"}
+                  placeholder="Digite a mesma senha" autoComplete="new-password"
+                  value={senhaRepetida} onChange={evento => setSenhaRepetida(evento.target.value)}
+                  aria-invalid={repeticaoDiferente}
+                  aria-describedby={repeticaoDiferente ? "confirmacao-senha" : undefined} required
+                /><button type="button" aria-label={mostrarRepeticao ? "Ocultar confirmação" : "Mostrar confirmação"}
+                  aria-pressed={mostrarRepeticao} onClick={() => setMostrarRepeticao(valor => !valor)}>
+                  <IconeVisibilidade visivel={mostrarRepeticao} /></button></span>
+                {repeticaoDiferente && <p className="entrada-validacao entrada-validacao-erro" id="confirmacao-senha" role="status">As senhas estão diferentes.</p>}
               </div>
-              <Button type="submit" disabled={signUpPending}>
+              <Button type="submit" disabled={signUpPending || cnpjInvalido || forca !== "forte" || senhaNova !== senhaRepetida}>
                 {signUpPending ? "Criando conta…" : "Criar minha conta"}
               </Button>
             </form>

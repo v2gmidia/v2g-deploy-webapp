@@ -62,6 +62,9 @@
 .contratar-intro > p { font-size: var(--fs-titulo); line-height: 1.55; max-width: 48ch; }
 .contratar-proximo { margin-top: 38px; }
 .contratar-limite { color: var(--ink-soft); border-top: 1px solid var(--line); padding-top: 20px; }
+.contratar-retomar { display: grid; gap: 5px; margin-top: 22px; }
+.contratar-retomar a { color: var(--cobalt-ink); font-weight: 700; text-underline-offset: 4px; }
+.contratar-retomar span { color: var(--ink-soft); font-size: var(--fs-corpo); }
 .contratar-formulario {
   background: var(--surface);
   padding: clamp(24px, 3vw, 40px);

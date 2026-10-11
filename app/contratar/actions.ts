@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validarCompra } from "@/lib/contratacao/qualificacao";
@@ -29,6 +30,14 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
   });
   if (erroPedido || typeof pedidoId !== "string")
     return { erro: "Não foi possível registrar o pedido. Confira os dados ou procure a V2G." };
+
+  // A referência é aleatória e não contém dados pessoais. Mantê-la no navegador
+  // permite retomar o mesmo pedido após atualização ou falha na próxima leitura,
+  // sem criar outra cobrança para o mesmo comprador.
+  (await cookies()).set("v2g_checkout_ref", dados.referencia, {
+    httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production",
+    path: "/contratar", maxAge: 60 * 60 * 24,
+  });
 
   const { data: pedido, error: erroLeitura } = await admin.from("commercial_orders")
     .select("id, status, provider_checkout_url, checkout_creation_started_at")

@@ -87,6 +87,21 @@
 .entrada-editorial .field input::placeholder { color: var(--ink-mute); opacity: 1; }
 .entrada-editorial .field input:focus-visible { border-color: var(--cobalt-ink); outline: 2px solid var(--cobalt-ink); outline-offset: 3px; }
 .entrada-editorial .field .note { margin-top: 8px; color: var(--ink-soft); font-size: 12px; line-height: 1.6; }
+.entrada-editorial .entrada-campo-senha { display: flex; align-items: stretch; position: relative; }
+.entrada-editorial .entrada-campo-senha input { padding-right: 56px; }
+.entrada-editorial .entrada-campo-senha button { display: grid; place-items: center; position: absolute; inset: 4px 4px 4px auto; width: 44px; border: 0; border-radius: 3px; background: transparent; color: var(--cobalt-ink); cursor: pointer; }
+.entrada-editorial .entrada-campo-senha button:hover { background: var(--surface); }
+.entrada-editorial .entrada-validacao { margin-top: 8px; font-size: 12px; line-height: 1.5; }
+.entrada-editorial .entrada-validacao-erro { color: var(--crit); }
+.entrada-editorial .field input[aria-invalid="true"] { border-color: var(--crit); }
+.entrada-editorial .entrada-forca { display: grid; gap: 5px; margin-top: 10px; color: var(--ink-soft); font-size: 12px; }
+.entrada-editorial .entrada-forca > span { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+.entrada-editorial .entrada-forca i { height: 5px; border-radius: 3px; background: var(--line); }
+.entrada-editorial .entrada-forca-fraca i:first-child { background: var(--crit); }
+.entrada-editorial .entrada-forca-media i:nth-child(-n+2) { background: var(--warn); }
+.entrada-editorial .entrada-forca-forte i { background: var(--good); }
+.entrada-editorial .entrada-forca strong { color: var(--ink); font-weight: 600; }
+.entrada-editorial .entrada-forca small { color: var(--ink-soft); font-size: 12px; }
 .entrada-editorial .entrada-senha-label { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
 .entrada-editorial .entrada-senha-label a { font-size: 12px; line-height: 1.8; }
 .entrada-editorial .cta { width: 100%; min-height: 52px; margin-top: 8px; padding: 12px 20px; border: 1px solid transparent; border-radius: 4px; background: var(--cobalt); color: #FFFFFF; font-family: var(--body); font-size: 16px; font-weight: 500; line-height: 1.5; box-shadow: none; text-align: center; text-decoration: none; }
