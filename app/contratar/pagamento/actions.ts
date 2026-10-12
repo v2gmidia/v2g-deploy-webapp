@@ -79,7 +79,25 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
     } });
     const corpo = cliente.body && typeof cliente.body === "object" ? cliente.body as Record<string, unknown> : null;
     clienteId = cliente.ok ? idAsaas(corpo?.id, "cus") : null;
-    if (!clienteId) return { erro: "O cadastro do pagador não foi confirmado. A V2G precisa conferir antes de tentar novamente." };
+    if (!clienteId) {
+      // HTTP 401 rejeita a chamada antes de criar o pagador. Somente nesse
+      // caso certo liberamos a reserva: timeout e demais falhas podem ter
+      // criado algo no provedor e exigem conciliação antes de outra tentativa.
+      if (cliente.status === 401) {
+        const { data: liberado, error: erroLiberacao } = await admin.from("commercial_orders")
+          .update({ payment_creation_started_at: null, provider_first_due_date: null,
+            payment_attempt_count: pedido.payment_attempt_count })
+          .eq("id", pedido.id).eq("status", "awaiting_payment")
+          .eq("payment_creation_started_at", reservadoEm)
+          .eq("payment_attempt_count", tentativasUsadas)
+          .is("provider_customer_id", null).is("provider_charge_id", null)
+          .is("provider_subscription_id", null)
+          .select("id").maybeSingle();
+        if (!erroLiberacao && liberado)
+          return { erro: "O pagamento de teste está temporariamente indisponível. Tente novamente mais tarde." };
+      }
+      return { erro: "O cadastro do pagador não foi confirmado. A V2G precisa conferir antes de tentar novamente." };
+    }
     const { data: vinculo, error: erroVinculo } = await admin.from("commercial_orders")
       .update({ provider_customer_id: clienteId }).eq("id", pedido.id)
       .eq("status", "awaiting_payment").is("provider_customer_id", null)
@@ -113,6 +131,21 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
   const corpo = resposta.body && typeof resposta.body === "object" ? resposta.body as Record<string, unknown> : null;
   const id = resposta.ok ? idAsaas(corpo?.id, assinatura ? "sub" : "pay") : null;
   if (!id) {
+    // Uma rejeição de autenticação também ocorre antes da criação da cobrança.
+    // O pagador pode permanecer vinculado; liberar só a reserva desta tentativa.
+    if (resposta.status === 401) {
+      const { data: liberado, error: erroLiberacao } = await admin.from("commercial_orders")
+        .update({ payment_creation_started_at: null, provider_first_due_date: null,
+          payment_attempt_count: pedido.payment_attempt_count })
+        .eq("id", pedido.id).eq("status", "awaiting_payment")
+        .eq("payment_creation_started_at", reservadoEm)
+        .eq("payment_attempt_count", tentativasUsadas)
+        .eq("provider_customer_id", clienteId)
+        .is("provider_charge_id", null).is("provider_subscription_id", null)
+        .select("id").maybeSingle();
+      if (!erroLiberacao && liberado)
+        return { erro: "O pagamento de teste está temporariamente indisponível. Tente novamente mais tarde." };
+    }
     if (cartao && resposta.cardDeclined) {
       // O Asaas confirma que essa recusa 400 nao persiste cobranca nem
       // assinatura. A reserva so e liberada se nenhum ID chegou ao pedido.
