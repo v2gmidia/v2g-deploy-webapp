@@ -1,6 +1,19 @@
 # Etapa 01 — compra nova e acesso no QA (12/10/2026)
 
-## 0. Dependência de Victor
+## Atualização após troca da chave (12/10)
+
+- `GET /v3/webhooks` no Asaas Sandbox respondeu HTTP 200 com a nova `ASAAS_API_KEY` local. A consulta por `externalReference` do pedido `82437221-4d55-41d8-a715-1bc36f4f586d` retornou zero pagadores, cobranças e assinaturas; no Supabase QA ele segue `awaiting_payment`, sem IDs do Asaas. A reserva antiga ainda não foi liberada.
+- O token local do webhook foi comparado indiretamente com o runtime QA: POST sem token retornou 401 e POST autenticado com payload inválido retornou 422. Nenhum evento financeiro foi enviado.
+- Foi criado no **Asaas Sandbox** o webhook `V2G WebApp QA pagamentos` (`e341cd5c-5749-4115-9575-2977cc11f7fc`), ativo e sem interrupção, para `https://v2g-webapp-qa.vercel.app/api/webhooks/asaas-payment`, somente `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED`. O webhook antigo do túnel permanece interrompido e não foi reutilizado. A entrega de evento autêntico ainda não foi observada.
+- O código local e `origin/QA` estão em `748adb1`; esta atualização do registro permanece sem commit. O último deployment de **produção do projeto QA** está READY, mas foi gerado do commit anterior `70a24a8`. Há um deployment de preview de `main` em `748adb1`; ele não prova que o endereço estável de QA executa essa versão. Victor precisa criar/publicar um deployment **da branch QA no projeto v2g-webapp-qa**, com o commit `748adb1`, pelo fluxo manual dele. Não basta redeployar o deployment anterior.
+- Não houve nova cobrança, aprovação, vinculação de terceiro CNPJ nem teste completo de acesso nesta atualização.
+
+## Publicação QA confirmada na Vercel (12/10, depois da atualização acima)
+
+- O deployment `dpl_p1r2ByqByJ813DAZ5ZDEvKr2f5Di` está `Ready`, em `Production` **do projeto QA**, com origem branch `QA`, commit `748adb1`. A tela de detalhes mostra `v2g-webapp-qa.vercel.app` em **Current Domains**. Portanto, o endereço estável já aponta para a correção que estava pendente; não criar outro deployment por rotina.
+- Ainda falta provar um novo pedido Sandbox, evento autêntico e vínculo de acesso nesse domínio.
+
+## 0. Dependência de Victor (registro anterior à troca da chave; superado acima)
 
 - A chave `ASAAS_API_KEY` do Sandbox no ambiente local retorna HTTP 401 `invalid_access_token` para `GET /v3/webhooks`. No painel Sandbox, a chave denominada `V2G WebApp Sandbox` aparece habilitada; isso não valida a cópia configurada no WebApp. Victor precisa gerar/substituir a credencial no projeto `v2g-webapp-qa` da Vercel e no `.env.local` de QA, sem enviá-la pelo chat. A mudança de variável na Vercel exige novo deployment da branch `QA` para entrar no runtime. O teste novo não pode ser retomado automaticamente enquanto a credencial não for verificada. Não alterar o projeto WebApp principal.
 - Depois da chave, configurar um webhook **novo** do Sandbox para `https://v2g-webapp-qa.vercel.app/api/webhooks/asaas-payment`, com `PAYMENT_CONFIRMED` e `PAYMENT_RECEIVED`, token igual ao `ASAAS_WEBHOOK_TOKEN` do projeto QA e fila ativa. O único webhook visível no painel Sandbox nesta inspeção era `V2G QA checkout temporario`, com fila interrompida e URL de túnel encerrado apontando para `/api/webhooks/asaas-checkout`; não reativá-lo.
