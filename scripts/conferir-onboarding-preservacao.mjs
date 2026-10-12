@@ -385,13 +385,18 @@ test('zero confirmado nas colunas não vira null ou não sei na retomada', async
   assert.equal(estado.contas.custo.naoSei,true); assert.equal(estado.contas.custo.calculado,null);
 });
 
-test('ticket não aceita não sei nem confirmação forjada fora da pergunta', async () => {
+test('ticket aceita não sei, sem inventar valor, e bloqueia repetição ou confirmação forjada', async () => {
   row.avg_ticket_min = null; row.avg_ticket_max = null;
   delete row.onboarding.contas.ticket;
-  assert.equal((await saveConta({conta:'ticket',escolha:'',naoSei:true})).ok,false);
   assert.equal((await saveConta({conta:'ticket',escolha:'100',confirmando:true})).ok,false);
-  assert.deepEqual(events,[]);
-  assert.equal((await saveConta({conta:'ticket',escolha:'100'})).ok,true);
+  assert.deepEqual(events, []);
+  const result = await saveConta({conta:'ticket',escolha:'',naoSei:true});
+  assert.equal(result.ok, true);
+  assert.equal(row.avg_ticket_min, null);
+  assert.equal(row.avg_ticket_max, null);
+  assert.equal(row.onboarding.contas.ticket.naoSei, true);
+  assert.equal(result.estado.leituras.ticket.estado, 'nao_sei');
+  assert.equal((await saveConta({conta:'ticket',escolha:'100'})).ok, false);
 });
 test('ticket parcialmente gravado não vira média falsa e retoma as duas colunas', async () => {
   row.avg_ticket_min = null;

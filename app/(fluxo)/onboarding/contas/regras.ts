@@ -23,7 +23,9 @@ export function transicaoDaContaPermitida(
   confirmando: boolean,
 ): boolean {
   if (naoSei && confirmando) return false;
-  if (conta === "ticket") return !naoSei && !confirmando;
+  // Ticket não tem uma etapa de confirmação de cálculo. "Não sei" é uma
+  // resposta permitida após a segunda pergunta de confirmação da interface.
+  if (conta === "ticket") return !confirmando;
   if (!confirmando) return true;
   return !!anterior && anterior.confirmado === false && !anterior.naoSei
     && typeof anterior.calculado === "number" && Number.isFinite(anterior.calculado);
