@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`qa-git-onboarding-12-10.md`](./qa-git-onboarding-12-10.md) | 12/10/2026 | Repositório Git ligado ao projeto QA com branch `QA`, commit `70a24a8` publicado, checkout e onboarding novo abertos em HTTPS; `Não sei` e isolamento entre dois negócios verificados. | **Sim.** Voz não reensaiada; vínculo de uma nova cobrança Sandbox ao acesso na URL estável continua sem prova. |
 | [`qa-onboarding-https-11-10.md`](./qa-onboarding-https-11-10.md) | 11/10/2026 | Login autenticado, dois negócios fictícios, descrição distinta salva e retomada no QA HTTPS, com confirmação no banco. | **Sim.** Onboarding completo e envio final; uma troca ficou temporariamente em `Abrindo…`. |
 | [`onboarding-editorial-local-11-10.md`](./onboarding-editorial-local-11-10.md) | 11/10/2026 | Primeira tela com uma pergunta por vez, marca editorial, voz na descrição e persistência do bloco atual verificada no navegador local. | **Sim.** Conciliar demais perguntas da bancada V4 com decisões recentes e publicar para QA. |
 | [`qa-https-deploy-11-10.md`](./qa-https-deploy-11-10.md) | 11/10/2026 | Commit `0124c80` publicado especificamente em `v2g-webapp-qa`; flag de checkout isolada ligada e telas públicas verificadas em HTTPS. | **Sim.** Login e onboarding autenticados no HTTPS, sem envio final ao backend. |
