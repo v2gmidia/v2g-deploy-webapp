@@ -12,7 +12,7 @@ const allowed = new Set([
   'app/(fluxo)/onboarding/actions.ts', 'app/(fluxo)/onboarding/perguntas.ts',
   'app/(fluxo)/onboarding/contas/actions.ts', 'app/(fluxo)/onboarding/contas/regras.ts',
   'app/(fluxo)/onboarding/marca/actions.ts', 'lib/onboarding/marca.ts', 'lib/onboarding/conclusao.ts',
-  'lib/onboarding/bloco-um.ts',
+  'lib/onboarding/bloco-um.ts', 'lib/onboarding/enderecos.ts',
   'lib/onboarding/documento.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
   'lib/formato.ts', 'lib/verba/limites.ts', 'lib/nichos/escolha.ts',
   'lib/nichos/busca.ts', 'lib/nichos/tipos.ts',
@@ -67,7 +67,7 @@ let row, events, loggedIn, fieldFailure, fieldFailureAfter, clearFailure, jsonFa
 beforeEach(() => {
   row = {id:'negocio-fixture', profile_id:'perfil-fixture', name:'Antes', description:'Descrição anterior',
     avg_ticket_min:100, avg_ticket_max:100, avg_direct_cost:null, target_profit_per_customer:null,
-    monthly_budget:null, site_url:null, instagram_handle:null, city:null, radius_km:null,
+    monthly_budget:null, site_url:null, instagram_handle:null, city:null, cep:null, radius_km:null,
     onboarding:documentFixture(), procedencia:{}};
   events = []; loggedIn = true; fieldFailure = false; fieldFailureAfter = null; clearFailure = false; jsonFailure = false; beforeMerge = null;
   readCount = 0; failReadAt = null;
@@ -157,6 +157,75 @@ test('aba antiga não grava após trocar de negócio', async () => {
   assert.equal(result.ok,false);
   assert.deepEqual(row,before);
   assert.deepEqual(events,[]);
+});
+
+test('site e Instagram inválidos não marcam resposta nem gravam coluna', async () => {
+  const before = structuredClone(row);
+  assert.equal((await save('site', 'site sem dominio')).ok, false);
+  assert.equal((await save('instagram', '@usuario!')).ok, false);
+  assert.deepEqual(row, before);
+  assert.deepEqual(events, []);
+});
+
+test('site e Instagram válidos entram em colunas do negócio e persistem no JSON', async () => {
+  assert.equal((await save('site', 'exemplo.com.br')).ok, true);
+  assert.equal(row.site_url, 'https://exemplo.com.br');
+  assert.equal(row.onboarding.respostas.site.texto, 'https://exemplo.com.br');
+  assert.equal((await save('instagram', 'https://instagram.com/Exemplo/')).ok, true);
+  assert.equal(row.instagram_handle, '@exemplo');
+  assert.equal(row.onboarding.respostas.instagram.texto, '@exemplo');
+});
+
+test('declarar ausência limpa endereço anterior sem apagar outros blocos', async () => {
+  row.site_url = 'https://anterior.com.br';
+  row.instagram_handle = '@anterior';
+  const contasAntes = structuredClone(row.onboarding.contas);
+  const site = await actions.salvarRespostaAction({businessId:row.id,qid:'site',texto:'Não tenho site',origem:'chip'});
+  const instagram = await actions.salvarRespostaAction({businessId:row.id,qid:'instagram',texto:'Não tenho Instagram',origem:'chip'});
+  assert.equal(site.ok, true);
+  assert.equal(instagram.ok, true);
+  assert.equal(row.site_url, null);
+  assert.equal(row.instagram_handle, null);
+  assert.deepEqual(row.onboarding.contas, contasAntes);
+  assert.equal(row.onboarding.respostas.site.texto, 'Não tenho site');
+  assert.equal((await marca.carregarMarcaAction()).siteNaoTenhoDeclarado, true);
+});
+
+test('falha na limpeza do site exige recarregar e não marca ausência', async () => {
+  row.site_url = 'https://anterior.com.br';
+  clearFailure = true;
+  const result = await actions.salvarRespostaAction({businessId:row.id,qid:'site',texto:'Não tenho site',origem:'chip'});
+  assert.equal(result.ok, false);
+  assert.equal(result.recarregar, true);
+  assert.equal(row.site_url, 'https://anterior.com.br');
+  assert.equal(row.onboarding.respostas.site, undefined);
+});
+
+test('CEP opcional da praça é validado e gravado no negócio selecionado', async () => {
+  const invalido = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Na cidade toda',origem:'chip',cidade:'São Paulo',cep:'1234A-000'});
+  assert.equal(invalido.ok, false);
+  assert.deepEqual(events, []);
+  const valido = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Na cidade toda',origem:'chip',cidade:'São Paulo',cep:'01310-100'});
+  assert.equal(valido.ok, true);
+  assert.equal(row.cep, '01310100');
+  assert.equal(row.onboarding.respostas.praca.cep, '01310100');
+  assert.match(row.onboarding.respostas.praca.echo, /CEP 01310-100/);
+});
+
+test('corrigir praça para texto livre limpa apenas CEP que veio da resposta anterior', async () => {
+  row.cep = '01310100'; row.city = 'São Paulo'; row.radius_km = 20;
+  row.onboarding.respostas.praca = {texto:'Na cidade toda',echo:'São Paulo · Na cidade toda · CEP 01310-100',origem:'chip',cidade:'São Paulo',cep:'01310100',em:oldTime};
+  assert.equal((await save('praca','Atendo clientes online')).ok, true);
+  assert.equal(row.cep, null);
+  assert.equal(row.city, null);
+  assert.equal(row.onboarding.respostas.praca.cep, undefined);
+});
+
+test('corrigir praça sem CEP preserva CEP divergente alterado em outra tela', async () => {
+  row.cep = '22222222';
+  row.onboarding.respostas.praca = {texto:'Na cidade toda',echo:'São Paulo · Na cidade toda · CEP 01310-100',origem:'chip',cidade:'São Paulo',cep:'01310100',em:oldTime};
+  assert.equal((await save('praca','Atendo clientes online')).ok, true);
+  assert.equal(row.cep, '22222222');
 });
 
 test('corrigir nome preserva contas completas e propriedades irmãs', async () => {

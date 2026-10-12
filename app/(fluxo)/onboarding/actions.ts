@@ -10,6 +10,7 @@ import { conferirEscolhaDeNicho } from "@/lib/nichos/escolha";
 import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { validarInstagram, validarSite } from "@/lib/onboarding/enderecos";
 
 /**
  * Uma resposta como fica gravada em `businesses.onboarding`.
@@ -23,6 +24,7 @@ export interface RespostaGravada {
   texto: string;
   origem: "chip" | "texto";
   cidade?: string;
+  cep?: string;
   echo: string;
   em: string;
 }
@@ -43,7 +45,10 @@ interface LinhaBusiness {
   id: string;
   onboarding: unknown;
   city: string | null;
+  cep: string | null;
   radius_km: number | null;
+  site_url: string | null;
+  instagram_handle: string | null;
 }
 
 function lerRespostas(onboarding: unknown): Record<string, RespostaGravada> {
@@ -85,7 +90,7 @@ async function obterOuCriarBusiness(): Promise<
   }
 
   const { data: existente, error: erroBusca } = ativo.status === "selecionado"
-    ? await supabase.from("businesses").select("id, onboarding, city, radius_km")
+    ? await supabase.from("businesses").select("id, onboarding, city, cep, radius_km, site_url, instagram_handle")
       .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle()
     : { data: null, error: null };
 
@@ -107,7 +112,7 @@ async function obterOuCriarBusiness(): Promise<
   const { data: criado, error: erroCriacao } = await supabase
     .from("businesses")
     .insert({ profile_id: user.id, name: NOME_PROVISORIO })
-    .select("id, onboarding, city, radius_km")
+    .select("id, onboarding, city, cep, radius_km, site_url, instagram_handle")
     .single();
 
   if (erroCriacao || !criado) {
@@ -154,6 +159,7 @@ export async function salvarRespostaAction(entrada: {
   texto: string;
   origem: "chip" | "texto";
   cidade?: string;
+  cep?: string;
 }): Promise<SalvarResultado> {
   const pergunta = perguntaPorId(entrada.qid);
   if (!pergunta) return { ok: false, erro: "Pergunta desconhecida." };
@@ -207,10 +213,25 @@ export async function salvarRespostaAction(entrada: {
   if (pergunta.minimo && texto.length < pergunta.minimo.tamanho) {
     return { ok: false, erro: pergunta.minimo.recado };
   }
+  if (entrada.qid === "instagram" && !(entrada.origem === "chip" && texto === "Não tenho Instagram")) {
+    const normalizado = validarInstagram(texto);
+    if (!normalizado) return { ok: false, erro: "Confira o @ ou o link do Instagram." };
+    texto = normalizado;
+  }
+  if (entrada.qid === "site" && !(entrada.origem === "chip" && texto === "Não tenho site")) {
+    const normalizado = validarSite(texto);
+    if (!normalizado) return { ok: false, erro: "Confira o endereço do site." };
+    texto = normalizado;
+  }
 
   const cidade = pergunta.pedeCidade && entrada.origem === "chip" ? entrada.cidade?.trim() : undefined;
+  const cepDigitado = pergunta.pedeCidade && entrada.origem === "chip" ? entrada.cep?.trim() : undefined;
+  const cep = cepDigitado ? cepDigitado.replace(/\D/g, "") : undefined;
   if (pergunta.pedeCidade && entrada.origem === "chip" && !cidade) {
     return { ok: false, erro: "Escreva sua cidade antes de escolher." };
+  }
+  if (cepDigitado && (!/^\d{5}-?\d{3}$/.test(cepDigitado) || cep?.length !== 8)) {
+    return { ok: false, erro: "Confira o CEP: use oito números." };
   }
 
   const resultado = await obterOuCriarBusiness();
@@ -223,11 +244,12 @@ export async function salvarRespostaAction(entrada: {
   const respostas = lerRespostas(linha.onboarding);
   const pracaAnterior = respostas.praca;
 
-  const echo = cidade && entrada.origem === "chip" ? `${cidade} · ${texto}` : texto;
+  const echo = cidade && entrada.origem === "chip" ? `${cidade} · ${texto}${cep ? ` · CEP ${cep.slice(0, 5)}-${cep.slice(5)}` : ""}` : texto;
   respostas[entrada.qid] = {
     texto,
     origem: entrada.origem,
     ...(cidade ? { cidade } : {}),
+    ...(cep ? { cep } : {}),
     echo,
     em: new Date().toISOString(),
   };
@@ -256,11 +278,14 @@ export async function salvarRespostaAction(entrada: {
   // `lib/nichos/escolha.ts`), e com ela a marcação e a migration `0021`.
   if (entrada.qid === "ramo") campos.push({ campo: "niche", valor: texto });
   if (entrada.qid === "descricao") campos.push({ campo: "description", valor: texto });
+  if (entrada.qid === "instagram" && texto !== "Não tenho Instagram") campos.push({ campo: "instagram_handle", valor: texto });
+  if (entrada.qid === "site" && texto !== "Não tenho site") campos.push({ campo: "site_url", valor: texto });
   if (entrada.qid === "praca") {
     // Cidade só existe quando veio do campo dedicado. Na resposta
     // escrita à mão ("atendo o interior todo") não dá para inferir sem
     // chutar, então a coluna fica nula e o texto vive no jsonb.
     if (cidade) campos.push({ campo: "city", valor: cidade });
+    if (cep) campos.push({ campo: "cep", valor: cep });
     if (entrada.origem === "chip") {
       const raio = RAIO_KM[texto];
       if (raio != null) campos.push({ campo: "radius_km", valor: raio });
@@ -274,8 +299,13 @@ export async function salvarRespostaAction(entrada: {
   const esvaziar = entrada.qid === "praca" && entrada.origem === "texto" &&
     pracaAnterior?.origem === "chip" ? [
       ...(pracaAnterior.cidade && linha.city === pracaAnterior.cidade ? ["city"] : []),
+      ...(pracaAnterior.cep && linha.cep === pracaAnterior.cep ? ["cep"] : []),
       ...(RAIO_KM[pracaAnterior.texto] === linha.radius_km ? ["radius_km"] : []),
-    ] : [];
+    ] : entrada.qid === "praca" && entrada.origem === "chip" && !cep &&
+      pracaAnterior?.cep && linha.cep === pracaAnterior.cep ? ["cep"] : [
+      ...(entrada.qid === "site" && texto === "Não tenho site" && linha.site_url ? ["site_url"] : []),
+      ...(entrada.qid === "instagram" && texto === "Não tenho Instagram" && linha.instagram_handle ? ["instagram_handle"] : []),
+    ];
 
   // PRIMEIRO as colunas, DEPOIS o jsonb. Se uma gravação falhar no meio,
   // a resposta não é marcada como dada e a pergunta continua aberta —

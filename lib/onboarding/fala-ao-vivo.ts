@@ -4,9 +4,9 @@
  * ============================================================
  * POR QUE DUAS TRANSCRIÇÕES, E NÃO UMA.
  *
- * A Web Speech é do NAVEGADOR: não custa nada, responde palavra por
- * palavra, e erra mais. A OpenAI custa por minuto, só responde depois que
- * a pessoa terminou de falar, e erra menos.
+ * A Web Speech é do NAVEGADOR e devolve texto palavra por palavra. No
+ * fluxo real, a pessoa revisa esse texto antes de salvar. O WebApp não
+ * envia nem guarda o áudio neste caminho.
  *
  * O briefing de 21/09 pede as duas, nessa ordem: a do navegador enquanto
  * fala, para a tela não ficar muda; a da OpenAI ao terminar, UMA vez, e o

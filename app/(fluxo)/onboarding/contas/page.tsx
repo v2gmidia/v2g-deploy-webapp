@@ -1,8 +1,8 @@
 import { carregarContasAction } from "./actions";
 import { Contas } from "./Contas";
-import { estadoDoCliente } from "@/lib/estado/cliente";
-import { Trilha } from "../Trilha";
 import { tituloDaAba } from "@/lib/titulos";
+import { Marca } from "@/components/ui/Marca";
+import "../onboarding-editorial.css";
 
 export const metadata = tituloDaAba("/onboarding/contas");
 
@@ -35,22 +35,15 @@ export default async function ContasPage() {
     );
   }
 
-  // A MESMA FONTE DA OUTRA TRILHA. Isto aqui era uma TERCEIRA contagem —
-  // `4 + Math.round(fechadas * 2 / 3)` blocos e `Math.max(2, 7 - fechadas * 2)`
-  // minutos — lendo o jsonb por conta própria, com regra diferente da do
-  // `/onboarding` e diferente da do `montarCadastro`. Três telas, três
-  // aritméticas, um assunto só.
-  const { blocosDaTrilha: blocos } = await estadoDoCliente(new Date());
-
   return (
-    <div className="auth-grid">
-      <section className="auth-card">
+    <div className="onb-v2 onb-v2-etapa">
+      <header className="onb-v2-topo">
+        <Marca editorial href="/inicio" />
+        <a href="/onboarding">Rever meu negócio</a>
+      </header>
+      <section className="onb-v2-conteudo">
         <Contas inicial={estado} />
       </section>
-
-      <aside className="auth-aside">
-        <Trilha passo={1} blocos={blocos} pecas={blocos >= 6 ? 1 : 0} />
-      </aside>
     </div>
   );
 }

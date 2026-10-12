@@ -30,7 +30,7 @@ import {
 } from "./validacoes";
 import { escritasDe, FORA_DE_COLUNA } from "./destino";
 import { RECADOS, TEM_AUDIO_GUARDADO, type CasoDeFalha } from "./recados";
-import { ouvinteDeFala, temFalaAoVivo, type Ouvinte, type Trecho } from "./fala-ao-vivo";
+import { ouvinteDeFala, temFalaAoVivo, type Ouvinte, type Trecho } from "@/lib/onboarding/fala-ao-vivo";
 import { coresDaLogo, PAPEIS_DA_COR, type CorDaLogo } from "./cores-da-logo";
 import css from "./Onboarding.module.css";
 

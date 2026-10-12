@@ -7,7 +7,10 @@ import styles from "./Marca.module.css";
 export function Marca({ inicial }: { inicial: EstadoMarca }) {
   const [estado, setEstado] = useState(inicial);
   const [site, setSite] = useState(inicial.site);
-  const [semSite, setSemSite] = useState(inicial.marca?.siteNaoTenho ?? false);
+  // A coluna atual prevalece sobre um marcador antigo da etapa da marca.
+  // Se a pessoa corrigiu o site no bloco inicial, esta tela permite revisar
+  // e gravar o novo estado sem abrir com site preenchido e caixa marcada.
+  const [semSite, setSemSite] = useState(!inicial.site && (inicial.siteNaoTenhoDeclarado || inicial.marca?.siteNaoTenho === true));
   const [instagram, setInstagram] = useState(inicial.instagram);
   const [aparencia, setAparencia] = useState(inicial.marca?.aparencia ?? "");
   const [naoSei, setNaoSei] = useState(inicial.marca?.aparenciaNaoSei ?? false);

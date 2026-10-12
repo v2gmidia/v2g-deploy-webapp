@@ -7,6 +7,7 @@ import { documento, type RespostasDaMarca } from "@/lib/onboarding/marca";
 import { respostasBasicas, type PerguntaBasica } from "@/lib/onboarding/bloco-um";
 import { estadoDaConclusao } from "@/lib/onboarding/conclusao";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { validarInstagram, validarSite } from "@/lib/onboarding/enderecos";
 
 interface Linha {
   id: string;
@@ -23,6 +24,7 @@ export interface EstadoMarca {
   businessId: string;
   site: string;
   instagram: string;
+  siteNaoTenhoDeclarado: boolean;
   marca: RespostasDaMarca | null;
   concluido: boolean;
   contasProntas: boolean;
@@ -61,6 +63,7 @@ function estado(linha: Linha): EstadoMarca {
     businessId: linha.id,
     site: linha.site_url ?? "",
     instagram: linha.instagram_handle ?? "",
+    siteNaoTenhoDeclarado: (doc.respostas as Record<string, { texto?: string }> | undefined)?.site?.texto === "Não tenho site",
     marca,
     concluido,
     respostasBasicas: respostasBasicas(doc),
@@ -74,20 +77,6 @@ export async function carregarMarcaAction(): Promise<{ erro: string } | EstadoMa
   return "erro" in r ? r : estado(r.linha);
 }
 
-function validarInstagram(bruto: string): string | null {
-  const texto = bruto.trim().replace(/\s/g, "");
-  const daUrl = texto.match(/^(?:https?:\/\/)?(?:www\.)?instagram\.com\/([^/?#]+)/i);
-  const usuario = (daUrl ? daUrl[1]! : texto).replace(/^@/, "").replace(/\/+$/, "");
-  return /^[a-zA-Z0-9._]{1,30}$/.test(usuario) ? `@${usuario.toLowerCase()}` : null;
-}
-
-function validarSite(bruto: string): string | null {
-  try {
-    const url = new URL(/^https?:\/\//i.test(bruto) ? bruto : `https://${bruto}`);
-    if (!/^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i.test(url.hostname)) return null;
-    return url.toString().replace(/\/$/, "");
-  } catch { return null; }
-}
 
 export async function salvarMarcaAction(entrada: {
   businessId: string;

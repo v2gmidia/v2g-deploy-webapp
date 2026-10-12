@@ -143,9 +143,27 @@ export const PERGUNTAS: Pergunta[] = [
     fallbackLabel: "Onde seus clientes estão",
     fallbackPlaceholder: "Onde estão seus clientes",
   },
+  {
+    id: "instagram",
+    texto: "Qual é o @ do Instagram do seu negócio? Se tiver, pode colar o link do perfil.",
+    opcoes: [{ echo: "Não tenho Instagram", rotulo: "Não tenho Instagram" }],
+    soTexto: true,
+    fallbackLabel: "Instagram do negócio",
+    fallbackPlaceholder: "@seunegocio",
+  },
+  {
+    id: "site",
+    texto: "Seu negócio tem site? Se tiver, informe o endereço para a equipe conhecer melhor sua oferta.",
+    opcoes: [{ echo: "Não tenho site", rotulo: "Não tenho site" }],
+    soTexto: true,
+    fallbackLabel: "Site do negócio",
+    fallbackPlaceholder: "seunegocio.com.br",
+  },
 ];
 
-export const ORDEM = PERGUNTAS.map((p) => p.id);
+// A antiga pergunta de abertura não pede dado. Respostas já gravadas nela
+// continuam legíveis, mas o percurso começa diretamente pela primeira tarefa.
+export const ORDEM = ["nome", "praca", "descricao", "instagram", "site", "ramo"];
 export const ULTIMA = ORDEM[ORDEM.length - 1]!;
 
 /**
@@ -225,7 +243,8 @@ export function perguntaPorId(id: string): Pergunta | undefined {
 
 /** A próxima pergunta ainda sem resposta, ou null se acabou. */
 export function proximaPergunta(respondidas: string[]): Pergunta | null {
-  for (const p of PERGUNTAS) {
+  for (const id of ORDEM) {
+    const p = perguntaPorId(id)!;
     if (!respondidas.includes(p.id)) return p;
   }
   return null;

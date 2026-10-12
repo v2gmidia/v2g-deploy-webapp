@@ -1,328 +1,144 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bubble } from "@/components/ui/Bubble";
 import { SeletorDeNicho } from "@/components/ui/SeletorDeNicho";
 import type { Nicho } from "@/lib/nichos/tipos";
+import { ouvinteDeFala, temFalaAoVivo, type Ouvinte } from "@/lib/onboarding/fala-ao-vivo";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
 import { ORDEM, PERGUNTAS, proximaPergunta, type Pergunta } from "./perguntas";
+import styles from "./OnboardingNovo.module.css";
 
-interface ChatProps {
-  businessId: string;
-  inicial: Record<string, RespostaGravada>;
-  /**
-   * A lista viva do `GET /nichos`, buscada no servidor e passada por props.
-   *
-   * O TOKEN NÃO PODE VIR PARA CÁ. `X-V2G-Token` é segredo entre máquinas —
-   * quem o tem age em nome de qualquer cliente. Por isso a chamada fica no
-   * Server Component e este componente recebe a lista já pronta; o filtro,
-   * esse sim, roda aqui.
-   *
-   * `null` = o backend não respondeu. NÃO existe lista de reserva: a
-   * pergunta passa a ser só o campo de texto, com uma linha dizendo que a
-   * lista não carregou. Ver `semLista` abaixo.
-   */
-  nichos: Nicho[] | null;
+const QUESTOES = ORDEM.map((id) => PERGUNTAS.find((p) => p.id === id)!);
+function partes(pergunta: Pergunta): [string, string | null] {
+  const match = pergunta.texto.match(/^(.+?[?.!])\s+(.+)$/s);
+  return match ? [match[1] ?? pergunta.texto, match[2] ?? null] : [pergunta.texto, null];
 }
 
-export function Chat({ businessId, inicial, nichos }: ChatProps) {
+export function Chat({ businessId, inicial, nichos }: {
+  businessId: string; inicial: Record<string, RespostaGravada>; nichos: Nicho[] | null;
+}) {
   const [respostas, setRespostas] = useState(inicial);
-  const [erro, setErro] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
-
-  const [cidade, setCidade] = useState("");
-  const [textoAberto, setTextoAberto] = useState(false);
   const [texto, setTexto] = useState("");
-  const [sacode, setSacode] = useState<"cidade" | "texto" | null>(null);
+  const [cidade, setCidade] = useState("");
+  const [cep, setCep] = useState("");
+  const [textoAberto, setTextoAberto] = useState(false);
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [incerto, setIncerto] = useState(false);
+  const [ouvindo, setOuvindo] = useState(false);
+  const [suportaVoz, setSuportaVoz] = useState<boolean | null>(null);
+  const ouvinte = useRef<Ouvinte | null>(null);
+  const baseDaFala = useRef("");
+  const campo = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
-  const campoTexto = useRef<HTMLInputElement>(null);
-  const campoCidade = useRef<HTMLInputElement>(null);
+  const pendente = proximaPergunta(ORDEM.filter((id) => !!respostas[id]));
+  const atual = editando ? QUESTOES.find((p) => p.id === editando) ?? pendente : pendente;
+  const indice = atual ? QUESTOES.findIndex((p) => p.id === atual.id) : QUESTOES.length;
+  const salvas = QUESTOES.filter((p) => respostas[p.id]);
 
-  const respondidas = ORDEM.filter((id) => respostas[id]);
-  const proxima = proximaPergunta(respondidas);
-  const atual = editando ? PERGUNTAS.find((p) => p.id === editando) ?? proxima : proxima;
-  const concluido = proxima === null;
-
-  // Numa pergunta sem chip o campo é a única resposta possível: ele nasce
-  // aberto, e não atrás de um "ou digite sua resposta" que só teria uma
-  // saída. `soTexto` decide isso; `textoAberto` continua sendo o
-  // interruptor das perguntas que têm chip E texto.
-  //
-  // A pergunta de nicho COM O CATÁLOGO FORA cai na mesma regra e pelo
-  // mesmo motivo: ali o texto é a única saída que existe.
-  const semListaViva = (p: Pergunta) => p.seletorDeNicho === true && nichos === null;
-  const campoVisivel = (p: Pergunta) =>
-    p.soTexto === true || semListaViva(p) || textoAberto;
-
+  useEffect(() => { setSuportaVoz(temFalaAoVivo()); }, []);
   useEffect(() => {
-    if (atual && campoVisivel(atual)) campoTexto.current?.focus();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [textoAberto, atual?.id]);
+    campo.current?.focus();
+    ouvinte.current?.parar();
+    ouvinte.current = null;
+    setOuvindo(false);
+  }, [atual?.id]);
+  useEffect(() => () => { ouvinte.current?.parar(); }, []);
 
-  function chacoalhar(qual: "cidade" | "texto") {
-    setSacode(null);
-    // deixa o React remover a classe antes de recolocar, senão a
-    // animação não reinicia quando o erro se repete
-    requestAnimationFrame(() => setSacode(qual));
-    setTimeout(() => setSacode(null), 400);
+  function limparEdicao() {
+    setEditando(null); setTexto(""); setCidade(""); setCep(""); setTextoAberto(false); setErro(null);
   }
-
-  async function enviar(
-    pergunta: Pergunta,
-    valor: string,
-    origem: "chip" | "texto",
-  ) {
-    if (enviando || aviso) return;
-
-    const cidadeLimpa = cidade.trim();
-    if (pergunta.pedeCidade && origem === "chip" && !cidadeLimpa) {
-      chacoalhar("cidade");
-      campoCidade.current?.focus();
-      return;
-    }
-    if (!valor.trim()) {
-      chacoalhar("texto");
-      campoTexto.current?.focus();
-      return;
-    }
-
-    setEnviando(true);
+  function corrigir(pergunta: Pergunta) {
+    const resposta = respostas[pergunta.id];
+    if (!resposta || enviando || incerto) return;
+    setEditando(pergunta.id);
+    setTexto(resposta.texto);
+    setCidade(resposta.cidade ?? "");
+    setCep(resposta.cep ?? "");
+    setTextoAberto(resposta.origem === "texto");
     setErro(null);
-    try {
-      const resultado = await salvarRespostaAction({
-        businessId,
-        qid: pergunta.id,
-        texto: valor,
-        origem,
-        ...(pergunta.pedeCidade && origem === "chip" ? { cidade: cidadeLimpa } : {}),
-      });
-
-      if (!resultado.ok && resultado.recarregar) {
-        setAviso("Não conseguimos confirmar a gravação. Parte da resposta pode ter sido salva. Recarregue para conferir antes de enviar de novo.");
-        return;
-      }
-      if (!resultado.ok) {
-        setErro(resultado.erro ?? "Não conseguimos salvar sua resposta.");
-        return;
-      }
-      if (!resultado.estado) {
-        setAviso("Resposta enviada, mas não conseguimos atualizar a tela. Recarregue para conferir antes de continuar.");
-        return;
-      }
-
-      setRespostas(resultado.estado.respostas);
-      setEditando(null);
-      setTexto("");
-      setTextoAberto(false);
-      setCidade("");
-    } catch {
-      setAviso("Não conseguimos confirmar se a resposta foi salva. Recarregue para conferir antes de enviar de novo.");
-    } finally {
-      setEnviando(false);
+  }
+  function alternarVoz() {
+    if (ouvindo) {
+      ouvinte.current?.parar(); ouvinte.current = null; setOuvindo(false); return;
     }
+    baseDaFala.current = texto;
+    const escuta = ouvinteDeFala(
+      ({ fechado, provisorio }) => setTexto([baseDaFala.current, fechado, provisorio].filter(Boolean).join(" ").trim()),
+      () => { setErro("O microfone falhou. Escreva sua resposta ou tente de novo."); setOuvindo(false); ouvinte.current?.parar(); ouvinte.current = null; },
+    );
+    if (!escuta) { setErro("O reconhecimento de voz não está disponível neste navegador. Escreva sua resposta."); return; }
+    ouvinte.current = escuta; setErro(null); setOuvindo(true);
+  }
+  async function enviar(pergunta: Pergunta, valor: string, origem: "chip" | "texto") {
+    if (enviando || incerto) return;
+    if (pergunta.pedeCidade && origem === "chip" && !cidade.trim()) { setErro("Informe sua cidade para escolher a distância."); return; }
+    if (!valor.trim()) { setErro("Escreva uma resposta antes de continuar."); campo.current?.focus(); return; }
+    ouvinte.current?.parar(); ouvinte.current = null; setOuvindo(false);
+    setEnviando(true); setErro(null);
+    try {
+      const resultado = await salvarRespostaAction({ businessId, qid: pergunta.id, texto: valor, origem,
+        ...(pergunta.pedeCidade && origem === "chip" ? { cidade: cidade.trim(), cep: cep.trim() } : {}) });
+      if (!resultado.ok && resultado.recarregar) { setIncerto(true); setErro("Não conseguimos confirmar a gravação. Recarregue para conferir antes de tentar novamente."); return; }
+      if (!resultado.ok) { setErro(resultado.erro ?? "Não conseguimos salvar. Tente novamente."); return; }
+      if (!resultado.estado) { setIncerto(true); setErro("A resposta pode ter sido salva. Recarregue para conferir antes de continuar."); return; }
+      setRespostas(resultado.estado.respostas); limparEdicao();
+    } catch {
+      setIncerto(true); setErro("Não sabemos se a resposta foi salva. Recarregue para conferir antes de tentar novamente.");
+    } finally { setEnviando(false); }
   }
 
-  return (
-    <>
-      <p className="mission-tag">Sua primeira missão · passo 1 de 3</p>
-      <h1 className="auth-h">Sobre o seu negócio</h1>
-      <p className="auth-sub">
-        Uma pergunta por vez. Responda clicando ou escrevendo do seu jeito — não existe
-        resposta errada aqui.
-      </p>
+  const semLista = !!atual?.seletorDeNicho && nichos === null;
+  const usaSeletor = !!atual?.seletorDeNicho && nichos !== null;
+  const mostrarTexto = !!atual && !usaSeletor && (atual.soTexto || semLista || textoAberto);
 
-      {erro && <p className="form-error">{erro}</p>}
-      {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
-
-      <div className="chat">
-        {PERGUNTAS.map((p) => {
-          const resposta = respostas[p.id];
-          const ehAtual = atual?.id === p.id;
-          if (!resposta && !ehAtual) return null;
-
-          // O seletor de nicho substitui os chips E o campo de texto desta
-          // pergunta: ele já é os dois.
-          const usaSeletor = p.seletorDeNicho === true && nichos !== null;
-
-          // ============================================================
-          // CATÁLOGO FORA: SÓ O TEXTO LIVRE, E A TELA DIZ POR QUÊ.
-          //
-          // Não existe lista de reserva. Os cinco chips fixos que havia
-          // aqui até 22/08 não eram nichos — um cobria três de uma vez,
-          // dois não cobriam nenhum — e gravar um deles seria palpite com
-          // cara de escolha do cliente. Quando o catálogo está fora, a
-          // verdade é que não sabemos o nicho, e a frase da pessoa é a
-          // única fonte honesta que sobra.
-          //
-          // A LINHA DE CONTEXTO NÃO É ENFEITE. "Escreva do seu jeito"
-          // sozinho parece que nunca houve lista — a pessoa não tem como
-          // saber que está vendo um estado degradado, e conclui que o
-          // produto é assim. Dizer que a lista não carregou é a diferença
-          // entre uma falha nossa e uma limitação nossa.
-          // ============================================================
-          const semLista = p.seletorDeNicho === true && nichos === null;
-
-          return (
-            <div className="qblock" key={p.id}>
-              {p.contador && <p className="qcount">{p.contador}</p>}
-              <Bubble de="ai">{p.texto}</Bubble>
-
-              {ehAtual && p.pedeCidade && (
-                <div className="city-row">
-                  <label className="sr-only" htmlFor="campo-cidade">
-                    Sua cidade
-                  </label>
-                  <input
-                    id="campo-cidade"
-                    ref={campoCidade}
-                    type="text"
-                    placeholder="Sua cidade"
-                    value={cidade}
-                    onChange={(e) => setCidade(e.target.value)}
-                    className={sacode === "cidade" ? "shake" : undefined}
-                  />
-                </div>
-              )}
-
-              {/*
-                SÓ ENQUANTO É A PERGUNTA DA VEZ, ao contrário dos chips das
-                outras, que ficam na tela desbotados depois de respondidas.
-                A diferença é de peso: cinco chips apagados são um rastro da
-                conversa; dez chips apagados mais um campo de busca são
-                mobília morta entre a pergunta e a resposta. O balão do
-                usuário logo abaixo já diz o que foi escolhido.
-              */}
-              {ehAtual && p.seletorDeNicho && nichos && (
-                <SeletorDeNicho
-                  nichos={nichos}
-                  ocupado={enviando || !!aviso}
-                  aoEscolher={(n) => enviar(p, n.rotulo, "chip")}
-                  aoEscreverLivre={(t) => enviar(p, t, "texto")}
-                  rotuloOutro={p.chipAbreTexto ?? "Outro"}
-                  placeholderLivre={p.fallbackPlaceholder}
-                  rotuloLivre={p.fallbackLabel}
-                />
-              )}
-
-              {ehAtual && semLista && (
-                <p className="nicho-sem-lista" role="status" aria-live="polite">
-                  A lista de ramos não carregou agora. Escreva o seu do jeito que você
-                  chama — a gente confere depois.
-                </p>
-              )}
-
-              {!usaSeletor && !semLista && (p.opcoes.length > 0 || p.chipAbreTexto) && (
-              <div className="chips-row">
-                {p.opcoes.map((o) => (
-                  <button
-                    key={o.echo}
-                    className="chip-opt"
-                    type="button"
-                    disabled={!ehAtual || enviando || !!aviso}
-                    onClick={() => enviar(p, o.echo, "chip")}
-                  >
-                    {o.rotulo}
-                  </button>
-                ))}
-                {p.chipAbreTexto && (
-                  <button
-                    className="chip-opt"
-                    type="button"
-                    disabled={!ehAtual || enviando || !!aviso}
-                    onClick={() => setTextoAberto(true)}
-                  >
-                    {p.chipAbreTexto}
-                  </button>
-                )}
-              </div>
-              )}
-
-              {ehAtual && !usaSeletor && p.fallbackPlaceholder && (
-                <>
-                  {!campoVisivel(p) && (
-                    <button
-                      className="text-fallback"
-                      type="button"
-                      onClick={() => setTextoAberto(true)}
-                    >
-                      ou digite sua resposta
-                    </button>
-                  )}
-                  {campoVisivel(p) && (
-                    <div className="fallback-field">
-                      <label className="sr-only" htmlFor="campo-texto">
-                        {p.fallbackLabel}
-                      </label>
-                      <input
-                        id="campo-texto"
-                        ref={campoTexto}
-                        type="text"
-                        placeholder={p.fallbackPlaceholder}
-                        value={texto}
-                        onChange={(e) => setTexto(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                            enviar(p, texto, "texto");
-                          }
-                        }}
-                        className={sacode === "texto" ? "shake" : undefined}
-                      />
-                      <button
-                        className="mini-send"
-                        type="button"
-                        disabled={enviando || !!aviso}
-                        onClick={() => enviar(p, texto, "texto")}
-                      >
-                        {enviando ? "…" : "Enviar"}
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {resposta && <>
-                <Bubble de="user">{resposta.echo}</Bubble>
-                {p.id !== "inicio" && (editando === p.id ?
-                  <button className="text-fallback" type="button" disabled={enviando} onClick={() => {
-                    setEditando(null); setTexto(""); setCidade(""); setTextoAberto(false); setErro(null);
-                  }}>Cancelar correção</button> :
-                  <button className="text-fallback" type="button" disabled={enviando || editando !== null} onClick={() => {
-                    setEditando(p.id);
-                    setTexto(resposta.texto);
-                    setCidade(resposta.cidade ?? "");
-                    setTextoAberto(resposta.origem === "texto");
-                    setErro(null);
-                  }}>Corrigir resposta</button>
-                )}
-              </>}
-            </div>
-          );
-        })}
-
-        {concluido && !editando && (
-          <Bubble de="ai">
-            Boa. Agora faltam três contas rápidas sobre o seu dinheiro — e se você não
-            souber alguma, tudo bem, a gente resolve numa conversa.
-          </Bubble>
-        )}
-      </div>
-
-      {concluido && !editando && (
-        <>
-          {/* NÃO HÁ CONFETE AQUI, e a ausência é a decisão. O bloco 1 não
-              termina o passo 1: as contas do bloco 2 são a outra metade de
-              "sobre o seu negócio". Comemorar aqui daria a peça por
-              encaixada com três perguntas ainda por fazer — e celebração
-              antes de conquista real é justamente o que a marca não faz. */}
-          <a className="cta" href="/onboarding/contas">
-            Continuar para as contas
-          </a>
-        </>
-      )}
-    </>
-  );
+  return <div className={styles.jornada}>
+    <div className={styles.progresso} aria-label={`${Math.min(indice + 1, QUESTOES.length)} de ${QUESTOES.length} perguntas`}>
+      <span style={{ width: `${((atual ? indice : QUESTOES.length) / QUESTOES.length) * 100}%` }} />
+    </div>
+    <div className={styles.topo}><span>{atual ? `Pergunta ${indice + 1} de ${QUESTOES.length}` : "Respostas registradas"}</span><span>Sobre seu negócio</span></div>
+    {atual ? <section className={styles.pergunta} key={atual.id}>
+      <h1>{partes(atual)[0]}</h1>
+      {partes(atual)[1] && <p className={styles.ajuda}>{partes(atual)[1]}</p>}
+      {atual.pedeCidade && <div className={styles.local}>
+        <label className={styles.campo}>Sua cidade<input type="text" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: São Paulo" disabled={enviando || incerto} /></label>
+        <label className={styles.campo}>CEP de onde você atende <small>(se souber)</small><input type="text" inputMode="numeric" autoComplete="postal-code" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" disabled={enviando || incerto} /></label>
+      </div>}
+      {usaSeletor && nichos && <SeletorDeNicho nichos={nichos} ocupado={enviando || incerto}
+        aoEscolher={(n) => enviar(atual, n.rotulo, "chip")} aoEscreverLivre={(t) => enviar(atual, t, "texto")}
+        rotuloOutro={atual.chipAbreTexto ?? "Outro"} placeholderLivre={atual.fallbackPlaceholder} rotuloLivre={atual.fallbackLabel} />}
+      {semLista && <p className={styles.ajuda}>A lista de ramos não carregou. Escreva como você chama seu negócio; a equipe confere depois.</p>}
+      {!usaSeletor && !semLista && atual.opcoes.length > 0 && <div className={styles.opcoes}>
+        {atual.opcoes.map((opcao) => <button type="button" key={opcao.echo} disabled={enviando || incerto}
+          onClick={() => enviar(atual, opcao.echo, "chip")}>{opcao.rotulo}</button>)}
+      </div>}
+      {!usaSeletor && !semLista && atual.chipAbreTexto && !textoAberto && <button className={styles.link} type="button" onClick={() => setTextoAberto(true)}>Escrever do meu jeito</button>}
+      {mostrarTexto && <div className={styles.resposta}>
+        <label className={styles.campo}>{atual.fallbackLabel ?? "Sua resposta"}
+          {atual.id === "descricao"
+            ? <textarea ref={campo as React.RefObject<HTMLTextAreaElement>} rows={4} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={atual.fallbackPlaceholder} disabled={enviando || incerto} />
+            : <input ref={campo as React.RefObject<HTMLInputElement>} type="text" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={atual.fallbackPlaceholder} disabled={enviando || incerto}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); enviar(atual, texto, "texto"); } }} />}
+        </label>
+        {atual.id === "descricao" && suportaVoz && <div className={styles.voz}>
+          <button type="button" disabled={enviando || incerto} onClick={alternarVoz} aria-pressed={ouvindo}>{ouvindo ? "Parar de ouvir" : "Responder falando"}</button>
+          <p>{ouvindo ? "Confira o texto que aparece enquanto você fala." : "Toque e fale. Revise o texto antes de salvar; o WebApp não guarda o áudio."}</p>
+        </div>}
+        {atual.id === "descricao" && suportaVoz === false && <p className={styles.ajuda}>Este navegador não oferece resposta por voz. Você pode escrever normalmente.</p>}
+        <button className={styles.primario} type="button" disabled={enviando || incerto || ouvindo} onClick={() => enviar(atual, texto, "texto")}>{enviando ? "Salvando…" : "Salvar e continuar"}</button>
+      </div>}
+      {erro && <div className={incerto ? "form-warning" : "form-error"} role="alert">{erro}{incerto && <button type="button" onClick={() => window.location.reload()}>Recarregar</button>}</div>}
+      {editando && <button className={styles.link} type="button" onClick={limparEdicao}>Cancelar correção</button>}
+    </section> : <section className={styles.pergunta}>
+      <h1>Seu negócio, contado por você.</h1>
+      <p className={styles.ajuda}>As respostas estão salvas. Agora vamos olhar as contas com calma. Se algum número não estiver à mão, você pode dizer que não sabe.</p>
+      <a className={styles.primario} href="/onboarding/contas">Continuar para as contas</a>
+    </section>}
+    {salvas.length > 0 && <details className={styles.revisao}><summary>Ver e corrigir respostas salvas ({salvas.length})</summary><ol>
+      {salvas.map((p) => <li key={p.id}><span>{partes(p)[0]}<strong>{respostas[p.id]?.echo}</strong></span>
+        <button type="button" disabled={enviando || incerto} onClick={() => corrigir(p)}>Corrigir</button></li>)}
+    </ol></details>}
+    <p className={styles.rodape}>Cada resposta é salva para este negócio. Você pode sair e voltar depois.</p>
+  </div>;
 }
-

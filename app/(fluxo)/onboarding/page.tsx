@@ -1,9 +1,9 @@
 import { carregarEstadoAction } from "./actions";
 import { Chat } from "./Chat";
-import { estadoDoCliente } from "@/lib/estado/cliente";
 import { listarNichos } from "@/lib/backend";
-import { Trilha } from "./Trilha";
 import { tituloDaAba } from "@/lib/titulos";
+import { Marca } from "@/components/ui/Marca";
+import "./onboarding-editorial.css";
 
 export const metadata = tituloDaAba("/onboarding");
 
@@ -66,7 +66,6 @@ export default async function OnboardingPage() {
   // `blocosDoPasso1`/`minutosRestantes`, duas tabelas fixas indexadas pela
   // última pergunta respondida do bloco 1 — que não enxergavam as contas
   // nem a `/verba`. Ver docs/estado-do-cliente.md §0.3.
-  const { blocosDaTrilha: blocos } = await estadoDoCliente(new Date());
 
   // `null` quando o backend não respondeu — e é o `null` que acende a
   // reserva no `Chat`. O token fica deste lado: o componente de cliente
@@ -74,14 +73,12 @@ export default async function OnboardingPage() {
   const nichos = await promessaNichos;
 
   return (
-    <div className="auth-grid">
-      <section className="auth-card">
-        <Chat businessId={businessId} inicial={respostas} nichos={nichos.ok ? nichos.dados : null} />
-      </section>
-
-      <aside className="auth-aside">
-        <Trilha passo={1} blocos={blocos} pecas={blocos >= 6 ? 1 : 0} />
-      </aside>
+    <div className="onb-v2">
+      <header className="onb-v2-topo">
+        <Marca editorial href="/inicio" />
+        <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com uma pessoa</a>
+      </header>
+      <Chat businessId={businessId} inicial={respostas} nichos={nichos.ok ? nichos.dados : null} />
     </div>
   );
 }
