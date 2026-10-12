@@ -1,5 +1,14 @@
 # Etapa 01 — compra nova e acesso no QA (12/10/2026)
 
+## Prova ponta a ponta no endereço estável (12/10, após a publicação QA)
+
+- O pedido sintético já existente `82437221-4d55-41d8-a715-1bc36f4f586d` foi conciliado antes da retomada: Asaas Sandbox retornou zero pagadores, cobranças e assinaturas para o `externalReference`; o banco QA ainda estava `awaiting_payment`, sem IDs do Asaas e com reserva antiga. Foi liberada **apenas essa reserva**, em atualização condicional que exigiu ID, referência, status, contador zero, timestamp original e IDs externos nulos.
+- Em `https://v2g-webapp-qa.vercel.app/contratar/pagamento`, o botão gerou um Pix **exclusivamente Sandbox** de R$ 2.850 para o plano semestral de uma conta. Asaas confirmou uma cobrança `PENDING`, com valor, pagador e referência correspondentes. O banco continuou `awaiting_payment`; no seletor autenticado havia somente os dois negócios anteriores.
+- A simulação oficial `POST /v3/sandbox/payment/{id}/confirm` retornou `RECEIVED`; **nenhum banco nem dinheiro real foi usado**. O webhook novo entregou `PAYMENT_RECEIVED`: o banco QA passou a `payment_approved`, com `payment_approved_at`, um evento de aprovação e IDs de cobrança/pagador vinculados. O webhook segue habilitado e sem interrupção.
+- Após recarregar a sessão autenticada, o terceiro CNPJ fictício passou a aparecer. O pedido e o negócio têm o mesmo `buyer_profile_id`/`profile_id`, e `claim_email` foi limpo. A seleção do terceiro negócio abriu `/inicio` com o nome correto e onboarding ainda em zero de quatro etapas. A tela de pagamento passou a mostrar confirmação e link de criação de acesso. Isso prova a jornada para um **e-mail já confirmado**; não repete o teste de confirmação inicial por e-mail.
+- O mesmo evento foi reenviado duas vezes ao webhook QA usando seu ID e o pagamento consultado no Asaas. Ambas as respostas foram HTTP 200; o estado permaneceu `payment_approved`, com um evento de aprovação. O registro financeiro adicional ficou com uma linha após as duas chamadas. A listagem do Asaas mostrou exatamente uma cobrança para esse pedido.
+- Limites: o ensaio foi Pix Sandbox no QA. Não comprova cobrança real, cartão/3DS em produção, próximas mensalidades, estorno/chargeback, entrega de e-mails, assinatura, NFS-e ou liberação pública. Pix, cartão anual e primeira mensalidade já tinham ensaios Sandbox anteriores; não foram repetidos por rotina.
+
 ## Atualização após troca da chave (12/10)
 
 - `GET /v3/webhooks` no Asaas Sandbox respondeu HTTP 200 com a nova `ASAAS_API_KEY` local. A consulta por `externalReference` do pedido `82437221-4d55-41d8-a715-1bc36f4f586d` retornou zero pagadores, cobranças e assinaturas; no Supabase QA ele segue `awaiting_payment`, sem IDs do Asaas. A reserva antiga ainda não foi liberada.
