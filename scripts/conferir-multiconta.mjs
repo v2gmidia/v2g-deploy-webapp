@@ -5,11 +5,20 @@ import { negociosLiberados } from "../lib/multiconta/elegibilidade.ts";
 import { cnpjsDoComprador } from "../lib/multiconta/identificacao.ts";
 import { lerTodasPaginas } from "../lib/multiconta/paginacao.ts";
 import { pedidosAutorizadosParaVinculo, vincularComprasAprovadasComCliente } from "../lib/contratacao/vincular-core.ts";
+import { negocioAindaNaoIniciouOnboarding } from "../lib/onboarding/entrada.ts";
 
 const empresas = [
   { id: "empresa-a", name: "Empresa A" },
   { id: "empresa-b", name: "Empresa B" },
 ];
+
+test("negócio recém-comprado recebe convite; negócio iniciado retoma pelo início", () => {
+  assert.equal(negocioAindaNaoIniciouOnboarding({}), true);
+  assert.equal(negocioAindaNaoIniciouOnboarding({ respostas: {} }), true);
+  assert.equal(negocioAindaNaoIniciouOnboarding({ respostas: { inicio: { texto: "Quero começar" } } }), false);
+  assert.equal(negocioAindaNaoIniciouOnboarding({ contas: { ticket: { estado: "nao_sei" } } }), false);
+  assert.equal(negocioAindaNaoIniciouOnboarding({ conclusao: { proximoPasso: "agendamento_pendente" } }), false);
+});
 
 test("paginação reúne pedidos além do limite e preserva a autorização", async () => {
   const registros = Array.from({ length: 1001 }, (_, indice) => ({

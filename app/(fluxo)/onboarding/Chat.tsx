@@ -113,6 +113,7 @@ export function Chat({ businessId, inicial, nichos }: {
         {atual.opcoes.map((opcao) => <button type="button" key={opcao.echo} disabled={enviando || incerto}
           onClick={() => enviar(atual, opcao.echo, "chip")}>{opcao.rotulo}</button>)}
       </div>}
+      {atual.id === "inicio" && <a className={styles.link} href="/inicio">Fazer depois</a>}
       {!usaSeletor && !semLista && atual.chipAbreTexto && !textoAberto && <button className={styles.link} type="button" onClick={() => setTextoAberto(true)}>Escrever do meu jeito</button>}
       {mostrarTexto && <div className={styles.resposta}>
         <label className={styles.campo}>{atual.fallbackLabel ?? "Sua resposta"}

@@ -57,8 +57,8 @@ export const PERGUNTAS: Pergunta[] = [
   {
     id: "inicio",
     texto:
-      "Oi! Vamos conhecer seu negócio para preparar a conversa com o gestor. São só algumas perguntas rápidas. Bora?",
-    opcoes: [{ echo: "Bora começar", rotulo: "Bora começar" }],
+      "Quer começar a preparar seu negócio agora? Vamos conhecer sua empresa para a conversa com o gestor. Suas respostas ficam salvas para continuar depois.",
+    opcoes: [{ echo: "Quero começar", rotulo: "Começar onboarding" }],
   },
   {
     id: "nome",
