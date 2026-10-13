@@ -1,8 +1,14 @@
 # Primeiro acesso novo e convite ao onboarding — QA, 12/10/2026
 
-## 0. Pendente
+## Atualização após publicação de QA (12/10)
 
-- A mudança de navegação e o texto neutro do cadastro estão **somente no código local**. Não houve commit, push ou deploy. Depois de publicar no projeto QA, repetir a escolha do negócio fictício novo em HTTPS e confirmar o convite, **Começar onboarding** e **Fazer depois**. A interface publicada ainda leva ao início.
+- Na sessão HTTPS do comprador novo, a escolha do único negócio fictício levou a `/onboarding`. A tela publicada abriu a primeira pergunta, sem convite. Isso comprova o destino de entrada exigido para a compra, mas não a experiência de convite proposta por Victor.
+- A causa era local: a pergunta `inicio` estava definida em `perguntas.ts`, porém ausente de `ORDEM`, que determina a tela exibida. `Chat.tsx` agora mostra um convite de interface antes da primeira pergunta quando o negócio não tem respostas; **Começar onboarding** abre a pergunta 1 e **Fazer depois** volta ao início. Nenhuma resposta fictícia é salva ao escolher.
+- Em `http://localhost:3000`, com negócio fictício sem respostas, foram observados convite, entrada na pergunta 1 e reaparecimento do convite após recarregar sem responder. `pnpm typecheck`, `pnpm conferir:onboarding-preservacao` (60/60) e `git diff --check` passaram. A correção do convite está somente local e ainda não foi verificada no QA HTTPS.
+
+## 0. Pendências atuais
+
+- O redirecionamento ao onboarding está publicado no QA e foi observado. Publicar pelo fluxo manual de Victor a correção local do convite e então conferir **Começar onboarding** e **Fazer depois** em HTTPS.
 - O fluxo de onboarding completo, reserva da reunião, assinatura, NFS-e e publicação da campanha não foram testados nesta rodada.
 - A primeira tentativa de Pix ficou presa após o Asaas recusar um telefone fictício inválido. Foi conciliada manualmente no mesmo pedido, sem duplicar cobrança; o tratamento automático dessa falha segue pendente.
 

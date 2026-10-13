@@ -1,5 +1,14 @@
 # Etapa 01 — LP publicada e ciclo financeiro no QA (12/10/2026)
 
+## Atualização — lead positivo e recusa de cartão (12/10, horário de Brasília)
+
+- Com autorização de Victor, o formulário **publicado** da LP recebeu um único pré-cadastro identificado como `V2G QA TESTE LP — NÃO ATENDER`, com contato dele e CNPJ fictício. A interface respondeu “Seu contato chegou” e explicou que isso não cria pedido nem pagamento. O registro `leads_lp.id = 3` foi conferido no banco V2G-SITE: origem `https://www.v2gmidia.com.br/`, `utm_source=codex_qa`, `utm_medium=teste`, campanha `etapa01_qa_20261012`, data e texto de consentimento presentes, e contato coincidente. A consulta de `commercial_orders` para o CNPJ fictício retornou zero pedidos. Não houve clique em “Continuar no WhatsApp” nem atendimento real.
+- O limite da LP ficou concreto: o CNPJ é validado no formulário e no servidor, mas **não existe em `leads_lp` nem na assinatura atual de `inserir_lead_lp`**. Assim, a equipe não consegue conferir o CNPJ informado a partir desse registro e não há vínculo persistente entre este lead e um pedido. O banco da LP é V2G-SITE; o checkout de teste usa outro banco, QA. Não chamar esses dois registros de jornada vinculada.
+- No repositório separado da LP, ficaram preparados `supabase/leads_lp_cnpj_20261012.sql` e `supabase/leads_lp_cnpj_finalizar_20261012.sql`, além de código com `LEADS_CNPJ_RPC_ENABLED` desligada por padrão. O primeiro arquivo adiciona coluna e nova RPC; o segundo remove a RPC antiga só após publicar/verificar a LP nova. **Nenhuma migration foi aplicada nem flag externa alterada.** `conferir-contato`, `conferir-jornada` e a validação sintática JavaScript passaram localmente; o SQL ainda não foi executado.
+- No checkout HTTPS de QA, um pedido mensal exclusivamente fictício (`b40706e8-c84d-4c38-84ea-fd1d5182c59a`) usou o cartão de recusa da documentação oficial do Asaas Sandbox. A tela mostrou recusa explícita. Consulta do banco após a primeira tentativa: `awaiting_payment`, contador 1, pagador vinculado, nenhuma cobrança ou assinatura vinculada, reserva liberada e nenhum perfil vinculado. Uma retentativa do mesmo cartão foi recusada; o contador passou a 2 com os mesmos bloqueios de acesso e IDs de cobrança/assinatura ausentes. Não houve pagamento real nem terceira tentativa. A ausência de recurso órfão no Asaas não foi consultada separadamente.
+- A cobrança **seguinte** da assinatura fictícia anterior (`pay_4c2civ8bhmqa3ggw`), já vencida no Sandbox, foi confirmada pela ação oficial de teste do painel. O Asaas exibiu “Cobrança confirmada com sucesso” e situação `Confirmada`, R$ 500. O webhook autêntico `PAYMENT_CONFIRMED` chegou ao QA uma vez para o mesmo ID, valor e vencimento; a tabela conserva também o `PAYMENT_OVERDUE` anterior. O pedido de origem continuou `payment_approved`, com a cobrança da primeira compra ainda como ID principal e a assinatura vinculada. Esta é **simulação de confirmação de uma mensalidade posterior**, não prova de débito automático do cartão no vencimento real.
+- A escolha HTTPS do comprador novo passou a levar `/escolher-negocio` → `/onboarding`, mas o QA publicado ainda pula o convite e mostra a pergunta 1. A correção do convite está local, registrada em `qa-primeiro-acesso-convite-12-10.md`.
+
 ## Provas observadas nesta rodada
 
 - A LP publicada respondeu HTTP 200 e continha CNPJ, consentimento, preço mensal de R$ 500 e anual de R$ 5.280. `POST /api/pre-cadastro` com JSON vazio respondeu 422 com erros de campos; nenhum lead válido foi enviado nesta rodada. Os conferidores locais `conferir-contato` e `conferir-jornada` passaram. Isso não prova a gravação de um lead real nem seu vínculo a um pedido.
@@ -10,9 +19,9 @@
 
 ## O que continua aberto
 
-1. Primeiro acesso de comprador novo: entrega do e-mail, confirmação, login e vínculo do pedido em HTTPS. O teste anterior foi com e-mail já confirmado.
-2. Envio positivo da LP e rastreio de origem/consentimento até o pedido. A LP é pré-cadastro; não há compra pública a partir dela.
-3. Pagamento ou recusa efetiva de uma mensalidade seguinte. O ensaio desta rodada cobriu a cobrança seguinte **vencida**, não a tentativa automática de cartão na data real.
+1. Primeiro acesso de comprador novo: e-mail, confirmação, vínculo do pedido e entrada em `/onboarding` passaram no QA. O convite anterior à primeira pergunta está corrigido só localmente e aguarda publicação manual e conferência HTTPS.
+2. O envio positivo da LP e a persistência de origem/consentimento passaram. O CNPJ informado não é persistido, e o atendimento e vínculo lead → pedido ainda não foram provados. A LP é pré-cadastro; não há compra pública a partir dela.
+3. A recusa inicial e uma retentativa de cartão fictício passaram no QA, sem liberação de acesso. A cobrança seguinte foi vencida e depois confirmada no Sandbox, com webhook registrado. A tentativa **automática** do cartão no próximo vencimento real do ciclo ainda não foi observada.
 4. Conclusão do estorno após autorização crítica, evento final e tratamento operacional. Chargeback autêntico não foi provocado. O código apenas registra esses eventos e não revoga acesso ou pausa campanha.
 5. Habilitação e contrato de tokenização/3DS da conta de produção, resposta específica do Asaas para assinatura mensal e prova em produção. O Sandbox não reproduz o desafio 3DS.
 

@@ -18,6 +18,7 @@ export function Chat({ businessId, inicial, nichos }: {
   businessId: string; inicial: Record<string, RespostaGravada>; nichos: Nicho[] | null;
 }) {
   const [respostas, setRespostas] = useState(inicial);
+  const [conviteAceito, setConviteAceito] = useState(false);
   const [editando, setEditando] = useState<string | null>(null);
   const [texto, setTexto] = useState("");
   const [cidade, setCidade] = useState("");
@@ -36,6 +37,7 @@ export function Chat({ businessId, inicial, nichos }: {
   const atual = editando ? QUESTOES.find((p) => p.id === editando) ?? pendente : pendente;
   const indice = atual ? QUESTOES.findIndex((p) => p.id === atual.id) : QUESTOES.length;
   const salvas = QUESTOES.filter((p) => respostas[p.id]);
+  const mostrarConvite = !conviteAceito && salvas.length === 0 && !editando;
 
   useEffect(() => { setSuportaVoz(temFalaAoVivo()); }, []);
   useEffect(() => {
@@ -94,11 +96,16 @@ export function Chat({ businessId, inicial, nichos }: {
   const mostrarTexto = !!atual && !usaSeletor && (atual.soTexto || semLista || textoAberto);
 
   return <div className={styles.jornada}>
-    <div className={styles.progresso} aria-label={`${Math.min(indice + 1, QUESTOES.length)} de ${QUESTOES.length} perguntas`}>
-      <span style={{ width: `${((atual ? indice : QUESTOES.length) / QUESTOES.length) * 100}%` }} />
+    <div className={styles.progresso} aria-label={mostrarConvite ? "Onboarding ainda não iniciado" : `${Math.min(indice + 1, QUESTOES.length)} de ${QUESTOES.length} perguntas`}>
+      <span style={{ width: `${(mostrarConvite ? 0 : (atual ? indice : QUESTOES.length) / QUESTOES.length) * 100}%` }} />
     </div>
-    <div className={styles.topo}><span>{atual ? `Pergunta ${indice + 1} de ${QUESTOES.length}` : "Respostas registradas"}</span><span>Sobre seu negócio</span></div>
-    {atual ? <section className={styles.pergunta} key={atual.id}>
+    <div className={styles.topo}><span>{mostrarConvite ? "Seu primeiro passo" : atual ? `Pergunta ${indice + 1} de ${QUESTOES.length}` : "Respostas registradas"}</span><span>Sobre seu negócio</span></div>
+    {mostrarConvite ? <section className={styles.pergunta}>
+      <h1>Quer começar a preparar seu negócio agora?</h1>
+      <p className={styles.ajuda}>Conte um pouco sobre sua empresa para a conversa com o gestor. Você pode sair e continuar depois; cada resposta será salva para este negócio.</p>
+      <button className={styles.primario} type="button" onClick={() => setConviteAceito(true)}>Começar onboarding</button>
+      <a className={styles.link} href="/inicio">Fazer depois</a>
+    </section> : atual ? <section className={styles.pergunta} key={atual.id}>
       <h1>{partes(atual)[0]}</h1>
       {partes(atual)[1] && <p className={styles.ajuda}>{partes(atual)[1]}</p>}
       {atual.pedeCidade && <div className={styles.local}>
