@@ -50,6 +50,16 @@ test("cobranca seguinte e estorno sao eventos registraveis, sem aprovar compra",
   assert.equal(lerEventoFinanceiro({ ...disputa, payment: { ...disputa.payment, subscription: "sub_outro!" } }), null);
 });
 
+test("falha ou abandono do desafio 3DS e registravel sem abrir acesso", () => {
+  const falha = { ...eventoPix, id: "evt_teste_3ds1",
+    event: "PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED",
+    payment: { ...eventoPix.payment, billingType: "CREDIT_CARD", status: "PENDING" } };
+  assert.equal(lerEventoFinanceiro(falha)?.tipo,
+    "PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED");
+  assert.equal(lerPagamentoConfirmado(falha), null);
+  assert.equal(lerEventoFinanceiro({ ...falha, payment: { ...falha.payment, value: 5.001 } }), null);
+});
+
 test("formulario do cartao rejeita documento e validade invalidos antes da API", () => {
   const form = new FormData();
   const dados = { holderName: "Cliente Exemplo", holderDocument: "12345678909",

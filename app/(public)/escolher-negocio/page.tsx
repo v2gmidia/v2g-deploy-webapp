@@ -5,7 +5,7 @@ import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { cnpjsDoComprador, type PedidoParaIdentificarNegocio } from "@/lib/multiconta/identificacao";
-import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
+import { lerTodasPaginasEmLotes } from "@/lib/multiconta/paginacao";
 import { FormularioNegocio } from "./Formulario";
 import { limparNegocioAction } from "./actions";
 import { tituloDaAba } from "@/lib/titulos";
@@ -56,10 +56,10 @@ export default async function EscolherNegocioPage() {
   let pedidos: PedidoParaIdentificarNegocio[] | null = null;
   try {
     const admin = createAdminClient();
-    pedidos = await lerTodasPaginas((inicio, fim) => admin.from("commercial_orders")
+    pedidos = await lerTodasPaginasEmLotes(data.map((negocio) => negocio.id), (lote, inicio, fim) => admin.from("commercial_orders")
       .select("business_id, cnpj, buyer_email, buyer_profile_id")
       .eq("status", "payment_approved")
-      .in("business_id", data.map((negocio) => negocio.id))
+      .in("business_id", lote)
       .order("created_at", { ascending: false })
       .order("id", { ascending: false })
       .range(inicio, fim));

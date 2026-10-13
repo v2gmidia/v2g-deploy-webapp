@@ -31,6 +31,7 @@ export function Conclusao({ estado }: { estado: Estado }) {
         Escolher horário da reunião
       </a>
       <p className="note">O Google mostra os horários livres e envia a confirmação por e-mail quando a reserva é concluída. Abrir a agenda não marca a reunião. O WebApp ainda não recebe automaticamente essa confirmação; guarde o e-mail do convite.</p>
+      <p className="note">Não encontrou um horário? <a href="https://wa.me/5521936182176?text=Oi!%20Terminei%20meu%20cadastro%20na%20V2G%2C%20mas%20n%C3%A3o%20encontrei%20um%20hor%C3%A1rio%20na%20agenda." target="_blank" rel="noopener noreferrer">Avise nossa equipe pelo WhatsApp</a> para combinar o próximo passo. Essa conversa não reserva a reunião; ela continua pendente até você receber a confirmação do agendamento.</p>
       <section className="pendencia-bloco">
         <b>O que acontece na reunião</b>
         <p>Vocês vão confirmar o WhatsApp que recebe clientes do anúncio, tratar dos acessos e definir os materiais para o primeiro criativo. O gestor fará a publicação da primeira campanha manualmente depois das conferências necessárias.</p>

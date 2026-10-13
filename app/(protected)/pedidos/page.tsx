@@ -93,8 +93,9 @@ export default async function PedidosPage({ searchParams }: {
         <p className="form-warning">Não foi possível consultar contrato e nota agora.</p> : <>
           <p>Contrato: {contratos.get(pedido.id) === "signed"
             ? "assinatura registrada no WebApp" : "sem assinatura registrada no WebApp"}.</p>
-          <p>Nota fiscal: {notas.get(pedido.id) === "authorized"
-            ? "autorização registrada no WebApp" : "sem autorização registrada no WebApp"}.</p>
+          <p>NFS-e: {notas.get(pedido.id) === "authorized"
+            ? "última nota registrada como autorizada; confira a competência e as demais mensalidades"
+            : "sem nota autorizada registrada nesta consulta"}.</p>
         </>)}
       {pedido.proof_reference && <p>Comprovante: {pedido.proof_reference}</p>}
       {pedido.status === "awaiting_payment" && <ComprovantePix orderId={pedido.id} />}

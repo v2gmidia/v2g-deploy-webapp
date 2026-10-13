@@ -1,5 +1,9 @@
 # Primeiro acesso novo e convite ao onboarding — QA, 12/10/2026
 
+## Verificação posterior — 13/10
+
+- O deploy de QA estava `READY` no commit `7f9e28816ef792d96db57467d09b031867c82412`. Victor abriu o negócio fictício sem respostas no endereço publicado e confirmou que o convite **Começar onboarding** aparece antes da primeira pergunta. A sessão automatizada do navegador não respondeu nesta rodada; o clique nos dois botões e a gravação de respostas não foram repetidos aqui. O passo 2 da etapa 01 tem confirmação humana da tela inicial, além das provas anteriores de e-mail, login e vínculo.
+
 ## Atualização após publicação de QA (12/10)
 
 - Na sessão HTTPS do comprador novo, a escolha do único negócio fictício levou a `/onboarding`. A tela publicada abriu a primeira pergunta, sem convite. Isso comprova o destino de entrada exigido para a compra, mas não a experiência de convite proposta por Victor.

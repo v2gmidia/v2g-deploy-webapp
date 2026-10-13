@@ -520,4 +520,16 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "unicidade de fonte/interacao, checks de evidencia/transcricao e corpos transacionais das duas RPCs",
     ],
   },
+  {
+    arquivo: "20261013060000_competencia_documento_fiscal.sql",
+    cria: [
+      { tipo: "tabela", nome: "fiscal_obligations" },
+      { tipo: "coluna", tabela: "fiscal_documents", nome: "obligation_id" },
+    ],
+    foraDoAlcance: [
+      "migration preparada localmente e NAO aplicada; consultar ledger antes de aplicar",
+      "unicidade por pedido e competencia, FK composta que impede nota de outro pedido, e RLS",
+      "o inicio do servico nao e inferido do pagamento nem registrado por esta migration",
+    ],
+  },
 ];

@@ -39,9 +39,9 @@ test("contratação não afirma ausência de contrato ou nota em consulta trunca
   assert.equal(situacaoDoContrato(undefined, false), "nenhum documento registrado");
   assert.equal(situacaoDoContrato(undefined, true), "documento não confirmado nesta consulta parcial");
   assert.equal(situacaoDoContrato("signed", true), "assinatura registrada");
-  assert.equal(situacaoDaNota(undefined, false), "sem emissão registrada");
-  assert.equal(situacaoDaNota(undefined, true), "emissão não confirmada nesta consulta parcial");
-  assert.equal(situacaoDaNota("authorized", true), "autorização registrada");
+  assert.equal(situacaoDaNota(undefined, false), "sem nota registrada");
+  assert.equal(situacaoDaNota(undefined, true), "registro fiscal não confirmado nesta consulta parcial");
+  assert.equal(situacaoDaNota("authorized", true), "último registro: nota autorizada; competência e cobertura a conferir");
 });
 
 test("fila pessoal isola contas e operadores, recupera peça sem tarefa e evita duplicata", () => {

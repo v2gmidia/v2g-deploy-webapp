@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { escolherNegocio, type EscolhaDeNegocio } from "./escolha";
 import { negociosLiberados, type PedidoDoNegocio } from "./elegibilidade";
-import { lerTodasPaginas } from "./paginacao";
+import { lerTodasPaginas, lerTodasPaginasEmLotes } from "./paginacao";
 
 export const COOKIE_NEGOCIO_ATIVO = "v2g_negocio_ativo";
 
@@ -50,9 +50,9 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
   if (precisaPedidos && data.length) {
     try {
       const admin = createAdminClient();
-      const resultado = await lerTodasPaginas((inicio, fim) => admin.from("commercial_orders")
+      const resultado = await lerTodasPaginasEmLotes(data.map((negocio) => negocio.id), (lote, inicio, fim) => admin.from("commercial_orders")
         .select("business_id, status, buyer_email, buyer_profile_id")
-        .in("business_id", data.map((negocio) => negocio.id))
+        .in("business_id", lote)
         .order("id", { ascending: true })
         .range(inicio, fim));
       if (!resultado) return { status: "falha_consulta" };

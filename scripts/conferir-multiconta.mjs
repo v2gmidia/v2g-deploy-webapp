@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { escolherNegocio } from "../lib/multiconta/escolha.ts";
 import { negociosLiberados } from "../lib/multiconta/elegibilidade.ts";
 import { cnpjsDoComprador } from "../lib/multiconta/identificacao.ts";
-import { lerTodasPaginas } from "../lib/multiconta/paginacao.ts";
+import { lerTodasPaginas, lerTodasPaginasEmLotes } from "../lib/multiconta/paginacao.ts";
 import { pedidosAutorizadosParaVinculo, vincularComprasAprovadasComCliente } from "../lib/contratacao/vincular-core.ts";
 import { negocioAindaNaoIniciouOnboarding } from "../lib/onboarding/entrada.ts";
 
@@ -41,6 +41,26 @@ test("erro na segunda página invalida toda a leitura", async () => {
     ? { data: Array(1000).fill({ id: "negocio" }), error: null }
     : { data: null, error: new Error("falha de consulta") });
   assert.equal(resultado, null);
+});
+
+test("mais de cem negócios são consultados em lotes e todos os pedidos entram", async () => {
+  const ids = Array.from({ length: 205 }, (_, indice) => `empresa-${indice}`);
+  const chamadas = [];
+  const pedidos = await lerTodasPaginasEmLotes(ids, async (lote, inicio, fim) => {
+    chamadas.push({ ids: lote.length, inicio, fim });
+    return { data: lote.map((id) => ({ business_id: id })), error: null };
+  });
+  assert.deepEqual(chamadas.map((chamada) => chamada.ids), [100, 100, 5]);
+  assert.equal(pedidos.length, 205);
+  assert.equal(pedidos[204].business_id, "empresa-204");
+});
+
+test("falha em lote posterior descarta todos os pedidos", async () => {
+  const ids = Array.from({ length: 101 }, (_, indice) => `empresa-${indice}`);
+  const pedidos = await lerTodasPaginasEmLotes(ids, async (lote) => lote.length === 100
+    ? { data: [{ business_id: "empresa-0" }], error: null }
+    : { data: null, error: new Error("falha no segundo lote") });
+  assert.equal(pedidos, null);
 });
 
 test("uma empresa entra sem escolha; duas exigem escolha explícita", () => {
@@ -86,6 +106,17 @@ test("aprovação do pedido libera o novo negócio ao comprador verificado", () 
     ...base, emailVerificado: null, negocios: [novo],
     pedidos: [{ ...pendente, status: "payment_approved" }],
   }), []);
+});
+
+test("pedidos mistos não vazam liberação entre negócios", () => {
+  const outro = { ...novo, id: "c", name: "Outro negócio" };
+  const pedidos = [
+    { ...pendente, business_id: "b" },
+    { ...pendente, business_id: "c", status: "payment_approved", buyer_email: "outro@exemplo.com" },
+    { ...pendente, business_id: "b", status: "payment_approved" },
+  ];
+  assert.deepEqual(negociosLiberados({ ...base, negocios: [antigo, novo, outro], pedidos })
+    .map((negocio) => negocio.id), ["a", "b"]);
 });
 
 test("novo perfil sem pedido não ganha acesso pela propriedade da linha", () => {
@@ -160,6 +191,8 @@ function clienteDeTeste(respostas) {
         not(...argumentos) { chamada.filtros.push(["not", ...argumentos]); return this; },
         in(...argumentos) { chamada.filtros.push(["in", ...argumentos]); return this; },
         is(...argumentos) { chamada.filtros.push(["is", ...argumentos]); return this; },
+        order(...argumentos) { chamada.filtros.push(["order", ...argumentos]); return this; },
+        range(...argumentos) { chamada.filtros.push(["range", ...argumentos]); return this; },
         then(resolve, reject) {
           if (!respostas.length) return Promise.reject(new Error("Consulta inesperada")).then(resolve, reject);
           return Promise.resolve(respostas.shift()).then(resolve, reject);
@@ -189,7 +222,9 @@ test("reivindicação parcial só grava pedido do negócio que passou a pertence
     ["eq", "buyer_email", "cliente@exemplo.com"], ["eq", "status", "payment_approved"],
   ]);
   assert.deepEqual(cliente.chamadas[3].filtros, [
-    ["in", "id", ["pedido-meu"]], ["in", "business_id", ["meu"]], ["is", "buyer_profile_id", null],
+    ["in", "id", ["pedido-meu"]], ["eq", "business_id", "meu"],
+    ["eq", "buyer_email", "cliente@exemplo.com"], ["eq", "status", "payment_approved"],
+    ["is", "buyer_profile_id", null],
   ]);
 });
 
@@ -220,4 +255,61 @@ test("e-mail não verificado não reivindica negócio nem pedido", async () => {
   const cliente = clienteDeTeste([]);
   await vincularComprasAprovadasComCliente(cliente, { ...usuarioVerificado, email_confirmed_at: null });
   assert.equal(cliente.chamadas.length, 0);
+});
+
+test("vínculo lê todas as páginas e grava no máximo cem pedidos por lote", async () => {
+  const pedidos = Array.from({ length: 1001 }, (_, indice) => ({
+    id: `pedido-${indice}`, business_id: "meu", buyer_profile_id: null,
+  }));
+  const cliente = clienteDeTeste([
+    { data: pedidos.slice(0, 1000), error: null },
+    { data: pedidos.slice(1000), error: null },
+    { error: null },
+    { data: [{ id: "meu" }], error: null },
+    ...Array.from({ length: 11 }, () => ({ error: null })),
+  ]);
+  await vincularComprasAprovadasComCliente(cliente, usuarioVerificado);
+  assert.deepEqual(cliente.chamadas.slice(0, 2).map((chamada) => chamada.filtros.at(-1)), [
+    ["range", 0, 999], ["range", 1000, 1999],
+  ]);
+  const gravacoes = cliente.chamadas.filter((chamada) => chamada.tabela === "commercial_orders"
+    && chamada.operacao[0] === "update");
+  assert.equal(gravacoes.length, 11);
+  assert.deepEqual(gravacoes.map((chamada) => chamada.filtros[0][2].length),
+    [...Array(10).fill(100), 1]);
+  assert.ok(gravacoes.every((chamada) => chamada.filtros.some((filtro) =>
+    filtro[0] === "eq" && filtro[1] === "business_id" && filtro[2] === "meu")));
+});
+
+test("erro na página posterior impede toda reivindicação", async () => {
+  const cliente = clienteDeTeste([
+    { data: Array.from({ length: 1000 }, (_, indice) => ({
+      id: `pedido-${indice}`, business_id: "meu", buyer_profile_id: null,
+    })), error: null },
+    { data: null, error: new Error("indisponível") },
+  ]);
+  await vincularComprasAprovadasComCliente(cliente, usuarioVerificado);
+  assert.equal(cliente.chamadas.length, 2);
+  assert.ok(cliente.chamadas.every((chamada) => chamada.operacao[0] === "select"));
+});
+
+test("cento e um negócios dividem filtros de propriedade sem misturar pedidos", async () => {
+  const pedidos = Array.from({ length: 101 }, (_, indice) => ({
+    id: `pedido-${indice}`, business_id: `negocio-${indice}`, buyer_profile_id: null,
+  }));
+  const cliente = clienteDeTeste([
+    { data: pedidos, error: null },
+    { error: null }, { error: null },
+    { data: pedidos.slice(0, 100).map((pedido) => ({ id: pedido.business_id })), error: null },
+    { data: [{ id: "negocio-100" }], error: null },
+    ...Array.from({ length: 101 }, () => ({ error: null })),
+  ]);
+  await vincularComprasAprovadasComCliente(cliente, usuarioVerificado);
+  const consultasPropriedade = cliente.chamadas.filter((chamada) => chamada.tabela === "businesses"
+    && chamada.operacao[0] === "select");
+  assert.deepEqual(consultasPropriedade.map((chamada) => chamada.filtros[0][2].length), [100, 1]);
+  const gravacoes = cliente.chamadas.filter((chamada) => chamada.tabela === "commercial_orders"
+    && chamada.operacao[0] === "update");
+  assert.equal(gravacoes.length, 101);
+  assert.ok(gravacoes.every((chamada) => chamada.filtros[0][2].length === 1));
 });

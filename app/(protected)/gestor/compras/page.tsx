@@ -77,6 +77,7 @@ export default async function ComprasDoGestorPage({ searchParams }: {
     // Somente no checkout de Sandbox com schema novo. Eventos adversos nao
     // mudam acesso automaticamente: o operador precisa conciliar no Asaas.
     const tiposDeAtencao = ["PAYMENT_OVERDUE", "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+      "PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED",
       "PAYMENT_REFUND_IN_PROGRESS", "PAYMENT_PARTIALLY_REFUNDED", "PAYMENT_REFUNDED",
       "PAYMENT_CHARGEBACK_REQUESTED", "PAYMENT_CHARGEBACK_DISPUTE",
       "PAYMENT_AWAITING_CHARGEBACK_REVERSAL"];

@@ -20,17 +20,24 @@ export function negociosLiberados(entrada: {
   const { negocios, pedidos, perfilId, emailVerificado, legadoEm, operador } = entrada;
   const marcoLegado = legadoEm ? Date.parse(legadoEm) : NaN;
   const email = emailVerificado?.trim().toLowerCase() ?? null;
+  const pedidosPorNegocio = new Map<string, PedidoDoNegocio[]>();
+  for (const pedido of pedidos) {
+    if (!pedido.business_id) continue;
+    const grupo = pedidosPorNegocio.get(pedido.business_id) ?? [];
+    grupo.push(pedido);
+    pedidosPorNegocio.set(pedido.business_id, grupo);
+  }
   const tinhaNegocioNoMarco = Number.isFinite(marcoLegado) && negocios.some((negocio) =>
     Number.isFinite(Date.parse(negocio.created_at)) && Date.parse(negocio.created_at) <= marcoLegado);
   const primeiroSemPedido = negocios
     .filter((negocio) => Number.isFinite(Date.parse(negocio.created_at))
       && Date.parse(negocio.created_at) > marcoLegado
-      && !pedidos.some((pedido) => pedido.business_id === negocio.id))
+      && !pedidosPorNegocio.has(negocio.id))
     .sort((a, b) => Date.parse(a.created_at) - Date.parse(b.created_at))[0]?.id;
 
   return negocios.filter((negocio) => {
     if (operador) return true;
-    const pedidosDoNegocio = pedidos.filter((pedido) => pedido.business_id === negocio.id);
+    const pedidosDoNegocio = pedidosPorNegocio.get(negocio.id) ?? [];
     const aprovado = pedidosDoNegocio.some((pedido) => pedido.status === "payment_approved"
       && !!email && pedido.buyer_email?.trim().toLowerCase() === email
       && (pedido.buyer_profile_id === perfilId || pedido.buyer_profile_id === null));

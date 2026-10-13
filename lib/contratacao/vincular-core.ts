@@ -1,4 +1,5 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
+import { lerTodasPaginas, lerTodasPaginasEmLotes } from "../multiconta/paginacao.ts";
 
 type PedidoParaVinculo = {
   id: string;
@@ -23,33 +24,55 @@ export function pedidosAutorizadosParaVinculo(
 export async function vincularComprasAprovadasComCliente(admin: SupabaseClient, user: User): Promise<void> {
   if (!user.email || !user.email_confirmed_at) return;
   const email = user.email.trim().toLowerCase();
-  const { data: pedidos, error: erroPedidos } = await admin.from("commercial_orders")
+  const pedidos = await lerTodasPaginas<PedidoParaVinculo>((inicio, fim) => admin.from("commercial_orders")
     .select("id, business_id, buyer_profile_id")
     .eq("buyer_email", email)
     .eq("status", "payment_approved")
-    .not("business_id", "is", null);
-  if (erroPedidos || !pedidos?.length) return;
+    .not("business_id", "is", null)
+    .order("id", { ascending: true })
+    .range(inicio, fim));
+  if (!pedidos?.length) return;
   const elegiveis = pedidos.filter((pedido) =>
     pedido.business_id && (pedido.buyer_profile_id === null || pedido.buyer_profile_id === user.id));
   if (!elegiveis.length) return;
-  const businessIds = [...new Set(elegiveis.map((pedido) => pedido.business_id).filter(Boolean))];
-  const { error: erroNegocios } = await admin.from("businesses")
-    .update({ profile_id: user.id, claim_email: null })
-    .in("id", businessIds)
-    .eq("claim_email", email)
-    .is("profile_id", null);
-  if (erroNegocios) return;
-  const { data: negociosDoPerfil, error: erroPropriedade } = await admin.from("businesses")
+  const businessIds = [...new Set(elegiveis.map((pedido) => pedido.business_id)
+    .filter((id): id is string => !!id))];
+  for (let inicio = 0; inicio < businessIds.length; inicio += 100) {
+    const { error } = await admin.from("businesses")
+      .update({ profile_id: user.id, claim_email: null })
+      .in("id", businessIds.slice(inicio, inicio + 100))
+      .eq("claim_email", email)
+      .is("profile_id", null);
+    if (error) return;
+  }
+  const negociosDoPerfil = await lerTodasPaginasEmLotes<{ id: string }>(businessIds, (lote, inicio, fim) => admin.from("businesses")
     .select("id")
-    .in("id", businessIds)
-    .eq("profile_id", user.id);
-  if (erroPropriedade || !negociosDoPerfil?.length) return;
+    .in("id", lote)
+    .eq("profile_id", user.id)
+    .order("id", { ascending: true })
+    .range(inicio, fim));
+  if (!negociosDoPerfil?.length) return;
   const idsNegociosDoPerfil = negociosDoPerfil.map((negocio) => negocio.id);
   const idsPedidos = pedidosAutorizadosParaVinculo(elegiveis, idsNegociosDoPerfil, user.id);
   if (!idsPedidos.length) return;
-  await admin.from("commercial_orders")
-    .update({ buyer_profile_id: user.id })
-    .in("id", idsPedidos)
-    .in("business_id", idsNegociosDoPerfil)
-    .is("buyer_profile_id", null);
+  const pedidosPorNegocio = new Map<string, string[]>();
+  const idsAutorizados = new Set(idsPedidos);
+  for (const pedido of elegiveis) {
+    if (!pedido.business_id || !idsAutorizados.has(pedido.id)) continue;
+    const ids = pedidosPorNegocio.get(pedido.business_id) ?? [];
+    ids.push(pedido.id);
+    pedidosPorNegocio.set(pedido.business_id, ids);
+  }
+  for (const [businessId, ids] of pedidosPorNegocio) {
+    for (let inicio = 0; inicio < ids.length; inicio += 100) {
+      const { error } = await admin.from("commercial_orders")
+        .update({ buyer_profile_id: user.id })
+        .in("id", ids.slice(inicio, inicio + 100))
+        .eq("business_id", businessId)
+        .eq("buyer_email", email)
+        .eq("status", "payment_approved")
+        .is("buyer_profile_id", null);
+      if (error) return;
+    }
+  }
 }

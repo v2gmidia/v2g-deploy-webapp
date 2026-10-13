@@ -43,9 +43,9 @@ export function situacaoDoContrato(status: string | undefined, consultaParcial: 
 }
 
 export function situacaoDaNota(status: string | undefined, consultaParcial: boolean): string {
-  if (status === "authorized") return "autorização registrada";
-  if (status) return `estado ${status}`;
-  return consultaParcial ? "emissão não confirmada nesta consulta parcial" : "sem emissão registrada";
+  if (status === "authorized") return "último registro: nota autorizada; competência e cobertura a conferir";
+  if (status) return `último registro: ${status}; competência a conferir`;
+  return consultaParcial ? "registro fiscal não confirmado nesta consulta parcial" : "sem nota registrada";
 }
 
 export type FiltroDeCompras = "todas" | "atencao" | "pagamento" | "aprovadas" | "canceladas";
