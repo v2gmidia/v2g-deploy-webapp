@@ -3,6 +3,10 @@
 .progresso span { display: block; height: 100%; background: #0B40DA; }
 .topo { display: flex; justify-content: space-between; gap: 16px; margin: 16px 0 64px; color: #49606A; font-size: 14px; }
 .pergunta { min-height: 430px; }
+.convite { min-height: 0; padding: clamp(28px, 5vw, 48px); border: 1px solid #CCD9D6; border-radius: 8px; background: #E3F6FE; }
+.convite .ajuda { margin-bottom: 24px; }
+.acoesConvite { display: flex; align-items: center; flex-wrap: wrap; gap: 16px 28px; }
+.acoesConvite .primario, .acoesConvite .link { margin: 0; }
 .pergunta h1 { max-width: 16ch; margin: 0; color: #102A35; font-family: var(--font-archivo), Archivo, sans-serif; font-size: clamp(30px, 4vw, 40px); font-weight: 500; letter-spacing: -.04em; line-height: 1.1; text-wrap: balance; }
 .ajuda { max-width: 64ch; margin: 20px 0 30px; color: #49606A; font-size: 16px; line-height: 1.65; }
 .campo { display: block; max-width: 660px; margin: 26px 0 16px; color: #102A35; font-size: 14px; font-weight: 600; }
@@ -32,5 +36,5 @@
 .revisao strong { display: block; margin-top: 4px; overflow-wrap: anywhere; color: #49606A; font-weight: 400; }
 .revisao li button { align-self: flex-start; border: 0; background: transparent; color: #0B40DA; text-decoration: underline; cursor: pointer; }
 .rodape { margin: 20px 0 70px; color: #49606A; font-size: 14px; }
-@media (max-width: 620px) { .topo { margin-bottom: 44px; } .pergunta { min-height: 360px; } .opcoes, .local { grid-template-columns: 1fr; } .voz { align-items: flex-start; flex-direction: column; } }
+@media (max-width: 620px) { .topo { margin-bottom: 28px; } .pergunta { min-height: 360px; } .convite { min-height: 0; padding: 24px; } .acoesConvite { align-items: flex-start; flex-direction: column; gap: 14px; } .opcoes, .local { grid-template-columns: 1fr; } .voz { align-items: flex-start; flex-direction: column; } }
 @media (prefers-reduced-motion: reduce) { .progresso span { transition: none; } }

@@ -125,10 +125,14 @@ export function opcaoDePostura(id: string): OpcaoDePostura | undefined {
   return POSTURA.find((o) => o.id === id);
 }
 
-/** Um número escrito à mão ("uns 250", "1.200,50"). */
+/** Um único valor em reais. Faixas digitadas não viram um número inventado. */
 export function numeroDoTexto(texto: string): number | null {
-  const limpo = texto.replace(/[^\d.,]/g, "").replace(/\./g, "").replace(",", ".");
-  if (!limpo) return null;
-  const n = Number(limpo);
+  const limpo = texto.trim()
+    .replace(/^uns?\s+/i, "")
+    .replace(/^r\$\s*/i, "")
+    .replace(/\s+reais?$/i, "")
+    .trim();
+  if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(limpo)) return null;
+  const n = Number(limpo.replace(/\./g, "").replace(",", "."));
   return Number.isFinite(n) && n >= 0 ? emReais(n) : null;
 }

@@ -2,7 +2,15 @@
 
 ## Estado desta entrega
 
-Este é um roteiro de implementação, **não um fluxo ativo**. O rascunho n8n contém somente uma nota, sem gatilho, credenciais, envio ou emissão. A minuta final, o provedor de assinatura e os parâmetros fiscais efetivos continuam pendentes em [`etapa-02-perguntas-para-fechar-13-10.md`](./etapa-02-perguntas-para-fechar-13-10.md).
+Este é um roteiro de implementação, **não um fluxo ativo**. Na criação, o rascunho n8n continha somente uma nota. A bancada manual acrescentada em 13/10 está descrita abaixo. A minuta final, o provedor de assinatura e os parâmetros fiscais efetivos continuam pendentes em [`etapa-02-perguntas-para-fechar-13-10.md`](./etapa-02-perguntas-para-fechar-13-10.md).
+
+**Piloto decidido depois desta bancada:** assinatura eletrônica iniciada manualmente no Google Workspace, com convites e lembretes enviados pelo Google após o operador solicitar a assinatura. Autentique ficou como candidata técnica para automatizar futuramente; não há conta, API, webhook nem envio configurado. Ver [`etapa-02-piloto-assinatura-google-13-10.md`](./etapa-02-piloto-assinatura-google-13-10.md). A bancada n8n continua bloqueada e não deve ser lida como automação do Google.
+
+### Bancada manual no n8n — 13/10, 18h17 (Brasília)
+
+No [rascunho da etapa 02](https://ia-n8n.5hue9s.easypanel.host/workflow/1gPKolQ4baLIm2Z1) foram salvos três nós ligados: gatilho **manual**, `Edit Fields` com pedido e identificador inteiramente fictícios e `Code in JavaScript` que devolve apenas estados `BLOCKED` para contrato e fiscal. Não há webhook, credencial, chamada HTTP, envio de e-mail, provedor de assinatura nem emissor de NFS-e. O fluxo continua não publicado.
+
+Execução manual observada na interface: `Success in 8.749s`, um item; `contract_action=BLOCKED`, `fiscal_action=BLOCKED`, motivos `minuta_sem_aprovacao_juridica`, `provedor_assinatura_pendente`, `parametros_fiscais_pendentes` e `automacao_desligada`. Recarreguei a página e os três nós persistiram. Esta execução comprova só o comportamento da bancada com dados fictícios; não comprova integração, assinatura ou emissão.
 
 ## Contrato: transições que o fluxo deverá executar
 

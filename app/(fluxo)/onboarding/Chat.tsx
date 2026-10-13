@@ -100,11 +100,13 @@ export function Chat({ businessId, inicial, nichos }: {
       <span style={{ width: `${(mostrarConvite ? 0 : (atual ? indice : QUESTOES.length) / QUESTOES.length) * 100}%` }} />
     </div>
     <div className={styles.topo}><span>{mostrarConvite ? "Seu primeiro passo" : atual ? `Pergunta ${indice + 1} de ${QUESTOES.length}` : "Respostas registradas"}</span><span>Sobre seu negócio</span></div>
-    {mostrarConvite ? <section className={styles.pergunta}>
+    {mostrarConvite ? <section className={`${styles.pergunta} ${styles.convite}`}>
       <h1>Quer começar a preparar seu negócio agora?</h1>
-      <p className={styles.ajuda}>Conte um pouco sobre sua empresa para a conversa com o gestor. Você pode sair e continuar depois; cada resposta será salva para este negócio.</p>
-      <button className={styles.primario} type="button" onClick={() => setConviteAceito(true)}>Começar onboarding</button>
-      <a className={styles.link} href="/inicio">Fazer depois</a>
+      <p className={styles.ajuda}>Conte com cuidado o que seu negócio vende e para quem. Essas respostas ajudam o gestor a preparar a conversa e a primeira campanha. Você pode sair e continuar depois; cada resposta fica salva para este negócio.</p>
+      <div className={styles.acoesConvite}>
+        <button className={styles.primario} type="button" onClick={() => setConviteAceito(true)}>Começar onboarding</button>
+        <a className={styles.link} href="/inicio">Fazer depois</a>
+      </div>
     </section> : atual ? <section className={styles.pergunta} key={atual.id}>
       <h1>{partes(atual)[0]}</h1>
       {partes(atual)[1] && <p className={styles.ajuda}>{partes(atual)[1]}</p>}

@@ -435,7 +435,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
             <section className="pendencia-bloco">
               <b>{estado.resumo.titulo}</b>
               <p>{estado.resumo.corpo}</p>
-              {estado.resumo.acao && (
+              {estado.resumo.acao && estado.resumo.acao.href !== "/verba" && (
                 <a className="cta" href={estado.resumo.acao.href}>
                   {estado.resumo.acao.rotulo}
                 </a>

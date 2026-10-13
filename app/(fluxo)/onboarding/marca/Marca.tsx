@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { salvarMarcaAction, type EstadoMarca } from "./actions";
 import styles from "./Marca.module.css";
 
 export function Marca({ inicial }: { inicial: EstadoMarca }) {
+  const router = useRouter();
   const [estado, setEstado] = useState(inicial);
   const [site, setSite] = useState(inicial.site);
   // A coluna atual prevalece sobre um marcador antigo da etapa da marca.
@@ -31,7 +33,11 @@ export function Marca({ inicial }: { inicial: EstadoMarca }) {
       const r = await salvarMarcaAction({ businessId: estado.businessId, site, siteNaoTenho: semSite, instagram, aparencia, aparenciaNaoSei: naoSei });
       if (!r.ok && r.recarregar) setAviso("Não conseguimos confirmar a gravação. Algumas respostas podem ter sido salvas. Recarregue para conferir antes de enviar de novo.");
       else if (!r.ok) setErro(r.erro ?? "Não conseguimos salvar esta etapa.");
-      else if (r.estado) { setEstado(r.estado); setSalvo(true); }
+      else if (r.estado) {
+        setEstado(r.estado);
+        if (!estado.concluido && r.estado.concluido) router.push("/onboarding/concluido");
+        else setSalvo(true);
+      }
       else setAviso("Respostas enviadas, mas não conseguimos atualizar a tela. Recarregue para conferir o próximo passo.");
     } catch {
       setAviso("Não conseguimos confirmar se as respostas foram salvas. Recarregue para conferir antes de enviar de novo.");

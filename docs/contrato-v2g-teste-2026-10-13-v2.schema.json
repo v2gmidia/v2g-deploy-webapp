@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://v2gmidia.com.br/schemas/contrato-v2g-teste-2026-10-13-v2.schema.json",
+  "title": "Contrato V2G - pacote de teste interno v2",
+  "description": "Valida dados de teste da minuta teste-interno-2026-10-13-v2. Não autoriza assinatura, cobrança, NFS-e ou publicação.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "ambiente",
+    "prestador",
+    "contratante",
+    "pedido",
+    "contrato",
+    "suporte",
+    "unidades",
+    "signatarios",
+    "aprovadores",
+    "fiscal"
+  ],
+  "properties": {
+    "ambiente": {
+      "const": "test_only",
+      "x-origem": "configuracao_do_gerador",
+      "x-validacao": "Qualquer outro ambiente deve ser rejeitado por este schema."
+    },
+    "prestador": { "$ref": "#/$defs/partePrestadora" },
+    "contratante": { "$ref": "#/$defs/parteContratante" },
+    "pedido": { "$ref": "#/$defs/pedido" },
+    "contrato": { "$ref": "#/$defs/contrato" },
+    "suporte": { "$ref": "#/$defs/suporte" },
+    "unidades": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "items": { "$ref": "#/$defs/unidade" },
+      "x-origem": "commercial_order_units",
+      "x-validacao": "O tamanho deve ser igual a pedido.quantidade_de_contas; IDs e ordinais não podem repetir."
+    },
+    "signatarios": {
+      "type": "array",
+      "minItems": 2,
+      "items": { "$ref": "#/$defs/signatario" },
+      "x-validacao": "Deve existir ao menos um signatário da V2G e um da contratante; representação conjunta pode exigir mais."
+    },
+    "aprovadores": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/aprovador" }
+    },
+    "fiscal": { "$ref": "#/$defs/fiscal" }
+  },
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "email": {
+      "type": "string",
+      "format": "email",
+      "maxLength": 254
+    },
+    "cnpjTexto": {
+      "type": "string",
+      "pattern": "^[0-9]{2}\\.[0-9]{3}\\.[0-9]{3}/[0-9]{4}-[0-9]{2}$",
+      "x-validacao": "Em produção, validar dígitos e situação conforme processo aprovado. O exemplo usa identificador fictício de teste."
+    },
+    "endereco": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["logradouro", "numero", "bairro", "cidade", "uf", "cep"],
+      "properties": {
+        "logradouro": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "numero": { "type": "string", "minLength": 1, "maxLength": 30 },
+        "complemento": { "type": ["string", "null"], "maxLength": 120 },
+        "bairro": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "cidade": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "uf": { "type": "string", "pattern": "^[A-Z]{2}$" },
+        "cep": { "type": "string", "pattern": "^[0-9]{5}-[0-9]{3}$" }
+      }
+    },
+    "representante": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nome", "qualificacao", "email", "poderes_conferidos", "evidencia_poderes"],
+      "properties": {
+        "nome": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "qualificacao": { "type": "string", "minLength": 3, "maxLength": 100 },
+        "email": { "$ref": "#/$defs/email" },
+        "poderes_conferidos": { "type": "boolean" },
+        "evidencia_poderes": { "type": "string", "minLength": 3, "maxLength": 300 }
+      }
+    },
+    "partePrestadora": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["razao_social", "cnpj", "endereco", "email_contratual", "signatario"],
+      "properties": {
+        "razao_social": { "type": "string", "minLength": 3, "maxLength": 200, "x-origem": "documento_societario_vigente" },
+        "cnpj": { "$ref": "#/$defs/cnpjTexto" },
+        "endereco": { "$ref": "#/$defs/endereco" },
+        "email_contratual": { "$ref": "#/$defs/email" },
+        "signatario": { "$ref": "#/$defs/representante" }
+      }
+    },
+    "parteContratante": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["razao_social", "cnpj", "endereco", "email_contratual", "email_confirmado_em"],
+      "properties": {
+        "razao_social": { "type": "string", "minLength": 3, "maxLength": 200, "x-origem": "dados_validados_do_pedido" },
+        "nome_fantasia": { "type": ["string", "null"], "maxLength": 200 },
+        "cnpj": { "$ref": "#/$defs/cnpjTexto" },
+        "endereco": { "$ref": "#/$defs/endereco" },
+        "email_contratual": { "$ref": "#/$defs/email" },
+        "email_confirmado_em": { "$ref": "#/$defs/dateTime" }
+      }
+    },
+    "pedido": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "plano",
+        "forma_pagamento",
+        "quantidade_de_contas",
+        "valor_unitario_centavos",
+        "desconto_percentual",
+        "duracao_meses",
+        "valor_total_centavos",
+        "valor_unitario_formatado",
+        "valor_total_formatado",
+        "status_pagamento",
+        "pagamento_aprovado_em"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid", "x-origem": "commercial_orders.id" },
+        "plano": {
+          "type": "string",
+          "enum": ["monthly_minimum_6m", "semiannual_upfront", "annual_upfront"],
+          "x-origem": "commercial_orders.billing_period"
+        },
+        "forma_pagamento": {
+          "type": "string",
+          "enum": ["asaas_pix", "asaas_card", "direct_pix"],
+          "x-origem": "commercial_orders.payment_method"
+        },
+        "quantidade_de_contas": { "type": "integer", "minimum": 1, "maximum": 100 },
+        "valor_unitario_centavos": { "type": "integer", "enum": [50000, 285000, 528000] },
+        "desconto_percentual": { "type": "integer", "enum": [0, 5, 12] },
+        "duracao_meses": { "type": "integer", "enum": [6, 12] },
+        "valor_total_centavos": { "type": "integer", "minimum": 1 },
+        "valor_unitario_formatado": { "type": "string", "pattern": "^R\\$ [0-9.]+,[0-9]{2}$" },
+        "valor_total_formatado": { "type": "string", "pattern": "^R\\$ [0-9.]+,[0-9]{2}$" },
+        "status_pagamento": { "const": "payment_approved" },
+        "pagamento_aprovado_em": { "$ref": "#/$defs/dateTime" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "plano": { "const": "monthly_minimum_6m" } }, "required": ["plano"] },
+          "then": { "properties": { "valor_unitario_centavos": { "const": 50000 }, "desconto_percentual": { "const": 0 }, "duracao_meses": { "const": 6 } } }
+        },
+        {
+          "if": { "properties": { "plano": { "const": "semiannual_upfront" } }, "required": ["plano"] },
+          "then": { "properties": { "valor_unitario_centavos": { "const": 285000 }, "desconto_percentual": { "const": 5 }, "duracao_meses": { "const": 6 } } }
+        },
+        {
+          "if": { "properties": { "plano": { "const": "annual_upfront" } }, "required": ["plano"] },
+          "then": { "properties": { "valor_unitario_centavos": { "const": 528000 }, "desconto_percentual": { "const": 12 }, "duracao_meses": { "const": 12 } } }
+        }
+      ]
+    },
+    "contrato": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "template_id",
+        "versao_documento",
+        "ambiente",
+        "status_juridico",
+        "status_documento",
+        "gerado_em",
+        "hash_conteudo",
+        "provedor_assinatura",
+        "automacao_assinatura_habilitada",
+        "publicacao_liberada"
+      ],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "template_id": { "const": "teste-interno-2026-10-13-v2" },
+        "versao_documento": { "type": "integer", "minimum": 1 },
+        "ambiente": { "const": "test_only" },
+        "status_juridico": { "const": "not_approved" },
+        "status_documento": { "const": "ready_for_review" },
+        "gerado_em": { "$ref": "#/$defs/dateTime" },
+        "hash_conteudo": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "provedor_assinatura": { "type": "null" },
+        "automacao_assinatura_habilitada": { "const": false },
+        "publicacao_liberada": { "const": false },
+        "data_ultima_assinatura": { "type": "null" },
+        "data_fim_periodo_minimo": { "type": "null" },
+        "data_fim_plano": { "type": "null" },
+        "documento_substituido_id": { "type": ["string", "null"], "format": "uuid" }
+      }
+    },
+    "suporte": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["canal", "dias", "inicio", "fim", "timezone", "primeira_resposta_dias_uteis", "emergencial_fora_janela"],
+      "properties": {
+        "canal": { "const": "whatsapp_v2g_informado_na_jornada" },
+        "dias": { "const": "segunda_a_sexta" },
+        "inicio": { "const": "10:00" },
+        "fim": { "const": "18:00" },
+        "timezone": { "const": "America/Sao_Paulo" },
+        "primeira_resposta_dias_uteis": { "const": 1 },
+        "emergencial_fora_janela": { "const": false }
+      }
+    },
+    "unidade": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ordinal", "plataforma", "conta_id_externo", "titularidade", "estado_identificacao", "teto_midia_centavos", "teto_midia_formatado"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "ordinal": { "type": "integer", "minimum": 1 },
+        "plataforma": { "type": "string", "enum": ["meta_ads", "google_ads", "outra_identificada_no_pedido"] },
+        "conta_id_externo": { "type": ["string", "null"], "maxLength": 200 },
+        "titularidade": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "estado_identificacao": { "type": "string", "enum": ["pendente", "identificada", "vinculada"] },
+        "teto_midia_centavos": { "type": "integer", "minimum": 0 },
+        "teto_midia_formatado": { "type": "string", "pattern": "^R\\$ [0-9.]+,[0-9]{2}$" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "estado_identificacao": { "enum": ["identificada", "vinculada"] } }, "required": ["estado_identificacao"] },
+          "then": { "properties": { "conta_id_externo": { "type": "string", "minLength": 3 } } }
+        }
+      ]
+    },
+    "signatario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["parte", "nome", "email", "papel", "regra_assinatura", "poderes_conferidos", "evidencia_poderes", "status"],
+      "properties": {
+        "parte": { "type": "string", "enum": ["v2g", "contratante"] },
+        "nome": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "email": { "$ref": "#/$defs/email" },
+        "papel": { "type": "string", "minLength": 3, "maxLength": 100 },
+        "regra_assinatura": { "type": "string", "enum": ["individual", "conjunta"] },
+        "poderes_conferidos": { "type": "boolean" },
+        "evidencia_poderes": { "type": "string", "minLength": 3, "maxLength": 300 },
+        "status": { "const": "pending" }
+      }
+    },
+    "aprovador": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nome", "email", "papel", "atos_autorizados", "poderes_conferidos"],
+      "properties": {
+        "nome": { "type": "string", "minLength": 3, "maxLength": 200 },
+        "email": { "$ref": "#/$defs/email" },
+        "papel": { "type": "string", "minLength": 3, "maxLength": 100 },
+        "atos_autorizados": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["oferta", "texto", "peca", "primeira_publicacao", "novo_anuncio", "aumento_teto"] }
+        },
+        "poderes_conferidos": { "type": "boolean" }
+      }
+    },
+    "fiscal": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status_parametros", "automacao_habilitada", "verba_midia_incluida", "frequencia_informada", "valor_mensal_confirmado", "competencia_confirmada"],
+      "properties": {
+        "status_parametros": { "const": "pending_accounting_confirmation" },
+        "automacao_habilitada": { "const": false },
+        "verba_midia_incluida": { "const": false },
+        "frequencia_informada": { "const": "uma_nfse_por_mes_de_servico" },
+        "valor_mensal_confirmado": { "const": false },
+        "competencia_confirmada": { "const": false },
+        "observacao": { "type": "string", "minLength": 3, "maxLength": 500 }
+      }
+    }
+  }
+}

@@ -1,0 +1,149 @@
+{
+  "ambiente": "test_only",
+  "prestador": {
+    "razao_social": "PRESTADORA EXEMPLO DE PUBLICIDADE LTDA",
+    "cnpj": "00.000.000/0000-00",
+    "endereco": {
+      "logradouro": "Rua Exemplo",
+      "numero": "100",
+      "complemento": "Sala Teste",
+      "bairro": "Centro Fictício",
+      "cidade": "Cidade Exemplo",
+      "uf": "PR",
+      "cep": "00000-000"
+    },
+    "email_contratual": "contratos@prestadora.example.invalid",
+    "signatario": {
+      "nome": "Victor Exemplo",
+      "qualificacao": "Administrador",
+      "email": "victor@prestadora.example.invalid",
+      "poderes_conferidos": true,
+      "evidencia_poderes": "Ato societário fictício conferido apenas para teste"
+    }
+  },
+  "contratante": {
+    "razao_social": "PADARIA HORIZONTE FICTÍCIA LTDA",
+    "nome_fantasia": "Padaria Horizonte Teste",
+    "cnpj": "11.111.111/1111-11",
+    "endereco": {
+      "logradouro": "Avenida Demonstração",
+      "numero": "200",
+      "complemento": null,
+      "bairro": "Bairro Modelo",
+      "cidade": "Município Fictício",
+      "uf": "SP",
+      "cep": "11111-111"
+    },
+    "email_contratual": "socia@cliente.example.invalid",
+    "email_confirmado_em": "2026-10-13T13:00:00-03:00"
+  },
+  "pedido": {
+    "id": "10000000-0000-4000-8000-000000000001",
+    "plano": "semiannual_upfront",
+    "forma_pagamento": "asaas_pix",
+    "quantidade_de_contas": 2,
+    "valor_unitario_centavos": 285000,
+    "desconto_percentual": 5,
+    "duracao_meses": 6,
+    "valor_total_centavos": 570000,
+    "valor_unitario_formatado": "R$ 2.850,00",
+    "valor_total_formatado": "R$ 5.700,00",
+    "status_pagamento": "payment_approved",
+    "pagamento_aprovado_em": "2026-10-13T12:45:00-03:00"
+  },
+  "contrato": {
+    "id": "20000000-0000-4000-8000-000000000001",
+    "template_id": "teste-interno-2026-10-13-v2",
+    "versao_documento": 1,
+    "ambiente": "test_only",
+    "status_juridico": "not_approved",
+    "status_documento": "ready_for_review",
+    "gerado_em": "2026-10-13T14:00:00-03:00",
+    "hash_conteudo": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "provedor_assinatura": null,
+    "automacao_assinatura_habilitada": false,
+    "publicacao_liberada": false,
+    "data_ultima_assinatura": null,
+    "data_fim_periodo_minimo": null,
+    "data_fim_plano": null,
+    "documento_substituido_id": null
+  },
+  "suporte": {
+    "canal": "whatsapp_v2g_informado_na_jornada",
+    "dias": "segunda_a_sexta",
+    "inicio": "10:00",
+    "fim": "18:00",
+    "timezone": "America/Sao_Paulo",
+    "primeira_resposta_dias_uteis": 1,
+    "emergencial_fora_janela": false
+  },
+  "unidades": [
+    {
+      "id": "30000000-0000-4000-8000-000000000001",
+      "ordinal": 1,
+      "plataforma": "meta_ads",
+      "conta_id_externo": "TEST-ACCOUNT-001",
+      "titularidade": "PADARIA HORIZONTE FICTÍCIA LTDA",
+      "estado_identificacao": "identificada",
+      "teto_midia_centavos": 150000,
+      "teto_midia_formatado": "R$ 1.500,00"
+    },
+    {
+      "id": "30000000-0000-4000-8000-000000000002",
+      "ordinal": 2,
+      "plataforma": "meta_ads",
+      "conta_id_externo": null,
+      "titularidade": "PADARIA HORIZONTE FICTÍCIA LTDA",
+      "estado_identificacao": "pendente",
+      "teto_midia_centavos": 100000,
+      "teto_midia_formatado": "R$ 1.000,00"
+    }
+  ],
+  "signatarios": [
+    {
+      "parte": "v2g",
+      "nome": "Victor Exemplo",
+      "email": "victor@prestadora.example.invalid",
+      "papel": "Administrador",
+      "regra_assinatura": "individual",
+      "poderes_conferidos": true,
+      "evidencia_poderes": "Ato societário fictício conferido apenas para teste",
+      "status": "pending"
+    },
+    {
+      "parte": "contratante",
+      "nome": "Marina Exemplo",
+      "email": "socia@cliente.example.invalid",
+      "papel": "Sócia administradora",
+      "regra_assinatura": "individual",
+      "poderes_conferidos": true,
+      "evidencia_poderes": "Contrato social fictício conferido apenas para teste",
+      "status": "pending"
+    }
+  ],
+  "aprovadores": [
+    {
+      "nome": "Marina Exemplo",
+      "email": "socia@cliente.example.invalid",
+      "papel": "Sócia administradora",
+      "atos_autorizados": [
+        "oferta",
+        "texto",
+        "peca",
+        "primeira_publicacao",
+        "novo_anuncio",
+        "aumento_teto"
+      ],
+      "poderes_conferidos": true
+    }
+  ],
+  "fiscal": {
+    "status_parametros": "pending_accounting_confirmation",
+    "automacao_habilitada": false,
+    "verba_midia_incluida": false,
+    "frequencia_informada": "uma_nfse_por_mes_de_servico",
+    "valor_mensal_confirmado": false,
+    "competencia_confirmada": false,
+    "observacao": "Exemplo fictício: nenhuma NFS-e pode ser emitida a partir destes dados."
+  }
+}

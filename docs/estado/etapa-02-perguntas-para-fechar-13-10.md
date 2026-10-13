@@ -18,7 +18,9 @@ Este roteiro reúne somente decisões e provas ainda ausentes. A implementação
 
 ## Provedor de assinatura — escolha e prova
 
-1. Escolher e contratar provedor com API e ambiente de teste. Clicksign é uma proposta documentada, não um fornecedor escolhido ou integrado. Confirmar preço e volume esperado antes de contratar.
+**Atualização em 13/10:** Victor escolheu um piloto manual com a assinatura eletrônica do Google Workspace, sem contratar outro serviço agora. Após a solicitação manual, o Google envia convite, lembretes e cópia final. Autentique é a candidata técnica para envio automático futuro; ainda não foi contratada, integrada nem testada. Procedimento e limites em `etapa-02-piloto-assinatura-google-13-10.md`.
+
+1. Para o piloto, aprovar a versão jurídica final, confirmar os poderes de todos os signatários e testar a solicitação e o arquivamento no Google com documento fictício. A assinatura real continua bloqueada até essas condições.
 2. No sandbox do provedor escolhido, obter documentação e acesso com o menor escopo possível para: criar documento/envelope, incluir signatários, enviar, consultar, receber eventos autenticados, cancelar e baixar versão final mais trilha de auditoria.
 3. Provar com dados fictícios: envio único por `(pedido, versão)`, repetição sem envelope duplicado, assinatura de todos os exigidos, recusa/expiração, entrega da cópia concluída ao cliente e arquivamento. Um evento de envio não é assinatura.
 
@@ -31,4 +33,4 @@ Este roteiro reúne somente decisões e provas ainda ausentes. A implementação
 ## Alterações que requerem autorização específica depois da revisão
 
 - `supabase/migrations/20261013060000_competencia_documento_fiscal.sql`: acrescenta obrigação por `(pedido, competência, tipo)` e vínculo opcional de notas, sem preencher históricos. Revisar diff e alvo (QA ou produção) antes de autorizar e aplicar; o banco é compartilhado com o backend.
-- Publicar código local e ativar n8n só após contrato final, provedor e fiscal definidos, testes em ambiente apropriado e decisão de abertura. O rascunho n8n atual tem apenas uma nota; nenhum nó executável ou gatilho.
+- Publicar código local e ativar n8n só após contrato final, provedor e fiscal definidos, testes em ambiente apropriado e decisão de abertura. O rascunho n8n agora tem gatilho **manual** e dois nós de bancada com dados fictícios; não há gatilho automático, credenciais, envio, emissão ou publicação. Resultado do teste em `etapa-02-orquestracao-segura-13-10.md`.

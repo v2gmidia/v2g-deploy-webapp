@@ -322,9 +322,8 @@ export async function salvarContaAction(entrada: {
       };
     } else {
       const exato = numeroDoTexto(entrada.escolha);
-      if (exato === null || exato <= 0) {
-        return { ok: false, erro: "Escreva um valor maior que zero." };
-      }
+      if (exato === null) return { ok: false, erro: "Escreva um único valor em reais ou escolha uma das faixas abaixo." };
+      if (exato <= 0) return { ok: false, erro: "Escreva um valor maior que zero." };
       // Valor exato é valor exato: min = max. A largura da faixa é sinal
       // de incerteza, e aqui não há incerteza a registrar.
       campos.push({ campo: "avg_ticket_min", valor: exato });

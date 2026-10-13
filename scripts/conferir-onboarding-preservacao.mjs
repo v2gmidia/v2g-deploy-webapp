@@ -398,6 +398,20 @@ test('ticket aceita não sei, sem inventar valor, e bloqueia repetição ou conf
   assert.equal(result.estado.leituras.ticket.estado, 'nao_sei');
   assert.equal((await saveConta({conta:'ticket',escolha:'100'})).ok, false);
 });
+test('ticket não transforma faixa digitada em um valor enorme', async () => {
+  row.avg_ticket_min = null; row.avg_ticket_max = null;
+  delete row.onboarding.contas.ticket;
+  for (const escolha of ['500-600', '500 a 600', 'R$ 500 / R$ 600']) {
+    const result = await saveConta({conta:'ticket',escolha});
+    assert.equal(result.ok,false);
+    assert.match(result.erro,/único valor/);
+    assert.deepEqual(events,[]);
+  }
+  const result = await saveConta({conta:'ticket',escolha:'R$ 500,50'});
+  assert.equal(result.ok,true);
+  assert.equal(row.avg_ticket_min,500.5);
+  assert.equal(row.avg_ticket_max,500.5);
+});
 test('ticket parcialmente gravado não vira média falsa e retoma as duas colunas', async () => {
   row.avg_ticket_min = null;
   row.avg_ticket_max = 100;

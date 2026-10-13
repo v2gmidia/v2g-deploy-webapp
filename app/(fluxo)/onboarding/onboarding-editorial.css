@@ -23,6 +23,9 @@
 .onb-v2-etapa :is(.eyebrow, .conta-hint, .chip-valor) { color: #49606A; }
 .onb-v2-etapa .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; }
 .onb-v2-etapa .conta-feita, .onb-v2-etapa .pendencia-bloco { border-color: #CCD9D6; border-radius: 6px; background: #FFFFFF; color: #102A35; }
+.onb-v2-etapa .conta-feita b { color: #102A35; }
+.onb-v2-etapa .conta-feita .eyebrow { color: #49606A; }
+.onb-v2-etapa .conta-origem { color: #237644; }
 .onb-v2-etapa .pendencia-bloco b { color: #102A35; }
 .onb-v2-etapa .pendencia-bloco p { color: #49606A; }
 .onb-v2-etapa .chips-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
