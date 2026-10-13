@@ -1,0 +1,77 @@
+RESPOSTAS AO QUESTIONÁRIO DO CONTRATO V2G — 13/10/2026
+
+Este retorno separa decisões comerciais confirmadas de pontos ainda pendentes. Não constitui aprovação jurídica da minuta nem autorização para envio à assinatura, cobrança ou emissão de NFS-e. A oferta vigente é R$ 500/mês por conta de anúncios; semestral à vista de R$ 2.850 por conta (5% de desconto); anual à vista de R$ 5.280 por conta (12% de desconto). A minuta interna anterior precisa refletir o semestral vigente.
+
+DECISÕES COMERCIAIS E OPERACIONAIS
+
+1. Escopo incluído por conta — C. Gestão da conta contratada, com diagnóstico e organização das informações do negócio, orientação de oferta, textos e criação ou apoio à criação de peças estáticas quando aplicável; configuração, primeira publicação pelo gestor após as conferências necessárias, acompanhamento e otimizações. Não estão incluídos a verba de mídia, atendimento comercial do cliente, produção/edição de vídeos, site, landing page, CRM ou plataformas não identificadas no pedido. A redação final do escopo e seus limites deve ser validada no contrato.
+
+2. Plataformas — C. Indicar expressamente no pedido a plataforma de cada conta contratada. A operação inicial está voltada a Meta Ads; Google Ads não integra automaticamente a oferta.
+
+3. Peças e campanhas — A, aprovada por Victor. Não há quantidade fixa mensal; as entregas seguem a estratégia e a capacidade operacional dentro do escopo contratado. Não prometer volume mínimo ou produção ilimitada.
+
+4. Atendimento — PENDENTE DE VICTOR: canal oficial, dias e horário, prazo esperado da primeira resposta e existência ou não de atendimento emergencial. Não anunciar SLA ainda.
+
+5. Relatórios — A, aprovada por Victor. Acompanhamento pelo painel do WebApp, sem relatório periódico separado. A redação contratual deve descrever apenas indicadores que o painel efetivamente apresenta.
+
+6. Reuniões — D. Há uma reunião inicial prevista para tratar acessos e primeiro criativo, com duração planejada de 25 minutos. Reunião mensal recorrente não foi aprovada como entrega incluída. Confirmar se outras reuniões serão avulsas antes de prometer essa regra.
+
+7. Substituição de conta — C, aprovada por Victor. Somente após análise e aditivo caso a caso; não há presunção de troca gratuita ou de cobrança automática de uma nova unidade. Definir procedimento e efeito financeiro no aditivo.
+
+8. Aprovações — Aprovada por Victor a exigência de aprovação expressa para oferta, textos/peças, primeira publicação e aumento de verba. O silêncio não autoriza esses atos. PENDENTE: canal e pessoa habilitada a aprovar; limites das otimizações rotineiras, redistribuição dentro da mesma conta e pausa preventiva. Não interpretar esta resposta como autorização para publicar ou alterar gastos.
+
+9. Verba de mídia — A verba de anúncios é separada da remuneração de gestão. Cada CNPJ/negócio mantém sua própria operação; não transferir verba entre CNPJs. PENDENTE DE VICTOR: teto por conta no pedido, redistribuição entre campanhas da mesma conta e condições para reduzir ou pausar gastos preventivamente.
+
+10. Pendências do cliente — PENDENTE DE VICTOR E JURÍDICO: efeito do atraso de acessos, materiais ou aprovações nos prazos, na cobrança e na duração mínima. Registrar e comunicar as pendências sem presumir suspensão ou prorrogação automática.
+
+DECISÕES A FECHAR COM VICTOR E ADVOGADO
+
+11. Formação do contrato — A jornada operacional é pedido realizado, pagamento aprovado, acesso ao WebApp, assinatura concluída e primeira campanha publicada somente depois da assinatura e das demais conferências. PENDENTE DE ANÁLISE JURÍDICA: em qual desses marcos se forma o vínculo e quais obrigações já existem antes da assinatura.
+
+12. Marco inicial da prestação e dos seis meses — PENDENTE. Escolher um marco objetivo e comprovável; pagamento, acesso, reunião e primeira publicação são eventos distintos.
+
+13. Mês parcial — PENDENTE. Definir ciclo por aniversário, pró-rata até data fixa ou outra regra, em conjunto com a contabilidade.
+
+14. Depois dos seis meses — PENDENTE. Definir término, continuidade ou renovação e aviso prévio.
+
+15. Plano anual após o 12º mês — PENDENTE. Definir encerramento, passagem para mensal ou nova contratação anual e forma de aceite.
+
+16. Pagamento aprovado sem assinatura — PENDENTE. Definir prazo para assinatura, tratamento do acesso e eventual cancelamento/restituição, com revisão jurídica.
+
+17. Cancelamento antes do início efetivo — PENDENTE DE REVISÃO JURÍDICA. Definir restituição e tratamento de custos ou de eventual direito legal aplicável.
+
+DECISÕES JURÍDICAS AINDA NÃO APROVADAS
+
+18. Saída antes de seis meses — Victor manifestou intenção de cobrar os meses restantes, mas fórmula, teto, exceções e validade dependem do advogado. Não tratar saldo integral como cláusula aprovada.
+
+19. Planos antecipados — PENDENTE. Definir restituição, eventual recálculo do desconto e diferenças conforme a causa do encerramento.
+
+20. Inadimplência — PENDENTE. Definir prazo de regularização, encargos, avisos, suspensão da gestão, eventual pausa de campanhas, resolução e retomada. A hipótese anterior de pausa após 24/48 horas não foi aprovada como regra final.
+
+21. Reajuste — PENDENTE. Definir índice, periodicidade e tratamento após o primeiro ciclo.
+
+22. Propriedade intelectual — PENDENTE. Definir licença ou cessão das peças finais, momento de aquisição dos direitos e entrega ou exclusão dos arquivos-fonte; preservar tecnologia e materiais próprios da V2G conforme redação jurídica.
+
+23. Responsabilidade — PENDENTE. Advogado deve definir limites e exceções compatíveis com a operação e a legislação aplicável.
+
+24. Confidencialidade — PENDENTE. Definir prazo, segredos comerciais e exceções de guarda legal e backups.
+
+25. Dados pessoais/LGPD — PENDENTE. Mapear papéis por finalidade, categorias, bases legais, fornecedores, transferências, incidentes, retenção e destino dos dados ao encerrar.
+
+26. Indisponibilidade ou bloqueio da plataforma — PENDENTE. Definir efeito sobre prestação, cobrança, conta substituta e eventual encerramento.
+
+27. Ordem de prevalência — PENDENTE DE REVISÃO JURÍDICA. A ordem proposta entre quadro-resumo, contrato, anexos, pedido, checkout e comunicações não está aprovada; conciliar com a oferta comercial efetivamente apresentada.
+
+28. Cessão do contrato — PENDENTE. Definir necessidade de autorização ou aviso e hipótese de reorganização societária.
+
+29. Foro e solução de conflitos — PENDENTE DE REVISÃO JURÍDICA, inclusive eventual aplicação do CDC.
+
+30. Assinatura eletrônica — Victor assina pela V2G; pelo cliente, ao menos um sócio ou dono com poderes de representação. PENDENTE: provedor com integração automática, nível de assinatura, validação de identidade e poderes, testemunhas, prazo de guarda e entrega da cópia final. A minuta atual não deve ser enviada à assinatura até aprovação da versão exata pelo advogado.
+
+CONTABILIDADE E DADOS DOCUMENTAIS
+
+31. NFS-e — A Contabilizei informou uma nota por mês de serviço prestado, inclusive nos planos antecipados, apenas pelo serviço de gestão (sem verba de mídia). Informou Curitiba/PR, inscrição municipal 13448418, item 17.06 e código municipal 170601000. A divisão aritmética do preço é R$ 475 por mês por conta no semestral (R$ 2.850/6) e R$ 440 no anual (R$ 5.280/12), mas esses valores NÃO são parâmetros fiscais aprovados. PENDENTE DA CONTABILIZEI: confirmar valor e competência de cada nota, data de emissão, mês parcial, município competente em cada caso, tratamento do adiantamento e procedimentos em cancelamento, restituição ou estorno.
+
+32. Dados documentais — PENDENTE DE CONFERÊNCIA EM DOCUMENTOS OFICIAIS: razão social e CNPJ da V2G, endereço contratual, nome civil e qualificação de Victor e prova dos poderes. PENDENTE DE VICTOR: e-mail jurídico/contratual e canal oficial para cancelamentos e notificações.
+
+Próxima devolutiva necessária: Victor preenche 4 e 9 e esclarece 10; o advogado fecha 11 a 30 e aprova um arquivo identificado por versão/data; a Contabilizei fecha os detalhes do 31; os documentos oficiais e Victor completam 32. Até então, não enviar a minuta para assinatura nem ativar a automação contratual ou fiscal.
