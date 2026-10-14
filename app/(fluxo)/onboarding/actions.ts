@@ -227,7 +227,7 @@ export async function salvarRespostaAction(entrada: {
   const cidade = pergunta.pedeCidade && entrada.origem === "chip" ? entrada.cidade?.trim() : undefined;
   const cepDigitado = pergunta.pedeCidade && entrada.origem === "chip" ? entrada.cep?.trim() : undefined;
   const cep = cepDigitado ? cepDigitado.replace(/\D/g, "") : undefined;
-  if (pergunta.pedeCidade && entrada.origem === "chip" && !cidade) {
+  if (pergunta.pedeCidade && entrada.origem === "chip" && texto !== "Brasil inteiro" && !cidade) {
     return { ok: false, erro: "Escreva sua cidade antes de escolher." };
   }
   if (cepDigitado && (!/^\d{5}-?\d{3}$/.test(cepDigitado) || cep?.length !== 8)) {
@@ -296,7 +296,9 @@ export async function salvarRespostaAction(entrada: {
   // raio ainda coincidem com aquela escolha, deixam de ser fatos atuais:
   // não inferimos números nem município da nova frase. Uma correção feita
   // depois em outra tela, com valor diferente, é preservada.
-  const esvaziar = entrada.qid === "praca" && entrada.origem === "texto" &&
+  const esvaziar = entrada.qid === "praca" && entrada.origem === "chip" && texto === "Brasil inteiro" &&
+    pracaAnterior?.origem === "chip" && RAIO_KM[pracaAnterior.texto] === linha.radius_km
+    ? ["radius_km"] : entrada.qid === "praca" && entrada.origem === "texto" &&
     pracaAnterior?.origem === "chip" ? [
       ...(pracaAnterior.cidade && linha.city === pracaAnterior.cidade ? ["city"] : []),
       ...(pracaAnterior.cep && linha.cep === pracaAnterior.cep ? ["cep"] : []),

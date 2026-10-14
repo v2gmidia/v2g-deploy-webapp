@@ -84,6 +84,7 @@ export async function salvarMarcaAction(entrada: {
   siteNaoTenho: boolean;
   instagram: string;
   aparencia: string;
+  coresConfirmadas?: string[];
   aparenciaNaoSei: boolean;
 }): Promise<ResultadoMarca> {
   const r = await obter();
@@ -94,8 +95,14 @@ export async function salvarMarcaAction(entrada: {
   if (!anterior.contasProntas) return { ok: false, erro: "Termine suas contas antes de continuar." };
 
   const aparencia = entrada.aparencia.trim();
-  if (!entrada.aparenciaNaoSei && !aparencia) {
-    return { ok: false, erro: "Conte como é sua marca ou marque que ainda não sabe." };
+  if (entrada.coresConfirmadas !== undefined &&
+      (!Array.isArray(entrada.coresConfirmadas) || entrada.coresConfirmadas.some((cor) => typeof cor !== "string")))
+    return { ok: false, erro: "Confira as cores escolhidas." };
+  const cores = (entrada.coresConfirmadas ?? []).map((cor) => cor.toUpperCase());
+  if (cores.length > 3 || cores.some((cor) => !/^#[0-9A-F]{6}$/.test(cor)))
+    return { ok: false, erro: "Confira as cores escolhidas." };
+  if (!entrada.aparenciaNaoSei && !aparencia && cores.length === 0) {
+    return { ok: false, erro: "Confirme as cores da marca ou indique que prefere defini-las com o gestor." };
   }
   if (aparencia.length > 500) return { ok: false, erro: "Resuma o visual da marca em até 500 caracteres." };
   if (entrada.siteNaoTenho && entrada.site.trim()) {
@@ -118,6 +125,7 @@ export async function salvarMarcaAction(entrada: {
   const visual = entrada.aparenciaNaoSei ? "" : aparencia;
   if (anterior.concluido && campos.length === 0 && esvaziar.length === 0 && anterior.marca &&
       anterior.marca.aparencia === visual &&
+      JSON.stringify(anterior.marca.coresConfirmadas) === JSON.stringify(cores) &&
       anterior.marca.aparenciaNaoSei === entrada.aparenciaNaoSei &&
       anterior.marca.siteNaoTenho === entrada.siteNaoTenho)
     return { ok: true, estado: anterior };
@@ -140,7 +148,7 @@ export async function salvarMarcaAction(entrada: {
   const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
     p_business_id: r.linha.id,
     p_patch: {
-      marca: { aparencia: visual,
+      marca: { aparencia: visual, coresConfirmadas: cores,
         aparenciaNaoSei: entrada.aparenciaNaoSei, siteNaoTenho: entrada.siteNaoTenho, em: agora },
       ...(anterior.concluido ? {} : { conclusao: { em: agora, proximoPasso: "agendamento_pendente" } }),
     },

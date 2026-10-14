@@ -356,6 +356,11 @@ export async function salvarContaAction(entrada: {
         confirmado: true,
         em: agora,
       };
+    } else if (numeroDoTexto(entrada.escolha) !== null) {
+      const valor = numeroDoTexto(entrada.escolha)!;
+      if (estado.ticket === null) return { ok: false, erro: "Responda antes quanto sai uma venda." };
+      if (valor > estado.ticket) return { ok: false, erro: "O custo não pode ser maior que o valor da venda." };
+      contas.custo = { echo: `Custo informado: ${valor}`, calculado: valor, confirmado: false, em: agora };
     } else {
       const opcao = opcaoDeSobra(entrada.escolha);
       if (!opcao) return { ok: false, erro: "Essa opção não existe." };
@@ -390,6 +395,11 @@ export async function salvarContaAction(entrada: {
         confirmado: true,
         em: agora,
       };
+    } else if (numeroDoTexto(entrada.escolha) !== null) {
+      const valor = numeroDoTexto(entrada.escolha)!;
+      if (estado.margem === null) return { ok: false, erro: "Feche antes quanto sobra de cada venda." };
+      if (valor > estado.margem) return { ok: false, erro: "O valor não pode ser maior que a sobra por venda." };
+      contas.lucro = { echo: `Valor informado: ${valor}`, calculado: valor, confirmado: false, em: agora };
     } else {
       const opcao = opcaoDePostura(entrada.escolha);
       if (!opcao) return { ok: false, erro: "Essa opção não existe." };

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import { SeletorDeNicho } from "@/components/ui/SeletorDeNicho";
 import type { Nicho } from "@/lib/nichos/tipos";
-import { ouvinteDeFala, temFalaAoVivo, type Ouvinte } from "@/lib/onboarding/fala-ao-vivo";
+import { RespostaPorVoz } from "./RespostaPorVoz";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
-import { ORDEM, PERGUNTAS, proximaPergunta, type Pergunta } from "./perguntas";
+import { ORDEM, PERGUNTAS, RAIO_KM, proximaPergunta, type Pergunta } from "./perguntas";
 import styles from "./OnboardingNovo.module.css";
 
 const QUESTOES = ORDEM.map((id) => PERGUNTAS.find((p) => p.id === id)!);
@@ -14,8 +14,8 @@ function partes(pergunta: Pergunta): [string, string | null] {
   return match ? [match[1] ?? pergunta.texto, match[2] ?? null] : [pergunta.texto, null];
 }
 
-export function Chat({ businessId, inicial, nichos }: {
-  businessId: string; inicial: Record<string, RespostaGravada>; nichos: Nicho[] | null;
+export function Chat({ businessId, inicial, nichos, vozHabilitada }: {
+  businessId: string; inicial: Record<string, RespostaGravada>; nichos: Nicho[] | null; vozHabilitada: boolean;
 }) {
   const [respostas, setRespostas] = useState(inicial);
   const [conviteAceito, setConviteAceito] = useState(false);
@@ -23,14 +23,12 @@ export function Chat({ businessId, inicial, nichos }: {
   const [texto, setTexto] = useState("");
   const [cidade, setCidade] = useState("");
   const [cep, setCep] = useState("");
+  const [alcanceLocal, setAlcanceLocal] = useState<string | null>(null);
   const [textoAberto, setTextoAberto] = useState(false);
   const [enviando, setEnviando] = useState(false);
+  const [vozOcupada, setVozOcupada] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [incerto, setIncerto] = useState(false);
-  const [ouvindo, setOuvindo] = useState(false);
-  const [suportaVoz, setSuportaVoz] = useState<boolean | null>(null);
-  const ouvinte = useRef<Ouvinte | null>(null);
-  const baseDaFala = useRef("");
   const campo = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   const pendente = proximaPergunta(ORDEM.filter((id) => !!respostas[id]));
@@ -39,45 +37,29 @@ export function Chat({ businessId, inicial, nichos }: {
   const salvas = QUESTOES.filter((p) => respostas[p.id]);
   const mostrarConvite = !conviteAceito && salvas.length === 0 && !editando;
 
-  useEffect(() => { setSuportaVoz(temFalaAoVivo()); }, []);
   useEffect(() => {
     campo.current?.focus();
-    ouvinte.current?.parar();
-    ouvinte.current = null;
-    setOuvindo(false);
   }, [atual?.id]);
-  useEffect(() => () => { ouvinte.current?.parar(); }, []);
 
   function limparEdicao() {
-    setEditando(null); setTexto(""); setCidade(""); setCep(""); setTextoAberto(false); setErro(null);
+    setEditando(null); setTexto(""); setCidade(""); setCep(""); setAlcanceLocal(null); setTextoAberto(false); setErro(null);
   }
   function corrigir(pergunta: Pergunta) {
     const resposta = respostas[pergunta.id];
-    if (!resposta || enviando || incerto) return;
+    if (!resposta || enviando || incerto || vozOcupada) return;
     setEditando(pergunta.id);
     setTexto(resposta.texto);
     setCidade(resposta.cidade ?? "");
     setCep(resposta.cep ?? "");
+    setAlcanceLocal(pergunta.id === "praca" && Object.hasOwn(RAIO_KM, resposta.texto) ? resposta.texto : null);
     setTextoAberto(resposta.origem === "texto");
     setErro(null);
   }
-  function alternarVoz() {
-    if (ouvindo) {
-      ouvinte.current?.parar(); ouvinte.current = null; setOuvindo(false); return;
-    }
-    baseDaFala.current = texto;
-    const escuta = ouvinteDeFala(
-      ({ fechado, provisorio }) => setTexto([baseDaFala.current, fechado, provisorio].filter(Boolean).join(" ").trim()),
-      () => { setErro("O microfone falhou. Escreva sua resposta ou tente de novo."); setOuvindo(false); ouvinte.current?.parar(); ouvinte.current = null; },
-    );
-    if (!escuta) { setErro("O reconhecimento de voz não está disponível neste navegador. Escreva sua resposta."); return; }
-    ouvinte.current = escuta; setErro(null); setOuvindo(true);
-  }
   async function enviar(pergunta: Pergunta, valor: string, origem: "chip" | "texto") {
-    if (enviando || incerto) return;
-    if (pergunta.pedeCidade && origem === "chip" && !cidade.trim()) { setErro("Informe sua cidade para escolher a distância."); return; }
+    if (enviando || incerto || vozOcupada) return;
+    if (pergunta.pedeCidade && origem === "chip" && valor !== "Brasil inteiro" && !cidade.trim()) { setErro("Informe sua cidade para escolher a distância."); return; }
     if (!valor.trim()) { setErro("Escreva uma resposta antes de continuar."); campo.current?.focus(); return; }
-    ouvinte.current?.parar(); ouvinte.current = null; setOuvindo(false);
+    if (pergunta.minimo && valor.trim().length < pergunta.minimo.tamanho) { setErro(pergunta.minimo.recado); campo.current?.focus(); return; }
     setEnviando(true); setErro(null);
     try {
       const resultado = await salvarRespostaAction({ businessId, qid: pergunta.id, texto: valor, origem,
@@ -110,17 +92,22 @@ export function Chat({ businessId, inicial, nichos }: {
     </section> : atual ? <section className={styles.pergunta} key={atual.id}>
       <h1>{partes(atual)[0]}</h1>
       {partes(atual)[1] && <p className={styles.ajuda}>{partes(atual)[1]}</p>}
-      {atual.pedeCidade && <div className={styles.local}>
-        <label className={styles.campo}>Sua cidade<input type="text" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex: São Paulo" disabled={enviando || incerto} /></label>
-        <label className={styles.campo}>CEP de onde você atende <small>(se souber)</small><input type="text" inputMode="numeric" autoComplete="postal-code" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" disabled={enviando || incerto} /></label>
-      </div>}
       {usaSeletor && nichos && <SeletorDeNicho nichos={nichos} ocupado={enviando || incerto}
         aoEscolher={(n) => enviar(atual, n.rotulo, "chip")} aoEscreverLivre={(t) => enviar(atual, t, "texto")}
-        rotuloOutro={atual.chipAbreTexto ?? "Outro"} placeholderLivre={atual.fallbackPlaceholder} rotuloLivre={atual.fallbackLabel} />}
-      {semLista && <p className={styles.ajuda}>A lista de ramos não carregou. Escreva como você chama seu negócio; a equipe confere depois.</p>}
+        rotuloOutro={atual.chipAbreTexto ?? "Outro"} placeholderLivre={atual.fallbackPlaceholder} rotuloLivre={atual.fallbackLabel} minimoTextoLivre={atual.minimo?.tamanho} />}
+      {semLista && <p className={styles.ajuda}>As sugestões de tipo de negócio estão indisponíveis agora. Escreva o que você faz; a equipe confere na reunião.</p>}
       {!usaSeletor && !semLista && atual.opcoes.length > 0 && <div className={styles.opcoes}>
         {atual.opcoes.map((opcao) => <button type="button" key={opcao.echo} disabled={enviando || incerto}
-          onClick={() => enviar(atual, opcao.echo, "chip")}>{opcao.rotulo}</button>)}
+          aria-pressed={atual.pedeCidade && opcao.echo !== "Brasil inteiro" ? alcanceLocal === opcao.echo : undefined}
+          onClick={() => {
+            if (atual.pedeCidade && opcao.echo !== "Brasil inteiro") { setAlcanceLocal(opcao.echo); setErro(null); }
+            else enviar(atual, opcao.echo, "chip");
+          }}>{opcao.rotulo}</button>)}
+      </div>}
+      {atual.pedeCidade && alcanceLocal && <div className={styles.local}>
+        <label className={styles.campo}>Em qual cidade fica seu negócio?<input type="text" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex.: São Paulo" disabled={enviando || incerto} /></label>
+        <label className={styles.campo}>CEP <small>(se souber)</small><input type="text" inputMode="numeric" autoComplete="postal-code" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" disabled={enviando || incerto} /></label>
+        <button className={styles.primario} type="button" disabled={enviando || incerto} onClick={() => enviar(atual, alcanceLocal, "chip")}>{enviando ? "Salvando…" : "Salvar e continuar"}</button>
       </div>}
       {atual.id === "inicio" && <a className={styles.link} href="/inicio">Fazer depois</a>}
       {!usaSeletor && !semLista && atual.chipAbreTexto && !textoAberto && <button className={styles.link} type="button" onClick={() => setTextoAberto(true)}>Escrever do meu jeito</button>}
@@ -131,12 +118,10 @@ export function Chat({ businessId, inicial, nichos }: {
             : <input ref={campo as React.RefObject<HTMLInputElement>} type="text" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={atual.fallbackPlaceholder} disabled={enviando || incerto}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); enviar(atual, texto, "texto"); } }} />}
         </label>
-        {atual.id === "descricao" && suportaVoz && <div className={styles.voz}>
-          <button type="button" disabled={enviando || incerto} onClick={alternarVoz} aria-pressed={ouvindo}>{ouvindo ? "Parar de ouvir" : "Responder falando"}</button>
-          <p>{ouvindo ? "Confira o texto que aparece enquanto você fala." : "Toque e fale. Revise o texto antes de salvar; o WebApp não guarda o áudio."}</p>
-        </div>}
-        {atual.id === "descricao" && suportaVoz === false && <p className={styles.ajuda}>Este navegador não oferece resposta por voz. Você pode escrever normalmente.</p>}
-        <button className={styles.primario} type="button" disabled={enviando || incerto || ouvindo} onClick={() => enviar(atual, texto, "texto")}>{enviando ? "Salvando…" : "Salvar e continuar"}</button>
+        {atual.id === "descricao" && vozHabilitada && <RespostaPorVoz ocupado={enviando || incerto}
+          aoTranscrever={(fala) => setTexto((atual) => [atual.trim(), fala].filter(Boolean).join(" "))}
+          aoOcupar={setVozOcupada} />}
+        <button className={styles.primario} type="button" disabled={enviando || incerto || vozOcupada} onClick={() => enviar(atual, texto, "texto")}>{enviando ? "Salvando…" : "Salvar e continuar"}</button>
       </div>}
       {erro && <div className={incerto ? "form-warning" : "form-error"} role="alert">{erro}{incerto && <button type="button" onClick={() => window.location.reload()}>Recarregar</button>}</div>}
       {editando && <button className={styles.link} type="button" onClick={limparEdicao}>Cancelar correção</button>}
@@ -147,8 +132,7 @@ export function Chat({ businessId, inicial, nichos }: {
     </section>}
     {salvas.length > 0 && <details className={styles.revisao}><summary>Ver e corrigir respostas salvas ({salvas.length})</summary><ol>
       {salvas.map((p) => <li key={p.id}><span>{partes(p)[0]}<strong>{respostas[p.id]?.echo}</strong></span>
-        <button type="button" disabled={enviando || incerto} onClick={() => corrigir(p)}>Corrigir</button></li>)}
+        <button type="button" disabled={enviando || incerto || vozOcupada} onClick={() => corrigir(p)}>Corrigir</button></li>)}
     </ol></details>}
-    <p className={styles.rodape}>Cada resposta é salva para este negócio. Você pode sair e voltar depois.</p>
   </div>;
 }

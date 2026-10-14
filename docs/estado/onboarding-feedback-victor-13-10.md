@@ -35,3 +35,19 @@ Os tempos são **relato do teste**, não medição de rede ou servidor. A transc
 6. **Performance:** medir navegação e tempo das ações no QA, com causa identificada antes de otimizar. O relato de 2 a 5 segundos não identifica se a espera é rede, RPC, renderização ou backend.
 
 App Review da Meta foi lembrado por Victor; requer verificação separada do painel Developers, sem inferir situação pelo tempo decorrido.
+
+## 4. Segunda passagem pelo QA e correção local
+
+Victor confirmou que o QA publicado ainda não mostrava “Brasil inteiro” nem o catálogo de ramos, permitia resposta curta “UI”, mantinha contas difíceis de preencher e perguntava pelas cores em texto livre. A página hospedada da agenda aceitou letras no CNPJ e permitiu mais de uma reserva. Essas são observações do teste de Victor, não prova de uma nova publicação.
+
+No código local, a praça agora oferece “Brasil inteiro” como **intenção registrada**, sem inventar raio para o backend. A cidade aparece depois de escolher alcance local. O ramo usa o catálogo vivo quando disponível; texto livre com menos de quatro caracteres é recusado no cliente e no servidor. O QA publicado não tinha `V2G_BACKEND_URL` e `V2G_BACKEND_TOKEN` na última conferência dos nomes de variáveis, portanto o catálogo não deve ser anunciado como corrigido lá até configurar e retestar.
+
+As três contas permitem valor digitado com prévia em reais, além das opções; custo e valor a manter exigem confirmação explícita antes de virar dado de perfil. A tela ganhou contraste em tema claro, largura mais contida e menos avisos repetidos. A marca agora recebe logo PNG e guia PDF privado, ambos limitados a 4 MB antes do envio para caber no teto de 4,5 MB da Vercel; propõe cores extraídas do logo para confirmação e deixa a descrição como nota opcional. O fluxo salvo segue para a agenda sem mensagem transitória.
+
+O bucket privado `v2g-midia` não existia no QA na checagem inicial de 13/10. Victor autorizou aplicar somente `20261014010000_bucket_identidade_qa.sql` no QA. A migration remota foi registrada como `20261014013627_qa_bucket_identidade_20261014`; consulta posterior confirmou `public=false`, limite de 10 MB, PNG/JPEG/PDF e nenhuma policy para esse bucket em `storage.objects`. O upload pelo WebApp ainda depende da versão nova publicada e de teste HTTPS; criar o bucket não prova o fluxo visual.
+
+**Agenda permanece aberta:** a página do Google não valida o campo personalizado CNPJ nem limita uma reserva por empresa. O WebApp não recebe o evento confirmado, logo não pode mostrar horário marcado, impedir outra reserva ou iniciar tutorial condicionado a ela. `lib/agenda/conciliacao.ts` valida a identidade de eventos em memória, mas falta integração autenticada com a agenda e persistência idempotente por negócio. Clique no link e relato do cliente não substituem essa prova.
+
+**Voz preparada localmente:** a pergunta aberta passou a usar gravação do navegador e transcrição por `gpt-4o-mini-transcribe` por uma rota autenticada; o texto volta para revisão antes de salvar, e o áudio não é gravado pela V2G. A rota só aparece quando `V2G_VOICE_TRANSCRIPTION_ENABLED=true` e `OPENAI_API_KEY` estão configuradas. Sem isso, o cliente escreve. Ainda faltam chave/configuração no QA, teste real de áudio em português e controle operacional de uso antes de qualquer ativação pública.
+
+**Ainda pendentes:** medição das demoras de 2–5 segundos, revisão da verba antiga e tutorial no Início após conciliação da reunião. Depois da preparação da voz, `pnpm typecheck`, `pnpm conferir:onboarding-preservacao` (65 casos) e `git diff --check` passaram localmente. A suíte geral segue com falhas de migrations anteriores não reconciliadas e exceções do gestor não declaradas, fora deste bloco.

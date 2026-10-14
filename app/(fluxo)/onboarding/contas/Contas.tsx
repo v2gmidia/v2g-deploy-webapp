@@ -4,7 +4,7 @@ import { useState } from "react";
 import { dinheiro } from "@/lib/formato";
 import type { ChaveDeConta } from "@/lib/cadastro/montar";
 import { reabrirContaAction, salvarContaAction, type EstadoDasContas } from "./actions";
-import { POSTURA, SOBRA, TICKET_FAIXA } from "./regras";
+import { numeroDoTexto, POSTURA, SOBRA, TICKET_FAIXA } from "./regras";
 
 /**
  * As três contas, uma por vez.
@@ -123,11 +123,10 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
 
   const pergunta: Record<ChaveDeConta, string> = {
     ticket: "Na média, quanto sai uma venda sua?",
-    custo:
-      "De cada R$ 100 que entra numa venda, quanto sobra depois de pagar o que você gastou pra entregar?",
+    custo: "Depois de pagar produto, material ou comissão de uma venda, quanto sobra?",
     lucro: estado.margem
-      ? `Dessa sobra de ${dinheiro(estado.margem, "BRL")}, quanto você quer que fique no seu bolso?`
-      : "Quanto você quer que fique no seu bolso a cada venda?",
+      ? `Dessa sobra aproximada de ${dinheiro(estado.margem, "BRL")}, quanto você precisa manter por venda?`
+      : "Quanto você precisa manter por venda?",
   };
 
   const contador: Record<ChaveDeConta, string> = {
@@ -136,6 +135,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     lucro: "Conta 3 de 3 · última",
   };
   const indisponivel = enviando || !!aviso;
+  const previa = numeroDoTexto(rascunho);
 
   return (
     <>
@@ -146,7 +146,6 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
         você não souber, tudo bem: a gente marca e resolve numa conversa.
       </p>
 
-      {erro && <p className="form-error">{erro}</p>}
       {aviso && <p className="form-warning" role="status">{aviso} <button type="button" onClick={() => window.location.reload()}>Recarregar</button></p>}
 
       {/* ---- o que já fechou ---- */}
@@ -208,6 +207,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       {atual && (
         <section className="hero-card">
           <span className="eyebrow">{contador[atual]}</span>
+          {erro && <p className="form-error" role="alert">{erro}</p>}
 
           {/* ---------- confirmação: o número que ele precisa ver ---------- */}
           {aConfirmar ? (
@@ -215,7 +215,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
               <p className="hero-phrase">
                 {atual === "custo"
                   ? `Então cada venda de ${dinheiro(estado.ticket ?? 0, "BRL")} te custa uns ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} pra entregar, e sobram ${dinheiro((estado.ticket ?? 0) - (aConfirmar.calculado ?? 0), "BRL")}.`
-                  : `Então ficam ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} com você a cada venda. Essa conta ajuda o gestor a avaliar a verba antes de preparar a campanha.`}
+                  : `Você quer manter cerca de ${dinheiro(aConfirmar.calculado ?? 0, "BRL")} por venda. É isso?`}
               </p>
 
               {ajustando === atual ? (
@@ -227,7 +227,8 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     id="ajuste"
                     autoFocus
                     inputMode="decimal"
-                    placeholder="Valor em reais"
+                    aria-label="Valor em reais"
+                    placeholder="Ex.: 50,00"
                     value={rascunho}
                     onChange={(e) => setRascunho(e.target.value)}
                     onKeyDown={(e) => {
@@ -237,6 +238,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       }
                     }}
                   />
+                  {previa !== null && <span className="conta-previa">{dinheiro(previa, "BRL")}</span>}
                   <button
                     className="mini-send"
                     type="button"
@@ -305,7 +307,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       id="ticket"
                       autoFocus
                       inputMode="decimal"
-                      placeholder="Ex: 80"
+                      placeholder="Ex.: 80,00"
                       value={rascunho}
                       onChange={(e) => setRascunho(e.target.value)}
                       onKeyDown={(e) => {
@@ -315,6 +317,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                         }
                       }}
                     />
+                    {previa !== null && <span className="conta-previa">{dinheiro(previa, "BRL")}</span>}
                     <button
                       className="mini-send"
                       type="button"
@@ -324,6 +327,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       {enviando ? "…" : "Enviar"}
                     </button>
                   </div>
+                  <p className="conta-hint">Digite um valor em reais. Por exemplo, 50 aparece como R$ 50,00.</p>
                   <p className="conta-hint">ou escolha uma faixa:</p>
                   <div className="chips-row">
                     {Object.keys(TICKET_FAIXA).map((f) => (
@@ -346,6 +350,18 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
               )}
 
               {atual === "custo" && (
+                <>
+                {estado.ticket !== null && <div className="conta-direto">
+                  <label htmlFor="custo-direto">Se souber o custo de uma venda, digite em reais</label>
+                  <div className="fallback-field">
+                    <input id="custo-direto" inputMode="decimal" placeholder="Ex.: 50,00" value={rascunho}
+                      onChange={(e) => setRascunho(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); enviar({ conta: "custo", escolha: rascunho }); } }} />
+                    {previa !== null && <span className="conta-previa">{dinheiro(previa, "BRL")}</span>}
+                    <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "custo", escolha: rascunho })}>Conferir</button>
+                  </div>
+                </div>}
+                <p className="conta-hint">Ou escolha uma estimativa:</p>
                 <div className="chips-row">
                   {estado.ticket === null && <p className="conta-hint">Sem o valor médio da venda, esta conta fica para a conversa com o gestor.</p>}
                   {estado.ticket !== null && SOBRA.map((o) => (
@@ -373,10 +389,22 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   >
                     Não sei
                   </button>
-                </div>
+                </div></>
               )}
 
               {atual === "lucro" && (
+                <>
+                {estado.margem !== null && <div className="conta-direto">
+                  <label htmlFor="lucro-direto">Se souber quanto precisa manter por venda, digite em reais</label>
+                  <div className="fallback-field">
+                    <input id="lucro-direto" inputMode="decimal" placeholder="Ex.: 50,00" value={rascunho}
+                      onChange={(e) => setRascunho(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); enviar({ conta: "lucro", escolha: rascunho }); } }} />
+                    {previa !== null && <span className="conta-previa">{dinheiro(previa, "BRL")}</span>}
+                    <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "lucro", escolha: rascunho })}>Conferir</button>
+                  </div>
+                </div>}
+                <p className="conta-hint">Ou escolha uma prioridade:</p>
                 <div className="chips-row">
                   {estado.margem === null && <p className="conta-hint">Sem a sobra por venda, esta conta fica para a conversa com o gestor.</p>}
                   {estado.margem !== null && POSTURA.map((o) => (
@@ -404,7 +432,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   >
                     Não sei
                   </button>
-                </div>
+                </div></>
               )}
               {confirmandoNaoSei === atual && (
                 <div className="pendencia-bloco" role="group" aria-label="Confirmar que não sabe responder">
@@ -443,9 +471,6 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
             </section>
           )}
 
-          <p className="form-notice">
-            Suas contas estão guardadas. Agora conte como sua marca aparece para os clientes.
-          </p>
           <a className="cta" href="/onboarding/marca">
             Continuar para o visual da marca
           </a>

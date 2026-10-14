@@ -1,6 +1,7 @@
-/** Respostas do visual da marca. O texto é do cliente, não uma cor inferida. */
+/** Cores propostas pelo arquivo só viram resposta depois da confirmação do cliente. */
 export interface RespostasDaMarca {
   aparencia: string;
+  coresConfirmadas: string[];
   aparenciaNaoSei: boolean;
   siteNaoTenho: boolean;
   em: string;
@@ -24,6 +25,9 @@ export function lerMarca(onboarding: unknown): RespostasDaMarca | null {
   if (typeof marca.em !== "string") return null;
   return {
     aparencia: typeof marca.aparencia === "string" ? marca.aparencia : "",
+    coresConfirmadas: Array.isArray(marca.coresConfirmadas)
+      ? marca.coresConfirmadas.filter((cor): cor is string => typeof cor === "string" && /^#[0-9A-Fa-f]{6}$/.test(cor)).slice(0, 3)
+      : [],
     aparenciaNaoSei: marca.aparenciaNaoSei === true,
     siteNaoTenho: marca.siteNaoTenho === true,
     em: marca.em,

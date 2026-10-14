@@ -25,20 +25,17 @@ export function Conclusao({ estado }: { estado: Estado }) {
         <a className="cta" href="/onboarding/marca">Conferir visual da marca</a>}
     </> : <>
       <p className="mission-tag">Sua primeira missão · passo 3 de 3</p>
-      <h1 className="auth-h">Suas respostas estão guardadas</h1>
-      <p className="auth-sub">O próximo passo é escolher data e horário para uma reunião com o gestor na agenda do Google.</p>
+      <h1 className="auth-h">Respostas guardadas. Vamos conversar?</h1>
+      <p className="auth-sub">Escolha um horário de 25 minutos para alinhar seus anúncios com o gestor.</p>
       <a className="cta" href={AGENDA_INICIAL_URL} target="_blank" rel="noopener noreferrer">
         Escolher horário da reunião
       </a>
-      <p className="note">O Google mostra os horários livres e envia a confirmação por e-mail quando a reserva é concluída. Abrir a agenda não marca a reunião. O WebApp ainda não recebe automaticamente essa confirmação; guarde o e-mail do convite.</p>
-      <p className="note">Não encontrou um horário? <a href="https://wa.me/5521936182176?text=Oi!%20Terminei%20meu%20cadastro%20na%20V2G%2C%20mas%20n%C3%A3o%20encontrei%20um%20hor%C3%A1rio%20na%20agenda." target="_blank" rel="noopener noreferrer">Avise nossa equipe pelo WhatsApp</a> para combinar o próximo passo. Essa conversa não reserva a reunião; ela continua pendente até você receber a confirmação do agendamento.</p>
+      <p className="note">Informe o mesmo CNPJ usado na compra, só com números. A reserva é confirmada por e-mail; guarde a mensagem e escolha apenas um horário por negócio.</p>
       <section className="pendencia-bloco">
         <b>O que acontece na reunião</b>
-        <p>Vocês vão confirmar o WhatsApp que recebe clientes do anúncio, tratar dos acessos e definir os materiais para o primeiro criativo. O gestor fará a publicação da primeira campanha manualmente depois das conferências necessárias.</p>
+        <p>Vamos conferir o WhatsApp que recebe clientes, acessos e materiais do primeiro anúncio.</p>
       </section>
-      <p className="note">Você também pode <a href="/verba">informar sua verba mensal de anúncios</a> antes da conversa. A verba de mídia é separada da mensalidade da V2G.</p>
-      <p className="form-warning">O onboarding concluído não confirma reunião marcada, contrato assinado, nota emitida, campanha publicada ou anúncio no ar.</p>
-      <a className="cta" href="/meu-negocio">Ver meus dados</a>
+      <p className="note">Não encontrou horário? <a href="https://wa.me/5521936182176?text=Oi!%20Terminei%20meu%20cadastro%20na%20V2G%2C%20mas%20n%C3%A3o%20encontrei%20um%20hor%C3%A1rio%20na%20agenda." target="_blank" rel="noopener noreferrer">Fale com a equipe</a>.</p>
     </>}
     </section>
   </div>;

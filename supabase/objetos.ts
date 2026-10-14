@@ -532,4 +532,13 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "o inicio do servico nao e inferido do pagamento nem registrado por esta migration",
     ],
   },
+  {
+    arquivo: "20261014010000_bucket_identidade_qa.sql",
+    cria: [],
+    foraDoAlcance: [
+      "migration preparada localmente e NAO aplicada no QA",
+      "bucket privado storage.buckets v2g-midia; o conferidor OpenAPI nao inspeciona o schema storage",
+      "limite de 10 MB e tipos de arquivo permitidos; conferir diretamente no projeto de destino",
+    ],
+  },
 ];

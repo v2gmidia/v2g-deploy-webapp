@@ -72,7 +72,7 @@ export const PERGUNTAS: Pergunta[] = [
   {
     id: "ramo",
     contador: "Pergunta 2 de 4",
-    texto: "Qual desses é o seu negócio?",
+    texto: "Qual é o tipo do seu negócio? Busque uma opção ou descreva com suas palavras.",
     seletorDeNicho: true,
     /**
      * ============================================================
@@ -108,8 +108,9 @@ export const PERGUNTAS: Pergunta[] = [
     opcoes: [],
     /** o rótulo do chip que abre o texto livre, no fim dos dez */
     chipAbreTexto: "Outro",
-    fallbackLabel: "Como você descreveria seu negócio",
-    fallbackPlaceholder: "O que você vende?",
+    fallbackLabel: "Tipo de negócio",
+    fallbackPlaceholder: "Ex.: software de gestão, padaria, salão de beleza",
+    minimo: { tamanho: 4, recado: "Descreva o tipo do seu negócio com pelo menos quatro caracteres." },
   },
   {
     id: "descricao",
@@ -133,12 +134,13 @@ export const PERGUNTAS: Pergunta[] = [
     id: "praca",
     contador: "Pergunta 4 de 4 · última",
     texto:
-      "De onde vêm seus clientes? Me diz sua cidade — e até que distância vale a pena buscar cliente.",
+      "De onde vêm seus clientes? Escolha a área onde vale a pena anunciar.",
     pedeCidade: true,
     opcoes: [
       { echo: "Só aqui perto (até 5 km)", rotulo: "Só aqui perto (até 5 km)" },
       { echo: "Na cidade toda", rotulo: "Na cidade toda" },
       { echo: "Cidade + região", rotulo: "Cidade + região" },
+      { echo: "Brasil inteiro", rotulo: "Brasil inteiro" },
     ],
     fallbackLabel: "Onde seus clientes estão",
     fallbackPlaceholder: "Onde estão seus clientes",

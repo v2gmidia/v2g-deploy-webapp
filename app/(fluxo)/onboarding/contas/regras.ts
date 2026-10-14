@@ -1,8 +1,9 @@
 /**
 * As regras das três contas do bloco 2 — ticket, custo direto e lucro desejado.
  *
- * A REGRA QUE GOVERNA ESTE ARQUIVO: nunca peça o número. Peça a coisa que
- * ele sabe, calcule, mostre em reais, e deixe ele confirmar ou corrigir.
+ * As estimativas continuam disponíveis; depois do teste de 13/10, o cliente
+ * também pode digitar um valor em reais. Custo e valor a manter passam por
+ * conferência antes de virar coluna do perfil; o ticket já tinha entrada direta.
  * Ver `docs/onboarding-expandido.md` §2 — o motivo é que um número que o
  * dono não sabe ele digita mesmo assim, e aí entra no perfil com a
  * procedência mais alta e desarma o `diagnosticar-orcamento`.
@@ -47,7 +48,8 @@ export function emReais(n: number): number {
 export const TICKET_FAIXA: Record<string, { min: number; max: number | null }> = {
   "Até R$ 100": { min: 0, max: 100 },
   "R$ 100 a R$ 300": { min: 100, max: 300 },
-  "R$ 300 a R$ 800": { min: 300, max: 800 },
+  "R$ 300 a R$ 500": { min: 300, max: 500 },
+  "R$ 500 a R$ 800": { min: 500, max: 800 },
   "Acima de R$ 800": { min: 800, max: null },
 };
 

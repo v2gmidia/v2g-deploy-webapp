@@ -34,7 +34,7 @@ import type { Nicho } from "@/lib/nichos/tipos";
  */
 
 interface SeletorDeNichoProps {
-  /** a lista viva, já validada. Quem não a tem mostra os chips de reserva. */
+  /** a lista viva, já validada. Sem ela o chamador mostra texto livre. */
   nichos: Nicho[];
   /** o que já está escolhido, para marcar o chip. Compara pelo identificador. */
   escolhido?: string | null;
@@ -52,6 +52,7 @@ interface SeletorDeNichoProps {
   /** o que o campo pede depois que o "Outro" foi tocado */
   placeholderLivre?: string;
   rotuloLivre?: string;
+  minimoTextoLivre?: number;
 }
 
 export function SeletorDeNicho({
@@ -65,6 +66,7 @@ export function SeletorDeNicho({
   rotuloOutro = "Outro",
   placeholderLivre = "O que você vende?",
   rotuloLivre = "Como você descreveria seu negócio",
+  minimoTextoLivre = 1,
 }: SeletorDeNichoProps) {
   const [consulta, setConsulta] = useState("");
   // O "Outro" trocou a lista pelo campo. Estado à parte da busca porque são
@@ -85,8 +87,8 @@ export function SeletorDeNicho({
   // ele some: não há o que enviar, e um botão ali contradiria a resposta
   // certa, que é tocar no chip.
   const podeEnviar = modoLivre
-    ? digitou
-    : resolucao.tipo === "nicho" || resolucao.tipo === "livre";
+    ? consulta.trim().length >= minimoTextoLivre
+    : resolucao.tipo === "nicho" || (resolucao.tipo === "livre" && consulta.trim().length >= minimoTextoLivre);
 
   function enviar() {
     if (ocupado || !podeEnviar) return;
@@ -142,6 +144,8 @@ export function SeletorDeNicho({
               enviar();
             }}
           />
+          {consulta.trim().length > 0 && consulta.trim().length < minimoTextoLivre &&
+            <p className="nicho-sem-lista" role="status">Escreva pelo menos {minimoTextoLivre} caracteres para descrever seu negócio.</p>}
           {podeEnviar && (
             <button className="mini-send" type="button" disabled={ocupado} onClick={enviar}>
               {ocupado ? "…" : "Enviar"}
@@ -254,7 +258,9 @@ export function SeletorDeNicho({
       */}
       {semResultado && (
         <p className="nicho-sem-lista" role="status" aria-live="polite">
-          Esse não está na nossa lista — escreva do seu jeito que a gente entende.
+          {consulta.trim().length < minimoTextoLivre
+            ? `Escreva pelo menos ${minimoTextoLivre} caracteres para descrever seu negócio.`
+            : "Esse não está na nossa lista — escreva do seu jeito que a gente entende."}
         </p>
       )}
     </div>

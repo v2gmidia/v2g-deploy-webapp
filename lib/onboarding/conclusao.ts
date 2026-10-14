@@ -29,7 +29,7 @@ export function estadoDaConclusao(dados: DadosParaConclusao) {
   ].every((leitura) => leitura.estado === "respondida" || leitura.estado === "nao_sei");
   const marca = lerMarca(doc);
   const marcaPronta = marca !== null &&
-    (marca.aparenciaNaoSei || marca.aparencia.trim().length > 0) &&
+    (marca.aparenciaNaoSei || marca.aparencia.trim().length > 0 || marca.coresConfirmadas.length > 0) &&
     (marca.siteNaoTenho ? !dados.site_url : !!dados.site_url);
   return {
     faltamBasicas,

@@ -212,6 +212,23 @@ test('CEP opcional da praça é validado e gravado no negócio selecionado', asy
   assert.match(row.onboarding.respostas.praca.echo, /CEP 01310-100/);
 });
 
+test('Brasil inteiro dispensa cidade e remove somente o raio da escolha local anterior', async () => {
+  row.radius_km = 25;
+  row.city = 'Curitiba';
+  row.onboarding.respostas.praca = {texto:'Na cidade toda',origem:'chip',cidade:'Curitiba',echo:'Curitiba · Na cidade toda',em:oldTime};
+  const result = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Brasil inteiro',origem:'chip'});
+  assert.equal(result.ok,true);
+  assert.equal(row.radius_km,null);
+  assert.equal(row.city,'Curitiba');
+  assert.equal(row.onboarding.respostas.praca.texto,'Brasil inteiro');
+});
+
+test('tipo de negócio com duas letras não conclui a pergunta', async () => {
+  const result = await actions.salvarRespostaAction({businessId:row.id,qid:'ramo',texto:'UI',origem:'texto'});
+  assert.equal(result.ok,false);
+  assert.deepEqual(events,[]);
+});
+
 test('corrigir praça para texto livre limpa apenas CEP que veio da resposta anterior', async () => {
   row.cep = '01310100'; row.city = 'São Paulo'; row.radius_km = 20;
   row.onboarding.respostas.praca = {texto:'Na cidade toda',echo:'São Paulo · Na cidade toda · CEP 01310-100',origem:'chip',cidade:'São Paulo',cep:'01310100',em:oldTime};
@@ -417,7 +434,7 @@ test('ticket parcialmente gravado não vira média falsa e retoma as duas coluna
   row.avg_ticket_max = 100;
   delete row.onboarding.contas.ticket;
   fieldFailureAfter = 1;
-  const primeira = await saveConta({conta:'ticket',escolha:'R$ 300 a R$ 800'});
+  const primeira = await saveConta({conta:'ticket',escolha:'R$ 300 a R$ 500'});
   assert.equal(primeira.ok,false);
   assert.equal(primeira.recarregar,true);
   assert.equal(row.avg_ticket_min,300);
@@ -428,11 +445,11 @@ test('ticket parcialmente gravado não vira média falsa e retoma as duas coluna
   assert.equal(retomada.leituras.ticket.estado,'nao_perguntado');
   assert.equal(cadastro.montarCadastro(row).pendencias.some(p => p.campo === 'ticket_medio'),true);
   fieldFailureAfter = null;
-  const segunda = await saveConta({conta:'ticket',escolha:'R$ 300 a R$ 800'});
+  const segunda = await saveConta({conta:'ticket',escolha:'R$ 300 a R$ 500'});
   assert.equal(segunda.ok,true);
-  assert.equal(segunda.estado.ticket,550);
+  assert.equal(segunda.estado.ticket,400);
   assert.equal(row.onboarding.contas.ticket.emGravacao,undefined);
-  assert.equal(row.avg_ticket_max,800);
+  assert.equal(row.avg_ticket_max,500);
 });
 test('faixa aberta limpa teto antigo antes de confirmar ticket', async () => {
   row.avg_ticket_min = null;
@@ -455,6 +472,16 @@ test('custo só pode ser confirmado após estimativa registrada, inclusive na re
   assert.equal((await saveConta({conta:'custo',escolha:'50',confirmando:true})).ok,true);
   assert.equal(row.avg_direct_cost,50);
   assert.equal(row.onboarding.contas.custo.confirmado,true);
+});
+
+test('custo digitado em reais precisa de confirmação antes de virar coluna', async () => {
+  delete row.onboarding.contas.custo;
+  assert.equal((await saveConta({conta:'custo',escolha:'R$ 4,00'})).ok,true);
+  assert.equal(row.avg_direct_cost,null);
+  assert.equal(row.onboarding.contas.custo.calculado,4);
+  assert.equal(row.onboarding.contas.custo.confirmado,false);
+  assert.equal((await saveConta({conta:'custo',escolha:'4',confirmando:true})).ok,true);
+  assert.equal(row.avg_direct_cost,4);
 });
 
 test('confirmação e não sei simultâneos não substituem a estimativa', async () => {
@@ -524,6 +551,14 @@ test('marca exige contas fechadas e resposta visual explícita', async () => {
   contasProntas();
   assert.equal((await marca.salvarMarcaAction({...entradaMarca(),aparencia:''})).ok,false);
   assert.deepEqual(events,[]);
+});
+
+test('cores confirmadas concluem marca sem exigir descrição livre', async () => {
+  contasProntas();
+  const result = await marca.salvarMarcaAction({...entradaMarca(),aparencia:'',coresConfirmadas:['#123456']});
+  assert.equal(result.ok,true);
+  assert.deepEqual(result.estado.marca.coresConfirmadas,['#123456']);
+  assert.equal(result.estado.concluido,true);
 });
 test('não conclui se faltar uma resposta básica, mesmo com as contas prontas', async () => {
   contasProntas();

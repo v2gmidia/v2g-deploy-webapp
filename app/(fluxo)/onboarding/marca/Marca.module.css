@@ -41,3 +41,21 @@
 .opcao input {
   margin-top: 4px;
 }
+
+.revisao { margin: 24px 0 30px; padding: 18px 22px; border: 1px solid #ccd9d6; border-radius: 8px; background: #fff; }
+.revisao summary { color: #0b40da; font-weight: 700; cursor: pointer; }
+.revisao p { margin: 12px 0 0; color: #49606a; }
+.logoBloco, .guiaBloco, .coresBloco { margin: 26px 0; padding: clamp(22px, 3vw, 32px); border: 1px solid #ccd9d6; border-radius: 8px; background: #fff; }
+.logoBloco h2, .guiaBloco h2, .coresBloco h2 { margin: 0 0 8px; color: #102a35; font: 700 clamp(22px, 2.5vw, 28px)/1.2 Archivo, Arial, sans-serif; }
+.logoBloco p, .guiaBloco p, .coresBloco p { color: #49606a; line-height: 1.55; }
+.logoForm { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 18px; }
+.logoForm input { min-width: 0; max-width: 100%; color: #102a35; }
+.logoForm button { margin: 0; }
+.logoAtual { display: flex; align-items: center; gap: 16px; margin: 18px 0; color: #49606a; overflow-wrap: anywhere; }
+.logoAtual img { width: 80px; height: 80px; object-fit: contain; border: 1px solid #ccd9d6; border-radius: 6px; background: #fff; }
+.declaracao { padding: 12px 16px; border-left: 3px solid #0b40da; background: #f4f7ff; font-size: 14px; }
+.cores { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0; }
+.cores label { display: grid; gap: 6px; min-width: 140px; padding: 12px; border: 1px solid #ccd9d6; border-radius: 6px; color: #102a35; font-weight: 600; }
+.cores input { width: 60px; height: 50px; padding: 0; border: 0; cursor: pointer; }
+.cores code { font-size: 13px; color: #49606a; }
+.confirmarCores { min-height: 48px; padding: 10px 16px; border: 1px solid #0b40da; border-radius: 4px; background: #e4f4f9; color: #0b40da; font-weight: 700; cursor: pointer; }
