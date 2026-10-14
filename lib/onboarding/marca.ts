@@ -26,7 +26,7 @@ export function lerMarca(onboarding: unknown): RespostasDaMarca | null {
   return {
     aparencia: typeof marca.aparencia === "string" ? marca.aparencia : "",
     coresConfirmadas: Array.isArray(marca.coresConfirmadas)
-      ? marca.coresConfirmadas.filter((cor): cor is string => typeof cor === "string" && /^#[0-9A-Fa-f]{6}$/.test(cor)).slice(0, 3)
+      ? marca.coresConfirmadas.filter((cor): cor is string => typeof cor === "string" && /^#[0-9A-Fa-f]{6}$/.test(cor)).slice(0, 6)
       : [],
     aparenciaNaoSei: marca.aparenciaNaoSei === true,
     siteNaoTenho: marca.siteNaoTenho === true,

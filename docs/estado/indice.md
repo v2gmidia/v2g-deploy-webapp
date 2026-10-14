@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`asaas-suporte-14-10.md`](./asaas-suporte-14-10.md) | 14/10/2026 | Resposta humana da Helen sobre tokenização e estorno simulado, réplica técnica da V2G e acompanhamento condicional marcado para 11h. | **Sim.** Liberação da conta em produção e fluxo 3DS inicial ainda sem confirmação específica; estorno final não provado. |
 | [`onboarding-feedback-victor-13-10.md`](./onboarding-feedback-victor-13-10.md) | 13/10/2026 | Teste completo narrado por Victor no QA, correções locais de convite, contraste, rota da conclusão e ticket digitado; backlog de voz, alcance, nichos, marca, verba e performance. | **Sim.** Publicação e verificação HTTPS das correções, voz por API, Brasil inteiro, marca por arquivo, agenda e verba. |
 | [`etapa-02-orquestracao-segura-13-10.md`](./etapa-02-orquestracao-segura-13-10.md) | 13/10/2026 | Contrato operacional para futura orquestração n8n de assinatura e competências fiscais, com deduplicação, falhas e retomada. | **Sim.** Minuta, provedor, parâmetros fiscais, artefatos assinados e integração ainda não aprovados. |
 | [`etapa-02-perguntas-para-fechar-13-10.md`](./etapa-02-perguntas-para-fechar-13-10.md) | 13/10/2026 | Dados já recebidos e respostas exatas ainda necessárias para contrato, provedor e NFS-e. | **Sim.** Arquivo jurídico final, início do serviço, provedor, fundamento fiscal e configuração efetiva. |

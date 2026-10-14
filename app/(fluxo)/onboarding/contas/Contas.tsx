@@ -122,7 +122,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
   }
 
   const pergunta: Record<ChaveDeConta, string> = {
-    ticket: "Na média, quanto sai uma venda sua?",
+    ticket: "Qual é o valor médio de uma venda sua? Pense no que o cliente costuma pagar; não precisa listar preços de cada serviço.",
     custo: "Depois de pagar produto, material ou comissão de uma venda, quanto sobra?",
     lucro: estado.margem
       ? `Dessa sobra aproximada de ${dinheiro(estado.margem, "BRL")}, quanto você precisa manter por venda?`
@@ -142,8 +142,8 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       <p className="mission-tag">Sua primeira missão · passo 1 de 3</p>
       <h1 className="auth-h">Suas contas</h1>
       <p className="auth-sub">
-        Três contas rápidas. Não precisa ser exato — precisa ser mais ou menos certo. E se
-        você não souber, tudo bem: a gente marca e resolve numa conversa.
+        Primeiro, o valor médio de uma venda. Depois, o custo para entregar e quanto você precisa manter.
+        Pode estimar ou deixar uma dúvida para conferir com o gestor.
       </p>
 
       {aviso && <p className="form-warning" role="status">{aviso} <button type="button" onClick={() => window.location.reload()}>Recarregar</button></p>}

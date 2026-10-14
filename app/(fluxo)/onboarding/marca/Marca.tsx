@@ -3,14 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
+import { TEXTO_DA_DECLARACAO } from "@/app/(protected)/conta/declaracao";
 import { coresDaLogo, PAPEIS_DA_COR } from "@/lib/identidade/cores-da-logo";
+import { coresDoPdf } from "@/lib/identidade/cores-do-pdf";
+import { juntarPaleta } from "@/lib/identidade/paleta";
 import { salvarMarcaAction, type EstadoMarca } from "./actions";
 import { LogoDaMarca } from "./LogoDaMarca";
 import { GuiaDaMarca } from "./GuiaDaMarca";
 import type { GuiaVisual } from "./guia-actions";
+import { VariacoesDaMarca } from "./VariacoesDaMarca";
+import type { VariacaoVisual } from "./variacoes-actions";
 import styles from "./Marca.module.css";
 
-export function Marca({ inicial, logo, guia }: { inicial: EstadoMarca; logo: ImagemDeIdentidade | null; guia: GuiaVisual | null }) {
+export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca; logo: ImagemDeIdentidade | null; guia: GuiaVisual | null; variacoes: VariacaoVisual[] }) {
   const router = useRouter();
   const [estado, setEstado] = useState(inicial);
   const [site, setSite] = useState(inicial.site);
@@ -52,16 +57,40 @@ export function Marca({ inicial, logo, guia }: { inicial: EstadoMarca; logo: Ima
     } finally { setEnviando(false); }
   }
 
-  async function proporCores(arquivo: File) {
+  async function proporCores(arquivos: File[]) {
     setAnalisandoLogo(true);
     setRecadoLogo(null);
     setCoresConferidas(false);
-    const propostas = await coresDaLogo(arquivo);
-    setCores(propostas.map((cor) => cor.hex));
-    setRecadoLogo(propostas.length
-      ? "Encontramos estas cores no arquivo. Confira e confirme as que representam sua marca."
-      : "Não encontramos cores confiáveis nesta imagem. Você pode definir com o gestor.");
-    setAnalisandoLogo(false);
+    try {
+      const propostas = (await Promise.all(arquivos.map((arquivo) => coresDaLogo(arquivo, 6)))).flat();
+      setCores((anteriores) => juntarPaleta(anteriores, propostas));
+      setRecadoLogo(propostas.length
+        ? "Somamos as cores encontradas nas imagens. Confira e confirme as que representam sua marca."
+        : "Não encontramos cores confiáveis nessas imagens. Você pode definir com o gestor.");
+    } catch {
+      setRecadoLogo("As imagens foram guardadas, mas não conseguimos ler as cores agora. Confira as cores manualmente ou defina com o gestor.");
+    } finally {
+      setAnalisandoLogo(false);
+    }
+  }
+
+  async function proporCoresDoGuia(arquivo: File) {
+    setAnalisandoLogo(true);
+    setRecadoLogo(null);
+    try {
+      const propostas = await coresDoPdf(arquivo);
+      if (propostas.length) {
+        setCores((anteriores) => juntarPaleta(anteriores, propostas));
+        setCoresConferidas(false);
+      }
+      setRecadoLogo(propostas.length
+        ? "Lemos as primeiras páginas do PDF e somamos as cores sugeridas. Confira antes de confirmar."
+        : "PDF guardado para o gestor. Não conseguimos extrair cores confiáveis dele; envie imagens ou defina as cores na reunião.");
+    } catch {
+      setRecadoLogo("PDF guardado para o gestor, mas a leitura automática das cores falhou. Confira as cores manualmente ou defina com o gestor.");
+    } finally {
+      setAnalisandoLogo(false);
+    }
   }
 
   return <>
@@ -80,11 +109,13 @@ export function Marca({ inicial, logo, guia }: { inicial: EstadoMarca; logo: Ima
       <>
         {erro && <p className="form-error" role="alert">{erro}</p>}
         {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
-        <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={proporCores} />
-        <GuiaDaMarca businessId={estado.businessId} guia={guia} />
+        <p className={styles.declaracao}>{TEXTO_DA_DECLARACAO}</p>
+        <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo])} />
+        <VariacoesDaMarca businessId={estado.businessId} variacoes={variacoes} aoEscolher={proporCores} />
+        <GuiaDaMarca businessId={estado.businessId} guia={guia} aoEscolher={proporCoresDoGuia} />
         <section className={styles.coresBloco}>
           <h2>Essas são as cores da sua marca?</h2>
-          <p>O palpite vem do logo. Você pode ajustar cada cor antes de confirmar.</p>
+          <p>O palpite vem dos logos, das imagens e do manual enviados. Você pode ajustar cada cor antes de confirmar.</p>
           {analisandoLogo && <p role="status">Analisando cores…</p>}
           {recadoLogo && <p role="status">{recadoLogo}</p>}
           {cores.length > 0 && <>
@@ -96,12 +127,21 @@ export function Marca({ inicial, logo, guia }: { inicial: EstadoMarca; logo: Ima
                   setCoresConferidas(false);
                 }} />
                 <code>{cor}</code>
+                <button type="button" className={styles.removerCor} onClick={() => {
+                  setCores(cores.filter((_, j) => j !== i));
+                  setCoresConferidas(false);
+                }}>Remover</button>
               </label>)}
             </div>
+            {cores.length < 6 && <button type="button" className={styles.adicionarCor} onClick={() => {
+              setCores([...cores, "#1250DC"]);
+              setCoresConferidas(false);
+            }}>Adicionar outra cor</button>}
             <button className={styles.confirmarCores} type="button" onClick={() => { setCoresConferidas(true); setNaoSei(false); }}>
               {coresConferidas ? "Cores confirmadas ✓" : "Confirmar estas cores"}
             </button>
           </>}
+          {cores.length === 0 && <button type="button" className={styles.adicionarCor} onClick={() => setCores(["#1250DC"])}>Adicionar cor manualmente</button>}
         </section>
         <div className={styles.campo}>
           <label htmlFor="instagram">Instagram da marca (se tiver)</label>

@@ -31,7 +31,7 @@ export default async function EscolherPage() {
     return (
       <Aviso
         titulo="Não encontramos seu negócio."
-        texto="Comece contando sobre ele — são quatro perguntas rápidas."
+        texto="Comece contando sobre sua oferta e seus clientes."
         acao={{ href: "/onboarding", rotulo: "Contar sobre o meu negócio" }}
       />
     );

@@ -536,9 +536,19 @@ export const MIGRATIONS: MigrationDeclarada[] = [
     arquivo: "20261014010000_bucket_identidade_qa.sql",
     cria: [],
     foraDoAlcance: [
-      "migration preparada localmente e NAO aplicada no QA",
+      "bucket aplicado somente no QA; o ledger remoto registra qa_bucket_identidade_20261014",
       "bucket privado storage.buckets v2g-midia; o conferidor OpenAPI nao inspeciona o schema storage",
       "limite de 10 MB e tipos de arquivo permitidos; conferir diretamente no projeto de destino",
+    ],
+  },
+  {
+    arquivo: "20261014030000_onboarding_reserva_unica.sql",
+    cria: [{ tipo: "tabela", nome: "onboarding_meetings" }],
+    foraDoAlcance: [
+      "aplicada somente no QA como qa_onboarding_reserva_unica_20261014; nao aplicada em producao",
+      "indices parciais de uma reserva ativa por negocio, CNPJ e horario exigem consulta SQL",
+      "RLS sem acesso anon/authenticated e escrita exclusiva pelo servidor exigem conferencia de grants",
+      "evento e convite Google nao sao verificados pelo esquema nem pela aplicacao da migration",
     ],
   },
 ];

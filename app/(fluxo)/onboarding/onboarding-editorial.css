@@ -6,6 +6,8 @@
 .onb-v2-topo .wm small { color: #49606A; }
 .onb-v2-topo a:last-child { color: #0B40DA; text-decoration: underline; text-underline-offset: 4px; }
 .onb-v2 { width: 100%; }
+.onb-v2-identidade { width: min(100%, 920px); margin: -18px auto 28px; padding: 12px 16px; border: 1px solid #CCD9D6; border-radius: 4px; background: #FFFFFF; color: #49606A; font-size: 14px; }
+.onb-v2-identidade strong { color: #102A35; font-weight: 700; font-variant-numeric: tabular-nums; }
 .onb-v2 .seletor-nicho { max-width: 820px; margin-top: 32px; }
 .onb-v2 .seletor-nicho .chips-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .onb-v2 .seletor-nicho .chip-opt { display: block; width: 100%; min-height: 68px; padding: 16px 20px; border: 1px solid #CCD9D6; border-radius: 4px; background: #FFFFFF; color: #102A35; font-weight: 600; text-align: left; white-space: normal; }
@@ -28,6 +30,7 @@
 .onb-v2-etapa .conta-origem { color: #237644; }
 .onb-v2-etapa .pendencia-bloco b { color: #102A35; }
 .onb-v2-etapa .pendencia-bloco p { color: #49606A; }
+.onb-v2-etapa .pendencia-bloco select { display: block; width: 100%; min-height: 52px; margin: 10px 0 18px; padding: 10px 12px; border: 1px solid #81979e; border-radius: 4px; background: #fff; color: #102a35; font: inherit; }
 .onb-v2-etapa .chips-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .onb-v2-etapa .chip-opt { min-height: 56px; padding: 14px 18px; border: 1px solid #CCD9D6; border-radius: 4px; background: #FFFFFF; color: #102A35; font-weight: 600; text-align: left; white-space: normal; }
 .onb-v2-etapa .chip-opt:hover { border-color: #0B40DA; color: #0B40DA; }

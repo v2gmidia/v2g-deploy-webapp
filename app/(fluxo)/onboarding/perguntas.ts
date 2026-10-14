@@ -1,3 +1,5 @@
+import { NAO_SEI_BRIEFING } from "../../../lib/onboarding/briefing-trafego.ts";
+
 /**
  * As perguntas do bloco 1 — "sobre o seu negócio".
  *
@@ -29,20 +31,14 @@ export interface Pergunta {
   fallbackPlaceholder?: string;
   /** chip que só abre o campo de texto, sem responder (o "Outro") */
   chipAbreTexto?: string;
-  /**
-   * A pergunta é respondida pelo `SeletorDeNicho`, com a lista viva do
-   * `GET /nichos`.
-   *
-   * As `opcoes` desta pergunta ficam **vazias**, e não existe lista de
-   * reserva: com o endpoint fora, a tela mostra só o texto livre e uma
-   * linha dizendo que a lista não carregou. Ver o comentário na pergunta
-   * `ramo`.
-   */
-  seletorDeNicho?: true;
+  /** Sugestões de atividade declaradas como texto, independentes do catálogo técnico. */
+  seletorDeAtividade?: true;
   /** pergunta sem chip nenhum: só o campo de texto, já aberto */
   soTexto?: true;
   /** piso de caracteres, quando o backend impõe um */
   minimo?: { tamanho: number; recado: string };
+  /** A resposta ausente só é aceita após uma segunda confirmação na tela. */
+  admiteNaoSei?: true;
 }
 
 /**
@@ -62,8 +58,7 @@ export const PERGUNTAS: Pergunta[] = [
   },
   {
     id: "nome",
-    contador: "Pergunta 1 de 4",
-    texto: "Como se chama o seu negócio? Vamos usar esse nome para identificar suas respostas.",
+    texto: "Como seus clientes conhecem sua empresa? Informe o nome do negócio, que pode ser diferente da razão social da compra.",
     opcoes: [],
     soTexto: true,
     fallbackLabel: "O nome do seu negócio",
@@ -71,56 +66,23 @@ export const PERGUNTAS: Pergunta[] = [
   },
   {
     id: "ramo",
-    contador: "Pergunta 2 de 4",
-    texto: "Qual é o tipo do seu negócio? Busque uma opção ou descreva com suas palavras.",
-    seletorDeNicho: true,
-    /**
-     * ============================================================
-     * SEM OPÇÕES FIXAS AQUI, E A LISTA VAZIA É A DECISÃO.
-     *
-     * Até 22/08 existiam cinco, e elas viraram a lista de RESERVA quando o
-     * seletor passou a ler o `GET /nichos`. Depois saíram de vez, porque
-     * reserva não é degradação: é palpite com cara de escolha do cliente.
-     * Esta era a conta do estrago, medida opção por opção contra os dez
-     * nichos de `knowledge/`:
-     *
-     *   Clínica / Consultório  → cobria TRÊS (odontológica, estética, médico)
-     *   Beleza e estética      → cobria QUATRO (barbearia, manicure, salão,
-     *                            clínica estética — que aparecia nas duas)
-     *   Restaurante / Bar      → cobria um
-     *   Loja física            → NENHUM
-     *   Serviço (advocacia…)   → NENHUM
-     *
-     * Com o catálogo fora, a verdade é que NÃO SABEMOS o nicho. A tela
-     * passa a oferecer só o texto livre, com uma linha dizendo que a lista
-     * não carregou — e a frase da pessoa é gravada como `confirmado`,
-     * porque ela é verdade: foi ela que disse.
-     *
-     * NÃO ACRESCENTE OPÇÃO AQUI. Toda linha nova é uma lista paralela
-     * envelhecendo em silêncio, que é o defeito que este lote apagou. A
-     * lista certa é a do backend, e ela é a única.
-     *
-     * A lista vazia também tem efeito no SERVIDOR: `actions.ts` confere
-     * resposta de chip contra `pergunta.opcoes`, então nenhum chip forjado
-     * passa por aqui quando o seletor não está no ar.
-     * ============================================================
-     */
+    texto: "Qual é o tipo do seu negócio? Busque uma atividade, como dentista ou restaurante, ou descreva com suas palavras.",
+    seletorDeAtividade: true,
+    // Sugestões em `lib/onboarding/atividades.ts`; não são IDs do backend.
+    // O cliente escolhe uma descrição, sempre gravada com origem `texto`.
     opcoes: [],
-    /** o rótulo do chip que abre o texto livre, no fim dos dez */
-    chipAbreTexto: "Outro",
     fallbackLabel: "Tipo de negócio",
     fallbackPlaceholder: "Ex.: software de gestão, padaria, salão de beleza",
     minimo: { tamanho: 4, recado: "Descreva o tipo do seu negócio com pelo menos quatro caracteres." },
   },
   {
     id: "descricao",
-    contador: "Pergunta 3 de 4",
     texto:
-      "Me conta com suas palavras o que você vende ou faz. Pode ser uma frase — isso ajuda o gestor a entender sua oferta.",
+      "Quais produtos ou serviços sua empresa oferece? Conte os principais; você escolherá o foco do primeiro anúncio na próxima pergunta.",
     opcoes: [],
     soTexto: true,
     fallbackLabel: "O que você vende ou faz",
-    fallbackPlaceholder: "Ex: bolo e salgado do dia",
+    fallbackPlaceholder: "Ex.: criação de sites, produção de conteúdo e design para empresas",
     // O schema do backend exige 10 caracteres (`descricao_livre`,
     // `minLength: 10`). O recado NÃO cita o número: contar caractere na
     // tela é linguagem de formulário, e o piso útil é bem maior que o piso
@@ -131,10 +93,67 @@ export const PERGUNTAS: Pergunta[] = [
     },
   },
   {
+    id: "oferta",
+    texto: "Qual desses produtos ou serviços você quer anunciar primeiro? Conte o que está incluído; o valor médio da venda vem depois.",
+    opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Quero decidir com o gestor" }],
+    soTexto: true,
+    admiteNaoSei: true,
+    fallbackLabel: "Foco do primeiro anúncio",
+    fallbackPlaceholder: "Ex.: criação de site institucional com até cinco páginas",
+    minimo: { tamanho: 15, recado: "Descreva a oferta inicial e o que está incluído, ou deixe a escolha para a reunião." },
+  },
+  {
+    id: "publico",
+    texto: "Quem costuma comprar de você? Descreva uma pessoa ou empresa comum entre seus clientes; não precisa conhecer o termo ‘persona’.",
+    opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Ainda não sei explicar" }],
+    soTexto: true,
+    admiteNaoSei: true,
+    fallbackLabel: "Quem compra de você",
+    fallbackPlaceholder: "Ex.: donos de pequenas lojas da minha cidade que vendem por conversa",
+    minimo: { tamanho: 20, recado: "Conte um exemplo de quem compra de você. Se não souber, deixe para a reunião." },
+  },
+  {
+    id: "motivo",
+    texto: "O que costuma acontecer quando essa pessoa procura sua empresa? Conte o problema ou a necessidade que trouxe um cliente real.",
+    opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Ainda não sei explicar" }],
+    soTexto: true,
+    admiteNaoSei: true,
+    fallbackLabel: "Motivo da procura",
+    fallbackPlaceholder: "Ex.: precisa de um site para apresentar o negócio e receber contatos",
+    minimo: { tamanho: 20, recado: "Conte por que um cliente procura você, ou deixe para a reunião." },
+  },
+  {
+    id: "resultado",
+    texto: "O que o cliente recebe depois da compra? Descreva a entrega concreta, sem prometer um resultado que depende de outros fatores.",
+    opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Ainda não sei explicar" }],
+    soTexto: true,
+    admiteNaoSei: true,
+    fallbackLabel: "Resultado real para o cliente",
+    fallbackPlaceholder: "Ex.: recebe um site publicado e acesso para atualizar textos e imagens",
+    minimo: { tamanho: 25, recado: "Conte o que o cliente recebe e qual problema é resolvido. Se não souber, confirme a pendência para a reunião." },
+  },
+  {
+    id: "diferencial",
+    texto: "Por que seus clientes escolhem você? Conte algo que você realmente faz de modo diferente, se souber.",
+    opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Quero descobrir com o gestor" }],
+    soTexto: true,
+    admiteNaoSei: true,
+    fallbackLabel: "Por que escolhem sua empresa",
+    fallbackPlaceholder: "Ex.: mostro uma primeira versão para o cliente antes da entrega final",
+    minimo: { tamanho: 20, recado: "Dê um exemplo concreto ou deixe esta resposta para a reunião." },
+  },
+  {
+    id: "prova",
+    texto: "Você tem depoimentos, fotos de trabalhos ou outros exemplos reais que podemos conferir? Conte quais são; os arquivos da marca vêm na próxima etapa.",
+    opcoes: [{ echo: "Ainda não tenho provas para enviar", rotulo: "Ainda não tenho" }],
+    soTexto: true,
+    fallbackLabel: "Exemplos e depoimentos disponíveis",
+    fallbackPlaceholder: "Ex.: tenho fotos de três projetos e dois depoimentos autorizados",
+  },
+  {
     id: "praca",
-    contador: "Pergunta 4 de 4 · última",
     texto:
-      "De onde vêm seus clientes? Escolha a área onde vale a pena anunciar.",
+      "Onde você atende ou entrega? Escolha a área de onde podem vir clientes para o anúncio.",
     pedeCidade: true,
     opcoes: [
       { echo: "Só aqui perto (até 5 km)", rotulo: "Só aqui perto (até 5 km)" },
@@ -142,11 +161,12 @@ export const PERGUNTAS: Pergunta[] = [
       { echo: "Cidade + região", rotulo: "Cidade + região" },
       { echo: "Brasil inteiro", rotulo: "Brasil inteiro" },
     ],
-    fallbackLabel: "Onde seus clientes estão",
-    fallbackPlaceholder: "Onde estão seus clientes",
+    fallbackLabel: "Área atendida",
+    fallbackPlaceholder: "Ex.: atendo online em todo o estado",
   },
   {
     id: "instagram",
+    contador: "Pergunta 7 de 8",
     texto: "Qual é o @ do Instagram do seu negócio? Se tiver, pode colar o link do perfil.",
     opcoes: [{ echo: "Não tenho Instagram", rotulo: "Não tenho Instagram" }],
     soTexto: true,
@@ -155,6 +175,7 @@ export const PERGUNTAS: Pergunta[] = [
   },
   {
     id: "site",
+    contador: "Pergunta 8 de 8 · última",
     texto: "Seu negócio tem site? Se tiver, informe o endereço para a equipe conhecer melhor sua oferta.",
     opcoes: [{ echo: "Não tenho site", rotulo: "Não tenho site" }],
     soTexto: true,
@@ -165,7 +186,8 @@ export const PERGUNTAS: Pergunta[] = [
 
 // A antiga pergunta de abertura não pede dado. Respostas já gravadas nela
 // continuam legíveis, mas o percurso começa diretamente pela primeira tarefa.
-export const ORDEM = ["nome", "praca", "descricao", "instagram", "site", "ramo"];
+// Instagram e site são conferidos na etapa visual, sem fazer a pessoa responder duas vezes.
+export const ORDEM = ["nome", "ramo", "praca", "descricao", "oferta", "publico", "motivo", "resultado", "diferencial", "prova"];
 export const ULTIMA = ORDEM[ORDEM.length - 1]!;
 
 /**

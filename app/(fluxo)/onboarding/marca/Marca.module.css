@@ -59,3 +59,10 @@
 .cores input { width: 60px; height: 50px; padding: 0; border: 0; cursor: pointer; }
 .cores code { font-size: 13px; color: #49606a; }
 .confirmarCores { min-height: 48px; padding: 10px 16px; border: 1px solid #0b40da; border-radius: 4px; background: #e4f4f9; color: #0b40da; font-weight: 700; cursor: pointer; }
+.variacoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(125px, 1fr)); gap: 12px; margin: 18px 0; }
+.variacoes figure { margin: 0; padding: 10px; border: 1px solid #ccd9d6; border-radius: 6px; background: #fff; overflow-wrap: anywhere; }
+.variacoes img { width: 100%; height: 100px; object-fit: contain; }
+.variacoes figcaption { color: #102a35; font-size: 13px; }
+.adicionarCor, .removerCor { border: 0; background: transparent; color: #0b40da; text-decoration: underline; font: inherit; font-weight: 700; cursor: pointer; }
+.adicionarCor { margin: 0 12px 12px 0; }
+.removerCor { justify-self: start; padding: 4px 0; }

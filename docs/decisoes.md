@@ -14,6 +14,24 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-14 — Perguntas separadas para preparar o primeiro anúncio
+
+**Correção direta do Victor.** O bloco do negócio começa pelo nome comercial, tipo de negócio e área atendida; depois separa catálogo de produtos/serviços, escolha da oferta inicial, comprador habitual, motivo da procura, entrega concreta, diferencial e provas disponíveis. O ticket médio permanece na etapa de contas, sem exigir uma tabela de preços de todos os serviços. O destino dos interessados nesta oferta é WhatsApp, então não vira uma pergunta de escolha. Instagram e site ficam na etapa da marca para evitar repetição. Esta decisão substitui a frase anterior que concentrava oferta, inclusão e preço numa única pergunta. As respostas adicionais são declarações do cliente para revisão do gestor, não segmentação, promessa publicitária ou diagnóstico automático. A relação entre verba, ticket e vendas necessárias só pode ser apresentada como cenário aritmético quando houver custo por venda confiável; sem taxa de conversão observada, não se prevê retorno nem se recomenda verba pelo ticket isolado.
+
+**Limite de integração:** a LP registra nome do negócio e nicho, mas o pré-cadastro no V2G-SITE ainda não possui vínculo comprovado com o pedido/negócio do QA. CNPJ, razão social e comprador vêm do pedido aprovado; razão social não substitui o nome comercial. A interface não deve preencher respostas da LP por semelhança de e-mail, telefone ou CNPJ sem ligação explícita e conferida.
+
+### 2026-10-14 — Recorte dos playbooks enviados para o onboarding V2G
+
+**Direção do Victor:** usar somente o que ajuda a extrair informações para rodar o tráfego do cliente. O fluxo pergunta qual oferta vai ao primeiro anúncio, quem compra e qual resultado real recebe, preservando as respostas declaradas e lacunas para o gestor. Não importa o diagnóstico de posicionamento, a produção de conteúdo ou o processo comercial completo dos playbooks. A implementação e os limites de prova estão em [`estado/onboarding-playbooks-fornecidos-14-10.md`](./estado/onboarding-playbooks-fornecidos-14-10.md). A agenda própria continua desativada mesmo após a migration aplicada no QA.
+
+### 2026-10-13 — Marca com múltiplas referências e uma reserva por negócio
+
+**Correções diretas do Victor.** Um único logo e um PDF guardado para consulta não bastam: o cliente deve poder enviar várias imagens da identidade, receber sugestões de várias cores e usar o manual de marca na proposta. A confirmação das cores continua explícita. Após agendar, o cliente deve conseguir ver o compromisso na jornada, e um negócio não deve reservar vários horários ativos. A página pública atual do Google permite reserva repetida e não devolve estado ao WebApp; por isso a etapa 04 permanece incompleta. A implementação local de imagens e leitura das primeiras páginas do PDF é preparação, não prova de QA. O bloqueio efetivo de reservas repetidas requer agendamento autenticado com calendário e registro persistido por negócio; ocultar o link público não satisfaz essa decisão.
+
+### 2026-10-13 — CNPJ da compra e sugestões de atividade no onboarding
+
+**Correção direta do Victor.** O onboarding deve mostrar o CNPJ já informado no pedido aprovado do negócio selecionado, sem pedir nova digitação. A pergunta de tipo de negócio deve permitir buscar enquanto se escreve, sugerir atividades concretas como dentista e médico, e oferecer “Outros” para descrição livre. A decisão anterior de 22/08, que escondia toda sugestão quando `GET /nichos` caía, foi substituída para esta pergunta. As sugestões locais são exemplos de atividade, não IDs nem confirmação do catálogo técnico do backend; a escolha é gravada como texto declarado pelo cliente. O catálogo técnico permanece dependente da configuração e da conferência próprias no QA.
+
 ### 2026-10-13 — Revisão do onboarding após percurso completo no QA
 
 **Correções diretas do Victor.** A praça precisa aceitar “Brasil inteiro”; como o backend só conhece raio local, esta escolha registra intenção e a segmentação nacional é definida pelo gestor na reunião. O tipo de negócio deve ter busca no catálogo e opção “Outro”; resposta de duas letras como “UI” não basta para identificar o negócio. Nas três contas, o cliente pode digitar um valor em reais quando o conhece ou escolher uma estimativa; nas contas de custo e valor a manter, números calculados e digitados exigem confirmação antes de virar dado de perfil. A etapa da marca deve receber logo e, quando houver, guia de identidade em PDF; cores extraídas do logo são propostas até o cliente confirmá-las. A pergunta livre “descreva as cores” deixa de ser a exigência principal. O preenchimento termina na agenda, com menos mensagens intermediárias. A tela deve funcionar em tema claro com contraste legível.

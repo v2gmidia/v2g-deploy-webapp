@@ -1,5 +1,6 @@
 import { montarCadastro, type NegocioParaCadastro } from "../cadastro/montar.ts";
 import { estadoDaConclusao } from "../onboarding/conclusao.ts";
+import { lerBriefingDeTrafego } from "../onboarding/briefing-trafego.ts";
 
 export interface NegocioDoPortfolio extends NegocioParaCadastro {
   dados_ficticios: boolean;
@@ -50,6 +51,7 @@ export interface LinhaDoPortfolio {
   instagram: { rotulo: string; url: string } | null;
   instagramInformadoSemLink: boolean;
   descricaoParaReuniao: string | null;
+  briefingParaReuniao: ReturnType<typeof lerBriefingDeTrafego>;
   diferenciaisParaReuniao: string[];
   contas: number;
   contasDetalhe: {
@@ -203,6 +205,7 @@ export function montarPortfolio(
       instagram,
       instagramInformadoSemLink: !!negocio.instagram_handle?.trim() && !instagram,
       descricaoParaReuniao: negocio.description?.trim() || null,
+      briefingParaReuniao: lerBriefingDeTrafego(negocio.onboarding),
       diferenciaisParaReuniao: Array.isArray(negocio.differentiators)
         ? negocio.differentiators.filter((valor): valor is string => typeof valor === "string" && !!valor.trim()) : [],
       contas: quantidadeContas,

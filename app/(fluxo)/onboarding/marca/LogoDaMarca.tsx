@@ -3,7 +3,6 @@
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
-import { TEXTO_DA_DECLARACAO } from "@/app/(protected)/conta/declaracao";
 import { enviarImagemAction, type IdentidadeState } from "@/app/(protected)/conta/identidade-actions";
 import styles from "./Marca.module.css";
 
@@ -36,7 +35,6 @@ export function LogoDaMarca({ businessId, logo, aoEscolher }: {
       <img src={logo.url} alt="Logo atual do negócio" />
       <span>Logo salvo: {logo.nomeDoArquivo}</span>
     </div>}
-    <p className={styles.declaracao}>{TEXTO_DA_DECLARACAO}</p>
     <form action={enviar} className={styles.logoForm}>
       <input type="hidden" name="businessId" value={businessId} />
       <input type="hidden" name="uso" value="logo" />

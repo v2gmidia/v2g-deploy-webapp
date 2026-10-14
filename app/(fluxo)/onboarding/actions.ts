@@ -1,12 +1,11 @@
 "use server";
 
 import { patchDoBlocoUm } from "@/lib/onboarding/documento";
+import { NAO_SEI_BRIEFING } from "@/lib/onboarding/briefing-trafego";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
-import { listarNichos } from "@/lib/backend";
-import { conferirEscolhaDeNicho } from "@/lib/nichos/escolha";
 import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
@@ -142,7 +141,7 @@ export async function carregarEstadoAction(): Promise<
  * `var answers = {}` do navegador enquanto a interface prometia
  * "suas respostas ficam guardadas". Aqui cada resposta é um round-trip
  * ao banco — a promessa passa a ser verdade, ao custo de uma escrita
- * por pergunta, que para 5 perguntas é irrelevante.
+ * por pergunta, que neste bloco é aceitável para preservar a retomada.
  *
  * Os campos estruturados também vão para colunas de `businesses`
  * (`name`, `niche`, `description`, `city`, `radius_km`) para poderem ser
@@ -166,42 +165,15 @@ export async function salvarRespostaAction(entrada: {
   if (entrada.origem !== "chip" && entrada.origem !== "texto")
     return { ok: false, erro: "Origem da resposta inválida." };
 
-  // `let` porque a conferência do nicho pode reescrever isto com a grafia
-  // canônica do backend — ver `conferirEscolhaDeNicho`.
   let texto = entrada.texto.trim();
   if (!texto) return { ok: false, erro: "Escreva uma resposta antes de enviar." };
 
   // Resposta por chip precisa bater com uma opção real da pergunta —
   // o cliente não escolhe o que quiser só porque manda o campo `origem`.
   if (entrada.origem === "chip") {
-    if (pergunta.seletorDeNicho) {
-      // ============================================================
-      // A LISTA DESTA PERGUNTA NÃO ESTÁ EM `pergunta.opcoes`.
-      //
-      // Ela vem do `GET /nichos`, então conferir contra as `opcoes`
-      // recusaria toda escolha válida — e a tentação seguinte seria
-      // apagar a checagem, o que reabriria o buraco de forjar
-      // `origem: "chip"` que ela existe para fechar. Confere-se contra a
-      // MESMA lista viva que a tela mostrou.
-      //
-      // Custa um `GET /nichos` por resposta de ramo: 17 ms, medido, e uma
-      // vez por cliente na vida. Barato pelo que compra.
-      // ============================================================
-      const lista = await listarNichos();
-      const conferencia = conferirEscolhaDeNicho({
-        // Sem lista, NENHUM chip passa — não existe lista de reserva. Com
-        // o catálogo fora a tela não mostra chip nenhum, só o texto
-        // livre; qualquer `origem: "chip"` que chegue aqui é forjado ou
-        // veio de uma aba que carregou antes da queda. Nos dois casos a
-        // resposta certa é a mesma: não dá para conferir agora.
-        lista: lista.ok ? lista.dados : null,
-        texto,
-      });
-      if (!conferencia.ok) return { ok: false, erro: conferencia.erro };
-      texto = conferencia.texto;
-    } else if (!pergunta.opcoes.some((o) => o.echo === texto)) {
+    if (!pergunta.opcoes.some((o) => o.echo === texto)) {
       // Numa pergunta `soTexto` a lista é vazia, então isto recusa
-      // qualquer chip forjado sem precisar de um caso à parte.
+      // qualquer chip forjado. Atividades sugeridas também chegam como texto.
       return { ok: false, erro: "Essa opção não existe nesta pergunta." };
     }
   }
@@ -210,9 +182,12 @@ export async function salvarRespostaAction(entrada: {
   // `minLength: 10`), e é conferido aqui porque o cliente não pode
   // descobrir isso como 422 três telas adiante. O recado não cita o
   // número — ver `perguntas.ts`.
-  if (pergunta.minimo && texto.length < pergunta.minimo.tamanho) {
+  if (pergunta.minimo && !(pergunta.admiteNaoSei && entrada.origem === "chip" && texto === NAO_SEI_BRIEFING)
+    && texto.length < pergunta.minimo.tamanho) {
     return { ok: false, erro: pergunta.minimo.recado };
   }
+  if (["descricao", "oferta", "publico", "motivo", "resultado", "diferencial", "prova"].includes(entrada.qid) && texto.length > 800)
+    return { ok: false, erro: "Resuma sua resposta em até 800 caracteres." };
   if (entrada.qid === "instagram" && !(entrada.origem === "chip" && texto === "Não tenho Instagram")) {
     const normalizado = validarInstagram(texto);
     if (!normalizado) return { ok: false, erro: "Confira o @ ou o link do Instagram." };

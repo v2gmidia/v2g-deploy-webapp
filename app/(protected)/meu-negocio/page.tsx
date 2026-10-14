@@ -35,7 +35,7 @@ export default async function MeuNegocioPage() {
           <h1>O que a gente entendeu do seu negócio</h1>
           <p>
             A gente ainda não sabe nada do seu negócio — isso começa no onboarding, que são
-            quatro perguntas rápidas.
+            algumas perguntas sobre sua oferta e seus clientes.
           </p>
         </div>
         <div className="card">

@@ -1,6 +1,9 @@
 import { carregarEstadoAction } from "./actions";
 import { Chat } from "./Chat";
-import { listarNichos } from "@/lib/backend";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { cnpjsDoComprador, type PedidoParaIdentificarNegocio } from "@/lib/multiconta/identificacao";
+import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
 import { tituloDaAba } from "@/lib/titulos";
 import { Marca } from "@/components/ui/Marca";
 import "./onboarding-editorial.css";
@@ -25,25 +28,6 @@ export const metadata = tituloDaAba("/onboarding");
  * renderização, sem piscar a tela vazia antes de carregar.
  */
 export default async function OnboardingPage() {
-  // ============================================================
-  // DISPARA ANTES DE ESPERAR QUALQUER COISA, e é a decisão sobre o
-  // carregamento — tomada depois de medir, não por gosto.
-  //
-  // Medido em 22/08/2026: o `GET /nichos` responde em 17 ms de mediana,
-  // 60 ms a frio. Esta página já esperava por duas outras coisas antes de
-  // renderizar; em paralelo com elas, a lista custa perto de nada.
-  //
-  // Por isso NÃO existe aqui um estado de "carregando a lista", nem os
-  // cinco chips de reserva aparecendo primeiro para serem trocados por dez
-  // meio segundo depois. Trocar chip na cara de quem está lendo é pior que
-  // as duas alternativas que essa manobra tentaria evitar.
-  //
-  // E a espera tem TETO, para isto não depender da medição continuar
-  // verdadeira: `listarNichos` desiste em 2,5 s e devolve falha, o que faz
-  // a reserva entrar. A tela nunca fica presa esperando o backend.
-  // ============================================================
-  const promessaNichos = listarNichos();
-
   const estado = await carregarEstadoAction();
 
   if ("erro" in estado) {
@@ -61,16 +45,29 @@ export default async function OnboardingPage() {
   }
 
   const { respostas, businessId } = estado;
-
-  // A TRILHA LÊ A MESMA FONTE QUE O RESTO DO APP. Antes ela lia
-  // `blocosDoPasso1`/`minutosRestantes`, duas tabelas fixas indexadas pela
-  // última pergunta respondida do bloco 1 — que não enxergavam as contas
-  // nem a `/verba`. Ver docs/estado-do-cliente.md §0.3.
-
-  // `null` quando o backend não respondeu — e é o `null` que acende a
-  // reserva no `Chat`. O token fica deste lado: o componente de cliente
-  // recebe a lista pronta por props e filtra local.
-  const nichos = await promessaNichos;
+  let cnpj: string | null = null;
+  try {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.email_confirmed_at && user.email) {
+      // Apenas pedidos aprovados do negócio que a sessão já selecionou.
+      // A identidade do comprador é conferida antes de mostrar o CNPJ.
+      const admin = createAdminClient();
+      const pedidos = await lerTodasPaginas((inicio, fim) => admin.from("commercial_orders")
+        .select("business_id, cnpj, buyer_email, buyer_profile_id")
+        .eq("business_id", businessId).eq("status", "payment_approved")
+        .order("created_at", { ascending: false }).order("id", { ascending: false })
+        .range(inicio, fim));
+      if (pedidos) cnpj = cnpjsDoComprador([businessId], pedidos as PedidoParaIdentificarNegocio[],
+        user.id, user.email).get(businessId) ?? null;
+    }
+  } catch {
+    console.error("[onboarding] CNPJ da compra indisponível");
+  }
+  const digitos = cnpj?.replace(/\D/g, "") ?? "";
+  const cnpjExibido = /^\d{14}$/.test(digitos)
+    ? digitos.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")
+    : null;
 
   return (
     <div className="onb-v2">
@@ -78,7 +75,8 @@ export default async function OnboardingPage() {
         <Marca editorial href="/inicio" />
         <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com uma pessoa</a>
       </header>
-      <Chat businessId={businessId} inicial={respostas} nichos={nichos.ok ? nichos.dados : null}
+      {cnpjExibido && <p className="onb-v2-identidade">CNPJ informado na compra: <strong>{cnpjExibido}</strong></p>}
+      <Chat businessId={businessId} inicial={respostas}
         vozHabilitada={process.env.V2G_VOICE_TRANSCRIPTION_ENABLED === "true" && !!process.env.OPENAI_API_KEY} />
     </div>
   );

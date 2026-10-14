@@ -7,6 +7,7 @@ import { Marca } from "@/components/ui/Marca";
 import { PreferenciaDeTema } from "@/components/ui/PreferenciaDeTema";
 import { TelaDoInicio } from "@/app/(protected)/inicio/TelaDoInicio";
 import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import "@/app/(fluxo)/onboarding/onboarding-editorial.css";
 
 export const metadata: Metadata = {
   title: "Exemplo — V2G",
@@ -148,7 +149,24 @@ export default async function ExemploPage({
   if (tela === "onboarding-concluido") {
     const modulo = ehDesenvolvimento ? await import("@/app/(fluxo)/onboarding/concluido/Conclusao") : null;
     if (!modulo) notFound();
-    return <modulo.Conclusao estado={{ concluido: true, faltamBasicas: [], contasProntas: true }} />;
+    return <div className="auth-shell"><main className="auth-wrap">
+      <modulo.Conclusao estado={{ concluido: true, faltamBasicas: [], contasProntas: true }} />
+    </main></div>;
+  }
+
+  // Prévia sem dados reais para revisar contraste e espaçamento da etapa visual.
+  if (tela === "onboarding-marca") {
+    const modulo = ehDesenvolvimento ? await import("@/app/(fluxo)/onboarding/marca/Marca") : null;
+    if (!modulo) notFound();
+    return <div className="auth-shell"><main className="auth-wrap"><div className="onb-v2 onb-v2-etapa">
+      <header className="onb-v2-topo"><Marca editorial href="/inicio" /></header>
+      <section className="onb-v2-conteudo">
+        <modulo.Marca inicial={{ businessId: "00000000-0000-4000-8000-000000000004",
+          site: "", instagram: "", siteNaoTenhoDeclarado: true, marca: null,
+          concluido: false, contasProntas: true, respostasBasicas: {}, faltamBasicas: [] }}
+          logo={null} guia={null} variacoes={[]} />
+      </section>
+    </div></main></div>;
   }
 
   // ---- o onboarding novo, onze perguntas ----

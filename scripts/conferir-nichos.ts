@@ -523,7 +523,7 @@ secao("8. a validação do servidor — a que quebraria calada");
   // aceita sem passar pelo catálogo — a reserva entrando de novo pela
   // porta dos fundos.
   const ramo = PERGUNTAS.find((q) => q.id === "ramo");
-  ok(ramo?.seletorDeNicho === true, "a pergunta `ramo` usa o seletor");
+  ok(ramo?.seletorDeAtividade === true, "a pergunta `ramo` usa sugestões de atividade");
   ok(
     ramo !== undefined && ramo.opcoes.length === 0,
     `\`ramo\` não tem opção fixa nenhuma (tem ${ramo?.opcoes.length ?? "?"})`,

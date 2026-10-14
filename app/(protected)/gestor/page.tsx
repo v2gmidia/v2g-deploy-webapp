@@ -6,10 +6,16 @@ import { filtrarPortfolio, montarPortfolio, type ExecucaoDoPortfolio, type Filtr
 import { proximasAcoesDoGestor, type RevisaoAberta, type TarefaAberta } from "@/lib/gestor/proximas-acoes";
 import { proximaAcaoConfiavel, resumoDoTrabalhoDaConta } from "@/lib/gestor/limites-carteira";
 import { tituloDaAba } from "@/lib/titulos";
+import type { RespostaDeBriefing } from "@/lib/onboarding/briefing-trafego";
 import styles from "./Gestor.module.css";
 
 export const metadata = tituloDaAba("/gestor");
 export const dynamic = "force-dynamic";
+
+function respostaParaReuniao(resposta: RespostaDeBriefing): string {
+  if (resposta.estado === "informado") return resposta.texto;
+  return resposta.estado === "nao_sei" ? "cliente deixou para conferir na reunião" : "não informado";
+}
 
 /** Visão interna de leitura. Cada número representa linha do banco, nunca métrica da Meta. */
 export default async function GestorPage({ searchParams }: {
@@ -214,7 +220,13 @@ export default async function GestorPage({ searchParams }: {
                   <p>Instagram: {linha.instagram
                     ? <a href={linha.instagram.url} target="_blank" rel="noopener noreferrer">{linha.instagram.rotulo}</a>
                     : linha.instagramInformadoSemLink ? "informado, mas o endereço precisa ser conferido na ficha" : "não informado"}</p>
-                  <p>Negócio: {linha.descricaoParaReuniao ?? "descrição ainda não informada"}</p>
+                  <p>Produtos e serviços (declarados pelo cliente): {linha.descricaoParaReuniao ?? "não informados"}</p>
+                  <p>Foco do primeiro anúncio (declarado): {respostaParaReuniao(linha.briefingParaReuniao.oferta)}</p>
+                  <p>Quem compra (declarado): {respostaParaReuniao(linha.briefingParaReuniao.publico)}</p>
+                  <p>Motivo da procura (declarado): {respostaParaReuniao(linha.briefingParaReuniao.motivo)}</p>
+                  <p>Entrega concreta (declarada): {respostaParaReuniao(linha.briefingParaReuniao.resultado)}</p>
+                  <p>Diferencial (declarado): {respostaParaReuniao(linha.briefingParaReuniao.diferencial)}</p>
+                  <p>Depoimentos ou exemplos (declarados): {respostaParaReuniao(linha.briefingParaReuniao.prova)}</p>
                   {linha.diferenciaisParaReuniao.length > 0 && <p>Diferenciais informados: {linha.diferenciaisParaReuniao.join(" · ")}</p>}
                   <p>Esta ficha reúne respostas do cliente; a avaliação do Instagram e a reunião ainda não têm confirmação registrada aqui.</p>
                 </details>

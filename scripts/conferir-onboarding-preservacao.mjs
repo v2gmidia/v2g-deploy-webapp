@@ -12,8 +12,8 @@ const allowed = new Set([
   'app/(fluxo)/onboarding/actions.ts', 'app/(fluxo)/onboarding/perguntas.ts',
   'app/(fluxo)/onboarding/contas/actions.ts', 'app/(fluxo)/onboarding/contas/regras.ts',
   'app/(fluxo)/onboarding/marca/actions.ts', 'lib/onboarding/marca.ts', 'lib/onboarding/conclusao.ts',
-  'lib/onboarding/bloco-um.ts', 'lib/onboarding/enderecos.ts',
-  'lib/onboarding/documento.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
+  'lib/onboarding/bloco-um.ts', 'lib/onboarding/enderecos.ts', 'lib/onboarding/briefing-trafego.ts',
+  'lib/onboarding/documento.ts', 'lib/onboarding/atividades.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
   'lib/formato.ts', 'lib/verba/limites.ts', 'lib/nichos/escolha.ts',
   'lib/nichos/busca.ts', 'lib/nichos/tipos.ts',
 ].map(p => pathToFileURL(path.join(root, p)).href));
@@ -51,6 +51,8 @@ const marca = await import('../app/(fluxo)/onboarding/marca/actions.ts');
 const cadastro = await import('../lib/cadastro/montar.ts');
 const marcaDoc = await import('../lib/onboarding/marca.ts');
 const { patchDoBlocoUm } = await import('../lib/onboarding/documento.ts');
+const { buscarAtividades } = await import('../lib/onboarding/atividades.ts');
+const { lerBriefingDeTrafego, NAO_SEI_BRIEFING } = await import('../lib/onboarding/briefing-trafego.ts');
 const oldTime = '2026-09-01T00:00:00.000Z';
 const resposta = texto => ({texto, echo:texto, origem:'texto', em:oldTime});
 const documentFixture = () => ({
@@ -227,6 +229,42 @@ test('tipo de negócio com duas letras não conclui a pergunta', async () => {
   const result = await actions.salvarRespostaAction({businessId:row.id,qid:'ramo',texto:'UI',origem:'texto'});
   assert.equal(result.ok,false);
   assert.deepEqual(events,[]);
+});
+
+test('busca de atividades sugere profissões com e sem acento e aceita Outros', async () => {
+  assert.deepEqual(buscarAtividades('dent'), ['Dentista']);
+  assert.ok(buscarAtividades('medico').includes('Médico'));
+  assert.ok(buscarAtividades('odontologia').includes('Dentista'));
+  assert.deepEqual(buscarAtividades('atividade fora da lista'), []);
+  const sugestao = await actions.salvarRespostaAction({businessId:row.id,qid:'ramo',texto:'Dentista',origem:'texto'});
+  assert.equal(sugestao.ok,true);
+  assert.equal(row.onboarding.respostas.ramo.origem,'texto');
+  const outro = await actions.salvarRespostaAction({businessId:row.id,qid:'ramo',texto:'Restauração de instrumentos musicais',origem:'texto'});
+  assert.equal(outro.ok,true);
+  assert.equal(row.onboarding.respostas.ramo.texto,'Restauração de instrumentos musicais');
+  const forjado = await actions.salvarRespostaAction({businessId:row.id,qid:'ramo',texto:'Dentista',origem:'chip'});
+  assert.equal(forjado.ok,false);
+});
+
+test('briefing de tráfego guarda público declarado e lacuna sem inventar resultado', async () => {
+  const antigo = structuredClone(row.onboarding.contas);
+  assert.equal((await save('descricao','Sites institucionais, produção de conteúdo e design para pequenas empresas')).ok,true);
+  assert.equal((await save('oferta','x')).ok,false);
+  assert.equal((await save('oferta','Site institucional com até cinco páginas e formulário de contato')).ok,true);
+  assert.equal((await save('publico','Pequenas lojas que vendem pelo WhatsApp e querem responder mais rápido')).ok,true);
+  assert.equal((await save('motivo','Precisam apresentar produtos e receber contatos pelo site')).ok,true);
+  assert.equal((await save('resultado','bom')).ok,false);
+  assert.equal((await actions.salvarRespostaAction({businessId:row.id,qid:'resultado',texto:NAO_SEI_BRIEFING,origem:'chip'})).ok,true);
+  assert.equal(lerBriefingDeTrafego(row.onboarding).publico.texto,'Pequenas lojas que vendem pelo WhatsApp e querem responder mais rápido');
+  assert.equal(lerBriefingDeTrafego(row.onboarding).oferta.texto,'Site institucional com até cinco páginas e formulário de contato');
+  assert.equal(lerBriefingDeTrafego(row.onboarding).motivo.estado,'informado');
+  assert.equal(lerBriefingDeTrafego(row.onboarding).resultado.estado,'nao_sei');
+  assert.deepEqual(row.onboarding.contas,antigo);
+  assert.equal((await save('resultado','A loja recebe as mensagens organizadas e responde no mesmo dia')).ok,true);
+  assert.equal((await save('diferencial','O cliente acompanha cada etapa da criação do site')).ok,true);
+  assert.equal((await actions.salvarRespostaAction({businessId:row.id,qid:'prova',texto:'Ainda não tenho provas para enviar',origem:'chip'})).ok,true);
+  assert.equal(lerBriefingDeTrafego(row.onboarding).prova.texto,'Ainda não tenho provas para enviar');
+  assert.equal(lerBriefingDeTrafego(row.onboarding).resultado.estado,'informado');
 });
 
 test('corrigir praça para texto livre limpa apenas CEP que veio da resposta anterior', async () => {

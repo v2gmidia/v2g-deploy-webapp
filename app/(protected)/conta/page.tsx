@@ -250,8 +250,8 @@ export default async function ContaPage() {
               </div>
               <div className="card">
                 <p className="hint">
-                  Você ainda não contou sobre o seu negócio. São quatro perguntas rápidas, e é
-                  delas que a IA parte para montar sua primeira campanha.
+                  Você ainda não contou sobre sua oferta e seus clientes. Essas respostas ajudam
+                  a equipe a preparar a conversa e a primeira campanha, após as conferências necessárias.
                 </p>
                 <a className="cta" href="/onboarding" style={{ width: "max-content" }}>
                   Começar agora

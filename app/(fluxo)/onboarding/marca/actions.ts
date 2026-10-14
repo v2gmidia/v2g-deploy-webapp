@@ -99,7 +99,7 @@ export async function salvarMarcaAction(entrada: {
       (!Array.isArray(entrada.coresConfirmadas) || entrada.coresConfirmadas.some((cor) => typeof cor !== "string")))
     return { ok: false, erro: "Confira as cores escolhidas." };
   const cores = (entrada.coresConfirmadas ?? []).map((cor) => cor.toUpperCase());
-  if (cores.length > 3 || cores.some((cor) => !/^#[0-9A-F]{6}$/.test(cor)))
+  if (cores.length > 6 || cores.some((cor) => !/^#[0-9A-F]{6}$/.test(cor)))
     return { ok: false, erro: "Confira as cores escolhidas." };
   if (!entrada.aparenciaNaoSei && !aparencia && cores.length === 0) {
     return { ok: false, erro: "Confirme as cores da marca ou indique que prefere defini-las com o gestor." };
