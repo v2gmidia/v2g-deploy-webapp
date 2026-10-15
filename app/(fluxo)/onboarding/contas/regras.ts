@@ -88,43 +88,13 @@ export function custoDaSobra(ticket: number, sobraPct: number): number {
   return emReais(ticket * (1 - sobraPct / 100));
 }
 
-// ------------------------------------------------------------------ C3
-
-export interface OpcaoDePostura {
-  id: string;
-  rotulo: string;
-  /** quanto da margem ele quer guardar */
-  fracaoQueFica: number;
-}
-
-/**
- * A C3 é uma escolha de postura, não um número.
- *
- * E a ordem dos chips é do mais agressivo para o mais conservador de
- * propósito: o primeiro que ele lê é o que deixa a IA gastar mais. O valor
- * em reais aparece DENTRO do chip, porque é ele que torna a troca visível
- * — quanto mais fica no bolso, menos a IA pode gastar, menos cliente
- * entra. Dizer isso em jargão de CPA seria falha; mostrar os dois números
- * é a mesma informação sem nenhuma palavra técnica.
- */
-export const POSTURA: readonly OpcaoDePostura[] = [
-  { id: "crescer", rotulo: "Quero crescer rápido", fracaoQueFica: 0.2 },
-  { id: "meio-a-meio", rotulo: "Meio a meio", fracaoQueFica: 0.5 },
-  { id: "lucro-agora", rotulo: "Quero lucro agora", fracaoQueFica: 0.8 },
-];
-
-export function lucroDaPostura(margem: number, fracao: number): number {
-  return emReais(margem * fracao);
-}
+// C3 recebe um valor informado em reais ou uma lacuna explícita. Uma
+// preferência abstrata de crescimento não vira automaticamente um número.
 
 // ------------------------------------------------------------- validação
 
 export function opcaoDeSobra(id: string): OpcaoDeSobra | undefined {
   return SOBRA.find((o) => o.id === id);
-}
-
-export function opcaoDePostura(id: string): OpcaoDePostura | undefined {
-  return POSTURA.find((o) => o.id === id);
 }
 
 /** Um único valor em reais. Faixas digitadas não viram um número inventado. */

@@ -154,7 +154,8 @@
 .v2g-editorial .side-account .who { min-width: 0; overflow-wrap: anywhere; }
 .v2g-editorial .side-account .who b { font-weight: 500; }
 .v2g-editorial .side-account .avatar { border-radius: 4px; font-weight: 500; color: var(--ice); }
-.v2g-editorial .side-account-opcoes { max-height: none; overflow: visible; }
+.v2g-editorial .side-account-menu { position: relative; }
+.v2g-editorial .side-account-opcoes { position: absolute; z-index: 60; bottom: calc(100% + 10px); left: -4px; right: -4px; padding: 10px; border: 1px solid var(--sidebar-line); border-radius: 4px; background: var(--plate); box-shadow: 0 14px 28px -18px rgb(0 0 0 / .65); }
 .v2g-editorial .sidebar :focus-visible { outline-color: var(--ice); }
 .v2g-editorial .side-falar { margin-top: 32px; padding-inline: 4px; font-size: var(--fs-corpo); }
 .v2g-editorial .topbar { min-height: 88px; padding: 16px 44px; gap: 24px; background: var(--fundo-topo); border-bottom: 1px solid var(--line); }
@@ -201,6 +202,11 @@
   .v2g-editorial .canvas { padding: 28px 24px calc(40px + var(--barra-h) + env(safe-area-inset-bottom)); }
   .v2g-editorial .topbar { padding: 12px 24px; gap: 16px; }
   .v2g-editorial .topbar-actions { gap: 12px; }
+  .v2g-editorial .topbar-account-menu .side-account-opcoes {
+    position: fixed; top: 80px; bottom: auto; left: auto; right: 16px;
+    width: min(320px, calc(100vw - 32px));
+    border-color: var(--line); background: var(--surface-2); color: var(--ink);
+  }
 }
 @media (max-width: 620px) {
   .v2g-editorial .topbar { padding-inline: 20px; }
@@ -215,4 +221,10 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .v2g-editorial *, .v2g-editorial *::before, .v2g-editorial *::after { animation: none; transition: none; scroll-behavior: auto; }
+}
+.app-shell .side-nav .nav-item[data-guia-ativo="true"] {
+  outline: 3px solid var(--cobalt-ink);
+  outline-offset: 2px;
+  background: var(--surface);
+  color: var(--ink);
 }

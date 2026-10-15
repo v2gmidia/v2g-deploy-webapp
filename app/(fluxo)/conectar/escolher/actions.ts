@@ -47,10 +47,20 @@ export async function salvarEscolhaAction(
 
   const { data: conexao } = await supabase
     .from("meta_connections")
-    .select("id")
+    .select("id, meta_page_id")
     .eq("business_id", business.id)
     .maybeSingle();
   if (!conexao) return { erro: "A conexão não foi encontrada. Conecte de novo." };
+
+  // Hoje a Página pertence à conexão do negócio, não à conta de anúncios.
+  // Evitar que a segunda conta troque silenciosamente a Página da primeira.
+  const outras = await supabase.from("ad_accounts")
+    .select("id")
+    .eq("business_id", business.id).eq("is_active", true)
+    .neq("external_id", contaExterna).limit(1);
+  if (outras.error) return { erro: "Não conseguimos conferir as contas já conectadas. Tente novamente." };
+  if (outras.data?.length && conexao.meta_page_id !== paginaId)
+    return { erro: "As contas deste negócio usam a mesma Página. Para usar outra Página nesta conta, fale com a equipe antes de continuar." };
 
   const admin = createAdminClient();
   const { data: token, error: erroToken } = await admin.rpc("obter_token_meta", {
@@ -91,6 +101,9 @@ export async function salvarEscolhaAction(
     }
     if (erroEscolha.message.includes("pedido ainda nao aprovado")) {
       return { erro: "Ainda falta aprovar o pagamento deste negócio para escolher outra conta." };
+    }
+    if (erroEscolha.message.includes("pagina compartilhada entre contas")) {
+      return { erro: "As contas deste negócio usam a mesma Página. Atualize a tela e escolha a Página já conectada." };
     }
     return { erro: "Não conseguimos salvar sua escolha. Tente de novo." };
   }

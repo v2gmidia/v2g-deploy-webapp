@@ -6,7 +6,7 @@ import { filtrarPortfolio, montarPortfolio, type ExecucaoDoPortfolio, type Filtr
 import { proximasAcoesDoGestor, type RevisaoAberta, type TarefaAberta } from "@/lib/gestor/proximas-acoes";
 import { proximaAcaoConfiavel, resumoDoTrabalhoDaConta } from "@/lib/gestor/limites-carteira";
 import { tituloDaAba } from "@/lib/titulos";
-import type { RespostaDeBriefing } from "@/lib/onboarding/briefing-trafego";
+import { lacunasParaReuniao, type RespostaDeBriefing } from "@/lib/onboarding/briefing-trafego";
 import styles from "./Gestor.module.css";
 
 export const metadata = tituloDaAba("/gestor");
@@ -217,11 +217,12 @@ export default async function GestorPage({ searchParams }: {
                 <details className={styles.contas}>
                   <summary>Preparar conversa com o cliente</summary>
                   <p>Reserve cerca de 10 minutos para avaliar a presença digital antes da reunião. Uma apresentação fraca pede orientação; não impede a compra.</p>
+                  {lacunasParaReuniao(linha.briefingParaReuniao).length > 0 && <p><strong>Pontos que o cliente deixou para confirmar na reunião:</strong> {lacunasParaReuniao(linha.briefingParaReuniao).join(" · ")}</p>}
                   <p>Instagram: {linha.instagram
                     ? <a href={linha.instagram.url} target="_blank" rel="noopener noreferrer">{linha.instagram.rotulo}</a>
                     : linha.instagramInformadoSemLink ? "informado, mas o endereço precisa ser conferido na ficha" : "não informado"}</p>
                   <p>Produtos e serviços (declarados pelo cliente): {linha.descricaoParaReuniao ?? "não informados"}</p>
-                  <p>Foco do primeiro anúncio (declarado): {respostaParaReuniao(linha.briefingParaReuniao.oferta)}</p>
+                  {linha.briefingParaReuniao.oferta.estado !== "ausente" && <p>Resposta anterior sobre primeiro anúncio (histórico, a decisão cabe ao gestor): {respostaParaReuniao(linha.briefingParaReuniao.oferta)}</p>}
                   <p>Quem compra (declarado): {respostaParaReuniao(linha.briefingParaReuniao.publico)}</p>
                   <p>Motivo da procura (declarado): {respostaParaReuniao(linha.briefingParaReuniao.motivo)}</p>
                   <p>Entrega concreta (declarada): {respostaParaReuniao(linha.briefingParaReuniao.resultado)}</p>
@@ -240,6 +241,7 @@ export default async function GestorPage({ searchParams }: {
                 </details>}</div>
               <div className={styles.destinos}>
                 <a href={`/revisar-perfil?negocio=${encodeURIComponent(linha.id)}#ficha-${encodeURIComponent(linha.id)}`}>Abrir ficha</a>
+                <a href={`/gestor/negocio/${encodeURIComponent(linha.id)}/marca`}>Ver materiais de marca</a>
                 {(linha.origem === "pedido" || fonteOperacionalIncompleta) && <a href={`/gestor/compras?negocio=${encodeURIComponent(linha.id)}`}>Ver contratações</a>}
                 {trabalhoAtivo && <a href={`/gestor/tarefas?negocio=${encodeURIComponent(linha.id)}`}>Tarefas da conta</a>}
                 {revisoes && <a href={`/gestor/criativos?negocio=${encodeURIComponent(linha.id)}`}>Criativos da conta</a>}

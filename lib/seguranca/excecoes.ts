@@ -80,6 +80,53 @@ export const EXCECOES: ExcecaoDeIdentidade[] = [
       "e ocupa uma unidade de pedido aprovado sob lock da linha do negócio.",
   },
   {
+    arquivo: "app/(fluxo)/onboarding/marca/variacoes-actions.ts",
+    autorizacao: "posse",
+    oQueEntra: "`businessId` e `id` da imagem, recebidos do formulário",
+    porque:
+      "Cada action compara o negócio informado com `negocioAtivoDaSessao()`, " +
+      "que valida a escolha sob RLS. Só depois usa o cliente admin; a remoção " +
+      "filtra simultaneamente o ID da imagem, `business_id`, tipo e uso. " +
+      "A leitura de referências também reconfere o negócio ativo.",
+  },
+  {
+    arquivo: "app/(protected)/gestor/negocio/[id]/marca/page.tsx",
+    autorizacao: "papel",
+    oQueEntra: "`params.id` do negócio na URL",
+    porque:
+      "A página exige `auth.getUser()` com `app_metadata.papel === 'operador'` " +
+      "antes de ler o parâmetro e criar o cliente admin. O papel autoriza " +
+      "consultar os materiais de qualquer negócio; o ID ainda é validado como UUID.",
+  },
+  {
+    arquivo: "app/(protected)/gestor/compras/page.tsx",
+    autorizacao: "papel",
+    oQueEntra: "`searchParams.negocio` usado para filtrar pedidos",
+    porque:
+      "A página confere `app_metadata.papel === 'operador'` antes de ler os " +
+      "parâmetros ou criar o cliente admin. O filtro aceita apenas UUID e o " +
+      "operador pode consultar pedidos de qualquer negócio.",
+  },
+  {
+    arquivo: "app/(protected)/gestor/criativos/page.tsx",
+    autorizacao: "papel",
+    oQueEntra: "`searchParams.negocio` e `searchParams.peca` usados na fila de revisão",
+    porque:
+      "A página exige `app_metadata.papel === 'operador'` antes de ler os " +
+      "parâmetros e consultar com o cliente admin. Ambos os IDs são validados " +
+      "como UUID; quando o modo de carteira está ativo, o negócio também " +
+      "deve constar nas atribuições atuais do gestor.",
+  },
+  {
+    arquivo: "app/(protected)/gestor/tarefas/page.tsx",
+    autorizacao: "papel",
+    oQueEntra: "`searchParams.negocio` e `searchParams.tarefa` usados na fila interna",
+    porque:
+      "A página confere `app_metadata.papel === 'operador'` antes de ler os " +
+      "parâmetros ou criar o cliente admin. Os dois IDs exigem UUID válido, " +
+      "e uma tarefa específica também exige o negócio informado.",
+  },
+  {
     arquivo: "app/(public)/escolher-negocio/actions.ts",
     autorizacao: "posse",
     oQueEntra: "`businessId` escolhido no formulário",

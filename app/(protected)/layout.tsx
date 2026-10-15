@@ -4,6 +4,8 @@ import { Casco } from "@/components/ui/Casco";
 import { signOutAction } from "./actions";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { logosDosNegociosLiberados } from "@/lib/multiconta/logos";
+import { cnpjsDosNegociosLiberados } from "@/lib/multiconta/cnpjs";
 
 
 /**
@@ -76,6 +78,16 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   const nome = profile?.full_name?.trim() ?? "";
   const nomeNegocio = ativo.status === "selecionado" ? ativo.negocio.name.trim() : undefined;
   const inicial = (nomeNegocio || nome || user.email || "?").charAt(0).toUpperCase();
+  const negocios = "negocios" in ativo ? ativo.negocios : [];
+  const idsLiberados = negocios.map((negocio) => negocio.id);
+  const [logos, cnpjPorNegocio] = await Promise.all([
+    logosDosNegociosLiberados(idsLiberados),
+    cnpjsDosNegociosLiberados(idsLiberados, user.id,
+      user.email_confirmed_at ? user.email ?? null : null).catch(() => {
+      console.error("[layout] falha ao identificar CNPJs dos negócios liberados");
+      return new Map<string, string>();
+    }),
+  ]);
 
   return (
     <Casco
@@ -85,7 +97,12 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       rotuloDaConta={nomeNegocio || user.email || ""}
       inicial={inicial}
       acaoSair={signOutAction}
-      negocios={"negocios" in ativo ? ativo.negocios.map((negocio) => ({ id: negocio.id, name: negocio.name })) : []}
+      negocios={negocios.map((negocio) => ({
+        id: negocio.id,
+        name: negocio.name,
+        logoUrl: logos.get(negocio.id) ?? null,
+        cnpj: cnpjPorNegocio.get(negocio.id) ?? null,
+      }))}
       ehOperador={user.app_metadata?.papel === "operador"}
     >
       {children}

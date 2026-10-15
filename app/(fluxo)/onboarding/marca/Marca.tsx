@@ -27,7 +27,8 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
   const [aparencia, setAparencia] = useState(inicial.marca?.aparencia ?? "");
   const [cores, setCores] = useState(inicial.marca?.coresConfirmadas ?? []);
   const [coresConferidas, setCoresConferidas] = useState((inicial.marca?.coresConfirmadas.length ?? 0) > 0);
-  const [analisandoLogo, setAnalisandoLogo] = useState(false);
+  const [analisesAtivas, setAnalisesAtivas] = useState(0);
+  const [uploadsAtivos, setUploadsAtivos] = useState(0);
   const [recadoLogo, setRecadoLogo] = useState<string | null>(null);
   const [naoSei, setNaoSei] = useState(inicial.marca?.aparenciaNaoSei ?? false);
   const [confirmandoNaoSei, setConfirmandoNaoSei] = useState(false);
@@ -37,7 +38,7 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
   const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
 
   async function salvar() {
-    if (enviando || aviso) return;
+    if (enviando || aviso || uploadsAtivos > 0 || analisesAtivas > 0) return;
     setEnviando(true);
     setErro(null);
     setAviso(null);
@@ -58,24 +59,26 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
   }
 
   async function proporCores(arquivos: File[]) {
-    setAnalisandoLogo(true);
+    setAnalisesAtivas((atual) => atual + 1);
     setRecadoLogo(null);
-    setCoresConferidas(false);
     try {
       const propostas = (await Promise.all(arquivos.map((arquivo) => coresDaLogo(arquivo, 6)))).flat();
-      setCores((anteriores) => juntarPaleta(anteriores, propostas));
+      if (propostas.length) {
+        setCores((anteriores) => juntarPaleta(anteriores, propostas));
+        setCoresConferidas(false);
+      }
       setRecadoLogo(propostas.length
         ? "Somamos as cores encontradas nas imagens. Confira e confirme as que representam sua marca."
         : "Não encontramos cores confiáveis nessas imagens. Você pode definir com o gestor.");
     } catch {
       setRecadoLogo("As imagens foram guardadas, mas não conseguimos ler as cores agora. Confira as cores manualmente ou defina com o gestor.");
     } finally {
-      setAnalisandoLogo(false);
+      setAnalisesAtivas((atual) => Math.max(0, atual - 1));
     }
   }
 
   async function proporCoresDoGuia(arquivo: File) {
-    setAnalisandoLogo(true);
+    setAnalisesAtivas((atual) => atual + 1);
     setRecadoLogo(null);
     try {
       const propostas = await coresDoPdf(arquivo);
@@ -89,14 +92,18 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
     } catch {
       setRecadoLogo("PDF guardado para o gestor, mas a leitura automática das cores falhou. Confira as cores manualmente ou defina com o gestor.");
     } finally {
-      setAnalisandoLogo(false);
+      setAnalisesAtivas((atual) => Math.max(0, atual - 1));
     }
+  }
+
+  function aoMudarUpload(ativo: boolean) {
+    setUploadsAtivos((atual) => Math.max(0, atual + (ativo ? 1 : -1)));
   }
 
   return <>
     <p className="mission-tag">Sua primeira missão · passo 2 de 3</p>
     <h1 className="auth-h">O visual da sua marca</h1>
-    <p className="auth-sub">Mostre o logo que seus clientes reconhecem. Confira as cores sugeridas e deixe os detalhes que faltarem para a reunião.</p>
+    <p className="auth-sub">Envie o que tiver da sua marca: logo principal, outras imagens e manual em PDF. Pode deixar para a reunião o que ainda não tiver. Confira as cores sugeridas antes de confirmar.</p>
     <details className={styles.revisao}>
       <summary>Rever o que você contou sobre o negócio</summary>
       {Object.entries(estado.respostasBasicas).map(([chave, resposta]) =>
@@ -110,13 +117,13 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
         {erro && <p className="form-error" role="alert">{erro}</p>}
         {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
         <p className={styles.declaracao}>{TEXTO_DA_DECLARACAO}</p>
-        <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo])} />
-        <VariacoesDaMarca businessId={estado.businessId} variacoes={variacoes} aoEscolher={proporCores} />
-        <GuiaDaMarca businessId={estado.businessId} guia={guia} aoEscolher={proporCoresDoGuia} />
+        <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo])} aoMudarUpload={aoMudarUpload} />
+        <VariacoesDaMarca businessId={estado.businessId} variacoes={variacoes} aoEscolher={proporCores} aoMudarUpload={aoMudarUpload} />
+        <GuiaDaMarca businessId={estado.businessId} guia={guia} aoEscolher={proporCoresDoGuia} aoMudarUpload={aoMudarUpload} />
         <section className={styles.coresBloco}>
           <h2>Essas são as cores da sua marca?</h2>
           <p>O palpite vem dos logos, das imagens e do manual enviados. Você pode ajustar cada cor antes de confirmar.</p>
-          {analisandoLogo && <p role="status">Analisando cores…</p>}
+          {analisesAtivas > 0 && <p role="status">Analisando cores…</p>}
           {recadoLogo && <p role="status">{recadoLogo}</p>}
           {cores.length > 0 && <>
             <div className={styles.cores}>
@@ -137,7 +144,7 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
               setCores([...cores, "#1250DC"]);
               setCoresConferidas(false);
             }}>Adicionar outra cor</button>}
-            <button className={styles.confirmarCores} type="button" onClick={() => { setCoresConferidas(true); setNaoSei(false); }}>
+            <button className={styles.confirmarCores} type="button" disabled={uploadsAtivos > 0 || analisesAtivas > 0} onClick={() => { setCoresConferidas(true); setNaoSei(false); }}>
               {coresConferidas ? "Cores confirmadas ✓" : "Confirmar estas cores"}
             </button>
           </>}
@@ -174,7 +181,7 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
           }}>Ainda não sei</button>
           <p className="conta-hint">O gestor verá essa pendência na conversa.</p>
         </div>}
-        <button className="cta" type="button" disabled={enviando || !!aviso || analisandoLogo} onClick={salvar}>{enviando ? "Salvando…" : "Guardar e escolher horário"}</button>
+        <button className="cta" type="button" disabled={enviando || !!aviso || uploadsAtivos > 0 || analisesAtivas > 0} onClick={salvar}>{enviando ? "Salvando…" : uploadsAtivos > 0 ? "Enviando materiais…" : analisesAtivas > 0 ? "Analisando cores…" : "Guardar e escolher horário"}</button>
       </>}
   </>;
 }

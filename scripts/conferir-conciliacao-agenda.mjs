@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { conciliarReserva } from "../lib/agenda/conciliacao.ts";
+import { conciliarReserva, horarioConfirmadoGoogle } from "../lib/agenda/conciliacao.ts";
+import { descricaoDaReuniao } from "../lib/agenda/descricao-reuniao.ts";
+import { CriacaoGoogleRecusada, rejeicaoDefinitivaDaCriacao } from "../lib/agenda/falhas-criacao.ts";
 
 const candidato = { businessId: "negocio-1", orderId: "pedido-1",
   paymentStatus: "payment_approved",
@@ -9,6 +11,15 @@ const conferir = (atual, candidatos = [candidato]) => conciliarReserva(atual, "a
 const evento = { calendarId: "agenda-v2g", eventId: "evento-1", etag: "versao-1", status: "confirmed",
   inicio: "2026-10-14T13:00:00-03:00", fim: "2026-10-14T13:25:00-03:00",
   emailParticipante: "CLIENTE@example.com", cnpjInformado: "00000000000191" };
+
+test("somente rejeições explícitas do POST podem liberar uma reserva sem evento", () => {
+  for (const status of [400, 401, 403, 404, 422]) {
+    assert.equal(rejeicaoDefinitivaDaCriacao(status), true);
+    assert.equal(new CriacaoGoogleRecusada(status).statusHttp, status);
+  }
+  for (const status of [200, 408, 409, 429, 500, 502, 503])
+    assert.equal(rejeicaoDefinitivaDaCriacao(status), false);
+});
 
 test("reserva só é reconhecida com evento, calendário, e-mail e CNPJ conferidos", () => {
   assert.deepEqual(conferir(evento), {
@@ -75,4 +86,34 @@ test("evento sem versão ou horário válido não produz reserva", () => {
   assert.equal(conferir({ ...evento, fim: evento.inicio }).status, "revisao");
   assert.equal(conferir({ ...evento, inicio: "2026-10-14T13:00:00" }).status, "revisao");
   assert.equal(conferir({ ...evento, fim: "2026-10-14T13:25:00" }).status, "revisao");
+});
+
+test("horário alterado no Google é normalizado; evento sem horário válido exige revisão", () => {
+  assert.deepEqual(horarioConfirmadoGoogle("2026-10-14T14:00:00-03:00", "2026-10-14T14:25:00-03:00"),
+    { inicio: "2026-10-14T17:00:00.000Z", fim: "2026-10-14T17:25:00.000Z" });
+  assert.equal(horarioConfirmadoGoogle(null, "2026-10-14T14:25:00-03:00"), null);
+  assert.equal(horarioConfirmadoGoogle("2026-10-14T14:00:00", "2026-10-14T14:25:00"), null);
+  assert.equal(horarioConfirmadoGoogle("2026-10-14T14:25:00-03:00", "2026-10-14T14:00:00-03:00"), null);
+});
+
+test("convite da reunião resume declarações e lacunas sem transformar oferta antiga em decisão", () => {
+  const descricao = descricaoDaReuniao({ respostas: {
+    ramo: { texto: "Academia", origem: "texto" },
+    descricao: { texto: "Treino de força\n e mobilidade", origem: "texto" },
+    oferta: { texto: "Anunciar plano anual", origem: "texto" },
+    publico: { texto: "Adultos que buscam treinamento", origem: "texto" },
+    motivo: { texto: "Ainda não sei explicar", origem: "chip" },
+  } }, "00000000000191");
+  assert.match(descricao, /Academia/);
+  assert.match(descricao, /Treino de força e mobilidade/);
+  assert.match(descricao, /Adultos que buscam treinamento/);
+  assert.match(descricao, /Para confirmar na reunião: O que o cliente procura/);
+  assert.doesNotMatch(descricao, /Anunciar plano anual/);
+  assert.doesNotMatch(descricao, /Treino de força\n e mobilidade/);
+});
+
+test("convite sem resposta não afirma perfil, diferencial ou ausência de dúvidas", () => {
+  const descricao = descricaoDaReuniao({}, "00000000000191");
+  assert.match(descricao, /CNPJ 00000000000191/);
+  assert.doesNotMatch(descricao, /Diferencial:|Quem compra:|Para confirmar na reunião:/);
 });

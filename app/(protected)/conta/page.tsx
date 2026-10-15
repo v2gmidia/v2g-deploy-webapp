@@ -54,6 +54,10 @@ export default async function ContaPage() {
     ? (await supabase.from("businesses").select("id, name, dados_ficticios")
       .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle()).data
     : null;
+  const contasAtivas = business ? await supabase.from("ad_accounts")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", business.id).eq("is_active", true) : null;
+  const variasContasAtivas = !contasAtivas?.error && (contasAtivas?.count ?? 0) > 1;
 
   const consultaPedidos = business ? await supabase.from("commercial_orders")
     .select("id, status, origin, billing_period, unit_count, total_cents, payment_method")
@@ -314,7 +318,8 @@ export default async function ContaPage() {
                 <div className="section-title">
                   <h2>De qual página seus anúncios saem</h2>
                 </div>
-                <TrocarPagina paginas={paginas} atual={paginaAtual} businessId={business.id} />
+                <TrocarPagina paginas={paginas} atual={paginaAtual} businessId={business.id}
+                  variasContasAtivas={variasContasAtivas} contasIlegiveis={Boolean(contasAtivas?.error)} />
               </section>
             )
           )}

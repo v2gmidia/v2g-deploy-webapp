@@ -78,7 +78,7 @@ export const PERGUNTAS: Pergunta[] = [
   {
     id: "descricao",
     texto:
-      "Quais produtos ou serviços sua empresa oferece? Conte os principais; você escolherá o foco do primeiro anúncio na próxima pergunta.",
+      "Quais produtos ou serviços sua empresa oferece? Conte os principais. O gestor definirá com você o foco do primeiro anúncio.",
     opcoes: [],
     soTexto: true,
     fallbackLabel: "O que você vende ou faz",
@@ -104,33 +104,33 @@ export const PERGUNTAS: Pergunta[] = [
   },
   {
     id: "publico",
-    texto: "Quem costuma comprar de você? Descreva uma pessoa ou empresa comum entre seus clientes; não precisa conhecer o termo ‘persona’.",
+    texto: "Quem costuma comprar de você? Pense em uma pessoa ou empresa comum entre seus clientes.",
     opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Ainda não sei explicar" }],
     soTexto: true,
     admiteNaoSei: true,
     fallbackLabel: "Quem compra de você",
     fallbackPlaceholder: "Ex.: donos de pequenas lojas da minha cidade que vendem por conversa",
-    minimo: { tamanho: 20, recado: "Conte um exemplo de quem compra de você. Se não souber, deixe para a reunião." },
+    minimo: { tamanho: 4, recado: "Conte quem costuma comprar de você, ou deixe para a reunião." },
   },
   {
     id: "motivo",
-    texto: "O que costuma acontecer quando essa pessoa procura sua empresa? Conte o problema ou a necessidade que trouxe um cliente real.",
+    texto: "O que essa pessoa precisa quando procura sua empresa? Pode ser um problema, desejo ou objetivo.",
     opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Ainda não sei explicar" }],
     soTexto: true,
     admiteNaoSei: true,
     fallbackLabel: "Motivo da procura",
     fallbackPlaceholder: "Ex.: precisa de um site para apresentar o negócio e receber contatos",
-    minimo: { tamanho: 20, recado: "Conte por que um cliente procura você, ou deixe para a reunião." },
+    minimo: { tamanho: 4, recado: "Conte o que esse cliente procura, ou deixe para a reunião." },
   },
   {
     id: "resultado",
-    texto: "O que o cliente recebe depois da compra? Descreva a entrega concreta, sem prometer um resultado que depende de outros fatores.",
+    texto: "O que o cliente recebe depois da compra? Se a entrega muda conforme o serviço ou plano, conte as opções principais.",
     opcoes: [{ echo: NAO_SEI_BRIEFING, rotulo: "Ainda não sei explicar" }],
     soTexto: true,
     admiteNaoSei: true,
     fallbackLabel: "Resultado real para o cliente",
     fallbackPlaceholder: "Ex.: recebe um site publicado e acesso para atualizar textos e imagens",
-    minimo: { tamanho: 25, recado: "Conte o que o cliente recebe e qual problema é resolvido. Se não souber, confirme a pendência para a reunião." },
+    minimo: { tamanho: 4, recado: "Conte o que o cliente recebe, ou deixe para a reunião." },
   },
   {
     id: "diferencial",
@@ -140,7 +140,7 @@ export const PERGUNTAS: Pergunta[] = [
     admiteNaoSei: true,
     fallbackLabel: "Por que escolhem sua empresa",
     fallbackPlaceholder: "Ex.: mostro uma primeira versão para o cliente antes da entrega final",
-    minimo: { tamanho: 20, recado: "Dê um exemplo concreto ou deixe esta resposta para a reunião." },
+    minimo: { tamanho: 4, recado: "Dê um exemplo concreto ou deixe esta resposta para a reunião." },
   },
   {
     id: "prova",
@@ -187,7 +187,9 @@ export const PERGUNTAS: Pergunta[] = [
 // A antiga pergunta de abertura não pede dado. Respostas já gravadas nela
 // continuam legíveis, mas o percurso começa diretamente pela primeira tarefa.
 // Instagram e site são conferidos na etapa visual, sem fazer a pessoa responder duas vezes.
-export const ORDEM = ["nome", "ramo", "praca", "descricao", "oferta", "publico", "motivo", "resultado", "diferencial", "prova"];
+// O foco da primeira campanha é decisão do gestor na reunião. A antiga
+// resposta "oferta" permanece no histórico, mas não é pedida a novos clientes.
+export const ORDEM = ["nome", "ramo", "praca", "descricao", "publico", "motivo", "resultado", "diferencial", "prova"];
 export const ULTIMA = ORDEM[ORDEM.length - 1]!;
 
 /**

@@ -3,10 +3,15 @@
 import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { sugerirHorarios } from "@/lib/agenda/horarios";
-import { avaliarHorario, type IntervaloOcupado } from "@/lib/agenda/regras";
+import { avaliarHorario, podeRemarcar, type IntervaloOcupado } from "@/lib/agenda/regras";
+import { horarioConfirmadoGoogle } from "@/lib/agenda/conciliacao";
+import { descricaoDaReuniao } from "@/lib/agenda/descricao-reuniao";
+import { CriacaoGoogleRecusada } from "@/lib/agenda/falhas-criacao";
 import { agendaGoogleConfigurada, apagarEventoGoogle, calendarIdConfigurado,
   criarEventoGoogle, lerEventoGoogle, ocupacoesGoogle } from "@/lib/agenda/google";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { estadoDaConclusao } from "@/lib/onboarding/conclusao";
+import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -21,29 +26,37 @@ export type EstadoAgenda =
   | { status: "erro"; mensagem: string }
   | { status: "livre"; horarios: string[] }
   | { status: "pendente"; inicio: string }
-  | { status: "confirmada"; inicio: string; fim: string; url: string | null };
+  | { status: "confirmada"; inicio: string; fim: string; url: string | null; podeRemarcar: boolean };
 
-async function contexto(): Promise<{
-  businessId: string; orderId: string; cnpj: string; email: string; nome: string;
+async function contexto(businessIdEsperado: string): Promise<{
+  businessId: string; orderId: string; cnpj: string; email: string; nome: string; descricao: string;
+  onboardingConcluido: boolean;
 } | null> {
   const ativo = await negocioAtivoDaSessao();
-  if (ativo.status !== "selecionado") return null;
+  if (ativo.status !== "selecionado" || ativo.negocio.id !== businessIdEsperado) return null;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user?.email_confirmed_at || !user.email) return null;
   const admin = createAdminClient();
-  const { data, error } = await admin.from("commercial_orders")
+  const pedidos = await lerTodasPaginas((inicio, fim) => admin.from("commercial_orders")
     .select("id, cnpj, buyer_name, buyer_email, buyer_profile_id")
     .eq("business_id", ativo.negocio.id).eq("status", "payment_approved")
-    .order("created_at", { ascending: false }).limit(20);
-  if (error || !data) return null;
+    .order("created_at", { ascending: false }).order("id", { ascending: false })
+    .range(inicio, fim));
+  if (!pedidos) return null;
   const email = user.email.trim().toLowerCase();
-  const pedido = data.find((item) => /^\d{14}$/.test(item.cnpj ?? "")
+  const pedido = pedidos.find((item) => /^\d{14}$/.test(item.cnpj ?? "")
     && item.buyer_email?.trim().toLowerCase() === email
     && (!item.buyer_profile_id || item.buyer_profile_id === user.id));
   if (!pedido) return null;
+  const { data: negocio, error: erroNegocio } = await supabase.from("businesses")
+    .select("onboarding, site_url, avg_ticket_min, avg_ticket_max, avg_direct_cost, target_profit_per_customer")
+    .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle();
+  if (erroNegocio || !negocio) return null;
   return { businessId: ativo.negocio.id, orderId: pedido.id, cnpj: pedido.cnpj,
-    email, nome: pedido.buyer_name?.trim() || ativo.negocio.name };
+    email, nome: pedido.buyer_name?.trim() || ativo.negocio.name,
+    descricao: descricaoDaReuniao(negocio.onboarding, pedido.cnpj),
+    onboardingConcluido: estadoDaConclusao(negocio).concluido };
 }
 
 async function reservaAtiva(businessId: string): Promise<Reserva | null> {
@@ -60,10 +73,16 @@ async function conciliarReservaAtiva(reserva: Reserva): Promise<Reserva | null> 
   if (!reserva.google_event_id) return reserva;
   const evento = await lerEventoGoogle(reserva.google_event_id);
   const admin = createAdminClient();
-  if (evento?.status === "confirmed" && evento.businessId === reserva.business_id && evento.etag) {
-    if (reserva.status === "confirmed" && reserva.google_etag === evento.etag) return reserva;
+  if (evento?.status === "confirmed") {
+    const horario = horarioConfirmadoGoogle(evento.inicio, evento.fim);
+    if (evento.businessId !== reserva.business_id || !evento.etag || !horario)
+      throw new Error("evento_google_exige_revisao");
+    if (reserva.status === "confirmed" && reserva.google_etag === evento.etag
+      && Date.parse(reserva.starts_at) === Date.parse(horario.inicio)
+      && Date.parse(reserva.ends_at) === Date.parse(horario.fim)) return reserva;
     const { data, error } = await admin.from("onboarding_meetings")
-      .update({ status: "confirmed", google_etag: evento.etag, google_event_url: evento.htmlLink })
+      .update({ status: "confirmed", google_etag: evento.etag, google_event_url: evento.htmlLink,
+        starts_at: horario.inicio, ends_at: horario.fim })
       .eq("id", reserva.id).eq("business_id", reserva.business_id)
       .in("status", ["pending", "confirmed"])
       .select("id, business_id, calendar_id, google_event_id, google_etag, google_event_url, starts_at, ends_at, status")
@@ -83,8 +102,8 @@ async function conciliarReservaAtiva(reserva: Reserva): Promise<Reserva | null> 
     if (error) throw new Error("falha_cancelamento_reserva");
     return null;
   }
-  // Evento desconhecido ou com outro negócio: segura a vaga para revisão humana.
-  return reserva;
+  // Um status desconhecido não confirma a reunião nem libera a vaga.
+  throw new Error("evento_google_exige_revisao");
 }
 
 async function ocupacoesDaAgenda(agora: Date, calendarId: string): Promise<IntervaloOcupado[]> {
@@ -104,12 +123,13 @@ function estadoDaReserva(reserva: Reserva): EstadoAgenda {
   if (reserva.status === "pending") return { status: "pendente", inicio: reserva.starts_at };
   const url = reserva.google_event_url;
   const segura = url && /^https:\/\/(?:www\.google\.com|calendar\.google\.com)\/calendar\//.test(url) ? url : null;
-  return { status: "confirmada", inicio: reserva.starts_at, fim: reserva.ends_at, url: segura };
+  return { status: "confirmada", inicio: reserva.starts_at, fim: reserva.ends_at, url: segura,
+    podeRemarcar: podeRemarcar(new Date(reserva.starts_at), new Date()) };
 }
 
-export async function carregarAgendaAction(): Promise<EstadoAgenda> {
+export async function carregarAgendaAction(businessIdEsperado: string): Promise<EstadoAgenda> {
   if (!agendaGoogleConfigurada()) return { status: "legado" };
-  const ctx = await contexto();
+  const ctx = await contexto(businessIdEsperado);
   const calendarId = calendarIdConfigurado();
   if (!ctx || !calendarId) return { status: "erro", mensagem: "Não conseguimos conferir o negócio desta reunião." };
   try {
@@ -126,11 +146,14 @@ export async function carregarAgendaAction(): Promise<EstadoAgenda> {
   }
 }
 
-export async function reservarHorarioAction(inicio: string): Promise<EstadoAgenda> {
+export async function reservarHorarioAction(inicio: string, businessIdEsperado: string): Promise<EstadoAgenda> {
   if (!agendaGoogleConfigurada()) return { status: "legado" };
-  const ctx = await contexto();
+  const ctx = await contexto(businessIdEsperado);
   const calendarId = calendarIdConfigurado();
-  if (!ctx || !calendarId) return { status: "erro", mensagem: "Entre no negócio comprado para agendar." };
+  // A página só mostra a agenda depois do onboarding; a action precisa
+  // repetir o portão para bloquear chamadas diretas ou abas antigas.
+  if (!ctx || !ctx.onboardingConcluido || !calendarId)
+    return { status: "erro", mensagem: "Conclua o onboarding do negócio comprado para agendar." };
   const inicioDate = new Date(inicio);
   const agora = new Date();
   if (!Number.isFinite(inicioDate.getTime())) return { status: "erro", mensagem: "Escolha um horário válido." };
@@ -138,7 +161,10 @@ export async function reservarHorarioAction(inicio: string): Promise<EstadoAgend
   const admin = createAdminClient();
   try {
     const anterior = await reservaAtiva(ctx.businessId);
-    if (anterior) return estadoDaReserva(anterior);
+    if (anterior) {
+      const conciliada = await conciliarReservaAtiva(anterior);
+      if (conciliada) return estadoDaReserva(conciliada);
+    }
     const ocupacoes = await ocupacoesDaAgenda(agora, calendarId);
     if (!sugerirHorarios(agora, ocupacoes).includes(inicioDate.toISOString())
       || !avaliarHorario({ inicio: inicioDate, agora, duracaoMinutos: 25, ocupacoes }).ok)
@@ -151,13 +177,30 @@ export async function reservarHorarioAction(inicio: string): Promise<EstadoAgend
       .single();
     if (erroPendente || !pendente) {
       const ativa = await reservaAtiva(ctx.businessId);
-      return ativa ? estadoDaReserva(ativa) : { status: "erro", mensagem: "Este horário ou CNPJ já tem uma reserva ativa. Atualize as opções ou fale com a equipe." };
+      const conciliada = ativa ? await conciliarReservaAtiva(ativa) : null;
+      return conciliada ? estadoDaReserva(conciliada) : { status: "erro", mensagem: "Este horário ou CNPJ já tem uma reserva ativa. Atualize as opções ou fale com a equipe." };
     }
     try {
       await criarEventoGoogle({ eventId, inicio: inicioDate.toISOString(), fim: fimDate.toISOString(),
-        email: ctx.email, nome: ctx.nome, cnpj: ctx.cnpj, businessId: ctx.businessId });
-    } catch {
-      // A resposta pode ter se perdido depois de o Google criar o evento. A leitura decide.
+        email: ctx.email, nome: ctx.nome, businessId: ctx.businessId,
+        descricao: ctx.descricao });
+    } catch (erro) {
+      if (erro instanceof CriacaoGoogleRecusada) {
+        // Houve rejeição explícita do POST. Uma leitura do ID reservado ainda
+        // confere que não existe evento antes de liberar a vaga local.
+        const evento = await lerEventoGoogle(eventId);
+        if (evento === null) {
+          const { data: falha, error: erroFalha } = await admin.from("onboarding_meetings")
+            .update({ status: "failed" }).eq("id", pendente.id)
+            .eq("business_id", ctx.businessId).eq("status", "pending")
+            .select("id").maybeSingle();
+          if (erroFalha || !falha) throw new Error("falha_registro_recusa_google");
+          revalidatePath("/onboarding/concluido");
+          return { status: "erro", mensagem: "A agenda recusou esta reserva. Atualize os horários e tente novamente." };
+        }
+      }
+      // Uma resposta incerta pode vir depois de o Google criar o evento.
+      // Nesses casos, a reserva permanece pendente até a conciliação.
     }
     const conciliada = await conciliarReservaAtiva(pendente as Reserva);
     revalidatePath("/onboarding/concluido");
@@ -168,21 +211,26 @@ export async function reservarHorarioAction(inicio: string): Promise<EstadoAgend
   }
 }
 
-export async function cancelarReservaAction(): Promise<EstadoAgenda> {
+export async function cancelarReservaAction(businessIdEsperado: string): Promise<EstadoAgenda> {
   if (!agendaGoogleConfigurada()) return { status: "legado" };
-  const ctx = await contexto();
+  const ctx = await contexto(businessIdEsperado);
   if (!ctx) return { status: "erro", mensagem: "Entre no negócio comprado para cancelar." };
   try {
-    const reserva = await reservaAtiva(ctx.businessId);
+    const atual = await reservaAtiva(ctx.businessId);
+    const reserva = atual ? await conciliarReservaAtiva(atual) : null;
     if (!reserva || reserva.status !== "confirmed" || !reserva.google_event_id)
-      return carregarAgendaAction();
+      return carregarAgendaAction(businessIdEsperado);
+    // Cancelar aqui libera uma nova reserva; portanto é remarcação e respeita
+    // o prazo de 25 minutos. Aviso de ausência continua pelo atendimento.
+    if (!podeRemarcar(new Date(reserva.starts_at), new Date()))
+      return estadoDaReserva(reserva);
     const apagou = await apagarEventoGoogle(reserva.google_event_id);
     if (!apagou) return { status: "erro", mensagem: "Não conseguimos confirmar o cancelamento. Sua reunião continua marcada." };
     const { error } = await createAdminClient().from("onboarding_meetings")
       .update({ status: "cancelled" }).eq("business_id", ctx.businessId).eq("id", reserva.id).eq("status", "confirmed");
     if (error) return { status: "erro", mensagem: "O Google recebeu o cancelamento. Atualize esta página para conferir o registro." };
     revalidatePath("/onboarding/concluido");
-    return carregarAgendaAction();
+    return carregarAgendaAction(businessIdEsperado);
   } catch {
     return { status: "erro", mensagem: "Não conseguimos confirmar o cancelamento agora. Atualize esta página." };
   }

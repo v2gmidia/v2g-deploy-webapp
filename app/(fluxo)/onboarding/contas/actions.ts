@@ -22,9 +22,7 @@ import {
   ORDEM_DAS_CONTAS,
   TICKET_FAIXA,
   custoDaSobra,
-  lucroDaPostura,
   numeroDoTexto,
-  opcaoDePostura,
   opcaoDeSobra,
   transicaoDaContaPermitida,
 } from "./regras";
@@ -34,6 +32,8 @@ export interface EstadoDasContas {
   contas: Partial<Record<ChaveDeConta, RespostaDeConta>>;
   /** o ticket que vale hoje, para as contas seguintes */
   ticket: number | null;
+  /** Faixa declarada não é um ticket único para derivar outros valores. */
+  ticketEmFaixa: boolean;
   margem: number | null;
   /**
    * O que se sabe de cada conta, JÁ RESOLVIDO entre coluna e jsonb.
@@ -136,7 +136,10 @@ function confirmadoEmDe(
 
 function montarEstado(linha: LinhaNegocio): EstadoDasContas {
   const contas = lerContas(linha.onboarding);
-  const ticket = contas.ticket?.emGravacao ? null : ticketEscalar(num(linha.avg_ticket_min), num(linha.avg_ticket_max));
+  const minimo = num(linha.avg_ticket_min);
+  const maximo = num(linha.avg_ticket_max);
+  const ticket = contas.ticket?.emGravacao ? null : ticketEscalar(minimo, maximo);
+  const ticketEmFaixa = ticket !== null && maximo !== minimo;
   const custo = num(linha.avg_direct_cost);
   const lucro = num(linha.target_profit_per_customer);
   const cadastro = montarCadastro(linha);
@@ -146,7 +149,8 @@ function montarEstado(linha: LinhaNegocio): EstadoDasContas {
     businessId: linha.id,
     contas,
     ticket,
-    margem: ticket !== null && custo !== null ? Math.round((ticket - custo) * 100) / 100 : null,
+    ticketEmFaixa,
+    margem: ticket !== null && !ticketEmFaixa && custo !== null ? Math.round((ticket - custo) * 100) / 100 : null,
     // A COLUNA PRIMEIRO, SEMPRE. `lerConta` é a única regra de combinação
     // entre coluna e jsonb no projeto — `motivoDaConta` também é escrita em
     // cima dela.
@@ -294,6 +298,9 @@ export async function salvarContaAction(entrada: {
   if (leitura.estado === "respondida" || leitura.estado === "nao_sei") {
     return { ok: false, erro: "Esta conta já foi respondida. Reabra a pergunta ou corrija em Meu Negócio." };
   }
+  if (entrada.conta === "custo" && estado.ticketEmFaixa && !entrada.naoSei) {
+    return { ok: false, erro: "O valor da venda está em faixa. Sem um valor único, deixe esta conta para a conversa com o gestor." };
+  }
   const contas = { ...estado.contas };
   if (!transicaoDaContaPermitida(entrada.conta, contas[entrada.conta],
       entrada.naoSei === true, entrada.confirmando === true)) {
@@ -346,6 +353,8 @@ export async function salvarContaAction(entrada: {
       const anterior = contas.custo;
       const valor = numeroDoTexto(entrada.escolha);
       if (valor === null) return { ok: false, erro: "Escreva um valor." };
+      if (valor !== anterior?.calculado)
+        return { ok: false, erro: "O valor mudou. Confira o número exibido antes de confirmar." };
       if (estado.ticket !== null && valor > estado.ticket) {
         return { ok: false, erro: "O custo não pode ser maior que o valor da venda." };
       }
@@ -385,6 +394,8 @@ export async function salvarContaAction(entrada: {
       const anterior = contas.lucro;
       const valor = numeroDoTexto(entrada.escolha);
       if (valor === null) return { ok: false, erro: "Escreva um valor." };
+      if (valor !== anterior?.calculado)
+        return { ok: false, erro: "O valor mudou. Confira o número exibido antes de confirmar." };
       if (estado.margem !== null && valor > estado.margem) {
         return { ok: false, erro: "Isso é mais do que sobra de cada venda. Escolha um valor menor." };
       }
@@ -400,17 +411,7 @@ export async function salvarContaAction(entrada: {
       if (estado.margem === null) return { ok: false, erro: "Feche antes quanto sobra de cada venda." };
       if (valor > estado.margem) return { ok: false, erro: "O valor não pode ser maior que a sobra por venda." };
       contas.lucro = { echo: `Valor informado: ${valor}`, calculado: valor, confirmado: false, em: agora };
-    } else {
-      const opcao = opcaoDePostura(entrada.escolha);
-      if (!opcao) return { ok: false, erro: "Essa opção não existe." };
-      if (estado.margem === null) return { ok: false, erro: "Feche antes quanto sobra de cada venda." };
-      contas.lucro = {
-        echo: opcao.rotulo,
-        calculado: lucroDaPostura(estado.margem, opcao.fracaoQueFica),
-        confirmado: false,
-        em: agora,
-      };
-    }
+    } else return { ok: false, erro: "Informe um valor em reais ou deixe esta conta para a conversa com o gestor." };
   }
 
   // O jsonb de `contas` fica ao lado de `respostas`, sem tocar nele. As

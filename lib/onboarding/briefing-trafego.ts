@@ -29,3 +29,15 @@ export function lerBriefingDeTrafego(onboarding: unknown): {
     resultado: ler("resultado"), diferencial: ler("diferencial"), prova: ler("prova"),
   };
 }
+
+/** Pontos que o cliente deixou explicitamente para conferir com o gestor. */
+export function lacunasParaReuniao(briefing: ReturnType<typeof lerBriefingDeTrafego>): string[] {
+  const campos = [
+    ["publico", "Quem costuma comprar"],
+    ["motivo", "O que o cliente procura"],
+    ["resultado", "O que recebe após a compra"],
+    ["diferencial", "Por que escolhe a empresa"],
+  ] as const;
+  return campos.filter(([chave]) => briefing[chave].estado === "nao_sei")
+    .map(([, rotulo]) => rotulo);
+}

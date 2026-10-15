@@ -14,6 +14,12 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-14 — Multiconta direta e ajuste do primeiro bloco do onboarding
+
+**Correções diretas do Victor, posteriores às decisões abaixo.** Um e-mail administra vários CNPJs. O menu mostra o negócio ativo com nome, logo quando houver e lista dos negócios liberados; a troca ocorre ao escolher um item, sem uma segunda tela ou botão de abertura. Adicionar negócio usa a compra existente, condicionada à disponibilidade real do checkout. No onboarding, o cliente declara o que vende, quem compra, a necessidade e a entrega; **não escolhe o foco do primeiro anúncio**, que fica para o gestor e a reunião. Respostas curtas, mas informativas, não devem ser recusadas apenas por um piso arbitrário de caracteres. “Brasil inteiro” remove cidade, CEP e raio derivados da escolha local anterior; área próxima requer CEP válido. Estas correções substituem a exigência de “oferta inicial” na ordem do bloco registrada em 14/10. A resposta antiga permanece no histórico.
+
+**Estado de execução:** seletor e correções do primeiro bloco foram preparados localmente em 14/10, com verificação de tipos e conferidores offline. A publicação e o ensaio autenticado com dois CNPJs no QA ainda não ocorreram. A entrada pública de outro CNPJ continua em pré-cadastro enquanto o checkout público não está liberado.
+
 ### 2026-10-14 — Perguntas separadas para preparar o primeiro anúncio
 
 **Correção direta do Victor.** O bloco do negócio começa pelo nome comercial, tipo de negócio e área atendida; depois separa catálogo de produtos/serviços, escolha da oferta inicial, comprador habitual, motivo da procura, entrega concreta, diferencial e provas disponíveis. O ticket médio permanece na etapa de contas, sem exigir uma tabela de preços de todos os serviços. O destino dos interessados nesta oferta é WhatsApp, então não vira uma pergunta de escolha. Instagram e site ficam na etapa da marca para evitar repetição. Esta decisão substitui a frase anterior que concentrava oferta, inclusão e preço numa única pergunta. As respostas adicionais são declarações do cliente para revisão do gestor, não segmentação, promessa publicitária ou diagnóstico automático. A relação entre verba, ticket e vendas necessárias só pode ser apresentada como cenário aritmético quando houver custo por venda confiável; sem taxa de conversão observada, não se prevê retorno nem se recomenda verba pelo ticket isolado.

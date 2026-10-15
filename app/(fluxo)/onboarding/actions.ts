@@ -10,6 +10,7 @@ import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
 import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { validarInstagram, validarSite } from "@/lib/onboarding/enderecos";
+import { cidadeDeclaradaValida } from "@/lib/onboarding/localizacao";
 
 /**
  * Uma resposta como fica gravada em `businesses.onboarding`.
@@ -160,6 +161,11 @@ export async function salvarRespostaAction(entrada: {
   cidade?: string;
   cep?: string;
 }): Promise<SalvarResultado> {
+  // A resposta antiga continua legível no histórico, mas a decisão atual
+  // deixa o primeiro anúncio com o gestor. Bloquear também na action impede
+  // que uma aba velha ou chamada forjada grave uma escolha nova do cliente.
+  if (entrada.qid === "oferta")
+    return { ok: false, erro: "O foco do primeiro anúncio será definido com o gestor." };
   const pergunta = perguntaPorId(entrada.qid);
   if (!pergunta) return { ok: false, erro: "Pergunta desconhecida." };
   if (entrada.origem !== "chip" && entrada.origem !== "texto")
@@ -199,11 +205,15 @@ export async function salvarRespostaAction(entrada: {
     texto = normalizado;
   }
 
-  const cidade = pergunta.pedeCidade && entrada.origem === "chip" ? entrada.cidade?.trim() : undefined;
-  const cepDigitado = pergunta.pedeCidade && entrada.origem === "chip" ? entrada.cep?.trim() : undefined;
+  const local = pergunta.pedeCidade && entrada.origem === "chip" && texto !== "Brasil inteiro";
+  const cidade = local ? entrada.cidade?.trim().replace(/\s+/g, " ") : undefined;
+  const cepDigitado = local && texto === "Só aqui perto (até 5 km)" ? entrada.cep?.trim() : undefined;
   const cep = cepDigitado ? cepDigitado.replace(/\D/g, "") : undefined;
-  if (pergunta.pedeCidade && entrada.origem === "chip" && texto !== "Brasil inteiro" && !cidade) {
-    return { ok: false, erro: "Escreva sua cidade antes de escolher." };
+  if (local && (!cidade || !cidadeDeclaradaValida(cidade))) {
+    return { ok: false, erro: "Confira o nome da cidade, sem números." };
+  }
+  if (local && texto === "Só aqui perto (até 5 km)" && !cep) {
+    return { ok: false, erro: "Informe o CEP para usar a área próxima." };
   }
   if (cepDigitado && (!/^\d{5}-?\d{3}$/.test(cepDigitado) || cep?.length !== 8)) {
     return { ok: false, erro: "Confira o CEP: use oito números." };
@@ -272,8 +282,11 @@ export async function salvarRespostaAction(entrada: {
   // não inferimos números nem município da nova frase. Uma correção feita
   // depois em outra tela, com valor diferente, é preservada.
   const esvaziar = entrada.qid === "praca" && entrada.origem === "chip" && texto === "Brasil inteiro" &&
-    pracaAnterior?.origem === "chip" && RAIO_KM[pracaAnterior.texto] === linha.radius_km
-    ? ["radius_km"] : entrada.qid === "praca" && entrada.origem === "texto" &&
+    pracaAnterior?.origem === "chip" ? [
+      ...(pracaAnterior.cidade && linha.city === pracaAnterior.cidade ? ["city"] : []),
+      ...(pracaAnterior.cep && linha.cep === pracaAnterior.cep ? ["cep"] : []),
+      ...(RAIO_KM[pracaAnterior.texto] === linha.radius_km ? ["radius_km"] : []),
+    ] : entrada.qid === "praca" && entrada.origem === "texto" &&
     pracaAnterior?.origem === "chip" ? [
       ...(pracaAnterior.cidade && linha.city === pracaAnterior.cidade ? ["city"] : []),
       ...(pracaAnterior.cep && linha.cep === pracaAnterior.cep ? ["cep"] : []),

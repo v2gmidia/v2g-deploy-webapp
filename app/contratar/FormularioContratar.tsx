@@ -6,12 +6,14 @@ import { valorDoPedidoCentavos, type PeriodoDeCobranca } from "@/lib/contratacao
 
 const inicial: CompraState = {};
 
-export function FormularioContratar({ referencia, apiAtiva }: { referencia: string; apiAtiva: boolean }) {
+export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso }: {
+  referencia: string; apiAtiva: boolean; emailDoAcesso?: string;
+}) {
   const [estado, acao, pendente] = useActionState(iniciarCompra, inicial);
   const [periodo, setPeriodo] = useState<PeriodoDeCobranca>("monthly");
   const [metodo, setMetodo] = useState<"asaas_pix" | "asaas_card">("asaas_card");
   const [contas, setContas] = useState(1);
-  const [campos, setCampos] = useState({ nome: "", email: "", whatsapp: "", razaoSocial: "",
+  const [campos, setCampos] = useState({ nome: "", email: emailDoAcesso ?? "", whatsapp: "", razaoSocial: "",
     cnpj: "", vendeWhatsApp: "" });
   const editar = (chave: keyof typeof campos) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setCampos(atual => ({ ...atual, [chave]: e.target.value }));
@@ -30,7 +32,9 @@ export function FormularioContratar({ referencia, apiAtiva }: { referencia: stri
       <input type="hidden" name="referencia" value={referencia} />
       <div className="contratar-campos">
         <label>Nome completo<input name="nome" autoComplete="name" maxLength={120} value={campos.nome} onChange={editar("nome")} required /></label>
-        <label>E-mail para acessar a conta<input name="email" type="email" autoComplete="email" value={campos.email} onChange={editar("email")} required /></label>
+        <label>E-mail para acessar a conta<input name="email" type="email" autoComplete="email" value={campos.email}
+          onChange={editar("email")} readOnly={Boolean(emailDoAcesso)} required /></label>
+        {emailDoAcesso && <p>Este pedido será vinculado ao e-mail da sua sessão atual.</p>}
         <label>WhatsApp com DDD<input name="whatsapp" type="tel" autoComplete="tel" value={campos.whatsapp} onChange={editar("whatsapp")} required /></label>
         <label>Razão social<input name="razaoSocial" autoComplete="organization" maxLength={200} value={campos.razaoSocial} onChange={editar("razaoSocial")} required /></label>
         <label>CNPJ<input name="cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" value={campos.cnpj} onChange={editar("cnpj")} required /></label>

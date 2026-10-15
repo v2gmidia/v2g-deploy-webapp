@@ -551,4 +551,14 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "evento e convite Google nao sao verificados pelo esquema nem pela aplicacao da migration",
     ],
   },
+  {
+    arquivo: "20261015011547_proteger_pagina_compartilhada_multiconta.sql",
+    cria: [{ tipo: "rpc", nome: "registrar_conta_contratada" }],
+    foraDoAlcance: [
+      "migration preparada localmente e NAO aplicada; consultar ledger antes de aplicar no QA",
+      "a funcao impedir_troca_pagina_compartilhada e o trigger meta_connections_pagina_compartilhada nao aparecem no OpenAPI",
+      "o lock da conexao, a serializacao por negocio, o corpo da RPC e o grant exclusivo a service_role exigem teste SQL",
+      "a compatibilidade com o banco compartilhado e a troca de Pagina concorrente exigem ensaio no QA",
+    ],
+  },
 ];

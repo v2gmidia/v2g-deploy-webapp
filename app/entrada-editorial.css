@@ -173,12 +173,14 @@
 .seletor-negocio .auth-h { margin-bottom: 12px; color: #102A35; font-size: clamp(30px, 4vw, 42px); font-weight: 500; line-height: 1.14; letter-spacing: -.035em; text-transform: none; }
 .seletor-negocio .auth-sub { margin-bottom: 28px; color: #49606A; }
 .seletor-negocio .escolha-lista { gap: 10px; margin-bottom: 22px; }
-.seletor-negocio .escolha-item { min-height: 76px; align-items: center; border: 1px solid #CCD9D6; border-radius: 4px; padding: 14px 18px; background: #F8FBFA; }
-.seletor-negocio .escolha-item:hover, .seletor-negocio .escolha-item:has(input:checked) { border-color: #0B40DA; background: #EEF4FF; }
+.seletor-negocio .escolha-item { width: 100%; min-height: 76px; align-items: center; border: 1px solid #CCD9D6; border-radius: 4px; padding: 14px 18px; background: #F8FBFA; text-align: left; }
+.seletor-negocio .escolha-item:hover, .seletor-negocio .escolha-item[aria-current="true"] { border-color: #0B40DA; background: #EEF4FF; }
 .seletor-negocio .escolha-item:focus-within { outline: 2px solid #0B40DA; outline-offset: 3px; }
-.seletor-negocio .escolha-item input { width: 18px; height: 18px; accent-color: #0B40DA; }
+.seletor-negocio .escolha-item:disabled { cursor: wait; }
 .seletor-negocio .esc-texto b { color: #102A35; font-family: var(--body); font-size: 16px; font-weight: 600; overflow-wrap: anywhere; }
-.seletor-negocio .esc-texto span { color: #49606A; font-size: 13px; }
+.seletor-negocio .esc-texto span { display: block; color: #49606A; font-size: 13px; }
+.seletor-negocio .escolha-seta { margin-left: auto; color: #0B40DA; font-size: 22px; }
+.seletor-negocio .seletor-abrindo { margin: 8px 0 0; color: #49606A; }
 .seletor-negocio .cta { width: 100%; min-height: 52px; border-radius: 4px; background: #0B40DA; color: #FFFFFF; font-family: var(--body); font-size: 16px; font-weight: 500; }
 .seletor-negocio .cta:hover:not(:disabled) { background: #092EAA; }
 .seletor-negocio .seletor-ajuda { margin: 28px 0 12px; padding-top: 22px; border-top: 1px solid #CCD9D6; color: #49606A; font-size: 14px; line-height: 1.6; }
@@ -189,3 +191,8 @@
   .auth-shell:has(.seletor-negocio) .auth-wrap { padding: 20px 16px 48px; }
   .seletor-negocio { padding: 24px 20px; }
 }
+.adicionar-negocio-opcoes { display: grid; gap: 20px; margin-top: 28px; }
+.adicionar-negocio-opcoes section { padding: 20px; border: 1px solid var(--line); border-radius: var(--raio-controle); }
+.adicionar-negocio-opcoes h2 { margin: 0 0 8px; font-size: 20px; }
+.adicionar-negocio-opcoes p { margin: 0 0 16px; color: var(--ink-soft); line-height: 1.6; }
+.adicionar-negocio-opcoes .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; }

@@ -150,7 +150,8 @@ export default async function ExemploPage({
     const modulo = ehDesenvolvimento ? await import("@/app/(fluxo)/onboarding/concluido/Conclusao") : null;
     if (!modulo) notFound();
     return <div className="auth-shell"><main className="auth-wrap">
-      <modulo.Conclusao estado={{ concluido: true, faltamBasicas: [], contasProntas: true }} />
+      <modulo.Conclusao estado={{ businessId: "f0000000-0000-4000-8000-000000000099",
+        concluido: true, faltamBasicas: [], contasProntas: true }} />
     </main></div>;
   }
 

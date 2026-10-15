@@ -9,6 +9,9 @@ import { TelaDoInicio } from "./TelaDoInicio";
 import { estadoDaConclusao } from "@/lib/onboarding/conclusao";
 import { lerConclusao } from "@/lib/onboarding/marca";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
+import { agendaGoogleConfigurada } from "@/lib/agenda/google";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { InicioAposReserva } from "./InicioAposReserva";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -133,10 +136,27 @@ export default async function InicioPage() {
     if (erroJornada) console.error("[inicio] falha ao ler conclusão ::", erroJornada.message);
     if (jornada && lerConclusao(jornada.onboarding)) {
       const conclusao = estadoDaConclusao(jornada);
-      if (conclusao.concluido) redirect("/onboarding/concluido");
-      if (conclusao.faltamBasicas.length) redirect("/onboarding");
-      if (!conclusao.contasProntas) redirect("/onboarding/contas");
-      redirect("/onboarding/marca");
+      if (conclusao.concluido) {
+        // Enquanto a agenda própria está desligada, abrir o link público não
+        // comprova reserva. Com ela ligada, só o registro confirmado deste
+        // negócio libera o retorno ao Início; pendência e erro voltam à agenda.
+        if (!agendaGoogleConfigurada()) redirect("/onboarding/concluido");
+        const { data: reserva, error: erroReserva } = await createAdminClient()
+          .from("onboarding_meetings").select("starts_at, ends_at")
+          .eq("business_id", estado.negocioId).eq("status", "confirmed")
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (erroReserva || !reserva) redirect("/onboarding/concluido");
+        // Após a reunião, a tela de campanha volta a ser a fonte da jornada.
+        // Antes de existir execução, não apresentar a cadeia antiga como se
+        // o cliente tivesse de publicar o primeiro anúncio por conta própria.
+        if (!estado.diaSeguinte.execucao && estado.campanhasNoAr.length === 0)
+          return <InicioAposReserva inicio={reserva.starts_at} fim={reserva.ends_at} />;
+      }
+      else {
+        if (conclusao.faltamBasicas.length) redirect("/onboarding");
+        if (!conclusao.contasProntas) redirect("/onboarding/contas");
+        redirect("/onboarding/marca");
+      }
     }
   }
 

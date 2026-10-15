@@ -1,0 +1,11 @@
+.pagina { display: grid; gap: 1.5rem; max-width: 900px; margin: 0 auto; }
+.pagina header p { color: var(--ink-soft); }
+.pagina section { padding: 1.25rem; border: 1px solid var(--line); border-radius: .5rem; background: var(--plate); color: var(--plate-ink); }
+.pagina section h2 { margin: 0 0 .75rem; }
+.pagina a { color: var(--cobalt-ink); text-decoration: underline; text-underline-offset: .2em; overflow-wrap: anywhere; }
+.sobretitulo { font-size: var(--fs-legenda); font-weight: 700; letter-spacing: .1em; }
+.arquivo, .lista { overflow-wrap: anywhere; }
+.lista { display: grid; gap: .6rem; margin: 0; padding-left: 1.3rem; }
+.cores { display: flex; flex-wrap: wrap; gap: .75rem; list-style: none; padding: 0; }
+.cores li { display: flex; align-items: center; gap: .5rem; }
+.amostra { display: inline-block; width: 2rem; height: 2rem; border: 1px solid var(--line); border-radius: .25rem; }

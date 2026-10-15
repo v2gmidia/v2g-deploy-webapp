@@ -11,16 +11,18 @@ interface Props {
   paginas: PaginaDoFacebook[];
   atual: string | null;
   businessId: string;
+  variasContasAtivas: boolean;
+  contasIlegiveis: boolean;
 }
 
 /**
  * Trocar a página do Facebook sem passar pelo OAuth de novo.
  *
- * Só aparece quando existe mais de uma página. Com uma só, não há troca
- * possível — e um seletor de um item é uma pergunta com uma resposta,
- * que ensina a clicar sem ler.
+ * Com várias contas de anúncios, informa que a Página ainda é compartilhada
+ * por negócio e encaminha a troca para a equipe. Com uma única Página
+ * disponível, mostra a escolhida sem oferecer um seletor sem alternativa.
  */
-export function TrocarPagina({ paginas, atual, businessId }: Props) {
+export function TrocarPagina({ paginas, atual, businessId, variasContasAtivas, contasIlegiveis }: Props) {
   const [estado, action, pendente] = useActionState(trocarPaginaAction, inicial);
   const [escolhida, setEscolhida] = useState(atual ?? paginas[0]?.id ?? "");
 
@@ -28,6 +30,16 @@ export function TrocarPagina({ paginas, atual, businessId }: Props) {
   if (paginas.length === 0) return null;
 
   const paginaAtual = paginas.find((p) => p.id === atual);
+
+  if (contasIlegiveis) return <div className="card">
+    <p className="hint">Não conseguimos conferir quantas contas de anúncios usam esta Página. Tente novamente antes de mudar.</p>
+  </div>;
+
+  if (variasContasAtivas) return <div className="card">
+    <p className="hint">Este negócio tem mais de uma conta de anúncios, e todas usam a mesma Página na configuração atual.</p>
+    <p className="hint">Página em uso: <b>{paginaAtual?.nome ?? atual ?? "não identificada"}</b>. Para trocar sem afetar as outras contas, fale com a equipe.</p>
+    <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com a equipe</a>
+  </div>;
 
   if (unica) {
     return (

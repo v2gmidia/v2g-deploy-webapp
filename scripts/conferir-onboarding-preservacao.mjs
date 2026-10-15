@@ -12,7 +12,7 @@ const allowed = new Set([
   'app/(fluxo)/onboarding/actions.ts', 'app/(fluxo)/onboarding/perguntas.ts',
   'app/(fluxo)/onboarding/contas/actions.ts', 'app/(fluxo)/onboarding/contas/regras.ts',
   'app/(fluxo)/onboarding/marca/actions.ts', 'lib/onboarding/marca.ts', 'lib/onboarding/conclusao.ts',
-  'lib/onboarding/bloco-um.ts', 'lib/onboarding/enderecos.ts', 'lib/onboarding/briefing-trafego.ts',
+  'lib/onboarding/bloco-um.ts', 'lib/onboarding/enderecos.ts', 'lib/onboarding/localizacao.ts', 'lib/onboarding/briefing-trafego.ts',
   'lib/onboarding/documento.ts', 'lib/onboarding/atividades.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
   'lib/formato.ts', 'lib/verba/limites.ts', 'lib/nichos/escolha.ts',
   'lib/nichos/busca.ts', 'lib/nichos/tipos.ts',
@@ -52,7 +52,7 @@ const cadastro = await import('../lib/cadastro/montar.ts');
 const marcaDoc = await import('../lib/onboarding/marca.ts');
 const { patchDoBlocoUm } = await import('../lib/onboarding/documento.ts');
 const { buscarAtividades } = await import('../lib/onboarding/atividades.ts');
-const { lerBriefingDeTrafego, NAO_SEI_BRIEFING } = await import('../lib/onboarding/briefing-trafego.ts');
+const { lerBriefingDeTrafego, lacunasParaReuniao, NAO_SEI_BRIEFING } = await import('../lib/onboarding/briefing-trafego.ts');
 const oldTime = '2026-09-01T00:00:00.000Z';
 const resposta = texto => ({texto, echo:texto, origem:'texto', em:oldTime});
 const documentFixture = () => ({
@@ -178,6 +178,16 @@ test('site e Instagram válidos entram em colunas do negócio e persistem no JSO
   assert.equal(row.onboarding.respostas.instagram.texto, '@exemplo');
 });
 
+test('uma aba antiga não grava a escolha do primeiro anúncio pelo cliente', async () => {
+  const before = structuredClone(row);
+  const result = await actions.salvarRespostaAction({
+    businessId: row.id, qid: 'oferta', texto: 'Quero anunciar este serviço primeiro', origem: 'texto',
+  });
+  assert.equal(result.ok, false);
+  assert.deepEqual(row, before);
+  assert.deepEqual(events, []);
+});
+
 test('declarar ausência limpa endereço anterior sem apagar outros blocos', async () => {
   row.site_url = 'https://anterior.com.br';
   row.instagram_handle = '@anterior';
@@ -203,25 +213,29 @@ test('falha na limpeza do site exige recarregar e não marca ausência', async (
   assert.equal(row.onboarding.respostas.site, undefined);
 });
 
-test('CEP opcional da praça é validado e gravado no negócio selecionado', async () => {
-  const invalido = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Na cidade toda',origem:'chip',cidade:'São Paulo',cep:'1234A-000'});
+test('área próxima exige CEP válido e cidade sem números', async () => {
+  const cidadeInvalida = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Na cidade toda',origem:'chip',cidade:'São 123'});
+  assert.equal(cidadeInvalida.ok, false);
+  const semCep = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Só aqui perto (até 5 km)',origem:'chip',cidade:'São Paulo'});
+  assert.equal(semCep.ok, false);
+  const invalido = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Só aqui perto (até 5 km)',origem:'chip',cidade:'São Paulo',cep:'1234A-000'});
   assert.equal(invalido.ok, false);
   assert.deepEqual(events, []);
-  const valido = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Na cidade toda',origem:'chip',cidade:'São Paulo',cep:'01310-100'});
+  const valido = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Só aqui perto (até 5 km)',origem:'chip',cidade:'São Paulo',cep:'01310-100'});
   assert.equal(valido.ok, true);
   assert.equal(row.cep, '01310100');
   assert.equal(row.onboarding.respostas.praca.cep, '01310100');
   assert.match(row.onboarding.respostas.praca.echo, /CEP 01310-100/);
 });
 
-test('Brasil inteiro dispensa cidade e remove somente o raio da escolha local anterior', async () => {
+test('Brasil inteiro dispensa cidade e remove localização derivada da escolha anterior', async () => {
   row.radius_km = 25;
   row.city = 'Curitiba';
   row.onboarding.respostas.praca = {texto:'Na cidade toda',origem:'chip',cidade:'Curitiba',echo:'Curitiba · Na cidade toda',em:oldTime};
   const result = await actions.salvarRespostaAction({businessId:row.id,qid:'praca',texto:'Brasil inteiro',origem:'chip'});
   assert.equal(result.ok,true);
   assert.equal(row.radius_km,null);
-  assert.equal(row.city,'Curitiba');
+  assert.equal(row.city,null);
   assert.equal(row.onboarding.respostas.praca.texto,'Brasil inteiro');
 });
 
@@ -250,7 +264,10 @@ test('briefing de tráfego guarda público declarado e lacuna sem inventar resul
   const antigo = structuredClone(row.onboarding.contas);
   assert.equal((await save('descricao','Sites institucionais, produção de conteúdo e design para pequenas empresas')).ok,true);
   assert.equal((await save('oferta','x')).ok,false);
-  assert.equal((await save('oferta','Site institucional com até cinco páginas e formulário de contato')).ok,true);
+  // Resposta de versões antigas continua legível, mas não pode ser regravada
+  // pelo cliente depois que a escolha do primeiro anúncio passou ao gestor.
+  row.onboarding.respostas.oferta = { texto: 'Site institucional com até cinco páginas e formulário de contato', origem: 'texto' };
+  assert.equal((await save('oferta','Trocar o foco do primeiro anúncio')).ok,false);
   assert.equal((await save('publico','Pequenas lojas que vendem pelo WhatsApp e querem responder mais rápido')).ok,true);
   assert.equal((await save('motivo','Precisam apresentar produtos e receber contatos pelo site')).ok,true);
   assert.equal((await save('resultado','bom')).ok,false);
@@ -259,12 +276,14 @@ test('briefing de tráfego guarda público declarado e lacuna sem inventar resul
   assert.equal(lerBriefingDeTrafego(row.onboarding).oferta.texto,'Site institucional com até cinco páginas e formulário de contato');
   assert.equal(lerBriefingDeTrafego(row.onboarding).motivo.estado,'informado');
   assert.equal(lerBriefingDeTrafego(row.onboarding).resultado.estado,'nao_sei');
+  assert.deepEqual(lacunasParaReuniao(lerBriefingDeTrafego(row.onboarding)), ['O que recebe após a compra']);
   assert.deepEqual(row.onboarding.contas,antigo);
   assert.equal((await save('resultado','A loja recebe as mensagens organizadas e responde no mesmo dia')).ok,true);
   assert.equal((await save('diferencial','O cliente acompanha cada etapa da criação do site')).ok,true);
   assert.equal((await actions.salvarRespostaAction({businessId:row.id,qid:'prova',texto:'Ainda não tenho provas para enviar',origem:'chip'})).ok,true);
   assert.equal(lerBriefingDeTrafego(row.onboarding).prova.texto,'Ainda não tenho provas para enviar');
   assert.equal(lerBriefingDeTrafego(row.onboarding).resultado.estado,'informado');
+  assert.deepEqual(lacunasParaReuniao(lerBriefingDeTrafego(row.onboarding)), []);
 });
 
 test('corrigir praça para texto livre limpa apenas CEP que veio da resposta anterior', async () => {
@@ -500,6 +519,25 @@ test('faixa aberta limpa teto antigo antes de confirmar ticket', async () => {
   assert.equal(result.estado.ticket,800);
   assert.deepEqual(events.slice(0,4),['json','campos','esvaziar','json']);
 });
+test('ticket em faixa não vira custo exato por ponto médio', async () => {
+  row.avg_ticket_min = 300;
+  row.avg_ticket_max = 500;
+  row.onboarding.contas.ticket = {echo:'R$ 300 a R$ 500',calculado:400,confirmado:true,em:oldTime};
+  delete row.onboarding.contas.custo;
+  const leitura = await contas.carregarContasAction();
+  assert.equal(leitura.ticketEmFaixa,true);
+  assert.equal(leitura.margem,null);
+  assert.equal((await saveConta({conta:'custo',escolha:'metade'})).ok,false);
+  assert.equal((await saveConta({conta:'custo',escolha:'100'})).ok,false);
+  assert.equal(row.avg_direct_cost,null);
+  assert.equal((await saveConta({conta:'custo',escolha:'',naoSei:true})).ok,true);
+});
+test('preferência abstrata de lucro não cria um número financeiro', async () => {
+  row.avg_direct_cost = 25;
+  delete row.onboarding.contas.lucro;
+  assert.equal((await saveConta({conta:'lucro',escolha:'lucro-agora'})).ok,false);
+  assert.equal(row.target_profit_per_customer,null);
+});
 
 test('custo só pode ser confirmado após estimativa registrada, inclusive na retomada', async () => {
   delete row.onboarding.contas.custo;
@@ -520,6 +558,30 @@ test('custo digitado em reais precisa de confirmação antes de virar coluna', a
   assert.equal(row.onboarding.contas.custo.confirmado,false);
   assert.equal((await saveConta({conta:'custo',escolha:'4',confirmando:true})).ok,true);
   assert.equal(row.avg_direct_cost,4);
+});
+
+test('ajustar a estimativa exige mostrar e confirmar o novo valor', async () => {
+  delete row.onboarding.contas.custo;
+  assert.equal((await saveConta({conta:'custo',escolha:'metade'})).ok,true);
+  assert.equal(row.onboarding.contas.custo.calculado,50);
+  assert.equal((await saveConta({conta:'custo',escolha:'40',confirmando:true})).ok,false);
+  assert.equal(row.avg_direct_cost,null);
+  assert.equal((await saveConta({conta:'custo',escolha:'40'})).ok,true);
+  assert.equal(row.onboarding.contas.custo.calculado,40);
+  assert.equal(row.onboarding.contas.custo.confirmado,false);
+  assert.equal(row.avg_direct_cost,null);
+  assert.equal((await saveConta({conta:'custo',escolha:'40',confirmando:true})).ok,true);
+  assert.equal(row.avg_direct_cost,40);
+});
+
+test('lucro confirmado precisa coincidir com o número previamente mostrado', async () => {
+  row.avg_direct_cost = 20;
+  assert.equal((await saveConta({conta:'lucro',escolha:'12',confirmando:true})).ok,false);
+  assert.equal(row.target_profit_per_customer,null);
+  assert.equal((await saveConta({conta:'lucro',escolha:'12'})).ok,true);
+  assert.equal(row.onboarding.contas.lucro.confirmado,false);
+  assert.equal((await saveConta({conta:'lucro',escolha:'12',confirmando:true})).ok,true);
+  assert.equal(row.target_profit_per_customer,12);
 });
 
 test('confirmação e não sei simultâneos não substituem a estimativa', async () => {

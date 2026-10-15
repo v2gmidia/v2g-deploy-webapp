@@ -153,6 +153,7 @@ export default async function EscolherPage() {
             Cada conta escolhida ocupa uma unidade contratada. Se precisar trocar uma conta
             depois, fale com a equipe. A primeira campanha é preparada e publicada pelo gestor.
           </p>
+          <p>A Página escolhida é compartilhada pelas contas de anúncios deste negócio. Se elas precisarem de Páginas diferentes, converse com a equipe antes de conectar a próxima conta.</p>
         </section>
       </aside>
     </div>

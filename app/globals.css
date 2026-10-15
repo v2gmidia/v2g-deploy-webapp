@@ -1107,17 +1107,31 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   display: flex; align-items: center; justify-content: center;
   font-family: var(--display); font-weight: 700; font-size: var(--fs-titulo);
 }
+.side-account .avatar img,
+.topbar-account .avatar img { width: 100%; height: 100%; object-fit: contain; border-radius: inherit; background: var(--white); }
 .side-account .who b { display: block; font-family: var(--display); font-size: var(--fs-corpo); color: var(--texto-sobre-escuro); }
 .side-account .who span { font-size: var(--fs-legenda); color: var(--sidebar-ink); }
 .side-account-menu { width: 100%; min-width: 0; }
-.side-account-menu summary { display: flex; align-items: center; gap: 10px; cursor: pointer; list-style: none; }
+.side-account-menu summary { display: flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; list-style: none; }
 .side-account-menu summary::-webkit-details-marker { display: none; }
 .side-account-menu summary .who { min-width: 0; }
 .side-account-menu summary .who b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .side-account-menu summary .who small { display: block; color: var(--sidebar-ink); }
-.side-account-opcoes { display: grid; gap: 2px; max-height: 45vh; overflow-y: auto; padding-top: 10px; }
+.account-chevron { width: 18px; height: 18px; flex: none; margin-left: auto; transition: transform 160ms ease; }
+.side-account-menu[open] .account-chevron { transform: rotate(180deg); }
+.side-account-opcoes { display: grid; gap: 8px; padding-top: 10px; }
 .side-account-opcoes .link-btn { width: 100%; text-align: left; overflow-wrap: anywhere; }
-.side-account-opcoes [aria-current="page"] { color: var(--texto-sobre-escuro); font-weight: 700; }
+.business-list { display: grid; gap: 3px; max-height: min(45vh, 360px); overflow-y: auto; }
+.business-option { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 48px; padding: 6px; border: 0; border-radius: var(--raio-controle); background: transparent; color: var(--sidebar-ink); text-align: left; }
+.business-option:hover, .business-option:focus-visible, .business-option[aria-current="true"] { background: var(--sidebar-active-bg); color: var(--texto-sobre-escuro); }
+.business-option .avatar { width: 30px; height: 30px; font-size: var(--fs-corpo); }
+.business-option-text { display: grid; min-width: 0; }
+.business-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.business-identity { font-size: var(--fs-legenda); color: inherit; opacity: .82; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.business-current { flex: none; margin-left: auto; font-size: var(--fs-legenda); color: inherit; }
+.business-empty { padding: 10px 6px; color: var(--sidebar-ink); }
+.business-actions { display: grid; border-top: 1px solid var(--sidebar-line); padding-top: 5px; }
+.topbar-account { display: none; }
 
 /* ---------- tudo que vive DENTRO da sidebar cobalto ----------
    Estas regras existem porque a sidebar é a única região com fundo
@@ -1197,6 +1211,18 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   .side-account,
   .nav-eyebrow { display: none; }
 
+  .topbar-account { display: block; position: relative; }
+  .topbar-account-menu summary { gap: 7px; min-height: 44px; color: var(--ink); }
+  .topbar-account-menu .avatar { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 4px; background: var(--line); color: var(--ink); }
+  .topbar-account-menu .who { max-width: 130px; }
+  .topbar-account-menu .who b { color: var(--ink); }
+  .topbar-account-menu .side-account-opcoes { position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; width: min(320px, calc(100vw - 32px)); padding: 12px; border: 1px solid var(--line); border-radius: var(--raio-controle); background: var(--surface-2); box-shadow: 0 12px 30px -18px rgb(var(--navy-rgb) / .5); }
+  .topbar-account-menu .business-option { color: var(--ink); }
+  .topbar-account-menu .business-option:hover, .topbar-account-menu .business-option:focus-visible, .topbar-account-menu .business-option[aria-current="true"] { background: var(--fundo-controle); color: var(--ink); }
+  .topbar-account-menu .business-empty { color: var(--ink-soft); }
+  .topbar-account-menu .business-actions { border-color: var(--line); }
+  .topbar-account-menu .link-btn { width: 100%; min-height: 44px; justify-content: flex-start; color: var(--cobalt-ink); }
+
   .side-nav { flex: 1; flex-direction: row; gap: 0; }
 
   /* Cinco células iguais, cada uma o alvo inteiro: largura da tela ÷ 5
@@ -1265,6 +1291,9 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
      embaixo dela. */
   .canvas { padding-bottom: calc(var(--barra-h) + 24px); }
   .canvas, .topbar { padding-left: 22px; padding-right: 22px; }
+}
+@media (max-width: 620px) {
+  .topbar-account-menu .who { display: none; }
 }
 @media (max-width: 620px) {
   .canvas { padding: 20px 18px calc(var(--barra-h) + 24px); }

@@ -26,6 +26,6 @@ export default async function OnboardingConcluidoPage() {
       }
     } catch { console.error("[conclusao] CNPJ da compra indisponível"); }
   }
-  const agenda = "erro" in estado || !estado.concluido ? { status: "legado" as const } : await carregarAgendaAction();
+  const agenda = "erro" in estado || !estado.concluido ? { status: "legado" as const } : await carregarAgendaAction(estado.businessId);
   return <Conclusao estado={estado} cnpj={cnpj} agenda={agenda} />;
 }

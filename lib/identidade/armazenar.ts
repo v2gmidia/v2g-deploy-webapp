@@ -59,7 +59,7 @@ export async function listarIdentidade(
 ): Promise<{ logo: ImagemDeIdentidade | null; fotos: ImagemDeIdentidade[] }> {
   const supa = createAdminClient();
 
-  const { data } = await supa
+  const { data, error } = await supa
     .from("creatives")
     .select("id, uso, file_name, storage_path, created_at")
     .eq("business_id", businessId)
@@ -67,7 +67,8 @@ export async function listarIdentidade(
     .is("arquivado_em", null)
     .order("created_at", { ascending: false });
 
-  const linhas = data ?? [];
+  if (error || !data) throw new Error("falha_leitura_identidade");
+  const linhas = data;
   if (linhas.length === 0) return { logo: null, fotos: [] };
 
   // Uma chamada só para todas as URLs. Assinar uma a uma seria uma ida ao
@@ -114,35 +115,23 @@ export async function guardarImagem(entrada: {
   const supa = createAdminClient();
 
   if (entrada.uso === "identidade") {
-    const { count } = await supa
+    const { count, error: erroContagem } = await supa
       .from("creatives")
       .select("id", { count: "exact", head: true })
       .eq("business_id", entrada.businessId)
       .eq("uso", "identidade")
       .is("arquivado_em", null);
 
-    if ((count ?? 0) >= MAXIMO_DE_FOTOS) {
+    if (erroContagem || count === null) {
+      return { ok: false, mensagem: "Não consegui conferir suas imagens agora. Tente de novo." };
+    }
+
+    if (count >= MAXIMO_DE_FOTOS) {
       return {
         ok: false,
         mensagem: `Você já tem ${MAXIMO_DE_FOTOS} fotos aqui, que é o limite. Remova uma antes de mandar outra.`,
       };
     }
-  }
-
-  // O logo é um só. O antigo sai do índice único ao ser arquivado, e é isso
-  // que libera o novo — por isso arquivar vem ANTES de inserir.
-  //
-  // O OBJETO NO STORAGE NÃO É APAGADO. Ele pode ter sido insumo de uma peça
-  // que está no ar, e "de qual logo saiu este anúncio" precisa continuar
-  // tendo resposta. A remoção física acontece só no fluxo de exclusão da
-  // LGPD, por prefixo.
-  if (entrada.uso === "logo") {
-    await supa
-      .from("creatives")
-      .update({ arquivado_em: new Date().toISOString() })
-      .eq("business_id", entrada.businessId)
-      .eq("uso", "logo")
-      .is("arquivado_em", null);
   }
 
   const nome =
@@ -162,9 +151,42 @@ export async function guardarImagem(entrada: {
     return { ok: false, mensagem: "Não consegui guardar o arquivo. Tente de novo." };
   }
 
+  // O índice parcial permite apenas um logo ativo por negócio. O arquivo
+  // novo já está no Storage; agora liberamos o índice antes de inserir a
+  // nova linha e guardamos o instante exato para restaurar em caso de falha.
+  let logoAnterior: string | null = null;
+  let arquivadoEm: string | null = null;
+  if (entrada.uso === "logo") {
+    const { data: antigos, error: erroAntigos } = await supa.from("creatives")
+      .select("id").eq("business_id", entrada.businessId).eq("uso", "logo")
+      .is("arquivado_em", null);
+    if (erroAntigos || !antigos || antigos.length > 1) {
+      await supa.storage.from(BUCKET).remove([caminho]);
+      return { ok: false, mensagem: "Não consegui conferir o logo atual. Atualize a página antes de tentar novamente." };
+    }
+    if (antigos.length === 1) {
+      logoAnterior = antigos[0]!.id;
+      arquivadoEm = new Date().toISOString();
+      const { data: arquivados, error: erroArquivo } = await supa.from("creatives")
+        .update({ arquivado_em: arquivadoEm })
+        .eq("business_id", entrada.businessId).eq("uso", "logo")
+        .eq("id", logoAnterior).is("arquivado_em", null).select("id");
+      if (erroArquivo || arquivados?.length !== 1) {
+        const restauro = await supa.from("creatives")
+          .update({ arquivado_em: null }).eq("business_id", entrada.businessId)
+          .eq("id", logoAnterior).eq("arquivado_em", arquivadoEm).select("id");
+        await supa.storage.from(BUCKET).remove([caminho]);
+        if (restauro.error) console.error("[identidade] estado do logo anterior é incerto");
+        return { ok: false, mensagem: "Não conseguimos confirmar a troca do logo. Atualize a página antes de tentar novamente." };
+      }
+    }
+  }
+
+  const novoId = randomUUID();
   const { data: linha, error: erroLinha } = await supa
     .from("creatives")
     .insert({
+      id: novoId,
       business_id: entrada.businessId,
       uso: entrada.uso,
       type: "imagem",
@@ -186,13 +208,33 @@ export async function guardarImagem(entrada: {
     .single();
 
   if (erroLinha || !linha) {
-    // Sem a linha, o objeto vira lixo invisível — ninguém sabe de quem é
-    // nem por quê. Desfaz.
-    await supa.storage.from(BUCKET).remove([caminho]);
-    return { ok: false, mensagem: "Não consegui registrar a imagem. Tente de novo." };
+    // A resposta do insert pode se perder depois da gravação. Só apagamos do
+    // Storage se uma leitura por ID confirmar que a linha não existe.
+    const { data: registrada, error: erroConferencia } = await supa.from("creatives")
+      .select("id").eq("id", novoId).eq("business_id", entrada.businessId)
+      .eq("storage_path", caminho).maybeSingle();
+    if (erroConferencia) {
+      console.error("[identidade] estado da gravação da imagem é incerto");
+      return { ok: false, mensagem: "Não conseguimos confirmar o envio. Atualize a página e confira a marca antes de tentar novamente." };
+    }
+    if (!registrada) {
+      const remocao = await supa.storage.from(BUCKET).remove([caminho]);
+      if (remocao.error) console.error("[identidade] arquivo sem registro não pôde ser removido");
+      if (logoAnterior && arquivadoEm) {
+        const restauro = await supa.from("creatives")
+          .update({ arquivado_em: null }).eq("business_id", entrada.businessId)
+          .eq("uso", "logo").eq("id", logoAnterior)
+          .eq("arquivado_em", arquivadoEm).select("id");
+        if (restauro.error || restauro.data?.length !== 1) {
+          console.error("[identidade] não foi possível confirmar o restauro do logo anterior");
+          return { ok: false, mensagem: "Não conseguimos concluir a troca do logo. Atualize a página e confira a marca antes de tentar novamente." };
+        }
+      }
+      return { ok: false, mensagem: "Não consegui registrar a imagem. Tente de novo." };
+    }
   }
 
-  return { ok: true, id: linha.id };
+  return { ok: true, id: novoId };
 }
 
 /**

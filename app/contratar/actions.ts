@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { validarCompra } from "@/lib/contratacao/qualificacao";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 import { urlCheckoutHospedadoSandbox } from "@/lib/contratacao/url-checkout";
@@ -14,6 +15,11 @@ export type CompraState = { erro?: string };
 /** Registra o pedido e abre o pagamento dentro da V2G. O checkout hospedado
  * permanece apenas para pedidos que já tinham um link emitido. */
 export async function iniciarCompra(_anterior: CompraState, form: FormData): Promise<CompraState> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const emailPedido = String(form.get("email") ?? "").trim().toLowerCase();
+  if (user?.email && user.email.trim().toLowerCase() !== emailPedido)
+    return { erro: "Use o e-mail deste acesso para adicionar outro CNPJ. Para usar outro e-mail, saia e entre novamente." };
   if (process.env.V2G_CHECKOUT_API_ENABLED !== "true")
     return iniciarCheckoutHospedado(form);
   if (!checkoutSandboxSeguroNesteServidor())

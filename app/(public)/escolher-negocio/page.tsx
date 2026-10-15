@@ -1,11 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
-import { cnpjsDoComprador, type PedidoParaIdentificarNegocio } from "@/lib/multiconta/identificacao";
-import { lerTodasPaginasEmLotes } from "@/lib/multiconta/paginacao";
+import { cnpjsDosNegociosLiberados } from "@/lib/multiconta/cnpjs";
 import { FormularioNegocio } from "./Formulario";
 import { limparNegocioAction } from "./actions";
 import { tituloDaAba } from "@/lib/titulos";
@@ -53,17 +51,12 @@ export default async function EscolherNegocioPage() {
   // O vínculo por e-mail verificado pode anteceder a gravação de buyer_profile_id.
   // A leitura administrativa fica restrita aos IDs já liberados e os dados
   // só aparecem se o comprador do pedido corresponder à sessão atual.
-  let pedidos: PedidoParaIdentificarNegocio[] | null = null;
+  let cnpjPorNegocio: Map<string, string>;
   try {
-    const admin = createAdminClient();
-    pedidos = await lerTodasPaginasEmLotes(data.map((negocio) => negocio.id), (lote, inicio, fim) => admin.from("commercial_orders")
-      .select("business_id, cnpj, buyer_email, buyer_profile_id")
-      .eq("status", "payment_approved")
-      .in("business_id", lote)
-      .order("created_at", { ascending: false })
-      .order("id", { ascending: false })
-      .range(inicio, fim));
-    if (!pedidos) throw new Error("pedidos indisponíveis");
+    cnpjPorNegocio = await cnpjsDosNegociosLiberados(
+      data.map((negocio) => negocio.id), user.id,
+      user.email_confirmed_at ? user.email ?? null : null,
+    );
   } catch {
     console.error("[escolher-negocio] falha ao ler CNPJs das compras");
     return <section className="auth-card">
@@ -72,10 +65,6 @@ export default async function EscolherNegocioPage() {
       <a className="cta" href="/escolher-negocio">Tentar novamente</a>
     </section>;
   }
-  const cnpjPorNegocio = cnpjsDoComprador(
-    data.map((negocio) => negocio.id), pedidos ?? [], user.id,
-    user.email_confirmed_at ? user.email ?? null : null,
-  );
   const negocios = data.map((negocio) => ({ ...negocio,
     cnpj: cnpjPorNegocio.get(negocio.id) ?? null, codigo: negocio.id.slice(0, 8),
   }));
@@ -85,9 +74,9 @@ export default async function EscolherNegocioPage() {
     <p className="auth-sub">Cada negócio tem suas próprias respostas, anúncios e próximos passos.</p>
     <FormularioNegocio negocios={negocios}
       selecionado={ativo.status === "selecionado" ? ativo.negocio.id : null} />
-    <p className="seletor-ajuda">Para adicionar outro CNPJ, use o mesmo e-mail na nova contratação. O negócio aparecerá após a confirmação do pagamento e do vínculo ao e-mail verificado.</p>
-    {process.env.NODE_ENV !== "production"
-      ? <a className="seletor-link" href="/contratar">Adicionar negócio pelo checkout de teste <span aria-hidden="true">→</span></a>
-      : <a className="seletor-link" href="https://wa.me/5521936182176?text=Quero%20adicionar%20outro%20neg%C3%B3cio%20%C3%A0%20minha%20conta%20V2G" target="_blank" rel="noopener">Pedir outro negócio <span aria-hidden="true">→</span></a>}
+    <p className="seletor-ajuda">Para adicionar outro CNPJ, use o mesmo e-mail na nova contratação. O negócio aparecerá após a confirmação do pagamento.</p>
+    <a className="seletor-link" href="/adicionar-negocio">
+      Adicionar negócio <span aria-hidden="true">→</span>
+    </a>
   </section>;
 }

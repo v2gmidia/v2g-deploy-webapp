@@ -15,17 +15,16 @@ export function FormularioNegocio({ negocios, selecionado }: {
   return <form action={action}>
     {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
     <div className="escolha-lista">
-      {negocios.map((negocio) => <label key={negocio.id} className="escolha-item">
-        <input type="radio" name="businessId" value={negocio.id}
-          defaultChecked={selecionado === negocio.id || (negocios.length === 1 && !selecionado)} required />
+      {negocios.map((negocio) => <button key={negocio.id} type="submit"
+        className="escolha-item" name="businessId" value={negocio.id}
+        aria-current={selecionado === negocio.id ? "true" : undefined} disabled={pendente}>
         <span className="esc-texto">
           <b>{negocio.name}</b>
           <span>{negocio.cnpj ? `CNPJ ${negocio.cnpj}` : `Cadastro ${negocio.codigo}`}</span>
         </span>
-      </label>)}
+        <span aria-hidden="true" className="escolha-seta">→</span>
+      </button>)}
     </div>
-    <button className="cta" type="submit" disabled={pendente}>
-      {pendente ? "Abrindo…" : "Abrir negócio"}
-    </button>
+    {pendente && <p className="seletor-abrindo" role="status">Abrindo negócio…</p>}
   </form>;
 }

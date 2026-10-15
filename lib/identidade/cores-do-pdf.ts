@@ -1,8 +1,9 @@
 import { coresDeImageData, type CorDaLogo } from "./cores-da-logo.ts";
+import { TETO_DO_NAVEGADOR_BYTES } from "@/lib/criativos/limites.mjs";
 
 /** Lê no navegador algumas páginas do guia. O PDF não sai do dispositivo nesta análise. */
 export async function coresDoPdf(arquivo: File): Promise<CorDaLogo[]> {
-  if (arquivo.size > 4 * 1024 * 1024 || arquivo.size < 5) return [];
+  if (arquivo.size > TETO_DO_NAVEGADOR_BYTES || arquivo.size < 5) return [];
   try {
     const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
     pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker-6.4.299.min.mjs";

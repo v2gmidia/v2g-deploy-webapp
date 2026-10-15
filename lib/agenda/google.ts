@@ -2,6 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import type { IntervaloOcupado } from "./regras";
+import { CriacaoGoogleRecusada, rejeicaoDefinitivaDaCriacao } from "./falhas-criacao";
 
 const API = "https://www.googleapis.com/calendar/v3";
 
@@ -75,8 +76,8 @@ export async function criarEventoGoogle(entrada: {
   fim: string;
   email: string;
   nome: string;
-  cnpj: string;
   businessId: string;
+  descricao: string;
 }): Promise<EventoGoogleCriado> {
   const calendarId = calendarIdConfigurado();
   if (!calendarId) throw new Error("agenda_nao_configurada");
@@ -86,7 +87,7 @@ export async function criarEventoGoogle(entrada: {
     body: JSON.stringify({
       id: entrada.eventId,
       summary: `Reunião inicial V2G (${entrada.nome})`,
-      description: `Negócio atendido: CNPJ ${entrada.cnpj}. Reunião inicial V2G de 25 minutos.`,
+      description: entrada.descricao,
       start: { dateTime: entrada.inicio, timeZone: "America/Sao_Paulo" },
       end: { dateTime: entrada.fim, timeZone: "America/Sao_Paulo" },
       attendees: [{ email: entrada.email }],
@@ -95,7 +96,11 @@ export async function criarEventoGoogle(entrada: {
       extendedProperties: { private: { v2gBusinessId: entrada.businessId } },
     }),
   });
-  if (!resposta.ok) throw new Error("falha_criacao_google");
+  if (!resposta.ok) {
+    if (rejeicaoDefinitivaDaCriacao(resposta.status))
+      throw new CriacaoGoogleRecusada(resposta.status);
+    throw new Error("falha_criacao_google");
+  }
   const dados: unknown = await resposta.json();
   if (!dados || typeof dados !== "object" || !("id" in dados) || !("etag" in dados)
     || typeof dados.id !== "string" || typeof dados.etag !== "string")
@@ -106,6 +111,7 @@ export async function criarEventoGoogle(entrada: {
 
 export async function lerEventoGoogle(eventId: string): Promise<{
   id: string; etag: string | null; status: string; businessId: string | null; htmlLink: string | null;
+  inicio: string | null; fim: string | null;
 } | null> {
   const calendarId = calendarIdConfigurado();
   if (!calendarId) throw new Error("agenda_nao_configurada");
@@ -118,12 +124,17 @@ export async function lerEventoGoogle(eventId: string): Promise<{
   const privado = "extendedProperties" in dados && dados.extendedProperties && typeof dados.extendedProperties === "object"
     && "private" in dados.extendedProperties && dados.extendedProperties.private && typeof dados.extendedProperties.private === "object"
     ? dados.extendedProperties.private : null;
+  const inicio = "start" in dados && dados.start && typeof dados.start === "object"
+    && "dateTime" in dados.start && typeof dados.start.dateTime === "string" ? dados.start.dateTime : null;
+  const fim = "end" in dados && dados.end && typeof dados.end === "object"
+    && "dateTime" in dados.end && typeof dados.end.dateTime === "string" ? dados.end.dateTime : null;
   return {
     id: eventId,
     etag: "etag" in dados && typeof dados.etag === "string" ? dados.etag : null,
     status: "status" in dados && typeof dados.status === "string" ? dados.status : "unknown",
     businessId: privado && "v2gBusinessId" in privado && typeof privado.v2gBusinessId === "string" ? privado.v2gBusinessId : null,
     htmlLink: "htmlLink" in dados && typeof dados.htmlLink === "string" ? dados.htmlLink : null,
+    inicio, fim,
   };
 }
 

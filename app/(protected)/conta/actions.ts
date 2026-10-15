@@ -69,6 +69,17 @@ export async function trocarPaginaAction(
   }
   const business = ativo.negocio;
 
+  const [conexaoAtual, contasAtivas] = await Promise.all([
+    supabase.from("meta_connections").select("meta_page_id")
+      .eq("business_id", business.id).maybeSingle(),
+    supabase.from("ad_accounts").select("id")
+      .eq("business_id", business.id).eq("is_active", true).limit(2),
+  ]);
+  if (conexaoAtual.error || contasAtivas.error)
+    return { erro: "Não conseguimos conferir as contas conectadas. Tente novamente." };
+  if ((contasAtivas.data?.length ?? 0) > 1 && conexaoAtual.data?.meta_page_id !== pagina)
+    return { erro: "Este negócio tem mais de uma conta de anúncios. A Página é compartilhada entre elas; peça ajuda à equipe antes de mudá-la." };
+
   const admin = createAdminClient();
 
   // A página precisa estar entre as que a conexão alcança. Sem esta
@@ -100,6 +111,9 @@ export async function trocarPaginaAction(
 
   if (error) {
     console.error("[conta] falha ao trocar página ::", error.message);
+    if (error.message.includes("pagina compartilhada entre contas")) {
+      return { erro: "Este negócio passou a ter mais de uma conta de anúncios. Atualize a tela; a Página precisa ser a mesma para todas." };
+    }
     return { erro: "Não conseguimos salvar agora. Tente de novo em instantes." };
   }
 

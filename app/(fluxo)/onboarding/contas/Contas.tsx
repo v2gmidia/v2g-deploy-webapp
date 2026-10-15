@@ -4,7 +4,7 @@ import { useState } from "react";
 import { dinheiro } from "@/lib/formato";
 import type { ChaveDeConta } from "@/lib/cadastro/montar";
 import { reabrirContaAction, salvarContaAction, type EstadoDasContas } from "./actions";
-import { numeroDoTexto, POSTURA, SOBRA, TICKET_FAIXA } from "./regras";
+import { numeroDoTexto, SOBRA, TICKET_FAIXA } from "./regras";
 
 /**
  * As três contas, uma por vez.
@@ -60,7 +60,8 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
 
   // Uma conta calculada e ainda não confirmada é o estado de confirmação.
   const aConfirmar =
-    atual && contas[atual]?.calculado !== null && contas[atual]?.confirmado === false && !contas[atual]?.naoSei
+    atual && !(atual === "custo" && estado.ticketEmFaixa)
+      && contas[atual]?.calculado !== null && contas[atual]?.confirmado === false && !contas[atual]?.naoSei
       ? contas[atual]!
       : null;
 
@@ -123,7 +124,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
 
   const pergunta: Record<ChaveDeConta, string> = {
     ticket: "Qual é o valor médio de uma venda sua? Pense no que o cliente costuma pagar; não precisa listar preços de cada serviço.",
-    custo: "Depois de pagar produto, material ou comissão de uma venda, quanto sobra?",
+    custo: "Você sabe quanto custa, em média, entregar uma venda? Pense em produto, material e comissão. Se não souber, deixe para conferir com o gestor.",
     lucro: estado.margem
       ? `Dessa sobra aproximada de ${dinheiro(estado.margem, "BRL")}, quanto você precisa manter por venda?`
       : "Quanto você precisa manter por venda?",
@@ -164,7 +165,10 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   que a IA está usando. */}
               <b>
                 {leitura.estado === "respondida"
-                  ? dinheiro(leitura.valor, "BRL")
+                  ? c === "ticket" && estado.ticketEmFaixa
+                    ? contas.ticket?.echo && Object.hasOwn(TICKET_FAIXA, contas.ticket.echo)
+                      ? contas.ticket.echo : "Valor informado em faixa"
+                    : dinheiro(leitura.valor, "BRL")
                   : "Você não soube — a gente resolve na conversa."}
               </b>
               {leitura.estado === "respondida" && quando && (
@@ -234,7 +238,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
-                        enviar({ conta: atual, escolha: rascunho, confirmando: true });
+                        enviar({ conta: atual, escolha: rascunho });
                       }
                     }}
                   />
@@ -243,7 +247,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     className="mini-send"
                     type="button"
                     disabled={indisponivel}
-                    onClick={() => enviar({ conta: atual, escolha: rascunho, confirmando: true })}
+                    onClick={() => enviar({ conta: atual, escolha: rascunho })}
                   >
                     {enviando ? "…" : "Salvar"}
                   </button>
@@ -351,7 +355,8 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
 
               {atual === "custo" && (
                 <>
-                {estado.ticket !== null && <div className="conta-direto">
+                {estado.ticketEmFaixa && <p className="conta-hint">Você informou uma faixa para o valor da venda. Não vamos transformar o meio dessa faixa em um custo por venda. Deixe esta conta para conferir na conversa com o gestor.</p>}
+                {estado.ticket !== null && !estado.ticketEmFaixa && <div className="conta-direto">
                   <label htmlFor="custo-direto">Se souber o custo de uma venda, digite em reais</label>
                   <div className="fallback-field">
                     <input id="custo-direto" inputMode="decimal" placeholder="Ex.: 50,00" value={rascunho}
@@ -361,10 +366,10 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "custo", escolha: rascunho })}>Conferir</button>
                   </div>
                 </div>}
-                <p className="conta-hint">Ou escolha uma estimativa:</p>
+                {!estado.ticketEmFaixa && <p className="conta-hint">Ou escolha uma estimativa para conferir antes de salvar:</p>}
                 <div className="chips-row">
                   {estado.ticket === null && <p className="conta-hint">Sem o valor médio da venda, esta conta fica para a conversa com o gestor.</p>}
-                  {estado.ticket !== null && SOBRA.map((o) => (
+                  {estado.ticket !== null && !estado.ticketEmFaixa && SOBRA.map((o) => (
                     <button
                       key={o.id}
                       className="chip-opt"
@@ -404,26 +409,9 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "lucro", escolha: rascunho })}>Conferir</button>
                   </div>
                 </div>}
-                <p className="conta-hint">Ou escolha uma prioridade:</p>
+                <p className="conta-hint">Se não souber esse valor, deixe para a conversa. Uma preferência como “quero crescer” não define um valor em reais.</p>
                 <div className="chips-row">
                   {estado.margem === null && <p className="conta-hint">Sem a sobra por venda, esta conta fica para a conversa com o gestor.</p>}
-                  {estado.margem !== null && POSTURA.map((o) => (
-                    <button
-                      key={o.id}
-                      className="chip-opt"
-                      type="button"
-                      disabled={indisponivel}
-                      onClick={() => enviar({ conta: "lucro", escolha: o.id })}
-                    >
-                      {o.rotulo}
-                      {estado.margem !== null && (
-                        <span className="chip-valor">
-                          {" "}
-                          (fica {dinheiro(estado.margem * o.fracaoQueFica, "BRL")})
-                        </span>
-                      )}
-                    </button>
-                  ))}
                   <button
                     className="chip-opt"
                     type="button"

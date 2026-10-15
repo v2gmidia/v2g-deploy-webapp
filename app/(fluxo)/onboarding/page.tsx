@@ -75,7 +75,7 @@ export default async function OnboardingPage() {
         <Marca editorial href="/inicio" />
         <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com uma pessoa</a>
       </header>
-      {cnpjExibido && <p className="onb-v2-identidade">CNPJ informado na compra: <strong>{cnpjExibido}</strong></p>}
+      {cnpjExibido && <p className="onb-v2-identidade">CNPJ da conta: <strong>{cnpjExibido}</strong></p>}
       <Chat businessId={businessId} inicial={respostas}
         vozHabilitada={process.env.V2G_VOICE_TRANSCRIPTION_ENABLED === "true" && !!process.env.OPENAI_API_KEY} />
     </div>

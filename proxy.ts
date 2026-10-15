@@ -49,6 +49,7 @@ const PROTECTED_PREFIXES = [
   "/gestor",
   "/revops",
   "/escolher-negocio",
+  "/adicionar-negocio",
   // `/campanhas` e `/criativos` viraram `/anuncios` no lote 8. Ficam aqui
   // porque continuam existindo como redirecionamento — e redirecionar
   // quem não tem sessão para o destino protegido seria vazar a rota.

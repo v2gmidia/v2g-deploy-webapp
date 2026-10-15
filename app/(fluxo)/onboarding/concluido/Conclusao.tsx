@@ -6,6 +6,7 @@ import type { EstadoAgenda } from "./agenda-actions";
 export const AGENDA_INICIAL_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0b5yJebHCZ15kBn6J7Q_uoGrxKKKEKvHri0CAAkKeCjNBRJ_KzIIJQwlYOifAH0auJD5u13G0r";
 
 type Estado = { erro: string } | {
+  businessId: string;
   concluido: boolean;
   faltamBasicas: unknown[];
   contasProntas: boolean;
@@ -34,12 +35,12 @@ export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }
       <p className="auth-sub">Escolha um horário de 25 minutos para alinhar seus anúncios com o gestor.</p>
       {agenda.status === "legado" ? <>
         <a className="cta" href={AGENDA_INICIAL_URL} target="_blank" rel="noopener noreferrer">Escolher horário da reunião</a>
-        {cnpjExibido && <p className="onb-v2-identidade">No formulário do Google, informe o CNPJ da compra: <strong>{cnpjExibido}</strong></p>}
+        {cnpjExibido && <p className="onb-v2-identidade">No formulário do Google, informe o CNPJ desta conta: <strong>{cnpjExibido}</strong></p>}
         <p className="note">Confira os 14 números do CNPJ antes de reservar. O formulário do Google aceita texto livre. A reserva é confirmada pelo e-mail do Google; guarde-o para consultar, remarcar ou cancelar seu horário.</p>
         <section className="pendencia-bloco"><b>Já reservou um horário?</b>
           <p>Abra o e-mail de confirmação do Google para ver data, link da reunião e opções de alteração. A V2G ainda está conectando essa confirmação ao seu negócio nesta tela. Não escolha outro horário enquanto a primeira reserva estiver ativa.</p>
         </section>
-      </> : <AgendaPropria inicial={agenda} />}
+      </> : <AgendaPropria inicial={agenda} businessId={estado.businessId} />}
       <section className="pendencia-bloco">
         <b>O que acontece na reunião</b>
         <p>Vamos conferir o WhatsApp que recebe clientes, acessos e materiais do primeiro anúncio.</p>

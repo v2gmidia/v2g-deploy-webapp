@@ -51,6 +51,16 @@ function instanteComFuso(valor: string): number | null {
   return Number.isFinite(instante) ? instante : null;
 }
 
+/** Um evento movido no Google deve atualizar o horário mostrado, nunca manter o antigo. */
+export function horarioConfirmadoGoogle(inicio: string | null, fim: string | null): {
+  inicio: string; fim: string;
+} | null {
+  const inicioMs = inicio === null ? null : instanteComFuso(inicio);
+  const fimMs = fim === null ? null : instanteComFuso(fim);
+  if (inicioMs === null || fimMs === null || fimMs <= inicioMs) return null;
+  return { inicio: new Date(inicioMs).toISOString(), fim: new Date(fimMs).toISOString() };
+}
+
 /** Falha fechada quando o Google não expõe o CNPJ ou a identidade completa. */
 export function conciliarReserva(
   evento: EventoDeReserva, calendarId: string, candidatos: VinculoEsperado[],

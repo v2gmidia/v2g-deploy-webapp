@@ -1,0 +1,50 @@
+.raiz {
+  width: min(100%, 780px);
+  margin: 0 auto;
+  padding: clamp(24px, 5vw, 56px) 0;
+  color: var(--ink);
+}
+
+.marcador, .contador {
+  color: var(--cobalt-ink);
+  font-size: .82rem;
+  font-weight: 750;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.raiz h1 {
+  margin: 12px 0;
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  line-height: 1.08;
+}
+
+.intro { max-width: 63ch; color: var(--ink-soft); line-height: 1.6; }
+
+.cartao {
+  margin-top: 30px;
+  padding: clamp(24px, 4vw, 38px);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.cartao h2 { margin: 12px 0; font-size: clamp(1.5rem, 3vw, 2rem); }
+.cartao p { max-width: 62ch; color: var(--ink-soft); line-height: 1.6; }
+.cartao a { display: inline-block; margin-top: 12px; color: var(--cobalt-ink); font-weight: 700; }
+.cartao a:focus-visible, .navegacao button:focus-visible { outline: 3px solid var(--cobalt-ink); outline-offset: 3px; }
+.resumo { margin-top: 30px; color: var(--ink-soft); line-height: 1.6; }
+
+.navegacao { display: flex; gap: 12px; margin-top: 18px; }
+.navegacao button {
+  min-height: 44px;
+  padding: 0 20px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.navegacao button:disabled { opacity: .55; cursor: default; }

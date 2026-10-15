@@ -3,42 +3,49 @@
 import { useActionState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
+import { prepararImagemDaMarca } from "@/lib/identidade/preparar-arquivo-cliente";
 import { enviarImagemAction, type IdentidadeState } from "@/app/(protected)/conta/identidade-actions";
 import styles from "./Marca.module.css";
 
-const LIMITE_ENVIO = 4 * 1024 * 1024;
-
-export function LogoDaMarca({ businessId, logo, aoEscolher }: {
+export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
   businessId: string;
   logo: ImagemDeIdentidade | null;
   aoEscolher: (arquivo: File) => Promise<void>;
+  aoMudarUpload: (ativo: boolean) => void;
 }) {
   const router = useRouter();
   const [resultado, enviar, enviando] = useActionState(async (anterior: IdentidadeState, dados: FormData) => {
     const arquivo = dados.get("arquivo");
-    if (!(arquivo instanceof File) || arquivo.size > LIMITE_ENVIO)
-      return { erro: "Escolha um logo PNG de até 4 MB." };
-    const resposta = await enviarImagemAction(anterior, dados);
-    if (resposta.ok) {
-      await aoEscolher(arquivo);
-      router.refresh();
+    if (!(arquivo instanceof File)) return { erro: "Escolha uma imagem para o logo principal." };
+    aoMudarUpload(true);
+    try {
+      const preparado = await prepararImagemDaMarca(arquivo, "logo");
+      if (!preparado.ok) return { erro: preparado.erro };
+      dados.set("arquivo", preparado.arquivo);
+      const resposta = await enviarImagemAction(anterior, dados);
+      if (resposta.ok) {
+        await aoEscolher(preparado.arquivo);
+        router.refresh();
+      }
+      return resposta;
+    } finally {
+      aoMudarUpload(false);
     }
-    return resposta;
   }, {});
   return <section className={styles.logoBloco}>
     <div>
-      <h2>Mostre a sua marca</h2>
-      <p>Envie seu logo em PNG de até 4 MB, com pelo menos 512 pixels de largura e altura. Confira as cores sugeridas antes de continuar.</p>
+      <h2>Logo principal</h2>
+      <p>Se tiver, envie o logo principal. PNG e JPG funcionam; WebP e AVIF são convertidos no navegador quando ele conseguir abrir. HEIC depende do navegador. Imagens de até 15 MB podem ser reduzidas para o envio, preservando pelo menos 512 pixels de cada lado. JPG pode manter um fundo opaco.</p>
     </div>
-    {logo?.url && <div className={styles.logoAtual}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={logo.url} alt="Logo atual do negócio" />
+    {logo && <div className={styles.logoAtual}>
+      {logo.url ? <img src={logo.url} alt="Logo atual do negócio" />
+        : <p className="form-warning">Logo salvo, mas a prévia está indisponível. Atualize antes de trocar.</p>}
       <span>Logo salvo: {logo.nomeDoArquivo}</span>
     </div>}
     <form action={enviar} className={styles.logoForm}>
       <input type="hidden" name="businessId" value={businessId} />
       <input type="hidden" name="uso" value="logo" />
-      <input type="file" name="arquivo" accept="image/png" aria-label="Escolher o logo da empresa" />
+      <input type="file" name="arquivo" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" aria-label="Escolher o logo da empresa" />
       <button className="cta" type="submit" disabled={enviando}>{enviando ? "Enviando…" : logo ? "Trocar logo" : "Enviar logo"}</button>
     </form>
     {resultado.erro && <p className="form-error" role="alert">{resultado.erro}</p>}

@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { SeletorDeAtividade } from "@/components/ui/SeletorDeAtividade";
+import { exemplosDaAtividade } from "@/lib/onboarding/atividades";
 import { NAO_SEI_BRIEFING } from "@/lib/onboarding/briefing-trafego";
+import { cidadeDeclaradaValida, formatarCep } from "@/lib/onboarding/localizacao";
 import { RespostaPorVoz } from "./RespostaPorVoz";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
 import { ORDEM, PERGUNTAS, RAIO_KM, proximaPergunta, type Pergunta } from "./perguntas";
@@ -37,6 +39,7 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
   const atual = editando ? QUESTOES.find((p) => p.id === editando) ?? pendente : pendente;
   const indice = atual ? QUESTOES.findIndex((p) => p.id === atual.id) : QUESTOES.length;
   const salvas = QUESTOES.filter((p) => respostas[p.id]);
+  const exemplos = exemplosDaAtividade(respostas.ramo?.texto ?? "");
   const mostrarConvite = !conviteAceito && salvas.length === 0 && !editando;
 
   useEffect(() => {
@@ -45,6 +48,12 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
 
   function limparEdicao() {
     setEditando(null); setTexto(""); setCidade(""); setCep(""); setAlcanceLocal(null); setTextoAberto(false); setConfirmandoNaoSei(false); setErro(null);
+  }
+  function cancelarEdicao() {
+    // Durante a transcrição, a resposta ainda pode voltar para este campo.
+    // Trocar de pergunta nesse intervalo misturaria falas de duas perguntas.
+    if (enviando || incerto || vozOcupada) return;
+    limparEdicao();
   }
   function corrigir(pergunta: Pergunta) {
     const resposta = respostas[pergunta.id];
@@ -61,13 +70,20 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
   async function enviar(pergunta: Pergunta, valor: string, origem: "chip" | "texto") {
     if (enviando || incerto || vozOcupada) return;
     if (pergunta.pedeCidade && origem === "chip" && valor !== "Brasil inteiro" && !cidade.trim()) { setErro("Informe sua cidade para escolher a distância."); return; }
+    if (pergunta.pedeCidade && origem === "chip" && valor !== "Brasil inteiro" && !cidadeDeclaradaValida(cidade)) {
+      setErro("Confira o nome da cidade, sem números."); return;
+    }
+    if (pergunta.pedeCidade && origem === "chip" && valor === "Só aqui perto (até 5 km)" && cep.replace(/\D/g, "").length !== 8) {
+      setErro("Informe o CEP com oito números para usar a área próxima."); return;
+    }
     if (!valor.trim()) { setErro("Escreva uma resposta antes de continuar."); campo.current?.focus(); return; }
     if (pergunta.minimo && !(pergunta.admiteNaoSei && origem === "chip" && valor === NAO_SEI_BRIEFING)
       && valor.trim().length < pergunta.minimo.tamanho) { setErro(pergunta.minimo.recado); campo.current?.focus(); return; }
     setEnviando(true); setErro(null);
     try {
       const resultado = await salvarRespostaAction({ businessId, qid: pergunta.id, texto: valor, origem,
-        ...(pergunta.pedeCidade && origem === "chip" ? { cidade: cidade.trim(), cep: cep.trim() } : {}) });
+        ...(pergunta.pedeCidade && origem === "chip" && valor !== "Brasil inteiro"
+          ? { cidade: cidade.trim(), cep: valor === "Só aqui perto (até 5 km)" ? cep.trim() : "" } : {}) });
       if (!resultado.ok && resultado.recarregar) { setIncerto(true); setErro("Não conseguimos confirmar a gravação. Recarregue para conferir antes de tentar novamente."); return; }
       if (!resultado.ok) { setErro(resultado.erro ?? "Não conseguimos salvar. Tente novamente."); return; }
       if (!resultado.estado) { setIncerto(true); setErro("A resposta pode ter sido salva. Recarregue para conferir antes de continuar."); return; }
@@ -116,8 +132,8 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
           onClick={() => enviar(atual, NAO_SEI_BRIEFING, "chip")}>Ainda não sei mesmo</button>
       </div>}
       {atual.pedeCidade && alcanceLocal && <div className={styles.local}>
-        <label className={styles.campo}>Em qual cidade fica seu negócio?<input type="text" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex.: São Paulo" disabled={enviando || incerto} /></label>
-        <label className={styles.campo}>CEP <small>(se souber)</small><input type="text" inputMode="numeric" autoComplete="postal-code" value={cep} onChange={(e) => setCep(e.target.value)} placeholder="00000-000" disabled={enviando || incerto} /></label>
+        <label className={styles.campo}>Em qual cidade fica seu negócio?<input type="text" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Ex.: São Paulo" maxLength={80} disabled={enviando || incerto} /></label>
+        {alcanceLocal === "Só aqui perto (até 5 km)" && <label className={styles.campo}>CEP do ponto de atendimento<input type="text" inputMode="numeric" autoComplete="postal-code" value={cep} onChange={(e) => setCep(formatarCep(e.target.value))} placeholder="00000-000" maxLength={9} disabled={enviando || incerto} /></label>}
         <button className={styles.primario} type="button" disabled={enviando || incerto} onClick={() => enviar(atual, alcanceLocal, "chip")}>{enviando ? "Salvando…" : "Salvar e continuar"}</button>
       </div>}
       {atual.id === "inicio" && <a className={styles.link} href="/inicio">Fazer depois</a>}
@@ -125,8 +141,8 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
       {mostrarTexto && <div className={styles.resposta}>
         <label className={styles.campo}>{atual.fallbackLabel ?? "Sua resposta"}
           {RESPOSTAS_LONGAS.has(atual.id)
-            ? <textarea ref={campo as React.RefObject<HTMLTextAreaElement>} rows={4} maxLength={800} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={atual.fallbackPlaceholder} disabled={enviando || incerto} />
-            : <input ref={campo as React.RefObject<HTMLInputElement>} type="text" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={atual.fallbackPlaceholder} disabled={enviando || incerto}
+            ? <textarea ref={campo as React.RefObject<HTMLTextAreaElement>} rows={4} maxLength={800} value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={exemplos[atual.id] ?? atual.fallbackPlaceholder} disabled={enviando || incerto} />
+            : <input ref={campo as React.RefObject<HTMLInputElement>} type="text" value={texto} onChange={(e) => setTexto(e.target.value)} placeholder={exemplos[atual.id] ?? atual.fallbackPlaceholder} disabled={enviando || incerto}
                 onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); enviar(atual, texto, "texto"); } }} />}
         </label>
         {RESPOSTAS_LONGAS.has(atual.id) && vozHabilitada && <RespostaPorVoz ocupado={enviando || incerto}
@@ -135,10 +151,11 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
         <button className={styles.primario} type="button" disabled={enviando || incerto || vozOcupada} onClick={() => enviar(atual, texto, "texto")}>{enviando ? "Salvando…" : "Salvar e continuar"}</button>
       </div>}
       {erro && <div className={incerto ? "form-warning" : "form-error"} role="alert">{erro}{incerto && <button type="button" onClick={() => window.location.reload()}>Recarregar</button>}</div>}
-      {editando && <button className={styles.link} type="button" onClick={limparEdicao}>Cancelar correção</button>}
+      {editando && <button className={styles.link} type="button"
+        disabled={enviando || incerto || vozOcupada} onClick={cancelarEdicao}>Cancelar correção</button>}
     </section> : <section className={styles.pergunta}>
       <h1>Seu negócio, contado por você.</h1>
-      <p className={styles.ajuda}>Guardamos o que você contou sobre sua empresa, quem compra e a oferta inicial. O gestor vai conferir as respostas antes de preparar o anúncio. Agora vamos ver o valor médio de uma venda e os custos; se não souber algum número, pode deixar para a conversa.</p>
+      <p className={styles.ajuda}>Guardamos o que você contou sobre sua empresa, quem compra e o que você entrega. O gestor vai escolher com você o foco do primeiro anúncio. Agora vamos ver o valor médio de uma venda e os custos; se não souber algum número, pode deixar para a conversa.</p>
       <a className={styles.primario} href="/onboarding/contas">Continuar para as contas</a>
     </section>}
     {salvas.length > 0 && <details className={styles.revisao}><summary>Ver e corrigir respostas salvas ({salvas.length})</summary><ol>
