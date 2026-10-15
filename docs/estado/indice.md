@@ -35,6 +35,8 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`onboarding-conversa-e-qa-multiconta-15-10.md`](./onboarding-conversa-e-qa-multiconta-15-10.md) | 15/10/2026 | Conversa guiada local, materiais de marca, build e troca autenticada entre dois negócios no QA. | **Sim.** Voz/agenda configuradas, publicação e testes de upload/isolamento. |
+| [`multiconta-fixture-qa-15-10.md`](./multiconta-fixture-qa-15-10.md) | 15/10/2026 | Registra a segunda empresa fictícia no mesmo login de QA, seu pedido simulado e o limite da prova. | **Sim.** Troca e isolamento ainda sem ensaio autenticado no HTTPS. |
 | [`onboarding-retorno-apos-reserva-15-10.md`](./onboarding-retorno-apos-reserva-15-10.md) | 15/10/2026 | Libera o Início após reunião registrada e apresenta guia local de três passos sem a cadeia antiga. | **Sim.** Agenda desativada, tour visual e conciliação real no QA. |
 | [`onboarding-agenda-portao-conclusao-15-10.md`](./onboarding-agenda-portao-conclusao-15-10.md) | 15/10/2026 | Exige conclusão do onboarding também na action de reserva, inclusive para chamada direta ou aba antiga. | **Sim.** Agenda desativada e teste autenticado no QA. |
 | [`etapas-03-04-aceite-atual-15-10.md`](./etapas-03-04-aceite-atual-15-10.md) | 15/10/2026 | Critérios de aceite e ordem de desbloqueio de multiconta e onboarding após o build local. | **Sim.** Publicação, migration autorizada, agenda/voz configuradas e QA autenticado. |

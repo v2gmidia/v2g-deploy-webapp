@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TETO_DO_NAVEGADOR_BYTES } from "@/lib/criativos/limites.mjs";
 import { prepararImagemDaMarca } from "@/lib/identidade/preparar-arquivo-cliente";
@@ -14,12 +14,13 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
   aoMudarUpload: (ativo: boolean) => void;
 }) {
   const router = useRouter();
-  const restantes = Math.max(0, 6 - variacoes.length);
+  const [selecionados, setSelecionados] = useState<string[]>([]);
+  const restantes = Math.max(0, 24 - variacoes.length);
   const [resultado, enviar, enviando] = useActionState(async (anterior: VariacoesState, dados: FormData) => {
     const arquivos = dados.getAll("arquivos").filter((item): item is File => item instanceof File && item.size > 0);
-    if (restantes === 0) return { erro: "Você já enviou 6 imagens. Remova uma para mandar outra." };
-    if (!arquivos.length || arquivos.length > restantes)
-      return { erro: `Escolha até ${restantes} ${restantes === 1 ? "imagem" : "imagens"}.` };
+    if (restantes === 0) return { erro: "Você já enviou 24 imagens. Remova uma para mandar outra." };
+    if (!arquivos.length || arquivos.length > Math.min(restantes, 12))
+      return { erro: `Escolha até ${Math.min(restantes, 12)} imagens neste envio.` };
     aoMudarUpload(true);
     try {
       const preparados: File[] = [];
@@ -35,6 +36,7 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
       const resposta = await enviarVariacoesAction(anterior, dados);
       if (resposta.ok) {
         await aoEscolher(preparados);
+        setSelecionados([]);
         router.refresh();
       }
       return resposta;
@@ -44,7 +46,7 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
   }, {});
   return <section className={styles.logoBloco}>
     <h2>Outras imagens da sua marca</h2>
-    <p>Escolha várias imagens de uma vez: logos, aplicações, materiais e referências visuais. PNG e JPG funcionam; WebP e AVIF são convertidos no navegador quando ele conseguir abrir. HEIC depende do navegador. Imagens de até 15 MB podem ser reduzidas para o envio; restam {restantes} de 6 vagas.</p>
+    <p>Escolha vários logos, fotos, aplicações e referências de uma vez. PNG, JPG, WebP e AVIF funcionam; HEIC depende do navegador. Imagens pequenas são ajustadas para o cadastro, e a equipe confere a nitidez antes de criar um anúncio. Você pode guardar até 24 imagens; restam {restantes} vagas.</p>
     {variacoes.length > 0 && <div className={styles.variacoes}>
       {variacoes.map((item) => <figure key={item.id}>
         {item.url ? <img src={item.url} alt={`Versão da marca: ${item.nome}`} />
@@ -53,12 +55,14 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
         <RemoverVariacao businessId={businessId} id={item.id} />
       </figure>)}
     </div>}
-    <form action={enviar} className={styles.logoForm}>
+    <form action={enviar} className={styles.anexoForm}>
       <input type="hidden" name="businessId" value={businessId} />
-      <input type="file" name="arquivos" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" multiple aria-label="Escolher várias imagens da marca" />
-      <button className="cta" type="submit" disabled={enviando || restantes === 0}>{enviando ? "Enviando…" : "Enviar imagens"}</button>
+      <label className={styles.anexoBotao} htmlFor="imagens-marca">＋ Anexar imagens</label>
+      <input id="imagens-marca" type="file" name="arquivos" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" multiple aria-label="Escolher várias imagens da marca" onChange={(evento) => setSelecionados(Array.from(evento.target.files ?? [], (arquivo) => arquivo.name))} />
+      <span className={styles.anexoSelecionados}>{selecionados.length ? `${selecionados.length} selecionada(s): ${selecionados.join(", ")}` : "Escolha as imagens que tiver. Você pode voltar depois."}</span>
+      <button className={styles.anexoEnviar} type="submit" disabled={enviando || restantes === 0 || selecionados.length === 0} aria-label="Enviar imagens da marca">{enviando ? "Enviando…" : "↑ Enviar"}</button>
     </form>
-    <p>{restantes === 0 ? "Limite atingido. Remova uma imagem para enviar outra." : "Você pode enviar em mais de uma rodada. Cada rodada aceita até 9 MB no total."}</p>
+    <p>{restantes === 0 ? "Limite atingido. Remova uma imagem para enviar outra." : "Você pode enviar em mais de uma rodada, até 12 imagens e 9 MB por rodada."}</p>
     {resultado.erro && <p className="form-error" role="alert">{resultado.erro}</p>}
     {resultado.ok && <p className="form-notice" role="status">{resultado.ok}</p>}
   </section>;

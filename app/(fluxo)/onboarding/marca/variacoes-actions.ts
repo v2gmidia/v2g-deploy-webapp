@@ -10,7 +10,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 const BUCKET = "v2g-midia";
 const TIPO = "variacao_logo";
-const MAX_ARQUIVOS = 6;
+const MAX_ARQUIVOS = 24;
+const MAX_LOTE = 12;
 const MAX_BYTES = 4 * 1024 * 1024;
 
 export interface VariacaoVisual { id: string; nome: string; url: string | null }
@@ -62,8 +63,8 @@ export async function enviarVariacoesAction(_prev: VariacoesState, formData: For
   if (!arquivos.length || arquivos.some((item) => !(item instanceof File)))
     return { erro: "Escolha uma ou mais imagens PNG ou JPG." };
   const candidatos = arquivos as File[];
-  if (candidatos.length > MAX_ARQUIVOS)
-    return { erro: `Envie até ${MAX_ARQUIVOS} imagens por vez.` };
+  if (candidatos.length > MAX_LOTE)
+    return { erro: `Envie até ${MAX_LOTE} imagens por vez.` };
   if (candidatos.reduce((total, arquivo) => total + arquivo.size, 0) > TETO_DO_NAVEGADOR_BYTES)
     return { erro: "Este envio passa de 9 MB. Divida as imagens em dois envios." };
   const preparados: { bytes: Uint8Array; nome: string; extensao: "png" | "jpg"; tipo: string }[] = [];

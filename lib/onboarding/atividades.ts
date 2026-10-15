@@ -117,6 +117,16 @@ export function normalizarAtividade(valor: string): string {
     .replace(/\p{Diacritic}/gu, "").trim();
 }
 
+/** Associação operacional conservadora. O texto que o cliente escreveu continua intacto. */
+export function familiaDaAtividade(valor: string): string | null {
+  const tipo = normalizarAtividade(valor);
+  if (/cabeleireir|salao de beleza|barbearia|servicos de beleza|clinica de estetica/.test(tipo)) return "Beleza e cuidados pessoais";
+  if (/dentist|odontolog/.test(tipo)) return "Odontologia";
+  if (/arquitet|design de interiores/.test(tipo)) return "Arquitetura e interiores";
+  if (/restaurante|pizzaria|hamburgueria|cafeteria|delivery de refeicoes/.test(tipo)) return "Alimentação";
+  return null;
+}
+
 export function buscarAtividades(consulta: string): string[] {
   const busca = normalizarAtividade(consulta);
   if (!busca) return ATIVIDADES_SUGERIDAS.slice(0, 8);
@@ -129,6 +139,12 @@ export function buscarAtividades(consulta: string): string[] {
 /** Exemplos de escrita, nunca fatos sobre o cliente nem segmentação aprovada. */
 export function exemplosDaAtividade(atividade: string): Record<string, string> {
   const tipo = normalizarAtividade(atividade);
+  if (familiaDaAtividade(tipo) === "Beleza e cuidados pessoais") return {
+    descricao: "Ex.: cortes, coloração e tratamentos, conforme o serviço escolhido",
+    publico: "Ex.: mulheres adultas que moram perto do salão e cuidam do cabelo regularmente",
+    motivo: "Ex.: querem cortar, tratar ou mudar a cor do cabelo com orientação",
+    resultado: "Ex.: recebe o atendimento contratado, como corte ou coloração",
+  };
   if (tipo.includes("academia") || tipo.includes("pilates")) return {
     descricao: "Ex.: musculação, aulas em grupo e avaliação inicial",
     publico: "Ex.: pessoas que querem ganhar massa muscular ou recuperar a mobilidade",
@@ -140,6 +156,12 @@ export function exemplosDaAtividade(atividade: string): Record<string, string> {
     publico: "Ex.: moradores da cidade que procuram atendimento odontológico",
     motivo: "Ex.: precisam avaliar um incômodo ou manter os cuidados em dia",
     resultado: "Ex.: avaliação e tratamento contratado, conforme cada caso",
+  };
+  if (tipo.includes("clinica medica") || tipo === "medico" || tipo.includes("fisioterap")) return {
+    descricao: "Ex.: consultas, avaliações e acompanhamentos disponíveis",
+    publico: "Ex.: pessoas da região que procuram atendimento na especialidade",
+    motivo: "Ex.: querem avaliar uma queixa ou acompanhar a própria saúde",
+    resultado: "Ex.: recebe a consulta ou o serviço contratado, conforme cada caso",
   };
   if (tipo.includes("restaurante") || tipo.includes("pizzaria") || tipo.includes("hamburgueria")) return {
     descricao: "Ex.: refeições no salão, retirada e entrega",

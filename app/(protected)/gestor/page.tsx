@@ -7,6 +7,9 @@ import { proximasAcoesDoGestor, type RevisaoAberta, type TarefaAberta } from "@/
 import { proximaAcaoConfiavel, resumoDoTrabalhoDaConta } from "@/lib/gestor/limites-carteira";
 import { tituloDaAba } from "@/lib/titulos";
 import { lacunasParaReuniao, type RespostaDeBriefing } from "@/lib/onboarding/briefing-trafego";
+import { familiaDaAtividade } from "@/lib/onboarding/atividades";
+import { listarNichos } from "@/lib/backend/nichos";
+import { normalizar } from "@/lib/nichos/busca";
 import styles from "./Gestor.module.css";
 
 export const metadata = tituloDaAba("/gestor");
@@ -28,12 +31,12 @@ export default async function GestorPage({ searchParams }: {
   try {
     const admin = createAdminClient();
     const negocios = await admin.from("businesses")
-      .select(`${COLUNAS_DO_CADASTRO}, dados_ficticios, updated_at, created_at`, { count: "exact" })
+      .select(`${COLUNAS_DO_CADASTRO}, niche, dados_ficticios, updated_at, created_at`, { count: "exact" })
       .eq("dados_ficticios", false)
       .order("name", { ascending: true }).limit(1000);
     if (negocios.error || !negocios.data) throw negocios.error ?? new Error("negocios indisponiveis");
     const ids = negocios.data.map((n) => n.id);
-    const [pedidos, contas, execucoes] = ids.length ? await Promise.all([
+    const [pedidos, contas, execucoes, catalogo] = ids.length ? await Promise.all([
       admin.from("commercial_orders")
         .select("id, business_id, status, created_at")
         .in("business_id", ids).order("created_at", { ascending: false }).limit(1000),
@@ -42,7 +45,8 @@ export default async function GestorPage({ searchParams }: {
       admin.from("execucoes")
         .select("id, business_id, status, campanha_meta, status_na_plataforma, status_lido_em, criado_em")
         .in("business_id", ids).order("criado_em", { ascending: false }).limit(1000),
-    ]) : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }];
+      listarNichos(),
+    ]) : [{ data: [], error: null }, { data: [], error: null }, { data: [], error: null }, null];
     if (pedidos.error || contas.error || !pedidos.data || !contas.data) {
       throw pedidos.error ?? contas.error ?? new Error("dados de operacao indisponiveis");
     }
@@ -222,6 +226,16 @@ export default async function GestorPage({ searchParams }: {
                     ? <a href={linha.instagram.url} target="_blank" rel="noopener noreferrer">{linha.instagram.rotulo}</a>
                     : linha.instagramInformadoSemLink ? "informado, mas o endereço precisa ser conferido na ficha" : "não informado"}</p>
                   <p>Produtos e serviços (declarados pelo cliente): {linha.descricaoParaReuniao ?? "não informados"}</p>
+                  <p>Tipo de negócio (declarado): {linha.nichoDeclarado ?? "não informado"}</p>
+                  {linha.nichoDeclarado && <p>{(() => {
+                    const familia = familiaDaAtividade(linha.nichoDeclarado);
+                    const encontrado = catalogo?.ok ? catalogo.dados.find((nicho) =>
+                      [nicho.rotulo, nicho.nicho, ...nicho.termosDeBusca]
+                        .some((termo) => normalizar(termo) === normalizar(linha.nichoDeclarado!))) : null;
+                    return encontrado
+                      ? `Estrutura técnica possivelmente correspondente: ${encontrado.rotulo}. O gestor confirma antes de usar.`
+                      : `Estrutura técnica ${catalogo?.ok ? "a associar ou criar" : "não conferida: catálogo indisponível"}.${familia ? ` Família sugerida: ${familia}.` : ""}`;
+                  })()}</p>}
                   {linha.briefingParaReuniao.oferta.estado !== "ausente" && <p>Resposta anterior sobre primeiro anúncio (histórico, a decisão cabe ao gestor): {respostaParaReuniao(linha.briefingParaReuniao.oferta)}</p>}
                   <p>Quem compra (declarado): {respostaParaReuniao(linha.briefingParaReuniao.publico)}</p>
                   <p>Motivo da procura (declarado): {respostaParaReuniao(linha.briefingParaReuniao.motivo)}</p>

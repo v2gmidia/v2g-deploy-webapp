@@ -14,6 +14,12 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-15 — Conversa guiada, materiais de marca e agenda dentro do WebApp
+
+**Aprovação direta do Victor, posterior às entradas abaixo.** O primeiro bloco do onboarding passa a ser uma conversa guiada, com uma pergunta por vez, progresso e previsão de cerca de 15 minutos; a pessoa responde no campo compacto e continua podendo corrigir respostas. A conversa permanece dirigida pelo roteiro, sem um chat livre que possa desviar da coleta. A atividade tem busca e “Outros” no mesmo campo. O microfone compacto usa transcrição por provedor quando configurada, com revisão do texto antes de gravar. O cliente pode anexar várias imagens da marca na etapa visual; imagens de 500 × 500 podem ser ajustadas para o cadastro, mas nitidez para anúncio ainda requer conferência. O envio de um manual em PDF sai desta etapa por decisão expressa; documentos já guardados não são apagados. Os exemplos e as sugestões de família de nicho não substituem a confirmação do catálogo técnico pelo gestor.
+
+**Motivo:** Victor aprovou a prévia conversacional e apontou fricção nas caixas livres, no fluxo de “Outros”, na exigência de 512 pixels, no limite de seis imagens e no PDF. A reserva deve acontecer e ficar visível no WebApp, com apenas uma reunião ativa por negócio. A implementação local da agenda segue atrás da configuração Google; enquanto a flag estiver desligada no QA, o link público ainda permite reservas repetidas e não satisfaz o aceite dessa parte. A publicação, configuração e ensaio autenticado são provas separadas.
+
 ### 2026-10-14 — Multiconta direta e ajuste do primeiro bloco do onboarding
 
 **Correções diretas do Victor, posteriores às decisões abaixo.** Um e-mail administra vários CNPJs. O menu mostra o negócio ativo com nome, logo quando houver e lista dos negócios liberados; a troca ocorre ao escolher um item, sem uma segunda tela ou botão de abertura. Adicionar negócio usa a compra existente, condicionada à disponibilidade real do checkout. No onboarding, o cliente declara o que vende, quem compra, a necessidade e a entrega; **não escolhe o foco do primeiro anúncio**, que fica para o gestor e a reunião. Respostas curtas, mas informativas, não devem ser recusadas apenas por um piso arbitrário de caracteres. “Brasil inteiro” remove cidade, CEP e raio derivados da escolha local anterior; área próxima requer CEP válido. Estas correções substituem a exigência de “oferta inicial” na ordem do bloco registrada em 14/10. A resposta antiga permanece no histórico.

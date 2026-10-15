@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import styles from "./OnboardingNovo.module.css";
+import styles from "./ChatConversa.module.css";
 
 const MAX_AUDIO = 3 * 1024 * 1024;
 const MAX_TEMPO = 60_000;
@@ -100,13 +100,13 @@ export function RespostaPorVoz({ ocupado, aoTranscrever, aoOcupar }: {
 
   return <div className={styles.voz}>
     {suporta && <button type="button" disabled={ocupado || enviando} aria-pressed={gravando}
+      title={gravando ? "Parar gravação" : enviando ? "Transcrevendo áudio" : "Gravar resposta por voz"}
+      aria-label={gravando ? "Parar gravação" : enviando ? "Transcrevendo áudio" : "Gravar resposta por voz"}
       onClick={() => gravando ? gravador.current?.stop() : void iniciar()}>
-      {gravando ? "Parar e transcrever" : enviando ? "Transcrevendo…" : "Responder falando"}
+      {gravando ? <span aria-hidden="true">■</span> : enviando ? <span aria-hidden="true">…</span> :
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" /><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4m-4 0h8" /></svg>}
     </button>}
-    <p>{gravando ? "Fale por até um minuto. Depois confira o texto antes de salvar." :
-      enviando ? "Aguarde a transcrição. O áudio não é salvo pela V2G." :
-      suporta ? "Grave, confira o texto e edite se precisar. O áudio não é salvo pela V2G." :
-      "Este navegador não permite gravação aqui. Você pode escrever normalmente."}</p>
+    {(gravando || enviando) && <span className={styles.vozEstado} role="status">{gravando ? "Gravando… toque para parar" : "Transcrevendo…"}</span>}
     {audio && erro && <><audio controls src={audioUrl ?? undefined} aria-label="Ouvir sua gravação" />
       <button type="button" disabled={ocupado || enviando} onClick={() => void transcrever(audio)}>Tentar transcrever de novo</button></>}
     {erro && <p className="form-error" role="alert">{erro}</p>}

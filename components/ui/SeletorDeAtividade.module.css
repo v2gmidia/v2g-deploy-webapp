@@ -1,11 +1,11 @@
-.seletor { max-width: 760px; margin-top: 28px; }
+.seletor { max-width: 760px; }
 .combobox { position: relative; }
 .rotulo { display: block; margin-bottom: 8px; color: #102A35; font-size: 14px; font-weight: 700; }
 .seletor input { display: block; width: 100%; min-height: 56px; padding: 12px 16px; border: 1px solid #70877E; border-radius: 4px; background: #FFF; color: #102A35; font: 400 18px/1.4 var(--body); }
 .seletor input::placeholder { color: #526A73; opacity: 1; }
 .seletor :is(input, button):focus-visible { outline: 2px solid #0B40DA; outline-offset: 3px; }
 .ajuda, .vazio, .aviso { margin: 12px 0 16px; color: #49606A; font-size: 14px; line-height: 1.5; }
-.opcoes { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; right: 0; display: flex; flex-direction: column; max-height: min(42vh, 350px); overflow: hidden; padding: 6px; border: 1px solid #70877E; border-radius: 4px; background: #FFF; box-shadow: 0 16px 30px -18px #102A35; }
+.opcoes { position: absolute; z-index: 30; bottom: calc(100% + 4px); left: 0; right: 0; display: flex; flex-direction: column; max-height: min(42vh, 350px); overflow: hidden; padding: 6px; border: 1px solid #70877E; border-radius: 4px; background: #FFF; box-shadow: 0 -10px 30px -18px #102A35; }
 .resultados { display: grid; min-height: 0; overflow-y: auto; }
 .opcoes button { min-height: 44px; padding: 9px 12px; border: 0; border-radius: 3px; background: #FFF; color: #102A35; font: 600 16px/1.4 var(--body); text-align: left; cursor: pointer; }
 .opcoes button:hover, .opcoes .opcaoAtiva { background: #E9F0FF; color: #0B40DA; }

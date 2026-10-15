@@ -35,7 +35,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
   return <section className={styles.logoBloco}>
     <div>
       <h2>Logo principal</h2>
-      <p>Se tiver, envie o logo principal. PNG e JPG funcionam; WebP e AVIF são convertidos no navegador quando ele conseguir abrir. HEIC depende do navegador. Imagens de até 15 MB podem ser reduzidas para o envio, preservando pelo menos 512 pixels de cada lado. JPG pode manter um fundo opaco.</p>
+      <p>Se tiver, indique o logo que prefere usar. PNG, JPG, WebP e AVIF funcionam; HEIC depende do navegador. Mesmo uma imagem de 500 × 500 pode entrar como referência. A equipe confere a nitidez antes de usar no anúncio.</p>
     </div>
     {logo && <div className={styles.logoAtual}>
       {logo.url ? <img src={logo.url} alt="Logo atual do negócio" />

@@ -253,10 +253,9 @@ export async function salvarRespostaAction(entrada: {
   if (entrada.qid === "nome") campos.push({ campo: "name", valor: texto });
   // SEMPRE `confirmado`, e não existe mais nada além disso.
   //
-  // Chegou aqui por chip: foi conferido contra a lista viva. Chegou por
-  // texto: é a frase que a própria pessoa escreveu, o que também é
-  // verdade — inclusive quando o catálogo está fora, que é justamente o
-  // caso em que ela é a única fonte que temos.
+  // A atividade vem como texto declarado, seja da lista de exemplos da
+  // interface, seja da opção Outros. Não é ID técnico do catálogo vivo.
+  // O gestor confere a correspondência antes de usar um nicho do backend.
   //
   // A `aproximacao` existiu por algumas horas em 22/08, para marcar
   // escolha feita numa lista de reserva. A reserva saiu (ver

@@ -21,7 +21,7 @@
 
 .campo textarea {
   min-height: 104px;
-  resize: vertical;
+  resize: none;
 }
 
 .campo :is(input, textarea):focus-visible {
@@ -51,6 +51,12 @@
 .logoForm { display: flex; align-items: center; flex-wrap: wrap; gap: 14px; margin-top: 18px; }
 .logoForm input { min-width: 0; max-width: 100%; color: #102a35; }
 .logoForm button { margin: 0; }
+.anexoForm{display:flex;align-items:center;gap:10px;min-height:66px;margin-top:18px;padding:10px 12px;border:1px solid #70877e;border-radius:10px;background:#fff}
+.anexoForm input[type="file"]{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.anexoBotao{flex:none;display:inline-flex;align-items:center;min-height:38px;padding:8px 10px;border-radius:6px;color:#0b40da;font-weight:700;cursor:pointer}.anexoBotao:hover{background:#e4f4f9}
+.anexoSelecionados{min-width:0;flex:1;color:#49606a;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.anexoEnviar{flex:none;min-height:38px;padding:8px 13px;border:0;border-radius:7px;background:#0b40da;color:#fff;font-weight:700;cursor:pointer}.anexoEnviar:disabled{background:#ccd9d6;color:#49606a;cursor:not-allowed}
+.anexoForm:focus-within{border-color:#0b40da;box-shadow:0 0 0 2px #b0e9fd}
 .logoAtual { display: flex; align-items: center; gap: 16px; margin: 18px 0; color: #49606a; overflow-wrap: anywhere; }
 .logoAtual img { width: 80px; height: 80px; object-fit: contain; border: 1px solid #ccd9d6; border-radius: 6px; background: #fff; }
 .declaracao { padding: 12px 16px; border-left: 3px solid #0b40da; background: #f4f7ff; font-size: 14px; }
@@ -66,3 +72,4 @@
 .adicionarCor, .removerCor { border: 0; background: transparent; color: #0b40da; text-decoration: underline; font: inherit; font-weight: 700; cursor: pointer; }
 .adicionarCor { margin: 0 12px 12px 0; }
 .removerCor { justify-self: start; padding: 4px 0; }
+@media(max-width:620px){.anexoForm{flex-wrap:wrap}.anexoSelecionados{flex-basis:100%;order:3}.anexoEnviar{margin-left:auto}}

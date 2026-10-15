@@ -3,6 +3,7 @@ import { estadoDaConclusao } from "../onboarding/conclusao.ts";
 import { lerBriefingDeTrafego } from "../onboarding/briefing-trafego.ts";
 
 export interface NegocioDoPortfolio extends NegocioParaCadastro {
+  niche?: string | null;
   dados_ficticios: boolean;
   updated_at: string;
   created_at: string;
@@ -47,6 +48,7 @@ export interface ExecucaoDoPortfolio {
 export interface LinhaDoPortfolio {
   id: string;
   nome: string;
+  nichoDeclarado: string | null;
   atualizadoEm: string;
   instagram: { rotulo: string; url: string } | null;
   instagramInformadoSemLink: boolean;
@@ -201,6 +203,7 @@ export function montarPortfolio(
     return {
       id: negocio.id,
       nome: negocio.name?.trim() || "Negócio sem nome",
+      nichoDeclarado: negocio.niche?.trim() || null,
       atualizadoEm: negocio.updated_at,
       instagram,
       instagramInformadoSemLink: !!negocio.instagram_handle?.trim() && !instagram,

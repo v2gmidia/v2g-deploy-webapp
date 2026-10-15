@@ -16,7 +16,6 @@ export async function prepararImagemDaMarca(arquivo: File, destino: "logo" | "va
     return { ok: false, erro: `${arquivo.name}: formato não reconhecido. Envie PNG, JPG, WebP ou AVIF; HEIC depende do navegador.` };
   if (arquivo.size > LIMITE_ORIGINAL)
     return { ok: false, erro: `${arquivo.name} ultrapassa 15 MB. Exporte uma versão menor antes de enviar.` };
-  if (formatoDireto && arquivo.size <= LIMITE_FINAL) return { ok: true, arquivo };
   if (typeof createImageBitmap !== "function")
     return { ok: false, erro: "Este navegador não consegue converter a imagem. Exporte em PNG ou JPG." };
 
@@ -25,13 +24,13 @@ export async function prepararImagemDaMarca(arquivo: File, destino: "logo" | "va
     bitmap = await createImageBitmap(arquivo);
     if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > MAX_PIXELS)
       return { ok: false, erro: `${arquivo.name} tem resolução grande demais. Exporte uma versão menor.` };
-    if (Math.min(bitmap.width, bitmap.height) < 512)
-      return { ok: false, erro: `${arquivo.name} precisa ter pelo menos 512 pixels de cada lado.` };
+    if (formatoDireto && arquivo.size <= LIMITE_FINAL && Math.min(bitmap.width, bitmap.height) >= 512)
+      return { ok: true, arquivo };
     const canvas = document.createElement("canvas");
     const contexto = canvas.getContext("2d");
     if (!contexto) return { ok: false, erro: "Não foi possível converter esta imagem. Exporte em PNG ou JPG." };
     let blob: Blob | null = null;
-    let escala = 1;
+    let escala = Math.max(1, 512 / Math.min(bitmap.width, bitmap.height));
     let extensao = "png";
     for (let tentativa = 0; tentativa < 8; tentativa += 1) {
       canvas.width = Math.round(bitmap.width * escala);

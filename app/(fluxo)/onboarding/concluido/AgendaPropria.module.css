@@ -1,0 +1,8 @@
+.agenda,.confirmada{margin:28px 0;padding:clamp(22px,4vw,32px);border:1px solid #ccd9d6;border-radius:10px;background:#fff;color:#102a35}
+.agenda h2,.confirmada h2{margin:0 0 8px;font:700 clamp(22px,3vw,30px)/1.15 Archivo,Arial,sans-serif;letter-spacing:-.03em}
+.agenda p,.confirmada p{margin:8px 0 18px;color:#49606a;line-height:1.5}
+.horarios{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;max-height:330px;overflow-y:auto;margin:22px 0}.horarios button{display:grid;gap:7px;min-height:72px;padding:11px 13px;border:1px solid #ccd9d6;border-radius:7px;background:#fff;color:#102a35;text-align:left;cursor:pointer}.horarios button:hover,.horarios button[aria-pressed="true"]{border-color:#0b40da;background:#e9f0ff}.horarios strong{font-size:13px;text-transform:capitalize}.horarios span{font-size:17px;font-weight:700}
+.primario{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:12px 20px;border:1px solid #0b40da;border-radius:6px;background:#0b40da;color:#fff!important;font:700 16px/1.25 Arial,sans-serif;text-decoration:none;cursor:pointer}.primario:hover{background:#092eaa}.primario:disabled{opacity:.55;cursor:not-allowed}
+.confirmadaIcone{display:grid;place-items:center;width:42px;height:42px;margin-bottom:15px;border-radius:50%;background:#e6f5ea;color:#237644;font-size:24px;font-weight:700}
+.agenda :is(button,a):focus-visible,.confirmada :is(button,a):focus-visible{outline:2px solid #0b40da;outline-offset:3px}
+@media(max-width:620px){.horarios{grid-template-columns:repeat(2,minmax(0,1fr));max-height:280px}.horarios button{min-height:72px}}

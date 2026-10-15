@@ -5,17 +5,14 @@ import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
 import { TEXTO_DA_DECLARACAO } from "@/app/(protected)/conta/declaracao";
 import { coresDaLogo, PAPEIS_DA_COR } from "@/lib/identidade/cores-da-logo";
-import { coresDoPdf } from "@/lib/identidade/cores-do-pdf";
 import { juntarPaleta } from "@/lib/identidade/paleta";
 import { salvarMarcaAction, type EstadoMarca } from "./actions";
 import { LogoDaMarca } from "./LogoDaMarca";
-import { GuiaDaMarca } from "./GuiaDaMarca";
-import type { GuiaVisual } from "./guia-actions";
 import { VariacoesDaMarca } from "./VariacoesDaMarca";
 import type { VariacaoVisual } from "./variacoes-actions";
 import styles from "./Marca.module.css";
 
-export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca; logo: ImagemDeIdentidade | null; guia: GuiaVisual | null; variacoes: VariacaoVisual[] }) {
+export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo: ImagemDeIdentidade | null; variacoes: VariacaoVisual[] }) {
   const router = useRouter();
   const [estado, setEstado] = useState(inicial);
   const [site, setSite] = useState(inicial.site);
@@ -77,25 +74,6 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
     }
   }
 
-  async function proporCoresDoGuia(arquivo: File) {
-    setAnalisesAtivas((atual) => atual + 1);
-    setRecadoLogo(null);
-    try {
-      const propostas = await coresDoPdf(arquivo);
-      if (propostas.length) {
-        setCores((anteriores) => juntarPaleta(anteriores, propostas));
-        setCoresConferidas(false);
-      }
-      setRecadoLogo(propostas.length
-        ? "Lemos as primeiras páginas do PDF e somamos as cores sugeridas. Confira antes de confirmar."
-        : "PDF guardado para o gestor. Não conseguimos extrair cores confiáveis dele; envie imagens ou defina as cores na reunião.");
-    } catch {
-      setRecadoLogo("PDF guardado para o gestor, mas a leitura automática das cores falhou. Confira as cores manualmente ou defina com o gestor.");
-    } finally {
-      setAnalisesAtivas((atual) => Math.max(0, atual - 1));
-    }
-  }
-
   function aoMudarUpload(ativo: boolean) {
     setUploadsAtivos((atual) => Math.max(0, atual + (ativo ? 1 : -1)));
   }
@@ -103,7 +81,7 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
   return <>
     <p className="mission-tag">Sua primeira missão · passo 2 de 3</p>
     <h1 className="auth-h">O visual da sua marca</h1>
-    <p className="auth-sub">Envie o que tiver da sua marca: logo principal, outras imagens e manual em PDF. Pode deixar para a reunião o que ainda não tiver. Confira as cores sugeridas antes de confirmar.</p>
+    <p className="auth-sub">Envie logos, fotos e aplicações da marca. Pode escolher várias imagens e conferir as cores sugeridas antes de continuar.</p>
     <details className={styles.revisao}>
       <summary>Rever o que você contou sobre o negócio</summary>
       {Object.entries(estado.respostasBasicas).map(([chave, resposta]) =>
@@ -119,10 +97,9 @@ export function Marca({ inicial, logo, guia, variacoes }: { inicial: EstadoMarca
         <p className={styles.declaracao}>{TEXTO_DA_DECLARACAO}</p>
         <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo])} aoMudarUpload={aoMudarUpload} />
         <VariacoesDaMarca businessId={estado.businessId} variacoes={variacoes} aoEscolher={proporCores} aoMudarUpload={aoMudarUpload} />
-        <GuiaDaMarca businessId={estado.businessId} guia={guia} aoEscolher={proporCoresDoGuia} aoMudarUpload={aoMudarUpload} />
         <section className={styles.coresBloco}>
           <h2>Essas são as cores da sua marca?</h2>
-          <p>O palpite vem dos logos, das imagens e do manual enviados. Você pode ajustar cada cor antes de confirmar.</p>
+          <p>As sugestões vêm das imagens enviadas. Você pode ajustar cada cor antes de confirmar.</p>
           {analisesAtivas > 0 && <p role="status">Analisando cores…</p>}
           {recadoLogo && <p role="status">{recadoLogo}</p>}
           {cores.length > 0 && <>

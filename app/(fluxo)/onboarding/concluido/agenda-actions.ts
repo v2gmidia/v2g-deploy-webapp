@@ -205,7 +205,7 @@ export async function reservarHorarioAction(inicio: string, businessIdEsperado: 
     const conciliada = await conciliarReservaAtiva(pendente as Reserva);
     revalidatePath("/onboarding/concluido");
     return conciliada ? estadoDaReserva(conciliada) :
-      { status: "erro", mensagem: "O Google não confirmou a reserva. Escolha outro horário após atualizar a agenda." };
+      { status: "pendente", inicio: pendente.starts_at };
   } catch {
     return { status: "erro", mensagem: "Não conseguimos confirmar a reserva. Atualize para conferir antes de tentar novamente." };
   }

@@ -1,0 +1,43 @@
+.pagina { min-height: 100vh; padding: 24px; background: #ECF5F2; color: #102A35; font-family: var(--body); }
+.aplicativo { width: min(100%, 920px); height: calc(100vh - 48px); min-height: 580px; margin: 0 auto; display: grid; grid-template-rows: auto auto 4px minmax(0, 1fr) auto; border: 1px solid #CCD9D6; border-radius: 12px; background: #F8FBFA; overflow: hidden; }
+.cabecalho { display: flex; align-items: center; gap: 18px; padding: 18px 26px; border-bottom: 1px solid #CCD9D6; background: #FFFFFF; }
+.marca { display: inline-flex !important; align-items: center; flex: none; gap: 8px !important; min-width: 128px; margin: 0 !important; color: #102A35; }
+.marca img { width: 32px; height: 32px; }
+.marca span { display: grid; gap: 0; color: #102A35; }
+.marca strong { font: 700 23px/1 var(--font-archivo), Archivo, sans-serif; letter-spacing: -.035em; }
+.marca small { font-size: 10px; letter-spacing: .14em; }
+.cabecalho > div { display: grid; gap: 2px; margin-right: auto; }
+.cabecalho strong { font-size: 15px; }
+.cabecalho span { color: #49606A; font-size: 12px; }
+.cabecalho button { padding: 8px 0; border: 0; background: transparent; color: #0B40DA; font: 600 14px var(--body); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.andamento { display: flex; justify-content: space-between; gap: 12px; padding: 12px 28px; color: #49606A; font-size: 13px; }
+.trilho { background: #CCD9D6; }
+.trilho span { display: block; height: 4px; background: #0B40DA; transition: width .25s ease; }
+.mensagens { padding: 36px max(28px, calc((100% - 660px) / 2)); overflow-y: auto; scrollbar-color: #70877E transparent; }
+.introducao { margin: 0 0 34px; }
+.introducao h1 { margin: 0 0 8px; font: 650 clamp(30px, 4vw, 42px)/1.08 var(--font-archivo), Archivo, sans-serif; letter-spacing: -.04em; }
+.introducao p { max-width: 58ch; margin: 0; color: #49606A; line-height: 1.55; }
+.linha { max-width: 76%; margin: 0 0 26px; }
+.autor { display: block; margin-bottom: 8px; color: #49606A; font-size: 12px; font-weight: 700; }
+.linha p { margin: 0; padding: 15px 18px; border: 1px solid #CCD9D6; border-radius: 14px 14px 14px 3px; background: #FFFFFF; font-size: 16px; line-height: 1.5; overflow-wrap: anywhere; }
+.cliente { margin-left: auto; }
+.cliente .autor { text-align: right; }
+.cliente p { border-color: #0B40DA; border-radius: 14px 14px 3px 14px; background: #0B40DA; color: #FFFFFF; }
+.formulario { padding: 14px max(24px, calc((100% - 660px) / 2)) 16px; border-top: 1px solid #CCD9D6; background: #FFFFFF; }
+.compositor { padding: 10px 12px; border: 1px solid #70877E; border-radius: 12px; background: #FFFFFF; }
+.compositor:focus-within { border-color: #0B40DA; box-shadow: 0 0 0 2px #B0E9FD; }
+.rotulo { display: block; margin: 0 0 4px 4px; font-size: 12px; font-weight: 700; }
+.compositor textarea { display: block; width: 100%; min-height: 54px; max-height: 108px; padding: 4px; border: 0; outline: 0; background: transparent; color: #102A35; font: 400 16px/1.5 var(--body); resize: none; }
+.compositor textarea::placeholder { color: #526A73; }
+.acoes, .ferramentas { display: flex; align-items: center; gap: 8px; }
+.acoes { justify-content: space-between; }
+.ferramentas button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-width: 34px; min-height: 34px; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; color: #0B40DA; font: 600 14px var(--body); cursor: pointer; }
+.ferramentas button:hover { background: #E4F4F9; }
+.ferramentas svg, .enviar svg { width: 19px; height: 19px; }
+.enviar { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 8px; background: #0B40DA; color: #FFFFFF; cursor: pointer; }
+.enviar:disabled { background: #CCD9D6; color: #49606A; cursor: not-allowed; }
+.aviso { margin: 0 0 10px; color: #49606A; font-size: 13px; }
+.nota { margin: 9px 2px 0; color: #49606A; font-size: 12px; line-height: 1.4; }
+.pagina button:focus-visible { outline: 2px solid #0B40DA; outline-offset: 3px; }
+@media (max-width: 640px) { .pagina { padding: 0; } .aplicativo { height: 100dvh; min-height: 480px; border: 0; border-radius: 0; } .cabecalho { padding: 14px 16px; gap: 10px; } .cabecalho > div { max-width: 150px; } .cabecalho span { line-height: 1.25; } .andamento { padding: 10px 16px; } .mensagens { padding: 26px 16px; } .linha { max-width: 88%; } .formulario { padding: 12px 16px 18px; } }
+@media (prefers-reduced-motion: reduce) { .trilho span { transition: none; } }

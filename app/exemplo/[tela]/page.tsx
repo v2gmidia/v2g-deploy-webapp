@@ -95,6 +95,30 @@ export default async function ExemploPage({
   const agora = new Date();
   const casco = exemplo.CASCO_DE_EXEMPLO;
 
+  // Prévia isolada da entrada em conversa. Não usa sessão, IA ou persistência.
+  if (tela === "onboarding-conversa") {
+    const modulo = ehDesenvolvimento ? await import("../_onboarding_conversa/Conversa") : null;
+    if (!modulo) notFound();
+    return <modulo.Conversa />;
+  }
+  if (tela === "onboarding-conversa-integrada") {
+    const modulo = ehDesenvolvimento ? await import("@/app/(fluxo)/onboarding/Chat") : null;
+    if (!modulo) notFound();
+    return <div className="auth-shell"><main className="auth-wrap"><div className="onb-v2">
+      <header className="onb-v2-topo"><Marca editorial href="/inicio" /><span>Prévia local da interface</span></header>
+      <modulo.Chat businessId="00000000-0000-4000-8000-000000000004" inicial={{}} vozHabilitada={false} />
+    </div></main></div>;
+  }
+  if (tela === "onboarding-conversa-nicho") {
+    const modulo = ehDesenvolvimento ? await import("@/app/(fluxo)/onboarding/Chat") : null;
+    if (!modulo) notFound();
+    return <div className="auth-shell"><main className="auth-wrap"><div className="onb-v2">
+      <header className="onb-v2-topo"><Marca editorial href="/inicio" /><span>Prévia local do tipo de negócio</span></header>
+      <modulo.Chat businessId="00000000-0000-4000-8000-000000000004" vozHabilitada={false}
+        inicial={{ nome: { texto: "Salão Exemplo", origem: "texto", echo: "Salão Exemplo", em: "2026-10-15T00:00:00.000Z" } }} />
+    </div></main></div>;
+  }
+
   // ---- o Inicio de quem acabou de chegar ----
   // Dois momentos, pelo sufixo da rota:
   //   /exemplo/chegada          -> falta conectar
@@ -165,7 +189,7 @@ export default async function ExemploPage({
         <modulo.Marca inicial={{ businessId: "00000000-0000-4000-8000-000000000004",
           site: "", instagram: "", siteNaoTenhoDeclarado: true, marca: null,
           concluido: false, contasProntas: true, respostasBasicas: {}, faltamBasicas: [] }}
-          logo={null} guia={null} variacoes={[]} />
+          logo={null} variacoes={[]} />
       </section>
     </div></main></div>;
   }
