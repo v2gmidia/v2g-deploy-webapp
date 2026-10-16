@@ -26,11 +26,7 @@ function centavos(valor: unknown): number | null {
     ? resultado : null;
 }
 
-/**
- * Só `PAYMENT_RECEIVED` libera o pedido nesta primeira integração.
- * `PAYMENT_CONFIRMED` informa pagamento efetuado, mas saldo ainda indisponível;
- * sua consequência comercial segue pendente. Outros eventos vão para triagem.
- */
+/** Pagamento confirmado ou recebido exige vínculo integral antes de liberar. */
 export function normalizarEventoAsaas(
   payload: unknown,
   esperado: VinculoAsaas,
@@ -41,12 +37,13 @@ export function normalizarEventoAsaas(
   const tipo = texto(evento.event);
   if (!eventoId || !tipo) return { tipo: "revisar", motivo: "identificacao_ausente" };
 
-  if (tipo === "PAYMENT_RECEIVED") {
+  if (tipo === "PAYMENT_RECEIVED" || tipo === "PAYMENT_CONFIRMED") {
     const pagamento = objeto(evento.payment);
+    const statusEsperado = tipo === "PAYMENT_RECEIVED" ? "RECEIVED" : "CONFIRMED";
     if (!pagamento || texto(pagamento.id) !== esperado.cobrancaId
       || texto(pagamento.customer) !== esperado.clienteId
       || centavos(pagamento.value) !== esperado.valorCentavos
-      || pagamento.status !== "RECEIVED") {
+      || pagamento.status !== statusEsperado) {
       return { tipo: "revisar", motivo: "cobranca_divergente" };
     }
     return { tipo: "pagamento_recebido", eventoId, cobrancaId: esperado.cobrancaId };

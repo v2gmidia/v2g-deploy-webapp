@@ -17,8 +17,12 @@ test("recebimento exige cobrança, cliente, valor e status vinculados", () => {
   assert.equal(normalizarEventoAsaas({ ...pagamento, payment: { ...pagamento.payment, status: "PENDING" } }, pedido).tipo, "revisar");
 });
 
-test("confirmação sem saldo disponível e payload inválido não liberam", () => {
-  assert.equal(normalizarEventoAsaas({ ...pagamento, event: "PAYMENT_CONFIRMED" }, pedido).tipo, "ignorar");
+test("confirmação exige status confirmado e payload íntegro", () => {
+  assert.deepEqual(normalizarEventoAsaas({ ...pagamento, event: "PAYMENT_CONFIRMED",
+    payment: { ...pagamento.payment, status: "CONFIRMED" } }, pedido), {
+    tipo: "pagamento_recebido", eventoId: "evt-1", cobrancaId: "pay-1",
+  });
+  assert.equal(normalizarEventoAsaas({ ...pagamento, event: "PAYMENT_CONFIRMED" }, pedido).tipo, "revisar");
   assert.equal(normalizarEventoAsaas(null, pedido).tipo, "revisar");
 });
 

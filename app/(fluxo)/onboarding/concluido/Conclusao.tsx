@@ -1,6 +1,7 @@
 import { Marca } from "@/components/ui/Marca";
 import { AgendaPropria } from "./AgendaPropria";
 import type { EstadoAgenda } from "./agenda-actions";
+import styles from "./Conclusao.module.css";
 
 /** URL publica da agenda piloto. O clique não registra reserva no WebApp. */
 export const AGENDA_INICIAL_URL = "https://calendar.google.com/calendar/appointments/schedules/AcZssZ0b5yJebHCZ15kBn6J7Q_uoGrxKKKEKvHri0CAAkKeCjNBRJ_KzIIJQwlYOifAH0auJD5u13G0r";
@@ -18,7 +19,7 @@ export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }
     ? digitos.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : null;
   return <div className="onb-v2 onb-v2-etapa">
     <header className="onb-v2-topo"><Marca editorial href="/inicio" /><a href="/onboarding/marca">Rever minhas respostas</a></header>
-    <section className="onb-v2-conteudo">
+    <section className={styles.conteudo}>
     {"erro" in estado ? <>
       <h1 className="auth-h">Não consegui confirmar seu onboarding.</h1>
       <p className="auth-sub">{estado.erro}</p>
@@ -34,20 +35,27 @@ export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }
       <h1 className="auth-h">Respostas guardadas. Vamos conversar?</h1>
       <p className="auth-sub">Escolha um horário de 25 minutos para alinhar seus anúncios com o gestor.</p>
       {agenda.status === "legado" ? <>
-        <a className="cta" href={AGENDA_INICIAL_URL} target="_blank" rel="noopener noreferrer">Escolher horário da reunião</a>
-        {cnpjExibido && <p className="onb-v2-identidade">No formulário do Google, informe o CNPJ desta conta: <strong>{cnpjExibido}</strong></p>}
-        <p className="note">Confira os 14 números do CNPJ antes de reservar. O formulário do Google aceita texto livre. A reserva é confirmada pelo e-mail do Google; guarde-o para consultar, remarcar ou cancelar seu horário.</p>
-        <section className="pendencia-bloco"><b>Já reservou um horário?</b>
-          <p>Abra o e-mail de confirmação do Google para ver data, link da reunião e opções de alteração. A V2G ainda está conectando essa confirmação ao seu negócio nesta tela. Não escolha outro horário enquanto a primeira reserva estiver ativa.</p>
-          <a className="cta quiet" href="/inicio">Já marquei meu horário</a>
-          <p className="note">Este botão apenas leva você ao Início. A reunião continuará como pendente até a V2G receber uma confirmação verificável do Google.</p>
+        <section className={styles.agendamento}>
+          <a className={styles.acaoPrincipal} href={AGENDA_INICIAL_URL} target="_blank" rel="noopener noreferrer">Escolher horário no Google</a>
+          {cnpjExibido && <div className={styles.identidade}>
+            <span>CNPJ para informar no formulário</span>
+            <strong>{cnpjExibido}</strong>
+          </div>}
+          <p className={styles.orientacao}>Depois de reservar, o Google enviará um e-mail com a data, o link da reunião e as opções para remarcar ou cancelar.</p>
+        </section>
+        <section className={styles.reservaFeita}>
+          <div>
+            <h2>Já reservou?</h2>
+            <p>Use o e-mail do Google para consultar sua reserva. Enquanto a confirmação não chega à V2G, esta etapa continuará pendente no Início.</p>
+          </div>
+          <a className={styles.acaoSecundaria} href="/inicio">Ir para o Início</a>
         </section>
       </> : <AgendaPropria inicial={agenda} businessId={estado.businessId} />}
-      <section className="pendencia-bloco">
-        <b>O que acontece na reunião</b>
+      <section className={styles.reuniao}>
+        <h2>O que acontece na reunião</h2>
         <p>Vamos conferir o WhatsApp que recebe clientes, acessos e materiais do primeiro anúncio.</p>
       </section>
-      <p className="note">Não encontrou horário? <a href="https://wa.me/5521936182176?text=Oi!%20Terminei%20meu%20cadastro%20na%20V2G%2C%20mas%20n%C3%A3o%20encontrei%20um%20hor%C3%A1rio%20na%20agenda." target="_blank" rel="noopener noreferrer">Fale com a equipe</a>.</p>
+      <p className={styles.ajuda}>Não encontrou horário? <a href="https://wa.me/5521936182176?text=Oi!%20Terminei%20meu%20cadastro%20na%20V2G%2C%20mas%20n%C3%A3o%20encontrei%20um%20hor%C3%A1rio%20na%20agenda." target="_blank" rel="noopener noreferrer">Fale com a equipe</a>.</p>
     </>}
     </section>
   </div>;

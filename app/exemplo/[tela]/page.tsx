@@ -175,7 +175,7 @@ export default async function ExemploPage({
     if (!modulo) notFound();
     return <div className="auth-shell"><main className="auth-wrap">
       <modulo.Conclusao estado={{ businessId: "f0000000-0000-4000-8000-000000000099",
-        concluido: true, faltamBasicas: [], contasProntas: true }} />
+        concluido: true, faltamBasicas: [], contasProntas: true }} cnpj="00.000.000/0004-34" />
     </main></div>;
   }
 

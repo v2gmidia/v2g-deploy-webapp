@@ -54,12 +54,15 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
   // Uma unica tentativa externa por pedido. Timeout ou resposta ambigua exige
   // conciliacao antes de repetir, pois o Asaas pode ter criado a cobranca.
   const hoje = hojeEmSaoPaulo();
-  const assinatura = pedido.billing_period === "monthly";
+  // Este é o fluxo direto já provado apenas no Sandbox. Produção depende do
+  // desenho cobrança avulsa 3DS -> PAYMENT_CONFIRMED -> assinatura no mês
+  // seguinte, registrado separadamente em fluxo-cartao-mensal.ts.
+  const assinaturaDiretaSandbox = pedido.billing_period === "monthly";
   const reservadoEm = new Date().toISOString();
   const tentativasUsadas = pedido.payment_attempt_count + (cartao ? 1 : 0);
   const { data: reservado, error: erroReserva } = await admin.from("commercial_orders")
     .update({ payment_creation_started_at: reservadoEm,
-      provider_first_due_date: assinatura ? hoje : null,
+      provider_first_due_date: assinaturaDiretaSandbox ? hoje : null,
       payment_attempt_count: tentativasUsadas })
     .eq("id", pedido.id).eq("status", "awaiting_payment")
     .eq("payment_attempt_count", pedido.payment_attempt_count)
@@ -114,9 +117,9 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
       addressNumber: titular.addressNumber, mobilePhone: pedido.buyer_whatsapp },
     remoteIp,
   } : {};
-  const resposta = await asaasSandbox(assinatura ? "/subscriptions" : "/payments", {
+  const resposta = await asaasSandbox(assinaturaDiretaSandbox ? "/subscriptions" : "/payments", {
     method: "POST", timeoutMs: titular ? 65_000 : 20_000,
-    body: assinatura ? {
+    body: assinaturaDiretaSandbox ? {
       customer: clienteId, billingType: "CREDIT_CARD", cycle: "MONTHLY",
       nextDueDate: hoje, value: pedido.total_cents / 100,
       description: "Gestão de anúncios V2G", externalReference: pedido.id,
@@ -129,7 +132,7 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
     },
   });
   const corpo = resposta.body && typeof resposta.body === "object" ? resposta.body as Record<string, unknown> : null;
-  const id = resposta.ok ? idAsaas(corpo?.id, assinatura ? "sub" : "pay") : null;
+  const id = resposta.ok ? idAsaas(corpo?.id, assinaturaDiretaSandbox ? "sub" : "pay") : null;
   if (!id) {
     // Uma rejeição de autenticação também ocorre antes da criação da cobrança.
     // O pagador pode permanecer vinculado; liberar só a reserva desta tentativa.
@@ -164,7 +167,7 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
   }
 
   const { data: salvo, error: erroSalvar } = await admin.from("commercial_orders")
-    .update(assinatura ? { provider_subscription_id: id } : { provider_charge_id: id })
+    .update(assinaturaDiretaSandbox ? { provider_subscription_id: id } : { provider_charge_id: id })
     .eq("id", pedido.id).eq("status", "awaiting_payment")
     .select("id").maybeSingle();
   if (erroSalvar || !salvo) return { erro: "A cobrança foi criada, mas o vínculo falhou. Procure a V2G antes de pagar." };
