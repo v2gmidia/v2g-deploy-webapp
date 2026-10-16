@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { COOKIE_NEGOCIO_ATIVO, negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
-import { negocioAindaNaoIniciouOnboarding } from "@/lib/onboarding/entrada";
 
 export interface EscolhaNegocioState { erro?: string }
 
@@ -28,7 +27,7 @@ export async function escolherNegocioAction(
   // O ID do formulário é preferência. A autorização vem da lista de
   // negócios liberados e desta conferência de propriedade sob RLS.
   const { data: negocio, error } = await supabase.from("businesses")
-    .select("id, onboarding").eq("id", id).eq("profile_id", user.id).maybeSingle();
+    .select("id").eq("id", id).eq("profile_id", user.id).maybeSingle();
   if (error || !negocio) return { erro: "Este negócio não está disponível para sua conta." };
 
   (await cookies()).set(COOKIE_NEGOCIO_ATIVO, negocio.id, {
@@ -39,7 +38,7 @@ export async function escolherNegocioAction(
     maxAge: 60 * 60 * 24 * 180,
   });
   revalidatePath("/", "layout");
-  redirect(negocioAindaNaoIniciouOnboarding(negocio.onboarding) ? "/onboarding" : "/inicio");
+  redirect("/inicio");
 }
 
 export async function limparNegocioAction(): Promise<void> {

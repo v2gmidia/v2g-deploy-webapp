@@ -75,7 +75,7 @@ export default async function EscolherNegocioPage() {
     <FormularioNegocio negocios={negocios}
       selecionado={ativo.status === "selecionado" ? ativo.negocio.id : null} />
     <p className="seletor-ajuda">Para adicionar outro CNPJ, use o mesmo e-mail na nova contratação. O negócio aparecerá após a confirmação do pagamento.</p>
-    <a className="seletor-link" href="/adicionar-negocio">
+    <a className="seletor-link" href="/entrar?adicionar=1">
       Adicionar negócio <span aria-hidden="true">→</span>
     </a>
   </section>;

@@ -70,14 +70,16 @@ export default async function OnboardingPage() {
     : null;
 
   return (
-    <div className="onb-v2">
+    <div className="onb-v2 onb-v2-conversa">
       <header className="onb-v2-topo">
         <Marca editorial href="/inicio" />
-        <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com uma pessoa</a>
+        <div className="onb-v2-topo-direita">
+          {cnpjExibido && <p className="onb-v2-identidade">CNPJ da conta: <strong>{cnpjExibido}</strong></p>}
+          <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com uma pessoa</a>
+        </div>
       </header>
-      {cnpjExibido && <p className="onb-v2-identidade">CNPJ da conta: <strong>{cnpjExibido}</strong></p>}
       <Chat businessId={businessId} inicial={respostas}
-        vozHabilitada={process.env.V2G_VOICE_TRANSCRIPTION_ENABLED === "true" && !!process.env.OPENAI_API_KEY} />
+        vozHabilitada={!!process.env.OPENAI_API_KEY && process.env.V2G_VOICE_TRANSCRIPTION_ENABLED !== "false"} />
     </div>
   );
 }

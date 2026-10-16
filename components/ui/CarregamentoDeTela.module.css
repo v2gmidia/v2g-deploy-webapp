@@ -1,0 +1,23 @@
+.fluxo,.conversa,.aplicativo{color:#102a35;font-family:var(--body)}
+.fluxo{width:min(100%,820px);margin:42px auto 0;padding:20px 0 48px}
+.conversa{min-height:100svh;background:#f8fbfa;padding:0 24px}
+.topo{display:flex;align-items:center;justify-content:space-between;min-height:88px;border-bottom:1px solid #d9e3e6}
+.topo small{color:#49606a;font-size:13px}
+.conteudo{width:min(100%,880px);margin:0 auto}
+.progresso{height:3px;margin:72px 0 50px;background:#d9e3e6;border-radius:99px;overflow:hidden}
+.progresso span{display:block;width:35%;height:100%;background:#0743dc;animation:avancar 1.3s ease-in-out infinite alternate}
+.titulo{margin:0 0 30px;font-size:15px;font-weight:700}
+.linha,.resposta,.campo{background:linear-gradient(90deg,#e7efef 20%,#f2f6f6 50%,#e7efef 80%);background-size:220% 100%;animation:brilho 1.5s ease-in-out infinite}
+.linha{height:23px;margin-bottom:15px;border-radius:6px}
+.linhaCurta{width:55%}
+.linhaLonga{width:78%}
+.resposta{width:34%;height:50px;margin:42px 0 0 auto;border-radius:13px}
+.campo{height:104px;margin-top:clamp(100px,22vh,220px);border:1px solid #d9e3e6;border-radius:13px;background:#fff}
+.aplicativo{padding:28px 0 60px}
+.aplicativo .titulo{font-size:16px}
+.aplicativo .linha{height:20px}
+.aplicativo .campo{height:150px;margin-top:34px}
+@keyframes brilho{to{background-position-x:-220%}}
+@keyframes avancar{to{width:72%}}
+@media(max-width:760px){.conversa{padding:0 16px}.topo{min-height:72px}.progresso{margin:36px 0}.campo{margin-top:100px}}
+@media(prefers-reduced-motion:reduce){.linha,.resposta,.campo,.progresso span{animation:none}}

@@ -1121,11 +1121,15 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .side-account-menu[open] .account-chevron { transform: rotate(180deg); }
 .side-account-opcoes { display: grid; gap: 8px; padding-top: 10px; }
 .side-account-opcoes .link-btn { width: 100%; text-align: left; overflow-wrap: anywhere; }
-.business-list { display: grid; gap: 3px; max-height: min(45vh, 360px); overflow-y: auto; }
-.business-option { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 48px; padding: 6px; border: 0; border-radius: var(--raio-controle); background: transparent; color: var(--sidebar-ink); text-align: left; }
+.business-list { display: grid; gap: 3px; min-width: 0; max-height: min(45vh, 360px); margin: 0; padding: 0; border: 0; overflow-x: hidden; overflow-y: auto; }
+.business-list-form { min-width: 0; }
+.business-opening, .business-error { display: block; padding: 4px 6px; font-size: var(--fs-legenda); }
+.business-opening { color: var(--sidebar-ink); }
+.business-error { color: #ffb7b1; }
+.business-option { display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0; min-height: 48px; padding: 6px; border: 0; border-radius: var(--raio-controle); background: transparent; color: var(--sidebar-ink); text-align: left; }
 .business-option:hover, .business-option:focus-visible, .business-option[aria-current="true"] { background: var(--sidebar-active-bg); color: var(--texto-sobre-escuro); }
 .business-option .avatar { width: 30px; height: 30px; font-size: var(--fs-corpo); }
-.business-option-text { display: grid; min-width: 0; }
+.business-option-text { display: grid; flex: 1; min-width: 0; }
 .business-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .business-identity { font-size: var(--fs-legenda); color: inherit; opacity: .82; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .business-current { flex: none; margin-left: auto; font-size: var(--fs-legenda); color: inherit; }
@@ -1219,6 +1223,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   .topbar-account-menu .side-account-opcoes { position: absolute; z-index: 60; top: calc(100% + 6px); right: 0; width: min(320px, calc(100vw - 32px)); padding: 12px; border: 1px solid var(--line); border-radius: var(--raio-controle); background: var(--surface-2); box-shadow: 0 12px 30px -18px rgb(var(--navy-rgb) / .5); }
   .topbar-account-menu .business-option { color: var(--ink); }
   .topbar-account-menu .business-option:hover, .topbar-account-menu .business-option:focus-visible, .topbar-account-menu .business-option[aria-current="true"] { background: var(--fundo-controle); color: var(--ink); }
+  .topbar-account-menu .business-opening { color: var(--ink-soft); }
+  .topbar-account-menu .business-error { color: var(--crit); }
   .topbar-account-menu .business-empty { color: var(--ink-soft); }
   .topbar-account-menu .business-actions { border-color: var(--line); }
   .topbar-account-menu .link-btn { width: 100%; min-height: 44px; justify-content: flex-start; color: var(--cobalt-ink); }

@@ -3,7 +3,7 @@ import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
 import { DataDeHoje, Saudacao } from "@/components/ui/Saudacao";
 import { PreferenciaDeTema } from "@/components/ui/PreferenciaDeTema";
-import { trocarNegocioRapidoAction } from "@/app/(public)/escolher-negocio/actions";
+import { ListaNegociosMenu } from "@/components/ui/ListaNegociosMenu";
 
 const IcoInicio = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
@@ -75,10 +75,11 @@ function MenuNegocios({ negocios, negocioAtivoId, rotuloDaConta, inicial, acaoSa
       <svg className="account-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="m5 7 5 5 5-5" /></svg>
     </summary>
     <div className="side-account-opcoes">
-      <div className="business-list" aria-label="Negócios disponíveis">
-        {negocios.map((negocio) => <form action={trocarNegocioRapidoAction} key={negocio.id}>
-          <input type="hidden" name="businessId" value={negocio.id} />
-          <button type="submit" className="business-option" aria-current={negocio.id === negocioAtivoId ? "true" : undefined}>
+      <ListaNegociosMenu>
+        {negocios.map((negocio) =>
+          <button key={negocio.id} type="submit" name="businessId" value={negocio.id}
+            className="business-option" aria-current={negocio.id === negocioAtivoId ? "true" : undefined}
+            aria-label={`Abrir ${negocio.name}, ${negocio.cnpj ? `CNPJ ${negocio.cnpj}` : `cadastro ${negocio.id.slice(0, 8)}`}`}>
             <AvatarDoNegocio nome={negocio.name} url={negocio.logoUrl} />
             <span className="business-option-text">
               <span className="business-name">{negocio.name}</span>
@@ -86,10 +87,9 @@ function MenuNegocios({ negocios, negocioAtivoId, rotuloDaConta, inicial, acaoSa
                 ? `CNPJ ${negocio.cnpj}` : `Cadastro ${negocio.id.slice(0, 8)}`}</span>
             </span>
             {negocio.id === negocioAtivoId && <span className="business-current">Atual</span>}
-          </button>
-        </form>)}
+          </button>)}
         {negocios.length === 0 && <span className="business-empty">Nenhum negócio disponível</span>}
-      </div>
+      </ListaNegociosMenu>
       <div className="business-actions">
         <a className="link-btn" href={adicionarHref}>Adicionar negócio</a>
         {ehOperador && <a className="link-btn" href="/gestor">Carteira do gestor</a>}
@@ -135,7 +135,7 @@ export function Casco({
   ehOperador?: boolean;
   children: ReactNode;
 }) {
-  const adicionarHref = "/adicionar-negocio";
+  const adicionarHref = "/entrar?adicionar=1";
   return (
     <div className="app-shell v2g-editorial">
       <a className="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>

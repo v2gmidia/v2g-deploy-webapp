@@ -553,9 +553,14 @@ export const MIGRATIONS: MigrationDeclarada[] = [
   },
   {
     arquivo: "20261015011547_proteger_pagina_compartilhada_multiconta.sql",
-    cria: [{ tipo: "rpc", nome: "registrar_conta_contratada" }],
+    cria: [
+      { tipo: "coluna", tabela: "ad_accounts", nome: "ownership" },
+      { tipo: "coluna", tabela: "ad_accounts", nome: "status" },
+      { tipo: "rpc", nome: "registrar_conta_contratada" },
+    ],
     foraDoAlcance: [
-      "migration preparada localmente e NAO aplicada; consultar ledger antes de aplicar no QA",
+      "aplicada somente no QA em 16/10/2026 como 20261016031941_qa_proteger_pagina_compartilhada_multiconta_20261015; nao aplicada em producao",
+      "colunas e checks de 0005 sao adicionados apenas se faltarem; escrita direta em ad_accounts e revogada para anon/authenticated",
       "a funcao impedir_troca_pagina_compartilhada e o trigger meta_connections_pagina_compartilhada nao aparecem no OpenAPI",
       "o lock da conexao, a serializacao por negocio, o corpo da RPC e o grant exclusivo a service_role exigem teste SQL",
       "a compatibilidade com o banco compartilhado e a troca de Pagina concorrente exigem ensaio no QA",

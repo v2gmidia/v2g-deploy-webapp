@@ -4,10 +4,11 @@ import { useEffect, useId, useRef, useState } from "react";
 import { buscarAtividades } from "@/lib/onboarding/atividades";
 import styles from "./SeletorDeAtividade.module.css";
 
-export function SeletorDeAtividade({ ocupado, minimo, valorInicial = "", aoResponder }: {
+export function SeletorDeAtividade({ ocupado, minimo, valorInicial = "", falaRecebida, aoResponder }: {
   ocupado: boolean;
   minimo: number;
   valorInicial?: string;
+  falaRecebida?: { texto: string; sequencia: number } | null;
   aoResponder: (atividade: string) => void;
 }) {
   const [busca, setBusca] = useState(valorInicial);
@@ -19,6 +20,13 @@ export function SeletorDeAtividade({ ocupado, minimo, valorInicial = "", aoRespo
   const id = useId();
   const listaId = `${id}-opcoes`;
   const resultados = buscarAtividades(busca);
+
+  useEffect(() => {
+    if (!falaRecebida) return;
+    setBusca(falaRecebida.texto);
+    setOutro(true);
+    setAberto(false);
+  }, [falaRecebida]);
 
   useEffect(() => {
     if (!aberto) return;

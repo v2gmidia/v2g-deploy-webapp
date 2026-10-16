@@ -46,3 +46,21 @@
 .onb-v2-etapa :is(button, input, textarea, a):focus-visible { outline: 2px solid #0B40DA; outline-offset: 3px; }
 @media (max-width: 620px) { .auth-shell:has(.onb-v2) .auth-wrap { width: min(100% - 32px, 1120px); } .onb-v2-topo { min-height: 72px; margin-bottom: 28px; } .onb-v2 .seletor-nicho .chips-row { grid-template-columns: 1fr; } }
 @media (max-width: 620px) { .onb-v2-etapa .chips-row { grid-template-columns: 1fr; } .onb-v2-etapa .hero-card { padding: 22px; } }
+
+/* A conversa usa o cabeçalho como parte da tela, sem um cartão de identidade. */
+.onb-v2-conversa .onb-v2-topo-direita { display: flex; align-items: center; gap: 28px; }
+.onb-v2-conversa .onb-v2-identidade { width: auto; margin: 0; padding: 0; border: 0; background: transparent; }
+body:has(.onb-v2-conversa) { background: #F8FBFA; }
+.auth-shell:has(.onb-v2-conversa) { height: 100dvh; min-height: 0; overflow: hidden; }
+.auth-shell:has(.onb-v2-conversa) .auth-wrap { min-height: 0; }
+.onb-v2-conversa { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.onb-v2-conversa .onb-v2-topo { flex: none; }
+@media (min-width: 761px) {
+  .auth-shell:has(.onb-v2-conversa) .auth-wrap { width: min(100% - 72px, 1320px); }
+  .onb-v2-conversa .onb-v2-topo { min-height: 88px; margin-bottom: 0; border-bottom-color: #D9E3E6; }
+  .onb-v2-conversa .onb-v2-topo a:last-child { font-size: 13px; }
+}
+@media (max-width: 760px) {
+  .onb-v2-conversa .onb-v2-topo-direita { display: block; text-align: right; }
+  .onb-v2-conversa .onb-v2-identidade { margin-bottom: 5px; font-size: 11px; }
+}

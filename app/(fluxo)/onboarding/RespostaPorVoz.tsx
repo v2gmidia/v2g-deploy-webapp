@@ -3,112 +3,188 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./ChatConversa.module.css";
 
-const MAX_AUDIO = 3 * 1024 * 1024;
 const MAX_TEMPO = 60_000;
+const ESPERA_FINAL = 1_200;
 
-function formato(): { mime: string; extensao: string } | null {
-  if (typeof MediaRecorder === "undefined") return null;
-  const opcoes: Array<[string, string]> = [["audio/webm;codecs=opus", "webm"], ["audio/webm", "webm"], ["audio/mp4", "mp4"]];
-  for (const [mime, extensao] of opcoes) {
-    if (MediaRecorder.isTypeSupported(mime)) return { mime, extensao };
-  }
-  return null;
-}
-
-export function RespostaPorVoz({ ocupado, aoTranscrever, aoOcupar }: {
+export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTranscrever, aoOcupar }: {
   ocupado: boolean;
+  textoAtual?: string;
+  aoIniciar?: () => void;
+  aoParcial?: (texto: string) => void;
   aoTranscrever: (texto: string) => void;
   aoOcupar: (ocupado: boolean) => void;
 }) {
-  const [suporta, setSuporta] = useState(false);
   const [gravando, setGravando] = useState(false);
+  const [iniciando, setIniciando] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [audio, setAudio] = useState<File | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const gravador = useRef<MediaRecorder | null>(null);
   const fluxo = useRef<MediaStream | null>(null);
+  const conexao = useRef<RTCPeerConnection | null>(null);
+  const canal = useRef<RTCDataChannel | null>(null);
+  const esperaFinal = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const finalizado = useRef(false);
+  const parcial = useRef("");
+  const vivo = useRef(true);
+  const gravandoRef = useRef(false);
+  const token = useRef<{ valor: string; expira: number } | null>(null);
+  const pedidoDeToken = useRef<Promise<string> | null>(null);
   const tempo = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { setSuporta(!!formato() && !!navigator.mediaDevices?.getUserMedia); }, []);
-  useEffect(() => { aoOcupar(gravando || enviando); }, [gravando, enviando, aoOcupar]);
-  useEffect(() => () => { aoOcupar(false); }, [aoOcupar]);
-  useEffect(() => () => {
-    if (tempo.current) clearTimeout(tempo.current);
-    if (gravador.current?.state === "recording") {
-      gravador.current.onstop = null;
-      gravador.current.stop();
-    }
-    fluxo.current?.getTracks().forEach((track) => track.stop());
-  }, []);
-  useEffect(() => () => { if (audioUrl) URL.revokeObjectURL(audioUrl); }, [audioUrl]);
+  async function obterToken(): Promise<string> {
+    if (token.current && token.current.expira > Date.now() + 20_000) return token.current.valor;
+    if (pedidoDeToken.current) return pedidoDeToken.current;
+    const pedido = fetch("/api/onboarding/transcrever/ao-vivo", { method: "POST", cache: "no-store" })
+      .then(async (resposta) => {
+        const dados = await resposta.json().catch(() => null) as { token?: unknown; expiresAt?: unknown } | null;
+        if (!resposta.ok || typeof dados?.token !== "string") throw new Error("Não consegui conectar o microfone.");
+        token.current = { valor: dados.token,
+          expira: typeof dados.expiresAt === "number" ? dados.expiresAt : Date.now() + 45_000 };
+        return dados.token;
+      });
+    pedidoDeToken.current = pedido;
+    try { return await pedido; }
+    finally { pedidoDeToken.current = null; }
+  }
 
-  async function transcrever(arquivo: File) {
-    setEnviando(true);
+  function liberar() {
+    if (tempo.current) clearTimeout(tempo.current);
+    if (esperaFinal.current) clearTimeout(esperaFinal.current);
+    canal.current?.close();
+    conexao.current?.close();
+    fluxo.current?.getTracks().forEach((track) => track.stop());
+    canal.current = null;
+    conexao.current = null;
+    fluxo.current = null;
+    gravandoRef.current = false;
+  }
+
+  useEffect(() => { aoOcupar(iniciando || gravando || enviando); }, [iniciando, gravando, enviando, aoOcupar]);
+  useEffect(() => () => { aoOcupar(false); }, [aoOcupar]);
+  useEffect(() => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") return;
+    void obterToken().catch(() => {});
+  }, []);
+  useEffect(() => {
+    vivo.current = true;
+    return () => {
+      vivo.current = false;
+      liberar();
+    };
+  }, []);
+  useEffect(() => { if (!iniciando && !gravando && !enviando) setErro(null); }, [textoAtual]);
+  useEffect(() => { if (ocupado) setErro(null); }, [ocupado]);
+
+  function concluirAoVivo(texto: string) {
+    if (finalizado.current || !vivo.current || !texto.trim()) return;
+    finalizado.current = true;
+    liberar();
+    setEnviando(false);
+    setGravando(false);
     setErro(null);
-    try {
-      const dados = new FormData();
-      dados.set("audio", arquivo);
-      const resposta = await fetch("/api/onboarding/transcrever", { method: "POST", body: dados, cache: "no-store" });
-      const payload = await resposta.json().catch(() => null) as { texto?: unknown; motivo?: unknown } | null;
-      if (!resposta.ok || typeof payload?.texto !== "string") {
-        setErro(typeof payload?.motivo === "string" ? payload.motivo : "Não consegui transcrever. Você pode escrever a resposta.");
-        return;
-      }
-      aoTranscrever(payload.texto);
-      setAudio(null);
-      setAudioUrl(null);
-    } catch {
-      setErro("A conexão falhou. Você pode tentar de novo ou escrever a resposta.");
-    } finally { setEnviando(false); }
+    aoTranscrever(texto.trim());
+  }
+
+  function encerrarSemFala() {
+    if (finalizado.current || !vivo.current) return;
+    finalizado.current = true;
+    liberar();
+    setGravando(false);
+    setEnviando(false);
+    setErro(null);
+  }
+
+  function parar() {
+    if (!gravandoRef.current || finalizado.current) return;
+    gravandoRef.current = false;
+    fluxo.current?.getTracks().forEach((track) => track.stop());
+    setGravando(false);
+    setEnviando(true);
+    if (tempo.current) clearTimeout(tempo.current);
+    if (canal.current?.readyState === "open") canal.current.send(JSON.stringify({ type: "input_audio_buffer.commit" }));
+    esperaFinal.current = setTimeout(() => {
+      if (parcial.current.trim()) concluirAoVivo(parcial.current);
+      else encerrarSemFala();
+    }, ESPERA_FINAL);
   }
 
   async function iniciar() {
-    if (ocupado || enviando || gravando) return;
-    const tipo = formato();
-    if (!tipo) { setErro("Seu navegador não consegue gravar áudio aqui. Escreva sua resposta."); return; }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      fluxo.current = stream;
-      const media = new MediaRecorder(stream, { mimeType: tipo.mime });
-      gravador.current = media;
-      const partes: BlobPart[] = [];
-      media.ondataavailable = (evento) => { if (evento.data.size) partes.push(evento.data); };
-      media.onstop = () => {
-        stream.getTracks().forEach((track) => track.stop());
-        fluxo.current = null;
-        setGravando(false);
-        if (tempo.current) clearTimeout(tempo.current);
-        const arquivo = new File(partes, `resposta.${tipo.extensao}`, { type: tipo.mime });
-        if (!arquivo.size || arquivo.size > MAX_AUDIO) {
-          setErro("O áudio ficou longo. Grave um trecho mais curto ou escreva a resposta.");
-          return;
-        }
-        setAudio(arquivo);
-        setAudioUrl(URL.createObjectURL(arquivo));
-        void transcrever(arquivo);
-      };
-      media.start();
-      setErro(null);
-      setGravando(true);
-      tempo.current = setTimeout(() => { if (media.state === "recording") media.stop(); }, MAX_TEMPO);
-    } catch {
-      fluxo.current?.getTracks().forEach((track) => track.stop());
-      setErro("Não consegui abrir o microfone. Você pode escrever sua resposta.");
+    if (ocupado || iniciando || enviando || gravando) return;
+    if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") {
+      setErro("Microfone indisponível neste navegador."); return;
     }
+    setIniciando(true);
+    setErro(null);
+    finalizado.current = false;
+    parcial.current = "";
+    try {
+      // Permissão do microfone e sessão temporária não dependem uma da outra.
+      const [captura, sessao] = await Promise.allSettled([
+        navigator.mediaDevices.getUserMedia({ audio: true }),
+        obterToken(),
+      ]);
+      if (captura.status === "fulfilled") fluxo.current = captura.value;
+      if (captura.status !== "fulfilled") throw new Error("Não consegui abrir o microfone.");
+      if (sessao.status !== "fulfilled") throw new Error("Não consegui conectar o microfone.");
+      const stream = captura.value;
+      const tokenDeVoz = sessao.value;
+      if (!vivo.current) { liberar(); return; }
+
+      const peer = new RTCPeerConnection();
+      conexao.current = peer;
+      stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+      const dc = peer.createDataChannel("oai-events");
+      canal.current = dc;
+      dc.onmessage = (evento) => {
+        let mensagem: { type?: string; delta?: string; transcript?: string };
+        try { mensagem = JSON.parse(evento.data); } catch { return; }
+        if (mensagem.type === "conversation.item.input_audio_transcription.delta" && typeof mensagem.delta === "string") {
+          parcial.current += mensagem.delta;
+          if (vivo.current && parcial.current.trim()) aoParcial?.(parcial.current);
+        }
+        if (mensagem.type === "conversation.item.input_audio_transcription.completed" && typeof mensagem.transcript === "string")
+          concluirAoVivo(mensagem.transcript);
+        if (mensagem.type === "error" && !finalizado.current && vivo.current) {
+          console.error("[onboarding:transcricao-ao-vivo] erro na sessão");
+          if (parcial.current.trim()) concluirAoVivo(parcial.current);
+          else encerrarSemFala();
+        }
+      };
+
+      const oferta = await peer.createOffer();
+      await peer.setLocalDescription(oferta);
+      const respostaSdp = await fetch("https://api.openai.com/v1/realtime/calls", {
+        method: "POST", headers: { Authorization: `Bearer ${tokenDeVoz}`, "Content-Type": "application/sdp" },
+        body: oferta.sdp,
+      });
+      if (!respostaSdp.ok) throw new Error("Não consegui conectar o microfone à transcrição ao vivo.");
+      await peer.setRemoteDescription({ type: "answer", sdp: await respostaSdp.text() });
+      await new Promise<void>((resolver, rejeitar) => {
+        if (dc.readyState === "open") { resolver(); return; }
+        const limite = setTimeout(() => rejeitar(new Error("A conexão de voz demorou demais.")), 10_000);
+        dc.onopen = () => { clearTimeout(limite); resolver(); };
+        dc.onerror = () => { clearTimeout(limite); rejeitar(new Error("A conexão de voz falhou.")); };
+      });
+      if (!vivo.current) { liberar(); return; }
+      aoIniciar?.();
+      setErro(null);
+      gravandoRef.current = true;
+      setGravando(true);
+      tempo.current = setTimeout(parar, MAX_TEMPO);
+    } catch (falha) {
+      liberar();
+      if (vivo.current) setErro(falha instanceof Error ? falha.message : "Não consegui abrir o microfone. Escreva sua resposta.");
+    } finally { if (vivo.current) setIniciando(false); }
   }
 
   return <div className={styles.voz}>
-    {suporta && <button type="button" disabled={ocupado || enviando} aria-pressed={gravando}
-      title={gravando ? "Parar gravação" : enviando ? "Transcrevendo áudio" : "Gravar resposta por voz"}
-      aria-label={gravando ? "Parar gravação" : enviando ? "Transcrevendo áudio" : "Gravar resposta por voz"}
-      onClick={() => gravando ? gravador.current?.stop() : void iniciar()}>
-      {gravando ? <span aria-hidden="true">■</span> : enviando ? <span aria-hidden="true">…</span> :
+    <button type="button" disabled={(!gravando && ocupado) || iniciando || enviando} aria-pressed={gravando}
+      title={gravando ? "Parar e conferir transcrição" : iniciando ? "Conectando microfone" : enviando ? "Finalizando transcrição" : "Falar e ver a transcrição ao vivo"}
+      aria-label={gravando ? "Parar e conferir transcrição" : iniciando ? "Conectando microfone" : enviando ? "Finalizando transcrição" : "Falar e ver a transcrição ao vivo"}
+      onClick={() => gravando ? parar() : void iniciar()}>
+      {gravando ? <span aria-hidden="true">■</span> : (iniciando || enviando) ? <span aria-hidden="true">…</span> :
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" /><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4m-4 0h8" /></svg>}
-    </button>}
-    {(gravando || enviando) && <span className={styles.vozEstado} role="status">{gravando ? "Gravando… toque para parar" : "Transcrevendo…"}</span>}
-    {audio && erro && <><audio controls src={audioUrl ?? undefined} aria-label="Ouvir sua gravação" />
-      <button type="button" disabled={ocupado || enviando} onClick={() => void transcrever(audio)}>Tentar transcrever de novo</button></>}
-    {erro && <p className="form-error" role="alert">{erro}</p>}
+    </button>
+    {(iniciando || gravando || enviando) && <span className={styles.vozEstado} role="status">{iniciando ? "Conectando…" : gravando ? "Ouvindo e escrevendo…" : "Finalizando…"}</span>}
+    {erro && <span className={styles.vozAviso} role="alert">{erro}</span>}
   </div>;
 }

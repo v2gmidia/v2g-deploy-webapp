@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import { cookies } from "next/headers";
+import { NavegacaoCarregando } from "@/components/ui/NavegacaoCarregando";
 import "./globals.css";
 import "./produto-editorial.css";
 import "./inicio-editorial.css";
@@ -113,7 +114,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   return (
     <html lang="pt-BR" className={archivo.variable} data-tema={tema ?? undefined}>
-      <body>{children}</body>
+      <body><NavegacaoCarregando />{children}</body>
     </html>
   );
 }

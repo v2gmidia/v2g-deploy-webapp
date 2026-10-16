@@ -31,6 +31,7 @@ export default function EntrarPage() {
 function EntrarContent() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "";
+  const adicionar = searchParams.get("adicionar") === "1";
   const mode = searchParams.get("modo") === "cadastro" ? "cadastro" : "login";
   const [nomeCadastro, setNomeCadastro] = useState("");
   const [whatsappCadastro, setWhatsappCadastro] = useState("");
@@ -46,6 +47,7 @@ function EntrarContent() {
   const destino = (modo: "cadastro" | "login") => {
     const busca = new URLSearchParams({ modo });
     if (next) busca.set("next", next);
+    if (adicionar) busca.set("adicionar", "1");
     return `/entrar?${busca.toString()}`;
   };
 

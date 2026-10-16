@@ -64,7 +64,7 @@
   --raio-item: 4px;
   --raio-interno: 4px;
   --raio-selo: 4px;
-  --sidebar-w: 240px;
+  --sidebar-w: 264px;
   --barra-h: 70px;
   --shell-max: 1440px;
   --alt-principal: 48px;
@@ -142,6 +142,9 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
+@media (min-width: 901px) {
+  .v2g-editorial .sidebar:has(.side-account-menu[open]) :is(.side-nav, .side-falar) { display: none; }
+}
 .v2g-editorial .side-brand { padding: 4px 10px 52px; gap: 11px; }
 .v2g-editorial .side-brand .glyph-img { width: 40px; height: 40px; }
 .v2g-editorial .side-brand .wm { font-size: 32px; font-weight: 680; letter-spacing: -.04em; line-height: 1; }
@@ -155,7 +158,11 @@
 .v2g-editorial .side-account .who b { font-weight: 500; }
 .v2g-editorial .side-account .avatar { border-radius: 4px; font-weight: 500; color: var(--ice); }
 .v2g-editorial .side-account-menu { position: relative; }
-.v2g-editorial .side-account-opcoes { position: absolute; z-index: 60; bottom: calc(100% + 10px); left: -4px; right: -4px; padding: 10px; border: 1px solid var(--sidebar-line); border-radius: 4px; background: var(--plate); box-shadow: 0 14px 28px -18px rgb(0 0 0 / .65); }
+.v2g-editorial .side-account .side-account-menu[open] { display: flex; flex-direction: column-reverse; }
+.v2g-editorial .side-account .side-account-opcoes { position: static; width: 100%; padding: 0 0 10px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.v2g-editorial .side-account-opcoes .business-name { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+.v2g-editorial .side-account-opcoes .business-identity { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
+.v2g-editorial .side-account .business-current { width: 6px; height: 6px; overflow: hidden; border-radius: 50%; background: currentColor; font-size: 0; }
 .v2g-editorial .sidebar :focus-visible { outline-color: var(--ice); }
 .v2g-editorial .side-falar { margin-top: 32px; padding-inline: 4px; font-size: var(--fs-corpo); }
 .v2g-editorial .topbar { min-height: 88px; padding: 16px 44px; gap: 24px; background: var(--fundo-topo); border-bottom: 1px solid var(--line); }
@@ -186,7 +193,7 @@
 .v2g-editorial :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, select) { border-color: var(--control-line); }
 
 @media (max-width: 1150px) {
-  .app-shell.v2g-editorial { --sidebar-w: 210px; }
+  .app-shell.v2g-editorial { --sidebar-w: 230px; }
   .v2g-editorial .sidebar { padding-inline: 16px; }
   .v2g-editorial .topbar { padding-inline: 28px; }
   .v2g-editorial .canvas { padding-inline: 28px; }

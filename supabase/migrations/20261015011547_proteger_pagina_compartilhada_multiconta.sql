@@ -1,6 +1,32 @@
 -- Uma Página é compartilhada por todas as contas de anúncios do negócio.
 -- A trava da interface não basta quando duas abas gravam ao mesmo tempo.
 -- A RPC mantém a serialização pelo negócio e agora trava também a conexão.
+-- O QA ainda não recebeu a 0005/0030: completar apenas as duas colunas
+-- usadas pela RPC e impedir escrita direta antes de criar a função.
+
+alter table public.ad_accounts
+  add column if not exists ownership text not null default 'cliente',
+  add column if not exists status text not null default 'ok';
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint
+      where conrelid = 'public.ad_accounts'::regclass
+        and conname = 'ad_accounts_ownership_check') then
+    alter table public.ad_accounts add constraint ad_accounts_ownership_check
+      check (ownership in ('cliente', 'v2g'));
+  end if;
+  if not exists (select 1 from pg_constraint
+      where conrelid = 'public.ad_accounts'::regclass
+        and conname = 'ad_accounts_status_check') then
+    alter table public.ad_accounts add constraint ad_accounts_status_check
+      check (status in ('ok', 'expired', 'revoked', 'no_permission'));
+  end if;
+end;
+$$;
+
+revoke insert, update, delete on public.ad_accounts from public, anon, authenticated;
+grant select, insert, update, delete on public.ad_accounts to service_role;
 
 create or replace function public.registrar_conta_contratada(
   p_business_id uuid,

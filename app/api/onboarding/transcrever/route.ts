@@ -11,7 +11,7 @@ function recado(motivo: string, status: number) {
 }
 
 export async function POST(request: Request) {
-  if (process.env.V2G_VOICE_TRANSCRIPTION_ENABLED !== "true" || !process.env.OPENAI_API_KEY)
+  if (process.env.V2G_VOICE_TRANSCRIPTION_ENABLED === "false" || !process.env.OPENAI_API_KEY)
     return recado("A resposta por voz ainda não está disponível aqui. Você pode escrever normalmente.", 501);
 
   const supabase = await createClient();

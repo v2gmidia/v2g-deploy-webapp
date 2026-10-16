@@ -49,7 +49,6 @@ const PROTECTED_PREFIXES = [
   "/gestor",
   "/revops",
   "/escolher-negocio",
-  "/adicionar-negocio",
   // `/campanhas` e `/criativos` viraram `/anuncios` no lote 8. Ficam aqui
   // porque continuam existindo como redirecionamento — e redirecionar
   // quem não tem sessão para o destino protegido seria vazar a rota.
@@ -211,7 +210,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  if (pathname === "/entrar" && user) {
+  if (pathname === "/entrar" && user && request.nextUrl.searchParams.get("adicionar") !== "1") {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/inicio";
     redirectUrl.search = "";

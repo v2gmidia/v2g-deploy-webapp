@@ -313,6 +313,11 @@ export default async function ExemploPage({
   if (tela !== "inicio") notFound();
 
   const busca2 = await searchParams;
+  const multicontaDaPrevia = busca2.multiconta === "1" ? [
+    { id: "00000000-0000-4000-8000-000000000001", name: "QA Empresa 1 — FICTÍCIA — Resposta A", logoUrl: null, cnpj: "00000000000191" },
+    { id: "00000000-0000-4000-8000-000000000002", name: "QA Empresa 2 — FICTÍCIA — Resposta B", logoUrl: null, cnpj: "00000000000272" },
+    { id: "00000000-0000-4000-8000-000000000003", name: "V2g teste", logoUrl: null, cnpj: "00000000000353" },
+  ] : undefined;
   const pedido = Array.isArray(busca2.estado) ? busca2.estado[0] : busca2.estado;
   const estadoDoExemplo: "chegada" | "preparando" | "no-ar" | "pausado" =
     pedido === "chegada" || pedido === "preparando" || pedido === "no-ar"
@@ -323,6 +328,8 @@ export default async function ExemploPage({
     <Casco
       nome={casco.nome}
       nomeNegocio={casco.nomeNegocio}
+      negocios={multicontaDaPrevia}
+      negocioAtivoId={multicontaDaPrevia?.[2]?.id}
       rotuloDaConta={casco.nomeNegocio}
       inicial={casco.inicial}
     >

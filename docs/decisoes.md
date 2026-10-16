@@ -14,6 +14,30 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-16 — Menu de negócios na barra e entrada direta
+
+**Correção direta do Victor.** A lista de negócios deve permanecer dentro da barra lateral, sem uma caixa que avance sobre o conteúdo. “Adicionar negócio” abre a tela de entrada existente, inclusive para quem já está autenticado, preservando a opção de primeiro acesso. A rota antiga `/adicionar-negocio` apenas redireciona para esse fluxo. Escolher um negócio autorizado leva a `/inicio`, inclusive se for o negócio já ativo. O Início continua responsável por encaminhar o cliente a uma etapa obrigatória de onboarding ou reunião quando o estado persistido exigir isso.
+
+**Motivo:** o menu sobrepunha a trilha do Início, a página intermediária criava um clique sem valor e a escolha de um perfil podia abrir diretamente o onboarding em vez da visão inicial. O mesmo e-mail segue podendo alcançar vários CNPJs aprovados; abrir `/entrar` não cria outro negócio nem aprova uma compra.
+
+### 2026-10-15 — Imagens somente na etapa visual do onboarding
+
+**Correção direta do Victor, posterior à aprovação da conversa desktop.** O compositor das perguntas sobre o negócio não oferece o botão “+”. O envio de imagens fica na etapa **Visual da marca**, que apresenta o acervo e sua finalidade. Imagens já enviadas pela conversa permanecem guardadas nesse acervo; não são apagadas nem passam a ser tratadas como resposta textual.
+
+**Motivo:** o “+” aparecia inclusive em perguntas como diferencial, mas gravava qualquer arquivo como variação da marca. Isso fazia uma foto enviada para explicar uma entrega parecer anexada à pergunta sem existir esse vínculo no banco.
+
+### 2026-10-15 — Microfone em todas as perguntas do primeiro bloco
+
+**Correção direta do Victor, posterior à decisão de 20/09.** As nove perguntas do primeiro bloco oferecem um microfone pequeno, inclusive tipo de negócio e área atendida. A fala transcrita aparece para revisão antes de salvar. No tipo de negócio, ela preenche a atividade editável; na área atendida, uma opção reconhecida pede confirmação e mantém cidade/CEP obrigatórios quando cabíveis. A transcrição fica disponível quando `OPENAI_API_KEY` está configurada, salvo bloqueio explícito com `V2G_VOICE_TRANSCRIPTION_ENABLED=false`.
+
+**Motivo:** o microfone não aparecia na tela que Victor estava testando porque dependia de uma segunda flag e só era renderizado no campo de texto. A regra antiga, que concentrava áudio nas perguntas abertas, não atende ao percurso conversacional aprovado. Após o teste de 15/10, Victor pediu a transcrição provisória durante a fala: o texto deve surgir enquanto grava e continuar editável antes de salvar. Após novo teste, Victor pediu fim rápido e silêncio quando não houver fala: a implementação local usa o texto parcial como recuperação, espera brevemente pelo resultado final e não mostra player, repetição nem aviso para trecho vazio.
+
+### 2026-10-15 — Onboarding desktop em conversa limpa e feedback de carregamento
+
+**Aprovação direta do Victor, posterior à prévia conversacional.** A referência visual do primeiro bloco passa a ser uma conversa desktop centralizada, sem menu de modelo, personagem/bolha de assistente, painel lateral de contexto ou botão de chamada por voz. Permanecem o progresso, a pergunta dirigida, o campo de texto, o anexo, o microfone pequeno quando a transcrição estiver configurada e o envio. O mobile será revisto em outro bloco. O app deve mostrar resposta em envio, indicador “Escrevendo…” até a próxima pergunta e carregamento visível nas trocas de tela.
+
+**Motivo:** a tela anterior parecia parada durante a gravação e a navegação, e a composição tinha mais elementos do que a coleta guiada exige. Esta decisão trata de apresentação e feedback; não converte o roteiro em chat livre nem ativa a transcrição ou a agenda sem configuração e prova próprias.
+
 ### 2026-10-15 — Conversa guiada, materiais de marca e agenda dentro do WebApp
 
 **Aprovação direta do Victor, posterior às entradas abaixo.** O primeiro bloco do onboarding passa a ser uma conversa guiada, com uma pergunta por vez, progresso e previsão de cerca de 15 minutos; a pessoa responde no campo compacto e continua podendo corrigir respostas. A conversa permanece dirigida pelo roteiro, sem um chat livre que possa desviar da coleta. A atividade tem busca e “Outros” no mesmo campo. O microfone compacto usa transcrição por provedor quando configurada, com revisão do texto antes de gravar. O cliente pode anexar várias imagens da marca na etapa visual; imagens de 500 × 500 podem ser ajustadas para o cadastro, mas nitidez para anúncio ainda requer conferência. O envio de um manual em PDF sai desta etapa por decisão expressa; documentos já guardados não são apagados. Os exemplos e as sugestões de família de nicho não substituem a confirmação do catálogo técnico pelo gestor.

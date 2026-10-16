@@ -1,0 +1,6 @@
+.indicador{position:fixed;inset:0 0 auto;z-index:1000;pointer-events:none}
+.barra{display:block;width:100%;height:3px;background:linear-gradient(90deg,#0743dc 0%,#b0e9fd 48%,#0743dc 100%);background-size:200% 100%;animation:passagem 1.15s linear infinite}
+.rotulo{position:absolute;top:13px;right:16px;padding:8px 12px;border-radius:7px;background:#102a35;color:#fff;font-size:12px;font-weight:700;box-shadow:0 5px 16px rgb(16 42 53 / .14);animation:mostrar .2s ease-out .35s both}
+@keyframes passagem{to{background-position:-200% 0}}
+@keyframes mostrar{from{opacity:0}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.barra,.rotulo{animation:none}}
