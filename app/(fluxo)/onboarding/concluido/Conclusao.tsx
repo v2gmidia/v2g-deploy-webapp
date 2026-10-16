@@ -39,6 +39,8 @@ export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }
         <p className="note">Confira os 14 números do CNPJ antes de reservar. O formulário do Google aceita texto livre. A reserva é confirmada pelo e-mail do Google; guarde-o para consultar, remarcar ou cancelar seu horário.</p>
         <section className="pendencia-bloco"><b>Já reservou um horário?</b>
           <p>Abra o e-mail de confirmação do Google para ver data, link da reunião e opções de alteração. A V2G ainda está conectando essa confirmação ao seu negócio nesta tela. Não escolha outro horário enquanto a primeira reserva estiver ativa.</p>
+          <a className="cta quiet" href="/inicio">Já marquei meu horário</a>
+          <p className="note">Este botão apenas leva você ao Início. A reunião continuará como pendente até a V2G receber uma confirmação verificável do Google.</p>
         </section>
       </> : <AgendaPropria inicial={agenda} businessId={estado.businessId} />}
       <section className="pendencia-bloco">

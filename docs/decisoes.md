@@ -14,9 +14,15 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-16 — Início preservado ao trocar de negócio e após agenda externa
+
+**Correção direta do Victor, posterior à entrada “Menu de negócios na barra e entrada direta”.** Escolher qualquer negócio autorizado leva a `/inicio` e mantém a pessoa nessa tela, inclusive quando ainda faltam respostas do onboarding, contas, visual da marca ou confirmação da reunião. O Início mostra a pendência e o caminho para resolvê-la; não redireciona automaticamente o negócio para outra etapa. Na agenda externa do Google, “Já marquei meu horário” volta a `/inicio`, mas a declaração da pessoa não vira prova de reserva: a reunião continua pendente até existir confirmação verificável.
+
+**Motivo:** a troca de negócio deve preservar um ponto de orientação estável e o cliente precisa enxergar o que falta sem entrar em um ciclo entre Início e onboarding. Um clique no WebApp não comprova que o Google concluiu a reserva.
+
 ### 2026-10-16 — Menu de negócios na barra e entrada direta
 
-**Correção direta do Victor.** A lista de negócios deve permanecer dentro da barra lateral, sem uma caixa que avance sobre o conteúdo. “Adicionar negócio” abre a tela de entrada existente, inclusive para quem já está autenticado, preservando a opção de primeiro acesso. A rota antiga `/adicionar-negocio` apenas redireciona para esse fluxo. Escolher um negócio autorizado leva a `/inicio`, inclusive se for o negócio já ativo. O Início continua responsável por encaminhar o cliente a uma etapa obrigatória de onboarding ou reunião quando o estado persistido exigir isso.
+**Correção direta do Victor.** A lista de negócios deve permanecer dentro da barra lateral, sem uma caixa que avance sobre o conteúdo. “Adicionar negócio” abre a tela de entrada existente, inclusive para quem já está autenticado, preservando a opção de primeiro acesso. A rota antiga `/adicionar-negocio` apenas redireciona para esse fluxo. Escolher um negócio autorizado leva a `/inicio`, inclusive se for o negócio já ativo. A regra original de encaminhar automaticamente a uma etapa obrigatória foi substituída pela decisão posterior acima.
 
 **Motivo:** o menu sobrepunha a trilha do Início, a página intermediária criava um clique sem valor e a escolha de um perfil podia abrir diretamente o onboarding em vez da visão inicial. O mesmo e-mail segue podendo alcançar vários CNPJs aprovados; abrir `/entrar` não cria outro negócio nem aprova uma compra.
 

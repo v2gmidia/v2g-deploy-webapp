@@ -55,17 +55,21 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
     } finally { setEnviando(false); }
   }
 
-  async function proporCores(arquivos: File[]) {
+  async function proporCores(arquivos: File[], origem: "logo-principal" | "imagem-de-apoio") {
     setAnalisesAtivas((atual) => atual + 1);
     setRecadoLogo(null);
     try {
-      const propostas = (await Promise.all(arquivos.map((arquivo) => coresDaLogo(arquivo, 6)))).flat();
+      const propostas = (await Promise.all(arquivos.map((arquivo) => coresDaLogo(arquivo, 6))))
+        .flat()
+        .map((cor) => ({ ...cor, origem }));
       if (propostas.length) {
         setCores((anteriores) => juntarPaleta(anteriores, propostas));
         setCoresConferidas(false);
       }
       setRecadoLogo(propostas.length
-        ? "Somamos as cores encontradas nas imagens. Confira e confirme as que representam sua marca."
+        ? origem === "logo-principal"
+          ? "Priorizamos as cores encontradas na logo principal. Confira, remova ou ajuste antes de confirmar."
+          : "Usamos as outras imagens como apoio para completar a paleta. Confira, remova ou ajuste antes de confirmar."
         : "Não encontramos cores confiáveis nessas imagens. Você pode definir com o gestor.");
     } catch {
       setRecadoLogo("As imagens foram guardadas, mas não conseguimos ler as cores agora. Confira as cores manualmente ou defina com o gestor.");
@@ -95,11 +99,11 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
         {erro && <p className="form-error" role="alert">{erro}</p>}
         {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
         <p className={styles.declaracao}>{TEXTO_DA_DECLARACAO}</p>
-        <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo])} aoMudarUpload={aoMudarUpload} />
-        <VariacoesDaMarca businessId={estado.businessId} variacoes={variacoes} aoEscolher={proporCores} aoMudarUpload={aoMudarUpload} />
+        <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo], "logo-principal")} aoMudarUpload={aoMudarUpload} />
+        <VariacoesDaMarca businessId={estado.businessId} variacoes={variacoes} aoEscolher={(arquivos) => proporCores(arquivos, "imagem-de-apoio")} aoMudarUpload={aoMudarUpload} />
         <section className={styles.coresBloco}>
           <h2>Essas são as cores da sua marca?</h2>
-          <p>As sugestões vêm das imagens enviadas. Você pode ajustar cada cor antes de confirmar.</p>
+          <p>A logo principal vem primeiro; as outras imagens ajudam a completar uma paleta coerente. Você escolhe quais tons manter e pode ajustar cada cor antes de confirmar.</p>
           {analisesAtivas > 0 && <p role="status">Analisando cores…</p>}
           {recadoLogo && <p role="status">{recadoLogo}</p>}
           {cores.length > 0 && <>

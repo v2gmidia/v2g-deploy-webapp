@@ -35,6 +35,8 @@ export interface CorDaLogo {
   hex: string;
   /** fração da imagem que ela ocupa, de 0 a 1 */
   peso: number;
+  /** A logo principal tem precedência sobre fotos e aplicações da marca. */
+  origem?: "logo-principal" | "imagem-de-apoio";
 }
 
 /** O lado da imagem reduzida. 120px basta para contar cor e é instantâneo. */

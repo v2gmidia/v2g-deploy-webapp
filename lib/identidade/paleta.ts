@@ -8,7 +8,12 @@ function rgb(hex: string): number[] {
 
 export function juntarPaleta(atuais: string[], novas: CorDaLogo[]): string[] {
   const resultado: string[] = [];
-  for (const cor of [...atuais, ...novas.sort((a, b) => b.peso - a.peso).map((item) => item.hex)]) {
+  const propostas = [...novas].sort((a, b) => {
+    const prioridadeA = a.origem === "logo-principal" ? 1 : 0;
+    const prioridadeB = b.origem === "logo-principal" ? 1 : 0;
+    return prioridadeB - prioridadeA || b.peso - a.peso;
+  });
+  for (const cor of [...atuais, ...propostas.map((item) => item.hex)]) {
     if (!/^#[0-9A-Fa-f]{6}$/.test(cor)) continue;
     const normalizada = cor.toUpperCase();
     const canais = rgb(normalizada);

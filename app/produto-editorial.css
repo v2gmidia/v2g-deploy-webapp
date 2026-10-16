@@ -142,9 +142,6 @@
   overflow-y: auto;
   overscroll-behavior-y: contain;
 }
-@media (min-width: 901px) {
-  .v2g-editorial .sidebar:has(.side-account-menu[open]) :is(.side-nav, .side-falar) { display: none; }
-}
 .v2g-editorial .side-brand { padding: 4px 10px 52px; gap: 11px; }
 .v2g-editorial .side-brand .glyph-img { width: 40px; height: 40px; }
 .v2g-editorial .side-brand .wm { font-size: 32px; font-weight: 680; letter-spacing: -.04em; line-height: 1; }
@@ -159,7 +156,7 @@
 .v2g-editorial .side-account .avatar { border-radius: 4px; font-weight: 500; color: var(--ice); }
 .v2g-editorial .side-account-menu { position: relative; }
 .v2g-editorial .side-account .side-account-menu[open] { display: flex; flex-direction: column-reverse; }
-.v2g-editorial .side-account .side-account-opcoes { position: static; width: 100%; padding: 0 0 10px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.v2g-editorial .side-account .side-account-opcoes { position: static; width: 100%; max-height: min(42vh, 380px); padding: 0 0 10px; overflow-y: auto; overscroll-behavior: contain; border: 0; border-radius: 0; background: transparent; box-shadow: none; scrollbar-color: var(--sidebar-line) transparent; }
 .v2g-editorial .side-account-opcoes .business-name { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
 .v2g-editorial .side-account-opcoes .business-identity { overflow: visible; text-overflow: clip; white-space: normal; overflow-wrap: anywhere; }
 .v2g-editorial .side-account .business-current { width: 6px; height: 6px; overflow: hidden; border-radius: 50%; background: currentColor; font-size: 0; }

@@ -68,3 +68,5 @@
 @media (max-width:760px){.jornada{height:auto;flex:1;min-height:0}}
 @media (prefers-reduced-motion:reduce){.digitando i{animation:none;opacity:1}}
 .balao,.compositor{position:relative}
+.encerramento{display:flex;flex-direction:column;align-items:flex-start;gap:20px}
+.encerramento p{margin-bottom:0}

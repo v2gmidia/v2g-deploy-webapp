@@ -18,3 +18,12 @@ test("tons repetidos são unidos e o limite de seis cores vale para o conjunto",
   assert.equal(cores.length, 6);
   assert.equal(cores.filter((cor) => cor === "#1144CC" || cor === "#1548CF").length, 1);
 });
+
+test("a logo principal vem antes das imagens de apoio sem apagar escolhas salvas", () => {
+  const cores = juntarPaleta(["#1144CC"], [
+    { hex: "#F1C6BA", peso: 0.9, origem: "imagem-de-apoio" },
+    { hex: "#E14A35", peso: 0.4, origem: "logo-principal" },
+    { hex: "#11BB44", peso: 0.8, origem: "logo-principal" },
+  ]);
+  assert.deepEqual(cores, ["#1144CC", "#11BB44", "#E14A35", "#F1C6BA"]);
+});

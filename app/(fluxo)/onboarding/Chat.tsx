@@ -181,7 +181,7 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
       atual ? <div className={`${styles.balao} ${styles.perguntaAtual}`} key={atual.id}><span>V2G · pergunta {indice + 1} de {QUESTOES.length}</span><p>{partes(atual)[0]}</p>
         {partes(atual)[1] && <small>{partes(atual)[1]}</small>}
         {atual.id === "descricao" && <small>Conte os principais produtos ou serviços. Você pode listar mais de um; a escolha do primeiro anúncio fica para a reunião.</small>}
-      </div> : <div className={styles.balao}><span>V2G</span><p>Suas respostas estão guardadas. Agora vamos conferir as contas do negócio.</p>
+      </div> : <div className={`${styles.balao} ${styles.encerramento}`}><span>V2G</span><p>Suas respostas estão guardadas. Agora vamos conferir as contas do negócio.</p>
         <a className={styles.primario} href="/onboarding/contas">Continuar para as contas</a></div>}
       {respostaPendente && respostaPendente.perguntaId === atual?.id && <div className={styles.pendente} role="status" aria-live="polite">
         <div className={`${styles.balao} ${styles.cliente}`}><span>Você</span><p>{respostaPendente.texto}</p>

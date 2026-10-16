@@ -3,6 +3,7 @@ import { diaCurto, dinheiro } from "@/lib/formato";
 import { contagemOuAusencia, dinheiroOuAusencia } from "@/lib/dia-seguinte/exibir";
 import { PerguntaDoDia } from "./PerguntaDoDia";
 import type { EstadoDoCliente } from "@/lib/estado/cliente";
+import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
 import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import {
   estadoNaLista,
@@ -146,6 +147,7 @@ export function TelaDoInicio({
   falhaAtualizacoes = false,
   diaDaPergunta,
   atrasados,
+  pendenciaOnboarding = null,
   faixa,
 }: {
   estado: EstadoDoCliente;
@@ -154,6 +156,7 @@ export function TelaDoInicio({
   /** o dia que a pergunta pergunta — ONTEM em São Paulo, calculado na busca */
   diaDaPergunta: string;
   atrasados: string[];
+  pendenciaOnboarding?: PendenciaDoOnboarding | null;
   /** a faixa de reconexão, que lê sessão: a página passa, a bancada não */
   faixa: ReactNode;
 }) {
@@ -526,6 +529,16 @@ export function TelaDoInicio({
     <div className="inicio-editorial">
       {faixa}
       <CabecalhoDoInicio />
+
+      {pendenciaOnboarding && (
+        <section className="inicio-onboarding-pendente" aria-labelledby="inicio-onboarding-titulo">
+          <div>
+            <h2 id="inicio-onboarding-titulo">{pendenciaOnboarding.titulo}</h2>
+            <p>{pendenciaOnboarding.corpo}</p>
+          </div>
+          <a className="cta" href={pendenciaOnboarding.href}>{pendenciaOnboarding.rotulo}</a>
+        </section>
+      )}
 
       {/* A mesma composição do estado sem números: estado, tarefa e
           acompanhamento. Os números continuam condicionados a temNumero. */}

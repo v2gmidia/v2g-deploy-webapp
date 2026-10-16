@@ -11,6 +11,13 @@ export interface DadosParaConclusao {
   target_profit_per_customer: number | string | null;
 }
 
+export interface PendenciaDoOnboarding {
+  titulo: string;
+  corpo: string;
+  href: "/onboarding" | "/onboarding/contas" | "/onboarding/marca" | "/onboarding/concluido";
+  rotulo: string;
+}
+
 function numero(valor: number | string | null | undefined): number | null {
   if (valor === null || valor === undefined || valor === "") return null;
   const convertido = Number(valor);
@@ -37,4 +44,37 @@ export function estadoDaConclusao(dados: DadosParaConclusao) {
     marca,
     concluido: lerConclusao(doc) !== null && faltamBasicas.length === 0 && contasProntas && marcaPronta,
   };
+}
+
+/** Próximo passo exibido no Início, sem expulsar a pessoa da tela. */
+export function pendenciaDoOnboarding(
+  dados: DadosParaConclusao,
+  reuniaoConfirmada: boolean,
+): PendenciaDoOnboarding | null {
+  const estado = estadoDaConclusao(dados);
+  if (estado.faltamBasicas.length > 0) return {
+    titulo: "Ainda faltam respostas sobre seu negócio",
+    corpo: "O que você já respondeu continua guardado. Termine as perguntas para a equipe preparar o próximo passo deste negócio.",
+    href: "/onboarding",
+    rotulo: "Continuar perguntas",
+  };
+  if (!estado.contasProntas) return {
+    titulo: "Ainda faltam as contas do negócio",
+    corpo: "Confira os valores que ajudam a planejar os anúncios. Você pode marcar o que ainda não sabe e revisar com o gestor.",
+    href: "/onboarding/contas",
+    rotulo: "Continuar contas",
+  };
+  if (!estado.concluido) return {
+    titulo: "Ainda falta conferir o visual da marca",
+    corpo: "Revise os materiais e confirme quais cores representam este negócio antes de escolher um horário.",
+    href: "/onboarding/marca",
+    rotulo: "Conferir visual da marca",
+  };
+  if (!reuniaoConfirmada) return {
+    titulo: "A confirmação da reunião ainda está pendente",
+    corpo: "Seu cadastro está concluído. Se você marcou pelo Google, o clique em “Já marquei meu horário” não comprova a reserva; confira o e-mail do Google enquanto a V2G aguarda uma confirmação verificável.",
+    href: "/onboarding/concluido",
+    rotulo: "Conferir reunião",
+  };
+  return null;
 }
