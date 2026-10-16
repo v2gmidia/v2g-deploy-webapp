@@ -6,6 +6,13 @@ import type { ChaveDeConta } from "@/lib/cadastro/montar";
 import { reabrirContaAction, salvarContaAction, type EstadoDasContas } from "./actions";
 import { numeroDoTexto, SOBRA, TICKET_FAIXA } from "./regras";
 
+function faixaDoTicket(minimo: number | null, maximo: number | null): string {
+  if (minimo === null) return "Valor informado em faixa";
+  if (maximo === null) return `Acima de ${dinheiro(minimo, "BRL")}`;
+  if (minimo === 0) return `Até ${dinheiro(maximo, "BRL")}`;
+  return `${dinheiro(minimo, "BRL")} a ${dinheiro(maximo, "BRL")}`;
+}
+
 /**
  * As três contas, uma por vez.
  *
@@ -166,8 +173,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
               <b>
                 {leitura.estado === "respondida"
                   ? c === "ticket" && estado.ticketEmFaixa
-                    ? contas.ticket?.echo && Object.hasOwn(TICKET_FAIXA, contas.ticket.echo)
-                      ? contas.ticket.echo : "Valor informado em faixa"
+                    ? faixaDoTicket(estado.ticketMinimo, estado.ticketMaximo)
                     : dinheiro(leitura.valor, "BRL")
                   : "Você não soube — a gente resolve na conversa."}
               </b>

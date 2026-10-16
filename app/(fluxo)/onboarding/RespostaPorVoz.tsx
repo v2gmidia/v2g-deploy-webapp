@@ -24,11 +24,17 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
   const esperaFinal = useRef<ReturnType<typeof setTimeout> | null>(null);
   const finalizado = useRef(false);
   const parcial = useRef("");
+  const trechosConcluidos = useRef<string[]>([]);
+  const paradaSolicitada = useRef(false);
   const vivo = useRef(true);
   const gravandoRef = useRef(false);
   const token = useRef<{ valor: string; expira: number } | null>(null);
   const pedidoDeToken = useRef<Promise<string> | null>(null);
   const tempo = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function transcricaoAtual() {
+    return [...trechosConcluidos.current, parcial.current].map((trecho) => trecho.trim()).filter(Boolean).join(" ");
+  }
 
   async function obterToken(): Promise<string> {
     if (token.current && token.current.expira > Date.now() + 20_000) return token.current.valor;
@@ -95,6 +101,7 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
 
   function parar() {
     if (!gravandoRef.current || finalizado.current) return;
+    paradaSolicitada.current = true;
     gravandoRef.current = false;
     fluxo.current?.getTracks().forEach((track) => track.stop());
     setGravando(false);
@@ -102,7 +109,7 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
     if (tempo.current) clearTimeout(tempo.current);
     if (canal.current?.readyState === "open") canal.current.send(JSON.stringify({ type: "input_audio_buffer.commit" }));
     esperaFinal.current = setTimeout(() => {
-      if (parcial.current.trim()) concluirAoVivo(parcial.current);
+      if (transcricaoAtual()) concluirAoVivo(transcricaoAtual());
       else encerrarSemFala();
     }, ESPERA_FINAL);
   }
@@ -116,6 +123,8 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
     setErro(null);
     finalizado.current = false;
     parcial.current = "";
+    trechosConcluidos.current = [];
+    paradaSolicitada.current = false;
     try {
       // Permissão do microfone e sessão temporária não dependem uma da outra.
       const [captura, sessao] = await Promise.allSettled([
@@ -139,13 +148,19 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
         try { mensagem = JSON.parse(evento.data); } catch { return; }
         if (mensagem.type === "conversation.item.input_audio_transcription.delta" && typeof mensagem.delta === "string") {
           parcial.current += mensagem.delta;
-          if (vivo.current && parcial.current.trim()) aoParcial?.(parcial.current);
+          if (vivo.current && transcricaoAtual()) aoParcial?.(transcricaoAtual());
         }
-        if (mensagem.type === "conversation.item.input_audio_transcription.completed" && typeof mensagem.transcript === "string")
-          concluirAoVivo(mensagem.transcript);
+        if (mensagem.type === "conversation.item.input_audio_transcription.completed" && typeof mensagem.transcript === "string" && !finalizado.current) {
+          const trecho = mensagem.transcript.trim();
+          if (trecho) trechosConcluidos.current.push(trecho);
+          parcial.current = "";
+          if (vivo.current && transcricaoAtual()) aoParcial?.(transcricaoAtual());
+          // Uma pausa pode concluir apenas um trecho; a gravação segue até a pessoa apertar parar.
+          if (paradaSolicitada.current && transcricaoAtual()) concluirAoVivo(transcricaoAtual());
+        }
         if (mensagem.type === "error" && !finalizado.current && vivo.current) {
           console.error("[onboarding:transcricao-ao-vivo] erro na sessão");
-          if (parcial.current.trim()) concluirAoVivo(parcial.current);
+          if (transcricaoAtual()) concluirAoVivo(transcricaoAtual());
           else encerrarSemFala();
         }
       };

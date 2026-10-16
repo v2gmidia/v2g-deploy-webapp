@@ -34,6 +34,9 @@ export interface EstadoDasContas {
   ticket: number | null;
   /** Faixa declarada não é um ticket único para derivar outros valores. */
   ticketEmFaixa: boolean;
+  /** Limites realmente gravados; o ponto médio não substitui a faixa na tela. */
+  ticketMinimo: number | null;
+  ticketMaximo: number | null;
   margem: number | null;
   /**
    * O que se sabe de cada conta, JÁ RESOLVIDO entre coluna e jsonb.
@@ -150,6 +153,8 @@ function montarEstado(linha: LinhaNegocio): EstadoDasContas {
     contas,
     ticket,
     ticketEmFaixa,
+    ticketMinimo: minimo,
+    ticketMaximo: maximo,
     margem: ticket !== null && !ticketEmFaixa && custo !== null ? Math.round((ticket - custo) * 100) / 100 : null,
     // A COLUNA PRIMEIRO, SEMPRE. `lerConta` é a única regra de combinação
     // entre coluna e jsonb no projeto — `motivoDaConta` também é escrita em

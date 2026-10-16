@@ -39,6 +39,13 @@ export type ConciliacaoDaReserva =
   | { status: "cancelado"; businessId: string; orderId: string;
     chaveEvento: string; versao: string };
 
+/** Uma mudança de calendário não prova que o evento antigo desapareceu. */
+export function calendarioDaReservaAindaConfigurado(
+  calendarIdDaReserva: string, calendarIdAtual: string | null,
+): boolean {
+  return Boolean(calendarIdAtual) && calendarIdDaReserva === calendarIdAtual;
+}
+
 function cnpjNumerico(valor: string): string | null {
   if (!/^[\d.\-/\s]+$/.test(valor)) return null;
   const digitos = valor.replace(/\D/g, "");

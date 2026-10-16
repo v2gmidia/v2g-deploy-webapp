@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
 import { prepararImagemDaMarca } from "@/lib/identidade/preparar-arquivo-cliente";
@@ -14,6 +14,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
   aoMudarUpload: (ativo: boolean) => void;
 }) {
   const router = useRouter();
+  const formulario = useRef<HTMLFormElement>(null);
   const [resultado, enviar, enviando] = useActionState(async (anterior: IdentidadeState, dados: FormData) => {
     const arquivo = dados.get("arquivo");
     if (!(arquivo instanceof File)) return { erro: "Escolha uma imagem para o logo principal." };
@@ -25,6 +26,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
       const resposta = await enviarImagemAction(anterior, dados);
       if (resposta.ok) {
         await aoEscolher(preparado.arquivo);
+        formulario.current?.reset();
         router.refresh();
       }
       return resposta;
@@ -42,7 +44,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
         : <p className="form-warning">Logo salvo, mas a prévia está indisponível. Atualize antes de trocar.</p>}
       <span>Logo salvo: {logo.nomeDoArquivo}</span>
     </div>}
-    <form action={enviar} className={styles.logoForm}>
+    <form ref={formulario} action={enviar} className={styles.logoForm}>
       <input type="hidden" name="businessId" value={businessId} />
       <input type="hidden" name="uso" value="logo" />
       <input type="file" name="arquivo" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" aria-label="Escolher o logo da empresa" />

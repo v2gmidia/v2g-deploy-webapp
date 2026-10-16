@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`revisao-03-04-qa-16-10.md`](./revisao-03-04-qa-16-10.md) | 16/10/2026 | Ensaio autenticado após o push: menu desktop e celular, troca em duas abas, conversa, marca, voz e agenda observadas no QA; testes locais e próximo passo. | **Sim.** Voz e agenda próprias desativadas no QA; upload bloqueado pela permissão da extensão, perda de acesso, múltiplas contas Meta e produção pendentes. |
 | [`multiconta-menu-e-entrada-16-10.md`](./multiconta-menu-e-entrada-16-10.md) | 16/10/2026 | Corrige o menu sobreposto, abre a entrada existente para adicionar negócio e leva a escolha ao Início. | **Sim.** Ensaio autenticado do novo fluxo após publicação e regras de etapa pendente. |
 | [`multiconta-migration-qa-16-10.md`](./multiconta-migration-qa-16-10.md) | 16/10/2026 | Aplicação autorizada no QA da proteção de Página compartilhada, permissões e ensaio transacional com rollback. | **Sim.** Concorrência real, perda de acesso, integração com Meta e produção. |
 | [`multiconta-ensaio-duas-abas-15-10.md`](./multiconta-ensaio-duas-abas-15-10.md) | 15/10/2026 | Troca autenticada entre CNPJs, bloqueio de edição numa aba antiga, menu local e remoção do anexo nas perguntas. | **Sim.** Publicação dos ajustes, migration no QA com autorização específica, perda de acesso e duas contas de anúncios. |

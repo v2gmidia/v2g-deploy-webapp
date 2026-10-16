@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TETO_DO_NAVEGADOR_BYTES } from "@/lib/criativos/limites.mjs";
 import { prepararImagemDaMarca } from "@/lib/identidade/preparar-arquivo-cliente";
@@ -14,6 +14,7 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
   aoMudarUpload: (ativo: boolean) => void;
 }) {
   const router = useRouter();
+  const formulario = useRef<HTMLFormElement>(null);
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const restantes = Math.max(0, 24 - variacoes.length);
   const [resultado, enviar, enviando] = useActionState(async (anterior: VariacoesState, dados: FormData) => {
@@ -36,6 +37,7 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
       const resposta = await enviarVariacoesAction(anterior, dados);
       if (resposta.ok) {
         await aoEscolher(preparados);
+        formulario.current?.reset();
         setSelecionados([]);
         router.refresh();
       }
@@ -55,7 +57,7 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
         <RemoverVariacao businessId={businessId} id={item.id} />
       </figure>)}
     </div>}
-    <form action={enviar} className={styles.anexoForm}>
+    <form ref={formulario} action={enviar} className={styles.anexoForm}>
       <input type="hidden" name="businessId" value={businessId} />
       <label className={styles.anexoBotao} htmlFor="imagens-marca">＋ Anexar imagens</label>
       <input id="imagens-marca" type="file" name="arquivos" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" multiple aria-label="Escolher várias imagens da marca" onChange={(evento) => setSelecionados(Array.from(evento.target.files ?? [], (arquivo) => arquivo.name))} />

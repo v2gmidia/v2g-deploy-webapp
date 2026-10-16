@@ -225,7 +225,7 @@ function DeOndeSai({ preVoo }: { preVoo: PreVoo }) {
   // vazio com título é pior que bloco nenhum: ele promete informação.
   if (!preVoo.temNegocio) return null;
 
-  const { pagina, conta, preRequisitos, conexaoIlegivel } = preVoo;
+  const { pagina, conta, preRequisitos, conexaoIlegivel, contaIlegivel } = preVoo;
 
   return (
     <section className="trust">
@@ -241,7 +241,11 @@ function DeOndeSai({ preVoo }: { preVoo: PreVoo }) {
               : "Página conectada: não conseguimos ler o nome dela agora."}
       </span>
 
-      {conta !== null && <Conta conta={conta} />}
+      {contaIlegivel ? (
+        <span style={{ display: "block", marginTop: 4 }}>
+          Não conseguimos conferir as contas de anúncio deste negócio agora. Nenhuma configuração foi alterada.
+        </span>
+      ) : conta !== null && <Conta conta={conta} />}
 
       {preRequisitos !== null && <Requisitos resultado={preRequisitos} />}
 

@@ -113,6 +113,8 @@ export interface PreVoo {
    * olhar. Mesma distinção da `/conta` (§ do `conta/page.tsx`).
    */
   conexaoIlegivel: boolean;
+  /** Falha ao ler as contas ou a escolha: lista vazia não prova ausência. */
+  contaIlegivel: boolean;
   /** `null` = sem negócio. */
   conta: ContaDeAnuncio | null;
   /**
@@ -127,6 +129,7 @@ const VAZIO: PreVoo = {
   temNegocio: false,
   pagina: null,
   conexaoIlegivel: false,
+  contaIlegivel: false,
   conta: null,
   preRequisitos: null,
 };
@@ -276,6 +279,7 @@ export async function preVooPorNegocio(
     temNegocio: true,
     pagina: paginaId ? { id: paginaId, nome } : null,
     conexaoIlegivel: respConexao.error !== null,
+    contaIlegivel: Boolean(respContas.error || respMarca.error),
     conta,
     preRequisitos,
   };

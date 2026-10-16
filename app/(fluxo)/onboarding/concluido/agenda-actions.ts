@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { sugerirHorarios } from "@/lib/agenda/horarios";
 import { avaliarHorario, podeRemarcar, type IntervaloOcupado } from "@/lib/agenda/regras";
-import { horarioConfirmadoGoogle } from "@/lib/agenda/conciliacao";
+import { calendarioDaReservaAindaConfigurado, horarioConfirmadoGoogle } from "@/lib/agenda/conciliacao";
 import { descricaoDaReuniao } from "@/lib/agenda/descricao-reuniao";
 import { CriacaoGoogleRecusada } from "@/lib/agenda/falhas-criacao";
 import { agendaGoogleConfigurada, apagarEventoGoogle, calendarIdConfigurado,
@@ -70,6 +70,11 @@ async function reservaAtiva(businessId: string): Promise<Reserva | null> {
 }
 
 async function conciliarReservaAtiva(reserva: Reserva): Promise<Reserva | null> {
+  // Um evento criado em outro calendário não pode ser considerado ausente
+  // apenas porque a configuração atual aponta para uma agenda diferente.
+  // Falhar fechado preserva a reserva única até a equipe revisar a troca.
+  if (!calendarioDaReservaAindaConfigurado(reserva.calendar_id, calendarIdConfigurado()))
+    throw new Error("calendario_da_reserva_alterado");
   if (!reserva.google_event_id) return reserva;
   const evento = await lerEventoGoogle(reserva.google_event_id);
   const admin = createAdminClient();

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { conciliarReserva, horarioConfirmadoGoogle } from "../lib/agenda/conciliacao.ts";
+import { calendarioDaReservaAindaConfigurado, conciliarReserva, horarioConfirmadoGoogle } from "../lib/agenda/conciliacao.ts";
 import { descricaoDaReuniao } from "../lib/agenda/descricao-reuniao.ts";
 import { CriacaoGoogleRecusada, rejeicaoDefinitivaDaCriacao } from "../lib/agenda/falhas-criacao.ts";
 
@@ -11,6 +11,12 @@ const conferir = (atual, candidatos = [candidato]) => conciliarReserva(atual, "a
 const evento = { calendarId: "agenda-v2g", eventId: "evento-1", etag: "versao-1", status: "confirmed",
   inicio: "2026-10-14T13:00:00-03:00", fim: "2026-10-14T13:25:00-03:00",
   emailParticipante: "CLIENTE@example.com", cnpjInformado: "00000000000191" };
+
+test("troca de calendário mantém a reserva bloqueada para revisão", () => {
+  assert.equal(calendarioDaReservaAindaConfigurado("agenda-v2g", "agenda-v2g"), true);
+  assert.equal(calendarioDaReservaAindaConfigurado("agenda-v2g", "agenda-nova"), false);
+  assert.equal(calendarioDaReservaAindaConfigurado("agenda-v2g", null), false);
+});
 
 test("somente rejeições explícitas do POST podem liberar uma reserva sem evento", () => {
   for (const status of [400, 401, 403, 404, 422]) {
