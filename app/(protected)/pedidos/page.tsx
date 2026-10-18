@@ -15,6 +15,16 @@ const estados: Record<string, string> = {
   cancelled: "Cancelado",
 };
 
+type PedidoAssistido = {
+  id: string; buyer_email: string; legal_name: string; cnpj: string;
+  unit_count: number; total_cents: number; billing_period: string;
+  status: string; proof_reference: string | null;
+  source_system?: string | null; source_lead_id?: number | null;
+  source_lead_origin?: string | null; source_lead_utm_source?: string | null;
+  source_lead_utm_medium?: string | null; source_lead_utm_campaign?: string | null;
+  source_lead_utm_content?: string | null; source_lead_consent_at?: string | null;
+};
+
 export default async function PedidosPage({ searchParams }: {
   searchParams: Promise<{ registro?: string }>;
 }) {
@@ -22,24 +32,27 @@ export default async function PedidosPage({ searchParams }: {
   const { data: { user } } = await supabase.auth.getUser();
   if (user?.app_metadata?.papel !== "operador") notFound();
 
-  let data: Array<{
-    id: string; buyer_email: string; legal_name: string; cnpj: string;
-    unit_count: number; total_cents: number; billing_period: string;
-    status: string; proof_reference: string | null;
-  }> | null = null;
+  let data: PedidoAssistido[] | null = null;
   let falhaConsulta = false;
   let contratos = new Map<string, string>();
   let notas = new Map<string, string>();
   let falhaDocumentos = false;
   try {
     const admin = createAdminClient();
+    const vinculoLeadAtivo = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true";
+    const colunasLead = vinculoLeadAtivo
+      ? ", source_system, source_lead_id, source_lead_origin, source_lead_utm_source, source_lead_utm_medium, source_lead_utm_campaign, source_lead_utm_content, source_lead_consent_at"
+      : "";
     const resposta = await admin.from("commercial_orders")
-      .select("id, buyer_email, legal_name, cnpj, unit_count, total_cents, billing_period, status, proof_reference")
+      .select(`id, buyer_email, legal_name, cnpj, unit_count, total_cents, billing_period, status, proof_reference${colunasLead}`)
       .eq("payment_method", "direct_pix")
       .order("created_at", { ascending: false })
       .limit(100);
     if (resposta.error) throw resposta.error;
-    data = resposta.data;
+    // A lista de colunas varia com a flag para o código poder ser publicado
+    // antes da migration sem consultar coluna inexistente. O parser estático
+    // do supabase-js não interpreta esse select dinâmico.
+    data = resposta.data as unknown as PedidoAssistido[];
     if (data?.length) {
       const ids = data.map((pedido) => pedido.id);
       const [respostaContratos, respostaNotas] = await Promise.all([
@@ -63,6 +76,7 @@ export default async function PedidosPage({ searchParams }: {
     falhaConsulta = true;
   }
   const { registro } = await searchParams;
+  const vinculoLeadAtivo = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true";
   const avisos: Record<string, string> = {
     criado: "Confira o pedido abaixo antes de enviar os dados do Pix pelo atendimento.",
     comprovante: "Confira abaixo se o comprovante foi registrado. O acesso continua fechado até a aprovação.",
@@ -78,13 +92,20 @@ export default async function PedidosPage({ searchParams }: {
       <p>Antes de emitir: conferir o serviço no cadastro fiscal do Asaas, alíquotas e retenções com a contabilidade, dados do tomador e competência da cobrança. Nenhuma emissão automática está ativa.</p>
     </section>
     {avisos[registro ?? ""] && <p className="form-notice">{avisos[registro ?? ""]}</p>}
-    {!falhaConsulta && <NovoPedidoPix referencia={crypto.randomUUID()} />}
+    {!falhaConsulta && <NovoPedidoPix referencia={crypto.randomUUID()} vinculoLeadAtivo={vinculoLeadAtivo} />}
     <h2>Pedidos recentes</h2>
     {falhaConsulta && <p className="form-error" role="alert">Não foi possível consultar os pedidos agora.</p>}
     {!falhaConsulta && data?.length === 0 && <p>Nenhum pedido assistido registrado.</p>}
     {!falhaConsulta && (data ?? []).map((pedido) => <section className="auth-card" key={pedido.id}>
       <h3>{pedido.legal_name}</h3>
       <p>{pedido.buyer_email} · CNPJ {pedido.cnpj}</p>
+      {pedido.source_system === "v2g_site" && pedido.source_lead_id && <div className="form-notice">
+        <strong>Origem rastreada: lead #{pedido.source_lead_id} da LP.</strong>
+        <p>Página: {pedido.source_lead_origin || "não informada"} · UTM source: {pedido.source_lead_utm_source || "não informada"} · medium: {pedido.source_lead_utm_medium || "não informada"} · campaign: {pedido.source_lead_utm_campaign || "não informada"} · content: {pedido.source_lead_utm_content || "não informada"}.</p>
+        <p>Consentimento registrado em {pedido.source_lead_consent_at
+          ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }).format(new Date(pedido.source_lead_consent_at))
+          : "data indisponível"}.</p>
+      </div>}
       <p>{pedido.unit_count} conta(s) · {pedido.billing_period === "monthly" ? "mensal"
         : pedido.billing_period === "semiannual_upfront" ? "semestral à vista"
           : pedido.billing_period === "annual_upfront" ? "anual à vista" : "período a conferir"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}</p>

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 import { pendenciaDoOnboarding } from "../lib/onboarding/conclusao.ts";
 
@@ -45,4 +46,24 @@ test("respostas incompletas apontam para o começo sem apagar o documento", () =
   delete onboarding.respostas.descricao;
   assert.equal(pendenciaDoOnboarding(dados(onboarding), false)?.href, "/onboarding");
   assert.equal(onboarding.contas.ticket.echo, "100");
+});
+
+test("o Início dá prioridade visual à pendência do onboarding", () => {
+  const fonte = readFileSync("app/(protected)/inicio/TelaDoInicio.tsx", "utf8");
+  const componente = fonte.slice(fonte.indexOf("function ProximoPasso"), fonte.indexOf("export function TelaDoInicio"));
+  assert.match(componente, /if \(pendencia\)/);
+  assert.match(componente, /if \(proximo\)/);
+  assert.ok(
+    componente.indexOf("if (pendencia)") < componente.indexOf("if (proximo)"),
+    "a pendência do onboarding precisa vencer a próxima etapa da campanha",
+  );
+  assert.match(fonte, /<ProximoPasso pendencia=\{pendenciaOnboarding\} proximo=\{proximo\}/);
+});
+
+test("o Início lê a execução pela rota do backend, sem depender da tabela local", () => {
+  const fonte = readFileSync("lib/estado/cliente.ts", "utf8");
+  assert.doesNotMatch(fonte, /execucaoDoCliente/);
+  assert.doesNotMatch(fonte, /\.from\(["']execucoes["']\)/);
+  assert.match(fonte, /execucaoDoNegocio\(/);
+  assert.match(fonte, /const execucao = execucaoDoDiaSeguinte/);
 });

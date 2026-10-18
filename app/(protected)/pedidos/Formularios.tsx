@@ -8,15 +8,28 @@ import {
 
 const inicial: PedidoActionState = {};
 
-export function NovoPedidoPix({ referencia }: { referencia: string }) {
+export function NovoPedidoPix({ referencia, vinculoLeadAtivo = false }: {
+  referencia: string;
+  vinculoLeadAtivo?: boolean;
+}) {
   const [estado, acao, pendente] = useActionState(criarPedidoPixAction, inicial);
   return <form action={acao} className="auth-card">
     <h2>Registrar venda assistida por Pix</h2>
     <p className="note">Este registro não cobra, não confirma pagamento e não envia chave Pix.</p>
     <input type="hidden" name="ref" value={referencia} />
+    {vinculoLeadAtivo && <>
+      <input type="hidden" name="vinculoLead" value="v2g_site" />
+      <label>ID do lead da LP
+        <input name="sourceLeadId" type="number" min="1" step="1" required inputMode="numeric" />
+      </label>
+      <p className="note">O servidor só cria o pedido se este ID existir e CNPJ, e-mail e WhatsApp coincidirem exatamente com o pré-cadastro.</p>
+    </>}
     <label>Razão social<input name="legalName" required maxLength={200} /></label>
     <label>CNPJ<input name="cnpj" required inputMode="numeric" /></label>
     <label>E-mail da compra<input name="email" type="email" required /></label>
+    {vinculoLeadAtivo && <label>WhatsApp do pré-cadastro
+      <input name="whatsapp" required inputMode="tel" maxLength={30} />
+    </label>}
     <label>Contas de anúncio<input name="unitCount" type="number" min="1" max="100" defaultValue="1" required /></label>
     <label>Período<select name="billingPeriod" defaultValue="monthly">
       <option value="monthly">Mensal · R$ 500 por conta</option>

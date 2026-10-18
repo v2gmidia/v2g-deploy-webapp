@@ -15,6 +15,7 @@ export default async function ContratarPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const apiAtiva = process.env.V2G_CHECKOUT_API_ENABLED === "true";
+  const segurancaAtiva = process.env.V2G_CHECKOUT_SECURITY_ENABLED === "true";
   const refAnterior = (await cookies()).get("v2g_checkout_ref")?.value;
   const podeRetomar = apiAtiva && refAnterior && /^[0-9a-f-]{36}$/i.test(refAnterior);
   return <main className="contratar-shell">
@@ -28,7 +29,8 @@ export default async function ContratarPage() {
         {podeRetomar && <p className="contratar-retomar"><a href={`/contratar/pagamento?ref=${encodeURIComponent(refAnterior)}`}>Retomar meu pedido de teste</a><span>Consulte o pagamento iniciado neste navegador antes de fazer outro pedido.</span></p>}
       </section>
       <FormularioContratar referencia={randomUUID()} apiAtiva={apiAtiva}
-        emailDoAcesso={user?.email ?? undefined} />
+        emailDoAcesso={user?.email ?? undefined}
+        turnstileSiteKey={segurancaAtiva ? (process.env.TURNSTILE_SITE_KEY ?? "") : undefined} />
     </div>
   </main>;
 }

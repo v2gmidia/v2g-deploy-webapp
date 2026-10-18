@@ -48,6 +48,7 @@ export default async function PagamentoPage({ searchParams }: Params) {
   const metodo = pedido.payment_method === "asaas_pix" || pedido.payment_method === "asaas_card"
     ? pedido.payment_method : null;
   const limiteCartao = metodo === "asaas_card" && pedido.payment_attempt_count >= MAX_TENTATIVAS_CARTAO;
+  const segurancaAtiva = process.env.V2G_CHECKOUT_SECURITY_ENABLED === "true";
   return <main className="contratar-shell">
     <header className="contratar-topo"><Marca href="/contratar" editorial /><Link href="/contratar">Voltar à contratação</Link></header>
     <div className="contratar-pagamento">
@@ -76,7 +77,8 @@ export default async function PagamentoPage({ searchParams }: Params) {
             O cartão foi recusado após três tentativas. Procure a V2G para continuar com segurança.
           </p>}
           {estado === "awaiting_payment" && !tentativaCriada && metodo && !limiteCartao
-            && <PagamentoFormulario referencia={referencia} metodo={metodo} />}
+            && <PagamentoFormulario referencia={referencia} metodo={metodo}
+              turnstileSiteKey={segurancaAtiva ? (process.env.TURNSTILE_SITE_KEY ?? "") : undefined} />}
         </section>
         <aside className="contratar-pagamento-resumo">
           <h2>Resumo do pedido</h2>

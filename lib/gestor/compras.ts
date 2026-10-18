@@ -14,6 +14,14 @@ export type PedidoDaFila = {
   provider_charge_id?: string | null;
   provider_subscription_id?: string | null;
   payment_creation_started_at?: string | null;
+  source_system?: string | null;
+  source_lead_id?: number | null;
+  source_lead_origin?: string | null;
+  source_lead_utm_source?: string | null;
+  source_lead_utm_medium?: string | null;
+  source_lead_utm_campaign?: string | null;
+  source_lead_utm_content?: string | null;
+  source_lead_consent_at?: string | null;
   created_at: string;
 };
 
@@ -74,7 +82,8 @@ export function prioridadeDaCompra(pedido: PedidoDaFila): number {
 export function filtrarCompras(pedidos: PedidoDaFila[], busca: string, filtro: FiltroDeCompras): PedidoDaFila[] {
   const termo = busca.trim().toLocaleLowerCase("pt-BR");
   return pedidos.filter((pedido) => {
-    const corresponde = !termo || [pedido.legal_name, pedido.buyer_email, pedido.cnpj, pedido.id]
+    const corresponde = !termo || [pedido.legal_name, pedido.buyer_email, pedido.cnpj, pedido.id,
+      pedido.source_lead_id?.toString() ?? ""]
       .some((campo) => campo.toLocaleLowerCase("pt-BR").includes(termo));
     if (!corresponde) return false;
     const prioridade = prioridadeDaCompra(pedido);

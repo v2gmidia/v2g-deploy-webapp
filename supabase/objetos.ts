@@ -566,4 +566,39 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "a compatibilidade com o banco compartilhado e a troca de Pagina concorrente exigem ensaio no QA",
     ],
   },
+  {
+    arquivo: "20261018130000_ligar_lead_lp_pedido.sql",
+    cria: [
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_system" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_id" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_origin" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_utm_source" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_utm_medium" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_utm_campaign" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_utm_content" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_consent_at" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_consent_text" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "source_lead_linked_at" },
+      { tipo: "rpc", nome: "registrar_pedido_pix_assistido_com_lead" },
+    ],
+    foraDoAlcance: [
+      "migration preparada localmente e NAO aplicada; consultar ledger antes de aplicar",
+      "indice unico por sistema e lead, checks do snapshot e corpo transacional da RPC",
+      "conferencia exata de CNPJ, e-mail e WhatsApp, lock e idempotencia exigem teste SQL no banco",
+      "grant exclusivo da RPC para service_role e evento lead_convertido_em_pedido",
+    ],
+  },
+  {
+    arquivo: "20261018133000_checkout_security_controls.sql",
+    cria: [
+      { tipo: "tabela", nome: "checkout_security_attempts" },
+      { tipo: "rpc", nome: "consumir_limite_checkout" },
+    ],
+    foraDoAlcance: [
+      "migration preparada localmente e NAO aplicada; consultar ledger antes de aplicar",
+      "RLS sem policies, revogacao de anon/authenticated e grant apenas para service_role",
+      "locks, limites por hora, retencao de sete dias e corpo da RPC",
+      "os registros contem somente HMACs; a qualidade do segredo depende da configuracao externa",
+    ],
+  },
 ];

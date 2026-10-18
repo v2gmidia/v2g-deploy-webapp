@@ -25,6 +25,9 @@ export async function criarPedidoPixAction(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const legalName = String(formData.get("legalName") ?? "").trim();
   const cnpj = String(formData.get("cnpj") ?? "").replace(/\D/g, "");
+  const whatsapp = String(formData.get("whatsapp") ?? "").replace(/\D/g, "");
+  const vinculoLeadAtivo = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true";
+  const sourceLeadId = Number(formData.get("sourceLeadId"));
   const unitCount = Number(formData.get("unitCount"));
   const billingPeriod = String(formData.get("billingPeriod") ?? "");
   if (formData.get("declaresCnpj") !== "yes" || formData.get("sellsByWhatsApp") !== "yes") {
@@ -37,6 +40,11 @@ export async function criarPedidoPixAction(
   if (billingPeriod !== "monthly" && billingPeriod !== "annual_upfront") {
     return { erro: "Escolha o período de cobrança." };
   }
+  if (vinculoLeadAtivo && (formData.get("vinculoLead") !== "v2g_site"
+      || !Number.isSafeInteger(sourceLeadId) || sourceLeadId <= 0
+      || !/^[1-9][0-9]{9,10}$/.test(whatsapp))) {
+    return { erro: "Informe o ID e o WhatsApp exatos do pré-cadastro da LP." };
+  }
   try {
     valorDoPedidoCentavos(unitCount, billingPeriod);
   } catch {
@@ -45,14 +53,23 @@ export async function criarPedidoPixAction(
 
   try {
     const admin = createAdminClient();
-    const { error } = await admin.rpc("registrar_pedido_pix_assistido", {
-      p_ref: ref, p_email: email, p_legal_name: legalName,
-      p_cnpj: cnpj, p_unit_count: unitCount, p_billing_period: billingPeriod,
-    });
+    const { error } = vinculoLeadAtivo
+      ? await admin.rpc("registrar_pedido_pix_assistido_com_lead", {
+        p_ref: ref, p_source_lead_id: sourceLeadId, p_email: email,
+        p_whatsapp: whatsapp, p_legal_name: legalName, p_cnpj: cnpj,
+        p_unit_count: unitCount, p_billing_period: billingPeriod,
+        p_operator_id: user.id,
+      })
+      : await admin.rpc("registrar_pedido_pix_assistido", {
+        p_ref: ref, p_email: email, p_legal_name: legalName,
+        p_cnpj: cnpj, p_unit_count: unitCount, p_billing_period: billingPeriod,
+      });
     if (error) throw error;
   } catch (error) {
     console.error("[pedidos] falha ao criar pedido ::", error);
-    return { erro: "Não foi possível registrar. Confira se já há pedido Pix pendente para este e-mail e CNPJ." };
+    return { erro: vinculoLeadAtivo
+      ? "Não foi possível registrar. Confira se ID, CNPJ, e-mail e WhatsApp são exatamente os mesmos do pré-cadastro e se o lead já virou pedido."
+      : "Não foi possível registrar. Confira se já há pedido Pix pendente para este e-mail e CNPJ." };
   }
   revalidatePath("/pedidos");
   redirect("/pedidos?registro=criado");

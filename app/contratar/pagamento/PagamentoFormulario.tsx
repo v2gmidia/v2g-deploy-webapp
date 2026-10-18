@@ -2,9 +2,10 @@
 
 import { useActionState } from "react";
 import { iniciarPagamento, type PagamentoState } from "./actions";
+import { Turnstile } from "@/components/seguranca/Turnstile";
 
-export function PagamentoFormulario({ referencia, metodo }: {
-  referencia: string; metodo: "asaas_pix" | "asaas_card";
+export function PagamentoFormulario({ referencia, metodo, turnstileSiteKey }: {
+  referencia: string; metodo: "asaas_pix" | "asaas_card"; turnstileSiteKey?: string;
 }) {
   const [estado, acao, pendente] = useActionState<PagamentoState, FormData>(iniciarPagamento, {});
   return <div className="contratar-pagamento-form">
@@ -28,6 +29,7 @@ export function PagamentoFormulario({ referencia, metodo }: {
         <label>CEP de cobrança<input name="postalCode" inputMode="numeric" autoComplete="postal-code" required /></label>
         <label>Número do endereço<input name="addressNumber" autoComplete="address-line2" maxLength={20} required /></label>
       </div>}
+      {turnstileSiteKey !== undefined && <Turnstile siteKey={turnstileSiteKey} />}
       <button type="submit" disabled={pendente}>{pendente ? "Enviando…"
         : metodo === "asaas_pix" ? "Gerar Pix de teste" : "Pagar com cartão de teste"}</button>
     </form>

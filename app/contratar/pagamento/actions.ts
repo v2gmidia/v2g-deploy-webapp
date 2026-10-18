@@ -8,6 +8,8 @@ import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-c
 import { asaasSandbox, idAsaas } from "@/lib/contratacao/asaas-sandbox";
 import { validarDadosCartao } from "@/lib/contratacao/dados-cartao";
 import { MAX_TENTATIVAS_CARTAO } from "@/lib/contratacao/retentativa-cartao";
+import { hashDeSeguranca, ipConfiavelDaVercel, segurancaCheckoutAtiva,
+  verificarTurnstile } from "@/lib/seguranca/checkout";
 
 export type PagamentoState = { erro?: string };
 
@@ -19,7 +21,8 @@ function hojeEmSaoPaulo(): string {
   return `${valor("year")}-${valor("month")}-${valor("day")}`;
 }
 
-export async function iniciarPagamento(_anterior: PagamentoState, form: FormData): Promise<PagamentoState> {
+export async function iniciarPagamento(_anterior: PagamentoState, form: FormData,
+  segurancaJaVerificada = false): Promise<PagamentoState> {
   if (!checkoutSandboxSeguroNesteServidor() || process.env.V2G_CHECKOUT_API_ENABLED !== "true")
     return { erro: "O pagamento de teste está indisponível neste ambiente." };
   const referencia = String(form.get("ref") ?? "");
@@ -39,14 +42,28 @@ export async function iniciarPagamento(_anterior: PagamentoState, form: FormData
   if (pedido.payment_method === "asaas_card" && pedido.payment_attempt_count >= MAX_TENTATIVAS_CARTAO)
     return { erro: "Este cartão já teve três tentativas. Procure a V2G para continuar com segurança." };
 
+  const cabecalhos = await headers();
+  const ipSeguro = segurancaCheckoutAtiva() ? ipConfiavelDaVercel(cabecalhos) : null;
+  if (segurancaCheckoutAtiva() && !segurancaJaVerificada) {
+    const token = String(form.get("cf-turnstile-response") ?? "");
+    const ipHash = ipSeguro ? hashDeSeguranca(ipSeguro) : null;
+    const contatoHash = hashDeSeguranca(pedido.buyer_email);
+    if (!ipSeguro || !ipHash || !contatoHash || !await verificarTurnstile(token, ipSeguro))
+      return { erro: "Não foi possível confirmar a verificação de segurança. Atualize a página e tente novamente." };
+    const { data: permitido, error: erroLimite } = await admin.rpc("consumir_limite_checkout", {
+      p_scope: "payment", p_ip_hash: ipHash, p_contact_hash: contatoHash,
+    });
+    if (erroLimite || permitido !== true)
+      return { erro: "Recebemos várias tentativas recentes. Aguarde uma hora ou procure a V2G." };
+  }
+
   const cartao = pedido.payment_method === "asaas_card" ? validarDadosCartao(form) : null;
   if (cartao && !cartao.dados) return { erro: cartao.erro };
   let remoteIp: string | null = null;
   if (cartao) {
-    const cabecalhos = await headers();
     if (cabecalhos.get("x-forwarded-proto") !== "https")
       return { erro: "O teste com cartão exige uma página HTTPS de QA. Nenhum dado do cartão foi enviado." };
-    remoteIp = (cabecalhos.get("cf-connecting-ip") ?? cabecalhos.get("x-forwarded-for")?.split(",")[0] ?? "").trim();
+    remoteIp = ipSeguro ?? (cabecalhos.get("cf-connecting-ip") ?? cabecalhos.get("x-forwarded-for")?.split(",")[0] ?? "").trim();
     if (!isIP(remoteIp) || remoteIp === "127.0.0.1" || remoteIp === "::1")
       return { erro: "Não foi possível identificar o IP do pagador. Nenhum dado do cartão foi enviado." };
   }

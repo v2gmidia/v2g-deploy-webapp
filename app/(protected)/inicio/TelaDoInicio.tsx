@@ -65,28 +65,9 @@ function TrilhaDaExecucao({
   const posicoes = posicoesDaCadeia(etapas, atual);
 
   return (
-    <section className="trilha">
-      {/* ============================================================
-          UM CONTADOR SÓ NA TELA — itens N1 e N3 do QA.
-
-          Havia dois, e eles contavam coisas diferentes com palavras
-          parecidas: o herói dizia "1 de 4 fases" e esta seção, três
-          blocos abaixo, "2 de 6 etapas". Quem lê não tem como saber que
-          são a mesma caminhada medida em duas réguas — a leitura natural
-          é que alguma das duas está errada.
-
-          Quem fica com o contador é o HERÓI, porque é lá que ele responde
-          a pergunta "quanto falta". Aqui embaixo a lista responde outra:
-          "o que já está pronto". Lista não precisa de placar.
-
-          VOCABULÁRIO: a tela inteira diz **etapas**. As quatro do herói
-          são etapas; as seis daqui são etapas. "Fase" saiu — era palavra
-          nova para uma coisa que o cliente já tinha nome.
-          ============================================================ */}
-      <div className="section-title">
-        <h2>O que já está pronto</h2>
-      </div>
-      <div className="card">
+    <details className="trilha">
+      <summary>Ver todas as etapas da preparação</summary>
+      <div className="trilha-conteudo">
         {/* A frase do backend encabeça a trilha: é a única linha aqui que
             sabe o que o pipeline está fazendo AGORA. As seis abaixo são a
             cadeia local, que sabe a ordem. */}
@@ -104,7 +85,7 @@ function TrilhaDaExecucao({
           ))}
         </ol>
       </div>
-    </section>
+    </details>
   );
 }
 
@@ -118,26 +99,79 @@ function CabecalhoDoInicio() {
 
 /** As mesmas quatro fases da cadeia, em uma linha de acompanhamento. */
 function FasesDaCampanha({ fases }: { fases: ReturnType<typeof fasesDaCadeia> }) {
+  const feitas = fases.filter((fase) => fase.estado === "feita").length;
   return (
-    <ol className="inicio-fases" aria-label="Etapas da campanha">
-      {fases.map((f) => (
-        <li
-          className={`inicio-fase f-${f.estado}`}
-          key={f.id}
-          aria-current={f.estado === "atual" ? "step" : undefined}
-        >
-          <span className="inicio-fase-marca" aria-hidden="true">
-            {f.estado === "feita" && (
-              <svg viewBox="0 0 12 12" fill="none">
-                <path d="m2.5 6 2.2 2.2 4.8-4.8" stroke="currentColor" strokeWidth="1.5" />
-              </svg>
-            )}
-          </span>
-          <b>{f.nome}</b>
-          <span className="inicio-fase-rotulo">{f.rotulo}</span>
-        </li>
-      ))}
-    </ol>
+    <section className="inicio-jornada" aria-labelledby="inicio-jornada-titulo">
+      <div className="inicio-jornada-cabecalho">
+        <h2 id="inicio-jornada-titulo">Sua jornada</h2>
+        <span>{feitas} de {fases.length} etapas concluídas</span>
+      </div>
+      <ol className="inicio-fases" aria-label="Etapas da campanha">
+        {fases.map((f) => (
+          <li
+            className={`inicio-fase f-${f.estado}`}
+            key={f.id}
+            aria-current={f.estado === "atual" ? "step" : undefined}
+          >
+            <span className="inicio-fase-marca" aria-hidden="true">
+              {f.estado === "feita" && (
+                <svg viewBox="0 0 12 12" fill="none">
+                  <path d="m2.5 6 2.2 2.2 4.8-4.8" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+              )}
+            </span>
+            <b>{f.nome}</b>
+            <span className="inicio-fase-rotulo">{f.rotulo}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+function ProximoPasso({
+  pendencia,
+  proximo,
+  cuidadoComCampanha = false,
+}: {
+  pendencia: PendenciaDoOnboarding | null;
+  proximo: Etapa | null;
+  cuidadoComCampanha?: boolean;
+}) {
+  if (pendencia) return (
+    <section className="inicio-proximo" aria-labelledby="inicio-proximo-titulo">
+      <h2 id="inicio-proximo-titulo">Seu próximo passo</h2>
+      <h3>{pendencia.titulo}</h3>
+      <p>{pendencia.corpo}</p>
+      <a className="cta" href={pendencia.href}>{pendencia.rotulo}</a>
+    </section>
+  );
+
+  if (proximo) return (
+    <section className="inicio-proximo" aria-labelledby="inicio-proximo-titulo">
+      <h2 id="inicio-proximo-titulo">Seu próximo passo</h2>
+      <h3>{proximo.titulo}</h3>
+      <p>{proximo.corpo}</p>
+      {proximo.acao ? (
+        <a className="cta" href={proximo.acao.href}>{proximo.acao.rotulo}</a>
+      ) : (
+        <p className="proximo-nota">
+          {proximo.bola === "facebook"
+            ? cuidadoComCampanha
+              ? "Agora é com o Facebook. Não precisa fazer nada — e mexer na campanha agora atrasaria."
+              : "Agora é com o Facebook. Não precisa fazer nada."
+            : "Agora é com a gente. Você não precisa fazer nada."}
+        </p>
+      )}
+    </section>
+  );
+
+  return (
+    <section className="inicio-proximo" aria-labelledby="inicio-proximo-titulo">
+      <h2 id="inicio-proximo-titulo">Seu próximo passo</h2>
+      <h3>Nada está esperando por você</h3>
+      <p>Quando alguma coisa precisar da sua atenção, ela aparece aqui.</p>
+    </section>
   );
 }
 
@@ -182,7 +216,6 @@ export function TelaDoInicio({
   // As quatro fases do wireframe, sobre as seis etapas da cadeia. Quem
   // agrupa é `lib/estado/frases.ts` — a tela não decide o que é fase.
   const fases = fasesDaCadeia(etapas, proximo);
-  const fasesFeitas = fases.filter((f) => f.estado === "feita").length;
 
   // ============================================================
   // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
@@ -331,10 +364,10 @@ export function TelaDoInicio({
         {faixa}
         <CabecalhoDoInicio />
 
-        {/* O estado abre a leitura; a superfície de tarefa destaca a ação.
-            As quatro fases ficam logo abaixo, comuns às duas colunas. */}
+        {/* A tarefa vem da pendência real do onboarding ou da cadeia de execução. */}
         <div className="inicio-topo">
-          <section className="inicio-estado" aria-label="Sua campanha">
+          <ProximoPasso pendencia={pendenciaOnboarding} proximo={proximo} cuidadoComCampanha={diaZero} />
+          <section className="inicio-estado" aria-label={pendenciaOnboarding ? "Seu negócio" : "Sua campanha"}>
             {/* ============================================================
                 A MANCHETE DE VEICULAÇÃO VEM DA FONTE ÚNICA. ITEM B3.
 
@@ -350,42 +383,15 @@ export function TelaDoInicio({
                 fato sabe: que a cadeia chegou nos números. Só a frase
                 sobre o AR trocou de dono.
                 ============================================================ */}
+            <p>Estado do {pendenciaOnboarding ? "negócio" : "anúncio"}</p>
             <h2>
-              {diaZero
-                ? fraseDeVeiculacao(estado.veiculacao, "manchete")
-                : "Sua campanha está sendo preparada"}
+              {pendenciaOnboarding
+                ? "Seu negócio está em preparação"
+                : diaZero
+                  ? fraseDeVeiculacao(estado.veiculacao, "manchete")
+                  : "Sua campanha está sendo preparada"}
             </h2>
-            <p className="inicio-progresso">
-              Você já concluiu{" "}
-              <b>
-                {fasesFeitas} de {fases.length}
-              </b>{" "}
-              etapas.
-            </p>
-
           </section>
-
-          {proximo && (
-            <section className="inicio-proximo">
-              <h2>Seu próximo passo</h2>
-              <h3>{proximo.titulo}</h3>
-              <p>{proximo.corpo}</p>
-              {/* A ÚNICA ação cheia da tela. O rótulo e o destino vêm da
-                  etapa, que é quem sabe de quem é a bola — a tela não
-                  inventa botão para etapa que não é do cliente. */}
-              {proximo.acao ? (
-                <a className="cta" href={proximo.acao.href}>
-                  {proximo.acao.rotulo}
-                </a>
-              ) : (
-                <p className="proximo-nota">
-                  {proximo.bola === "facebook"
-                    ? "Agora é com o Facebook. Não precisa fazer nada — e mexer na campanha agora atrasaria."
-                    : "Agora é com a gente. Você não precisa fazer nada."}
-                </p>
-              )}
-            </section>
-          )}
         </div>
         <FasesDaCampanha fases={fases} />
 
@@ -405,8 +411,7 @@ export function TelaDoInicio({
           ============================================================ */}
         {!cabePerguntarSobreOntem && (
           <p className="foot-line">
-            As perguntas sobre venda começam quando seu anúncio estiver no ar. Até lá não há o
-            que contar.
+            As perguntas sobre vendas começam quando o anúncio estiver no ar.
           </p>
         )}
 
@@ -426,18 +431,6 @@ export function TelaDoInicio({
                   </p>
                 </div>
 
-                {/* Espaço reservado da missão do dia zero (wireframe do
-                    Figma). A mecânica ainda não existe; o lugar dela sim,
-                    para a tela não terminar num vazio que empurra a pessoa
-                    para a campanha. */}
-                <section className="mission-slot">
-                  <span className="ms-tag">Enquanto isso</span>
-                  <b>Adiante o que vai fazer falta depois</b>
-                  <p>
-                    Separe fotos que representem seu negócio e confira as informações que você
-                    nos passou. A equipe usa esse contexto para preparar e acompanhar os anúncios.
-                  </p>
-                </section>
               </>
             )}
 
@@ -451,8 +444,8 @@ export function TelaDoInicio({
           </div>
 
           <div className="inicio-col">
-            {diaZero ? <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} /> : <Suporte />}
             <Comando verba={estado.verbaMensal} investido={null} />
+            {diaZero && <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />}
           </div>
         </div>
       </div>
@@ -530,19 +523,10 @@ export function TelaDoInicio({
       {faixa}
       <CabecalhoDoInicio />
 
-      {pendenciaOnboarding && (
-        <section className="inicio-onboarding-pendente" aria-labelledby="inicio-onboarding-titulo">
-          <div>
-            <h2 id="inicio-onboarding-titulo">{pendenciaOnboarding.titulo}</h2>
-            <p>{pendenciaOnboarding.corpo}</p>
-          </div>
-          <a className="cta" href={pendenciaOnboarding.href}>{pendenciaOnboarding.rotulo}</a>
-        </section>
-      )}
-
       {/* A mesma composição do estado sem números: estado, tarefa e
           acompanhamento. Os números continuam condicionados a temNumero. */}
       <div className="inicio-topo">
+        <ProximoPasso pendencia={pendenciaOnboarding} proximo={proximo} />
         <section className="inicio-estado" aria-label="Sua campanha">
           {/* ============================================================
               UMA REDAÇÃO SÓ PARA VEICULAÇÃO — item N7 do QA.
@@ -562,51 +546,9 @@ export function TelaDoInicio({
               sendo a frase do pipeline. O que saiu daqui é o uso dele
               como manchete de veiculação.
               ============================================================ */}
+          <p>Estado do anúncio</p>
           <h2>{fraseDeVeiculacao(estado.veiculacao, "manchete")}</h2>
-          <p className="inicio-progresso">
-            Você já concluiu{" "}
-            <b>
-              {fasesFeitas} de {fases.length}
-            </b>{" "}
-            etapas.
-          </p>
         </section>
-
-        {proximo ? (
-          <section className="inicio-proximo">
-            <h2>Seu próximo passo</h2>
-            <h3>{proximo.titulo}</h3>
-            <p>{proximo.corpo}</p>
-            {proximo.acao ? (
-              <a className="cta" href={proximo.acao.href}>
-                {proximo.acao.rotulo}
-              </a>
-            ) : (
-              <p className="proximo-nota">
-                {proximo.bola === "facebook"
-                  ? "Agora é com o Facebook. Não precisa fazer nada."
-                  : "Agora é com a gente. Você não precisa fazer nada."}
-              </p>
-            )}
-          </section>
-        ) : (
-          /* Cadeia fechada: o cartão continua ocupando o lugar, porque
-             "não há nada te esperando" é informação — e some-lo faria o
-             topo mudar de forma justamente na visita em que está tudo em
-             ordem. O que ele não tem é botão: não há ação a oferecer. */
-          <section className="inicio-proximo">
-            <h2>Seu próximo passo</h2>
-            <h3>Nada está esperando por você</h3>
-            <p>
-              Todas as etapas do seu anúncio estão fechadas. Quando alguma coisa precisar de
-              você, ela aparece aqui primeiro.
-            </p>
-            <p className="proximo-nota">
-              A pergunta do dia continua sendo o que mais ajuda — é dela que sai a conta de
-              quanto voltou.
-            </p>
-          </section>
-        )}
       </div>
       <FasesDaCampanha fases={fases} />
 
@@ -683,8 +625,7 @@ export function TelaDoInicio({
           ============================================================ */}
       {!cabePerguntarSobreOntem && (
         <p className="foot-line">
-          As perguntas sobre venda começam quando seu anúncio estiver no ar. Até lá não há o
-          que contar.
+          As perguntas sobre vendas começam quando o anúncio estiver no ar.
         </p>
       )}
 
@@ -794,7 +735,6 @@ export function TelaDoInicio({
         </div>
 
         <div className="inicio-col">
-          <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
           {/* O investido só vai para o Comando quando ele é comparável
               com a verba, que é em reais. Em outra moeda, o card mostra
               só o teto. */}
@@ -808,6 +748,7 @@ export function TelaDoInicio({
                 : null
             }
           />
+          <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
         </div>
       </div>
     </div>
@@ -827,20 +768,13 @@ export function TelaDoInicio({
  */
 function Melhoras({ fotos }: { fotos: number }) {
   return (
-    <section>
-      <div className="section-title">
-        <h2>Enquanto isso, se você quiser</h2>
-        <span className="side-note">Ajuda, mas não trava nada</span>
-      </div>
-      <div className="card acct-list">
+    <details className="inicio-extras">
+      <summary>Outras ações para este negócio</summary>
+      <div className="acct-list">
         <a className="acct-row" href="/conta">
           <span className="ar-text">
-            <b>Separar fotos do seu negócio</b>
-            <span>
-              {fotos === 0
-                ? "Você ainda não mandou nenhuma. As fotos ajudam a equipe a conhecer seu negócio."
-                : `Você já mandou ${fotos} ${fotos === 1 ? "foto" : "fotos"}. Elas ajudam a equipe a conhecer seu negócio.`}
-            </span>
+            <b>Fotos do negócio</b>
+            <span>{fotos === 0 ? "Nenhuma enviada" : `${fotos} ${fotos === 1 ? "foto enviada" : "fotos enviadas"}`}</span>
           </span>
           <Seta />
         </a>
@@ -859,30 +793,27 @@ function Melhoras({ fotos }: { fotos: number }) {
             ============================================================ */}
         <a className="acct-row" href="/criativos">
           <span className="ar-text">
-            <b>Conferir uma peça que você já tem</b>
-            <span>
-              Se alguém já fez um anúncio para você, a gente diz se ele serve — antes de você
-              gastar com ele.
-            </span>
+            <b>Conferir uma peça</b>
+            <span>Analisar uma imagem antes de anunciar</span>
           </span>
           <Seta />
         </a>
         <a className="acct-row" href="/meu-negocio">
           <span className="ar-text">
-            <b>Conferir o que a gente entendeu do seu negócio</b>
-            <span>Principalmente os números — é deles que sai a mira dos anúncios.</span>
+            <b>Dados do negócio</b>
+            <span>Rever informações e valores</span>
           </span>
           <Seta />
         </a>
         <a className="acct-row" href="/expectativas">
           <span className="ar-text">
             <b>Ler os combinados</b>
-            <span>Os 4 acordos, antes de qualquer cobrança.</span>
+            <span>Como funciona o serviço</span>
           </span>
           <Seta />
         </a>
       </div>
-    </section>
+    </details>
   );
 }
 
@@ -914,7 +845,7 @@ function Noturno({ decisao, falha }: { decisao: { payload: unknown } | null; fal
 function Comando({ verba, investido }: { verba: number | null; investido: number | null }) {
   return (
     <section className="command-card">
-      <b className="title">Você está no comando</b>
+      <b className="title">Limite mensal</b>
       <p className="limit">
         {/* `"BRL"` nos dois: a verba é o que o cliente digitou em reais, e
             quem chama só passa `investido` quando ele é da mesma moeda. */}
@@ -925,10 +856,6 @@ function Comando({ verba, investido }: { verba: number | null; investido: number
             : `Seu teto do mês é ${dinheiro(verba, "BRL")}. `}
         <a href="/verba">{verba === null ? "definir agora" : "mudar limite"}</a>
       </p>
-      <a className="cta quiet" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-        Falar com uma pessoa
-      </a>
-      <p className="note">Fale com a equipe pelo WhatsApp.</p>
     </section>
   );
 }
@@ -941,18 +868,6 @@ function resumoDaDecisao(payload: unknown): string {
     }
   }
   return "Abra os avisos para ver o detalhe.";
-}
-
-function Suporte() {
-  return (
-    <section className="trust support-block">
-      <b className="title">Travou em alguma parte?</b>
-      Fale com a equipe pelo WhatsApp se precisar de ajuda.
-      <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-        Chamar no WhatsApp &rarr;
-      </a>
-    </section>
-  );
 }
 
 const Seta = () => (

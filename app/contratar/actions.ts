@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -9,6 +10,8 @@ import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-c
 import { urlCheckoutHospedadoSandbox } from "@/lib/contratacao/url-checkout";
 import { iniciarPagamento } from "./pagamento/actions";
 import { iniciarCheckoutHospedado } from "./checkout-hospedado";
+import { hashDeSeguranca, ipConfiavelDaVercel, segurancaCheckoutAtiva,
+  verificarTurnstile } from "@/lib/seguranca/checkout";
 
 export type CompraState = { erro?: string };
 
@@ -20,14 +23,29 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
   const emailPedido = String(form.get("email") ?? "").trim().toLowerCase();
   if (user?.email && user.email.trim().toLowerCase() !== emailPedido)
     return { erro: "Use o e-mail deste acesso para adicionar outro CNPJ. Para usar outro e-mail, saia e entre novamente." };
-  if (process.env.V2G_CHECKOUT_API_ENABLED !== "true")
-    return iniciarCheckoutHospedado(form);
-  if (!checkoutSandboxSeguroNesteServidor())
-    return { erro: "O pagamento de teste exige um banco de QA separado. Nenhum pedido foi enviado." };
   const validacao = validarCompra(form);
   if (!validacao.dados) return { erro: validacao.erro };
   const dados = validacao.dados;
   const admin = createAdminClient();
+  let segurancaJaVerificada = false;
+  if (segurancaCheckoutAtiva()) {
+    const ip = ipConfiavelDaVercel(await headers());
+    const token = String(form.get("cf-turnstile-response") ?? "");
+    const ipHash = ip ? hashDeSeguranca(ip) : null;
+    const contatoHash = hashDeSeguranca(dados.email);
+    if (!ip || !ipHash || !contatoHash || !await verificarTurnstile(token, ip))
+      return { erro: "Não foi possível confirmar a verificação de segurança. Atualize a página e tente novamente." };
+    const { data: permitido, error: erroLimite } = await admin.rpc("consumir_limite_checkout", {
+      p_scope: "order", p_ip_hash: ipHash, p_contact_hash: contatoHash,
+    });
+    if (erroLimite || permitido !== true)
+      return { erro: "Recebemos várias tentativas recentes. Aguarde uma hora ou procure a V2G." };
+    segurancaJaVerificada = true;
+  }
+  if (process.env.V2G_CHECKOUT_API_ENABLED !== "true")
+    return iniciarCheckoutHospedado(form);
+  if (!checkoutSandboxSeguroNesteServidor())
+    return { erro: "O pagamento de teste exige um banco de QA separado. Nenhum pedido foi enviado." };
   const { data: pedidoId, error: erroPedido } = await admin.rpc("registrar_pedido_self_service", {
     p_ref: dados.referencia, p_email: dados.email, p_buyer_name: dados.nome,
     p_whatsapp: dados.whatsapp, p_legal_name: dados.razaoSocial,
@@ -59,7 +77,7 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
   if (dados.metodo === "asaas_pix") {
     const pagamento = new FormData();
     pagamento.set("ref", dados.referencia);
-    return iniciarPagamento({}, pagamento);
+    return iniciarPagamento({}, pagamento, segurancaJaVerificada);
   }
   redirect(`/contratar/pagamento?ref=${encodeURIComponent(dados.referencia)}`);
 }

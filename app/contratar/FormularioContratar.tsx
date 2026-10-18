@@ -3,11 +3,12 @@
 import { startTransition, useActionState, useState } from "react";
 import { iniciarCompra, type CompraState } from "./actions";
 import { valorDoPedidoCentavos, type PeriodoDeCobranca } from "@/lib/contratacao/preco";
+import { Turnstile } from "@/components/seguranca/Turnstile";
 
 const inicial: CompraState = {};
 
-export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso }: {
-  referencia: string; apiAtiva: boolean; emailDoAcesso?: string;
+export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso, turnstileSiteKey }: {
+  referencia: string; apiAtiva: boolean; emailDoAcesso?: string; turnstileSiteKey?: string;
 }) {
   const [estado, acao, pendente] = useActionState(iniciarCompra, inicial);
   const [periodo, setPeriodo] = useState<PeriodoDeCobranca>("monthly");
@@ -72,6 +73,7 @@ export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso }: {
         <span>{periodo === "monthly" ? " por mês · permanência mínima de 6 meses"
           : periodo === "semiannual_upfront" ? " à vista por 6 meses · 5% de desconto"
           : " à vista por 12 meses · 12% de desconto"}</span></p>
+      {turnstileSiteKey !== undefined && <Turnstile siteKey={turnstileSiteKey} />}
       <button type="submit" disabled={pendente}>
         {pendente ? "Preparando pagamento…" : !apiAtiva ? "Continuar para o checkout de teste"
           : metodo === "asaas_pix" ? "Gerar Pix na V2G" : "Continuar para pagar na V2G"}

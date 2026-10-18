@@ -52,3 +52,15 @@
 3. Com 03/04 fechados, priorizar 01 antes de 02/05 para provar compra pública, vínculo LP → pedido e liberação de acesso. O 01 ainda depende do retorno de habilitação/fluxo 3DS do Asaas e de testes financeiros; o 02 depende de contrato final, representação e parâmetros fiscais. A frente operacional do gestor (possível 05) pode avançar em desenho e QA sem chamar pagamento, assinatura ou reunião de concluídos. Confirmar o escopo numerado do 05 antes de marcar progresso nele.
 
 Nenhum commit, push, deploy, alteração de configuração externa, migração, cobrança, reserva ou escrita na Meta foi feito nesta revisão.
+
+## Fechamento local do núcleo 03/04 — 18/10/2026
+
+Victor deu aceite funcional ao onboarding concluído e à troca multiconta. Os dois pontos restantes observados no retorno ao Início foram corrigidos localmente:
+
+- A pendência verificável do onboarding passou a ocupar `Seu próximo passo` antes da cadeia da campanha. Para um cadastro concluído sem reunião confirmada, o Início mostra o agendamento pendente em vez de priorizar a verba.
+- O Início deixou de consultar `public.execucoes` diretamente. A mesma resposta autenticada de `GET /negocios/{business_id}/execucao`, já usada para o estado do dia seguinte, agora também alimenta o estado local da cadeia. Isso remove a dependência incorreta da tabela ausente no Supabase de QA sem criar cópia do schema do backend.
+- `scripts/conferir-pendencia-onboarding.mjs` ganhou travas para a prioridade visual e para impedir que `lib/estado/cliente.ts` volte a depender da tabela local.
+
+Passaram nesta rodada: teste específico 5/5, `conferir:inicio` 39/39, `conferir:estado` 122, `conferir:multiconta` 28/28, `conferir:onboarding-preservacao` 72/72, `conferir:identidade` 6/6, `pnpm typecheck`, `pnpm build` e `git diff --check`. A suíte completa avançou até `conferir:migrations` e parou nas 18 divergências históricas do schema de QA já registradas nesta revisão; nenhuma foi introduzida por este fechamento.
+
+Este registro fecha localmente o núcleo de interface e isolamento das etapas 03/04 conforme o aceite de Victor. Voz, agenda Google própria, upload real e publicação continuam provas/configurações externas separadas; este fechamento não as declara configuradas. Nenhum commit, push, deploy, migration ou escrita externa foi executado.

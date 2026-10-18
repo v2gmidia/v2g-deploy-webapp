@@ -27,7 +27,10 @@ export default async function ComprasDoGestorPage({ searchParams }: {
     // As três colunas da tentativa por API existem no QA, mas ainda não no banco real.
     const colunasDaApi = process.env.V2G_CHECKOUT_API_ENABLED === "true" && checkoutSandboxSeguroNesteServidor()
       ? ", provider_charge_id, provider_subscription_id, payment_creation_started_at" : "";
-    const colunas = `id, buyer_email, legal_name, cnpj, origin, payment_method, billing_period, unit_count, total_cents, status, business_id, buyer_profile_id, created_at${colunasDaApi}`;
+    const colunasDoLead = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true"
+      ? ", source_system, source_lead_id, source_lead_origin, source_lead_utm_source, source_lead_utm_medium, source_lead_utm_campaign, source_lead_utm_content, source_lead_consent_at"
+      : "";
+    const colunas = `id, buyer_email, legal_name, cnpj, origin, payment_method, billing_period, unit_count, total_cents, status, business_id, buyer_profile_id, created_at${colunasDaApi}${colunasDoLead}`;
     let consulta = admin.from("commercial_orders").select(colunas)
       .order("created_at", { ascending: false }).limit(200);
     if (negocioId) consulta = consulta.eq("business_id", negocioId);
@@ -136,6 +139,13 @@ export default async function ComprasDoGestorPage({ searchParams }: {
       <div className={styles.lista}>{visiveis.map((pedido) => <section className={`auth-card ${styles.cartao}`} key={pedido.id}>
         <h2>{pedido.legal_name}</h2>
         <p>{pedido.buyer_email} · CNPJ {pedido.cnpj}</p>
+        {pedido.source_system === "v2g_site" && pedido.source_lead_id && <p className="form-notice">
+          Lead #{pedido.source_lead_id} da LP · origem {pedido.source_lead_origin || "não informada"} · UTMs {[
+            pedido.source_lead_utm_source, pedido.source_lead_utm_medium,
+            pedido.source_lead_utm_campaign, pedido.source_lead_utm_content,
+          ].filter(Boolean).join(" / ") || "não informadas"} · consentimento {pedido.source_lead_consent_at
+            ? data.format(new Date(pedido.source_lead_consent_at)) : "sem data"}.
+        </p>}
         <p><strong>{situacaoDaCompra(pedido)}</strong> · {pedido.origin === "self_service" ? "Compra direta" : "Venda assistida"} · {pedido.payment_method === "asaas_card" ? "Cartão" : "Pix"}</p>
         <p>{pedido.unit_count} {pedido.unit_count === 1 ? "conta" : "contas"} · {periodoDaCompra(pedido.billing_period)} · {dinheiro.format(pedido.total_cents / 100)} · {data.format(new Date(pedido.created_at))}</p>
         <p>{pedido.business_id ? "Negócio vinculado" : "Negócio ainda não vinculado"} · {pedido.buyer_profile_id ? "Perfil vinculado ao pedido" : "Perfil ainda não vinculado"}</p>
