@@ -1,5 +1,11 @@
 # V2G — mapa de execução do plano outubro–dezembro de 2026
 
+> **Atualização posterior, 18/10/2026:** as ideias de produto para depois da
+> base atual foram organizadas em
+> [`metas-produto-evolucao-operacional-18-10.md`](./metas-produto-evolucao-operacional-18-10.md).
+> Este arquivo continua sendo o retrato do plano lido em 05/10; o novo mapa não
+> transforma hipótese futura em entrega aprovada.
+
 Leitura de trabalho em 05/10/2026. Fonte: `C:/Users/victo/Downloads/V2G_Plano_de_Execucao_Outubro_Dezembro_2026.pdf`, 8 páginas, datado de 03/10. O PDF reúne objetivos dos founders e também **critérios e datas intermediárias propostos**; suas frases não são autorização para fazer deploy, cobrar, migrar dados ou publicar campanhas. Decisões diretas de Victor e Gabriel e evidência atual têm precedência. Preço continua indefinido.
 
 ## Como manter este mapa

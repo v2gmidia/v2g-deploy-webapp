@@ -116,6 +116,8 @@ São ~45 documentos. **Não leia todos.** Escolha pelo assunto:
 - `docs/onboarding-expandido.md`, `docs/perfil-empresa.md`, `docs/extracao-perfil.md`
 - `docs/estado-do-cliente.md`, `docs/revisao-perfil-cliente.md`
 - `docs/publicar-campanha.md`, `docs/tela-processando.md`, `docs/upload-identidade.md`
+- `docs/metas-produto-evolucao-operacional-18-10.md` — ideias futuras organizadas
+  por dependência, prova e degrau de autonomia; não são funções aprovadas.
 
 **Design**
 - `docs/padrao-visual.md`, `docs/contraste.md`, `docs/escala-tipografica.md`
