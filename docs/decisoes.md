@@ -14,6 +14,14 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-19 — Piloto de referências de barbearia sem painel
+
+**Direção posterior do Victor no chat:** iniciar o trabalho de referências e classificação de criativos ligados a barbearia, tomar as decisões operacionais do piloto sem depender de nova escolha dele e não construir painel agora. Barbearia é o recorte inicial; cabeleireiro, manicure e fornecedores de produtos para barbeiros não entram automaticamente no mesmo lote. A distinção de subnicho só vira regra do catálogo depois de conferir o ID técnico e casos reais.
+
+**Limite de execução:** a delegação autoriza avançar no piloto e registrar metadados públicos com origem e descarte explícitos; não transforma a Biblioteca da Meta em API de coleta geral de anúncios comerciais brasileiros, não prova desempenho de concorrente e não autoriza uso indevido de imagens de terceiros. O Jev só analisa uma imagem depois de haver caminho de coleta/uso admissível, controle de custo e prova da chamada. As proibições permanentes de commit, push, deploy, migration e escrita na Meta continuam vigentes.
+
+**Motivo:** testar o valor da análise em lote com evidência verificável antes de ampliar volume e custo.
+
 ### 2026-10-19 — Aplicar os cinco ajustes do QA de interface
 
 **Aprovação direta do Victor: “Pode aplicar todos esses”.** Aplicar a coerência entre pendências de Início e Avisos, corrigir o convite de envio quando Criativos está indisponível, compactar orientações no Início com resultados, explicitar e preservar o período ao navegar entre Início e Anúncios e encurtar títulos/textos redundantes da Conta. Preservar a identidade visual e a ausência do sumário. Falha de consulta não pode ser apresentada como “tudo em dia”.

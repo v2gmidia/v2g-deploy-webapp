@@ -35,6 +35,8 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`criativos-barbearia-triagem-n8n-19-10.md`](./criativos-barbearia-triagem-n8n-19-10.md) | 19/10/2026 | Busca pública manual, 10 referências registradas no n8n, triagem 6/4 e execução 13 sem Jev. | **Sim.** Fonte admissível de imagens em lote, direito/uso, ID técnico do nicho e piloto visual medido. |
+| [`criativos-n8n-mapa-piloto-19-10.md`](./criativos-n8n-mapa-piloto-19-10.md) | 19/10/2026 | Fluxo manual e inativo no n8n para portas de referência, direitos e custo; mapa do lugar dos documentos, teste simulado e atualização do FigJam. | **Sim.** Amostra autorizada, ID do nicho, teto por ensaio, credencial TypeSafe e piloto pago medido. |
 | [`ajustes-qa-interface-19-10.md`](./ajustes-qa-interface-19-10.md) | 19/10/2026 | Cinco ajustes aprovados do QA: pendências coerentes, envio disponível, Início compacto, período em Anúncios e Conta concisa. | **Sim.** Revisão autenticada e publicação manual; prévia local e testes isolados não comprovam produção. |
 | [`revops-noite-19-10.md`](./revops-noite-19-10.md) | 19/10/2026 | Modelo operacional aplicado à V2G e alertas locais de qualidade por oportunidade; sem banco real. | **Sim.** Revisão da taxonomia, SLAs, migration e ponte com Finance. |
 | [`criativos-jev-contrato-piloto-18-10.md`](./criativos-jev-contrato-piloto-18-10.md) | 18/10/2026 | Contrato local para classificação visual experimental no Jev, multipart e testes sintéticos; sem chamadas externas. | **Sim.** Nicho/negócio, material e teto; piloto medido e autorizações próprias para dados reais, banco e publicação. |
