@@ -145,9 +145,10 @@ export default async function CriativosPage() {
     {falhaDaGaleria ? <p className="form-warning">Parte da biblioteca não pôde ser carregada agora. Tente novamente mais tarde.</p> : null}
     <TelaDeCriativos
       itens={itens}
+      envioDisponivel={revisaoHabilitada && Boolean(negocioId)}
       envio={revisaoHabilitada && negocioId
         ? <PedirRevisao businessId={negocioId} />
-        : <p className="form-warning">O envio para revisão ainda não está disponível nesta conta.</p>}
+        : null}
       analise={amostra
         ? <AmostraDeVereditos qual={amostra} />
         : <Analisar podeEnviar={podeAnalisar} businessId={negocioId ?? ""} />}

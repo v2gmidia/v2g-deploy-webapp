@@ -35,9 +35,8 @@ import type { RespostaDoDono, ResultadoParaTela } from "./tipos.ts";
  * `pnpm conferir:campanha-da-sessao` trava isso por leitura de código.
  * ============================================================
  *
- * A JANELA é a padrão do backend (`ate` = hoje, `desde` = `ate - 29d`).
- * Não repetimos esses defaults: dois lugares decidindo a janela é a
- * família de defeito que este repositório passa a vida consertando.
+ * A tela pode passar a mesma janela livre do Início. Quando omitida,
+ * permanece o padrão do backend. Negócio e execuções recebem o mesmo recorte.
  */
 
 /** Em que ponto a campanha está — e os quatro são visualmente diferentes. */
@@ -128,6 +127,7 @@ export interface ResultadoDoNegocio {
    * entre "não perguntamos ainda" e "não conseguimos ler".
    */
   doDono: RespostaDoDono | null;
+  periodo?: { desde: string; ate: string };
 }
 
 const VAZIO: ResultadoDoNegocio = {
@@ -143,11 +143,14 @@ export async function resultadoDoNegocio(args: {
   businessId: string;
   /** de `auth.getUser()`, nunca de formulário */
   profileId: string;
+  intervalo?: { desde: string; ate: string };
 }): Promise<ResultadoDoNegocio> {
   // ---- 1. a porta, e ela é a que confere o dono ----
   const acumulado = await consolidadoDoNegocio({
     businessId: args.businessId,
     profileId: args.profileId,
+    desde: args.intervalo?.desde,
+    ate: args.intervalo?.ate,
   });
 
   if (!acumulado.ok) {
@@ -177,7 +180,7 @@ export async function resultadoDoNegocio(args: {
     porExecucao.map(async (ficha): Promise<CampanhaNaTela | null> => {
       const [respFicha, respConsolidado] = await Promise.all([
         fichaDaExecucao({ idExecucao: ficha.idExecucao }),
-        consolidadoDaExecucao({ idExecucao: ficha.idExecucao }),
+        consolidadoDaExecucao({ idExecucao: ficha.idExecucao, desde: args.intervalo?.desde, ate: args.intervalo?.ate }),
       ]);
 
       if (!respConsolidado.ok) return null;
@@ -227,5 +230,6 @@ export async function resultadoDoNegocio(args: {
     // `./ler.ts`: as duas rotas satisfazem o mesmo tipo, e quem passasse
     // a da execução traria de volta o defeito que o B2 fechou.
     doDono: respostaDoDono(acumulado.dados),
+    periodo: { desde: acumulado.dados.desde, ate: acumulado.dados.ate },
   };
 }

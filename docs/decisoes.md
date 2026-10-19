@@ -14,6 +14,12 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-19 — Aplicar os cinco ajustes do QA de interface
+
+**Aprovação direta do Victor: “Pode aplicar todos esses”.** Aplicar a coerência entre pendências de Início e Avisos, corrigir o convite de envio quando Criativos está indisponível, compactar orientações no Início com resultados, explicitar e preservar o período ao navegar entre Início e Anúncios e encurtar títulos/textos redundantes da Conta. Preservar a identidade visual e a ausência do sumário. Falha de consulta não pode ser apresentada como “tudo em dia”.
+
+**Limite:** a aprovação não habilita upload bloqueado, não muda textos legais nem autoriza publicação ou escrita em dados reais. A operação atual permanece separada do recorte histórico dos resultados. Implementação e testes locais em `docs/estado/ajustes-qa-interface-19-10.md`.
+
 ### 2026-10-18 — Base de contexto e fluxo de criativos por etapas
 
 **Direção aprovada pelo Victor no chat, posterior ao desenho do envio de peça pronta.** Antes de gerar imagens, a V2G organiza uma regra central e documentos aplicáveis por nicho, com dados do negócio, identidade visual, referências verificáveis e lacunas explícitas. O primeiro uso prático continua sendo o cliente subir uma peça pronta; a tela pode informar que a análise e a preparação da publicação acontecem depois, sem afirmar que a peça foi publicada. O fluxo futuro recebe objetivo/promoção declarados pelo cliente, gera uma proposta, permite até três pedidos de refação com instrução do cliente e separa aprovação da peça, revisão operacional e publicação comprovada. Provedor e custo da geração serão decididos por piloto medido, não por preferência antecipada.

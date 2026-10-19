@@ -1,12 +1,14 @@
-import { alertasDeQualidade, ROTULOS_EVIDENCIA, ROTULOS_INTERACAO } from "@/lib/revops/contrato";
+import {
+  alertasDaOportunidade,
+  descricaoDaFonteRevOps,
+  METADADOS_ETAPA_REVOPS,
+  ROTULOS_INTERACAO,
+  ROTULOS_NATUREZA_ETAPA,
+  rotuloDaEvidencia,
+  resumoOperacionalRevOps,
+} from "@/lib/revops/contrato";
 import type { OportunidadeRevOps } from "@/lib/revops/dados";
 import { FormInteressado, FormInteracao } from "./Formularios";
-
-const ETAPAS: Record<string, string> = {
-  interested: "Interessado", qualification: "Qualificação", meeting: "Reunião",
-  proposal: "Proposta", decision: "Decisão", purchase_reported: "Compra relatada",
-  won_verified: "Venda verificada", lost: "Perdida", postponed: "Adiada",
-};
 
 const DIAGNOSTICOS: Record<string, string> = {
   not_assessed: "Instagram ainda não avaliado",
@@ -26,13 +28,8 @@ export function TelaRevOps({ oportunidades, falhaConsulta = false, referencia, s
   referencia: string;
   somenteLeitura?: boolean;
 }) {
-  const semProximoPasso = oportunidades.filter((oportunidade) => !oportunidade.proximoPasso).length;
-  const inferenciasPendentes = oportunidades.flatMap((oportunidade) => oportunidade.interacoes)
-    .filter((interacao) => interacao.evidencia === "inference" && interacao.revisaoHumana === "pending").length;
-
-  const total = falhaConsulta ? "—" : String(oportunidades.length);
-  const semPasso = falhaConsulta ? "—" : String(semProximoPasso);
-  const inferencias = falhaConsulta ? "—" : String(inferenciasPendentes);
+  const resumo = resumoOperacionalRevOps(oportunidades);
+  const numero = (valor: number) => falhaConsulta ? "—" : String(valor);
 
   return <>
     <div className="revops-abertura">
@@ -44,10 +41,13 @@ export function TelaRevOps({ oportunidades, falhaConsulta = false, referencia, s
     </div>
 
     <section className="revops-resumo" aria-label="Qualidade dos dados">
-      <div><strong>{total}</strong><span>oportunidades registradas</span></div>
-      <div><strong>{semPasso}</strong><span>sem próximo passo</span></div>
-      <div><strong>{inferencias}</strong><span>inferências para revisar</span></div>
-      <p>Conversas geradas por anúncios de clientes não entram nestas contagens.</p>
+      <div><strong>{numero(resumo.oportunidades)}</strong><span>oportunidades</span></div>
+      <div><strong>{numero(resumo.comResponsavel)}</strong><span>com responsável</span></div>
+      <div><strong>{numero(resumo.comProximoPasso)}</strong><span>com próximo passo</span></div>
+      <div><strong>{numero(resumo.reunioesRealizadas)}</strong><span>reuniões realizadas</span></div>
+      <div><strong>{numero(resumo.comprasRelatadas)}</strong><span>compras relatadas</span></div>
+      <div><strong>{numero(resumo.vendasVerificadas)}</strong><span>vendas verificadas</span></div>
+      <p>Sem taxa de conversão enquanto elegibilidade, janela e cobertura dos dados não estiverem definidas. Conversas de anúncios dos clientes ficam fora.</p>
     </section>
 
     {falhaConsulta && <p className="form-warning" role="status">
@@ -80,11 +80,14 @@ export function TelaRevOps({ oportunidades, falhaConsulta = false, referencia, s
         </div>}
 
         {oportunidades.map((oportunidade) => {
-          const alertas = alertasDeQualidade(oportunidade.interacoes);
+          const alertas = alertasDaOportunidade(oportunidade);
+          const etapa = METADADOS_ETAPA_REVOPS[oportunidade.etapa];
           return <article className="revops-oportunidade" key={oportunidade.id}>
             <header className="revops-oportunidade-head">
               <div><h3>{oportunidade.empresa}</h3><p>{oportunidade.pessoas.join(" · ") || "Pessoa não informada"}</p></div>
-              <span className="revops-etapa">{ETAPAS[oportunidade.etapa] ?? "Estado desconhecido"}</span>
+              <span className="revops-etapa" data-natureza={etapa.natureza}>
+                {ROTULOS_NATUREZA_ETAPA[etapa.natureza]} · {etapa.rotulo}
+              </span>
             </header>
 
             <div className="revops-proximo">
@@ -96,6 +99,9 @@ export function TelaRevOps({ oportunidades, falhaConsulta = false, referencia, s
               <div><dt>Diagnóstico</dt><dd>{DIAGNOSTICOS[oportunidade.diagnosticoInstagram] ?? "Não informado"}</dd></div>
               <div><dt>Vínculos verificados</dt><dd>
                 LP {oportunidade.vinculos.lp ? "sim" : "não"} · pedido {oportunidade.vinculos.pedido ? "sim" : "não"} · negócio {oportunidade.vinculos.negocio ? "sim" : "não"}
+                {oportunidade.vinculos.prova && <small className="revops-prova-vinculo">
+                  Evidência registrada em {dataHora(oportunidade.vinculos.prova.registradaEm)}: {oportunidade.vinculos.prova.descricao}
+                </small>}
               </dd></div>
             </dl>
 
@@ -113,10 +119,15 @@ export function TelaRevOps({ oportunidades, falhaConsulta = false, referencia, s
                 <div className="revops-evento">
                   <div className="revops-evento-topo">
                     <strong>{ROTULOS_INTERACAO[interacao.tipo]}</strong>
-                    <span data-evidencia={interacao.evidencia}>{ROTULOS_EVIDENCIA[interacao.evidencia]}</span>
+                    <span data-evidencia={interacao.evidencia}>
+                      {rotuloDaEvidencia(interacao.evidencia, interacao.revisaoHumana)}
+                    </span>
                   </div>
                   <p>{interacao.resumo}</p>
-                  <small>{interacao.fonte.canal} · {interacao.fonte.sistema} · ref. {interacao.fonte.referencia}</small>
+                  <small>{descricaoDaFonteRevOps(interacao.fonte)}</small>
+                  {interacao.revisadoPorId && interacao.revisadoEm && <small>
+                    Revisão humana registrada em {dataHora(interacao.revisadoEm)}; autoria preservada no registro interno.
+                  </small>}
                   {interacao.transcricao === "pending" && <em>Transcrição pendente</em>}
                 </div>
               </li>)}

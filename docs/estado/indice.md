@@ -35,6 +35,9 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`ajustes-qa-interface-19-10.md`](./ajustes-qa-interface-19-10.md) | 19/10/2026 | Cinco ajustes aprovados do QA: pendências coerentes, envio disponível, Início compacto, período em Anúncios e Conta concisa. | **Sim.** Revisão autenticada e publicação manual; prévia local e testes isolados não comprovam produção. |
+| [`revops-noite-19-10.md`](./revops-noite-19-10.md) | 19/10/2026 | Modelo operacional aplicado à V2G e alertas locais de qualidade por oportunidade; sem banco real. | **Sim.** Revisão da taxonomia, SLAs, migration e ponte com Finance. |
+| [`criativos-jev-contrato-piloto-18-10.md`](./criativos-jev-contrato-piloto-18-10.md) | 18/10/2026 | Contrato local para classificação visual experimental no Jev, multipart e testes sintéticos; sem chamadas externas. | **Sim.** Nicho/negócio, material e teto; piloto medido e autorizações próprias para dados reais, banco e publicação. |
 | [`periodo-livre-conta-sem-sumario-18-10.md`](./periodo-livre-conta-sem-sumario-18-10.md) | 18/10/2026 | Calendário livre e Conta sem sumário, preservando operação e demais telas. | **Sim.** Conferência e publicação manual; ensaio autenticado local pendente. |
 | [`criativos-contexto-e-nicho-18-10.md`](./criativos-contexto-e-nicho-18-10.md) | 18/10/2026 | Decisão do canal de aprovação, base central de contexto, modelo de nicho e limite experimental do Jev com imagens. | **Sim.** Nicho/negócio piloto, materiais e teto; conciliação contratual; aprovações próprias para código, banco e integrações. |
 | [`revisao-visual-produto-18-10.md`](./revisao-visual-produto-18-10.md) | 18/10/2026 | Revisão visual das cinco telas, responsividade, temas, navegação da Conta e prévia local. | **Sim.** Revisão do Victor e ensaio autenticado das alterações; sem publicação. |

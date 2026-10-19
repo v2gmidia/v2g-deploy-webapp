@@ -6,6 +6,7 @@ import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 import { resumirPendencias } from "@/lib/alertas/pendencias";
 import { AbasDeAvisos } from "./AbasDeAvisos";
+import { lerPendenciaDoNegocio } from "@/lib/onboarding/pendencia-do-negocio";
 
 export const metadata = tituloDaAba("/alertas");
 
@@ -34,6 +35,11 @@ export default async function AlertasPage() {
 
   // A RLS limita aos negócios do perfil, mas um perfil pode ter mais de
   // um. A tela precisa acompanhar o mesmo negócio do restante do app.
+  const jornada = await lerPendenciaDoNegocio(estado.negocioId);
+  const proximo = estado.proximo;
+  const aguardandoReuniao = jornada.reserva && !estado.diaSeguinte.execucao && estado.campanhasNoAr.length === 0;
+  const pendenciaPrincipal = jornada.pendencia ?? (!jornada.falha && !aguardandoReuniao && proximo?.acao
+    ? { titulo: proximo.titulo, corpo: proximo.corpo, ...proximo.acao } : null);
   const { data: pendentes, error: erroPendentes, count: totalDecisoes } = estado.negocioId
     ? await supabase
         .from("decisions")
@@ -100,6 +106,7 @@ export default async function AlertasPage() {
     decisoesTotal: erroPendentes ? null : totalDecisoes,
     ajustesExibidos: ajustesDeCriativo.length,
     ajustesTotal: ajustes.error ? null : ajustes.count,
+    jornadaTotal: jornada.falha ? null : pendenciaPrincipal ? 1 : 0,
   });
 
   // A CONTAGEM VIVE NO TÍTULO DA SEÇÃO, não numa faixa.
@@ -128,7 +135,12 @@ export default async function AlertasPage() {
       Não conseguimos conferir todas as pendências agora. A lista pode estar incompleta.
     </p>}
 
-    {temPendencia || ajustesDeCriativo.length > 0 || (ajustes.count ?? 0) > 0 ? <div className="avisos-pendencias">
+    {pendenciaPrincipal || temPendencia || ajustesDeCriativo.length > 0 || (ajustes.count ?? 0) > 0 ? <div className="avisos-pendencias">
+      {pendenciaPrincipal && <article className="aviso-linha atencao">
+        <span className="aviso-sinal" aria-hidden="true" />
+        <div className="aviso-corpo"><h3>{pendenciaPrincipal.titulo}</h3><p>{pendenciaPrincipal.corpo}</p></div>
+        <a className="aviso-acao" href={pendenciaPrincipal.href}>{pendenciaPrincipal.rotulo} <span aria-hidden="true">→</span></a>
+      </article>}
       {ajustesDeCriativo.map((r) => <article className="aviso-linha atencao" key={r.id}>
         <span className="aviso-sinal" aria-hidden="true" />
         <div className="aviso-corpo">

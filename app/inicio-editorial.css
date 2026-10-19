@@ -1160,3 +1160,55 @@
     grid-row: auto;
   }
 }
+
+/* QA: uma pendência compacta, sem deslocar o resumo para outra tela. */
+.v2g-editorial .inicio-pendencia-compacta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-bottom: 16px;
+  background: var(--task-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--raio-cartao);
+}
+.v2g-editorial .inicio-pendencia-compacta > div { min-width: 0; }
+.v2g-editorial .inicio-pendencia-compacta h2 {
+  margin: 0;
+  font-size: var(--fs-titulo);
+  line-height: 1.4;
+  font-weight: 600;
+}
+.v2g-editorial .inicio-pendencia-compacta summary {
+  display: list-item;
+  width: fit-content;
+  padding-block: 8px;
+  color: var(--cobalt-ink);
+  cursor: pointer;
+}
+.v2g-editorial .inicio-pendencia-compacta details p { max-width: 65ch; margin: 4px 0 0; color: var(--ink-soft); }
+.v2g-editorial .inicio-pendencia-compacta .cta { flex: 0 0 auto; width: auto; }
+.v2g-editorial .inicio-situacao-resumida { margin-bottom: 20px; }
+.v2g-editorial .inicio-situacao-resumida .inicio-estado {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.v2g-editorial .inicio-situacao-resumida .inicio-estado h2 {
+  font-size: var(--fs-corpo);
+  line-height: 1.5;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--ink-soft);
+}
+.v2g-editorial .inicio-situacao-resumida .inicio-estado-link { min-height: 44px; display: inline-flex; align-items: center; }
+.v2g-editorial .anuncios-periodo { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
+.v2g-editorial .anuncios-periodo > a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 620px) {
+  .v2g-editorial .inicio-pendencia-compacta { align-items: stretch; flex-direction: column; padding: 14px; gap: 4px; }
+  .v2g-editorial .inicio-pendencia-compacta summary { min-height: 44px; }
+  .v2g-editorial .inicio-situacao-resumida { margin-bottom: 12px; }
+  .v2g-editorial .anuncios-periodo { flex-direction: column-reverse; align-items: stretch; gap: 4px; }
+}

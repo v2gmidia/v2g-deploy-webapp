@@ -56,6 +56,7 @@
     "db:studio": "supabase start",
     "conferir:campanha-da-sessao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-campanha-da-sessao.ts",
     "conferir:inicio": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs scripts/conferir-inicio.ts",
+    "conferir:qa-interface": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-qa-interface.mjs",
     "conferir:portao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-portao-de-fixture.ts",
     "conferir:analise": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs scripts/conferir-analise.ts",
     "conferir:jev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-jev.ts",

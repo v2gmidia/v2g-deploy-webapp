@@ -7,11 +7,8 @@ import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
 import { TelaDoInicio } from "./TelaDoInicio";
-import { estadoDaConclusao, pendenciaDoOnboarding, type PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
-import { fluxoAguardaReuniao } from "@/lib/onboarding/marca";
+import { lerPendenciaDoNegocio } from "@/lib/onboarding/pendencia-do-negocio";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
-import { agendaGoogleConfigurada } from "@/lib/agenda/google";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { InicioAposReserva } from "./InicioAposReserva";
 import { consolidadoDoNegocio } from "@/lib/backend/dia-seguinte";
 
@@ -156,31 +153,12 @@ export default async function InicioPage({
   // A escolha do negócio sempre permanece no Início. Esta leitura resolve
   // qual pendência do onboarding deve aparecer aqui, sem transformar uma
   // declaração sobre a agenda externa em prova de reserva.
-  let pendenciaOnboarding: PendenciaDoOnboarding | null = null;
-  if (!fixture && estado.negocioId) {
-    const { data: jornada, error: erroJornada } = await supabase
-      .from("businesses").select("onboarding, site_url, avg_ticket_min, avg_ticket_max, avg_direct_cost, target_profit_per_customer")
-      .eq("id", estado.negocioId).eq("profile_id", user!.id).maybeSingle();
-    if (erroJornada) console.error("[inicio] falha ao ler conclusão ::", erroJornada.message);
-    if (jornada && fluxoAguardaReuniao(jornada.onboarding)) {
-      let reservaConfirmada = false;
-      const conclusao = estadoDaConclusao(jornada);
-      if (conclusao.concluido && agendaGoogleConfigurada()) {
-        const { data: reserva, error: erroReserva } = await createAdminClient()
-          .from("onboarding_meetings").select("starts_at, ends_at")
-          .eq("business_id", estado.negocioId).eq("status", "confirmed")
-          .order("created_at", { ascending: false }).limit(1).maybeSingle();
-        if (erroReserva) console.error("[inicio] falha ao ler reserva ::", erroReserva.message);
-        reservaConfirmada = Boolean(reserva && !erroReserva);
-        // Após a reunião, a tela de campanha volta a ser a fonte da jornada.
-        // Antes de existir execução, não apresentar a cadeia antiga como se
-        // o cliente tivesse de publicar o primeiro anúncio por conta própria.
-        if (reserva && !erroReserva && !estado.diaSeguinte.execucao && estado.campanhasNoAr.length === 0)
-          return <InicioAposReserva inicio={reserva.starts_at} fim={reserva.ends_at} />;
-      }
-      pendenciaOnboarding = pendenciaDoOnboarding(jornada, reservaConfirmada);
-    }
-  }
+  const leituraDaPendencia = !fixture && estado.negocioId
+    ? await lerPendenciaDoNegocio(estado.negocioId)
+    : { pendencia: null, falha: false, reserva: null };
+  const { pendencia: pendenciaOnboarding, reserva } = leituraDaPendencia;
+  if (reserva && !estado.diaSeguinte.execucao && estado.campanhasNoAr.length === 0)
+    return <InicioAposReserva inicio={reserva.starts_at} fim={reserva.ends_at} />;
 
   const { data: ultimaDecisao, error: erroDecisao } = estado.negocioId ? await supabase
     .from("decisions")
@@ -227,6 +205,7 @@ export default async function InicioPage({
       diaDaPergunta={diaDaPergunta}
       atrasados={atrasados}
       pendenciaOnboarding={pendenciaOnboarding}
+      falhaPendencia={leituraDaPendencia.falha}
       intervalo={intervalo}
       acumuladoDoPeriodo={acumuladoDoPeriodo}
       investidoNoMesCentavos={investidoNoMesCentavos}

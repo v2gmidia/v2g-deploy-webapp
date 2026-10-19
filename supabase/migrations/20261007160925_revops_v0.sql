@@ -97,6 +97,8 @@ create table public.revops_interactions (
   human_review_status text not null default 'not_applicable' check (
     human_review_status in ('not_applicable', 'pending', 'confirmed', 'rejected')
   ),
+  reviewed_by uuid references public.profiles(id) on delete restrict,
+  reviewed_at timestamptz,
   recorded_by uuid not null references public.profiles(id) on delete restrict,
   occurred_at timestamptz not null,
   created_at timestamptz not null default now(),
@@ -106,6 +108,18 @@ create table public.revops_interactions (
   constraint revops_inference_requires_review check (
     (evidence_kind = 'inference' and human_review_status <> 'not_applicable')
     or (evidence_kind <> 'inference' and human_review_status = 'not_applicable')
+  ),
+  constraint revops_human_review_has_audit check (
+    (
+      human_review_status in ('not_applicable', 'pending')
+      and reviewed_by is null
+      and reviewed_at is null
+    )
+    or (
+      human_review_status in ('confirmed', 'rejected')
+      and reviewed_by is not null
+      and reviewed_at is not null
+    )
   )
 );
 

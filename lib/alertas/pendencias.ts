@@ -4,13 +4,14 @@ export function resumirPendencias(entrada: {
   decisoesTotal: number | null;
   ajustesExibidos: number;
   ajustesTotal: number | null;
+  jornadaTotal?: number | null;
 }): { total: number | null; leituraCompleta: boolean; ajustesNaoExibidos: number } {
-  const { decisoesExibidas, decisoesTotal, ajustesExibidos, ajustesTotal } = entrada;
-  const contagensCoerentes = decisoesTotal !== null && ajustesTotal !== null
+  const { decisoesExibidas, decisoesTotal, ajustesExibidos, ajustesTotal, jornadaTotal = 0 } = entrada;
+  const contagensCoerentes = jornadaTotal !== null && decisoesTotal !== null && ajustesTotal !== null
     && decisoesTotal >= decisoesExibidas && ajustesTotal >= ajustesExibidos;
   const leituraCompleta = contagensCoerentes && decisoesExibidas >= decisoesTotal;
   return {
-    total: contagensCoerentes ? decisoesTotal + ajustesTotal : null,
+    total: contagensCoerentes ? decisoesTotal + ajustesTotal + jornadaTotal : null,
     leituraCompleta,
     ajustesNaoExibidos: ajustesTotal === null ? 0 : Math.max(0, ajustesTotal - ajustesExibidos),
   };

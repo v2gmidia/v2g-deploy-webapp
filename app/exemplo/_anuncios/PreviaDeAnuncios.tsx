@@ -1,4 +1,6 @@
 import { PainelDeAnuncios, type AnuncioDaLista } from "@/app/(protected)/anuncios/PainelDeAnuncios";
+import { SeletorDePeriodo } from "@/app/(protected)/inicio/SeletorDePeriodo";
+import type { IntervaloDoInicio } from "@/lib/inicio/periodo";
 
 const ANUNCIOS: AnuncioDaLista[] = [
   { id: "a1", nome: "Campanha Outubro — WhatsApp", estado: "com-numeros", canal: "WhatsApp", periodo: "1 out — hoje",
@@ -11,11 +13,15 @@ const ANUNCIOS: AnuncioDaLista[] = [
     metricas: [{ rotulo: "Investido", valor: "Ainda não sabemos", ausente: true }, { rotulo: "Impressões", valor: "Ainda não sabemos", ausente: true }, { rotulo: "Cliques", valor: "Ainda não sabemos", ausente: true }, { rotulo: "Conversas", valor: "Ainda não sabemos", ausente: true }], criativos: [] },
 ];
 
-export function PreviaDeAnuncios() {
+export function PreviaDeAnuncios({ intervalo }: { intervalo: IntervaloDoInicio }) {
   return <div className="anuncios-editorial">
     <header className="anuncios-topo-novo"><div className="page-head"><h1>Anúncios</h1><p>Acompanhe o que está rodando e o resultado de cada anúncio.</p></div>
       <a className="cta" href="/exemplo/criativos">Abrir criativos</a></header>
     <p className="res-veiculacao">Seu anúncio está no ar.</p>
+    <div className="anuncios-periodo"><a href={`/exemplo/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
+      <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
+    {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
+    <p className="previa-local-nota">Prévia visual: métricas fixas, sem consulta real ao mudar o período.</p>
     <PainelDeAnuncios anuncios={ANUNCIOS} ilustrativo />
   </div>;
 }

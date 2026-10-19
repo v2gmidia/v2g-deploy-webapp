@@ -13,6 +13,9 @@ import type { ValorNaTela } from "@/lib/resultado/tipos";
 import type { Etapa } from "@/lib/estado/frases";
 import { tituloDaAba } from "@/lib/titulos";
 import { PainelDeAnuncios, type AnuncioDaLista } from "./PainelDeAnuncios";
+import { intervaloDoInicio, rotuloDoIntervalo } from "@/lib/inicio/periodo";
+import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { SeletorDePeriodo } from "../inicio/SeletorDePeriodo";
 
 export const metadata = tituloDaAba("/anuncios");
 
@@ -60,7 +63,11 @@ export const metadata = tituloDaAba("/anuncios");
  * `pnpm conferir:resultado` §10 lê este arquivo e reprova se voltarem.
  * ============================================================
  */
-export default async function AnunciosPage() {
+export default async function AnunciosPage({ searchParams }: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const agora = new Date();
+  const intervalo = intervaloDoInicio(await searchParams, diaEmSaoPaulo(agora));
   const supabase = await createClient();
   const {
     data: { user },
@@ -69,7 +76,7 @@ export default async function AnunciosPage() {
   // A resposta para "o que falta" vem pronta e é a MESMA que o `/inicio` e
   // a trilha do onboarding leem. O que muda daqui para lá é o
   // enquadramento, não o fato — ver docs/estado-do-cliente.md §3.
-  const estado = await estadoDoCliente(new Date());
+  const estado = await estadoDoCliente(agora);
 
   const { data: criativos } = estado.negocioId
     ? await supabase
@@ -86,7 +93,7 @@ export default async function AnunciosPage() {
 
   const resultado =
     user && estado.negocioId
-      ? await resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id })
+      ? await resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id, intervalo })
       : null;
 
   // ============================================================
@@ -97,7 +104,12 @@ export default async function AnunciosPage() {
   // `/inicio` degradando calada, que este repositório já pagou.
   // ============================================================
   if (resultado === null || resultado.estado === "sem-execucao") {
-    return <SemAnuncioNenhum proximo={estado.proximo} fotos={estado.melhoras.fotos} />;
+    return <>
+      <div className="anuncios-periodo"><a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
+        <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
+      {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
+      <SemAnuncioNenhum proximo={estado.proximo} fotos={estado.melhoras.fotos} />
+    </>;
   }
 
   // O `foiReprovada` no lugar do `p.status === "rejected"` escrito à mão:
@@ -106,11 +118,7 @@ export default async function AnunciosPage() {
   const reprovadas = pecas.filter(foiReprovada);
   const anunciosDaLista: AnuncioDaLista[] = resultado.estado === "com-campanhas" ? resultado.campanhas.map((campanha) => {
     const r = campanha.resultado;
-    const periodo = r.periodoComDado
-      ? r.periodoComDado.desde === r.periodoComDado.ate
-        ? diaPorExtenso(r.periodoComDado.desde)
-        : `${diaPorExtenso(r.periodoComDado.desde)} a ${diaPorExtenso(r.periodoComDado.ate)}`
-      : null;
+    const periodo = `Resultados de ${rotuloDoIntervalo(r.periodo)}`;
     return {
       id: campanha.idExecucao,
       nome: campanha.nome,
@@ -158,6 +166,11 @@ export default async function AnunciosPage() {
        </div>
        <a className="cta" href="/criativos">Abrir criativos</a>
       </header>
+      <div className="anuncios-periodo">
+        <a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
+        <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
+      </div>
+      {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
 
       {reprovadas.length > 0 ? (
         <section className="hero-destaque">
@@ -222,6 +235,7 @@ export default async function AnunciosPage() {
                     <h2>O que você contou</h2>
                     <span className="st-note">
                       Isto é o que você respondeu, não o que a plataforma mediu.
+                      {resultado.periodo && ` Período: ${rotuloDoIntervalo(resultado.periodo)}.`}
                     </span>
                   </div>
                   <div className="res-grid">

@@ -159,12 +159,20 @@ export default async function ExemploPage({
     const modulo = ehDesenvolvimento ? await import("@/app/(internal)/revops/TelaRevOps") : null;
     const fixture = ehDesenvolvimento ? await import("@/lib/dev/fixtures-revops") : null;
     if (!modulo || !fixture) notFound();
+    const buscaRevops = await searchParams;
+    const estadoPedido = Array.isArray(buscaRevops.estado)
+      ? buscaRevops.estado[0]
+      : buscaRevops.estado;
+    const falhaConsulta = estadoPedido === "falha";
+    const oportunidades = estadoPedido === "vazio" || falhaConsulta
+      ? []
+      : fixture.OPORTUNIDADES_REVOPS_FICTICIAS;
     return <div className="app-shell v2g-editorial revops-shell">
       <header className="revops-topo"><Marca className="revops-marca" editorial />
         <div className="revops-topo-acoes"><span>Prévia fictícia · área interna</span><PreferenciaDeTema /></div>
       </header>
       <main className="revops-canvas">
-        <modulo.TelaRevOps oportunidades={fixture.OPORTUNIDADES_REVOPS_FICTICIAS}
+        <modulo.TelaRevOps oportunidades={oportunidades} falhaConsulta={falhaConsulta}
           referencia="f0000000-0000-4000-8000-000000000099" somenteLeitura />
       </main>
     </div>;
@@ -198,13 +206,14 @@ export default async function ExemploPage({
   // Galeria fictícia para inspecionar a composição aprovada sem depender de
   // sessão, Storage ou métricas reais por criativo.
   if (tela === "criativos") {
+    const buscaCriativos = await searchParams;
     const modulo = ehDesenvolvimento ? await import("@/app/(protected)/criativos/TelaDeCriativos") : null;
     const fixture = ehDesenvolvimento ? await import("../_criativos/dados") : null;
     if (!modulo || !fixture) notFound();
     return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
-      <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} retencaoAtiva previa
-        envio={<div className="form-warning">Prévia local: o envio real exige uma conta autenticada.</div>} />
+      <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} retencaoAtiva previa envioDisponivel={buscaCriativos.envio !== "indisponivel"}
+        envio={buscaCriativos.envio === "indisponivel" ? null : <div className="form-warning">Prévia local: o envio real exige uma conta autenticada.</div>} />
     </Casco>;
   }
 
@@ -224,7 +233,7 @@ export default async function ExemploPage({
     if (!modulo) notFound();
     return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/anuncios">
-      <modulo.PreviaDeAnuncios />
+      <modulo.PreviaDeAnuncios intervalo={intervaloDoInicio(await searchParams, diaEmSaoPaulo(agora))} />
     </Casco>;
   }
 
@@ -393,6 +402,12 @@ export default async function ExemploPage({
         diaDaPergunta={diaDeOntemEmSaoPaulo(agora)}
         atrasados={[]}
         intervalo={intervalo}
+        pendenciaOnboarding={busca2.pendencia === "marca" ? {
+          titulo: "Ainda falta conferir o visual da marca",
+          corpo: "Revise os materiais e confirme quais cores representam este negócio antes de escolher um horário.",
+          href: "/onboarding/marca", rotulo: "Conferir visual da marca",
+        } : null}
+        falhaPendencia={busca2.pendencia === "falha"}
         investidoNoMesCentavos={1025}
         faixa={null}
       />

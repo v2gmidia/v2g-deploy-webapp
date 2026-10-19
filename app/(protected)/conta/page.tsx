@@ -258,7 +258,7 @@ export default async function ContaPage() {
           {conexaoIlegivel ? (
             <section className="conta-secao conta-conexoes" id="conexoes">
               <div className="section-title">
-                <h2>De qual página seus anúncios saem</h2>
+                <h2>Conexões</h2>
               </div>
               {/* DIZ QUE NÃO LEU, em vez de sumir. Uma seção que
                   desaparece é indistinguível de "você não tem página", e
@@ -277,7 +277,7 @@ export default async function ContaPage() {
             business && paginas.length > 0 && (
               <section className="conta-secao conta-conexoes" id="conexoes">
                 <div className="section-title">
-                  <h2>De qual página seus anúncios saem</h2>
+                  <h2>Conexões</h2>
                 </div>
                 <TrocarPagina paginas={paginas} atual={paginaAtual} businessId={business.id}
                   variasContasAtivas={variasContasAtivas} contasIlegiveis={Boolean(contasAtivas?.error)} />
@@ -314,7 +314,7 @@ export default async function ContaPage() {
           {business && (
             <section className="conta-secao conta-identidade" id="identidade">
               <div className="section-title">
-                <h2>A cara do seu negócio</h2>
+                <h2>Identidade visual</h2>
                 <span className="side-note">Entra nos anúncios</span>
               </div>
               <details className="card conta-recolhivel">
@@ -350,7 +350,7 @@ export default async function ContaPage() {
               clicar, só a sensação de que não está andando. */}
           <section className="conta-secao conta-requisitos" id="requisitos">
             <div className="section-title">
-              <h2>Verba, cobrança e requisitos</h2>
+              <h2>Verba e requisitos</h2>
             </div>
             <div className="card acct-list">
               <a className="acct-row" href="/verba">
@@ -379,7 +379,7 @@ export default async function ContaPage() {
 
           <section className="conta-secao conta-contrato" id="contrato">
             <div className="section-title">
-              <h2>Contrato e atendimento</h2>
+              <h2>Contrato</h2>
             </div>
             <div className="card acct-list">
               <p className="hint">
@@ -404,12 +404,9 @@ export default async function ContaPage() {
 
           <section className="conta-secao conta-atendimento" id="atendimento">
             <div className="section-title">
-              <h2>Fala com gente de verdade</h2>
+              <h2>Atendimento</h2>
             </div>
             <div className="conta-atendimento-texto">
-              <p>
-                Para dúvidas sobre cobrança, resultados ou saída, fale com a equipe pelo WhatsApp.
-              </p>
               <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
                 Chamar no WhatsApp &rarr;
               </a>

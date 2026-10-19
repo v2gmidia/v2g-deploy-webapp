@@ -185,17 +185,17 @@ secao("3. nenhum id de URL, query ou formulário chega perto disso");
     const codigo = a.texto.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
     // ============================================================
-    // A TELA NÃO PODE LER `searchParams` NEM `params` NO MESMO ARQUIVO.
-    //
-    // É mais duro que o necessário de propósito: em tese daria para ler um
-    // filtro de data de `searchParams` sem risco nenhum. Mas "sem risco
-    // nenhum" é julgamento, e julgamento não sobrevive a seis meses de
-    // edições. Precisar de filtro é motivo para revisitar esta regra
-    // conscientemente, que é exatamente o que se quer.
+    // Exceção aprovada em 19/10: Anúncios recebe apenas datas validadas.
+    // Identificadores continuam exclusivamente da sessão e de porExecucao.
+    // O teste offline conferir-qa-interface também exercita a ordem e os argumentos.
     // ============================================================
     ok(
-      !/\bsearchParams\b|\bparams\s*[:.]/.test(codigo),
-      `\`${a.caminho}\` não lê \`searchParams\` nem \`params\` — não há id de URL para vazar`,
+      a.caminho === "app/(protected)/anuncios/page.tsx"
+        ? /intervaloDoInicio\(await searchParams, diaEmSaoPaulo\(agora\)\)/.test(codigo)
+          && !/searchParams\s*[.\[]|\bparams\s*[:.]/.test(codigo)
+          && /resultadoDoNegocio\(\{ businessId: estado\.negocioId, profileId: user\.id, intervalo \}\)/.test(codigo)
+        : !/\bsearchParams\b|\bparams\s*[:.]/.test(codigo),
+      `\`${a.caminho}\` não recebe identidade da URL; Anúncios admite apenas o intervalo validado`,
     );
     ok(
       /businessId:\s*estado\.negocioId/.test(codigo),

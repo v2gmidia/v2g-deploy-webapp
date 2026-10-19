@@ -28,7 +28,7 @@ export function ConclusaoDaJornada({ businessId }: { businessId: string }) {
   return (
     <section className="inicio-conclusao" aria-labelledby="inicio-conclusao-titulo">
       <div>
-        <h2 id="inicio-conclusao-titulo">Sua campanha completou todas as etapas.</h2>
+        <h2 id="inicio-conclusao-titulo">Preparação da campanha concluída.</h2>
         <p>Agora o Início fica focado no investimento e nos resultados.</p>
       </div>
       <button type="button" onClick={dispensar}>Entendi</button>

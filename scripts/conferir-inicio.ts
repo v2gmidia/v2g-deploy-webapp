@@ -233,7 +233,7 @@ secao("5. B7 — seção sem item não renderiza título");
     "a `/inicio` não repete a lista detalhada que já mora em `/anuncios`",
   );
   ok(
-    /href="\/anuncios"/.test(inicio),
+    /href=\{linkDosAnuncios\}/.test(inicio) && inicio.includes('`/anuncios?desde=${intervalo.desde}&ate=${intervalo.ate}`'),
     "e o estado do anúncio ainda oferece a saída para o detalhe",
   );
 

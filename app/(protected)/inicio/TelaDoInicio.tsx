@@ -227,10 +227,17 @@ function FasesDaCampanha({ fases }: { fases: ReturnType<typeof fasesDaCadeia> })
 function ProximoPasso({
   pendencia,
   proximo,
+  compacto = false,
 }: {
   pendencia: PendenciaDoOnboarding | null;
   proximo: Etapa | null;
+  compacto?: boolean;
 }) {
+  const acao = pendencia ?? (proximo?.acao ? { titulo: proximo.titulo, corpo: proximo.corpo, ...proximo.acao } : null);
+  if (compacto && acao) return <section className="inicio-pendencia-compacta" aria-label="Pendência do negócio">
+    <div><h2>{acao.titulo}</h2><details><summary>Ver orientação</summary><p>{acao.corpo}</p></details></div>
+    <a className="cta" href={acao.href}>{acao.rotulo}</a>
+  </section>;
   if (pendencia) return (
     <section className="inicio-proximo" aria-labelledby="inicio-proximo-titulo">
       <h2 id="inicio-proximo-titulo">Seu próximo passo</h2>
@@ -259,6 +266,7 @@ export function TelaDoInicio({
   diaDaPergunta,
   atrasados,
   pendenciaOnboarding = null,
+  falhaPendencia = false,
   intervalo,
   acumuladoDoPeriodo,
   investidoNoMesCentavos = null,
@@ -271,6 +279,7 @@ export function TelaDoInicio({
   diaDaPergunta: string;
   atrasados: string[];
   pendenciaOnboarding?: PendenciaDoOnboarding | null;
+  falhaPendencia?: boolean;
   intervalo?: IntervaloDoInicio;
   /** Só os resultados mudam com as datas; jornada e perguntas usam o estado atual. */
   acumuladoDoPeriodo?: ConsolidadoDoNegocio | null;
@@ -310,6 +319,8 @@ export function TelaDoInicio({
   const fases = fasesDaCadeia(etapas, proximo);
   const jornadaConcluida = fases.every((fase) => fase.estado === "feita");
   const temProximoAcionavel = pendenciaOnboarding !== null || Boolean(proximo?.acao);
+  const linkDosAnuncios = intervalo
+    ? `/anuncios?desde=${intervalo.desde}&ate=${intervalo.ate}` : "/anuncios";
 
   // ============================================================
   // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
@@ -457,6 +468,7 @@ export function TelaDoInicio({
       <div className="inicio-editorial">
         {faixa}
         <CabecalhoDoInicio intervalo={intervalo} />
+        {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do negócio agora. Tente novamente.</p>}
         {acumuladoDoPeriodo === null && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}
 
         {/* A tarefa vem da pendência real do onboarding ou da cadeia de execução. */}
@@ -623,11 +635,11 @@ export function TelaDoInicio({
 
       {/* A mesma composição do estado sem números: estado, tarefa e
           acompanhamento. Os números continuam condicionados a temNumero. */}
-      {jornadaConcluida && estado.negocioId && (
-        <ConclusaoDaJornada businessId={estado.negocioId} />
-      )}
+      {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do negócio agora. Tente novamente.</p>}
+      {temProximoAcionavel && <ProximoPasso compacto pendencia={pendenciaOnboarding} proximo={proximo} />}
 
-      <div className={`inicio-topo${temProximoAcionavel ? " com-acao" : ""}`}>
+      {/* O estado continua visível, sem ocupar uma coluna nem competir com os números. */}
+      <div className="inicio-situacao-resumida">
         <section className="inicio-estado" aria-label="Sua campanha">
           {/* ============================================================
               UMA REDAÇÃO SÓ PARA VEICULAÇÃO — item N7 do QA.
@@ -648,16 +660,11 @@ export function TelaDoInicio({
               como manchete de veiculação.
               ============================================================ */}
           <div className="inicio-estado-texto">
-            <p>Estado do anúncio</p>
             <h2>{fraseDeVeiculacao(estado.veiculacao, "manchete")}</h2>
           </div>
-          <a className="inicio-estado-link" href="/anuncios">Ver anúncios</a>
+          <a className="inicio-estado-link" href={linkDosAnuncios}>Ver anúncios</a>
         </section>
-        {temProximoAcionavel && (
-          <ProximoPasso pendencia={pendenciaOnboarding} proximo={proximo} />
-        )}
       </div>
-      <FasesDaCampanha fases={fases} />
 
       {/* ============================================================
           OS PRIMEIROS SINAIS — quatro números, e um deles é uma ausência.
@@ -736,6 +743,10 @@ export function TelaDoInicio({
         )}
       </div>
 
+      {jornadaConcluida && !temProximoAcionavel && !falhaPendencia && estado.negocioId && (
+        <ConclusaoDaJornada businessId={estado.negocioId} />
+      )}
+      <FasesDaCampanha fases={fases} />
       {cardDaPergunta}
       {!cabePerguntarSobreOntem && (
         <p className="foot-line">
