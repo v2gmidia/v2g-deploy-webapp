@@ -277,7 +277,7 @@
 }
 
 .v2g-editorial .inicio-editorial .sinais-bloco {
-  margin: 28px 0;
+  margin: 24px 0;
   padding: 0;
   border-top: 0;
 }
@@ -356,7 +356,7 @@
 }
 
 .v2g-editorial .inicio-editorial .sinal-frase {
-  margin: 22px 0 0;
+  margin: 16px 0 0;
   padding: 0;
   max-width: 72ch;
   border: 0;
@@ -797,35 +797,33 @@
   color: var(--ink-soft);
 }
 
-.v2g-editorial .periodo-seletor nav {
+.v2g-editorial .periodo-form {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   right: 0;
-  min-width: 190px;
-  padding: 6px;
+  width: min(390px, calc(100vw - 32px));
+  padding: 20px;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--control-line);
   border-radius: 4px;
+  box-shadow: 0 12px 28px color-mix(in srgb, var(--ink) 15%, transparent);
 }
-
-.v2g-editorial .periodo-seletor nav a {
-  display: flex;
-  align-items: center;
-  min-height: 40px;
-  padding: 0 10px;
-  color: var(--ink-soft);
-  border-radius: 2px;
-  font-size: var(--fs-corpo);
-}
-
-.v2g-editorial .periodo-seletor nav a:hover,
-.v2g-editorial .periodo-seletor nav a[aria-current="page"] {
-  color: var(--ink);
-  background: var(--surface-soft);
+.v2g-editorial .periodo-form h2 { margin: 0 0 16px; font-size: var(--fs-titulo); font-weight: 600; }
+.v2g-editorial .periodo-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.v2g-editorial .periodo-campos label { display: grid; gap: 7px; min-width: 0; color: var(--ink-soft); font-size: var(--fs-legenda); }
+.v2g-editorial .periodo-campos input { width: 100%; min-width: 0; min-height: 44px; padding: 8px; border: 1px solid var(--control-line); border-radius: 4px; background: var(--canvas); color: var(--ink); font: inherit; }
+.v2g-editorial .periodo-form .cta { width: 100%; justify-content: center; margin-top: 16px; min-height: 44px; }
+.v2g-editorial .periodo-form .form-error { margin: 12px 0 0; }
+@media (max-width: 620px) {
+  .v2g-editorial .inicio-cabecalho { flex-wrap: wrap; gap: 16px; }
+  .v2g-editorial .periodo-seletor { width: 100%; }
+  .v2g-editorial .periodo-seletor summary { justify-content: space-between; }
+  .v2g-editorial .periodo-form { width: 100%; }
+  .v2g-editorial .periodo-campos { grid-template-columns: 1fr; }
 }
 
 .v2g-editorial .periodo-seletor summary:focus-visible,
-.v2g-editorial .periodo-seletor nav a:focus-visible {
+.v2g-editorial .periodo-form :is(input, button):focus-visible {
   outline: 2px solid var(--cobalt-ink);
   outline-offset: 2px;
 }
@@ -841,7 +839,7 @@
 
 .v2g-editorial .inicio-editorial .sinal,
 .v2g-editorial .inicio-editorial .sinal:nth-child(n) {
-  min-height: 138px;
+  min-height: 132px;
   padding: 20px;
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1118,12 +1116,24 @@
   }
 
   .v2g-editorial .inicio-editorial .sinais {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
   }
 
-  .v2g-editorial .inicio-editorial .sinal {
-    min-height: 0;
+  .v2g-editorial .inicio-editorial .sinal:nth-child(n) {
+    min-height: 112px;
+    padding: 14px;
   }
+  .v2g-editorial .sinal-cabecalho { gap: 8px; }
+  .v2g-editorial .sinal-cabecalho .sinal-icone { width: 24px; height: 24px; background: transparent; }
+  .v2g-editorial .sinal-cabecalho .sinal-icone svg { width: 20px; height: 20px; }
+  .v2g-editorial .inicio-editorial .sinal .s-label { font-size: var(--fs-legenda); }
+  .v2g-editorial .inicio-editorial .sinal .s-valor { font-size: var(--fs-tela); overflow-wrap: anywhere; }
+  .v2g-editorial .inicio-estado { gap: 12px; }
+  .v2g-editorial .inicio-estado-link { font-size: var(--fs-legenda); }
+  .v2g-editorial .inicio-editorial .section-title { margin-bottom: 14px; }
+  .v2g-editorial .inicio-editorial .sinal-frase { font-size: var(--fs-legenda); }
+
 
   .v2g-editorial .desempenho-card,
   .v2g-editorial .vendas-card {
@@ -1137,7 +1147,7 @@
   }
 
   .v2g-editorial .grafico-investimento text {
-    font-size: 10px;
+    font-size: 14px;
   }
 
   .v2g-editorial .inicio-editorial .command-card {

@@ -118,7 +118,7 @@ export default async function AlertasPage() {
 
   const blocoDePendencias = <section className="avisos-secao" aria-labelledby="titulo-pendencias">
     <div className="section-title">
-      <div><span className="avisos-kicker">Prioridade</span><h2 id="titulo-pendencias">Precisa de você</h2></div>
+      <div><h2 id="titulo-pendencias">Precisa de você</h2></div>
       {quantasPendentes !== null && quantasPendentes > 0 && <span className="grp-count">
         {quantasPendentes} {quantasPendentes === 1 ? "item" : "itens"}
       </span>}
@@ -162,7 +162,7 @@ export default async function AlertasPage() {
   </section>;
 
   const blocoDeAtualizacoes = <section className="avisos-secao" aria-labelledby="titulo-atualizacoes">
-    <div className="section-title"><div><span className="avisos-kicker">Histórico recente</span>
+    <div className="section-title"><div>
       <h2 id="titulo-atualizacoes">Atualizações</h2></div></div>
     {revisoes.error || erroRegistradas ? <p className="form-warning">Não conseguimos carregar todo o histórico agora.</p> : null}
     {quantasAtualizacoes > 0 ? <div className="avisos-registros">

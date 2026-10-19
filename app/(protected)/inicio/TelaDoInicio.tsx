@@ -5,7 +5,9 @@ import { PerguntaDoDia } from "./PerguntaDoDia";
 import { ConclusaoDaJornada } from "./ConclusaoDaJornada";
 import type { EstadoDoCliente } from "@/lib/estado/cliente";
 import type { DiaDoConsolidado } from "@/lib/dia-seguinte/tipos";
-import { PERIODOS_DO_INICIO, rotuloDoPeriodo, type PeriodoDoInicio } from "@/lib/inicio/periodo";
+import type { IntervaloDoInicio } from "@/lib/inicio/periodo";
+import type { ConsolidadoDoNegocio } from "@/lib/dia-seguinte/tipos";
+import { SeletorDePeriodo } from "./SeletorDePeriodo";
 import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
 import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import {
@@ -92,29 +94,14 @@ function TrilhaDaExecucao({
   );
 }
 
-function CabecalhoDoInicio({ periodo, mostrarPeriodo = false }: { periodo: PeriodoDoInicio; mostrarPeriodo?: boolean }) {
-  const rotulo = rotuloDoPeriodo(periodo);
-  return (
+function CabecalhoDoInicio({ intervalo }: { intervalo?: IntervaloDoInicio }) {
+  return <>
     <header className="inicio-cabecalho">
       <h1>Início<span className="inicio-quadrado" aria-hidden="true" /></h1>
-      {mostrarPeriodo && <details className="periodo-seletor">
-        <summary aria-label={`Período selecionado: ${rotulo}`}>
-          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <rect x="3" y="4.5" width="14" height="12.5" rx="1.5" stroke="currentColor" />
-            <path d="M6.5 2.5v4M13.5 2.5v4M3 8.5h14" stroke="currentColor" />
-          </svg>
-          {rotulo}
-        </summary>
-        <nav aria-label="Escolher período">
-          {PERIODOS_DO_INICIO.map((opcao) => (
-            <a key={opcao.id} aria-current={periodo === opcao.id ? "page" : undefined} href={`?periodo=${opcao.id}`}>
-              {opcao.rotulo}
-            </a>
-          ))}
-        </nav>
-      </details>}
+      {intervalo && <SeletorDePeriodo key={intervalo.desde + intervalo.ate} intervalo={intervalo} />}
     </header>
-  );
+    {intervalo?.erro && <p className="form-error" role="alert">{intervalo.erro}</p>}
+  </>;
 }
 
 type TipoDeSinal = "investido" | "cliques" | "impressoes" | "conversas";
@@ -272,7 +259,8 @@ export function TelaDoInicio({
   diaDaPergunta,
   atrasados,
   pendenciaOnboarding = null,
-  periodo = "1m",
+  intervalo,
+  acumuladoDoPeriodo,
   investidoNoMesCentavos = null,
   faixa,
 }: {
@@ -283,12 +271,23 @@ export function TelaDoInicio({
   diaDaPergunta: string;
   atrasados: string[];
   pendenciaOnboarding?: PendenciaDoOnboarding | null;
-  periodo?: PeriodoDoInicio;
+  intervalo?: IntervaloDoInicio;
+  /** Só os resultados mudam com as datas; jornada e perguntas usam o estado atual. */
+  acumuladoDoPeriodo?: ConsolidadoDoNegocio | null;
   investidoNoMesCentavos?: number | null;
   /** a faixa de reconexão, que lê sessão: a página passa, a bancada não */
   faixa: ReactNode;
 }) {
-  const { resultado, temNumero } = estado;
+  const acumulado = acumuladoDoPeriodo === undefined ? estado.diaSeguinte.acumulado : acumuladoDoPeriodo;
+  const resultado = acumuladoDoPeriodo === undefined ? estado.resultado : {
+    investidoCentavos: acumulado?.investiuCentavos ?? null,
+    moeda: acumulado?.moeda ?? null,
+    cliques: acumulado?.cliques ?? null,
+    impressoes: acumulado?.impressoes ?? null,
+    pessoas: null,
+  };
+  const temNumero = estado.temNumero || Boolean(acumulado &&
+    (acumulado.investiuCentavos !== null || acumulado.voltouCentavos !== null || acumulado.dias.length > 0));
 
   // ============================================================
   // A CADEIA VEM PRONTA. A tela não aplica mais regra nenhuma sobre ela.
@@ -303,7 +302,6 @@ export function TelaDoInicio({
   // mundo que lê a cadeia, e a fonte deixou de ser o gasto: agora é
   // `veiculacao`, que o backend expõe. Ver `lib/veiculacao/estado.ts`.
   // ============================================================
-  const acumulado = estado.diaSeguinte.acumulado;
   const etapas = estado.etapas;
   const proximo = etapas.find((e) => !e.concluida) ?? null;
 
@@ -458,7 +456,8 @@ export function TelaDoInicio({
     return (
       <div className="inicio-editorial">
         {faixa}
-        <CabecalhoDoInicio periodo={periodo} />
+        <CabecalhoDoInicio intervalo={intervalo} />
+        {acumuladoDoPeriodo === null && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}
 
         {/* A tarefa vem da pendência real do onboarding ou da cadeia de execução. */}
         <div className={`inicio-topo${temProximoAcionavel ? " com-acao" : ""}`}>
@@ -619,7 +618,8 @@ export function TelaDoInicio({
   return (
     <div className="inicio-editorial">
       {faixa}
-      <CabecalhoDoInicio periodo={periodo} mostrarPeriodo />
+      <CabecalhoDoInicio intervalo={intervalo} />
+        {acumuladoDoPeriodo === null && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}
 
       {/* A mesma composição do estado sem números: estado, tarefa e
           acompanhamento. Os números continuam condicionados a temNumero. */}
@@ -746,7 +746,7 @@ export function TelaDoInicio({
       <Comando
         verba={estado.verbaMensal}
         investido={
-          resultado.moeda === null || resultado.moeda === "BRL"
+          estado.resultado.moeda === null || estado.resultado.moeda === "BRL"
             ? investidoNoMesCentavos === null
               ? null
               : investidoNoMesCentavos / 100

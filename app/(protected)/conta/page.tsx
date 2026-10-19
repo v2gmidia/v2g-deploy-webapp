@@ -197,37 +197,18 @@ export default async function ContaPage() {
       </div>
 
       <div className="dash-grid conta-layout">
-        <nav className="conta-indice" aria-label="Seções da conta">
-          <a className="ativo" href="#visao-geral"><IconeDocumento />Visão geral</a>
-          <a href="#negocio"><IconeNegocio />Negócio</a>
-          <a href="#identidade"><IconeImagem />Identidade visual</a>
-          <a href="#conexoes"><IconeVinculo />Conexões</a>
-          <a href="#plano"><IconeCartao />Plano</a>
-        </nav>
         <div className="dash-main conta-ficha">
-          <section className="conta-secao conta-plano" id="plano">
+          <section className="conta-secao conta-perfil" id="visao-geral">
             <div className="section-title">
-              <h2>Seu plano</h2>
-              <span className="side-note">Por negócio</span>
+              <h2>Seu perfil</h2>
             </div>
-            <div className="card">
-              {pedidoIlegivel ? <p className="hint">Não conseguimos consultar os pedidos agora. Tente novamente.</p>
-                : pedidos.length ? <>
-                  {pedidos.map((pedido) => <p className="hint" key={pedido.id}>
-                    {business?.dados_ficticios ? "Pedido de teste: aprovação simulada, sem pagamento. "
-                      : pedido.status === "payment_approved" ? pedido.origin === "self_service"
-                      ? "Pagamento confirmado pelo provedor. " : "Pedido aprovado pela equipe. "
-                      : pedido.status === "proof_received" ? "Comprovante recebido; aprovação pendente. "
-                        : pedido.status === "cancelled" ? "Pedido cancelado. "
-                          : "Pedido aguardando pagamento ou análise. "}
-                    {pedido.unit_count} {pedido.unit_count === 1 ? "conta de anúncio" : "contas de anúncio"} · {pedido.billing_period === "annual_upfront" ? "anual à vista" : pedido.billing_period === "semiannual_upfront" ? "semestral à vista" : "mensal"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}.
-                  </p>)}
-                  {pedidos.length === 100 && <p className="foot-line">Mostrando os 100 pedidos mais recentes deste negócio.</p>}
-                  <p className="foot-line">Estes registros não informam próxima cobrança, recibo nem liquidação bancária.</p>
-                </> : <p className="hint">Não há pedido vinculado a este negócio nesta conta. Se contratou com outro e-mail, fale com a equipe para conferir.</p>}
-            </div>
+            <details className="conta-perfil-resumo">
+              <summary><span className="conta-avatar">{iniciaisDoPerfil(profile?.full_name, user.email)}</span>
+                <span className="conta-perfil-identidade"><b>{profile?.full_name?.trim() || "Seu perfil"}</b><small>{user.email}</small><small>{profile?.whatsapp || "WhatsApp não informado"}</small></span>
+                <span className="conta-editar">Editar dados</span></summary>
+              <div className="conta-perfil-form"><FormPerfil nome={profile?.full_name ?? ""} whatsapp={profile?.whatsapp ?? ""} email={user.email ?? ""} /></div>
+            </details>
           </section>
-
           {business ? (
             <section className="conta-secao conta-negocio" id="negocio">
               <div className="section-title">
@@ -270,35 +251,6 @@ export default async function ContaPage() {
             </section>
           )}
 
-          {/* Identidade visual. Fica DEPOIS do que o negócio é e ANTES de
-              como ele aparece — a ordem da tela acompanha a ordem em que a
-              pessoa pensa sobre o próprio negócio. */}
-          {business && (
-            <section className="conta-secao conta-identidade" id="identidade">
-              <div className="section-title">
-                <h2>A cara do seu negócio</h2>
-                <span className="side-note">Entra nos anúncios</span>
-              </div>
-              <details className="card conta-recolhivel">
-                <summary><span><b>Logo e fotos do negócio</b><small>{identidadeIlegivel ? "Não conseguimos conferir agora" : `${identidade.fotos.length} ${identidade.fotos.length === 1 ? "imagem guardada" : "imagens guardadas"}`}</small></span><span>Gerenciar</span></summary>
-                <div className="conta-recolhivel-conteudo">
-                {identidadeIlegivel ? (
-                  // DIZ QUE NÃO LEU. Um `Identidade` vazio afirmaria que
-                  // ele não tem logo nem foto — e o cliente que subiu as
-                  // dele veria o próprio trabalho ter sumido.
-                  <p className="rc-tranquilo">
-                    Não consegui carregar sua logo e suas fotos agora. Elas continuam
-                    guardadas — nada foi perdido. Tente daqui a pouco; se continuar assim,
-                    chama a gente.
-                  </p>
-                ) : (
-                  <Identidade businessId={business.id} logo={identidade.logo} fotos={identidade.fotos} />
-                )}
-                </div>
-              </details>
-            </section>
-          )}
-
           {/* Trocar a página sem refazer o OAuth. Antes, o único caminho
               era reconectar tudo — desproporcional para mudar um campo, e
               cada passagem pelo Facebook é uma chance de o cliente
@@ -331,6 +283,58 @@ export default async function ContaPage() {
                   variasContasAtivas={variasContasAtivas} contasIlegiveis={Boolean(contasAtivas?.error)} />
               </section>
             )
+          )}
+
+          <section className="conta-secao conta-plano" id="plano">
+            <div className="section-title">
+              <h2>Seu plano</h2>
+              <span className="side-note">Por negócio</span>
+            </div>
+            <div className="card">
+              {pedidoIlegivel ? <p className="hint">Não conseguimos consultar os pedidos agora. Tente novamente.</p>
+                : pedidos.length ? <>
+                  {pedidos.map((pedido) => <p className="hint" key={pedido.id}>
+                    {business?.dados_ficticios ? "Pedido de teste: aprovação simulada, sem pagamento. "
+                      : pedido.status === "payment_approved" ? pedido.origin === "self_service"
+                      ? "Pagamento confirmado pelo provedor. " : "Pedido aprovado pela equipe. "
+                      : pedido.status === "proof_received" ? "Comprovante recebido; aprovação pendente. "
+                        : pedido.status === "cancelled" ? "Pedido cancelado. "
+                          : "Pedido aguardando pagamento ou análise. "}
+                    {pedido.unit_count} {pedido.unit_count === 1 ? "conta de anúncio" : "contas de anúncio"} · {pedido.billing_period === "annual_upfront" ? "anual à vista" : pedido.billing_period === "semiannual_upfront" ? "semestral à vista" : "mensal"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}.
+                  </p>)}
+                  {pedidos.length === 100 && <p className="foot-line">Mostrando os 100 pedidos mais recentes deste negócio.</p>}
+                  <p className="foot-line">Estes registros não informam próxima cobrança, recibo nem liquidação bancária.</p>
+                </> : <p className="hint">Não há pedido vinculado a este negócio nesta conta. Se contratou com outro e-mail, fale com a equipe para conferir.</p>}
+            </div>
+          </section>
+
+          {/* Identidade visual. Fica DEPOIS do que o negócio é e ANTES de
+              como ele aparece — a ordem da tela acompanha a ordem em que a
+              pessoa pensa sobre o próprio negócio. */}
+          {business && (
+            <section className="conta-secao conta-identidade" id="identidade">
+              <div className="section-title">
+                <h2>A cara do seu negócio</h2>
+                <span className="side-note">Entra nos anúncios</span>
+              </div>
+              <details className="card conta-recolhivel">
+                <summary><span><b>Logo e fotos do negócio</b><small>{identidadeIlegivel ? "Não conseguimos conferir agora" : `${identidade.fotos.length} ${identidade.fotos.length === 1 ? "imagem guardada" : "imagens guardadas"}`}</small></span><span>Gerenciar</span></summary>
+                <div className="conta-recolhivel-conteudo">
+                {identidadeIlegivel ? (
+                  // DIZ QUE NÃO LEU. Um `Identidade` vazio afirmaria que
+                  // ele não tem logo nem foto — e o cliente que subiu as
+                  // dele veria o próprio trabalho ter sumido.
+                  <p className="rc-tranquilo">
+                    Não consegui carregar sua logo e suas fotos agora. Elas continuam
+                    guardadas — nada foi perdido. Tente daqui a pouco; se continuar assim,
+                    chama a gente.
+                  </p>
+                ) : (
+                  <Identidade businessId={business.id} logo={identidade.logo} fotos={identidade.fotos} />
+                )}
+                </div>
+              </details>
+            </section>
           )}
 
           <section className="conta-secao conta-preferencias" id="preferencias">
@@ -373,32 +377,6 @@ export default async function ContaPage() {
             </div>
           </section>
 
-          <section className="conta-secao conta-perfil" id="visao-geral">
-            <div className="section-title">
-              <h2>Seu perfil</h2>
-            </div>
-            <details className="conta-perfil-resumo">
-              <summary><span className="conta-avatar">{iniciaisDoPerfil(profile?.full_name, user.email)}</span>
-                <span className="conta-perfil-identidade"><b>{profile?.full_name?.trim() || "Seu perfil"}</b><small>{user.email}</small><small>{profile?.whatsapp || "WhatsApp não informado"}</small></span>
-                <span className="conta-editar">Editar dados</span></summary>
-              <div className="conta-perfil-form"><FormPerfil nome={profile?.full_name ?? ""} whatsapp={profile?.whatsapp ?? ""} email={user.email ?? ""} /></div>
-            </details>
-          </section>
-
-          <section className="conta-secao conta-atendimento" id="atendimento">
-            <div className="section-title">
-              <h2>Fala com gente de verdade</h2>
-            </div>
-            <div className="conta-atendimento-texto">
-              <p>
-                Para dúvidas sobre cobrança, resultados ou saída, fale com a equipe pelo WhatsApp.
-              </p>
-              <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-                Chamar no WhatsApp &rarr;
-              </a>
-            </div>
-          </section>
-
           <section className="conta-secao conta-contrato" id="contrato">
             <div className="section-title">
               <h2>Contrato e atendimento</h2>
@@ -422,6 +400,20 @@ export default async function ContaPage() {
             <p className="foot-line">
               A campanha só pode ser publicada depois das conferências e da assinatura concluída.
             </p>
+          </section>
+
+          <section className="conta-secao conta-atendimento" id="atendimento">
+            <div className="section-title">
+              <h2>Fala com gente de verdade</h2>
+            </div>
+            <div className="conta-atendimento-texto">
+              <p>
+                Para dúvidas sobre cobrança, resultados ou saída, fale com a equipe pelo WhatsApp.
+              </p>
+              <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
+                Chamar no WhatsApp &rarr;
+              </a>
+            </div>
           </section>
 
           {/* ESTA CONTA — a casa do "Sair".
@@ -504,10 +496,3 @@ function iniciaisDoPerfil(nome: string | null | undefined, email: string | null 
   if (partes.length > 0) return `${partes[0]?.[0] ?? ""}${partes[1]?.[0] ?? ""}`.toUpperCase();
   return (email?.[0] ?? "V").toUpperCase();
 }
-
-const iconeBase = { viewBox: "0 0 20 20", fill: "none", stroke: "currentColor", strokeWidth: 1.6, "aria-hidden": true } as const;
-const IconeDocumento = () => <svg {...iconeBase}><path d="M5 2.5h7l3 3V17.5H5z" /><path d="M12 2.5v3h3M8 9h4M8 12h4" /></svg>;
-const IconeNegocio = () => <svg {...iconeBase}><path d="M4 17V6h8v11M7 6V3h3v3M12 9h4v8M7 9h2M7 12h2" /></svg>;
-const IconeImagem = () => <svg {...iconeBase}><rect x="3" y="4" width="14" height="12" rx="2" /><circle cx="7" cy="8" r="1" /><path d="m4 14 4-3 3 2 2-2 3 3" /></svg>;
-const IconeVinculo = () => <svg {...iconeBase}><path d="m7.5 12.5 5-5M6 15l-1 1a3 3 0 0 1-4-4l3-3a3 3 0 0 1 4 0M14 5l1-1a3 3 0 0 1 4 4l-3 3a3 3 0 0 1-4 0" /></svg>;
-const IconeCartao = () => <svg {...iconeBase}><rect x="2.5" y="4.5" width="15" height="11" rx="2" /><path d="M2.5 8h15M6 12h3" /></svg>;

@@ -15,7 +15,7 @@ export function PreviaDeAnuncios() {
   return <div className="anuncios-editorial">
     <header className="anuncios-topo-novo"><div className="page-head"><h1>Anúncios</h1><p>Acompanhe o que está rodando e o resultado de cada anúncio.</p></div>
       <a className="cta" href="/exemplo/criativos">Abrir criativos</a></header>
-    <p className="res-veiculacao">Seu anúncio está no ar. <span className="hint-inline">Situação geral ilustrativa desta prévia.</span></p>
+    <p className="res-veiculacao">Seu anúncio está no ar.</p>
     <PainelDeAnuncios anuncios={ANUNCIOS} ilustrativo />
   </div>;
 }

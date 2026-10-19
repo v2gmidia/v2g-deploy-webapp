@@ -59,6 +59,7 @@
     "conferir:portao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-portao-de-fixture.ts",
     "conferir:analise": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/resolvedor-de-imports.mjs scripts/conferir-analise.ts",
     "conferir:jev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-jev.ts",
+    "conferir:jev-criativos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-jev-criativos.ts",
     "conferir:revops": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-revops.mjs"
   },
   "dependencies": {

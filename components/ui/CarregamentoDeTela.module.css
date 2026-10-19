@@ -13,11 +13,13 @@
 .linhaLonga{width:78%}
 .resposta{width:34%;height:50px;margin:42px 0 0 auto;border-radius:13px}
 .campo{height:104px;margin-top:clamp(100px,22vh,220px);border:1px solid #d9e3e6;border-radius:13px;background:#fff}
-.aplicativo{padding:28px 0 60px}
+.aplicativo{padding:28px 0 60px;color:var(--ink)}
+.aplicativo .linha,.aplicativo .campo{background:var(--surface);border:1px solid var(--line);border-radius:var(--raio-cartao,4px);animation:respirar 1.5s ease-in-out infinite alternate}
+@keyframes respirar{to{opacity:.55}}
 .aplicativo .titulo{font-size:16px}
 .aplicativo .linha{height:20px}
 .aplicativo .campo{height:150px;margin-top:34px}
 @keyframes brilho{to{background-position-x:-220%}}
 @keyframes avancar{to{width:72%}}
 @media(max-width:760px){.conversa{padding:0 16px}.topo{min-height:72px}.progresso{margin:36px 0}.campo{margin-top:100px}}
-@media(prefers-reduced-motion:reduce){.linha,.resposta,.campo,.progresso span{animation:none}}
+@media(prefers-reduced-motion:reduce){.linha,.resposta,.campo,.progresso span{animation:none}.aplicativo .linha,.aplicativo .campo{animation:none}}

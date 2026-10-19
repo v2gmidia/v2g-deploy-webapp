@@ -1,34 +1,29 @@
 import type { ReactNode } from "react";
 import { GaleriaCriativos, type ItemDaGaleria } from "./GaleriaCriativos";
 
-export function TelaDeCriativos({ itens, envio, analise, retencaoAtiva = false }: {
+export function TelaDeCriativos({ itens, envio, analise, retencaoAtiva = false, previa = false }: {
   itens: ItemDaGaleria[];
   envio: ReactNode;
   analise?: ReactNode;
   retencaoAtiva?: boolean;
+  previa?: boolean;
 }) {
   return <div className="criativos-editorial">
     <header className="criativos-topo">
       <div className="page-head"><h1>Criativos</h1><p>Sua biblioteca de imagens e vídeos.</p></div>
       <a className="cta criativos-subir" href="#subir-criativo"><IconeUpload />Subir criativo</a>
     </header>
-    <div className="criativos-regra" role="note">
-      <IconeInfo />
-      <p>{retencaoAtiva
-        ? "Arquivos que saem de circulação ficam disponíveis por 30 dias. Depois, o arquivo é removido e o histórico permanece."
-        : "O histórico das peças permanece aqui. O prazo automático de 30 dias aparece quando a retenção estiver ativa."}</p>
-      <a href="#regra-retencao">Entender a regra</a>
-    </div>
-    <GaleriaCriativos itens={itens} />
+    <GaleriaCriativos itens={itens} previa={previa} />
     <section className="criativos-envio" id="subir-criativo" aria-labelledby="subir-titulo">
       <div className="criativos-envio-copy"><h2 id="subir-titulo">Subir um novo criativo</h2><p>Envie uma imagem deste negócio. Ela entra em revisão antes de qualquer publicação.</p></div>
       {envio}
     </section>
     {analise ? <details className="criativos-analise-extra"><summary>Conferir uma imagem antes de enviar<IconeMais /></summary><div>{analise}</div></details> : null}
-    <section className="criativos-retencao" id="regra-retencao" aria-labelledby="retencao-titulo">
-      <h2 id="retencao-titulo">Como funciona o histórico</h2>
+    <details className="criativos-retencao" id="regra-retencao">
+      <summary><IconeInfo />Histórico e armazenamento<IconeMais /></summary>
+      <p>{retencaoAtiva ? "Arquivos que saem de circulação ficam disponíveis por 30 dias. Depois, o arquivo é removido e o histórico permanece." : "A exclusão automática após 30 dias ainda não está ativa."}</p>
       <p>Remover o arquivo não apaga o registro da peça. Nome, estado e resultados já medidos continuam disponíveis para consulta.</p>
-    </section>
+    </details>
   </div>;
 }
 

@@ -167,8 +167,8 @@
 .v2g-editorial .avisos-editorial .avisos-cabecalho p { max-width: none; }
 .v2g-editorial .avisos-editorial .avisos-abas {
   display: flex;
-  gap: 28px;
-  overflow-x: auto;
+  gap: 8px 24px;
+  flex-wrap: wrap;
   scrollbar-width: none;
   border-bottom: 1px solid var(--line);
 }
@@ -188,7 +188,7 @@
   cursor: pointer;
 }
 .v2g-editorial .avisos-editorial .avisos-abas button:hover { color: var(--ink); }
-.v2g-editorial .avisos-editorial .avisos-abas button[aria-selected="true"] {
+.v2g-editorial .avisos-editorial .avisos-abas button[aria-pressed="true"] {
   border-bottom-color: var(--cobalt-ink);
   color: var(--ink);
 }
@@ -203,7 +203,7 @@
   color: var(--ink-soft);
   font-size: var(--fs-legenda);
 }
-.v2g-editorial .avisos-editorial .avisos-conteudo { display: grid; gap: 54px; padding-top: 38px; }
+.v2g-editorial .avisos-editorial .avisos-conteudo { display: grid; gap: 32px; padding-top: 24px; }
 .v2g-editorial .avisos-editorial .avisos-secao .section-title {
   align-items: flex-end;
   justify-content: space-between;
@@ -338,7 +338,8 @@
 .v2g-editorial .conta-editorial .acct-row {
   gap: 24px;
   padding: 18px 0;
-  border-bottom-style: solid;
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
 }
 .v2g-editorial .conta-editorial .acct-row:first-child { padding-top: 0; }
 .v2g-editorial .conta-editorial .acct-row:last-child { padding-bottom: 0; }
@@ -454,47 +455,26 @@
   .v2g-editorial .conta-editorial .sessao-atual { align-items: flex-start; flex-direction: column; }
 }
 
-/* Conta aprovada em 18/10: navegação secundária e ficha operacional.
+/* Conta: ficha operacional sem sumário, conforme feedback de 18/10.
    As ações continuam nos componentes existentes; esta camada só organiza. */
 .v2g-editorial .conta-editorial { max-width: 1240px; }
 .v2g-editorial .conta-editorial > .page-head { margin-bottom: 28px; }
 .v2g-editorial .conta-editorial .conta-layout {
   display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   gap: 32px;
   align-items: start;
 }
-.v2g-editorial .conta-editorial .conta-indice {
-  position: sticky;
-  top: 96px;
-  display: grid;
-  gap: 6px;
-  padding-right: 16px;
-  border-right: 1px solid var(--line);
-}
-.v2g-editorial .conta-editorial .conta-indice a {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 46px;
-  padding: 10px 12px;
-  border-radius: var(--raio-controle);
-  color: var(--ink-soft);
-  text-decoration: none;
-}
-.v2g-editorial .conta-editorial .conta-indice a:hover { color: var(--ink); background: var(--surface); }
-.v2g-editorial .conta-editorial .conta-indice a.ativo { background: var(--cobalt); color: var(--white); }
-.v2g-editorial .conta-editorial .conta-indice svg { width: 20px; height: 20px; flex: none; }
-.v2g-editorial .conta-editorial .conta-ficha { grid-column: 2; display: flex; flex-direction: column; gap: 12px; }
+.v2g-editorial .conta-editorial .conta-ficha { grid-column: 1; display: flex; flex-direction: column; gap: 12px; }
 .v2g-editorial .conta-editorial .conta-ficha > .conta-secao {
   display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
+  grid-template-columns: 140px minmax(0, 1fr);
   gap: 28px;
   padding: 24px;
   border: 1px solid var(--line);
   border-radius: var(--raio-cartao);
-  background: var(--surface-2);
-  scroll-margin-top: 96px;
+  background: var(--surface);
+  scroll-margin-top: 100px;
 }
 .v2g-editorial .conta-editorial .conta-ficha > .conta-secao > * { grid-column: 2; }
 .v2g-editorial .conta-editorial .conta-ficha > .conta-secao > .section-title {
@@ -515,16 +495,6 @@
   color: var(--ink-mute);
 }
 .v2g-editorial .conta-editorial .conta-ficha > .conta-secao > .card { padding: 0; border: 0; background: transparent; }
-.v2g-editorial .conta-editorial .conta-perfil { order: 1; }
-.v2g-editorial .conta-editorial .conta-negocio { order: 2; }
-.v2g-editorial .conta-editorial .conta-conexoes { order: 3; }
-.v2g-editorial .conta-editorial .conta-plano { order: 4; }
-.v2g-editorial .conta-editorial .conta-identidade { order: 5; }
-.v2g-editorial .conta-editorial .conta-preferencias { order: 6; }
-.v2g-editorial .conta-editorial .conta-requisitos { order: 7; }
-.v2g-editorial .conta-editorial .conta-contrato { order: 8; }
-.v2g-editorial .conta-editorial .conta-atendimento { order: 9; }
-.v2g-editorial .conta-editorial .conta-sessao { order: 10; }
 .v2g-editorial .conta-editorial .conta-perfil-resumo,
 .v2g-editorial .conta-editorial .conta-recolhivel { min-width: 0; }
 .v2g-editorial .conta-editorial :is(.conta-perfil-resumo, .conta-recolhivel) > summary {
@@ -557,7 +527,7 @@
 .v2g-editorial .conta-editorial .conta-editar,
 .v2g-editorial .conta-editorial .conta-recolhivel summary > span:last-child {
   margin-left: auto;
-  min-height: 42px;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   padding: 8px 14px;
@@ -581,27 +551,36 @@
 .v2g-editorial .conta-editorial .conta-negocio-atual span { color: var(--ink-mute); font-size: var(--fs-legenda); }
 .v2g-editorial .conta-editorial .conta-estado { padding: 5px 9px; border-radius: var(--raio-selo); background: var(--good-soft); color: var(--good) !important; }
 .v2g-editorial .conta-editorial .conta-ficha .acct-row { padding: 16px 0; }
-.v2g-editorial .conta-editorial .conta-notas { grid-column: 2; gap: 24px; padding-top: 18px; }
+.v2g-editorial .conta-editorial .conta-notas { grid-column: 1; gap: 24px; padding-top: 18px; }
 
 @media (max-width: 980px) {
   .v2g-editorial .conta-editorial .conta-layout { grid-template-columns: minmax(0, 1fr); gap: 22px; }
-  .v2g-editorial .conta-editorial .conta-indice {
-    position: static;
-    grid-template-columns: repeat(5, max-content);
-    gap: 8px;
-    overflow-x: auto;
-    padding: 0 0 12px;
-    border: 0;
-    border-bottom: 1px solid var(--line);
-    scrollbar-width: none;
-  }
-  .v2g-editorial .conta-editorial .conta-indice::-webkit-scrollbar { display: none; }
-  .v2g-editorial .conta-editorial .conta-ficha,
+      .v2g-editorial .conta-editorial .conta-ficha,
   .v2g-editorial .conta-editorial .conta-notas { grid-column: 1; }
 }
 @media (max-width: 700px) {
   .v2g-editorial .conta-editorial .conta-ficha > .conta-secao { display: block; padding: 20px; }
   .v2g-editorial .conta-editorial .conta-ficha > .conta-secao > .section-title { margin-bottom: 18px; }
   .v2g-editorial .conta-editorial .conta-perfil-resumo > summary { align-items: flex-start; flex-wrap: wrap; }
+  .v2g-editorial .conta-editorial .conta-editar { margin-left: 66px; }
+}
+
+
+.v2g-editorial .conta-editorial .conta-ficha .acct-row { border-bottom-width: 1px; }
+.v2g-editorial .conta-editorial .conta-ficha .acct-row:last-child { border-bottom: 0; }
+.v2g-editorial .conta-editorial .conta-ficha :is(.hint, .rc-tranquilo, .foot-line) { margin-top: 0; }
+.v2g-editorial .conta-editorial .conta-perfil-resumo > summary { flex-wrap: wrap; }
+.v2g-editorial .conta-editorial .conta-perfil-identidade { flex: 1; min-width: 140px; }
+.v2g-editorial .conta-editorial .conta-negocio-atual { padding-bottom: 14px; }
+.v2g-editorial .conta-editorial :is(.conta-perfil-resumo, .conta-recolhivel) > summary:hover .conta-editar { background: var(--surface-2); }
+
+
+@media (max-width: 620px) {
+  .v2g-editorial .avisos-editorial .avisos-abas { gap: 8px; border: 0; }
+  .v2g-editorial .avisos-editorial .avisos-abas button { min-height: 44px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--raio-controle); font-size: var(--fs-legenda); }
+  .v2g-editorial .avisos-editorial .avisos-abas button[aria-pressed="true"] { border-color: var(--cobalt-ink); background: var(--ice-soft); }
+  .v2g-editorial .avisos-editorial .aviso-linha { padding: 20px 0; gap: 12px; }
+  .v2g-editorial .avisos-editorial .aviso-corpo p { font-size: var(--fs-corpo); }
+  .v2g-editorial .conta-editorial .conta-ficha > .conta-secao { padding: 18px; }
   .v2g-editorial .conta-editorial .conta-editar { margin-left: 66px; }
 }

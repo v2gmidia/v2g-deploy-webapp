@@ -663,8 +663,8 @@
 
 .v2g-editorial .criativos-editorial .criativos-abas {
   display: flex;
-  gap: 30px;
-  overflow-x: auto;
+  gap: 8px 24px;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--line);
   scrollbar-width: none;
 }
@@ -728,7 +728,7 @@
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--raio-cartao);
-  background: var(--surface-2);
+  background: var(--surface);
 }
 
 .v2g-editorial .criativos-editorial .criativo-card-imagem {
@@ -743,7 +743,7 @@
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
 }
 .v2g-editorial .criativos-editorial .criativo-vinculo-badge {
   position: absolute;
@@ -799,7 +799,7 @@
 }
 
 .v2g-editorial .criativos-editorial .criativo-status {
-  max-width: 46%;
+  max-width: 100%;
   flex: none;
   padding: 4px 7px;
   border-radius: var(--raio-selo);
@@ -933,7 +933,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  min-height: 36px;
+  min-height: 44px;
   color: var(--cobalt-ink);
   font-size: var(--fs-legenda);
   font-weight: 550;
@@ -1093,8 +1093,7 @@
 }
 
 @media (max-width: 760px) {
-  .v2g-editorial .criativos-editorial .criativos-topo,
-  .v2g-editorial .criativos-editorial .criativos-galeria-head { align-items: stretch; flex-direction: column; }
+  .v2g-editorial .criativos-editorial .criativos-topo { align-items: flex-start; flex-direction: column; gap: 16px; }
   .v2g-editorial .criativos-editorial .criativos-subir { width: 100%; justify-content: center; }
   .v2g-editorial .criativos-editorial .criativos-regra { grid-template-columns: auto minmax(0, 1fr); }
   .v2g-editorial .criativos-editorial .criativos-regra a { grid-column: 2; }
@@ -1105,4 +1104,30 @@
   .v2g-editorial .criativos-editorial .criativos-grade { grid-template-columns: 1fr; }
   .v2g-editorial .criativos-editorial .criativos-regra { align-items: start; }
   .v2g-editorial .criativos-editorial .criativo-card-imagem { aspect-ratio: 1.6 / 1; }
+}
+
+
+.v2g-editorial .criativos-editorial .criativos-galeria-head h2 { font-size: var(--fs-bloco); font-weight: 550; }
+.v2g-editorial .criativos-editorial .criativos-galeria-head { gap: 12px; align-items: center; margin-top: 28px; }
+.v2g-editorial .criativos-editorial .criativo-card-titulo { flex-direction: column; gap: 8px; }
+.v2g-editorial .criativos-editorial .criativo-status { text-align: left; }
+.v2g-editorial .criativos-editorial .criativo-associacoes > a { min-height: 44px; border: 0; padding: 6px 0; }
+.v2g-editorial .criativos-editorial .criativo-associacoes > a:hover b { text-decoration: underline; text-underline-offset: 4px; }
+.v2g-editorial .criativos-editorial .criativo-associacoes-rotulo { text-transform: none; letter-spacing: 0; }
+.v2g-editorial .criativos-editorial .criativos-retencao { max-width: none; padding-top: 0; }
+.v2g-editorial .criativos-editorial .criativos-retencao summary { display: flex; gap: 12px; align-items: center; min-height: 56px; cursor: pointer; list-style: none; color: var(--ink-soft); }
+.v2g-editorial .criativos-editorial .criativos-retencao summary::-webkit-details-marker { display: none; }
+.v2g-editorial .criativos-editorial .criativos-retencao summary svg { width: 18px; height: 18px; flex: none; }
+.v2g-editorial .criativos-editorial .criativos-retencao summary svg:last-child { margin-left: auto; }
+.v2g-editorial .criativos-editorial .criativos-retencao[open] summary svg:last-child { transform: rotate(45deg); }
+.v2g-editorial .criativos-editorial .criativos-retencao > p { max-width: 72ch; margin: 0 0 14px; }
+@media (max-width: 620px) {
+  .v2g-editorial .criativos-editorial .criativos-galeria-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .v2g-editorial .criativos-editorial .criativos-galeria-head { justify-content: flex-end; margin: 0; }
+  .v2g-editorial .criativos-editorial .criativos-abas { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; border: 0; }
+  .v2g-editorial .criativos-editorial .criativos-abas button { justify-content: space-between; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: var(--raio-controle); }
+  .v2g-editorial .criativos-editorial .criativos-abas button::after { display: none; }
+  .v2g-editorial .criativos-editorial .criativos-abas button.ativa { border-color: var(--cobalt-ink); background: var(--ice-soft); }
+  .v2g-editorial .criativos-editorial .criativos-topo { margin-bottom: 8px; }
+  .v2g-editorial .criativos-editorial .criativos-vazio { min-height: 140px; padding: 20px; }
 }

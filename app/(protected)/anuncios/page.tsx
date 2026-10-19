@@ -245,16 +245,7 @@ export default async function AnunciosPage() {
           <PecaPronta />
         </div>
 
-        <aside className="dash-aside">
-          <DicasDeFoto />
-          <section className="trust support-block">
-            <b className="title">Ficou com dúvida?</b>
-            Se precisar de ajuda com seus anúncios, fale com a equipe pelo WhatsApp.
-            <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-              Chamar no WhatsApp &rarr;
-            </a>
-          </section>
-        </aside>
+
       </div>
     </div>
   );

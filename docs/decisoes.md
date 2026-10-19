@@ -14,6 +14,22 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-18 — Base de contexto e fluxo de criativos por etapas
+
+**Direção aprovada pelo Victor no chat, posterior ao desenho do envio de peça pronta.** Antes de gerar imagens, a V2G organiza uma regra central e documentos aplicáveis por nicho, com dados do negócio, identidade visual, referências verificáveis e lacunas explícitas. O primeiro uso prático continua sendo o cliente subir uma peça pronta; a tela pode informar que a análise e a preparação da publicação acontecem depois, sem afirmar que a peça foi publicada. O fluxo futuro recebe objetivo/promoção declarados pelo cliente, gera uma proposta, permite até três pedidos de refação com instrução do cliente e separa aprovação da peça, revisão operacional e publicação comprovada. Provedor e custo da geração serão decididos por piloto medido, não por preferência antecipada.
+
+**Jev e referências:** classificar anúncios e imagens por perguntas fechadas é uma hipótese de piloto. Uma peça ativa na Biblioteca de Anúncios ou encontrada no Pinterest é referência visual, não prova de vendas ou de superioridade. Coleta, direito de uso, pertinência ao nicho e evidência de desempenho precisam ser verificados separadamente. A documentação atual da TypeSafe declara imagens experimentais, não prontas para produção; isso não autoriza varredura automática nem operação com dados de clientes.
+
+**Aprovação principal no aplicativo:** Victor corrigiu a decisão de 13/10 que exigia e-mail como canal principal. O aplicativo deverá colher a aprovação explícita da pessoa autorizada para peça e primeira publicação, com identidade, versão, horário e conteúdo aprovados registrados; o e-mail pode complementar a comunicação. Silêncio e WhatsApp continuam sem valer como aprovação. A mudança do canal no produto não altera, por si, a minuta contratual ou as condições jurídicas: conciliar a redação do contrato antes de uso real. Até haver implementação e prova desse registro no app, permanece o procedimento seguro de aprovação formal já documentado; esta entrada não libera publicação automática.
+
+**Motivo:** dar contexto confiável à criação, evitar referência tomada como resultado e manter rastreabilidade antes de ampliar autonomia.
+
+### 2026-10-18 — Intervalo livre no Início e Conta sem sumário
+
+**Feedback e implementação autorizados diretamente pelo Victor, posteriores à revisão visual.** O calendário permite data inicial e final livres, inclusive janeiro a março de um ano anterior. Os atalhos de um, três, seis meses e um ano não atendem ao pedido. Sem escolha, abre o mês atual; datas inválidas, invertidas ou futuras recebem orientação. A seleção fica na URL e recorta somente resultados: jornada, perguntas sobre ontem e limite mensal continuam no estado atual.
+
+A Conta perde o sumário lateral e seu equivalente móvel, mantendo seções e ações. **Criativos, Anúncios e Avisos não mudam neste lote.** Esta decisão substitui a navegação interna prevista na aprovação abaixo.
+
 ### 2026-10-18 — Conta como ficha de configurações do negócio
 
 **Aprovação direta do Victor.** A tela Conta passa a organizar perfil, negócio selecionado, identidade visual, conexões, plano e preferências em uma ficha única, com navegação interna e leitura rápida. A edição do perfil e a gestão da identidade visual permanecem recolhidas até a pessoa pedir, reduzindo texto e peso visual sem retirar as ações existentes.

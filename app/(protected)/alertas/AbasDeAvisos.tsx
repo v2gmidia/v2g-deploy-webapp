@@ -18,16 +18,16 @@ export function AbasDeAvisos({
   const [aba, setAba] = useState<Aba>((quantasPendencias ?? 0) > 0 ? "pendencias" : "atualizacoes");
 
   return <>
-    <div className="avisos-abas" role="tablist" aria-label="Filtrar avisos">
-      <button type="button" role="tab" aria-selected={aba === "pendencias"}
+    <div className="avisos-abas" role="group" aria-label="Filtrar avisos">
+      <button type="button" aria-pressed={aba === "pendencias"}
         onClick={() => setAba("pendencias")}>
         Precisa de você {quantasPendencias !== null && <span>{quantasPendencias}</span>}
       </button>
-      <button type="button" role="tab" aria-selected={aba === "atualizacoes"}
+      <button type="button" aria-pressed={aba === "atualizacoes"}
         onClick={() => setAba("atualizacoes")}>
         Atualizações <span>{quantasAtualizacoes}</span>
       </button>
-      <button type="button" role="tab" aria-selected={aba === "todos"}
+      <button type="button" aria-pressed={aba === "todos"}
         onClick={() => setAba("todos")}>
         Todos
       </button>

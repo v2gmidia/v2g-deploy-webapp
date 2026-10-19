@@ -53,7 +53,7 @@ function CardDoCriativo({ item }: { item: ItemDaGaleria }) {
       {item.imagemUrl
         // A origem é privada e chega como URL assinada após conferir o negócio.
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={item.imagemUrl} alt={`Prévia de ${item.nome}`} />
+        ? <img src={item.imagemUrl} alt={`Prévia de ${item.nome}`} loading="lazy" />
         : item.arte
           ? <ArteDeExemplo tipo={item.arte} />
           : <div className="criativo-sem-previa"><IconeImagem /><span>Prévia indisponível</span></div>}
@@ -86,7 +86,7 @@ function CardDoCriativo({ item }: { item: ItemDaGaleria }) {
   </article>;
 }
 
-export function GaleriaCriativos({ itens }: { itens: ItemDaGaleria[] }) {
+export function GaleriaCriativos({ itens, previa = false }: { itens: ItemDaGaleria[]; previa?: boolean }) {
   const contagens = useMemo(() => new Map(ABAS.map((aba) => [
     aba.id, itens.filter((item) => item.grupo === aba.id).length,
   ])), [itens]);
@@ -96,13 +96,13 @@ export function GaleriaCriativos({ itens }: { itens: ItemDaGaleria[] }) {
 
   return <section className="criativos-galeria" aria-labelledby="galeria-titulo">
     <div className="criativos-galeria-head">
-      <div><h2 id="galeria-titulo">Sua biblioteca</h2><p>Crie, revise e reutilize peças sem perder de vista os anúncios ligados a elas.</p></div>
-      <a className="criativos-filtro" href="/anuncios">Ver todos os anúncios<IconeSeta /></a>
+      <h2 id="galeria-titulo">Sua biblioteca</h2>
+      <a className="criativos-filtro" href={previa ? "/exemplo/anuncios" : "/anuncios"}>Ver anúncios<IconeSeta /></a>
     </div>
-    <div className="criativos-abas" role="tablist" aria-label="Filtrar criativos por estado">
+    <div className="criativos-abas" role="group" aria-label="Filtrar criativos por estado">
       {ABAS.map((aba) => {
         const ativa = abaAtiva === aba.id;
-        return <button key={aba.id} type="button" role="tab" aria-selected={ativa}
+        return <button key={aba.id} type="button" aria-pressed={ativa}
           className={ativa ? "ativa" : undefined} onClick={() => setAbaAtiva(aba.id)}>
           {aba.rotulo}<span>{contagens.get(aba.id) ?? 0}</span>
         </button>;

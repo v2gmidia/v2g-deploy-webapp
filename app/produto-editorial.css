@@ -64,7 +64,7 @@
   --raio-item: 4px;
   --raio-interno: 4px;
   --raio-selo: 4px;
-  --sidebar-w: 264px;
+  --sidebar-w: 240px;
   --barra-h: 70px;
   --shell-max: 1440px;
   --alt-principal: 48px;
@@ -162,7 +162,7 @@
 .v2g-editorial .side-account .business-current { width: 6px; height: 6px; overflow: hidden; border-radius: 50%; background: currentColor; font-size: 0; }
 .v2g-editorial .sidebar :focus-visible { outline-color: var(--ice); }
 .v2g-editorial .side-falar { margin-top: 32px; padding-inline: 4px; font-size: var(--fs-corpo); }
-.v2g-editorial .topbar { min-height: 88px; padding: 16px 44px; gap: 24px; background: var(--fundo-topo); border-bottom: 1px solid var(--line); }
+.v2g-editorial .topbar { min-height: 80px; padding: 12px 36px; gap: 24px; background: var(--fundo-topo); border-bottom: 1px solid var(--line); }
 .v2g-editorial .topbar .hi { font-size: var(--fs-corpo); font-weight: 500; }
 .v2g-editorial .greet .sub { font-size: var(--fs-legenda); }
 .v2g-editorial .topbar-actions { gap: 24px; }
@@ -171,12 +171,12 @@
 .v2g-editorial .tema-compacto { display: flex; align-items: center; gap: 8px; font-size: var(--fs-legenda); color: var(--ink-soft); }
 .v2g-editorial .tema-compacto select { min-height: 44px; width: auto; max-width: 118px; padding: 8px 4px; border: 0; background: var(--canvas); color: var(--ink); font: inherit; cursor: pointer; }
 .v2g-editorial .tema-compacto select:disabled { cursor: wait; }
-.v2g-editorial .canvas { margin-inline: auto; padding: 36px 44px 56px; }
+.v2g-editorial .canvas { margin-inline: auto; padding: 32px 36px 56px; }
 .v2g-editorial .canvas:focus { outline: none; }
 .v2g-editorial .pular-conteudo { position: fixed; z-index: 100; top: -100px; left: 16px; padding: 12px 18px; color: var(--ink); background: var(--surface-2); }
 .v2g-editorial .pular-conteudo:focus { top: 12px; }
 .v2g-editorial .page-head { margin-bottom: 32px; }
-.v2g-editorial .page-head h1 { font-size: var(--fs-destaque); font-weight: 400; letter-spacing: -.035em; line-height: 1.2; margin-bottom: 14px; }
+.v2g-editorial .page-head h1 { font-size: var(--fs-destaque); font-weight: 550; letter-spacing: -.035em; line-height: 1.2; margin-bottom: 10px; }
 .v2g-editorial .page-head h1::after { content: ""; display: inline-block; width: 6px; height: 6px; background: var(--cobalt-ink); margin-left: 9px; }
 .v2g-editorial .page-head p { font-size: var(--fs-corpo); line-height: 1.7; }
 .v2g-editorial .section-title h2 { font-weight: 450; font-size: var(--fs-bloco); letter-spacing: -.025em; }
@@ -190,7 +190,7 @@
 .v2g-editorial :is(input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), textarea, select) { border-color: var(--control-line); }
 
 @media (max-width: 1150px) {
-  .app-shell.v2g-editorial { --sidebar-w: 230px; }
+  .app-shell.v2g-editorial { --sidebar-w: 210px; }
   .v2g-editorial .sidebar { padding-inline: 16px; }
   .v2g-editorial .topbar { padding-inline: 28px; }
   .v2g-editorial .canvas { padding-inline: 28px; }
@@ -213,14 +213,16 @@
   }
 }
 @media (max-width: 620px) {
-  .v2g-editorial .topbar { padding-inline: 20px; }
+  .v2g-editorial .topbar { padding-inline: 16px; min-height: 72px; }
+  .v2g-editorial .topbar-actions > .link-btn { display: none; }
   .v2g-editorial .topbar-help { width: 44px; justify-content: center; }
   .v2g-editorial .topbar-help span { display: none; }
   .v2g-editorial .greet { min-width: 0; }
   .v2g-editorial .greet .sub { display: none; }
   .v2g-editorial .topbar .hi { font-size: var(--fs-legenda); }
   .v2g-editorial .topbar-actions { gap: 4px; }
-  .v2g-editorial .canvas { padding-inline: 20px; }
+  .v2g-editorial .canvas { padding-inline: 16px; }
+  .v2g-editorial .page-head { margin-bottom: 24px; }
   .v2g-editorial .page-head h1 { font-size: 28px; }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -232,3 +234,9 @@
   background: var(--surface);
   color: var(--ink);
 }
+
+
+.v2g-editorial .main { min-width: 0; }
+.v2g-editorial :is(.criativo-card h3, .anuncio-linha-nova, .conta-secao) { overflow-wrap: anywhere; }
+.v2g-editorial { scrollbar-color: var(--control-line) var(--canvas); }
+.v2g-editorial .previa-local-nota { margin: 0 0 16px; color: var(--ink-mute); font-size: var(--fs-legenda); }

@@ -1,6 +1,6 @@
 /* Cada campanha mantém sua moeda, origem e ausência de dados. A apresentação
    agrupa por linhas; não soma moedas nem transforma presença em desempenho. */
-.v2g-editorial .anuncios-editorial .dash-grid { grid-template-columns: minmax(0, 1fr) 240px; gap: 40px; }
+.v2g-editorial .anuncios-editorial .dash-grid { grid-template-columns: minmax(0, 1fr); gap: 28px; }
 .v2g-editorial .anuncios-editorial .dash-aside { position: static; }
 .v2g-editorial .anuncios-editorial .res-lista { gap: 0; }
 .v2g-editorial .anuncios-editorial .res-ficha { background: transparent; border: 0; border-radius: 0; padding: 28px 0; border-top: 1px solid var(--line); box-shadow: none; }
@@ -73,9 +73,9 @@
 .v2g-editorial .anuncios-editorial .anuncios-topo-novo > .cta { width: max-content; flex: none; }
 .v2g-editorial .anuncios-editorial .anuncios-filtros {
   display: flex;
-  gap: 28px;
-  margin-top: 28px;
-  overflow-x: auto;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+  margin-top: 24px;
   border-bottom: 1px solid var(--line);
   scrollbar-width: none;
 }
@@ -94,23 +94,24 @@
   font: inherit;
   cursor: pointer;
 }
-.v2g-editorial .anuncios-editorial .anuncios-filtros button[aria-selected="true"] { border-bottom-color: var(--cobalt-ink); color: var(--ink); }
+.v2g-editorial .anuncios-editorial .anuncios-filtros button[aria-pressed="true"] { border-bottom-color: var(--cobalt-ink); color: var(--ink); }
 .v2g-editorial .anuncios-editorial .anuncios-filtros button span { color: var(--ink-mute); font-size: var(--fs-legenda); }
 .v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho {
   display: flex;
-  align-items: end;
+  align-items: baseline;
+  flex-wrap: wrap;
   justify-content: space-between;
   gap: 20px;
-  margin: 30px 0 16px;
+  margin: 24px 0 16px;
 }
-.v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho h2 { margin: 0; font-size: var(--fs-tela); font-weight: 450; }
+.v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho h2 { margin: 0; font-size: var(--fs-bloco); font-weight: 550; }
 .v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho p { margin: 6px 0 0; color: var(--ink-soft); }
 .v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho > span { color: var(--ink-mute); font-size: var(--fs-legenda); }
 .v2g-editorial .anuncios-editorial .anuncios-lista-nova { display: grid; gap: 12px; }
-.v2g-editorial .anuncios-editorial .anuncio-linha-nova { overflow: hidden; border: 1px solid var(--line); border-radius: var(--raio-cartao); background: var(--surface-2); }
+.v2g-editorial .anuncios-editorial .anuncio-linha-nova { overflow: hidden; border: 1px solid var(--line); border-radius: var(--raio-cartao); background: var(--surface); }
 .v2g-editorial .anuncios-editorial .anuncio-resumo {
   display: grid;
-  grid-template-columns: minmax(230px, 1fr) minmax(460px, 1.5fr) 20px;
+  grid-template-columns: minmax(180px, 1fr) minmax(360px, 1.5fr) 20px;
   align-items: center;
   gap: 24px;
   width: 100%;
@@ -125,7 +126,7 @@
 .v2g-editorial .anuncios-editorial .anuncio-identidade h3 { margin: 8px 0 4px; color: var(--ink); font-size: var(--fs-titulo); font-weight: 600; overflow-wrap: anywhere; }
 .v2g-editorial .anuncios-editorial .anuncio-identidade p { margin: 0; color: var(--ink-mute); font-size: var(--fs-legenda); }
 .v2g-editorial .anuncios-editorial .anuncio-estado { display: inline-flex; padding: 4px 8px; border-radius: var(--raio-selo); font-size: var(--fs-legenda); }
-.v2g-editorial .anuncios-editorial .anuncio-estado.com-numeros { background: var(--good-soft); color: var(--good); }
+.v2g-editorial .anuncios-editorial .anuncio-estado.com-numeros { background: var(--ice-soft); color: var(--ink-soft); }
 .v2g-editorial .anuncios-editorial .anuncio-estado.sem-numeros { background: var(--ice-soft); color: var(--ink-soft); }
 .v2g-editorial .anuncios-editorial .anuncio-resumo dl { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; }
 .v2g-editorial .anuncios-editorial .anuncio-resumo dl div { min-width: 0; padding: 0 14px; border-left: 1px solid var(--line); }
@@ -154,7 +155,7 @@
   .v2g-editorial .anuncios-editorial .anuncio-resumo dl { grid-column: 1 / -1; grid-row: 2; }
 }
 @media (max-width: 700px) {
-  .v2g-editorial .anuncios-editorial .anuncios-topo-novo { flex-direction: column; }
+  .v2g-editorial .anuncios-editorial .anuncios-topo-novo { flex-direction: column; gap: 14px; }
   .v2g-editorial .anuncios-editorial .anuncio-resumo { padding: 16px; }
   .v2g-editorial .anuncios-editorial .anuncio-resumo dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 0; }
   .v2g-editorial .anuncios-editorial .anuncio-criativos { grid-template-columns: 1fr; }
@@ -165,4 +166,27 @@
   .v2g-editorial .anuncios-editorial .anuncio-criativo { grid-template-columns: 60px minmax(0, 1fr); }
   .v2g-editorial .anuncios-editorial .anuncio-criativo-arte { width: 60px; height: 52px; }
   .v2g-editorial .anuncios-editorial .anuncio-criativo a { grid-column: 2; }
+}
+
+
+.v2g-editorial .anuncios-editorial .anuncios-topo-novo > .cta {
+  min-height: 44px; padding: 10px 16px; border: 1px solid var(--control-line);
+  background: transparent; color: var(--cobalt-ink);
+}
+.v2g-editorial .anuncios-editorial .anuncios-topo-novo > .cta:hover { background: var(--surface); }
+.v2g-editorial .anuncios-editorial .anuncio-resumo:hover { background: var(--surface-2); }
+.v2g-editorial .anuncios-editorial .anuncio-resumo:focus-visible { outline-offset: -4px; }
+.v2g-editorial .anuncios-editorial .res-veiculacao { max-width: 76ch; margin-top: 14px; }
+.v2g-editorial .anuncios-editorial .anuncios-vazio { padding: 28px; border: 1px dashed var(--line); color: var(--ink-soft); }
+.v2g-editorial .anuncios-editorial .anuncio-criativo { border: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.v2g-editorial .anuncios-editorial .anuncio-criativo a { min-height: 44px; display: inline-flex; align-items: center; }
+@media (max-width: 620px) {
+  .v2g-editorial .anuncios-editorial .anuncios-filtros { gap: 8px; border: 0; }
+  .v2g-editorial .anuncios-editorial .anuncios-filtros button {
+    min-height: 44px; padding: 8px 10px; border: 1px solid var(--line);
+    border-radius: var(--raio-controle); font-size: var(--fs-legenda);
+  }
+  .v2g-editorial .anuncios-editorial .anuncios-filtros button[aria-pressed="true"] { background: var(--ice-soft); border-color: var(--cobalt-ink); }
+  .v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho { gap: 6px; margin-top: 20px; }
+  .v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho p { font-size: var(--fs-legenda); }
 }

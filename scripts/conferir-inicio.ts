@@ -33,7 +33,7 @@ import {
   type MedidaDoCliente,
 } from "../lib/estado/frases.ts";
 import type { ResumoDePendencias } from "../lib/cadastro/pendencias.ts";
-import { inicioDoPeriodo, periodoDoInicio } from "../lib/inicio/periodo.ts";
+import { inicioDoPeriodo, periodoDoInicio, intervaloDoInicio, erroDoIntervalo } from "../lib/inicio/periodo.ts";
 
 let passou = 0;
 let falhou = 0;
@@ -260,8 +260,8 @@ secao("5. B7 — seção sem item não renderiza título");
     "atualizações vazias não ganham cartão",
   );
   ok(
-    /GraficoDeInvestimento/.test(inicio) && /periodo\?: PeriodoDoInicio/.test(inicio),
-    "o resumo oferece série temporal e períodos naturais",
+    /GraficoDeInvestimento/.test(inicio) && /intervalo\?: IntervaloDoInicio/.test(inicio),
+    "o resumo oferece série temporal e intervalo livre",
   );
 }
 
@@ -276,6 +276,43 @@ secao("5.1 períodos naturais — seleção e viradas de calendário");
   ok(inicioDoPeriodo("2026-10-18", "3m") === "2026-07-18", "três meses usam calendário, não 90 dias fixos");
   ok(inicioDoPeriodo("2026-03-31", "1m") === "2026-02-28", "fim de mês é ajustado sem pular para março");
   ok(inicioDoPeriodo("2024-02-29", "1a") === "2023-02-28", "ano bissexto cai no último dia válido");
+}
+
+// ------------------------------------------------------------------
+secao("5.2 intervalo livre — validação, histórico e separação da operação");
+{
+  const hoje = "2026-10-18";
+  const trimestre = intervaloDoInicio({ desde: "2026-01-01", ate: "2026-03-31" }, hoje);
+  ok(trimestre.desde === "2026-01-01" && trimestre.ate === "2026-03-31" && !trimestre.erro,
+    "janeiro a março é consultado exatamente, sem ancorar em hoje");
+  const padrao = intervaloDoInicio({}, hoje);
+  ok(padrao.desde === "2026-10-01" && padrao.ate === hoje, "sem seleção, mostra o mês atual");
+  ok(erroDoIntervalo("2024-02-29", "2024-02-29", hoje) === null, "um único dia bissexto é válido");
+  ok(erroDoIntervalo("2020-01-01", "2026-03-31", hoje) === null, "histórico superior a um ano não é restringido");
+  ok(Boolean(erroDoIntervalo("2026-02-29", "2026-03-31", hoje)), "data inexistente é rejeitada");
+  ok(Boolean(erroDoIntervalo("2026-04-31", "2026-05-01", hoje)), "não normaliza abril para maio");
+  ok(Boolean(erroDoIntervalo("2026-03-31", "2026-01-01", hoje)), "ordem invertida é rejeitada");
+  ok(Boolean(erroDoIntervalo("", "2026-03-31", hoje)), "data incompleta é rejeitada");
+  ok(Boolean(erroDoIntervalo("2026-10-18", "2026-10-19", hoje)), "não consulta resultado futuro");
+  ok(Boolean(erroDoIntervalo("01/01/2026", "2026-03-31", hoje)), "query fora do formato ISO é rejeitada");
+  ok(Boolean(erroDoIntervalo("0000-01-01", "2026-03-31", hoje)), "ano zero é rejeitado");
+  const invalido = intervaloDoInicio({ desde: "errado", ate: "2026-03-31" }, hoje);
+  ok(Boolean(invalido.erro) && invalido.desde === padrao.desde, "query inválida informa erro e o recorte substituto");
+  const repetido = intervaloDoInicio({ desde: ["2026-01-01", "errado"], ate: ["2026-03-31"] }, hoje);
+  ok(repetido.desde === trimestre.desde && !repetido.erro, "parâmetros repetidos têm interpretação determinística");
+  const pagina = fonte("app/(protected)/inicio/page.tsx");
+  ok(pagina.includes("await estadoDoCliente(agora)") && pagina.includes("desde: intervalo.desde, ate: intervalo.ate"),
+    "histórico consulta as datas escolhidas sem mudar a leitura do estado atual");
+  ok(pagina.includes('desde: desdeMes, ate: hoje') && pagina.includes('acumuladoDoPeriodo={acumuladoDoPeriodo}'),
+    "limite do mês e resultado histórico são fornecidos separadamente");
+  const tela = fonte("app/(protected)/inicio/TelaDoInicio.tsx");
+  ok(tela.includes("estado.diaSeguinte.acumulado?.dias.find") && tela.includes("acumuladoDoPeriodo === undefined"),
+    "perguntas de ontem continuam usando o estado atual, não o trimestre histórico");
+  const seletor = fonte("app/(protected)/inicio/SeletorDePeriodo.tsx");
+  ok(seletor.includes('type="date"') && seletor.includes('parametros.delete("periodo")') && seletor.includes('busca.toString()'),
+    "calendário livre preserva outros parâmetros e remove o atalho antigo");
+  ok(!fonte("app/(protected)/conta/page.tsx").includes("IndiceDaConta") &&
+    !fonte("app/exemplo/_conta/PreviaDeConta.tsx").includes("IndiceDaConta"), "Conta real e prévia não têm sumário");
 }
 
 // ------------------------------------------------------------------

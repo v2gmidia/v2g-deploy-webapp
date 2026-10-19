@@ -6,9 +6,9 @@ import { Casco } from "@/components/ui/Casco";
 import { Marca } from "@/components/ui/Marca";
 import { PreferenciaDeTema } from "@/components/ui/PreferenciaDeTema";
 import { TelaDoInicio } from "@/app/(protected)/inicio/TelaDoInicio";
-import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 import "@/app/(fluxo)/onboarding/onboarding-editorial.css";
-import { periodoDoInicio } from "@/lib/inicio/periodo";
+import { intervaloDoInicio } from "@/lib/inicio/periodo";
 
 export const metadata: Metadata = {
   title: "Exemplo — V2G",
@@ -203,7 +203,7 @@ export default async function ExemploPage({
     if (!modulo || !fixture) notFound();
     return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
-      <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} retencaoAtiva
+      <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} retencaoAtiva previa
         envio={<div className="form-warning">Prévia local: o envio real exige uma conta autenticada.</div>} />
     </Casco>;
   }
@@ -356,8 +356,7 @@ export default async function ExemploPage({
   if (tela !== "inicio") notFound();
 
   const busca2 = await searchParams;
-  const periodoPedido = Array.isArray(busca2.periodo) ? busca2.periodo[0] : busca2.periodo;
-  const periodo = periodoDoInicio(periodoPedido);
+  const intervalo = intervaloDoInicio(busca2, diaEmSaoPaulo(agora));
   const multicontaDaPrevia = busca2.multiconta === "1" ? [
     { id: "00000000-0000-4000-8000-000000000001", name: "QA Empresa 1 — FICTÍCIA — Resposta A", logoUrl: null, cnpj: "00000000000191" },
     { id: "00000000-0000-4000-8000-000000000002", name: "QA Empresa 2 — FICTÍCIA — Resposta B", logoUrl: null, cnpj: "00000000000272" },
@@ -387,12 +386,13 @@ export default async function ExemploPage({
           aparecem: execucao existe (o pipeline disparou) e o anuncio
           NUNCA foi ao ar.
           ============================================================ */}
+      <p className="previa-local-nota">Prévia visual: os dados de exemplo são fixos. Na conta autenticada, as datas consultam o período escolhido.</p>
       <TelaDoInicio
         estado={exemplo.exemploDoInicio(agora, estadoDoExemplo)}
         ultimaDecisao={null}
         diaDaPergunta={diaDeOntemEmSaoPaulo(agora)}
         atrasados={[]}
-        periodo={periodo}
+        intervalo={intervalo}
         investidoNoMesCentavos={1025}
         faixa={null}
       />

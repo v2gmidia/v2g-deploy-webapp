@@ -17,7 +17,7 @@ type Filtro = "todos" | AnuncioDaLista["estado"];
 
 export function PainelDeAnuncios({ anuncios, ilustrativo = false }: { anuncios: AnuncioDaLista[]; ilustrativo?: boolean }) {
   const [filtro, setFiltro] = useState<Filtro>("todos");
-  const [aberto, setAberto] = useState<string | null>(anuncios[0]?.id ?? null);
+  const [aberto, setAberto] = useState<string | null>(null);
   const contagens = useMemo(() => ({
     todos: anuncios.length,
     "com-numeros": anuncios.filter((a) => a.estado === "com-numeros").length,
@@ -26,18 +26,19 @@ export function PainelDeAnuncios({ anuncios, ilustrativo = false }: { anuncios: 
   const visiveis = filtro === "todos" ? anuncios : anuncios.filter((a) => a.estado === filtro);
 
   return <section className="anuncios-painel" aria-labelledby="anuncios-lista-titulo">
-    <div className="anuncios-filtros" role="tablist" aria-label="Filtrar anúncios">
+    <div className="anuncios-filtros" role="group" aria-label="Filtrar anúncios">
       {(["todos", "com-numeros", "sem-numeros"] as const).map((id) => <button key={id} type="button"
-        role="tab" aria-selected={filtro === id} onClick={() => setFiltro(id)}>
+        aria-pressed={filtro === id} onClick={() => setFiltro(id)}>
         {id === "todos" ? "Todos" : id === "com-numeros" ? "Com números" : "Sem números ainda"}
         <span>{contagens[id]}</span>
       </button>)}
     </div>
     <div className="anuncios-painel-cabecalho">
-      <div><h2 id="anuncios-lista-titulo">Todos os anúncios</h2><p>Abra um anúncio para ver os números e os criativos associados.</p></div>
+      <div><h2 id="anuncios-lista-titulo">{filtro === "todos" ? "Todos os anúncios" : filtro === "com-numeros" ? "Anúncios com números" : "Anúncios sem números ainda"}</h2><p>Selecione um anúncio para ver os criativos associados.</p></div>
       {ilustrativo ? <span>Prévia local com dados ilustrativos</span> : null}
     </div>
     <div className="anuncios-lista-nova">
+      {visiveis.length === 0 && <p className="anuncios-vazio" role="status">Nenhum anúncio neste filtro. Selecione outro filtro para continuar.</p>}
       {visiveis.map((anuncio) => {
         const estaAberto = aberto === anuncio.id;
         return <article className="anuncio-linha-nova" key={anuncio.id}>
@@ -53,16 +54,16 @@ export function PainelDeAnuncios({ anuncios, ilustrativo = false }: { anuncios: 
             <IconeChevron />
           </button>
           {estaAberto ? <div className="anuncio-detalhe-novo">
-            <div className="anuncio-detalhe-titulo"><div><h4>Criativos usados neste anúncio ({anuncio.criativos.length})</h4>
-              <p>Esta ligação só aparece quando a fonte confirma qual arquivo pertence a este anúncio.</p></div>
-              <a href="/criativos">Abrir biblioteca →</a></div>
+            <div className="anuncio-detalhe-titulo"><div><h4>Criativos associados{anuncio.criativos.length > 0 ? ` (${anuncio.criativos.length})` : ""}</h4>
+</div>
+              <a href={ilustrativo ? "/exemplo/criativos" : "/criativos"}>Abrir biblioteca →</a></div>
             {anuncio.criativos.length > 0 ? <div className="anuncio-criativos">
               {anuncio.criativos.map((criativo) => <div className="anuncio-criativo" key={criativo.id}>
                 <div className={`anuncio-criativo-arte ${criativo.arte ?? "crescimento"}`} aria-hidden="true" />
                 <div><b>{criativo.nome}</b>{criativo.detalhe ? <span>{criativo.detalhe}</span> : null}</div>
-                <a href="/criativos">Ver criativo</a>
+                <a href={ilustrativo ? "/exemplo/criativos" : "/criativos"}>Ver criativo</a>
               </div>)}
-            </div> : <p className="anuncio-sem-vinculo">O backend ainda não informou quais arquivos pertencem a esta execução. Nenhuma associação foi presumida.</p>}
+            </div> : <p className="anuncio-sem-vinculo">Ainda não foi possível identificar os criativos deste anúncio.</p>}
             {anuncio.observacao ? <p className="anuncio-observacao">{anuncio.observacao}</p> : null}
           </div> : null}
         </article>;

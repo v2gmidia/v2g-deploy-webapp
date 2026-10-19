@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
 import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
-import { inicioDoPeriodo, periodoDoInicio } from "@/lib/inicio/periodo";
+import { intervaloDoInicio } from "@/lib/inicio/periodo";
 import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
@@ -75,13 +75,11 @@ export default async function InicioPage({
   // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
   const agora = new Date();
   const busca = await searchParams;
-  const periodoPedido = Array.isArray(busca.periodo) ? busca.periodo[0] : busca.periodo;
-  const periodo = periodoDoInicio(periodoPedido);
-  const ate = diaEmSaoPaulo(agora);
-  const desde = inicioDoPeriodo(ate, periodo);
+  const hoje = diaEmSaoPaulo(agora);
+  const intervalo = intervaloDoInicio(busca, hoje);
   let estado: EstadoDoCliente | null = fixture
     ? null
-    : await estadoDoCliente(agora, { desde, ate });
+    : await estadoDoCliente(agora);
 
   // ============================================================
   // O PORTÃO DAS FIXTURES — dois trincos, e nenhum deles sozinho abre.
@@ -139,20 +137,20 @@ export default async function InicioPage({
   // ============================================================
   if (!estado.temNegocio) redirect("/onboarding");
 
-  // O seletor muda o resumo para 30 ou 60 dias, mas a verba continua
-  // mensal. Uma leitura separada impede comparar o teto do mês com um
-  // acumulado de dois meses.
+  // A consulta histórica não altera a jornada nem as perguntas sobre ontem.
+  // O limite mensal sempre considera o mês atual, independentemente do calendário.
   let investidoNoMesCentavos: number | null = null;
+  let acumuladoDoPeriodo: EstadoDoCliente["diaSeguinte"]["acumulado"] | undefined = fixture ? undefined : null;
   if (!fixture && estado.negocioId && user) {
-    const acumuladoDoMes = await consolidadoDoNegocio({
-      businessId: estado.negocioId,
-      profileId: user.id,
-      desde: `${ate.slice(0, 8)}01`,
-      ate,
-    });
-    investidoNoMesCentavos = acumuladoDoMes.ok
-      ? acumuladoDoMes.dados.investiuCentavos
-      : null;
+    const args = { businessId: estado.negocioId, profileId: user.id };
+    const desdeMes = `${hoje.slice(0, 8)}01`;
+    const mensal = consolidadoDoNegocio({ ...args, desde: desdeMes, ate: hoje });
+    const consultaPeriodo = intervalo.desde === desdeMes && intervalo.ate === hoje
+      ? mensal
+      : consolidadoDoNegocio({ ...args, desde: intervalo.desde, ate: intervalo.ate });
+    const [acumuladoDoMes, selecionado] = await Promise.all([mensal, consultaPeriodo]);
+    investidoNoMesCentavos = acumuladoDoMes.ok ? acumuladoDoMes.dados.investiuCentavos : null;
+    acumuladoDoPeriodo = selecionado.ok ? selecionado.dados : null;
   }
 
   // A escolha do negócio sempre permanece no Início. Esta leitura resolve
@@ -229,7 +227,8 @@ export default async function InicioPage({
       diaDaPergunta={diaDaPergunta}
       atrasados={atrasados}
       pendenciaOnboarding={pendenciaOnboarding}
-      periodo={periodo}
+      intervalo={intervalo}
+      acumuladoDoPeriodo={acumuladoDoPeriodo}
       investidoNoMesCentavos={investidoNoMesCentavos}
       faixa={<FaixaReconectar />}
     />

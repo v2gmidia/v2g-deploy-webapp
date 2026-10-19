@@ -22,12 +22,15 @@ interface NavItemProps {
  */
 export function NavItem({ href, icone, children, ativo: ativoInformado }: NavItemProps) {
   const pathname = usePathname();
-  const ativo = ativoInformado ?? (pathname === href || pathname.startsWith(`${href}/`));
+  // A bancada usa o mesmo menu, mantendo a navegação dentro das prévias.
+  const emPrevia = pathname.startsWith("/exemplo/");
+  const destino = emPrevia ? `/exemplo/${href === "/alertas" ? "avisos" : href.slice(1)}` : href;
+  const ativo = ativoInformado ?? (pathname === destino || pathname.startsWith(`${destino}/`));
 
   return (
     <a
       className={`nav-item${ativo ? " active" : ""}`}
-      href={href}
+      href={destino}
       aria-current={ativo ? "page" : undefined}
     >
       {icone}
