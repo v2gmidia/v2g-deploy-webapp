@@ -5,12 +5,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { estadoDoCliente } from "@/lib/estado/cliente";
 import { sincronizarTarefaDeRevisao } from "@/lib/gestor/sincronizar-revisao";
 import { BUCKET_REVISAO, caminhoDaRevisao, podeRepetirEnvio,
-  TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem, type StatusRevisao } from "@/lib/criativos/revisao";
+  podeAnalisarAposEnvio, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem, type StatusRevisao } from "@/lib/criativos/revisao";
 
 export type ResultadoDaSolicitacao =
-  | { ok: true; id: string; repetido: boolean }
+  | { ok: true; id: string; repetido: boolean; analisarAgora: boolean }
   | { ok: false; recado: string };
 
 const RECADO_FALHA = "Não foi possível registrar a peça agora. Ela não foi publicada. Tente novamente.";
@@ -68,7 +69,7 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
           ["approved_for_manual_publish", "changes_requested", "rejected"].includes(atual.data.status)) {
         if (atual.data.status === "awaiting_review")
           await garantirTarefaDeRevisao(businessId, id);
-        return { ok: true, id, repetido: true };
+        return { ok: true, id, repetido: true, analisarAgora: false };
       }
       if (!podeRepetirEnvio(atual.data.status as StatusRevisao, atual.data.updated_at, Date.now()))
         return { ok: false, recado: "Este envio ainda está em andamento. Aguarde e confira a lista antes de tentar novamente." };
@@ -101,7 +102,13 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
       .eq("id", id).eq("status", "uploading").select("id").maybeSingle();
     if (concluido.error || !concluido.data) return { ok: false, recado: RECADO_FALHA };
     await garantirTarefaDeRevisao(businessId, id);
-    return { ok: true, id, repetido: false };
+    const pilotoAtivo = process.env.V2G_CREATIVE_AUTO_ANALYSIS_ENABLED === "true";
+    const estado = pilotoAtivo ? await estadoDoCliente(new Date()).catch(() => null) : null;
+    return {
+      ok: true, id, repetido: false,
+      analisarAgora: podeAnalisarAposEnvio(pilotoAtivo, false,
+        estado?.negocioId === businessId && estado.diaSeguinte.execucao !== null),
+    };
   } catch {
     return { ok: false, recado: RECADO_FALHA };
   }

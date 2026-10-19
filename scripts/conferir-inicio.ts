@@ -33,6 +33,7 @@ import {
   type MedidaDoCliente,
 } from "../lib/estado/frases.ts";
 import type { ResumoDePendencias } from "../lib/cadastro/pendencias.ts";
+import { inicioDoPeriodo, periodoDoInicio } from "../lib/inicio/periodo.ts";
 
 let passou = 0;
 let falhou = 0;
@@ -225,20 +226,56 @@ secao("5. B7 — seção sem item não renderiza título");
   // page.tsx só busca. A regra é sobre o desenho, então lê o desenho.
   const inicio = fonte("app/(protected)/inicio/TelaDoInicio.tsx");
 
-  // A lista de campanhas é o caso medido: ela ganhava cabeçalho e link
-  // "Ver todas" com zero linhas embaixo.
-  const temMapa = /campanhasNoAr\.map\(/.test(inicio);
-  ok(temMapa, "a `/inicio` ainda renderiza a lista de campanhas (se não, revise esta regra)");
+  // O resumo executivo deixou a lista detalhada na rota de anúncios.
+  // Reintroduzi-la aqui faria o Início voltar a competir com o próprio resumo.
   ok(
-    /campanhasNoAr\.length\s*>\s*0/.test(inicio),
-    "e ela está guardada por `campanhasNoAr.length > 0`",
+    !/campanhasNoAr\.map\(/.test(inicio),
+    "a `/inicio` não repete a lista detalhada que já mora em `/anuncios`",
+  );
+  ok(
+    /href="\/anuncios"/.test(inicio),
+    "e o estado do anúncio ainda oferece a saída para o detalhe",
   );
 
   // O bloco do dono já era guardado; a trava existe para não deixar de ser.
   ok(
     /donoRespondeu\s*&&/.test(inicio),
-    "o bloco 'O que você me contou' só sai quando o dono respondeu",
+    "o bloco de vendas informadas só sai quando o dono respondeu",
   );
+
+  ok(
+    !/Nada está esperando por você/.test(inicio),
+    "a ausência de pendência não ocupa o Início com um cartão vazio",
+  );
+  ok(
+    /feitas\s*===\s*fases\.length\)\s*return null/.test(inicio),
+    "a jornada concluída deixa de ocupar espaço permanente",
+  );
+  ok(
+    /ConclusaoDaJornada/.test(inicio),
+    "a conclusão da jornada tem uma confirmação dispensável",
+  );
+  ok(
+    /if\s*\(!falha\s*&&\s*!decisao\)\s*return null/.test(inicio),
+    "atualizações vazias não ganham cartão",
+  );
+  ok(
+    /GraficoDeInvestimento/.test(inicio) && /periodo\?: PeriodoDoInicio/.test(inicio),
+    "o resumo oferece série temporal e períodos naturais",
+  );
+}
+
+// ------------------------------------------------------------------
+secao("5.1 períodos naturais — seleção e viradas de calendário");
+{
+  ok(periodoDoInicio("1m") === "1m", "um mês é aceito");
+  ok(periodoDoInicio("3m") === "3m", "três meses são aceitos");
+  ok(periodoDoInicio("6m") === "6m", "seis meses são aceitos");
+  ok(periodoDoInicio("1a") === "1a", "um ano é aceito");
+  ok(periodoDoInicio("60") === "1m", "valor antigo ou desconhecido volta ao padrão seguro");
+  ok(inicioDoPeriodo("2026-10-18", "3m") === "2026-07-18", "três meses usam calendário, não 90 dias fixos");
+  ok(inicioDoPeriodo("2026-03-31", "1m") === "2026-02-28", "fim de mês é ajustado sem pular para março");
+  ok(inicioDoPeriodo("2024-02-29", "1a") === "2023-02-28", "ano bissexto cai no último dia válido");
 }
 
 // ------------------------------------------------------------------

@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
-import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { diaDeOntemEmSaoPaulo, diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { inicioDoPeriodo, periodoDoInicio } from "@/lib/inicio/periodo";
 import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
@@ -12,6 +13,7 @@ import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 import { agendaGoogleConfigurada } from "@/lib/agenda/google";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { InicioAposReserva } from "./InicioAposReserva";
+import { consolidadoDoNegocio } from "@/lib/backend/dia-seguinte";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -53,7 +55,11 @@ export const metadata = tituloDaAba("/inicio");
  * para a bancada `/exemplo/inicio` desenhar a MESMA tela com dado falso. Ver
  * o comentário do topo de `TelaDoInicio.tsx`.
  */
-export default async function InicioPage() {
+export default async function InicioPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   // Ver o bloco do portão, logo abaixo: em produção esta constante é
   // `false` por dobra de literal, e tudo que depende dela some com ela.
   const fixture =
@@ -68,7 +74,14 @@ export default async function InicioPage() {
 
   // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
   const agora = new Date();
-  let estado: EstadoDoCliente | null = fixture ? null : await estadoDoCliente(agora);
+  const busca = await searchParams;
+  const periodoPedido = Array.isArray(busca.periodo) ? busca.periodo[0] : busca.periodo;
+  const periodo = periodoDoInicio(periodoPedido);
+  const ate = diaEmSaoPaulo(agora);
+  const desde = inicioDoPeriodo(ate, periodo);
+  let estado: EstadoDoCliente | null = fixture
+    ? null
+    : await estadoDoCliente(agora, { desde, ate });
 
   // ============================================================
   // O PORTÃO DAS FIXTURES — dois trincos, e nenhum deles sozinho abre.
@@ -125,6 +138,22 @@ export default async function InicioPage() {
   // escopo deste lote.
   // ============================================================
   if (!estado.temNegocio) redirect("/onboarding");
+
+  // O seletor muda o resumo para 30 ou 60 dias, mas a verba continua
+  // mensal. Uma leitura separada impede comparar o teto do mês com um
+  // acumulado de dois meses.
+  let investidoNoMesCentavos: number | null = null;
+  if (!fixture && estado.negocioId && user) {
+    const acumuladoDoMes = await consolidadoDoNegocio({
+      businessId: estado.negocioId,
+      profileId: user.id,
+      desde: `${ate.slice(0, 8)}01`,
+      ate,
+    });
+    investidoNoMesCentavos = acumuladoDoMes.ok
+      ? acumuladoDoMes.dados.investiuCentavos
+      : null;
+  }
 
   // A escolha do negócio sempre permanece no Início. Esta leitura resolve
   // qual pendência do onboarding deve aparecer aqui, sem transformar uma
@@ -200,6 +229,8 @@ export default async function InicioPage() {
       diaDaPergunta={diaDaPergunta}
       atrasados={atrasados}
       pendenciaOnboarding={pendenciaOnboarding}
+      periodo={periodo}
+      investidoNoMesCentavos={investidoNoMesCentavos}
       faixa={<FaixaReconectar />}
     />
   );

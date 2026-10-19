@@ -112,7 +112,8 @@ function execucao(estado: EstadoDeExemplo): ExecucaoDoNegocio {
 
 /**
  * O lado da plataforma, com os números de produção. O lado do dono vem
- * vazio: nos prints ele ainda não tinha respondido a pergunta do dia.
+ * preenchido com valores FICTÍCIOS para a bancada também conferir o card
+ * lateral de vendas informadas. Nada daqui é consumido em produção.
  * `pessoasQueChegaram` é "0.0" e a tela NÃO escreve zero — sem a medição, o
  * zero mentiria; ela escreve a ausência.
  */
@@ -122,16 +123,16 @@ function consolidado(): ConsolidadoDoNegocio {
     desde: "2026-08-12",
     ate: "2026-09-10",
     dias: [
-      { dia: "2026-09-05", investiuCentavos: 531, pessoasQueChegaram: "0.0", viraramVenda: null, voltouCentavos: null },
-      { dia: "2026-09-06", investiuCentavos: 462, pessoasQueChegaram: "0.0", viraramVenda: null, voltouCentavos: null },
+      { dia: "2026-09-05", investiuCentavos: 531, pessoasQueChegaram: "0.0", viraramVenda: 1, voltouCentavos: 15000 },
+      { dia: "2026-09-06", investiuCentavos: 462, pessoasQueChegaram: "0.0", viraramVenda: 2, voltouCentavos: 30000 },
       { dia: "2026-09-07", investiuCentavos: 32, pessoasQueChegaram: "0.0", viraramVenda: null, voltouCentavos: null },
     ],
     investiuCentavos: 1025,
-    voltouCentavos: null,
+    voltouCentavos: 45000,
     pessoasQueChegaram: "0.0",
-    vendas: null,
+    vendas: 3,
     retornoPorReal: null,
-    diasComOsDoisLados: 0,
+    diasComOsDoisLados: 2,
     temDadoDaPlataforma: true,
     respondeuHoje: false,
     moeda: "BRL",

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { BUCKET_REVISAO, caminhoDaRevisao, podeRepetirEnvio,
-  rotuloDaRevisao, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem } from "../lib/criativos/revisao.ts";
+  podeAnalisarAposEnvio, rotuloDaRevisao, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem } from "../lib/criativos/revisao.ts";
 import { descricaoDaTarefaDeRevisao, ehTarefaDeRevisao, idDaTarefaDeRevisao,
   solicitacaoDaTarefaDeRevisao } from "../lib/gestor/revisao-pendente.ts";
 import { destinoPaginaCriativos, faixaDeCriativos, paginaDeCriativos,
@@ -51,6 +51,13 @@ test("falha pode ser repetida; envio recente nao compete com si mesmo", () => {
 test("aprovacao interna nao vira estado de publicacao", () => {
   assert.match(rotuloDaRevisao("approved_for_manual_publish"), /publicação manual pendente/);
   assert.match(rotuloDaRevisao("awaiting_review"), /revisão do gestor/);
+});
+
+test("analise automatica tem piloto desligado e nao repete chamada em envio idempotente", () => {
+  assert.equal(podeAnalisarAposEnvio(false, false, true), false);
+  assert.equal(podeAnalisarAposEnvio(true, true, true), false);
+  assert.equal(podeAnalisarAposEnvio(true, false, false), false);
+  assert.equal(podeAnalisarAposEnvio(true, false, true), true);
 });
 
 test("uma solicitacao tem uma tarefa interna estavel e distinta", () => {

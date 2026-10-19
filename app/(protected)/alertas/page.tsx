@@ -5,6 +5,7 @@ import { tituloDaAba } from "@/lib/titulos";
 import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 import { resumirPendencias } from "@/lib/alertas/pendencias";
+import { AbasDeAvisos } from "./AbasDeAvisos";
 
 export const metadata = tituloDaAba("/alertas");
 
@@ -93,7 +94,6 @@ export default async function AlertasPage() {
   const veiculacao = estado.veiculacao;
   const temCampanha = esteveNoAr(veiculacao);
   const temPendencia = (pendentes?.length ?? 0) > 0;
-  const temRegistro = (registradas?.length ?? 0) > 0;
   const ajustesDeCriativo = (revisoes.data ?? []).filter((r) => r.status === "changes_requested");
   const resumoPendencias = resumirPendencias({
     decisoesExibidas: pendentes?.length ?? 0,
@@ -113,149 +113,86 @@ export default async function AlertasPage() {
   //
   // Ver docs/padrao-visual.md §5 para o critério de reabertura.
   const quantasPendentes = resumoPendencias.total;
+  const revisoesInformativas = (revisoes.data ?? []).filter((r) => r.status !== "changes_requested");
+  const quantasAtualizacoes = revisoesInformativas.length + (registradas?.length ?? 0);
+
+  const blocoDePendencias = <section className="avisos-secao" aria-labelledby="titulo-pendencias">
+    <div className="section-title">
+      <div><span className="avisos-kicker">Prioridade</span><h2 id="titulo-pendencias">Precisa de você</h2></div>
+      {quantasPendentes !== null && quantasPendentes > 0 && <span className="grp-count">
+        {quantasPendentes} {quantasPendentes === 1 ? "item" : "itens"}
+      </span>}
+    </div>
+
+    {!resumoPendencias.leituraCompleta && <p className="form-warning">
+      Não conseguimos conferir todas as pendências agora. A lista pode estar incompleta.
+    </p>}
+
+    {temPendencia || ajustesDeCriativo.length > 0 || (ajustes.count ?? 0) > 0 ? <div className="avisos-pendencias">
+      {ajustesDeCriativo.map((r) => <article className="aviso-linha atencao" key={r.id}>
+        <span className="aviso-sinal" aria-hidden="true" />
+        <div className="aviso-corpo">
+          <div className="aviso-meta"><span>Criativos</span><time dateTime={r.created_at}>{formatarData(r.created_at)}</time></div>
+          <h3>Ajuste pedido no criativo {r.original_name}</h3>
+          <p>{r.review_note || "O gestor pediu uma alteração antes da publicação."}</p>
+        </div>
+        <a className="aviso-acao" href="/criativos">Ver criativo <span aria-hidden="true">→</span></a>
+      </article>)}
+      {resumoPendencias.ajustesNaoExibidos > 0 && <article className="aviso-linha atencao">
+        <span className="aviso-sinal" aria-hidden="true" />
+        <div className="aviso-corpo"><div className="aviso-meta"><span>Criativos</span></div>
+          <h3>Há mais {resumoPendencias.ajustesNaoExibidos} peça(s) com ajustes pedidos</h3>
+          <p>Abra sua biblioteca para conferir todas as pendências recentes.</p>
+        </div>
+        <a className="aviso-acao" href="/criativos">Ver criativos <span aria-hidden="true">→</span></a>
+      </article>}
+      {(pendentes ?? []).map((d) => <article className="aviso-linha atencao" key={d.id}>
+        <span className="aviso-sinal" aria-hidden="true" />
+        <div className="aviso-corpo">
+          <div className="aviso-meta"><span>Negócio</span><time dateTime={d.created_at}>{formatarData(d.created_at)}</time></div>
+          <h3>{tituloDaDecisao(d.kind)}</h3><p>{resumoDaDecisao(d.payload)}</p>
+        </div>
+      </article>)}
+    </div> : resumoPendencias.leituraCompleta ? <div className="empty-hero">
+      <div className="avisos-vazio-titulo"><h3>Tudo em dia por aqui.</h3><span className="badge">Nada pendente</span></div>
+      <p>Quando algo precisar da sua decisão, vai aparecer aqui primeiro.</p>
+      <p className="eh-note">{fraseDeVeiculacao(veiculacao, "manchete")} {estaNoArAgora(veiculacao)
+        ? "Nada travou." : temCampanha ? "Não há nenhuma ação esperando por você." : "Ainda não há campanha em circulação."}</p>
+    </div> : null}
+  </section>;
+
+  const blocoDeAtualizacoes = <section className="avisos-secao" aria-labelledby="titulo-atualizacoes">
+    <div className="section-title"><div><span className="avisos-kicker">Histórico recente</span>
+      <h2 id="titulo-atualizacoes">Atualizações</h2></div></div>
+    {revisoes.error || erroRegistradas ? <p className="form-warning">Não conseguimos carregar todo o histórico agora.</p> : null}
+    {quantasAtualizacoes > 0 ? <div className="avisos-registros">
+      {revisoesInformativas.map((r) => <article className="atualizacao-linha" key={r.id}>
+        <time dateTime={r.reviewed_at || r.created_at}>{formatarData(r.reviewed_at || r.created_at)}</time>
+        <div><span className="avisos-origem">Retorno dos criativos</span><h3>{r.original_name}</h3>
+          <p>{rotuloDaRevisao(r.status as StatusRevisao)}.
+            {r.status === "approved_for_manual_publish" && " A publicação pelo gestor ainda precisa ser confirmada."}
+            {r.review_note && ` ${r.review_note}`}</p></div>
+      </article>)}
+      {(registradas ?? []).map((d) => <article className="atualizacao-linha" key={d.id}>
+        <time dateTime={d.created_at}>{formatarData(d.created_at)}</time>
+        <div><span className="avisos-origem">Negócio</span><h3>{tituloDaDecisao(d.kind)}</h3><p>{resumoDaDecisao(d.payload)}</p></div>
+      </article>)}
+    </div> : <div className="card"><p className="hint" style={{ marginBottom: 0 }}>Ainda não há atualizações registradas para este negócio.</p></div>}
+    {(revisoes.data?.length ?? 0) === 20 && <p className="form-warning">Mostrando as 20 peças mais recentes.</p>}
+  </section>;
 
   return (
     <div className="avisos-editorial">
-      <div className="page-head">
+      <div className="page-head avisos-cabecalho">
         <h1>Avisos</h1>
-        <p>
-          Veja primeiro as pendências que precisam da sua atenção. Abaixo, os registros que
-          não pedem ação sua.
-        </p>
+        <p>O que precisa de você aparece primeiro.</p>
       </div>
-
-      <div className="dash-grid avisos-layout">
-        <div className="dash-main avisos-listas">
-          <section className="avisos-secao">
-            <div className="section-title">
-              <h2>Precisa de você</h2>
-              {quantasPendentes !== null && quantasPendentes > 0 && (
-                <span className="grp-count">
-                  {quantasPendentes} {quantasPendentes === 1 ? "coisa" : "coisas"}
-                </span>
-              )}
-            </div>
-
-            {!resumoPendencias.leituraCompleta && (
-              <div className="card">
-                <p className="form-warning">Não conseguimos conferir todas as pendências agora. Os itens abaixo são apenas os que retornaram nesta consulta.</p>
-              </div>
-            )}
-            {temPendencia || ajustesDeCriativo.length > 0 || (ajustes.count ?? 0) > 0 ? (
-              <div className="avisos-pendencias">
-                {ajustesDeCriativo.map((r) => <article className="alert-card warn" key={r.id}>
-                  <b>Ajustes pedidos na peça {r.original_name}</b>
-                  <p>{r.review_note || "Abra Criativos para ver a revisão do gestor."}</p>
-                  <a href="/criativos#casa-revisao">Ver meus criativos</a>
-                </article>)}
-                {resumoPendencias.ajustesNaoExibidos > 0 && <article className="alert-card warn">
-                  <b>Há mais {resumoPendencias.ajustesNaoExibidos} peça(s) com ajustes pedidos</b>
-                  <p>A lista abaixo mostra só as peças recentes. Abra Criativos para conferir todas as pendências.</p>
-                  <a href="/criativos#casa-revisao">Ver meus criativos</a>
-                </article>}
-                {(pendentes ?? []).map((d) => (
-                  <article className="alert-card warn" key={d.id}>
-                    <b>{tituloDaDecisao(d.kind)}</b>
-                    <p>{resumoDaDecisao(d.payload)}</p>
-                    <time dateTime={d.created_at}>{formatarData(d.created_at)}</time>
-                  </article>
-                ))}
-              </div>
-            ) : resumoPendencias.leituraCompleta ? (
-              <div className="empty-hero">
-                <div className="avisos-vazio-titulo">
-                  <h3>Tudo em dia por aqui.</h3>
-                  <span className="badge">Nada pendente</span>
-                </div>
-                <p>
-                  Quando houver um aviso registrado para este negócio, ele aparece nesta tela.
-                </p>
-                {/* A frase do ar vem do módulo; o que esta tela acrescenta
-                    é o que ELA sabe — que não há aviso pendente. Repare que
-                    são três casos e não dois: um anúncio que já rodou e
-                    parou não é "ainda não foi ao ar" nem "está rodando", e
-                    era essa a terceira frase que não existia em lugar
-                    nenhum do app. */}
-                <p className="eh-note">
-                  {fraseDeVeiculacao(veiculacao, "manchete")}{" "}
-                  {estaNoArAgora(veiculacao)
-                    ? "Nada travou. Se algo precisar de você, aparece aqui antes de virar problema."
-                    : temCampanha
-                      ? "Enquanto ele estiver parado não há o que avisar. Se algo precisar de você quando ele voltar, aparece aqui."
-                      : "Então não há o que avisar. Assim que a primeira campanha começar a rodar, é aqui que você acompanha."}
-                </p>
-              </div>
-            ) : null}
-          </section>
-
-          {process.env.V2G_CREATIVE_REVIEW_ENABLED === "true" && <section className="avisos-secao">
-            <div className="section-title"><h2>Retorno dos criativos</h2></div>
-            {revisoes.error ? <p className="form-warning">Não conseguimos carregar o retorno das peças agora.</p>
-              : (revisoes.data?.length ?? 0) === 0 ? <p className="hint">Nenhuma peça enviada para revisão nesta conta.</p>
-              : <div className="avisos-registros">{revisoes.data!.map((r) => <div className="log-row" key={r.id}>
-                  <time dateTime={r.reviewed_at || r.created_at}>{formatarData(r.reviewed_at || r.created_at)}</time>
-                  <p><b>{r.original_name}</b>: {rotuloDaRevisao(r.status as StatusRevisao)}.
-                    {r.status === "approved_for_manual_publish" && " A publicação pelo gestor ainda precisa ser confirmada."}
-                    {r.review_note && ` ${r.review_note}`}</p>
-                </div>)}</div>}
-            {(revisoes.data?.length ?? 0) === 20 && <p className="form-warning">Mostrando as 20 peças mais recentes.</p>}
-            <p className="foot-line">Esses avisos aparecem no app ao abrir a página; não confirmam entrega por e-mail ou WhatsApp.</p>
-          </section>}
-
-          <section className="avisos-secao">
-            <div className="section-title">
-              <h2>Só pra você saber</h2>
-              <span className="st-note">Registros que não pedem ação sua.</span>
-            </div>
-
-            {erroRegistradas ? (
-              <div className="card">
-                <p className="form-error">Não conseguimos carregar o histórico agora. Tente novamente em instantes.</p>
-              </div>
-            ) : temRegistro ? (
-              <div className="avisos-registros">
-                {registradas!.map((d) => (
-                  <div className="log-row" key={d.id}>
-                    <time dateTime={d.created_at}>{formatarData(d.created_at)}</time>
-                    <p>{resumoDaDecisao(d.payload)}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="card">
-                <p className="hint" style={{ marginBottom: 0 }}>
-                  {temCampanha
-                    ? "Ainda não há decisões registradas para este negócio. Quando houver, você poderá consultá-las aqui."
-                    : "Ainda não há decisões registradas para este negócio. A primeira campanha será preparada e publicada pelo gestor após a reunião e as conferências necessárias."}
-                </p>
-              </div>
-            )}
-          </section>
-        </div>
-
-        <aside className="dash-aside avisos-atendimento">
-          <section>
-            <h2 className="pc-title">
-              Atendimento pelo WhatsApp
-            </h2>
-            <p className="hint">
-              Se precisar tratar de uma pendência com a equipe, use o canal de atendimento abaixo.
-            </p>
-            <p className="foot-line">
-              O envio automático de avisos pelo WhatsApp ainda não está disponível.
-            </p>
-          </section>
-
-          <section className="trust support-block">
-            <b className="title">Fala com gente de verdade</b>
-            Dúvida de cobrança, de resultado ou de saída: é a mesma pessoa que responde.
-            Você pode falar com a equipe pelo WhatsApp.
-            <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-              Chamar no WhatsApp &rarr;
-            </a>
-          </section>
-        </aside>
-      </div>
+      <AbasDeAvisos pendencias={blocoDePendencias} atualizacoes={blocoDeAtualizacoes}
+        quantasPendencias={quantasPendentes} quantasAtualizacoes={quantasAtualizacoes} />
+      <footer className="avisos-suporte"><span>Precisa de ajuda com algum aviso?</span>
+        <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com uma pessoa →</a>
+        <small>Os avisos aparecem no app. O envio automático pelo WhatsApp ainda não está disponível.</small>
+      </footer>
     </div>
   );
 }

@@ -121,6 +121,7 @@ export function Casco({
   acaoSair,
   negocios = [],
   ehOperador,
+  rotaAtiva,
   children,
 }: {
   nome: string;
@@ -133,6 +134,7 @@ export function Casco({
   acaoSair?: () => void | Promise<void>;
   negocios?: NegocioDoMenu[];
   ehOperador?: boolean;
+  rotaAtiva?: "/inicio" | "/criativos" | "/anuncios" | "/alertas" | "/conta";
   children: ReactNode;
 }) {
   const adicionarHref = "/entrar?adicionar=1";
@@ -182,19 +184,19 @@ export function Casco({
               que é o que aquela tela já faz. Item de menu para passo
               único vira um lugar que, depois de cumprido, só serve para
               o cliente se perguntar por que ainda está ali. */}
-          <NavItem href="/inicio" icone={<IcoInicio />}>
+          <NavItem href="/inicio" icone={<IcoInicio />} ativo={rotaAtiva ? rotaAtiva === "/inicio" : undefined}>
             Início
           </NavItem>
-          <NavItem href="/criativos" icone={<IcoCriativos />}>
+          <NavItem href="/criativos" icone={<IcoCriativos />} ativo={rotaAtiva ? rotaAtiva === "/criativos" : undefined}>
             Criativos
           </NavItem>
-          <NavItem href="/anuncios" icone={<IcoAnuncios />}>
+          <NavItem href="/anuncios" icone={<IcoAnuncios />} ativo={rotaAtiva ? rotaAtiva === "/anuncios" : undefined}>
             Anúncios
           </NavItem>
-          <NavItem href="/alertas" icone={<IcoAlertas />}>
+          <NavItem href="/alertas" icone={<IcoAlertas />} ativo={rotaAtiva ? rotaAtiva === "/alertas" : undefined}>
             Avisos
           </NavItem>
-          <NavItem href="/conta" icone={<IcoConta />}>
+          <NavItem href="/conta" icone={<IcoConta />} ativo={rotaAtiva ? rotaAtiva === "/conta" : undefined}>
             Conta
           </NavItem>
         </nav>

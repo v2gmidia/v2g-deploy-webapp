@@ -14,6 +14,44 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-18 — Conta como ficha de configurações do negócio
+
+**Aprovação direta do Victor.** A tela Conta passa a organizar perfil, negócio selecionado, identidade visual, conexões, plano e preferências em uma ficha única, com navegação interna e leitura rápida. A edição do perfil e a gestão da identidade visual permanecem recolhidas até a pessoa pedir, reduzindo texto e peso visual sem retirar as ações existentes.
+
+**Limite factual:** a tela só afirma conexão, cobrança, contrato ou quantidade de arquivos quando existe fonte real. Não inventa CNPJ, próxima cobrança, recibo, cancelamento automático nem estado de integração ausente no banco.
+
+**Motivo:** Conta deve responder rapidamente “quem sou, qual negócio estou vendo, o que está conectado e qual é meu plano”, sem virar outro painel de desempenho nem expor formulários extensos o tempo todo.
+
+### 2026-10-18 — Criativos guarda o acervo; Anúncios guarda veiculação e resultado
+
+**Aprovação direta do Victor, posterior ao primeiro desenho da galeria.** A aba Criativos é a biblioteca de imagens e vídeos do negócio: subir, importar, revisar, analisar, reutilizar e descobrir onde cada peça está sendo usada. “Ativo” e “inativo” não são estados principais do arquivo, porque a mesma peça pode participar de vários anúncios em momentos diferentes. A apresentação passa a usar Biblioteca, Instagram, Em revisão e Arquivados.
+
+A aba Anúncios concentra a operação e o desempenho: no ar, pausado, em preparo, período, investimento, impressões, cliques e conversas. Ao abrir um anúncio, a pessoa vê os criativos associados e o resultado de cada um naquele contexto. Métrica por criativo só aparece quando houver fonte real para atribuí-la.
+
+**Motivo:** misturar ciclo de vida do arquivo com ciclo de vida da veiculação tornava as duas telas redundantes e ambíguas. A separação permite reutilizar uma peça sem fingir que ela própria está “ativa” e deixa o resultado no lugar em que a relação anúncio–criativo é conhecida.
+
+**Aplicação posterior aprovada pelo Victor.** Criativos passa a usar Biblioteca, Instagram, Em revisão e Arquivados. Cada card mostra “Associação ao anúncio” e um indicador visível sobre a imagem; quando não há vínculo comprovado, diz “Sem anúncio”. Anúncios passa a ser uma lista expansível que reúne números e criativos associados. Como o backend não entrega veiculação nem vínculo de arquivo por execução, a rota real usa “Com números”/“Sem números ainda” e não presume criativos; a bancada local explicita que os vínculos e números são ilustrativos.
+
+### 2026-10-18 — Avisos como caixa de entrada de ação
+
+**Aprovação direta do Victor.** Avisos passa a separar “Precisa de você”, “Atualizações” e “Todos”. Pendências aparecem em linhas com contexto, horário e ação; retornos que não exigem decisão ficam no histórico. O atendimento pelo WhatsApp deixa de ocupar uma coluna própria e vira apoio discreto no fim da página.
+
+**Limite factual:** não existe estado persistido de lido/não lido, portanto a interface não oferece “marcar tudo como visto”. Aprovação de criativo continua sem significar publicação; a confirmação do gestor permanece explícita.
+
+**Motivo:** o valor da tela é orientar a próxima ação, não repetir cartões de acompanhamento nem sugerir um controle que o produto ainda não grava.
+
+### 2026-10-18 — Início com evolução no tempo e períodos naturais
+
+**Correção direta do Victor, posterior à decisão abaixo.** O resumo executivo mantém os quatro números prioritários e passa a incluir um gráfico simples de evolução no tempo, seletor real de 1 mês, 3 meses, 6 meses ou 1 ano, vendas e receita informadas em bloco lateral e o limite mensal em barra. A série diária disponível hoje é investimento; cliques e impressões permanecem como totais porque o contrato do consolidado não fornece esses campos por dia. O seletor altera a janela consultada no backend. O consumo do limite usa uma leitura separada do mês corrente, para não comparar o teto mensal com períodos maiores.
+
+**Motivo:** além do total, o cliente precisa enxergar quando o investimento aconteceu. A série não pode inventar pontos que o backend não mede, e a escolha de período não pode alterar semanticamente a verba mensal.
+
+### 2026-10-18 — Início como resumo executivo, sem vazios explicativos
+
+**Aprovação direta do Victor.** Depois que as quatro fases da campanha forem concluídas, a jornada e o detalhe da preparação deixam de ocupar o Início. A conclusão aparece uma vez, pode ser dispensada e permanece oculta para aquele negócio. “Seu próximo passo” só aparece quando existe uma ação real do cliente; a ausência de pendência não ganha cartão nem texto próprio. O primeiro bloco permanente da tela passa a priorizar investimento, cliques, impressões e conversas. Vendas e receita declaradas pelo cliente continuam separadas dos dados da plataforma. Gráficos analíticos não entram no Início; histórico e aprofundamento pertencem às telas de anúncio.
+
+**Motivo:** o dono do negócio precisa entender investimento, alcance, conversas, vendas e eventual ação em poucos segundos. Etapas concluídas, cartões dizendo que nada precisa ser feito e gráficos sem decisão associada aumentam a carga sem melhorar a orientação.
+
 ### 2026-10-16 — Início preservado ao trocar de negócio e após agenda externa
 
 **Correção direta do Victor, posterior à entrada “Menu de negócios na barra e entrada direta”.** Escolher qualquer negócio autorizado leva a `/inicio` e mantém a pessoa nessa tela, inclusive quando ainda faltam respostas do onboarding, contas, visual da marca ou confirmação da reunião. O Início mostra a pendência e o caminho para resolvê-la; não redireciona automaticamente o negócio para outra etapa. Na agenda externa do Google, “Já marquei meu horário” volta a `/inicio`, mas a declaração da pessoa não vira prova de reserva: a reunião continua pendente até existir confirmação verificável.
@@ -887,4 +925,24 @@ fica o motivo escrito, e o teclado.
 **Registro:** `CONVITE_ABAIXO_DO_CAMPO` e `CONVITE_NO_MICROFONE` em
 `app/exemplo/_onboarding/perguntas.ts`, campo `aberta` no `Passo`.
 Capturas em `docs/v2g-wireframes/capturas/onboarding-v2/`, com e sem chave.
+
+### 2026-10-18 — Criativos vira biblioteca; resultado e retenção só aparecem com fonte
+**Decisão:** `/criativos` abre na galeria do negócio selecionado. As peças
+ficam separadas em “Em anúncios”, “Disponíveis”, “Em revisão” e
+“Histórico”; subir arquivo continua sendo uma ação da mesma tela, depois da
+galeria. A análise isolada permanece disponível, mas recolhida como
+ferramenta secundária.
+**Limite factual:** o backend ainda não entrega desempenho por criativo nem
+uma data própria de saída de circulação. A rota real não inventa essas
+informações. O card mostra resultado somente quando a fonte passar a
+fornecê-lo, e o prazo de 30 dias só é afirmado quando a retenção estiver
+ativa. A bancada `/exemplo/criativos` usa números explicitamente marcados
+como ilustrativos para revisar a composição completa.
+**Retenção aprovada como regra de produto:** quando implementada, a
+automação remove o arquivo após 30 dias fora de circulação, mas preserva o
+registro e o resultado histórico. Implementar a exclusão exige contrato de
+dados e rotina próprios; não foi criada migration nem tarefa de exclusão
+neste bloco de UI.
+**Registro:** `app/(protected)/criativos/TelaDeCriativos.tsx`,
+`GaleriaCriativos.tsx`, `page.tsx` e `app/criativos-editorial.css`.
 

@@ -282,7 +282,10 @@ function vazio(agora: Date): EstadoDoCliente {
  * `agora` é PARÂMETRO, pelo mesmo motivo do `resumirPendencias`: é o que
  * torna os cortes de tempo testáveis sem esperar dois dias.
  */
-export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
+export async function estadoDoCliente(
+  agora: Date,
+  janela: { desde: string; ate: string } | null = null,
+): Promise<EstadoDoCliente> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -414,7 +417,12 @@ export async function estadoDoCliente(agora: Date): Promise<EstadoDoCliente> {
   // ============================================================
   const [respExecucao, respAcumulado] = await Promise.all([
     execucaoDoNegocio({ businessId: linha.id, profileId: user.id }),
-    consolidadoDoNegocio({ businessId: linha.id, profileId: user.id }),
+    consolidadoDoNegocio({
+      businessId: linha.id,
+      profileId: user.id,
+      desde: janela?.desde,
+      ate: janela?.ate,
+    }),
   ]);
   const execucaoDoDiaSeguinte = respExecucao.ok ? respExecucao.dados : null;
   const acumulado = respAcumulado.ok ? respAcumulado.dados : null;

@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`criativos-envio-analise-piloto-18-10.md`](./criativos-envio-analise-piloto-18-10.md) | 18/10/2026 | Conecta envio privado de peça pronta à análise automática opcional e mantém revisão/publicação separadas. | **Sim.** Piloto, teto de custo, QA autenticado, persistência do resultado e aprovação no app. |
 | [`onboarding-inicio-paleta-menu-16-10.md`](./onboarding-inicio-paleta-menu-16-10.md) | 16/10/2026 | Implementa os itens aprovados 1, 3, 4, 5 e 6: espaçamento final da conversa, prioridade da logo na paleta, pendências no Início, menu multicontas preservado e retorno honesto da agenda externa. | **Sim.** Revisão/publicação manual e repetição do ensaio autenticado no QA; item 2 aguarda esclarecimento. |
 | [`revisao-01-02-16-10.md`](./revisao-01-02-16-10.md) | 16/10/2026 | Retorno posterior do Asaas, estado verificável de entrada/pagamento/acesso e contrato/fiscal, com correção do rateio fiscal automático. | **Sim.** Decisão do fluxo público com 3DS, vínculo LP → pedido, renovação/estorno reais, contrato final e parâmetros fiscais. |
 | [`revisao-03-04-qa-16-10.md`](./revisao-03-04-qa-16-10.md) | 16/10/2026 | Ensaio autenticado após o push: menu desktop e celular, troca em duas abas, conversa, marca, voz e agenda observadas no QA; testes locais e próximo passo. | **Sim.** Voz e agenda próprias desativadas no QA; upload bloqueado pela permissão da extensão, perda de acesso, múltiplas contas Meta e produção pendentes. |

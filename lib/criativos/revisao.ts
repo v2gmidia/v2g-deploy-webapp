@@ -21,6 +21,11 @@ export function podeRepetirEnvio(status: StatusRevisao, updatedAt: string, agora
     (status === "uploading" && agora - Date.parse(updatedAt) >= 2 * 60_000);
 }
 
+/** Uma análise por envio novo, somente com piloto e execução existentes. */
+export function podeAnalisarAposEnvio(pilotoAtivo: boolean, envioRepetido: boolean, temExecucao: boolean): boolean {
+  return pilotoAtivo && !envioRepetido && temExecucao;
+}
+
 export function rotuloDaRevisao(status: StatusRevisao): string {
   switch (status) {
     case "uploading": return "Envio em andamento";

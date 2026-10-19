@@ -7,6 +7,7 @@ interface NavItemProps {
   href: string;
   icone?: ReactNode;
   children: string;
+  ativo?: boolean;
 }
 
 /**
@@ -19,9 +20,9 @@ interface NavItemProps {
  * O rótulo vai dentro de um `<span>` porque a sidebar colapsa para só
  * os ícones abaixo de 900px (regra `.nav-item span { display: none }`).
  */
-export function NavItem({ href, icone, children }: NavItemProps) {
+export function NavItem({ href, icone, children, ativo: ativoInformado }: NavItemProps) {
   const pathname = usePathname();
-  const ativo = pathname === href || pathname.startsWith(`${href}/`);
+  const ativo = ativoInformado ?? (pathname === href || pathname.startsWith(`${href}/`));
 
   return (
     <a

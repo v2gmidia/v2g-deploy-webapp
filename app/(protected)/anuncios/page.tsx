@@ -12,6 +12,7 @@ import type { CampanhaNaTela } from "@/lib/resultado/do-negocio";
 import type { ValorNaTela } from "@/lib/resultado/tipos";
 import type { Etapa } from "@/lib/estado/frases";
 import { tituloDaAba } from "@/lib/titulos";
+import { PainelDeAnuncios, type AnuncioDaLista } from "./PainelDeAnuncios";
 
 export const metadata = tituloDaAba("/anuncios");
 
@@ -103,13 +104,37 @@ export default async function AnunciosPage() {
   // peça de campanha ARQUIVADA e reprovada vazava e continuaria aparecendo
   // em "precisa de você" para sempre. Ver docs/lote-leitura-de-peca.md §5.1.
   const reprovadas = pecas.filter(foiReprovada);
+  const anunciosDaLista: AnuncioDaLista[] = resultado.estado === "com-campanhas" ? resultado.campanhas.map((campanha) => {
+    const r = campanha.resultado;
+    const periodo = r.periodoComDado
+      ? r.periodoComDado.desde === r.periodoComDado.ate
+        ? diaPorExtenso(r.periodoComDado.desde)
+        : `${diaPorExtenso(r.periodoComDado.desde)} a ${diaPorExtenso(r.periodoComDado.ate)}`
+      : null;
+    return {
+      id: campanha.idExecucao,
+      nome: campanha.nome,
+      estado: campanha.estado === "com-dado" ? "com-numeros" : "sem-numeros",
+      canal: campanha.canal,
+      periodo,
+      metricas: [
+        { rotulo: "Investido", valor: r.bloco.investido.texto, ausente: r.bloco.investido.ausente },
+        { rotulo: "Cliques", valor: r.bloco.cliques.texto, ausente: r.bloco.cliques.ausente },
+        { rotulo: "Impressões", valor: r.bloco.impressoes.texto, ausente: r.bloco.impressoes.ausente },
+        { rotulo: "Pessoas que chegaram", valor: r.bloco.pessoas.texto, ausente: r.bloco.pessoas.ausente },
+      ],
+      observacao: r.nivelFrase,
+      criativos: [],
+    };
+  }) : [];
 
   return (
     <div className="anuncios-editorial">
       <FaixaReconectar />
-      <div className="page-head">
-        <h1>Seus anúncios</h1>
-        <p>Cada anúncio e o que ele produziu até agora.</p>
+      <header className="anuncios-topo-novo">
+       <div className="page-head">
+        <h1>Anúncios</h1>
+        <p>Acompanhe cada anúncio e o que ele produziu até agora.</p>
         {/* ============================================================
             A ÚNICA AFIRMAÇÃO DE VEICULAÇÃO DESTA TELA. ITENS B3 e C6.
 
@@ -130,7 +155,9 @@ export default async function AnunciosPage() {
             {fraseDeVeiculacao(estado.veiculacao, "apoio")}
           </span>
         </p>
-      </div>
+       </div>
+       <a className="cta" href="/criativos">Abrir criativos</a>
+      </header>
 
       {reprovadas.length > 0 ? (
         <section className="hero-destaque">
@@ -167,24 +194,7 @@ export default async function AnunciosPage() {
                   tela — e por isso não existe o lugar onde R$ 73,25 e
                   A$ 113,45 virariam um número que não existe.
                   ============================================================ */}
-              <section>
-                <div className="section-title">
-                  {/* N6 do QA: era "Seus anúncios" de novo, igual ao
-                      `<h1>` três blocos acima. Título repetido não
-                      organiza nada — ensina o olho a pular. Este bloco é
-                      a lista em si, então ele diz o que a lista mostra. */}
-                  <h2>O que cada um produziu</h2>
-                  <span className="grp-count">
-                    {resultado.campanhas.length}{" "}
-                    {resultado.campanhas.length === 1 ? "anúncio" : "anúncios"}
-                  </span>
-                </div>
-                <div className="res-lista">
-                  {resultado.campanhas.map((c) => (
-                    <Campanha key={c.idExecucao} campanha={c} />
-                  ))}
-                </div>
-              </section>
+              <PainelDeAnuncios anuncios={anunciosDaLista} />
 
               {resultado.moedasMisturadas && (
                 <p className="hint">

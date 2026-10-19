@@ -1,181 +1,156 @@
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { estadoDoCliente } from "@/lib/estado/cliente";
+import { tituloDaAba } from "@/lib/titulos";
+import { BUCKET_REVISAO, rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
 import { Analisar } from "./Analisar";
 import { AmostraDeVereditos } from "./Amostra";
-import { MinhasPecas } from "./MinhasPecas";
-import { CriarPeca } from "./CriarPeca";
-import { tituloDaAba } from "@/lib/titulos";
-import { createClient } from "@/lib/supabase/server";
-import { rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
-import { faixaDeCriativos, paginaDeCriativos, ultimaPaginaCriativos } from "@/lib/criativos/paginacao";
 import { PedirRevisao } from "./PedirRevisao";
+import { TelaDeCriativos } from "./TelaDeCriativos";
+import type { GrupoDaGaleria, ItemDaGaleria } from "./GaleriaCriativos";
 
 export const metadata = tituloDaAba("/criativos");
 
-/**
- * A CASA DO CRIATIVO — três blocos numa página. Pilar 3 e 4 do produto.
- *
- * ============================================================
- * ELA VIROU ITEM DE BARRA EM 12/09/2026, E O DOCSTRING ANTERIOR DIZIA O
- * CONTRÁRIO. A frase que saiu daqui era esta:
- *
- *   "É uma tarefa, não um lugar de navegação — por isso não vira item
- *    de menu (continuam os cinco do QA-1)."
- *
- * Estava certa enquanto a página era UMA tarefa: mandar a peça e ler o
- * veredito. Deixou de ser hoje — ela passou a hospedar três coisas, e a
- * terceira é recorrente. **Continuam cinco itens**: `/vendas` saiu da
- * barra no lugar dela, e o motivo está em `docs/decisoes.md` e no
- * comentário da `(protected)/layout.tsx`.
- *
- * `/campanhas` segue redirecionando para `/anuncios`, e `/vendas` segue
- * no ar. Nenhuma URL quebrou.
- *
- * ============================================================
- * OS TRÊS BLOCOS, E POR QUE NESTA ORDEM
- *
- *   1. Tenho uma peça pronta   FUNCIONA hoje — passo 6 do teste
- *   2. Minhas peças            vazio POR MEDIÇÃO — ver MinhasPecas.tsx
- *   3. Criar uma peça nova     estrutura, sem backend — ver CriarPeca.tsx
- *
- * O que funciona vem primeiro. É o inverso da ordem natural de um
- * produto (criar, ver, conferir) e é de propósito: ordenar pelo fluxo
- * ideal poria o bloco que não faz nada no topo, e quem abre a página
- * pela barra cairia primeiro no que não existe.
- * ============================================================
- */
-export default async function CriativosPage({ searchParams }: {
-  searchParams: Promise<{ revisoes?: string }>;
-}) {
+type PecaDaCampanha = {
+  id: string;
+  file_name: string | null;
+  storage_path: string | null;
+  status: string | null;
+  published_at: string | null;
+  external_ad_id: string | null;
+  created_at: string;
+  updated_at: string;
+  arquivado_em: string | null;
+};
+
+type PedidoDeRevisao = {
+  id: string;
+  original_name: string;
+  file_path: string;
+  status: StatusRevisao;
+  review_note: string | null;
+  created_at: string;
+};
+
+const dataCurta = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeZone: "America/Sao_Paulo",
+});
+
+function grupoDaPeca(peca: PecaDaCampanha): GrupoDaGaleria {
+  if (peca.arquivado_em || peca.status === "paused" || peca.status === "rejected") return "arquivados";
+  if (peca.published_at || peca.external_ad_id) return "biblioteca";
+  return "revisao";
+}
+
+function estadoDaPeca(status: string | null): Pick<ItemDaGaleria, "estado" | "tom"> {
+  switch (status) {
+    case "approved": return { estado: "Aprovado", tom: "positivo" };
+    case "pending_review": return { estado: "Revisão da plataforma", tom: "atencao" };
+    case "rejected": return { estado: "Recusado", tom: "critico" };
+    case "paused": return { estado: "Pausado", tom: "atencao" };
+    default: return { estado: "Em preparo", tom: "neutro" };
+  }
+}
+
+function grupoDaRevisao(status: StatusRevisao): GrupoDaGaleria {
+  if (status === "approved_for_manual_publish") return "biblioteca";
+  if (status === "rejected" || status === "upload_failed") return "arquivados";
+  return "revisao";
+}
+
+function tomDaRevisao(status: StatusRevisao): ItemDaGaleria["tom"] {
+  if (status === "approved_for_manual_publish") return "positivo";
+  if (status === "rejected" || status === "upload_failed") return "critico";
+  if (status === "changes_requested") return "atencao";
+  return "neutro";
+}
+
+export default async function CriativosPage() {
   const estado = await estadoDoCliente(new Date());
   const revisaoHabilitada = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true";
-  const parametros = await searchParams;
-  const paginaInformada = paginaDeCriativos(parametros.revisoes);
-  const paginaRevisoes = paginaInformada.numero;
-  const tamanhoPagina = 30;
-  const { inicio, fim } = faixaDeCriativos(paginaRevisoes, tamanhoPagina);
-  const supabase = revisaoHabilitada ? await createClient() : null;
-  const revisoes = revisaoHabilitada && estado.negocioId && supabase
-    ? await supabase.from("creative_review_requests")
-      .select("id, original_name, status, review_note, created_at", { count: "exact" })
-      .eq("business_id", estado.negocioId).order("created_at", { ascending: false })
-      .order("id", { ascending: false }).range(inicio, fim)
-    : null;
-  const ultimaPagina = revisoes?.count === null || revisoes?.count === undefined
-    ? null : ultimaPaginaCriativos(revisoes.count, tamanhoPagina);
-  const destinoRevisoes = (pagina: number) => `/criativos?revisoes=${pagina}#casa-revisao`;
-  const dataDaRevisao = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeZone: "America/Sao_Paulo" });
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const negocioId = estado.negocioId;
 
-  // ============================================================
-  // SEM EXECUÇÃO A TELA NÃO QUEBRA — ela explica.
-  //
-  // `estadoDoCliente()` devolve `execucao: null` para quem ainda não
-  // disparou o pipeline, e é o caso da maioria das contas hoje. A peça
-  // se liga a uma execução: sem ela, não há onde gravar.
-  //
-  // O formulário aparece DESABILITADO em vez de sumir, de propósito: a
-  // pessoa que chegou aqui veio procurar isto, e uma tela sem nada faz
-  // ela achar que errou o caminho.
-  // ============================================================
-  const podeEnviar = estado.diaSeguinte.execucao !== null;
+  const [pecasResposta, revisoesResposta] = negocioId ? await Promise.all([
+    supabase.from("creatives")
+      .select("id, file_name, storage_path, status, published_at, external_ad_id, created_at, updated_at, arquivado_em")
+      .eq("business_id", negocioId).eq("uso", "campanha")
+      .order("created_at", { ascending: false }).limit(120),
+    revisaoHabilitada
+      ? supabase.from("creative_review_requests")
+        .select("id, original_name, file_path, status, review_note, created_at")
+        .eq("business_id", negocioId).order("created_at", { ascending: false }).limit(120)
+      : Promise.resolve({ data: [] as PedidoDeRevisao[], error: null }),
+  ]) : [
+    { data: [] as PecaDaCampanha[], error: null },
+    { data: [] as PedidoDeRevisao[], error: null },
+  ];
 
-  // O portão das fixtures — os mesmos dois trincos da `/inicio`. Só
-  // decide o que esta tela DESENHA; não muda o que o backend responde.
-  const amostra =
-    process.env.NODE_ENV !== "production" ? (process.env.V2G_FIXTURE_ANALISE ?? null) : null;
+  const pecas = (pecasResposta.data ?? []) as PecaDaCampanha[];
+  const revisoes = (revisoesResposta.data ?? []) as PedidoDeRevisao[];
+  const admin = user && negocioId ? createAdminClient() : null;
+  const caminhosDasPecas = pecas.map((peca) => peca.storage_path).filter((c): c is string => Boolean(c));
+  const caminhosDasRevisoes = revisoes
+    .filter((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed")
+    .map((pedido) => pedido.file_path);
 
-  return (
-    <div className="criativos-editorial">
-      <div className="page-head">
-        <h1>Criativos</h1>
-        <p>
-          {revisaoHabilitada
-            ? "Confira uma imagem que já tem e acompanhe as peças enviadas ao gestor."
-            : "Aqui você pode conferir uma imagem que já tem. O envio para revisão do gestor ainda não está disponível."}
-        </p>
-      </div>
+  const [urlsDasPecas, urlsDasRevisoes] = admin ? await Promise.all([
+    caminhosDasPecas.length
+      ? admin.storage.from("v2g-midia").createSignedUrls(caminhosDasPecas, 900)
+      : Promise.resolve({ data: [], error: null }),
+    caminhosDasRevisoes.length
+      ? admin.storage.from(BUCKET_REVISAO).createSignedUrls(caminhosDasRevisoes, 900)
+      : Promise.resolve({ data: [], error: null }),
+  ]) : [{ data: [], error: null }, { data: [], error: null }];
 
-      {/* Índice dos blocos. Em 390px a página fica alta, e sem ele o dono
-          rola sem saber quantos blocos existem — e o terceiro, que é o
-          que ele mais quer, é o último. Âncora e não rota: nenhuma URL
-          nova, e o alvo tem 44px de altura mínima. */}
-      <nav className="casa-indice" aria-label="Blocos desta página">
-        {revisaoHabilitada && <a href="#casa-revisao">Revisão do gestor</a>}
-        <a href="#casa-analise">Tenho uma peça pronta</a>
-        <a href="#casa-pecas">Minhas peças</a>
-        <a href="#casa-criar">Criar uma peça nova</a>
-      </nav>
+  const urlPorPeca = new Map((urlsDasPecas.data ?? []).map((item) => [item.path, item.signedUrl]));
+  const urlPorRevisao = new Map((urlsDasRevisoes.data ?? []).map((item) => [item.path, item.signedUrl]));
+  const itens: ItemDaGaleria[] = [
+    ...pecas.map((peca) => ({
+      id: `peca-${peca.id}`,
+      nome: peca.file_name || "Criativo sem nome",
+      imagemUrl: peca.storage_path ? (urlPorPeca.get(peca.storage_path) ?? null) : null,
+      grupo: grupoDaPeca(peca),
+      ...estadoDaPeca(peca.status),
+      criadoEm: `Criado em ${dataCurta.format(new Date(peca.created_at))}`,
+      detalhe: peca.arquivado_em ? `Arquivado em ${dataCurta.format(new Date(peca.arquivado_em))}` : null,
+      acao: { rotulo: "Ver anúncio", href: "/anuncios" },
+      associacoes: peca.published_at || peca.external_ad_id
+        ? [{ nome: "Usado em anúncio", href: "/anuncios" }]
+        : [],
+    })),
+    ...revisoes.map((pedido) => ({
+      id: `revisao-${pedido.id}`,
+      nome: pedido.original_name,
+      imagemUrl: urlPorRevisao.get(pedido.file_path) ?? null,
+      grupo: grupoDaRevisao(pedido.status),
+      estado: rotuloDaRevisao(pedido.status),
+      tom: tomDaRevisao(pedido.status),
+      criadoEm: `Enviado em ${dataCurta.format(new Date(pedido.created_at))}`,
+      detalhe: pedido.review_note ? `Retorno do gestor: ${pedido.review_note}` : null,
+      acao: pedido.status === "approved_for_manual_publish"
+        ? { rotulo: "Ver anúncios", href: "/anuncios" }
+        : null,
+      associacoes: [],
+    })),
+  ];
 
-      <section className="casa-bloco" aria-labelledby="casa-analise">
-        <div className="casa-bloco-head">
-          <h2 id="casa-analise" className="section-title">
-            Tenho uma peça pronta
-          </h2>
-          <p>
-            Mande a imagem que você já tem e a gente diz se ela serve para anunciar — antes de
-            você gastar com ela.
-          </p>
-        </div>
+  const amostra = process.env.NODE_ENV !== "production" ? (process.env.V2G_FIXTURE_ANALISE ?? null) : null;
+  const podeAnalisar = estado.diaSeguinte.execucao !== null;
+  const falhaDaGaleria = pecasResposta.error || revisoesResposta.error;
 
-        {!podeEnviar && (
-          <p className="analise-aviso" role="status">
-            A gente ainda não tem uma campanha sua em montagem, e é a ela que a peça se liga.
-            Assim que ela existir, esta página passa a aceitar envio.
-          </p>
-        )}
-
-        {/* A mesma análise automática ao escolher a imagem. A coluna de
-            contexto explica a diferença entre análise e publicação. */}
-        <div className="criativos-workspace">
-          {amostra ? <AmostraDeVereditos qual={amostra} /> : <Analisar podeEnviar={podeEnviar} businessId={estado.negocioId ?? ""} />}
-
-          <aside className="criativos-contexto" aria-label="Sobre a análise">
-            <div>
-              <h3>Uma análise da sua imagem.</h3>
-              <p>Ao selecionar um arquivo aceito, a análise começa e a resposta aparece nesta tela.</p>
-            </div>
-            <div>
-              <h4>Antes de uma campanha</h4>
-              <p>A análise não encaminha a peça ao gestor, não publica e não altera a sua imagem.</p>
-            </div>
-            <div>
-              <h4>Para pedir a inclusão</h4>
-              <p>{revisaoHabilitada && estado.negocioId
-                ? "Use Revisão do gestor nesta página para enviar a peça. A análise isolada não encaminha nada à equipe."
-                : "Fale com a equipe pelo WhatsApp. A análise desta aba não cria uma solicitação de publicação."}</p>
-            </div>
-          </aside>
-        </div>
-      </section>
-
-      {revisaoHabilitada && <section className="casa-bloco" aria-labelledby="casa-revisao">
-        <div className="casa-bloco-head"><h2 id="casa-revisao" className="section-title">Revisão do gestor</h2>
-          <p>Envie a peça do negócio selecionado. O gestor decide se ela pode seguir para publicação manual.</p></div>
-        {estado.negocioId && <PedirRevisao businessId={estado.negocioId} />}
-        {revisoes?.error && <p className="form-warning">Não foi possível carregar as peças enviadas. Tente novamente mais tarde.</p>}
-        {paginaInformada.invalida && <p className="form-warning">Página inválida; mostrando os envios mais recentes.</p>}
-        {revisoes && !revisoes.error && revisoes.count === null &&
-          <p className="form-warning">O total de peças desta conta está indisponível nesta consulta.</p>}
-        {revisoes?.data?.length === 0 && <p>{paginaRevisoes > 1
-          ? "Não há peças nesta página. Volte aos envios mais recentes."
-          : "Nenhuma peça enviada para revisão nesta conta."}</p>}
-        {revisoes && !revisoes.error && (revisoes.count ?? 0) > 0 &&
-          <p>{revisoes.count} peça(s) registrada(s) nesta conta · página {paginaRevisoes} de {ultimaPagina}</p>}
-        {paginaRevisoes > 1 && revisoes && !revisoes.error && <p><a href={destinoRevisoes(paginaRevisoes - 1)}>Envios mais recentes</a></p>}
-        {revisoes?.data?.map((revisao) => <article className="auth-card" key={revisao.id}>
-          <h3>{revisao.original_name}</h3>
-          <p>{rotuloDaRevisao(revisao.status as StatusRevisao)} · {dataDaRevisao.format(new Date(revisao.created_at))}</p>
-          {revisao.review_note && <p>Retorno do gestor: {revisao.review_note}</p>}
-        </article>)}
-        {ultimaPagina !== null && paginaRevisoes < ultimaPagina && paginaRevisoes < 1000 &&
-          <p><a href={destinoRevisoes(paginaRevisoes + 1)}>Ver envios anteriores</a></p>}
-        {ultimaPagina !== null && paginaRevisoes > ultimaPagina &&
-          <p className="form-warning">Esta página ficou além do histórico atual. <a href={destinoRevisoes(1)}>Voltar ao início</a>.</p>}
-        {ultimaPagina !== null && ultimaPagina > 1000 && paginaRevisoes === 1000 &&
-          <p className="form-warning">O histórico atingiu o limite desta consulta. Fale com a equipe para localizar peças mais antigas.</p>}
-      </section>}
-
-      <MinhasPecas />
-      <CriarPeca />
-    </div>
-  );
+  return <>
+    {falhaDaGaleria ? <p className="form-warning">Parte da biblioteca não pôde ser carregada agora. Tente novamente mais tarde.</p> : null}
+    <TelaDeCriativos
+      itens={itens}
+      envio={revisaoHabilitada && negocioId
+        ? <PedirRevisao businessId={negocioId} />
+        : <p className="form-warning">O envio para revisão ainda não está disponível nesta conta.</p>}
+      analise={amostra
+        ? <AmostraDeVereditos qual={amostra} />
+        : <Analisar podeEnviar={podeAnalisar} businessId={negocioId ?? ""} />}
+    />
+  </>;
 }

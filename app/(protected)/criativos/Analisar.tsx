@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { AnaliseDaPeca } from "@/lib/backend";
 import { ACEITOS_NO_INPUT, conferirArquivo, LADO_MINIMO_PX, TETO_DO_NAVEGADOR_MB, type Recusa } from "@/lib/criativos/envio";
-import { TETO_DA_ESPERA_MS } from "@/lib/criativos/limites.mjs";
+import { comTetoDeEspera, EsperaEstourou } from "@/lib/criativos/espera";
 import { apresentarVeredito } from "@/lib/criativos/veredito";
 import { analisarPecaAction, type ResultadoDaAnalise } from "./actions";
 
@@ -42,18 +42,6 @@ import { analisarPecaAction, type ResultadoDaAnalise } from "./actions";
  * sozinho quando a corrida termina, e não deixa timer pendurado.
  * ============================================================
  */
-class EsperaEstourou extends Error {}
-
-function comTetoDeEspera<T>(promessa: Promise<T>): Promise<T> {
-  const sinal = AbortSignal.timeout(TETO_DA_ESPERA_MS);
-  return Promise.race([
-    promessa,
-    new Promise<never>((_, rejeitar) => {
-      sinal.addEventListener("abort", () => rejeitar(new EsperaEstourou()), { once: true });
-    }),
-  ]);
-}
-
 type Fase =
   | { nome: "parado" }
   | { nome: "recusado"; recusa: Recusa }

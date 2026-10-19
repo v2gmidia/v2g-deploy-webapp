@@ -2,7 +2,10 @@ import type { ReactNode } from "react";
 import { diaCurto, dinheiro } from "@/lib/formato";
 import { contagemOuAusencia, dinheiroOuAusencia } from "@/lib/dia-seguinte/exibir";
 import { PerguntaDoDia } from "./PerguntaDoDia";
+import { ConclusaoDaJornada } from "./ConclusaoDaJornada";
 import type { EstadoDoCliente } from "@/lib/estado/cliente";
+import type { DiaDoConsolidado } from "@/lib/dia-seguinte/tipos";
+import { PERIODOS_DO_INICIO, rotuloDoPeriodo, type PeriodoDoInicio } from "@/lib/inicio/periodo";
 import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
 import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import {
@@ -35,10 +38,10 @@ import {
 /**
  * O resto do caminho — a cadeia, sem peso.
  *
- * Existe para a pessoa saber que há uma sequência e onde ela está nela. O
- * que ela deve FAZER agora é o herói; isto é o mapa. Etapa concluída fica
- * na lista, marcada: sumir com ela encolheria a lista a cada visita e
- * tiraria justamente a sensação de ter andado.
+ * Existe para a pessoa saber que há uma sequência e onde ela está nela.
+ * Enquanto existe etapa aberta, o detalhe fica disponível por divulgação
+ * progressiva. Quando a cadeia fecha, a trilha sai do Início: o histórico
+ * cumpriu sua função e os resultados passam a ser a informação principal.
  *
  * ============================================================
  * DUAS COISAS QUE ESTA LISTA ERRAVA, e as duas viraram regra em
@@ -89,17 +92,122 @@ function TrilhaDaExecucao({
   );
 }
 
-function CabecalhoDoInicio() {
+function CabecalhoDoInicio({ periodo, mostrarPeriodo = false }: { periodo: PeriodoDoInicio; mostrarPeriodo?: boolean }) {
+  const rotulo = rotuloDoPeriodo(periodo);
   return (
     <header className="inicio-cabecalho">
       <h1>Início<span className="inicio-quadrado" aria-hidden="true" /></h1>
+      {mostrarPeriodo && <details className="periodo-seletor">
+        <summary aria-label={`Período selecionado: ${rotulo}`}>
+          <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+            <rect x="3" y="4.5" width="14" height="12.5" rx="1.5" stroke="currentColor" />
+            <path d="M6.5 2.5v4M13.5 2.5v4M3 8.5h14" stroke="currentColor" />
+          </svg>
+          {rotulo}
+        </summary>
+        <nav aria-label="Escolher período">
+          {PERIODOS_DO_INICIO.map((opcao) => (
+            <a key={opcao.id} aria-current={periodo === opcao.id ? "page" : undefined} href={`?periodo=${opcao.id}`}>
+              {opcao.rotulo}
+            </a>
+          ))}
+        </nav>
+      </details>}
     </header>
+  );
+}
+
+type TipoDeSinal = "investido" | "cliques" | "impressoes" | "conversas";
+
+function IconeDoSinal({ tipo }: { tipo: TipoDeSinal }) {
+  const corpo = {
+    investido: <><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M7 9h10M7 14h6" /></>,
+    cliques: <><path d="m6 3 11 9-5 .8-2.5 4.7L6 3Z" /><path d="m13 13 4 5" /></>,
+    impressoes: <><path d="M5 19v-5M10 19V9M15 19V5M20 19V11" /><path d="M3 19h19" /></>,
+    conversas: <path d="M20.5 11.5a8.5 8.5 0 0 1-11.7 7.9L4 21l1.6-4.2A8.5 8.5 0 1 1 20.5 11.5Z" />,
+  }[tipo];
+
+  return (
+    <span className="sinal-icone" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        {corpo}
+      </svg>
+    </span>
+  );
+}
+
+function GraficoDeInvestimento({ dias }: { dias: DiaDoConsolidado[] }) {
+  const serie = dias.flatMap((dia) =>
+    dia.investiuCentavos === null ? [] : [{ dia: dia.dia, valor: dia.investiuCentavos }],
+  );
+
+  if (serie.length < 2) {
+    return (
+      <section className="desempenho-card" aria-labelledby="desempenho-titulo">
+        <div className="desempenho-cabecalho">
+          <h2 id="desempenho-titulo">Investimento ao longo do tempo</h2>
+          <span>por dia</span>
+        </div>
+        <p className="grafico-vazio">O gráfico aparece quando houver investimento medido em pelo menos dois dias.</p>
+      </section>
+    );
+  }
+
+  let maior = 0;
+  for (const ponto of serie) maior = Math.max(maior, ponto.valor);
+  const teto = Math.max(maior, 1);
+  const largura = 720;
+  const altura = 250;
+  const esquerda = 62;
+  const direita = 18;
+  const topo = 16;
+  const base = 210;
+  const faixaX = largura - esquerda - direita;
+  const faixaY = base - topo;
+  const coordenadas = serie.map((ponto, indice) => ({
+    ...ponto,
+    x: esquerda + (indice / (serie.length - 1)) * faixaX,
+    y: base - (ponto.valor / teto) * faixaY,
+  }));
+  const caminho = coordenadas
+    .map((ponto, indice) => `${indice === 0 ? "M" : "L"}${ponto.x.toFixed(1)} ${ponto.y.toFixed(1)}`)
+    .join(" ");
+  const meio = Math.floor((serie.length - 1) / 2);
+  const marcasY = [0, 0.5, 1];
+
+  return (
+    <section className="desempenho-card" aria-labelledby="desempenho-titulo">
+      <div className="desempenho-cabecalho">
+        <h2 id="desempenho-titulo">Investimento ao longo do tempo</h2>
+        <span><i aria-hidden="true" /> por dia</span>
+      </div>
+      <svg className="grafico-investimento" viewBox={`0 0 ${largura} ${altura}`} role="img" aria-label={`Investimento diário de ${diaCurto(serie[0]!.dia)} a ${diaCurto(serie[serie.length - 1]!.dia)}`}>
+        {marcasY.map((proporcao) => {
+          const y = base - proporcao * faixaY;
+          return (
+            <g key={proporcao}>
+              <line x1={esquerda} x2={largura - direita} y1={y} y2={y} className="grafico-grade" />
+              <text x={esquerda - 10} y={y + 4} textAnchor="end">{dinheiro((teto * proporcao) / 100, "BRL")}</text>
+            </g>
+          );
+        })}
+        <path d={caminho} className="grafico-linha" />
+        {coordenadas.map((ponto) => <circle key={ponto.dia} cx={ponto.x} cy={ponto.y} r="3.5" className="grafico-ponto" />)}
+        {Array.from(new Set([0, meio, serie.length - 1])).map((indice) => (
+          <text key={serie[indice]!.dia} x={coordenadas[indice]!.x} y={238} textAnchor={indice === 0 ? "start" : indice === serie.length - 1 ? "end" : "middle"}>
+            {diaCurto(serie[indice]!.dia)}
+          </text>
+        ))}
+      </svg>
+    </section>
   );
 }
 
 /** As mesmas quatro fases da cadeia, em uma linha de acompanhamento. */
 function FasesDaCampanha({ fases }: { fases: ReturnType<typeof fasesDaCadeia> }) {
   const feitas = fases.filter((fase) => fase.estado === "feita").length;
+  if (feitas === fases.length) return null;
+
   return (
     <section className="inicio-jornada" aria-labelledby="inicio-jornada-titulo">
       <div className="inicio-jornada-cabecalho">
@@ -132,11 +240,9 @@ function FasesDaCampanha({ fases }: { fases: ReturnType<typeof fasesDaCadeia> })
 function ProximoPasso({
   pendencia,
   proximo,
-  cuidadoComCampanha = false,
 }: {
   pendencia: PendenciaDoOnboarding | null;
   proximo: Etapa | null;
-  cuidadoComCampanha?: boolean;
 }) {
   if (pendencia) return (
     <section className="inicio-proximo" aria-labelledby="inicio-proximo-titulo">
@@ -147,32 +253,16 @@ function ProximoPasso({
     </section>
   );
 
-  if (proximo) return (
+  if (proximo?.acao) return (
     <section className="inicio-proximo" aria-labelledby="inicio-proximo-titulo">
       <h2 id="inicio-proximo-titulo">Seu próximo passo</h2>
       <h3>{proximo.titulo}</h3>
       <p>{proximo.corpo}</p>
-      {proximo.acao ? (
-        <a className="cta" href={proximo.acao.href}>{proximo.acao.rotulo}</a>
-      ) : (
-        <p className="proximo-nota">
-          {proximo.bola === "facebook"
-            ? cuidadoComCampanha
-              ? "Agora é com o Facebook. Não precisa fazer nada — e mexer na campanha agora atrasaria."
-              : "Agora é com o Facebook. Não precisa fazer nada."
-            : "Agora é com a gente. Você não precisa fazer nada."}
-        </p>
-      )}
+      <a className="cta" href={proximo.acao.href}>{proximo.acao.rotulo}</a>
     </section>
   );
 
-  return (
-    <section className="inicio-proximo" aria-labelledby="inicio-proximo-titulo">
-      <h2 id="inicio-proximo-titulo">Seu próximo passo</h2>
-      <h3>Nada está esperando por você</h3>
-      <p>Quando alguma coisa precisar da sua atenção, ela aparece aqui.</p>
-    </section>
-  );
+  return null;
 }
 
 export function TelaDoInicio({
@@ -182,6 +272,8 @@ export function TelaDoInicio({
   diaDaPergunta,
   atrasados,
   pendenciaOnboarding = null,
+  periodo = "1m",
+  investidoNoMesCentavos = null,
   faixa,
 }: {
   estado: EstadoDoCliente;
@@ -191,6 +283,8 @@ export function TelaDoInicio({
   diaDaPergunta: string;
   atrasados: string[];
   pendenciaOnboarding?: PendenciaDoOnboarding | null;
+  periodo?: PeriodoDoInicio;
+  investidoNoMesCentavos?: number | null;
   /** a faixa de reconexão, que lê sessão: a página passa, a bancada não */
   faixa: ReactNode;
 }) {
@@ -216,6 +310,8 @@ export function TelaDoInicio({
   // As quatro fases do wireframe, sobre as seis etapas da cadeia. Quem
   // agrupa é `lib/estado/frases.ts` — a tela não decide o que é fase.
   const fases = fasesDaCadeia(etapas, proximo);
+  const jornadaConcluida = fases.every((fase) => fase.estado === "feita");
+  const temProximoAcionavel = pendenciaOnboarding !== null || Boolean(proximo?.acao);
 
   // ============================================================
   // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
@@ -362,11 +458,10 @@ export function TelaDoInicio({
     return (
       <div className="inicio-editorial">
         {faixa}
-        <CabecalhoDoInicio />
+        <CabecalhoDoInicio periodo={periodo} />
 
         {/* A tarefa vem da pendência real do onboarding ou da cadeia de execução. */}
-        <div className="inicio-topo">
-          <ProximoPasso pendencia={pendenciaOnboarding} proximo={proximo} cuidadoComCampanha={diaZero} />
+        <div className={`inicio-topo${temProximoAcionavel ? " com-acao" : ""}`}>
           <section className="inicio-estado" aria-label={pendenciaOnboarding ? "Seu negócio" : "Sua campanha"}>
             {/* ============================================================
                 A MANCHETE DE VEICULAÇÃO VEM DA FONTE ÚNICA. ITEM B3.
@@ -392,6 +487,9 @@ export function TelaDoInicio({
                   : "Sua campanha está sendo preparada"}
             </h2>
           </section>
+          {temProximoAcionavel && (
+            <ProximoPasso pendencia={pendenciaOnboarding} proximo={proximo} />
+          )}
         </div>
         <FasesDaCampanha fases={fases} />
 
@@ -521,12 +619,15 @@ export function TelaDoInicio({
   return (
     <div className="inicio-editorial">
       {faixa}
-      <CabecalhoDoInicio />
+      <CabecalhoDoInicio periodo={periodo} mostrarPeriodo />
 
       {/* A mesma composição do estado sem números: estado, tarefa e
           acompanhamento. Os números continuam condicionados a temNumero. */}
-      <div className="inicio-topo">
-        <ProximoPasso pendencia={pendenciaOnboarding} proximo={proximo} />
+      {jornadaConcluida && estado.negocioId && (
+        <ConclusaoDaJornada businessId={estado.negocioId} />
+      )}
+
+      <div className={`inicio-topo${temProximoAcionavel ? " com-acao" : ""}`}>
         <section className="inicio-estado" aria-label="Sua campanha">
           {/* ============================================================
               UMA REDAÇÃO SÓ PARA VEICULAÇÃO — item N7 do QA.
@@ -546,9 +647,15 @@ export function TelaDoInicio({
               sendo a frase do pipeline. O que saiu daqui é o uso dele
               como manchete de veiculação.
               ============================================================ */}
-          <p>Estado do anúncio</p>
-          <h2>{fraseDeVeiculacao(estado.veiculacao, "manchete")}</h2>
+          <div className="inicio-estado-texto">
+            <p>Estado do anúncio</p>
+            <h2>{fraseDeVeiculacao(estado.veiculacao, "manchete")}</h2>
+          </div>
+          <a className="inicio-estado-link" href="/anuncios">Ver anúncios</a>
         </section>
+        {temProximoAcionavel && (
+          <ProximoPasso pendencia={pendenciaOnboarding} proximo={proximo} />
+        )}
       </div>
       <FasesDaCampanha fases={fases} />
 
@@ -566,35 +673,42 @@ export function TelaDoInicio({
           ============================================================ */}
       <section className="sinais-bloco">
         <div className="section-title">
-          <h2>Os primeiros sinais</h2>
+          <h2>Resumo do período</h2>
           {periodoMedido && <span className="side-note">{periodoMedido}</span>}
         </div>
         <div className="sinais">
           <div className="sinal">
-            <span className="s-label">Investido</span>
+            <div className="sinal-cabecalho"><IconeDoSinal tipo="investido" /><span className="s-label">Investido</span></div>
             <span className="s-valor">
-              {dinheiroOuAusencia(resultado.investidoCentavos, resultado.moeda)}
+              {resultado.investidoCentavos === null
+                ? "—"
+                : dinheiroOuAusencia(resultado.investidoCentavos, resultado.moeda)}
             </span>
           </div>
           <div className="sinal">
-            <span className="s-label">Pessoas que clicaram</span>
-            <span className="s-valor">{contagemOuAusencia(resultado.cliques)}</span>
+            <div className="sinal-cabecalho"><IconeDoSinal tipo="cliques" /><span className="s-label">Cliques</span></div>
+            <span className="s-valor">
+              {resultado.cliques === null ? "—" : contagemOuAusencia(resultado.cliques)}
+            </span>
           </div>
           <div className="sinal">
-            <span className="s-label">Vezes que apareceu</span>
-            <span className="s-valor">{contagemOuAusencia(resultado.impressoes)}</span>
+            <div className="sinal-cabecalho"><IconeDoSinal tipo="impressoes" /><span className="s-label">Impressões</span></div>
+            <span className="s-valor">
+              {resultado.impressoes === null ? "—" : contagemOuAusencia(resultado.impressoes)}
+            </span>
           </div>
           <div className={`sinal${conversas === null ? " s-ausente" : ""}`}>
-            <span className="s-label">Conversas</span>
-            <span className="s-valor">{contagemOuAusencia(conversas)}</span>
-            {conversas === null && (
-              <span className="s-nota">
-                A contagem de quem chega pelo anúncio ainda não está de pé. Não quer dizer que
-                ninguém chegou.
-              </span>
-            )}
+            <div className="sinal-cabecalho"><IconeDoSinal tipo="conversas" /><span className="s-label">Conversas</span></div>
+            <span className="s-valor">{conversas === null ? "—" : contagemOuAusencia(conversas)}</span>
           </div>
         </div>
+
+        {(resultado.investidoCentavos === null ||
+          resultado.cliques === null ||
+          resultado.impressoes === null ||
+          conversas === null) && (
+          <p className="sinais-ausencia">— indica dado que ainda não está disponível.</p>
+        )}
 
         {/* A FRASE DO NÍVEL, COMO VEIO. Sem tradução, sem cor, sem nota.
             Ela é a única coisa nesta tela autorizada a dizer se está bom
@@ -602,155 +716,49 @@ export function TelaDoInicio({
         {acumulado?.nivelFrase && <p className="sinal-frase">{acumulado.nivelFrase}</p>}
       </section>
 
-      {/*
-        O QUE O DONO RESPONDEU. Só aparece quando ele respondeu alguma
-        coisa — um bloco vazio prometendo número é pior que bloco nenhum,
-        e é o item B7 do QA: seção sem item não renderiza título.
+      <div className={`resultado-grade${donoRespondeu ? " com-vendas" : ""}`}>
+        <GraficoDeInvestimento dias={acumulado?.dias ?? []} />
+        {donoRespondeu && acumulado && (
+          <section className="vendas-card" aria-labelledby="vendas-informadas-titulo">
+            <div className="vendas-cabecalho">
+              <h2 id="vendas-informadas-titulo">Vendas informadas</h2>
+              <span>informado por você</span>
+            </div>
+            <div className="venda-dado">
+              <IconeDoSinal tipo="conversas" />
+              <p><strong>{contagemOuAusencia(acumulado.vendas)}</strong><span>vendas</span></p>
+            </div>
+            <div className="venda-dado">
+              <IconeDoSinal tipo="investido" />
+              <p><strong>{dinheiroOuAusencia(acumulado.voltouCentavos, acumulado.moeda)}</strong><span>em receita informada</span></p>
+            </div>
+          </section>
+        )}
+      </div>
 
-        `null` NUNCA vira R$ 0,00 aqui: `dinheiroOuAusencia` escreve
-        "ainda não sabemos", porque dizer R$ 0,00 sobre o dinheiro do
-        cliente quando não se sabe é afirmação falsa. Ver
-        `lib/dia-seguinte/exibir.ts`.
-      */}
       {cardDaPergunta}
-      {/* ============================================================
-          SEM A PERGUNTA, UMA LINHA DIZENDO QUANDO ELA VAI EXISTIR.
-
-          Sumir em silêncio deixaria o dono sem saber que um dia a gente
-          vai perguntar — e a primeira vez que a pergunta aparecesse
-          pareceria cobrança do nada.
-
-          Ela NÃO promete prazo: diz a condição ("quando seu anúncio
-          estiver no ar"), não a data.
-          ============================================================ */}
       {!cabePerguntarSobreOntem && (
         <p className="foot-line">
           As perguntas sobre vendas começam quando o anúncio estiver no ar.
         </p>
       )}
 
-      <div className="inicio-cols">
-        <div className="inicio-col">
-          {donoRespondeu && acumulado && (
-            <section>
-              <div className="section-title">
-                <h2>O que você me contou</h2>
-              </div>
-              <div className="card">
-                <div className="metrics">
-                  <div className="metric">
-                    <span className="m-label">Viraram venda</span>
-                    <span className="m-value">{contagemOuAusencia(acumulado.vendas)}</span>
-                    <span className="m-delta">do que você respondeu</span>
-                  </div>
-                  <div className="metric">
-                    <span className="m-label">Voltou</span>
-                    <span className="m-value">
-                      {dinheiroOuAusencia(acumulado.voltouCentavos, acumulado.moeda)}
-                    </span>
-                    <span className="m-delta">
-                      {acumulado.diasComOsDoisLados > 0
-                        ? `${acumulado.diasComOsDoisLados} dia(s) com os dois lados`
-                        : "ainda sem o lado da plataforma"}
-                    </span>
-                  </div>
-                </div>
+      <Comando
+        verba={estado.verbaMensal}
+        investido={
+          resultado.moeda === null || resultado.moeda === "BRL"
+            ? investidoNoMesCentavos === null
+              ? null
+              : investidoNoMesCentavos / 100
+            : null
+        }
+      />
 
-                {/* ============================================================
-                    O "PRA CADA R$ 1,00 VOLTARAM R$ X" SAIU — item B1 do QA.
-
-                    O backend calcula e manda; o número de produção hoje é
-                    `117.07`, ou seja, "pra cada R$ 1,00 voltaram R$ 117,07".
-                    Ele está ARITMETICAMENTE CERTO e é uma mentira sobre o
-                    negócio: os dois lados nunca caíram no mesmo dia
-                    (`dias_com_os_dois_lados: 0`), então a conta divide a
-                    receita de agosto pelo investimento de setembro.
-
-                    Enquanto `diasComOsDoisLados` for zero, não há retorno
-                    para mostrar — e mostrar 117× para o dono é pior do que
-                    não mostrar retorno nenhum. `frasePorRealInvestido`
-                    continua existindo, sem chamador nesta tela.
-                    ============================================================ */}
-
-                {/* Enquanto o coletor da Meta estiver desligado, dizer isso é
-                    melhor que deixar o cliente achar que a metade que falta é
-                    culpa dele. */}
-                {!acumulado.temDadoDaPlataforma && (
-                  <p className="rc-tranquilo">
-                    O quanto foi investido ainda não chega automático — por isso a conta de
-                    retorno fica incompleta por enquanto.
-                  </p>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* SEÇÃO SEM ITEM NÃO RENDERIZA TÍTULO — item B7. Antes, uma
-              conta sem campanha ganhava o cabeçalho "Suas campanhas", o
-              link "Ver todas" e uma lista vazia embaixo. */}
-          {estado.campanhasNoAr.length > 0 && (
-            <section>
-              <div className="section-title">
-                <h2>Suas campanhas</h2>
-                <a href="/anuncios">Ver todas &rarr;</a>
-              </div>
-              <div className="campaign-list">
-                {estado.campanhasNoAr.map((c) => (
-                  <div className="list-row" key={c.id}>
-                    {/* ============================================================
-                        O SELO DE "NO AR" SAIU DAQUI, e a razão MUDOU hoje.
-
-                        Ele saiu porque `status_na_plataforma` não era exposto
-                        por rota nenhuma, e o selo era literalmente `?? "No ar"`.
-
-                        Em 11/09/2026 apareceu uma fonte: `veiculacao`, em
-                        `GET /negocios/{business_id}/execucao` — ver
-                        `lib/veiculacao/estado.ts`. Mas ela é POR NEGÓCIO, e
-                        esta lista é POR CAMPANHA: `LinhaDoNegocioPorExecucao`
-                        não traz o campo. Carimbar cada linha com o estado do
-                        negócio seria afirmar de uma campanha o que se mediu de
-                        outra.
-                        ============================================================ */}
-                    <div className="lr-head">
-                      <span className="lr-title">{c.nome ?? "Campanha sem nome"}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* A cadeia continua VISÍVEL depois que o número chega. Ela deixou
-              de decidir o ramo (ver o bloco da condição), e sumir com ela
-              aqui trocaria um erro por outro: a pessoa perderia de vista que
-              ainda há etapa aberta justamente quando passa a ter o que
-              comemorar. */}
-          <TrilhaDaExecucao
-            etapas={etapas}
-            atual={proximo}
-            andamento={andamentoDaExecucao}
-          />
-
-          <Melhoras fotos={estado.melhoras.fotos} />
-        </div>
-
-        <div className="inicio-col">
-          {/* O investido só vai para o Comando quando ele é comparável
-              com a verba, que é em reais. Em outra moeda, o card mostra
-              só o teto. */}
-          <Comando
-            verba={estado.verbaMensal}
-            investido={
-              resultado.moeda === null || resultado.moeda === "BRL"
-                ? resultado.investidoCentavos === null
-                  ? null
-                  : resultado.investidoCentavos / 100
-                : null
-            }
-          />
-          <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
-        </div>
-      </div>
+      <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
+      {proximo && (
+        <TrilhaDaExecucao etapas={etapas} atual={proximo} andamento={andamentoDaExecucao} />
+      )}
+      <Melhoras fotos={estado.melhoras.fotos} />
     </div>
   );
 }
@@ -818,6 +826,8 @@ function Melhoras({ fotos }: { fotos: number }) {
 }
 
 function Noturno({ decisao, falha }: { decisao: { payload: unknown } | null; falha: boolean }) {
+  if (!falha && !decisao) return null;
+
   return (
     <section className="card noturno">
       <div className="nc-head">
@@ -830,11 +840,7 @@ function Noturno({ decisao, falha }: { decisao: { payload: unknown } | null; fal
         <p>Não conseguimos carregar as atualizações agora. Tente novamente em instantes.</p>
       ) : decisao ? (
         <p>{resumoDaDecisao(decisao.payload)}</p>
-      ) : (
-        <p>
-          Ainda não há atualizações concluídas para mostrar nesta conta.
-        </p>
-      )}
+      ) : null}
       <p className="nc-foot">
         <a href="/alertas">ver todos os avisos</a>
       </p>
@@ -843,19 +849,28 @@ function Noturno({ decisao, falha }: { decisao: { payload: unknown } | null; fal
 }
 
 function Comando({ verba, investido }: { verba: number | null; investido: number | null }) {
+  const percentual = verba !== null && verba > 0 && investido !== null
+    ? Math.min(Math.max((investido / verba) * 100, 0), 100)
+    : null;
+
   return (
     <section className="command-card">
-      <b className="title">Limite mensal</b>
-      <p className="limit">
-        {/* `"BRL"` nos dois: a verba é o que o cliente digitou em reais, e
-            quem chama só passa `investido` quando ele é da mesma moeda. */}
-        {verba === null
-          ? "Você ainda não definiu um teto mensal. "
-          : investido !== null
-            ? `${dinheiro(investido, "BRL")} de ${dinheiro(verba, "BRL")} investidos este mês · `
-            : `Seu teto do mês é ${dinheiro(verba, "BRL")}. `}
-        <a href="/verba">{verba === null ? "definir agora" : "mudar limite"}</a>
-      </p>
+      <div className="limite-texto">
+        <b className="title">Limite mensal</b>
+        <p className="limit">
+          {verba === null
+            ? "Você ainda não definiu um teto mensal."
+            : investido !== null
+              ? <><strong>{dinheiro(investido, "BRL")}</strong> de {dinheiro(verba, "BRL")}</>
+              : <>Seu teto do mês é <strong>{dinheiro(verba, "BRL")}</strong>.</>}
+        </p>
+      </div>
+      {percentual !== null && (
+        <div className="limite-progresso" role="progressbar" aria-label="Limite mensal utilizado" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(percentual)}>
+          <span style={{ width: `${percentual}%` }} />
+        </div>
+      )}
+      <a className="limite-link" href="/verba">{verba === null ? "Definir agora" : "Mudar limite"}</a>
     </section>
   );
 }
