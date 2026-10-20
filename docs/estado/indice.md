@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`criativos-fachada-e-filtro-imagens-19-10.md`](./criativos-fachada-e-filtro-imagens-19-10.md) | 19/10/2026 | Foto de fachada declarada no upload já existente; verificação do filtro Imagens na Biblioteca e limites da coleta. | **Sim.** Fonte de lote permitida, ensaio Jev com imagem e QA autenticado do upload. |
 | [`criativos-barbearia-triagem-n8n-19-10.md`](./criativos-barbearia-triagem-n8n-19-10.md) | 19/10/2026 | Busca pública manual, 10 referências registradas no n8n, triagem 6/4 e execução 13 sem Jev. | **Sim.** Fonte admissível de imagens em lote, direito/uso, ID técnico do nicho e piloto visual medido. |
 | [`criativos-n8n-mapa-piloto-19-10.md`](./criativos-n8n-mapa-piloto-19-10.md) | 19/10/2026 | Fluxo manual e inativo no n8n para portas de referência, direitos e custo; mapa do lugar dos documentos, teste simulado e atualização do FigJam. | **Sim.** Amostra autorizada, ID do nicho, teto por ensaio, credencial TypeSafe e piloto pago medido. |
 | [`ajustes-qa-interface-19-10.md`](./ajustes-qa-interface-19-10.md) | 19/10/2026 | Cinco ajustes aprovados do QA: pendências coerentes, envio disponível, Início compacto, período em Anúncios e Conta concisa. | **Sim.** Revisão autenticada e publicação manual; prévia local e testes isolados não comprovam produção. |

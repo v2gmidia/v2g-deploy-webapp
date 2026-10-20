@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MAXIMO_DE_FOTOS, validar, type UsoDeIdentidade } from "./regras";
+import { tipoFotoRegistrado, tipoFotoValido, type TipoFotoDoNegocio } from "./tipo-foto";
 
 /**
  * Guardar, listar e arquivar a identidade visual do negócio.
@@ -48,6 +49,7 @@ export interface ImagemDeIdentidade {
   nomeDoArquivo: string | null;
   caminho: string;
   criadoEm: string;
+  tipoFoto: TipoFotoDoNegocio | null;
   /** URL assinada, de vida curta. O bucket é privado. */
   url: string | null;
 }
@@ -61,7 +63,7 @@ export async function listarIdentidade(
 
   const { data, error } = await supa
     .from("creatives")
-    .select("id, uso, file_name, storage_path, created_at")
+    .select("id, uso, file_name, storage_path, created_at, copy")
     .eq("business_id", businessId)
     .in("uso", ["logo", "identidade"])
     .is("arquivado_em", null)
@@ -88,6 +90,7 @@ export async function listarIdentidade(
     nomeDoArquivo: l.file_name,
     caminho: l.storage_path ?? "",
     criadoEm: l.created_at,
+    tipoFoto: l.uso === "identidade" ? tipoFotoRegistrado(l.copy) : null,
     url: porCaminho.get(l.storage_path ?? "") ?? null,
   });
 
@@ -106,9 +109,14 @@ export async function guardarImagem(entrada: {
   uso: UsoDeIdentidade;
   nomeOriginal: string;
   bytes: Uint8Array;
+  tipoFoto?: TipoFotoDoNegocio;
   /** O texto EXATO do aviso que a pessoa viu antes de enviar. */
   textoDaDeclaracao: string;
 }): Promise<ResultadoDoEnvio> {
+  const tipoFoto = tipoFotoValido(entrada.tipoFoto);
+  if (entrada.uso === "identidade" && !tipoFoto) {
+    return { ok: false, mensagem: "Diga se a foto mostra a fachada, o ambiente ou um produto." };
+  }
   const veredito = validar(entrada.bytes, entrada.uso);
   if (!veredito.ok) return { ok: false, mensagem: veredito.mensagem };
 
@@ -197,6 +205,7 @@ export async function guardarImagem(entrada: {
       // demonstra o quê. Guardar a redação vigente é o que permite
       // responder, dois anos depois, o que exatamente foi declarado.
       copy: {
+        ...(tipoFoto ? { identidade: { tipoFoto } } : {}),
         declaracao: {
           em: new Date().toISOString(),
           texto: entrada.textoDaDeclaracao,

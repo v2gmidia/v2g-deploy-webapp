@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { arquivarImagem, guardarImagem } from "@/lib/identidade/armazenar";
 import type { UsoDeIdentidade } from "@/lib/identidade/regras";
+import { tipoFotoValido } from "@/lib/identidade/tipo-foto";
 import { TEXTO_DA_DECLARACAO } from "./declaracao";
 
 export interface IdentidadeState {
@@ -34,6 +35,10 @@ export async function enviarImagemAction(
 
   const uso = String(formData.get("uso") ?? "");
   if (uso !== "logo" && uso !== "identidade") return { erro: "Não entendi o pedido." };
+  const tipoFoto = uso === "identidade" ? tipoFotoValido(formData.get("tipoFoto")) : null;
+  if (uso === "identidade" && !tipoFoto) {
+    return { erro: "Escolha o que a foto mostra antes de enviar." };
+  }
 
   const arquivo = formData.get("arquivo");
   if (!(arquivo instanceof File) || arquivo.size === 0) {
@@ -47,6 +52,7 @@ export async function enviarImagemAction(
     uso: uso as UsoDeIdentidade,
     nomeOriginal: arquivo.name,
     bytes,
+    ...(tipoFoto ? { tipoFoto } : {}),
     // O texto EXATO que a pessoa viu. Vem da mesma constante que a tela
     // renderiza — se viesse do formulário, quem envia escolheria o que
     // ficou registrado que ele aceitou.

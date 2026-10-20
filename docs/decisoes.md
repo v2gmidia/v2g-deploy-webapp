@@ -22,6 +22,8 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 **Motivo:** testar o valor da análise em lote com evidência verificável antes de ampliar volume e custo.
 
+**Complemento do Victor no mesmo dia:** pesquisar na Biblioteca por Brasil e barbearia, considerar somente imagens, e usar foto real da fachada enviada pelo próprio cliente nas futuras peças. O upload de identidade já existente na Conta passa a registrar se a foto é fachada, ambiente ou produto; foto antiga sem tipo não é fachada presumida. O filtro visual da Biblioteca exige conferência por peça porque a página pode exibir vídeo mesmo com `Imagens` selecionado. Isso não autoriza captura automatizada da interface nem afirma que anúncio ativo converteu.
+
 ### 2026-10-19 — Aplicar os cinco ajustes do QA de interface
 
 **Aprovação direta do Victor: “Pode aplicar todos esses”.** Aplicar a coerência entre pendências de Início e Avisos, corrigir o convite de envio quando Criativos está indisponível, compactar orientações no Início com resultados, explicitar e preservar o período ao navegar entre Início e Anúncios e encurtar títulos/textos redundantes da Conta. Preservar a identidade visual e a ausência do sumário. Falha de consulta não pode ser apresentada como “tudo em dia”.

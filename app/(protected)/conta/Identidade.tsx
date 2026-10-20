@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/Button";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
 import { MAXIMO_DE_FOTOS } from "@/lib/identidade/regras";
+import type { TipoFotoDoNegocio } from "@/lib/identidade/tipo-foto";
 import {
   enviarImagemAction,
   removerImagemAction,
@@ -12,6 +13,11 @@ import {
 import { TEXTO_DA_DECLARACAO } from "./declaracao";
 
 const inicial: IdentidadeState = {};
+const ROTULO_DA_FOTO: Record<TipoFotoDoNegocio, string> = {
+  fachada: "Fachada",
+  ambiente: "Ambiente",
+  produto: "Produto",
+};
 
 interface Props {
   businessId: string;
@@ -124,11 +130,12 @@ function BlocoDasFotos({ businessId, fotos }: { businessId: string; fotos: Image
   return (
     <div className="id-bloco">
       <div className="id-cabeca">
-        <b>Fachada e ambiente</b>
+        <b>Fotos do negócio</b>
         <span className="hint">
           JPG ou PNG, a partir de 1080 pixels · {fotos.length} de {MAXIMO_DE_FOTOS}
         </span>
       </div>
+      <p className="hint">Envie a frente real do seu negócio como referência para futuras peças. Indique abaixo quando a foto for da fachada; não inventamos uma.</p>
 
       {fotos.length > 0 ? (
         <>
@@ -137,6 +144,7 @@ function BlocoDasFotos({ businessId, fotos }: { businessId: string; fotos: Image
               <li key={f.id}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={f.url ?? ""} alt={f.nomeDoArquivo ?? "Foto do seu negócio"} />
+                <span className="hint">{f.tipoFoto ? ROTULO_DA_FOTO[f.tipoFoto] : "Tipo não informado"}</span>
                 <form action={remover}>
                   <input type="hidden" name="businessId" value={businessId} />
                   <input type="hidden" name="id" value={f.id} />
@@ -161,6 +169,15 @@ function BlocoDasFotos({ businessId, fotos }: { businessId: string; fotos: Image
           <form action={enviar} className="id-form">
             <input type="hidden" name="businessId" value={businessId} />
             <input type="hidden" name="uso" value="identidade" />
+            <label className="id-tipo">
+              O que a foto mostra?
+              <select name="tipoFoto" defaultValue="" required>
+                <option value="" disabled>Escolha uma opção</option>
+                <option value="fachada">Fachada</option>
+                <option value="ambiente">Ambiente interno</option>
+                <option value="produto">Produto</option>
+              </select>
+            </label>
             <input
               type="file"
               name="arquivo"

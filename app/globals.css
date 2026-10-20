@@ -3066,6 +3066,13 @@ code {
 }
 
 .id-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.id-tipo { display: grid; gap: 5px; font-size: var(--fs-corpo); color: var(--ink-soft); }
+.id-tipo select {
+  font: inherit; color: var(--ink); background: var(--surface);
+  border: 1.5px solid var(--line); border-radius: var(--raio-controle);
+  padding: 8px 10px; min-height: 42px;
+}
+.id-tipo select:focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 2px; }
 
 /* O botão nativo do input de arquivo destoa de tudo em volta: ele é
    desenhado pelo sistema operacional, não pela página, e muda de forma
