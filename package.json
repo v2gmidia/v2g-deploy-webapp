@@ -46,6 +46,7 @@
     "conferir:preco-contratacao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-preco-contratacao.mjs",
     "conferir:checkout": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-checkout-self-service.mjs",
     "conferir:checkout-api": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-checkout-api.mjs",
+    "conferir:pagamento-publico": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-estado-pagamento-publico.mjs",
     "conferir:cartao-mensal": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-fluxo-cartao-mensal.mjs",
     "conferir:preparo-assinatura": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-preparo-assinatura.mjs",
     "conferir:competencias-fiscais": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-competencias-fiscais.mjs",

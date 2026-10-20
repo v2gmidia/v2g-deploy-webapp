@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Archivo } from "next/font/google";
 import { cookies } from "next/headers";
 import { NavegacaoCarregando } from "@/components/ui/NavegacaoCarregando";
+import { COOKIE_TEMA, temaDoCookie } from "@/lib/tema";
 import "./globals.css";
 import "./produto-editorial.css";
 import "./inicio-editorial.css";
@@ -36,37 +37,6 @@ export const metadata: Metadata = {
   // buscador). Herdado por toda rota, porque todas passam por este layout.
   robots: { index: false, follow: false },
 };
-
-export const COOKIE_TEMA = "v2g_tema";
-export type Tema = "claro" | "escuro" | "sistema";
-
-/**
- * O valor cru do cookie, virado tema — e a normalização é o conserto do
- * item #8 do QA.
- *
- * ============================================================
- * `?? "sistema"` NÃO BASTAVA, E O MOTIVO É UMA LINHA DE JAVASCRIPT.
- *
- * `cookies().delete()` não some com o cookie na resposta: ele grava um
- * cookie VENCIDO, de valor vazio. Então, na mesma requisição em que o
- * cliente escolhe "Do aparelho", `get(COOKIE_TEMA)?.value` devolve `""`
- * — string vazia, não `undefined`.
- *
- * E `"" ?? "sistema"` é `""`, porque `??` só cai para o padrão em `null`
- * e `undefined`. O `SeletorDeTema` comparava `atual === o.valor` contra
- * uma string vazia, **nenhuma das três opções casava**, e as três saíam
- * com `aria-pressed="false"` até a pessoa recarregar a página. Medido no
- * QA de 11/09/2026: "o dono não vê qual tema está valendo".
- *
- * A função existe para os DOIS leitores usarem a mesma regra. O
- * `RootLayout` acertava por acidente — ele compara com os literais e
- * ignora o resto —, e "acerta por acidente" é o que deixa o próximo
- * leitor errar de novo.
- * ============================================================
- */
-export function temaDoCookie(bruto: string | undefined): Tema {
-  return bruto === "claro" || bruto === "escuro" ? bruto : "sistema";
-}
 
 /**
  * O tema é decidido NO SERVIDOR, a partir de um cookie.

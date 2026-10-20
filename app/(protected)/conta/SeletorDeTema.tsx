@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { COOKIE_TEMA, temaDoCookie } from "@/app/layout";
+import { COOKIE_TEMA, temaDoCookie } from "@/lib/tema";
 import { definirTemaAction } from "./tema-actions";
 
 /**

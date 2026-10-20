@@ -6,6 +6,7 @@ import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-c
 import { asaasSandbox, idAsaas } from "@/lib/contratacao/asaas-sandbox";
 import { urlCheckoutHospedadoSandbox } from "@/lib/contratacao/url-checkout";
 import { MAX_TENTATIVAS_CARTAO } from "@/lib/contratacao/retentativa-cartao";
+import { consultarEstadoPagamento } from "@/lib/contratacao/consultar-estado-pagamento";
 import { PagamentoFormulario } from "./PagamentoFormulario";
 import { EstadoPagamento } from "./EstadoPagamento";
 import { CopiarPix } from "./CopiarPix";
@@ -29,8 +30,7 @@ export default async function PagamentoPage({ searchParams }: Params) {
     const link = urlCheckoutHospedadoSandbox(pedido.provider_checkout_url);
     if (link) redirect(link);
   }
-  const estado = pedido.status === "payment_approved" || pedido.status === "cancelled"
-    ? pedido.status : "awaiting_payment";
+  const estado = await consultarEstadoPagamento(admin, pedido);
   const pixId = pedido.payment_method === "asaas_pix"
     ? idAsaas(pedido.provider_charge_id, "pay") : null;
   let pix: { imagem: string; codigo: string } | null = null;
@@ -60,7 +60,6 @@ export default async function PagamentoPage({ searchParams }: Params) {
         <section aria-label="Forma de pagamento" className="contratar-pagamento-principal">
           {(tentativaCriada || estado !== "awaiting_payment")
             && <EstadoPagamento referencia={referencia} inicial={estado} />}
-          {estado === "payment_approved" && <p><Link href="/entrar?modo=cadastro">Criar meu acesso</Link></p>}
           {estado === "awaiting_payment" && pix && <div className="contratar-pix">
             <h2>Seu Pix está pronto</h2>
             <p>Leia o QR Code pelo aplicativo do banco ou copie o código abaixo. No Sandbox, use a simulação de pagamento do Asaas.</p>

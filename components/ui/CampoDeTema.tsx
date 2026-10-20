@@ -1,7 +1,7 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import type { Tema } from "@/app/layout";
+import type { Tema } from "@/lib/tema";
 import { definirTemaAction } from "@/app/(protected)/conta/tema-actions";
 
 function Escolha({ atual }: { atual: Tema }) {

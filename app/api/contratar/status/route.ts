@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
+import { consultarEstadoPagamento } from "@/lib/contratacao/consultar-estado-pagamento";
 
 export async function GET(req: NextRequest) {
   if (!checkoutSandboxSeguroNesteServidor() || process.env.V2G_CHECKOUT_API_ENABLED !== "true")
@@ -10,11 +11,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ erro: "referencia_invalida" }, { status: 400 });
   const admin = createAdminClient();
   const { data: pedido, error } = await admin.from("commercial_orders")
-    .select("status, origin").eq("external_ref", referencia).maybeSingle();
+    .select("id, status, origin, provider_charge_id").eq("external_ref", referencia).maybeSingle();
   if (error) return NextResponse.json({ erro: "consulta_falhou" }, { status: 503 });
   if (!pedido || pedido.origin !== "self_service")
     return NextResponse.json({ erro: "nao_encontrado" }, { status: 404 });
-  return NextResponse.json({ status: pedido.status }, {
+  const status = await consultarEstadoPagamento(admin, pedido);
+  // Nunca devolve IDs financeiros, contato ou payload bruto ao portador da referência.
+  return NextResponse.json({ status }, {
     headers: { "Cache-Control": "no-store, private" },
   });
 }

@@ -1,5 +1,10 @@
 # Etapa 01 — vínculo LP → pedido e controles de segurança — 18/10/2026
 
+> ATUALIZADO em 19/10: vínculo e segurança ativados e testados no QA, com cobrança,
+> cancelamento e estorno fictícios autorizados. Ver [recibo do QA](./etapa-01-qa-vinculo-seguranca-financeiro-19-10.md).
+> O agendamento de retorno mencionado abaixo foi removido posteriormente a pedido
+> de Victor; não representa temporizador ativo.
+
 ## Estado confirmado
 
 - Implementação somente local. Nenhuma migration foi aplicada, nenhuma flag foi ligada e nenhum deploy foi feito.

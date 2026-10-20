@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
-import { COOKIE_TEMA, type Tema } from "@/app/layout";
+import { COOKIE_TEMA, type Tema } from "@/lib/tema";
 
 const VALIDOS: Tema[] = ["claro", "escuro", "sistema"];
 
