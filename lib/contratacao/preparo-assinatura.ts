@@ -25,7 +25,7 @@ export function prepararAssinatura(dados: DadosParaAssinatura): ResultadoPreparo
   if (dados.paymentStatus !== "payment_approved") pendencias.push("pagamento");
   if (!dados.buyerEmailVerified) pendencias.push("email_comprador");
   if (!dados.templateVersion.trim()
-    || dados.templateVersion.startsWith("minuta-interna-")
+    || /^(?:minuta-interna|teste-interno|contrato-v2g-teste)(?:-|$)/i.test(dados.templateVersion.trim())
     || dados.templateVersion !== dados.approvedTemplateVersion) pendencias.push("minuta_aprovada");
   if (!/^[0-9a-f]{64}$/i.test(dados.pdfSha256)
     || !dados.approvedPdfSha256

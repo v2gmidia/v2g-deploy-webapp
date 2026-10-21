@@ -4,15 +4,23 @@ import { useActionState } from "react";
 import { iniciarPagamento, type PagamentoState } from "./actions";
 import { Turnstile } from "@/components/seguranca/Turnstile";
 
-export function PagamentoFormulario({ referencia, metodo, turnstileSiteKey }: {
-  referencia: string; metodo: "asaas_pix" | "asaas_card"; turnstileSiteKey?: string;
+export function PagamentoFormulario({ referencia, metodo, turnstileSiteKey, usa3ds = false }: {
+  referencia: string; metodo: "asaas_pix" | "asaas_card"; turnstileSiteKey?: string; usa3ds?: boolean;
 }) {
-  const [estado, acao, pendente] = useActionState<PagamentoState, FormData>(iniciarPagamento, {});
+  const [estado, acao, pendente] = useActionState<PagamentoState, FormData>(async (anterior, form) => {
+    if (usa3ds && metodo === "asaas_card") form.set("deviceInfo", JSON.stringify({
+      colorDepth: window.screen.colorDepth, screenHeight: window.screen.height,
+      screenWidth: window.screen.width, timeZoneOffset: new Date().getTimezoneOffset() / 60,
+      language: navigator.language,
+    }));
+    return iniciarPagamento(anterior, form);
+  }, {});
   return <div className="contratar-pagamento-form">
     <h2>{metodo === "asaas_pix" ? "Pagar com Pix" : "Pagar com cartão"}</h2>
     <p>{metodo === "asaas_pix"
       ? "Gere um Pix para este pedido. Você verá o QR Code e o código para copiar nesta página."
       : "Informe somente um cartão de teste em uma conexão HTTPS de QA. Os dados são enviados ao Asaas para esta cobrança e não são persistidos pela V2G."}</p>
+    {usa3ds && <p>O banco pode solicitar a autenticação do cartão. Voltar a esta página não confirma o pagamento; aguardamos a confirmação do Asaas.</p>}
     {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
     <form action={acao} onSubmit={metodo === "asaas_card" ? e => {
       const formulario = e.currentTarget;

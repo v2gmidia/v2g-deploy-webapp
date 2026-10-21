@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { lerMarca } from "@/lib/onboarding/marca";
+import { caminhosDaMarcaNoNegocio } from "@/lib/gestor/caminhos-marca";
 import styles from "./MarcaDoNegocio.module.css";
 
 export const dynamic = "force-dynamic";
@@ -34,10 +35,14 @@ export default async function MarcaDoNegocioPage({ params }: {
   if (logo.error || referencias.error || !logo.data || !referencias.data)
     throw new Error("Não foi possível consultar os materiais de marca.");
 
-  const caminhos = [...logo.data, ...referencias.data]
-    .map((item) => item.storage_path).filter((path): path is string => Boolean(path));
-  const { data: urls, error: erroUrls } = caminhos.length
-    ? await admin.storage.from("v2g-midia").createSignedUrls(caminhos, 3600)
+  const escopoDosArquivos = caminhosDaMarcaNoNegocio(id, [...logo.data, ...referencias.data]);
+  if (!escopoDosArquivos.ok) return <main className={styles.pagina}>
+    <a href="/gestor">← Voltar à carteira</a>
+    <h1>Materiais de marca indisponíveis</h1>
+    <p className="form-error" role="alert">Não foi possível confirmar a qual negócio pertencem todos os arquivos. Nenhum link privado foi criado.</p>
+  </main>;
+  const { data: urls, error: erroUrls } = escopoDosArquivos.caminhos.length
+    ? await admin.storage.from("v2g-midia").createSignedUrls(escopoDosArquivos.caminhos, 3600)
     : { data: [], error: null };
   const porCaminho = new Map((urls ?? []).map((item) => [item.path ?? "", item.signedUrl ?? null]));
   const logoAtual = logo.data[0] ?? null;

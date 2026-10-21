@@ -3,8 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BUCKET_REVISAO } from "@/lib/criativos/revisao";
+import { BUCKET_REVISAO, caminhoConfereComRevisao } from "@/lib/criativos/revisao";
 import { sincronizarTarefaDeRevisao } from "@/lib/gestor/sincronizar-revisao";
+import { hojeEmSaoPaulo, impedimentoParaAprovarEnvio } from "@/lib/criativos/intencao-envio";
 
 export type EstadoDaRevisao = { ok?: string; erro?: string };
 
@@ -26,10 +27,16 @@ export async function revisarPecaAction(_anterior: EstadoDaRevisao,
   try {
     const admin = createAdminClient();
     const pendente = await admin.from("creative_review_requests")
-      .select("id, business_id, file_path").eq("id", id).eq("status", "awaiting_review")
+      .select("id, business_id, file_path, upload_intent").eq("id", id).eq("status", "awaiting_review")
       .maybeSingle();
     if (pendente.error) return { erro: "Não foi possível conferir a peça. Tente novamente." };
     if (!pendente.data) return { erro: "Esta peça já foi decidida ou não está mais na fila. Atualize a página." };
+    if (!caminhoConfereComRevisao(pendente.data))
+      return { erro: "Não foi possível confirmar o arquivo desta peça. Atualize a fila." };
+    if (decisao === "approved_for_manual_publish") {
+      const impedimento = impedimentoParaAprovarEnvio(pendente.data.upload_intent, hojeEmSaoPaulo());
+      if (impedimento) return { erro: impedimento };
+    }
     if (process.env.V2G_MANAGER_WORK_ENABLED === "true") {
       const conta = await admin.from("manager_accounts").select("operator_profile_id")
         .eq("business_id", pendente.data.business_id).maybeSingle();
@@ -45,7 +52,9 @@ export async function revisarPecaAction(_anterior: EstadoDaRevisao,
     const registro = await admin.from("creative_review_requests")
       .update({ status: decisao, review_note: nota.trim() || null,
         reviewed_by: user.id, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
-      .eq("id", id).eq("status", "awaiting_review").select("id").maybeSingle();
+      .eq("id", id).eq("business_id", pendente.data.business_id)
+      .eq("file_path", pendente.data.file_path)
+      .eq("status", "awaiting_review").select("id").maybeSingle();
     if (registro.error) return { erro: "Não foi possível registrar a decisão. Tente novamente." };
     if (!registro.data) return { erro: "Esta peça já foi decidida ou não está mais na fila. Atualize a página." };
     let tarefaPendente = false;

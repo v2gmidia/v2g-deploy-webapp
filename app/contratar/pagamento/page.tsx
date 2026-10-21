@@ -7,6 +7,8 @@ import { asaasSandbox, idAsaas } from "@/lib/contratacao/asaas-sandbox";
 import { urlCheckoutHospedadoSandbox } from "@/lib/contratacao/url-checkout";
 import { MAX_TENTATIVAS_CARTAO } from "@/lib/contratacao/retentativa-cartao";
 import { consultarEstadoPagamento } from "@/lib/contratacao/consultar-estado-pagamento";
+import { urlDesafio3ds } from "@/lib/contratacao/cartao-3ds";
+import { origemAsaasNoServidor } from "@/lib/contratacao/origem-asaas-servidor";
 import { PagamentoFormulario } from "./PagamentoFormulario";
 import { EstadoPagamento } from "./EstadoPagamento";
 import { CopiarPix } from "./CopiarPix";
@@ -22,10 +24,11 @@ export default async function PagamentoPage({ searchParams }: Params) {
   const referencia = (await searchParams).ref ?? "";
   if (!/^[0-9a-f-]{36}$/i.test(referencia)) notFound();
   const admin = createAdminClient();
+  const assistidoAtivo = process.env.V2G_ASSISTED_ASAAS_ENABLED === "true";
   const { data: pedido, error } = await admin.from("commercial_orders")
     .select("id, status, origin, payment_method, billing_period, unit_count, total_cents, provider_checkout_id, provider_checkout_url, checkout_creation_started_at, provider_charge_id, provider_subscription_id, payment_creation_started_at, payment_attempt_count")
     .eq("external_ref", referencia).maybeSingle();
-  if (error || !pedido || pedido.origin !== "self_service") notFound();
+  if (error || !pedido || !await origemAsaasNoServidor(admin, pedido, assistidoAtivo)) notFound();
   if (pedido.provider_checkout_id && pedido.provider_checkout_url && pedido.status === "awaiting_payment") {
     const link = urlCheckoutHospedadoSandbox(pedido.provider_checkout_url);
     if (link) redirect(link);
@@ -49,6 +52,18 @@ export default async function PagamentoPage({ searchParams }: Params) {
     ? pedido.payment_method : null;
   const limiteCartao = metodo === "asaas_card" && pedido.payment_attempt_count >= MAX_TENTATIVAS_CARTAO;
   const segurancaAtiva = process.env.V2G_CHECKOUT_SECURITY_ENABLED === "true";
+  let desafio: string | null = null;
+  if (process.env.V2G_CHECKOUT_3DS_SCHEMA_ENABLED === "true" && estado === "awaiting_payment"
+      && pedido.billing_period === "monthly" && pedido.provider_charge_id && pedido.payment_method === "asaas_card") {
+    const fluxo = await admin.from("commercial_orders").select("provider_card_flow").eq("id", pedido.id).single();
+    if (!fluxo.error && fluxo.data.provider_card_flow === "initial_3ds") {
+      const resposta = await asaasSandbox(`/payments/${pedido.provider_charge_id}`);
+      const body = resposta.ok && resposta.body && typeof resposta.body === "object"
+        ? resposta.body as Record<string, unknown> : null;
+      if (body && body.id === pedido.provider_charge_id && body.status === "PENDING")
+        desafio = urlDesafio3ds(body.threeDSecureChallengeUrl);
+    }
+  }
   return <main className="contratar-shell">
     <header className="contratar-topo"><Marca href="/contratar" editorial /><Link href="/contratar">Voltar à contratação</Link></header>
     <div className="contratar-pagamento">
@@ -60,6 +75,7 @@ export default async function PagamentoPage({ searchParams }: Params) {
         <section aria-label="Forma de pagamento" className="contratar-pagamento-principal">
           {(tentativaCriada || estado !== "awaiting_payment")
             && <EstadoPagamento referencia={referencia} inicial={estado} />}
+          {desafio && <p><a href={desafio} rel="noreferrer">Continuar autenticação no banco</a></p>}
           {estado === "awaiting_payment" && pix && <div className="contratar-pix">
             <h2>Seu Pix está pronto</h2>
             <p>Leia o QR Code pelo aplicativo do banco ou copie o código abaixo. No Sandbox, use a simulação de pagamento do Asaas.</p>
@@ -77,6 +93,8 @@ export default async function PagamentoPage({ searchParams }: Params) {
           </p>}
           {estado === "awaiting_payment" && !tentativaCriada && metodo && !limiteCartao
             && <PagamentoFormulario referencia={referencia} metodo={metodo}
+              usa3ds={pedido.billing_period === "monthly" && process.env.V2G_CHECKOUT_3DS_SCHEMA_ENABLED === "true"
+                && process.env.V2G_CHECKOUT_3DS_ENABLED === "true"}
               turnstileSiteKey={segurancaAtiva ? (process.env.TURNSTILE_SITE_KEY ?? "") : undefined} />}
         </section>
         <aside className="contratar-pagamento-resumo">

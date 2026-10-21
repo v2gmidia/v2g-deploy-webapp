@@ -30,7 +30,9 @@ export default async function ComprasDoGestorPage({ searchParams }: {
     const colunasDoLead = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true"
       ? ", source_system, source_lead_id, source_lead_origin, source_lead_utm_source, source_lead_utm_medium, source_lead_utm_campaign, source_lead_utm_content, source_lead_consent_at"
       : "";
-    const colunas = `id, buyer_email, legal_name, cnpj, origin, payment_method, billing_period, unit_count, total_cents, status, business_id, buyer_profile_id, created_at${colunasDaApi}${colunasDoLead}`;
+    const colunas3ds = colunasDaApi && process.env.V2G_CHECKOUT_3DS_SCHEMA_ENABLED === "true"
+      ? ", provider_card_flow" : "";
+    const colunas = `id, buyer_email, legal_name, cnpj, origin, payment_method, billing_period, unit_count, total_cents, status, business_id, buyer_profile_id, created_at${colunasDaApi}${colunasDoLead}${colunas3ds}`;
     let consulta = admin.from("commercial_orders").select(colunas)
       .order("created_at", { ascending: false }).limit(200);
     if (negocioId) consulta = consulta.eq("business_id", negocioId);
@@ -49,18 +51,27 @@ export default async function ComprasDoGestorPage({ searchParams }: {
       if (negocioId) tentativa = tentativa.eq("business_id", negocioId);
       return tentativa;
     })() : null;
-    const [resposta, comprovantes, semPerfil, ambiguos] = await Promise.all([
+    const consultaRecorrencia = colunas3ds ? (() => {
+      let pendente = admin.from("commercial_orders").select(colunas)
+        .eq("provider_card_flow", "initial_3ds").eq("status", "payment_approved")
+        .is("provider_subscription_id", null).order("created_at", { ascending: false }).limit(200);
+      if (negocioId) pendente = pendente.eq("business_id", negocioId);
+      return pendente;
+    })() : null;
+    const [resposta, comprovantes, semPerfil, ambiguos, recorrencias] = await Promise.all([
       consulta, consultaComprovantes, consultaSemPerfil,
       consultaAmbigua ?? Promise.resolve({ data: [], error: null }),
+      consultaRecorrencia ?? Promise.resolve({ data: [], error: null }),
     ]);
     if (resposta.error || !resposta.data) throw resposta.error ?? new Error("pedidos indisponíveis");
-    const atencaoIndisponivel = !!(comprovantes.error || semPerfil.error || ambiguos.error ||
-      !comprovantes.data || !semPerfil.data || !ambiguos.data);
+    const atencaoIndisponivel = !!(comprovantes.error || semPerfil.error || ambiguos.error || recorrencias.error ||
+      !comprovantes.data || !semPerfil.data || !ambiguos.data || !recorrencias.data);
     const selecao = selecionarPedidosDaFila([
       resposta.data as unknown as PedidoDaFila[],
       comprovantes.data as unknown as PedidoDaFila[] ?? [],
       semPerfil.data as unknown as PedidoDaFila[] ?? [],
       ambiguos.data as unknown as PedidoDaFila[] ?? [],
+      recorrencias.data as unknown as PedidoDaFila[] ?? [],
     ]);
     // Mantém o recorte de 200 para as consultas de documentos, mas seleciona
     // pela prioridade operacional antes de cortar os pedidos recentes.
@@ -103,7 +114,7 @@ export default async function ComprasDoGestorPage({ searchParams }: {
     const notasParciais = (notas.data?.length ?? 0) === 1000;
     const consultaParcial = selecao.parcial || resposta.data.length === 200 || (comprovantes.data?.length ?? 0) === 200 ||
       (semPerfil.data?.length ?? 0) === 200 || (ambiguos.data?.length ?? 0) === 200 ||
-      contratosParciais || notasParciais || (movimentos.data?.length ?? 0) === 1000;
+      contratosParciais || notasParciais || (movimentos.data?.length ?? 0) === 1000 || (recorrencias.data?.length ?? 0) === 200;
     const busca = typeof parametros.q === "string" ? parametros.q.slice(0, 120) : "";
     const filtro: FiltroDeCompras = ["atencao", "pagamento", "aprovadas", "canceladas"].includes(parametros.filtro ?? "")
       ? parametros.filtro as FiltroDeCompras : "todas";
@@ -149,6 +160,8 @@ export default async function ComprasDoGestorPage({ searchParams }: {
         <p><strong>{situacaoDaCompra(pedido)}</strong> · {pedido.origin === "self_service" ? "Compra direta" : "Venda assistida"} · {pedido.payment_method === "asaas_card" ? "Cartão" : "Pix"}</p>
         <p>{pedido.unit_count} {pedido.unit_count === 1 ? "conta" : "contas"} · {periodoDaCompra(pedido.billing_period)} · {dinheiro.format(pedido.total_cents / 100)} · {data.format(new Date(pedido.created_at))}</p>
         <p>{pedido.business_id ? "Negócio vinculado" : "Negócio ainda não vinculado"} · {pedido.buyer_profile_id ? "Perfil vinculado ao pedido" : "Perfil ainda não vinculado"}</p>
+        {pedido.provider_card_flow === "initial_3ds" && pedido.status === "payment_approved"
+          && !pedido.provider_subscription_id && <p className="form-warning">Primeira cobrança confirmada; assinatura mensal ainda não vinculada. Confira no Asaas antes de repetir qualquer criação. O primeiro pagamento não comprova recorrência configurada.</p>}
         {!documentosIndisponiveis && <p>Contrato: {situacaoDoContrato(assinaturas.get(pedido.id), contratosParciais)} · NFS-e: {situacaoDaNota(fiscais.get(pedido.id), notasParciais)}</p>}
         {movimentoPorPedido.has(pedido.id) && <p className="form-warning">Ocorrência financeira: {movimentoPorPedido.get(pedido.id)?.event_type} · vencimento {movimentoPorPedido.get(pedido.id)?.due_date} · cobrança {movimentoPorPedido.get(pedido.id)?.provider_charge_id}. Confira no Asaas; o registro não cancela automaticamente o acesso.</p>}
         {pedido.business_id && <p><a href={`/revisar-perfil?negocio=${encodeURIComponent(pedido.business_id)}#ficha-${encodeURIComponent(pedido.business_id)}`}>Abrir ficha do negócio</a></p>}

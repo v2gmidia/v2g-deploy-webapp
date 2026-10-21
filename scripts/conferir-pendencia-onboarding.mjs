@@ -52,9 +52,9 @@ test("o Início dá prioridade visual à pendência do onboarding", () => {
   const fonte = readFileSync("app/(protected)/inicio/TelaDoInicio.tsx", "utf8");
   const componente = fonte.slice(fonte.indexOf("function ProximoPasso"), fonte.indexOf("export function TelaDoInicio"));
   assert.match(componente, /if \(pendencia\)/);
-  assert.match(componente, /if \(proximo\)/);
+  assert.match(componente, /if \(proximo\?\.acao\)/);
   assert.ok(
-    componente.indexOf("if (pendencia)") < componente.indexOf("if (proximo)"),
+    componente.indexOf("if (pendencia)") < componente.indexOf("if (proximo?.acao)"),
     "a pendência do onboarding precisa vencer a próxima etapa da campanha",
   );
   assert.match(fonte, /<ProximoPasso pendencia=\{pendenciaOnboarding\} proximo=\{proximo\}/);

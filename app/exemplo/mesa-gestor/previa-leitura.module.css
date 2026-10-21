@@ -1,0 +1,11 @@
+.pagina { display: grid; gap: 32px; min-width: 0; }
+.pagina h1 { margin: 0 0 20px; font-size: var(--fs-tela); font-weight: 500; }
+.pagina a { color: var(--cobalt-ink); text-underline-offset: 4px; }
+.filtros { display: flex; flex-wrap: wrap; align-items: end; gap: 16px; }
+.filtros label { display: grid; gap: 8px; color: var(--ink); font-size: var(--fs-corpo); }
+.filtros select, .filtros button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--control-line); border-radius: var(--raio-controle); background: var(--surface-2); color: var(--ink); font: inherit; }
+.filtros select { max-width: 100%; }
+.filtros button { background: var(--cobalt); color: var(--white); border-color: var(--cobalt); cursor: pointer; }
+.filtros button:hover { background: var(--cobalt-dark); }
+.filtros :is(select, button):focus-visible, .pagina a:focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 4px; }
+@media (max-width: 500px) { .filtros { align-items: stretch; flex-direction: column; } }

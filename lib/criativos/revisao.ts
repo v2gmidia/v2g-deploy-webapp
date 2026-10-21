@@ -16,6 +16,15 @@ export function caminhoDaRevisao(businessId: string, submissaoId: string): strin
   return `${businessId}/${submissaoId}`;
 }
 
+/** Exige o vínculo exato antes de assinar ou baixar arquivo com service_role. */
+export function caminhoConfereComRevisao(pedido: {
+  id: string; business_id: string; file_path: string;
+}): boolean {
+  const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+  return uuid.test(pedido.id) && uuid.test(pedido.business_id)
+    && pedido.file_path === caminhoDaRevisao(pedido.business_id, pedido.id);
+}
+
 export function podeRepetirEnvio(status: StatusRevisao, updatedAt: string, agora: number): boolean {
   return status === "upload_failed" ||
     (status === "uploading" && agora - Date.parse(updatedAt) >= 2 * 60_000);

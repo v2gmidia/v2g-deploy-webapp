@@ -92,7 +92,7 @@ function MenuNegocios({ negocios, negocioAtivoId, rotuloDaConta, inicial, acaoSa
       </ListaNegociosMenu>
       <div className="business-actions">
         <a className="link-btn" href={adicionarHref}>Adicionar negócio</a>
-        {ehOperador && <a className="link-btn" href="/gestor">Carteira do gestor</a>}
+        {ehOperador && <a className="link-btn" href="/supergestor">Mesa do gestor</a>}
         {acaoSair && <form action={acaoSair}><button type="submit" className="link-btn">Sair</button></form>}
       </div>
     </div>
@@ -256,7 +256,7 @@ export function Casco({
               O desenho não é invenção: é o mesmo do cabeçalho de
               `(fluxo)` — marca à esquerda, gente de verdade à direita. */}
           <div className="topbar-actions">
-            {ehOperador && <a className="link-btn" href="/gestor">Gestor</a>}
+            {ehOperador && <a className="link-btn" href="/supergestor">Mesa do gestor</a>}
             <div className="topbar-account">
               <MenuNegocios negocios={negocios} negocioAtivoId={negocioAtivoId}
                 rotuloDaConta={rotuloDaConta} inicial={inicial} acaoSair={acaoSair}

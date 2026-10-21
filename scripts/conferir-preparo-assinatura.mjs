@@ -25,6 +25,15 @@ test("minuta interna nunca é liberada mesmo se configurada como aprovada", () =
   assert.ok(resultado.pendencias.includes("minuta_aprovada"));
 });
 
+test("identificador real da V2 de teste e suas variantes nunca liberam envio", () => {
+  for (const templateVersion of ["teste-interno-2026-10-13-v2", " TESTE-INTERNO-2026-10-13-v2 ",
+    "contrato-v2g-teste-2026-10-13-v2", "minuta-interna"]) {
+    const resultado = prepararAssinatura({ ...base, templateVersion, approvedTemplateVersion: templateVersion });
+    assert.equal(resultado.pronto, false);
+    assert.ok(resultado.pendencias.includes("minuta_aprovada"));
+  }
+});
+
 test("pedido pendente, e-mail não verificado e provedor ausente bloqueiam", () => {
   const resultado = prepararAssinatura({ ...base, paymentStatus: "awaiting_payment",
     buyerEmailVerified: false, providerConfigured: false });

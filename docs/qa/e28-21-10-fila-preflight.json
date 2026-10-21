@@ -1,0 +1,225 @@
+{
+  "rls": true,
+  "bucket": {
+    "id": "creative-review",
+    "public": false,
+    "file_size_limit": 9437184,
+    "allowed_mime_types": [
+      "image/jpeg",
+      "image/png"
+    ]
+  },
+  "grants": [
+    {
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "postgres",
+      "privilege": "DELETE"
+    },
+    {
+      "grantee": "postgres",
+      "privilege": "INSERT"
+    },
+    {
+      "grantee": "postgres",
+      "privilege": "REFERENCES"
+    },
+    {
+      "grantee": "postgres",
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "postgres",
+      "privilege": "TRIGGER"
+    },
+    {
+      "grantee": "postgres",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "grantee": "postgres",
+      "privilege": "UPDATE"
+    },
+    {
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    }
+  ],
+  "columns": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "business_id",
+      "type": "uuid",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "submitted_by",
+      "type": "uuid",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "file_path",
+      "type": "text",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "original_name",
+      "type": "text",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "mime_type",
+      "type": "text",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "size_bytes",
+      "type": "integer",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "sha256",
+      "type": "text",
+      "default": null,
+      "not_null": true
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "default": "'uploading'::text",
+      "not_null": true
+    },
+    {
+      "name": "review_note",
+      "type": "text",
+      "default": null,
+      "not_null": false
+    },
+    {
+      "name": "reviewed_by",
+      "type": "uuid",
+      "default": null,
+      "not_null": false
+    },
+    {
+      "name": "reviewed_at",
+      "type": "timestamp with time zone",
+      "default": null,
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "not_null": true
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "default": "now()",
+      "not_null": true
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM businesses b\n  WHERE ((b.id = creative_review_requests.business_id) AND (b.profile_id = ( SELECT auth.uid() AS uid)))))",
+      "roles": [
+        "authenticated"
+      ],
+      "tablename": "creative_review_requests",
+      "permissive": "PERMISSIVE",
+      "policyname": "creative_review_read_own",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ],
+  "triggers": [],
+  "row_count": 0,
+  "captured_at": "2026-10-21T13:36:03.483965+00:00",
+  "constraints": [
+    {
+      "sql": "CHECK ((((status = ANY (ARRAY['approved_for_manual_publish'::text, 'changes_requested'::text, 'rejected'::text])) AND (reviewed_by IS NOT NULL) AND (reviewed_at IS NOT NULL)) OR ((status = ANY (ARRAY['uploading'::text, 'upload_failed'::text, 'awaiting_review'::text])) AND (reviewed_by IS NULL) AND (reviewed_at IS NULL))))",
+      "name": "creative_review_decision_matches"
+    },
+    {
+      "sql": "CHECK ((file_path = (((business_id)::text || '/'::text) || (id)::text)))",
+      "name": "creative_review_path_matches"
+    },
+    {
+      "sql": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+      "name": "creative_review_requests_business_id_fkey"
+    },
+    {
+      "sql": "UNIQUE (file_path)",
+      "name": "creative_review_requests_file_path_key"
+    },
+    {
+      "sql": "CHECK ((mime_type = ANY (ARRAY['image/jpeg'::text, 'image/png'::text])))",
+      "name": "creative_review_requests_mime_type_check"
+    },
+    {
+      "sql": "PRIMARY KEY (id)",
+      "name": "creative_review_requests_pkey"
+    },
+    {
+      "sql": "FOREIGN KEY (reviewed_by) REFERENCES profiles(id) ON DELETE SET NULL",
+      "name": "creative_review_requests_reviewed_by_fkey"
+    },
+    {
+      "sql": "CHECK ((sha256 ~ '^[0-9a-f]{64}$'::text))",
+      "name": "creative_review_requests_sha256_check"
+    },
+    {
+      "sql": "CHECK (((size_bytes > 0) AND (size_bytes <= 9437184)))",
+      "name": "creative_review_requests_size_bytes_check"
+    },
+    {
+      "sql": "CHECK ((status = ANY (ARRAY['uploading'::text, 'upload_failed'::text, 'awaiting_review'::text, 'approved_for_manual_publish'::text, 'changes_requested'::text, 'rejected'::text])))",
+      "name": "creative_review_requests_status_check"
+    },
+    {
+      "sql": "FOREIGN KEY (submitted_by) REFERENCES profiles(id) ON DELETE RESTRICT",
+      "name": "creative_review_requests_submitted_by_fkey"
+    }
+  ],
+  "project_ref": "zskpijnqgkqwxksqmzmf",
+  "storage_count": 0
+}

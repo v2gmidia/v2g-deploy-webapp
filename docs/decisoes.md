@@ -14,6 +14,18 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-20 — Corte de entrega para o evento de 28/10
+
+**Decisão direta de Victor neste chat e autorização de coordenação.** Até 28/10, geração e armazenamento de imagens, biblioteca/revisão e resultados confiáveis são a prioridade. A venda inicial pode ser assistida pelo WhatsApp; checkout público, automação de assinatura/NFS-e e conciliação completa da agenda podem avançar depois. Contrato, nota, pagamento confirmado e acesso correto continuam necessários na operação, ainda que tratados manualmente. O melhor produto permanece a meta; muda a ordem de ataque.
+
+**Jornada mínima.** Preservar multiconta e onboarding encerrados no recorte aprovado; conferir a continuidade até a reunião e o cancelamento pelo Google/e-mail. Cliente aprova a versão exata da peça no aplicativo; equipe revisa; gestor publica manualmente; "no ar" exige evidência da plataforma. A mesa mínima precisa tornar pedidos e pendências encontráveis. Mesa completa, importação do Instagram, delegação ampla de agência, CRM WhatsApp, previsão e autonomia de campanhas ficam fora do caminho crítico. Avisos no Início é hipótese de organização, sem decisão de excluir a aba atual.
+
+**Prova de dados.** Conferir leitura da própria V2G e de conta externa autorizada, ligação de campanha publicada manualmente e visualização com usuário comum. Papéis em Meta Developers não substituem permissões de ativos/API. Métricas guardam conta, período, fonte e coleta; conversa, venda relatada e receita confirmada são distintas. Sem fonte/amostra não há verde nem pausa automática. A meta interna de revisão em menos de 24 horas será medida, sem criar SLA contratual por esta entrada.
+
+**Coordenação autorizada.** Atualizar FigJam e calendário original; enviar prompts aos chats 01/02, 03/04 e 05/06; criar 07/08 e iniciar blocos locais úteis, com escopo de arquivos e contratos entre WebApp/backend. A autonomia cobre implementação/testes locais e leituras autorizadas, sem commit, push, merge, deploy ou mudanças de produção. Chamadas pagas, mídia, emissão, mensagem a cliente e escrita externa exigem o respectivo piloto/conta/limite autorizado; nada será apresentado como pronto sem prova. Plano espelhado em `docs/execucao-evento-28-10.md` com IDs E28, metas diárias e critérios.
+
+**Motivo:** concentrar os dias restantes no produto demonstrável e entregável, preservando operação humana e os avanços já concluídos. Datas são metas de execução; dependências externas permanecem explícitas.
+
 ### 2026-10-19 — Piloto de referências de barbearia sem painel
 
 **Direção posterior do Victor no chat:** iniciar o trabalho de referências e classificação de criativos ligados a barbearia, tomar as decisões operacionais do piloto sem depender de nova escolha dele e não construir painel agora. Barbearia é o recorte inicial; cabeleireiro, manicure e fornecedores de produtos para barbeiros não entram automaticamente no mesmo lote. A distinção de subnicho só vira regra do catálogo depois de conferir o ID técnico e casos reais.

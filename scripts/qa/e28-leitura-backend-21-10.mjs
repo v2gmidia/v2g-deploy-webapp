@@ -1,0 +1,25 @@
+/** Conferencia somente leitura do deploy, sem criar fixtures em producao. */
+import assert from 'node:assert/strict';
+const base=process.env.V2G_BACKEND_URL?.replace(/\/$/,'');
+const token=process.env.V2G_BACKEND_TOKEN;
+assert.equal(base,'https://api.v2gmidia.com.br');
+assert.ok(token,'V2G_BACKEND_TOKEN precisa estar configurado; nunca imprime o valor.');
+const business='11111111-1111-4111-8111-111111111111';
+const profile='22222222-2222-4222-8222-222222222222';
+const url=new URL(base+'/negocios/'+business+'/consolidado');
+url.searchParams.set('profile_id',profile);
+url.searchParams.set('desde','2026-10-20');
+url.searchParams.set('ate','2026-10-21');
+const get=(target,headers={})=>fetch(target,{headers,signal:AbortSignal.timeout(30000)});
+const health=await get(base+'/saude');assert.equal(health.status,200);
+const body=await health.json();assert.equal(body.versao,'dbf2611f3b1e');
+console.log('PASS fingerprint de producao corresponde ao backend entregue');
+const schema=await (await get(base+'/openapi.json')).json();
+assert.ok(schema.paths['/negocios/{business_id}/campanhas-manuais/meta']);
+assert.ok(schema.components.schemas.ContratoDeLeituraDaCampanha);
+console.log('PASS rota manual e contrato publicados no OpenAPI');
+const denied=await get(url);assert.equal(denied.status,401);
+console.log('PASS consolidado exige autenticacao de servidor');
+const authenticated=await get(url,{'X-V2G-Token':token});assert.equal(authenticated.status,404);
+console.log('PASS leitura autenticada nega negocio ficticio inexistente (404)');
+console.log('LIMITACAO: isto nao comprova um consolidado 200 com dados nem integracao WebApp-backend em QA. Nenhuma escrita executada.');

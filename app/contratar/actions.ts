@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { validarCompra } from "@/lib/contratacao/qualificacao";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 import { urlCheckoutHospedadoSandbox } from "@/lib/contratacao/url-checkout";
-import { iniciarPagamento } from "./pagamento/actions";
+import { iniciarPagamentoInterno } from "@/lib/contratacao/iniciar-pagamento";
 import { iniciarCheckoutHospedado } from "./checkout-hospedado";
 import { hashDeSeguranca, ipConfiavelDaVercel, segurancaCheckoutAtiva,
   verificarTurnstile } from "@/lib/seguranca/checkout";
@@ -77,7 +77,7 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
   if (dados.metodo === "asaas_pix") {
     const pagamento = new FormData();
     pagamento.set("ref", dados.referencia);
-    return iniciarPagamento({}, pagamento, segurancaJaVerificada);
+    return iniciarPagamentoInterno({}, pagamento, segurancaJaVerificada);
   }
   redirect(`/contratar/pagamento?ref=${encodeURIComponent(dados.referencia)}`);
 }

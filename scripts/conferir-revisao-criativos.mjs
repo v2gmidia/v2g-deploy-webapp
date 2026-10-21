@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
-import { BUCKET_REVISAO, caminhoDaRevisao, podeRepetirEnvio,
+import { BUCKET_REVISAO, caminhoConfereComRevisao, caminhoDaRevisao, podeRepetirEnvio,
   podeAnalisarAposEnvio, rotuloDaRevisao, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem } from "../lib/criativos/revisao.ts";
 import { descricaoDaTarefaDeRevisao, ehTarefaDeRevisao, idDaTarefaDeRevisao,
   solicitacaoDaTarefaDeRevisao } from "../lib/gestor/revisao-pendente.ts";
@@ -38,6 +39,38 @@ test("mesma solicitacao usa o mesmo caminho privado", () => {
   assert.equal(BUCKET_REVISAO, "creative-review");
   assert.equal(caminhoDaRevisao("negocio", "solicitacao"), "negocio/solicitacao");
   assert.equal(TAMANHO_MAXIMO_REVISAO, 9 * 1024 * 1024);
+});
+
+test("arquivo privado precisa corresponder exatamente ao negócio e à solicitação", () => {
+  const business_id = "11111111-1111-4111-8111-111111111111";
+  const id = "22222222-2222-4222-8222-222222222222";
+  const correto = { id, business_id, file_path: `${business_id}/${id}` };
+  assert.equal(caminhoConfereComRevisao(correto), true);
+  for (const file_path of [`${business_id}/outro`, `${id}/${business_id}`,
+    `${business_id}/${id}/imagem.png`, `33333333-3333-4333-8333-333333333333/${id}`])
+    assert.equal(caminhoConfereComRevisao({ ...correto, file_path }), false);
+  assert.equal(caminhoConfereComRevisao({ ...correto, business_id: "invalido" }), false);
+});
+
+test("fila e action conferem o vínculo antes de assinar ou baixar", () => {
+  const pagina = readFileSync("app/(protected)/gestor/criativos/page.tsx", "utf8");
+  const action = readFileSync("app/(protected)/gestor/criativos/actions.ts", "utf8");
+  assert.ok(pagina.indexOf("if (!caminhoConfereComRevisao(pedido))") >= 0);
+  assert.ok(pagina.indexOf("if (!caminhoConfereComRevisao(pedido))")
+    < pagina.indexOf(".createSignedUrl(pedido.file_path"));
+  assert.ok(action.indexOf("if (!caminhoConfereComRevisao(pendente.data))") >= 0);
+  assert.ok(action.indexOf("if (!caminhoConfereComRevisao(pendente.data))")
+    < action.indexOf(".download(pendente.data.file_path"));
+});
+
+test("galeria do cliente não assina ou mostra peça de outro negócio", () => {
+  const pagina = readFileSync("app/(protected)/criativos/page.tsx", "utf8");
+  assert.match(pagina, /select\("id, business_id, original_name, file_path, status, review_note, created_at, upload_intent"\)/);
+  assert.match(pagina, /revisoesRecebidas\.filter\(\(pedido\) => pedido\.business_id === negocioId\)/);
+  const filtro = pagina.indexOf("&& caminhoConfereComRevisao(pedido))");
+  const assinatura = pagina.indexOf(".createSignedUrls(caminhosDasRevisoes");
+  assert.ok(filtro >= 0 && assinatura > filtro);
+  assert.match(pagina, /imagemUrl: caminhoConfereComRevisao\(pedido\)/);
 });
 
 test("falha pode ser repetida; envio recente nao compete com si mesmo", () => {

@@ -14,6 +14,7 @@ export type PedidoDaFila = {
   provider_charge_id?: string | null;
   provider_subscription_id?: string | null;
   payment_creation_started_at?: string | null;
+  provider_card_flow?: string;
   source_system?: string | null;
   source_lead_id?: number | null;
   source_lead_origin?: string | null;
@@ -70,6 +71,8 @@ export function selecionarPedidosDaFila(grupos: PedidoDaFila[][], limite = 200):
 
 export function prioridadeDaCompra(pedido: PedidoDaFila): number {
   if (pedido.status === "proof_received") return 0;
+  if (pedido.provider_card_flow === "initial_3ds" && pedido.status === "payment_approved"
+      && !pedido.provider_subscription_id) return 1;
   if (pedido.status === "awaiting_payment" && pedido.payment_creation_started_at
       && !pedido.provider_charge_id && !pedido.provider_subscription_id) return 1;
   if (pedido.status === "payment_approved" && !pedido.buyer_profile_id) return 2;

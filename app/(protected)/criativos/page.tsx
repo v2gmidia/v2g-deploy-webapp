@@ -1,13 +1,17 @@
+import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
-import { BUCKET_REVISAO, rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
+import { BUCKET_REVISAO, caminhoConfereComRevisao, rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
 import { Analisar } from "./Analisar";
 import { AmostraDeVereditos } from "./Amostra";
 import { PedirRevisao } from "./PedirRevisao";
 import { TelaDeCriativos } from "./TelaDeCriativos";
 import type { GrupoDaGaleria, ItemDaGaleria } from "./GaleriaCriativos";
+import { carregarPedidosDaSessao } from "@/lib/criativos/pedidos-da-sessao";
+import { PedidoDeImagem } from "./PedidoDeImagem";
+import { resumoDaIntencao } from "@/lib/criativos/intencao-envio";
 
 export const metadata = tituloDaAba("/criativos");
 
@@ -25,10 +29,12 @@ type PecaDaCampanha = {
 
 type PedidoDeRevisao = {
   id: string;
+  business_id: string;
   original_name: string;
   file_path: string;
   status: StatusRevisao;
   review_note: string | null;
+  upload_intent: unknown;
   created_at: string;
 };
 
@@ -72,6 +78,13 @@ export default async function CriativosPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const negocioId = estado.negocioId;
+  const pedidosHabilitados = process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && Boolean(negocioId);
+  const pedidosCriacao = pedidosHabilitados
+    ? await carregarPedidosDaSessao(negocioId!) : { pedidos: [], falhou: false };
+  const partesHoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo",
+    year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+  const parteHoje = (nome: Intl.DateTimeFormatPartTypes) => partesHoje.find((p) => p.type === nome)!.value;
+  const hoje = `${parteHoje("year")}-${parteHoje("month")}-${parteHoje("day")}`;
 
   const [pecasResposta, revisoesResposta] = negocioId ? await Promise.all([
     supabase.from("creatives")
@@ -80,7 +93,7 @@ export default async function CriativosPage() {
       .order("created_at", { ascending: false }).limit(120),
     revisaoHabilitada
       ? supabase.from("creative_review_requests")
-        .select("id, original_name, file_path, status, review_note, created_at")
+        .select("id, business_id, original_name, file_path, status, review_note, created_at, upload_intent")
         .eq("business_id", negocioId).order("created_at", { ascending: false }).limit(120)
       : Promise.resolve({ data: [] as PedidoDeRevisao[], error: null }),
   ]) : [
@@ -89,11 +102,16 @@ export default async function CriativosPage() {
   ];
 
   const pecas = (pecasResposta.data ?? []) as PecaDaCampanha[];
-  const revisoes = (revisoesResposta.data ?? []) as PedidoDeRevisao[];
+  const revisoesRecebidas = (revisoesResposta.data ?? []) as PedidoDeRevisao[];
+  const revisoes = revisoesRecebidas.filter((pedido) => pedido.business_id === negocioId);
+  const revisaoInconsistente = revisoes.length !== revisoesRecebidas.length
+    || revisoes.some((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed"
+      && !caminhoConfereComRevisao(pedido));
   const admin = user && negocioId ? createAdminClient() : null;
   const caminhosDasPecas = pecas.map((peca) => peca.storage_path).filter((c): c is string => Boolean(c));
   const caminhosDasRevisoes = revisoes
-    .filter((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed")
+    .filter((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed"
+      && caminhoConfereComRevisao(pedido))
     .map((pedido) => pedido.file_path);
 
   const [urlsDasPecas, urlsDasRevisoes] = admin ? await Promise.all([
@@ -124,12 +142,14 @@ export default async function CriativosPage() {
     ...revisoes.map((pedido) => ({
       id: `revisao-${pedido.id}`,
       nome: pedido.original_name,
-      imagemUrl: urlPorRevisao.get(pedido.file_path) ?? null,
+      imagemUrl: caminhoConfereComRevisao(pedido)
+        ? (urlPorRevisao.get(pedido.file_path) ?? null) : null,
       grupo: grupoDaRevisao(pedido.status),
       estado: rotuloDaRevisao(pedido.status),
       tom: tomDaRevisao(pedido.status),
       criadoEm: `Enviado em ${dataCurta.format(new Date(pedido.created_at))}`,
-      detalhe: pedido.review_note ? `Retorno do gestor: ${pedido.review_note}` : null,
+      detalhe: [resumoDaIntencao(pedido.upload_intent, hoje),
+        pedido.review_note ? `Retorno do gestor: ${pedido.review_note}` : null].filter(Boolean).join(" "),
       acao: pedido.status === "approved_for_manual_publish"
         ? { rotulo: "Ver anúncios", href: "/anuncios" }
         : null,
@@ -143,11 +163,15 @@ export default async function CriativosPage() {
 
   return <>
     {falhaDaGaleria ? <p className="form-warning">Parte da biblioteca não pôde ser carregada agora. Tente novamente mais tarde.</p> : null}
+    {revisaoInconsistente ? <p className="form-warning">Uma peça está com o vínculo do arquivo inconsistente; sua prévia não foi aberta. Peça ajuda à equipe para conferir o envio.</p> : null}
     <TelaDeCriativos
       itens={itens}
+      criacao={pedidosHabilitados ? <PedidoDeImagem key={negocioId} businessId={negocioId!}
+        requestId={randomUUID()} hoje={hoje} pedidos={pedidosCriacao.pedidos}
+        falhou={pedidosCriacao.falhou} /> : null}
       envioDisponivel={revisaoHabilitada && Boolean(negocioId)}
       envio={revisaoHabilitada && negocioId
-        ? <PedirRevisao businessId={negocioId} />
+        ? <PedirRevisao key={negocioId} businessId={negocioId} hoje={hoje} />
         : null}
       analise={amostra
         ? <AmostraDeVereditos qual={amostra} />

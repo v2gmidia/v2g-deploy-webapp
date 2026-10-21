@@ -521,6 +521,46 @@ export const MIGRATIONS: MigrationDeclarada[] = [
     ],
   },
   {
+    arquivo: "20261008223000_checkout_transparente_sandbox.sql",
+    cria: [
+      { tipo: "coluna", tabela: "commercial_orders", nome: "provider_subscription_id" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "payment_creation_started_at" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "provider_first_due_date" },
+      { tipo: "rpc", nome: "aprovar_pagamento_api_self_service" },
+    ],
+    foraDoAlcance: ["unicidade da assinatura, corpo transacional da aprovacao e grants service_role; aplicar apenas com ledger e destino conferidos"],
+  },
+  {
+    arquivo: "20261009015000_checkout_cartao_retentativa_qa.sql",
+    cria: [{ tipo: "coluna", tabela: "commercial_orders", nome: "payment_attempt_count" }],
+    foraDoAlcance: ["CHECK de zero a tres tentativas; presenca da coluna nao prova o limite"],
+  },
+  {
+    arquivo: "20261009034500_fila_revisao_criativos.sql",
+    cria: [{ tipo: "tabela", nome: "creative_review_requests" }],
+    foraDoAlcance: ["bucket privado creative-review, indices, constraints, RLS e policy de leitura por dono"],
+  },
+  {
+    arquivo: "20261009042000_gestor_responsaveis_tarefas.sql",
+    cria: [{ tipo: "tabela", nome: "manager_accounts" }, { tipo: "tabela", nome: "manager_tasks" }],
+    foraDoAlcance: ["indices, CHECK de conclusao de tarefa, RLS e revokes de escrita"],
+  },
+  {
+    arquivo: "20261011140000_eventos_financeiros_sandbox.sql",
+    cria: [{ tipo: "tabela", nome: "commercial_payment_events" }, { tipo: "rpc", nome: "registrar_evento_financeiro_asaas" }],
+    foraDoAlcance: ["RLS, grants, unicidade de evento, corpo de conciliacao por cobranca/assinatura e CHECK de tipos"],
+  },
+  {
+    arquivo: "20261013031434_qa_registrar_falha_desafio_3ds.sql",
+    cria: [{ tipo: "rpc", nome: "registrar_evento_financeiro_asaas" }],
+    foraDoAlcance: ["RPC substitui corpo anterior e CHECK admite falha 3DS; OpenAPI nao distingue corpos"],
+  },
+  {
+    arquivo: "20261013070000_corrigir_mescla_contas_onboarding.sql",
+    cria: [{ tipo: "rpc", nome: "mesclar_blocos_onboarding" }],
+    foraDoAlcance: ["corpo de mescla por pergunta e conta; presenca de RPC nao prova sua versao"],
+  },
+  {
     arquivo: "20261013060000_competencia_documento_fiscal.sql",
     cria: [
       { tipo: "tabela", nome: "fiscal_obligations" },
@@ -600,5 +640,52 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       "locks, limites por hora, retencao de sete dias e corpo da RPC",
       "os registros contem somente HMACs; a qualidade do segredo depende da configuracao externa",
     ],
+  },
+  {
+    arquivo: "20261020021942_qa_cartao_mensal_3ds.sql",
+    cria: [
+      { tipo: "tabela", nome: "checkout_3ds_context" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "provider_card_flow" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "subscription_creation_started_at" },
+      { tipo: "coluna", tabela: "commercial_orders", nome: "provider_subscription_first_due_date" },
+      { tipo: "rpc", nome: "registrar_evento_inicial_3ds" },
+      { tipo: "rpc", nome: "reservar_assinatura_apos_3ds" },
+    ],
+    foraDoAlcance: ["migration preparada localmente; nenhuma aplicacao inferida", "reserva atomica, grants e ausencia de reabertura apos evento adverso exigem ensaio SQL"],
+  },
+  {
+    arquivo: "20261021001651_creative_generation_requests.sql",
+    cria: [{ tipo: "tabela", nome: "creative_generation_requests" }],
+    foraDoAlcance: [
+      "proposta local NAO aplicada; pedido imutavel nao autoriza geracao nem gasto",
+      "RLS SELECT/INSERT por dono do negocio, grant de colunas e ausencia de UPDATE/DELETE exigem QA SQL",
+      "chave primaria impede replay duplicado; payload e hash exigem conferencias da aplicacao",
+    ],
+  },
+  {
+    arquivo: "20261021032617_creative_review_upload_intent.sql",
+    cria: [{ tipo: "coluna", tabela: "creative_review_requests", nome: "upload_intent" }],
+    foraDoAlcance: [
+      "preparada localmente e NAO aplicada; confirmar ledger antes de aplicar",
+      "check JSON, datas reais e preservacao do legado NULL exigem ensaio SQL",
+      "sem alteracao de RLS, bucket ou permissoes; validade nao agenda publicacao ou pausa",
+    ],
+  },
+  {
+    arquivo: "20261021033313_commercial_payment_email_outbox.sql",
+    cria: [{ tipo: "tabela", nome: "commercial_payment_email_outbox" }],
+    foraDoAlcance: ["proposta local NAO aplicada", "RLS/grants service_role e unicidade por pedido/cobranca exigem ensaio SQL", "accepted e aceite pelo provedor, nao entrega; timeout/review nao permite reenvio automatico"],
+  },
+  {
+    arquivo: "20261021042254_assisted_asaas_orders.sql",
+    cria: [
+      { tipo: "coluna", tabela: "commercial_orders", nome: "assisted_operator_id" },
+      { tipo: "rpc", nome: "pedido_asaas_comercial_elegivel" },
+      { tipo: "rpc", nome: "registrar_pedido_asaas_assistido" },
+      { tipo: "rpc", nome: "aprovar_pagamento_api_comercial" },
+      { tipo: "rpc", nome: "registrar_evento_financeiro_comercial" },
+      { tipo: "rpc", nome: "registrar_evento_inicial_3ds_comercial" },
+    ],
+    foraDoAlcance: ["proposta local NAO aplicada; flag QA separada", "operador autenticado, origem e lead preservados; direct_pix legado nao convertido", "RPCs comerciais novas sem remover RPCs self-service; 3DS exige dependencia anterior"],
   },
 ];

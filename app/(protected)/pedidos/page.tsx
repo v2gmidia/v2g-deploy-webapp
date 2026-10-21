@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { tituloDaAba } from "@/lib/titulos";
 import { ultimoDocumentoPorPedido, type DocumentoPorPedido } from "@/lib/contratacao/documentos";
 import { AprovarPix, ComprovantePix, NovoPedidoPix } from "./Formularios";
+import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 
 export const metadata = tituloDaAba("/pedidos");
 export const dynamic = "force-dynamic";
@@ -11,14 +12,15 @@ export const dynamic = "force-dynamic";
 const estados: Record<string, string> = {
   awaiting_payment: "Aguardando comprovante",
   proof_received: "Comprovante registrado; acesso ainda fechado",
-  payment_approved: "Comprovante aprovado pela equipe; entrada pelo e-mail da compra",
+  payment_approved: "Pagamento aprovado pela equipe; entrada pelo e-mail da compra",
   cancelled: "Cancelado",
 };
 
 type PedidoAssistido = {
-  id: string; buyer_email: string; legal_name: string; cnpj: string;
+  id: string; business_id: string | null; buyer_email: string; legal_name: string; cnpj: string;
   unit_count: number; total_cents: number; billing_period: string;
   status: string; proof_reference: string | null;
+  payment_method: string; external_ref: string;
   source_system?: string | null; source_lead_id?: number | null;
   source_lead_origin?: string | null; source_lead_utm_source?: string | null;
   source_lead_utm_medium?: string | null; source_lead_utm_campaign?: string | null;
@@ -37,6 +39,8 @@ export default async function PedidosPage({ searchParams }: {
   let contratos = new Map<string, string>();
   let notas = new Map<string, string>();
   let falhaDocumentos = false;
+  const asaasAtivo = process.env.V2G_ASSISTED_ASAAS_ENABLED === "true"
+    && process.env.V2G_CHECKOUT_API_ENABLED === "true" && checkoutSandboxSeguroNesteServidor();
   try {
     const admin = createAdminClient();
     const vinculoLeadAtivo = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true";
@@ -44,8 +48,9 @@ export default async function PedidosPage({ searchParams }: {
       ? ", source_system, source_lead_id, source_lead_origin, source_lead_utm_source, source_lead_utm_medium, source_lead_utm_campaign, source_lead_utm_content, source_lead_consent_at"
       : "";
     const resposta = await admin.from("commercial_orders")
-      .select(`id, buyer_email, legal_name, cnpj, unit_count, total_cents, billing_period, status, proof_reference${colunasLead}`)
-      .eq("payment_method", "direct_pix")
+      .select(`id, business_id, buyer_email, legal_name, cnpj, unit_count, total_cents, billing_period, status, proof_reference, payment_method, external_ref${colunasLead}`)
+      .eq("origin", "assisted")
+      .in("payment_method", asaasAtivo ? ["direct_pix", "asaas_pix", "asaas_card"] : ["direct_pix"])
       .order("created_at", { ascending: false })
       .limit(100);
     if (resposta.error) throw resposta.error;
@@ -78,6 +83,7 @@ export default async function PedidosPage({ searchParams }: {
   const { registro } = await searchParams;
   const vinculoLeadAtivo = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true";
   const avisos: Record<string, string> = {
+    asaas: "Pedido de teste registrado. Confira os dados antes de abrir o pagamento pelo Asaas. Nenhuma cobrança ou mensagem foi criada por este registro.",
     criado: "Confira o pedido abaixo antes de enviar os dados do Pix pelo atendimento.",
     comprovante: "Confira abaixo se o comprovante foi registrado. O acesso continua fechado até a aprovação.",
     aprovado: "Confira abaixo se o pedido foi aprovado antes de orientar o comprador a entrar com o e-mail da compra.",
@@ -85,20 +91,21 @@ export default async function PedidosPage({ searchParams }: {
 
   return <div className="canvas">
     <div className="page-head"><h1>Pedidos assistidos</h1>
-      <p>Qualificação declarada e Pix direto. A equipe registra cada etapa.</p></div>
+      <p>{asaasAtivo ? "Atendimento com pagamento pelo Asaas em QA. Pedidos antigos de Pix direto continuam separados." : "Qualificação declarada e Pix direto. A equipe registra cada etapa."}</p></div>
     <section className="pendencia-bloco" aria-labelledby="preparacao-fiscal">
       <h2 id="preparacao-fiscal">Preparação fiscal</h2>
       <p>Contabilizei informou Simples Nacional, item de serviço 17.06 e código municipal 170601000 para a V2G. Fonte: resposta repassada por Gabriel em 07/10.</p>
       <p>Antes de emitir: conferir o serviço no cadastro fiscal do Asaas, alíquotas e retenções com a contabilidade, dados do tomador e competência da cobrança. Nenhuma emissão automática está ativa.</p>
     </section>
     {avisos[registro ?? ""] && <p className="form-notice">{avisos[registro ?? ""]}</p>}
-    {!falhaConsulta && <NovoPedidoPix referencia={crypto.randomUUID()} vinculoLeadAtivo={vinculoLeadAtivo} />}
+    {!falhaConsulta && <NovoPedidoPix referencia={crypto.randomUUID()} vinculoLeadAtivo={vinculoLeadAtivo} asaasAtivo={asaasAtivo} />}
     <h2>Pedidos recentes</h2>
     {falhaConsulta && <p className="form-error" role="alert">Não foi possível consultar os pedidos agora.</p>}
     {!falhaConsulta && data?.length === 0 && <p>Nenhum pedido assistido registrado.</p>}
     {!falhaConsulta && (data ?? []).map((pedido) => <section className="auth-card" key={pedido.id}>
       <h3>{pedido.legal_name}</h3>
       <p>{pedido.buyer_email} · CNPJ {pedido.cnpj}</p>
+      <p>Pedido: {pedido.id} · Negócio: {pedido.business_id || "vínculo indisponível; conferir antes de liberar"}.</p>
       {pedido.source_system === "v2g_site" && pedido.source_lead_id && <div className="form-notice">
         <strong>Origem rastreada: lead #{pedido.source_lead_id} da LP.</strong>
         <p>Página: {pedido.source_lead_origin || "não informada"} · UTM source: {pedido.source_lead_utm_source || "não informada"} · medium: {pedido.source_lead_utm_medium || "não informada"} · campaign: {pedido.source_lead_utm_campaign || "não informada"} · content: {pedido.source_lead_utm_content || "não informada"}.</p>
@@ -109,7 +116,14 @@ export default async function PedidosPage({ searchParams }: {
       <p>{pedido.unit_count} conta(s) · {pedido.billing_period === "monthly" ? "mensal"
         : pedido.billing_period === "semiannual_upfront" ? "semestral à vista"
           : pedido.billing_period === "annual_upfront" ? "anual à vista" : "período a conferir"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}</p>
-      <p><strong>{estados[pedido.status] ?? "Estado indisponível"}</strong></p>
+      <p><strong>{pedido.payment_method !== "direct_pix" && pedido.status === "awaiting_payment"
+        ? "Aguardando confirmação do Asaas"
+        : pedido.payment_method !== "direct_pix" && pedido.status === "payment_approved"
+          ? "Pagamento confirmado pelo Asaas; recorrência e contrato são conferidos separadamente"
+          : estados[pedido.status] ?? "Estado indisponível"}</strong></p>
+      {asaasAtivo && pedido.payment_method !== "direct_pix" && pedido.status === "awaiting_payment" && <p>
+        <a href={`/contratar/pagamento?ref=${encodeURIComponent(pedido.external_ref)}`}>Abrir pagamento de teste pelo Asaas</a>
+      </p>}
       {pedido.status === "payment_approved" && (falhaDocumentos ?
         <p className="form-warning">Não foi possível consultar contrato e nota agora.</p> : <>
           <p>Contrato: {contratos.get(pedido.id) === "signed"
@@ -119,8 +133,9 @@ export default async function PedidosPage({ searchParams }: {
             : "sem nota autorizada registrada nesta consulta"}.</p>
         </>)}
       {pedido.proof_reference && <p>Comprovante: {pedido.proof_reference}</p>}
-      {pedido.status === "awaiting_payment" && <ComprovantePix orderId={pedido.id} />}
-      {pedido.status === "proof_received" && <AprovarPix orderId={pedido.id} />}
+      {pedido.status === "payment_approved" && <p className="note">Próximo passo: orientar o comprador a entrar em /entrar com o e-mail desta compra. No primeiro acesso, ele informa o CNPJ e confirma o próprio e-mail. Na seleção, conferir este negócio antes de continuar para o Início. Contrato e nota são acompanhados separadamente.</p>}
+      {pedido.payment_method === "direct_pix" && pedido.status === "awaiting_payment" && <ComprovantePix orderId={pedido.id} />}
+      {pedido.payment_method === "direct_pix" && pedido.status === "proof_received" && <AprovarPix orderId={pedido.id} />}
     </section>)}
   </div>;
 }

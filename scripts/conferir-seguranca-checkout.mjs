@@ -7,7 +7,14 @@ const migration = readFileSync(new URL(
   "../supabase/migrations/20261018133000_checkout_security_controls.sql", import.meta.url,
 ), "utf8");
 const compra = readFileSync(new URL("../app/contratar/actions.ts", import.meta.url), "utf8");
-const pagamento = readFileSync(new URL("../app/contratar/pagamento/actions.ts", import.meta.url), "utf8");
+const pagamento = readFileSync(new URL("../lib/contratacao/iniciar-pagamento.ts", import.meta.url), "utf8");
+const actionPublica = readFileSync(new URL("../app/contratar/pagamento/actions.ts", import.meta.url), "utf8");
+
+test("action publica nao aceita bypass da verificacao de seguranca", () => {
+  assert.doesNotMatch(actionPublica, /segurancaJaVerificada/);
+  assert.match(actionPublica, /iniciarPagamentoInterno\(anterior, form, false\)/);
+  assert.match(pagamento, /import "server-only"/);
+});
 
 test("IP só é confiado quando a requisição traz a marca da Vercel", () => {
   assert.match(modulo, /process\.env\.VERCEL !== "1"/);
