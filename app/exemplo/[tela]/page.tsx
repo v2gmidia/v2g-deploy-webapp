@@ -209,11 +209,36 @@ export default async function ExemploPage({
     const buscaCriativos = await searchParams;
     const modulo = ehDesenvolvimento ? await import("@/app/(protected)/criativos/TelaDeCriativos") : null;
     const fixture = ehDesenvolvimento ? await import("../_criativos/dados") : null;
-    if (!modulo || !fixture) notFound();
+    const envio = ehDesenvolvimento ? await import("@/app/(protected)/criativos/PedirRevisao") : null;
+    const datas = ehDesenvolvimento ? await import("@/lib/criativos/intencao-envio") : null;
+    if (!modulo || !fixture || !envio || !datas) notFound();
     return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
       <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} retencaoAtiva previa envioDisponivel={buscaCriativos.envio !== "indisponivel"}
-        envio={buscaCriativos.envio === "indisponivel" ? null : <div className="form-warning">Prévia local: o envio real exige uma conta autenticada.</div>} />
+        envio={buscaCriativos.envio === "indisponivel" ? null : <envio.PedirRevisao
+          businessId="f0000000-0000-4000-8000-000000000099" hoje={datas.hojeEmSaoPaulo()} previa />} />
+    </Casco>;
+  }
+
+  // Pedido de criação interativo, estritamente local. Não usa sessão,
+  // persistência, referências privadas, provedor de imagem ou publicação.
+  if (tela === "criativos-pedido") {
+    const modulo = ehDesenvolvimento ? await import("../_criativos/PreviaDoPedido") : null;
+    if (!modulo) notFound();
+    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
+      rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
+      <modulo.PreviaDoPedido hoje={diaEmSaoPaulo(agora)} />
+    </Casco>;
+  }
+
+  if (tela === "criativos-pedido-duravel") {
+    const modulo = ehDesenvolvimento ? await import("@/app/(protected)/criativos/PedidoDeImagem") : null;
+    if (!modulo) notFound();
+    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
+      rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
+      <modulo.PedidoDeImagem businessId="00000000-0000-4000-8000-000000000004"
+        requestId="00000000-0000-4000-8000-000000000005" hoje={diaEmSaoPaulo(agora)}
+        pedidos={[]} falhou={false} previa />
     </Casco>;
   }
 

@@ -11,6 +11,10 @@ import { familiaDaAtividade } from "@/lib/onboarding/atividades";
 import { listarNichos } from "@/lib/backend/nichos";
 import { normalizar } from "@/lib/nichos/busca";
 import styles from "./Gestor.module.css";
+import { Suspense } from "react";
+import { LeituraDaConta } from "@/components/gestor/leitura/LeituraDaConta";
+import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { intervaloMesa } from "@/lib/gestor/painel";
 
 export const metadata = tituloDaAba("/gestor");
 export const dynamic = "force-dynamic";
@@ -22,7 +26,7 @@ function respostaParaReuniao(resposta: RespostaDeBriefing): string {
 
 /** Visão interna de leitura. Cada número representa linha do banco, nunca métrica da Meta. */
 export default async function GestorPage({ searchParams }: {
-  searchParams: Promise<{ q?: string; filtro?: string }>;
+  searchParams: Promise<{ q?: string; filtro?: string; metricas?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -113,6 +117,12 @@ export default async function GestorPage({ searchParams }: {
     const gestorPorNegocio = new Map((responsaveis.data ?? []).map((item) => [item.business_id, item.operator_profile_id]));
     const minhasContas = new Set((responsaveis.data ?? [])
       .filter((item) => item.operator_profile_id === user.id).map((item) => item.business_id));
+    const leituraAtiva = process.env.V2G_MANAGER_METRICS_READ_ENABLED === "true";
+    const leituraDisponivel = leituraAtiva && trabalhoAtivo && !responsaveis.error &&
+      !!responsaveis.data && !responsaveisParciais;
+    const negocioDaLeitura = leituraDisponivel && typeof parametros.metricas === "string"
+      ? linhas.find((l) => l.id === parametros.metricas && minhasContas.has(l.id)) : undefined;
+    const periodoDaLeitura = intervaloMesa(diaDeOntemEmSaoPaulo(new Date()), 7);
     const filaPessoalIndisponivel = trabalhoIndisponivel || trabalhoParcial || parcial ||
       (!!revisoes && (!!revisoesDaCarteira?.error || revisoesParciais));
     const acoesPessoais = trabalhoAtivo && !filaPessoalIndisponivel
@@ -142,6 +152,11 @@ export default async function GestorPage({ searchParams }: {
           <a href="/saude-meta">Fila de revisão</a>
         </nav>
       </header>
+      {negocioDaLeitura && <Suspense fallback={<p role="status">Conferindo a leitura da conta...</p>}>
+        <LeituraDaConta businessId={negocioDaLeitura.id} nome={negocioDaLeitura.nome}
+          desde={periodoDaLeitura.inicio} ate={periodoDaLeitura.fim} />
+      </Suspense>}
+      {leituraAtiva && parametros.metricas && !negocioDaLeitura && <p className="form-warning" role="status">Não foi possível autorizar a leitura desta conta nesta carteira. Nenhum número foi consultado.</p>}
       {revisoes?.error && <p className="form-warning">A fila de criativos não pôde ser consultada agora.</p>}
       {revisoesDaCarteira?.error && <p className="form-warning">As pendências de criativos por negócio não puderam ser consultadas agora.</p>}
       {revisoesParciais && <p className="form-warning">A contagem de peças por negócio está parcial ou indisponível. Confira a fila de cada negócio.</p>}
@@ -178,7 +193,7 @@ export default async function GestorPage({ searchParams }: {
         <div className={styles.introducao}><h2 id="titulo-fila">{fonteOperacionalIncompleta ? "Negócios para conferir" : "Próxima ação por negócio"}</h2>
           <p>{fonteOperacionalIncompleta ? "A ordem é alfabética até as fontes voltarem a oferecer um recorte completo." :
             "A ordem começa por comprovantes para conferir. A ficha guarda respostas e procedência."}</p></div>
-        <form className={styles.filtros} action="/gestor" method="get">
+        <form className={styles.filtros} method="get">
           <label>Buscar negócio <input type="search" name="q" defaultValue={busca} placeholder="Nome ou identificador" /></label>
           <label>Mostrar <select name="filtro" defaultValue={filtro}>
             <option value="todos">Toda a carteira</option>
@@ -254,6 +269,8 @@ export default async function GestorPage({ searchParams }: {
                   </li>)}</ul>
                 </details>}</div>
               <div className={styles.destinos}>
+                {leituraDisponivel && minhasContas.has(linha.id) && <a
+                  href={`?${new URLSearchParams({ q: busca, filtro, metricas: linha.id }).toString()}#leitura-da-carteira`}>Ver números</a>}
                 <a href={`/revisar-perfil?negocio=${encodeURIComponent(linha.id)}#ficha-${encodeURIComponent(linha.id)}`}>Abrir ficha</a>
                 <a href={`/gestor/negocio/${encodeURIComponent(linha.id)}/marca`}>Ver materiais de marca</a>
                 {(linha.origem === "pedido" || fonteOperacionalIncompleta) && <a href={`/gestor/compras?negocio=${encodeURIComponent(linha.id)}`}>Ver contratações</a>}
@@ -263,7 +280,7 @@ export default async function GestorPage({ searchParams }: {
               </div>
             </article>)}</div>}
       </section>
-      <p className={styles.fonte}>Fonte: cadastro, pedidos, unidades contratadas e contas no Supabase{execucoesIndisponiveis ? "; execuções indisponíveis nesta consulta" : "; execuções vinculadas quando disponíveis"}. Conta sem unidade vinculada pode ser legada; não é prova de inadimplência. O estado da plataforma é a última leitura registrada, não uma consulta ao vivo. Reuniões não são sincronizadas; resultados, saldo e ritmo de gasto não são calculados nesta tela.</p>
+      <p className={styles.fonte}>Fonte da carteira: cadastro, pedidos, unidades contratadas e contas no Supabase{execucoesIndisponiveis ? "; execuções indisponíveis nesta consulta" : "; execuções vinculadas quando disponíveis"}. Conta sem unidade vinculada pode ser legada; não é prova de inadimplência. O estado da plataforma é a última leitura registrada, não uma consulta ao vivo. Reuniões não são sincronizadas; saldo e ritmo de gasto não são calculados nesta tela.{negocioDaLeitura ? " A leitura de números acima tem fonte, período e limites próprios." : " Resultados não são calculados nesta carteira."}</p>
     </div>;
   } catch (error) {
     console.error("[gestor] falha ao consultar carteira ::", error instanceof Error ? error.message : "erro desconhecido");

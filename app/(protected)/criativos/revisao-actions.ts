@@ -7,6 +7,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { sincronizarTarefaDeRevisao } from "@/lib/gestor/sincronizar-revisao";
+import { hojeEmSaoPaulo, mesmaIntencaoDoEnvio, validarIntencaoDoEnvio,
+  type IntencaoDoEnvio } from "@/lib/criativos/intencao-envio";
 import { BUCKET_REVISAO, caminhoDaRevisao, podeRepetirEnvio,
   podeAnalisarAposEnvio, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem, type StatusRevisao } from "@/lib/criativos/revisao";
 
@@ -43,32 +45,42 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
       typeof businessId !== "string" || arquivo.size < 1 || arquivo.size > TAMANHO_MAXIMO_REVISAO)
     return { ok: false, recado: "Escolha uma imagem JPG ou PNG de até 9 MB e tente novamente." };
 
-  const supabase = await createClient();
-  const { data: { user }, error: erroSessao } = await supabase.auth.getUser();
-  const negocio = await negocioAtivoDaSessao();
-  if (erroSessao || !user || negocio.status !== "selecionado" || negocio.negocio.id !== businessId)
-    return { ok: false, recado: "A conta selecionada mudou. Atualize a página antes de enviar." };
-
-  const bytes = new Uint8Array(await arquivo.arrayBuffer());
-  const mimeType = tipoRealDaImagem(bytes);
-  if (!mimeType || mimeType !== arquivo.type)
-    return { ok: false, recado: "O arquivo precisa ser uma imagem JPG ou PNG válida." };
-  const sha256 = createHash("sha256").update(bytes).digest("hex");
-  const caminho = caminhoDaRevisao(businessId, id);
-  const nome = arquivo.name.trim().slice(0, 180) || "imagem";
+  const intencaoValidada = validarIntencaoDoEnvio({
+    objetivo: dados.get("objetivo"), promocao: dados.get("promocao") === "sim",
+    validade: dados.get("validade"), confirmado: dados.get("confirmado") === "sim",
+  }, hojeEmSaoPaulo());
+  if (!intencaoValidada.ok) return { ok: false, recado: intencaoValidada.erro };
+  const intencao: IntencaoDoEnvio = { version: 1, objective: intencaoValidada.objetivo,
+    promotionEndsOn: intencaoValidada.validade, confirmedAt: new Date().toISOString() };
 
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: erroSessao } = await supabase.auth.getUser();
+    const negocio = await negocioAtivoDaSessao();
+    if (erroSessao || !user || negocio.status !== "selecionado" || negocio.negocio.id !== businessId)
+      return { ok: false, recado: "A conta selecionada mudou. Atualize a página antes de enviar." };
+
+    const bytes = new Uint8Array(await arquivo.arrayBuffer());
+    const mimeType = tipoRealDaImagem(bytes);
+    if (!mimeType || mimeType !== arquivo.type)
+      return { ok: false, recado: "O arquivo precisa ser uma imagem JPG ou PNG válida." };
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    const caminho = caminhoDaRevisao(businessId, id);
+    const nome = arquivo.name.trim().slice(0, 180) || "imagem";
+
     const admin = createAdminClient();
-    const colunas = "id, business_id, submitted_by, sha256, status, updated_at";
+    const colunas = "id, business_id, submitted_by, sha256, status, updated_at, upload_intent";
     const atual = await admin.from("creative_review_requests").select(colunas).eq("id", id).maybeSingle();
     if (atual.error) return { ok: false, recado: RECADO_FALHA };
     if (atual.data) {
       if (atual.data.business_id !== businessId || atual.data.submitted_by !== user.id ||
-          atual.data.sha256 !== sha256) return { ok: false, recado: "Este envio pertence a outra peça. Escolha o arquivo novamente." };
+          atual.data.sha256 !== sha256 || !mesmaIntencaoDoEnvio(atual.data.upload_intent, intencao))
+        return { ok: false, recado: "Os dados deste envio mudaram. Confira a galeria antes de iniciar um novo envio." };
       if (atual.data.status === "awaiting_review" ||
           ["approved_for_manual_publish", "changes_requested", "rejected"].includes(atual.data.status)) {
         if (atual.data.status === "awaiting_review")
           await garantirTarefaDeRevisao(businessId, id);
+        revalidatePath("/criativos");
         return { ok: true, id, repetido: true, analisarAgora: false };
       }
       if (!podeRepetirEnvio(atual.data.status as StatusRevisao, atual.data.updated_at, Date.now()))
@@ -81,7 +93,7 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
       const insercao = await admin.from("creative_review_requests").insert({
         id, business_id: businessId, submitted_by: user.id, file_path: caminho,
         original_name: nome, mime_type: mimeType, size_bytes: bytes.length, sha256,
-        status: "uploading",
+        status: "uploading", upload_intent: intencao,
       });
       if (insercao.error) return { ok: false, recado: RECADO_FALHA };
     }
@@ -102,6 +114,7 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
       .eq("id", id).eq("status", "uploading").select("id").maybeSingle();
     if (concluido.error || !concluido.data) return { ok: false, recado: RECADO_FALHA };
     await garantirTarefaDeRevisao(businessId, id);
+    revalidatePath("/criativos");
     const pilotoAtivo = process.env.V2G_CREATIVE_AUTO_ANALYSIS_ENABLED === "true";
     const estado = pilotoAtivo ? await estadoDoCliente(new Date()).catch(() => null) : null;
     return {

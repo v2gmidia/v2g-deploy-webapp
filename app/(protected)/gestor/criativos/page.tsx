@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BUCKET_REVISAO, rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
+import { BUCKET_REVISAO, caminhoConfereComRevisao, rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
 import { destinoPaginaCriativos, faixaDeCriativos, paginaDeCriativos,
   ultimaPaginaCriativos, MAX_PAGINA_CRIATIVOS } from "@/lib/criativos/paginacao";
 import { DecidirPeca } from "./DecidirPeca";
 import { SincronizarTarefa } from "./SincronizarTarefa";
+import { hojeEmSaoPaulo, resumoDaIntencao } from "@/lib/criativos/intencao-envio";
 
 export const metadata = { title: "Revisão de criativos | V2G", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -48,7 +49,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
         <p><a href="/gestor/criativos">{tituloFila}</a></p></div>;
     // Buscar pendências antes do histórico: limitar os últimos envios primeiro
     // ocultava peças antigas que ainda precisavam de decisão do gestor.
-    const colunas = "id, business_id, original_name, file_path, status, review_note, created_at";
+    const colunas = "id, business_id, original_name, file_path, status, review_note, created_at, upload_intent";
     const consultaPendentes = admin.from("creative_review_requests")
       .select(colunas, { count: "exact" }).eq("status", "awaiting_review");
     const consultaHistorico = admin.from("creative_review_requests")
@@ -76,6 +77,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
     const nomes = new Map((negocios.data ?? []).map((negocio) => [negocio.id, negocio.name]));
     const links = await Promise.all(pedidos.map(async (pedido) => {
       if (pedido.status === "uploading" || pedido.status === "upload_failed") return null;
+      if (!caminhoConfereComRevisao(pedido)) return null;
       const url = await admin.storage.from(BUCKET_REVISAO).createSignedUrl(pedido.file_path, 600);
       return url.error ? null : url.data.signedUrl;
     }));
@@ -109,6 +111,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       {pedidos.map((pedido, indice) => <section className="auth-card" key={pedido.id}>
         <h2>{nomes.get(pedido.business_id) ?? "Negócio sem nome disponível"}</h2>
         <p>{pedido.original_name} · {rotuloDaRevisao(pedido.status as StatusRevisao)} · {data.format(new Date(pedido.created_at))}</p>
+        <p>{resumoDaIntencao(pedido.upload_intent, hojeEmSaoPaulo())}</p>
         {links[indice] ? <p><a href={links[indice]!} target="_blank" rel="noopener noreferrer">Abrir imagem (link válido por 10 minutos)</a></p>
           : pedido.status === "awaiting_review" && <p className="form-warning">Imagem indisponível agora; não decida sem conferir a peça.</p>}
         {pedido.review_note && <p>Retorno registrado: {pedido.review_note}</p>}

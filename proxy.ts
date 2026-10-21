@@ -47,6 +47,7 @@ const PROTECTED_PREFIXES = [
   "/revisar-perfil",
   "/pedidos",
   "/gestor",
+  "/supergestor",
   "/revops",
   "/escolher-negocio",
   // `/campanhas` e `/criativos` viraram `/anuncios` no lote 8. Ficam aqui
@@ -78,7 +79,7 @@ const PROTECTED_PREFIXES = [
  * Precisam estar TAMBÉM em `PROTECTED_PREFIXES` — a checagem de sessão
  * vem primeiro, e esta é um segundo filtro sobre ela, não um substituto.
  */
-const OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil", "/pedidos", "/gestor", "/ativar-campanha"];
+const OPERADOR_PREFIXES = ["/saude-meta", "/revisar-perfil", "/pedidos", "/gestor", "/supergestor", "/ativar-campanha"];
 
 const REVOPS_PREFIXES = ["/revops"];
 

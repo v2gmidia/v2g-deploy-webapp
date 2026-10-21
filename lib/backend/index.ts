@@ -1,5 +1,8 @@
 import "server-only";
 
+/** Leitura da carteira com sessão e atribuição verificadas antes da chamada. */
+export { lerMetricasDaCarteira, type ResultadoDaLeituraDaCarteira } from "./metricas-da-carteira";
+
 /**
  * A porta de entrada do backend V2G.
  *

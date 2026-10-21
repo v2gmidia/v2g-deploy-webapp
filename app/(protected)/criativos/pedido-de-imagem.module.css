@@ -1,0 +1,26 @@
+.secao { margin-block: 32px; padding-block-start: 32px; border-block-start: 1px solid var(--line); }
+.secao > p { max-width: 70ch; margin-block: 12px 24px; color: var(--ink-soft); }
+.formulario { max-width: 680px; }
+.formulario fieldset { margin: 0; padding: 0; border: 0; min-width: 0; display: grid; gap: 12px; }
+.formulario label { font-weight: 600; margin-block-start: 8px; }
+.formulario textarea, .formulario input:not([type="checkbox"]) { width: 100%; min-width: 0; box-sizing: border-box; font: inherit; padding: 12px 16px; border: 1px solid var(--line); border-radius: var(--raio-campo, 6px); background: var(--surface); color: var(--ink); }
+.formulario textarea { resize: vertical; }
+.formulario :is(textarea, input)::placeholder { color: var(--ink-mute); }
+.formulario :is(textarea, input):focus-visible, .lista summary:focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 3px; }
+.formulario .opcao { display: flex; align-items: flex-start; gap: 12px; font-weight: 400; }
+.opcao input { flex: 0 0 auto; margin-block-start: 4px; accent-color: var(--cobalt); }
+.formulario > button { margin-block-start: 24px; }
+.historico { margin-block-start: 32px; }
+.historico > p { color: var(--ink-soft); margin-block: 12px 16px; }
+.lista { list-style: none; padding: 0; margin: 0; }
+.lista li { border-block-start: 1px solid var(--line); padding-block: 16px; }
+.lista summary { cursor: pointer; display: flex; justify-content: space-between; gap: 16px; font-weight: 600; overflow-wrap: anywhere; }
+.data { flex: 0 0 auto; font-size: 14px; font-weight: 400; color: var(--ink-soft); }
+.lista dl { display: grid; grid-template-columns: minmax(120px, 180px) 1fr; gap: 12px 20px; margin-block: 20px 0; }
+.lista dt { color: var(--ink-soft); }
+.lista dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 640px) {
+  .lista summary { flex-direction: column; gap: 8px; }
+  .lista dl { grid-template-columns: 1fr; gap: 8px; }
+  .lista dd { margin-block-end: 12px; }
+}
