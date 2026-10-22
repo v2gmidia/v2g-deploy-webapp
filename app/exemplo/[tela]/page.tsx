@@ -93,6 +93,11 @@ export default async function ExemploPage({
   if (!exemplo) notFound();
 
   const { tela } = await params;
+  if (tela === "redefinir") {
+    const modulo = ehDesenvolvimento ? await import("../_redefinir/Previa") : null;
+    if (!modulo) notFound();
+    return <modulo.PreviaRedefinir />;
+  }
   const agora = new Date();
   const casco = exemplo.CASCO_DE_EXEMPLO;
 

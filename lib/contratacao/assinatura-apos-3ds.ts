@@ -13,6 +13,7 @@ export type DependenciasAssinatura3ds = {
   lerCobranca: (id: string) => Promise<Registro | null>;
   lerIpPagador: () => Promise<string | null>;
   buscarAssinaturas: (orderId: string) => Promise<Registro[] | null>;
+  lerParcelas: (subscriptionId: string) => Promise<Registro[] | null>;
   semOcorrencias: () => Promise<boolean>;
   reservar: (vencimento: string) => Promise<boolean>;
   criar: (corpo: Registro) => Promise<Registro | null>;
@@ -37,14 +38,28 @@ export async function garantirAssinaturaApos3ds(pedido: PedidoParaAssinatura3ds,
       || payment.status !== "CONFIRMED" || payment.deleted === true
       || payment.value !== pedido.total_cents / 100 || payment.dueDate !== pedido.provider_first_due_date
       || payment.subscription != null) return false;
-  const valida = (sub: Registro) => typeof sub.id === "string" && /^sub_[A-Za-z0-9]+$/.test(sub.id)
+  const valida = async (sub: Registro) => {
+    if (!(typeof sub.id === "string" && /^sub_[A-Za-z0-9]+$/.test(sub.id)
     && sub.customer === pedido.provider_customer_id && sub.externalReference === pedido.id
     && sub.billingType === "CREDIT_CARD" && sub.cycle === "MONTHLY"
-    && sub.value === pedido.total_cents / 100 && sub.nextDueDate === vencimento
-    && sub.deleted !== true && sub.status === "ACTIVE";
+    && sub.value === pedido.total_cents / 100
+    && sub.deleted !== true && sub.status === "ACTIVE")) return false;
+    if (sub.nextDueDate === vencimento) return true;
+    // O provedor pode gerar a primeira parcela imediatamente e avançar a data
+    // da assinatura. Não basta uma data futura: exigir a parcela exata e única.
+    if (sub.nextDueDate !== vencimentoNoMesSeguinte(vencimento)) return false;
+    const parcelas = await deps.lerParcelas(sub.id as string);
+    if (!parcelas || parcelas.length !== 1) return false;
+    const primeira = parcelas[0]!;
+    return typeof primeira.id === "string" && /^pay_[A-Za-z0-9]+$/.test(primeira.id)
+      && primeira.subscription === sub.id && primeira.customer === pedido.provider_customer_id
+      && primeira.externalReference === pedido.id && primeira.billingType === "CREDIT_CARD"
+      && primeira.value === pedido.total_cents / 100 && primeira.dueDate === vencimento
+      && primeira.deleted !== true && ["PENDING", "CONFIRMED", "RECEIVED"].includes(String(primeira.status));
+  };
   if (pedido.subscription_creation_started_at) {
     const existentes = await deps.buscarAssinaturas(pedido.id);
-    if (!existentes || existentes.length !== 1 || !valida(existentes[0]!)) return false;
+    if (!existentes || existentes.length !== 1 || !await valida(existentes[0]!)) return false;
     return deps.salvar(existentes[0]!.id as string, vencimento);
   }
   const card = payment.creditCard && typeof payment.creditCard === "object"
@@ -58,6 +73,6 @@ export async function garantirAssinaturaApos3ds(pedido: PedidoParaAssinatura3ds,
     billingType: "CREDIT_CARD", cycle: "MONTHLY", nextDueDate: vencimento,
     value: pedido.total_cents / 100, externalReference: pedido.id,
     description: "Gestão de anúncios V2G", creditCardToken: token, remoteIp });
-  if (!subscription || !valida(subscription)) return false;
+  if (!subscription || !await valida(subscription)) return false;
   return deps.salvar(subscription.id as string, vencimento);
 }

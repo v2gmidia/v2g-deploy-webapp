@@ -14,6 +14,22 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-21 — Desconto à vista também no semestral
+
+**Correção direta de Victor no chat.** Há desconto por pagamento à vista tanto no semestral quanto no anual. A ausência de desconto semestral registrada em 06/10 fica substituída por esta confirmação. Não remover a opção semestral por causa daquele registro antigo. O código atual calcula 5% no semestral (R$ 2.850 por conta) e 12% no anual (R$ 5.280 por conta); nenhum percentual ou preço foi alterado neste bloco.
+
+Victor também autorizou o ensaio fictício apresentado no chat: primeira cobrança mensal de R$ 500 exclusivamente no Sandbox, cancelamento da assinatura e estorno ao encerrar, com confirmação de teste somente para seu e-mail empresarial. Configuração externa, publicação e produção permanecem sujeitas à autorização própria. Resultado em `estado/e28-01-compra-unica-ensaio-sandbox-21-10.md`.
+
+### 2026-10-21 — Compra única pela página de contratação
+
+**Decisão direta de Victor após esclarecimento em voz, confirmada no chat.** A V1 terá dois canais de entrada, mas um único percurso de compra. Quem já decidiu pode comprar pela página de contratação; quem precisa de atendimento deixa o formulário, conversa com Victor no WhatsApp e recebe o link direto para a mesma página de contratação. Não precisa voltar ao começo da apresentação nem depender de um pedido preenchido pelo operador.
+
+**Prioridade revista.** O cadastro manual de pedidos assistidos e sua reforma visual saem do caminho crítico. Preservar código, histórico e travas existentes; não habilitar a ponte assistida Asaas apenas para testar o percurso principal. Montar um pedido pela equipe fica como exceção futura, caso exista necessidade concreta. O vínculo entre pedido, pagamento confirmado e negócio continua obrigatório; atribuir uma compra ao lead anterior não pode exigir redigitação pelo operador nem associação por semelhança de contato.
+
+**Entrega e limites.** Conferir a página de compra existente em QA, reconciliar o formulário da LP com alerta por e-mail e WhatsApp pessoal já solicitado, validar confirmação e acesso com usuário comprador e só depois preparar a abertura real. A página de contratação atual é restrita a QA/Sandbox: a decisão não autoriza remover seus guards, expor pagamento fictício na LP pública, publicar, migrar, enviar mensagens ou criar cobranças. Contrato e NFS-e mantêm suas dependências e não são substituídos por recibo. A prioridade comercial desta entrada substitui a dependência de pedido assistido, sem ampliar as autorizações externas do corte de 20/10.
+
+**Registro:** `estado/e28-01-rota-compra-unica-21-10.md`.
+
 ### 2026-10-20 — Corte de entrega para o evento de 28/10
 
 **Decisão direta de Victor neste chat e autorização de coordenação.** Até 28/10, geração e armazenamento de imagens, biblioteca/revisão e resultados confiáveis são a prioridade. A venda inicial pode ser assistida pelo WhatsApp; checkout público, automação de assinatura/NFS-e e conciliação completa da agenda podem avançar depois. Contrato, nota, pagamento confirmado e acesso correto continuam necessários na operação, ainda que tratados manualmente. O melhor produto permanece a meta; muda a ordem de ataque.

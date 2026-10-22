@@ -8,7 +8,7 @@ import { processarAssinatura3ds } from "@/lib/contratacao/processar-assinatura-3
 import { processarEmailPagamento } from "@/lib/contratacao/processar-email-pagamento";
 import { origemAsaasNoServidor } from "@/lib/contratacao/origem-asaas-servidor";
 import { asaasSandbox } from "@/lib/contratacao/asaas-sandbox";
-import { confirmacaoCanonicaConfere } from "@/lib/contratacao/confirmacao-canonica";
+import { confirmacaoCanonicaConfere, replayEstornadoJaRegistrado } from "@/lib/contratacao/confirmacao-canonica";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -59,8 +59,21 @@ export async function POST(req: NextRequest) {
     try {
       const canonico = await asaasSandbox(`/payments/${encodeURIComponent(financeiro.cobrancaId)}`);
       if (!canonico.ok) return NextResponse.json({ erro: "confirmacao_pendente" }, { status: 503 });
-      if (!confirmacaoCanonicaConfere(pedido.id, financeiro, canonico.body))
+      if (!confirmacaoCanonicaConfere(pedido.id, financeiro, canonico.body)) {
+        let consultaAnterior = admin.from("commercial_payment_events")
+          .select("provider_event_id", { count: "exact", head: true })
+          .eq("provider_event_id", financeiro.eventoId).eq("order_id", pedido.id)
+          .eq("provider_charge_id", financeiro.cobrancaId).eq("event_type", financeiro.tipo)
+          .eq("amount_cents", financeiro.valorCentavos).eq("due_date", financeiro.vencimento);
+        consultaAnterior = financeiro.assinaturaId === null
+          ? consultaAnterior.is("provider_subscription_id", null)
+          : consultaAnterior.eq("provider_subscription_id", financeiro.assinaturaId);
+        const anterior = await consultaAnterior;
+        if (replayEstornadoJaRegistrado(pedido.id, financeiro, canonico.body,
+          !anterior.error && anterior.count === 1))
+          return NextResponse.json({ ok: true, historico: true });
         return NextResponse.json({ erro: "confirmacao_divergente" }, { status: 422 });
+      }
     } catch { return NextResponse.json({ erro: "confirmacao_pendente" }, { status: 503 }); }
   }
   if (fluxo3ds && financeiro.assinaturaId === null) {

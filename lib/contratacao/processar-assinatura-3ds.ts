@@ -33,6 +33,13 @@ export async function processarAssinatura3ds(admin: SupabaseClient, orderId: str
       return resposta.ok && body?.hasMore === false && Array.isArray(body.data)
         ? body.data.filter((sub: Record<string, unknown>) => sub.externalReference === id) : null;
     },
+    lerParcelas: async id => {
+      const resposta = await asaasSandbox(`/subscriptions/${encodeURIComponent(id)}/payments?limit=100`);
+      const body = objeto(resposta.body);
+      if (!resposta.ok || body?.hasMore !== false || !Array.isArray(body.data)) return null;
+      const itens = body.data.map(objeto);
+      return itens.every((item): item is Record<string, unknown> => item !== null) ? itens : null;
+    },
     semOcorrencias: async () => {
       const movimentos = await admin.from("commercial_payment_events").select("provider_event_id", { count: "exact", head: true })
         .eq("order_id", orderId).eq("provider_charge_id", pedido.provider_charge_id)

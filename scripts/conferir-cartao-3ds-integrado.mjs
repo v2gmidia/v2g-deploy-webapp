@@ -22,6 +22,7 @@ function deps(overrides = {}) {
     lerCobranca: async () => payment,
     lerIpPagador: async () => '203.0.113.1',
     buscarAssinaturas: async () => [],
+    lerParcelas: async () => [],
     semOcorrencias: async () => true,
     reservar: async due => { calls.push(['reservar', due]); if (locked) return false; locked = true; return true; },
     criar: async body => { calls.push(['criar', body]); return sub; },
@@ -103,6 +104,32 @@ test('assinatura divergente ou duplicada exige conciliacao e nao e vinculada', a
   for (const list of [[sub, sub], [{ ...sub, value: 501 }], [{ ...sub, nextDueDate: '2099-01-31' }], [{ ...sub, deleted: true }]]) {
     const d = deps({ buscarAssinaturas: async () => list });
     assert.equal(await garantirAssinaturaApos3ds(pending, d, '2099-01-31'), false);
+    assert.equal(d.calls.length, 0);
+  }
+});
+
+const primeiraParcela = { id: 'pay_next', subscription: sub.id, customer: base.provider_customer_id,
+  externalReference: base.id, billingType: 'CREDIT_CARD', value: 500, dueDate: '2099-02-28', status: 'PENDING', deleted: false };
+const subAvancada = { ...sub, nextDueDate: '2099-03-28' };
+test('data avancada so vincula com primeira parcela gerada exatamente compativel', async () => {
+  for (const reservado of [false, true]) {
+    const d = deps({ criar: async () => subAvancada, buscarAssinaturas: async () => [subAvancada],
+      lerParcelas: async () => [primeiraParcela] });
+    const pedido = { ...base, subscription_creation_started_at: reservado ? '2099-01-31T12:00:00Z' : null };
+    assert.equal(await garantirAssinaturaApos3ds(pedido, d, '2099-01-31'), true);
+    assert.equal(d.calls.filter(c => c[0] === 'salvar').length, 1);
+    assert.equal(d.calls.filter(c => c[0] === 'criar').length, 0);
+  }
+});
+test('parcela divergente, cancelada, duplicada, ausente ou consulta incompleta nao autoriza vinculo', async () => {
+  const listas = [null, [], [primeiraParcela, primeiraParcela], ...[
+    { id: 'invalido' }, { subscription: 'sub_outro' }, { customer: 'cus_outro' },
+    { externalReference: 'outro' }, { billingType: 'PIX' }, { value: 501 },
+    { dueDate: '2099-03-28' }, { status: 'REFUNDED' }, { deleted: true },
+  ].map(patch => [{ ...primeiraParcela, ...patch }])];
+  for (const lista of listas) {
+    const d = deps({ buscarAssinaturas: async () => [subAvancada], lerParcelas: async () => lista });
+    assert.equal(await garantirAssinaturaApos3ds({ ...base, subscription_creation_started_at: '2099-01-31T12:00:00Z' }, d, '2099-01-31'), false);
     assert.equal(d.calls.length, 0);
   }
 });

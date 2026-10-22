@@ -105,7 +105,12 @@ globalThis.__envioOffline = {
         select(c) { colunas = c; return consulta; },
         eq(k, v) { filtros[k] = v; return consulta; },
         update(v) { alteracao = v; return consulta; },
-        async maybeSingle() { return executar(); },
+        async maybeSingle() {
+          const resposta = executar();
+          if (!alteracao && tabela === "creative_review_requests" && estado.barreiraLeitura)
+            await estado.barreiraLeitura();
+          return resposta;
+        },
         then(resolve, reject) { return Promise.resolve(executar()).then(resolve, reject); },
         async insert(linha) {
           if (estado.falhaBanco) return { error: { message: "segredo-nao-exibir" } };
@@ -119,6 +124,12 @@ globalThis.__envioOffline = {
         if (estado.falhaBanco) return { data: null, error: { message: "segredo-nao-exibir" } };
         if (tabela === "manager_accounts") return { data: { operator_profile_id: estado.responsavel }, error: null };
         const linha = estado.linhas.find((l) => Object.entries(filtros).every(([k, v]) => l[k] === v));
+        if (linha && alteracao?.status === "awaiting_review" && estado.falhaFinalizacao) {
+          const modo = estado.falhaFinalizacao;
+          estado.falhaFinalizacao = null;
+          if (modo === "depois") Object.assign(linha, alteracao);
+          throw Error("resposta-ambigua-sintetica");
+        }
         if (linha && alteracao) Object.assign(linha, alteracao);
         return { data: linha ? Object.fromEntries(colunas.split(",").map((c) => [c.trim(), structuredClone(linha[c.trim()])])) : null, error: null };
       }
@@ -128,6 +139,7 @@ globalThis.__envioOffline = {
       async upload(caminho, bytes, opcoes) {
         estado.uploads++;
         assert.equal(opcoes.upsert, true);
+        if (estado.aguardarUpload) await estado.aguardarUpload();
         if (estado.falhaUpload) return { error: {} };
         estado.bytes.set(caminho, new Uint8Array(bytes)); return { error: null };
       },
@@ -205,6 +217,70 @@ test("falha parcial de Storage retoma mesmo id, arquivo e intenção", async () 
   estado.falhaUpload = false;
   assert.equal((await solicitarRevisaoAction(formulario())).ok, true);
   assert.equal(estado.insercoes, 1); assert.equal(estado.linhas[0].status, "awaiting_review");
+});
+
+function sinal() {
+  let resolver;
+  const promessa = new Promise((resolve) => { resolver = resolve; });
+  return { promessa, resolver };
+}
+
+test("dois envios simultâneos do mesmo pedido criam somente uma linha e um arquivo", async () => {
+  estado.papel = "cliente";
+  const leituras = sinal(); let numeroLeituras = 0;
+  estado.barreiraLeitura = async () => {
+    numeroLeituras++;
+    if (numeroLeituras === 2) leituras.resolver();
+    await leituras.promessa;
+  };
+  const respostas = await Promise.all([solicitarRevisaoAction(formulario()), solicitarRevisaoAction(formulario())]);
+  assert.equal(numeroLeituras, 2);
+  assert.equal(respostas.filter((r) => r.ok).length, 1);
+  assert.equal(estado.insercoes, 1); assert.equal(estado.linhas.length, 1);
+  assert.equal(estado.uploads, 1); assert.equal(estado.bytes.size, 1);
+  assert.equal(estado.linhas[0].status, "awaiting_review");
+});
+
+test("repetição durante o upload em andamento não abre uma segunda gravação", async () => {
+  const iniciou = sinal(), liberar = sinal();
+  estado.aguardarUpload = async () => { iniciou.resolver(); await liberar.promessa; };
+  const primeira = solicitarRevisaoAction(formulario());
+  await iniciou.promessa;
+  const segunda = await solicitarRevisaoAction(formulario());
+  assert.equal(segunda.ok, false); assert.match(segunda.recado, /ainda está em andamento/);
+  assert.equal(estado.uploads, 1);
+  liberar.resolver();
+  assert.equal((await primeira).ok, true);
+  assert.equal(estado.insercoes, 1); assert.equal(estado.bytes.size, 1);
+});
+
+test("resposta perdida depois da confirmação no banco é reconciliada sem reenviar arquivo", async () => {
+  estado.falhaFinalizacao = "depois";
+  const primeira = await solicitarRevisaoAction(formulario());
+  assert.equal(primeira.ok, false); assert.doesNotMatch(primeira.recado, /ambigua|sintetica/);
+  assert.equal(estado.linhas[0].status, "awaiting_review");
+  const original = structuredClone(estado.linhas[0]);
+  const segunda = await solicitarRevisaoAction(formulario());
+  assert.equal(segunda.ok, true); assert.equal(segunda.repetido, true);
+  assert.equal(estado.uploads, 1); assert.equal(estado.insercoes, 1);
+  assert.deepEqual(estado.linhas[0], original);
+});
+
+test("falha entre arquivo e confirmação aguarda janela e retoma mesmo caminho e conteúdo", async () => {
+  estado.falhaFinalizacao = "antes";
+  assert.equal((await solicitarRevisaoAction(formulario())).ok, false);
+  assert.equal(estado.linhas[0].status, "uploading");
+  const original = structuredClone(estado.linhas[0]);
+  const bytes = new Uint8Array(estado.bytes.get(`${negocio}/${id}`));
+  assert.equal((await solicitarRevisaoAction(formulario())).ok, false);
+  assert.equal(estado.uploads, 1);
+  estado.linhas[0].updated_at = new Date(Date.now() - 121_000).toISOString();
+  assert.equal((await solicitarRevisaoAction(formulario())).ok, true);
+  assert.equal(estado.insercoes, 1); assert.equal(estado.bytes.size, 1);
+  assert.equal(estado.linhas[0].status, "awaiting_review");
+  assert.deepEqual(estado.bytes.get(`${negocio}/${id}`), bytes);
+  assert.equal(estado.linhas[0].sha256, original.sha256);
+  assert.deepEqual(estado.linhas[0].upload_intent, original.upload_intent);
 });
 test("aprovação interna recusa prazo vencido, mas permite solicitar ajustes", async () => {
   await solicitarRevisaoAction(formulario());

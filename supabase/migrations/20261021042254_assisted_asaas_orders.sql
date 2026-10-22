@@ -36,7 +36,9 @@ declare
   v_order uuid;
 begin
   if p_ref is null or p_ref !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
-    or p_operator_id is null or not exists(select 1 from auth.users u where u.id=p_operator_id and u.raw_app_meta_data->>'papel'='operador')
+    -- Papel validado por getUser()+app_metadata na action antes do cliente admin.
+    -- RPC exclusiva do servidor; nao amplia grants nem consulta auth.users.
+    or p_operator_id is null or not exists(select 1 from public.profiles p where p.id=p_operator_id)
     or v_email is null or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$' or length(v_email)>254
     or v_phone !~ '^[1-9][0-9]{9,10}$' or p_buyer_name is null or length(btrim(p_buyer_name)) not between 3 and 120
     or btrim(p_buyer_name) !~ '^[^[:space:]]+[[:space:]]+[^[:space:]]+'

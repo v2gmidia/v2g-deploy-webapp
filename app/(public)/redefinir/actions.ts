@@ -28,8 +28,15 @@ export async function redefinirAction(
     return { error: mensagemDeErroAuth(error, "redefinicao", "/redefinir") };
   }
 
-  await supabase.auth.signOut();
-  redirect("/entrar");
+  // A senha já mudou: falha no encerramento não pode parecer falha ao salvá-la.
+  let saidaConfirmada = false;
+  try {
+    const { error: erroSaida } = await supabase.auth.signOut();
+    saidaConfirmada = !erroSaida;
+  } catch { /* Mostrar o resultado salvo sem expor resposta do provedor. */ }
+  // Página pública independente da sessão: remover cookies pode remontar a
+  // página atual como link expirado antes de um estado local ser exibido.
+  redirect(saidaConfirmada ? "/redefinir/concluido" : "/redefinir/concluido?aviso=sessao");
 }
 
 export { initialState as redefinirInitialState };

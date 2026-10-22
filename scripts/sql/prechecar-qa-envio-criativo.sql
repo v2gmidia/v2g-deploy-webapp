@@ -11,8 +11,11 @@ select to_regclass('supabase_migrations.schema_migrations') as ledger,
 -- Se o ledger não existe/é inacessível, a consulta seguinte falha: PARAR e reconciliar.
 select version, name from supabase_migrations.schema_migrations
 where version in ('20261009034500','20261009042000','20261021032617')
-  or name in ('fila_revisao_criativos','gestor_responsaveis_tarefas','creative_review_upload_intent')
+  or name in ('fila_revisao_criativos','gestor_responsaveis_tarefas','creative_review_upload_intent',
+    'qa_fila_revisao_criativos','qa_gestor_responsaveis_tarefas','qa_creative_review_upload_intent')
 order by version;
+-- O QA registra versões próprias para a aplicação individual. Comparar também
+-- definição/ACL/policies abaixo; versão diferente não autoriza reaplicar DDL.
 
 select table_name,column_name,data_type,is_nullable,column_default
 from information_schema.columns

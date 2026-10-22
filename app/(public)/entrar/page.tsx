@@ -4,6 +4,7 @@ import { Suspense, useActionState, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { CriteriosSenha } from "@/components/ui/CriteriosSenha";
+import { IconeVisibilidadeSenha as IconeVisibilidade } from "@/components/ui/IconeVisibilidadeSenha";
 import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
 import { SITE_PUBLICO_ORIGEM } from "@/lib/site-publico";
 import { forcaDaSenha } from "@/lib/auth-senha";
@@ -12,17 +13,9 @@ import { signInAction, signUpAction, type AuthActionState } from "./actions";
 
 const initialState: AuthActionState = {};
 
-function IconeVisibilidade({ visivel }: { visivel: boolean }) {
-  return <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M2.5 12s3.4-5.5 9.5-5.5 9.5 5.5 9.5 5.5-3.4 5.5-9.5 5.5S2.5 12 2.5 12Z" />
-    <circle cx="12" cy="12" r="2.5" />
-    {visivel && <path d="M3 21 21 3" />}
-  </svg>;
-}
-
 export default function EntrarPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<EntradaEditorial><h1>Carregando seu acesso…</h1><p role="status">Preparando o formulário de entrada.</p></EntradaEditorial>}>
       <EntrarContent />
     </Suspense>
   );

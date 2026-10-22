@@ -41,7 +41,9 @@ try {
   assert.equal(directRow.origin,'assisted');assert.equal(directRow.source_lead_id,null);assert.equal(directRow.assisted_operator_id,operator);
   assert.notEqual(directRow.business_id,otherBusiness);
   assert.equal((await db.query('select profile_id from businesses where id=$1',[otherBusiness])).rows[0].profile_id,other);
-  await assert.rejects(create({actor:other}),/pedido_assistido_invalido/);
+  // Papel e validado na action real (suite conferir-assistido-asaas.mjs).
+  // A RPC privada exige perfil existente; nao consulta Auth nem autoriza navegador.
+  await assert.rejects(create({actor:randomUUID()}),/pedido_assistido_invalido/);
   await assert.rejects(create({lead:73,email:'outro@example.invalid'}),/lead_divergente/);
   await assert.rejects(create({period:'monthly',method:'asaas_pix'}),/pedido_assistido_invalido/);
   const linked=await create({lead:73,email:'lead@example.invalid'});
@@ -89,5 +91,10 @@ try {
       'aprovar_pagamento_api_comercial(uuid,text,text,text,text,text,integer,date)','registrar_evento_inicial_3ds_comercial(uuid,text,text,text,text,integer,date)'])
       assert.equal((await db.query('select has_function_privilege($1,$2,$3) as ok',[role,signature,'EXECUTE'])).rows[0].ok,false);
   }
+  await db.exec('grant usage on schema auth to service_role; grant select on profiles,leads_lp to service_role; grant select,insert on businesses,commercial_orders,commercial_order_units,commercial_events to service_role;');
+  assert.equal((await db.query("select has_column_privilege('service_role','auth.users','raw_app_meta_data','SELECT') as ok")).rows[0].ok,false);
+  await db.exec('set role service_role');
+  try { assert.ok(await create({email:'role-sem-auth@example.invalid'})); }
+  finally { await db.exec('reset role'); }
   console.log('PASS: migrations reais, assistido com/sem lead, operador, replay, origem, valor/cliente/cobranca, 3DS pago sem assinatura, reserva unica e legado.');
 }finally{await db.close();}
