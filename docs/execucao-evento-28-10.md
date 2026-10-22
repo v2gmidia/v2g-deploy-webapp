@@ -1,4 +1,83 @@
-# Execução V2G até o evento de 28/10 — espelho do plano v4
+# Execução V2G até o evento de 28/10 — espelho do plano v5
+
+## Encerramento da noite 21→22/10 — 22/10, 01:46
+
+Automação **PAUSADA** após duas rodadas consecutivas sem mudança e sem próximo recorte local útil. Todos os quatro chats encerraram seus blocos e aguardam decisões ou autorizações externas. Não foram enviadas tarefas repetidas para mantê-los ocupados.
+
+Resumo final, provas, limites e ordem de retomada: [fechamento-noite-21-22-10.md](handoffs/fechamento-noite-21-22-10.md). Pacote backend e revisão de contrato de QA preparados localmente; nenhuma aplicação externa ou página nova deve ser presumida. Provas financeiras e de envio anteriores permanecem válidas nos seus recortes.
+
+Planilha e este espelho refletem o encerramento; Figma permanece parcialmente atualizado (oito cartões v5 e interiores complementares pendentes). Geração real e backend QA operacional ainda impedem garantir o objetivo completo do evento. Próximo avanço depende de revisão dos pacotes e portões descritos, sem nova automação até orientação humana.
+
+## Rodada noturna 03 — 22/10 00:46
+
+**Revisão documental 07/08 fechada e conferida:** o contrato proposto já inclui três flags, identificação do projeto QA no servidor, ordem de autorização e limites de redirecionamento, 404 e revogação. Nenhuma página, flag, fixture ou configuração foi implementada. Fonte: backend/docs/qa/homologacao-leitura-contrato-webapp-22-10.md e adendo no checkpoint do backend.
+
+Todos os quatro chats encerraram seus blocos e aguardam as dependências registradas; nenhum novo prompt se justifica. Planilha: quatro células atualizadas e relidas. Figma NÃO RELIDO/ATUALIZADO; pendência parcial mantida. Houve entrega nova, portanto o contador de ociosidade está em zero. Duas próximas rodadas consecutivas sem progresso e sem trabalho local útil devem encerrar a coordenação antecipadamente. Automação ACTIVE dentro da janela, sem novo despacho externo.
+
+## Rodada noturna 02 — 22/10 00:16
+
+- **05/06 concluiu confrontoDOCUMENTAL:** porta/componente compatíveis, com dois ajustes obrigatórios na proposta:preservar a flag de trabalho do gestor junto às outras duas e fixar projetoWebAppQA pelo ambiente confiável do servidor. URLsQA sozinhas não barram uso acidental no projeto de produção. Fonte: adendo07/08 em docs/estado/e28-05-06-envio-e-desenho-22-10.md; referências de flags/cliente/ambiente conferidas peloCentral.
+- **07/08 recebeu somente correção do documento existente**, pois estava livre. Incluir3flags/pinQA/ordem deatribuição e limites shellredirect/404/contagens; semimplementar página/runtime/SQL/teste/flag/fixture. Depoisparar.
+- **Demaisfrentes:** encerradas nosportões; nenhuma nova operação financeira, acesso, migration/configuração/deploy ou chamada paga.
+- **Planilha:**7células atualizadas e relidas semdivergência. FigmaNÃO RELIDO/ATUALIZADO, indisponibilidade anterior semmudança. Contador de rodadas semprogresso0; coordenaçãoACTIVE dentro dajanela.
+
+## Rodada noturna 01 — 21/10 23:46 (janela21→22)
+
+- **07/08 concluiu pacote LOCAL completo:** nove unidadesSQL propostas, RLS/ACL/rollback/defaults adversos; sete modelos e boot/saúde/consolidadoASGI200/401/404 em banco descartável. PropostaQA preservaDecimal2.125, corrigindo arredondamento medido2.13. Guarda opt-inQA defaultOFF. Relatório2809testes/9ignorados e Ruff/mypy limpos. Central conferiu checkpoint/README/manifesto/código/diff; não repetiu suíte. Schema remoto/credenciais/deploy/HTTPS NÃO concluídos. Fonte: backend/docs/estado/e28-backend-qa-pacote-completo-local-22-10.md.
+- **05/06 recebeu passagem DOCUMENTAL nova:** avaliar contrato de homologaçãoQA07/08 contra porta/componente existentes, sem implementar página/flag/fixture ou reabrir itens adiados. Ativo; comentário inicial propõe preservar flag de operação e gate confiável do projetoQA, além dasURLs. Aguardar fechamento antes de repassar correções ao dono.
+- **01/02 e03/04:** sem novidade; portões humanos preservados e nenhum novo prompt repetido.
+- **Planilha:**18 células novas atualizadas/relidas. **Figma não relido nesta rodada** por indisponibilidade anterior inalterada; sincronização parcial já descrita abaixo permanece.
+- Progresso verificável novo; contador de rodadas ociosas0. Automação segueACTIVE. Ensaio26/10 e evento28/10 continuam metas, sem garantia do objetivo original completo.
+
+## Plano vigente — noite de 21→22/10/2026
+
+Revisão autorizada por Victor neste chat, após os novos anexos e o ensaio de compra/e-mail. Os quatro próximos blocos foram enviados; o histórico v4 e o encerramento da noite anterior abaixo são preservados como histórico, não como estado atual. Checkpoint completo e prompts exatos: [noite-21-22-10-central.md](handoffs/noite-21-22-10-central.md).
+
+### Estado por frente
+
+| Frente | Comprovado | Trabalho da nova noite | Ainda não comprovado / dependência |
+|---|---|---|---|
+| 01/02 | Sandbox fictício confirmado e e-mail recebido; estorno DONE, assinatura inativa/excluída e futura excluída. Pix semestral/cartão anual/primeira mensalidade anteriores preservados. 84 testes locais e tipos das novas correções. | Conferir versão publicada, investigar evento de estorno ausente, política de acesso por compra/negócio e correções de senha/Turnstile/assinatura. Sem nova cobrança ou estorno. | Evento REFUNDED no QA, acesso correto e correções novas em HTTPS. Sandbox sem desafio não certifica 3DS real. Contrato/nota adiados nesta rodada. |
+| 03/04 | Onboarding/multiconta concluídos no recorte; 152 testes locais anteriores. Novo playbook de recebimento Meta reconciliado e checkpoint entregue. | Bloco documental encerrado; não reabrir concluído nem criar trabalho artificial. | Victor nomeia conta-piloto externa/ativos/responsável. Acesso manual, API de leitura e API de publicação são três aceites distintos. Agenda automática fora do recorte. |
+| 05/06 | 17 verificações reais HTTPS/Auth/DB/Storage/privacidade/hash/isolamento/relogin/replay; fixtures limpas. upload_intent já aplicado QA. 20 locais + 12 SQL + tipos. Consumidor de leitura local pronto. | Complemento de UI com mocks/leitura, manifesto para futuro QA e arquitetura app→backend→n8n. **IA somente desenho**, conforme decisão humana mais recente; aprovação/refações/gestor/publicação adiados. | Geração real NÃO implementada. Novo manifesto de contas/negócios/imagem ainda requer autorização. Leitura real de métricas no QA não concluída. |
+| 07/08 | 16 cenários locais FastAPI→TS/SSR; 2792 testes/9 ignorados e análises no relatório anterior. Painel HTTPS resolvido. Unidade1 baseline passou 10 testes locais, não aplicada. | Preparar unidades mínimas restantes, precisão e ACL/rollback em banco descartável; guardas locais de QA só leitura e runbook GO/NO-GO. | backend-qa parado: aprovação individual de schema, segredos privados no painel e publicação QA. Ainda sem leitura HTTPS200/401/404 entre serviços/telas. |
+
+### O que vale como prioridade atual
+
+1. Fechar pacotes locais e diferenças concretas sem repetir provas de compra ou de upload.
+2. Destravar schema/segredos/runtime do backend QA para a leitura integrada. A frente prepara guarda opcional local de leitura antes do boot QA. A hipótese inicial de chamador n8n ativo não se confirmou na inspeção posterior; não é defeito medido.
+3. Preservar envio de criativos já comprovado. Não converter aprovação do desenho em autorização de gerador/automação paga.
+4. Revisar explicitamente a diferença entre **objetivo original de gerar imagens no evento** e **escopo atual limitado ao desenho**. A criação real exige próximo bloco aprovado; datas antigas não são promessa nova.
+5. 26/10: ensaio integrado HTTPS/celular e decisão GO/NO-GO. 27/10: corrigir bloqueios e congelar; 28/10: demonstrar o comprovado com bastidor manual declarado.
+
+### Instrumentos atualizados e limite da sincronização
+
+- Planilha original, abas Resumo 01-08 e Plano diário 20-31: 178 células atualizadas e relidas sem divergência; 31 IDs/datas históricas preservados. Local, QA, produção e adiamentos explicitados.
+- FigJam principal: oito cartões e cabeçalho/prioridades v5 atualizados (38 nós), sem overflow na verificação estrutural.
+- **Pendente no FigJam:** conteúdo interno das seções adicionais Execução diária (99:160) e Decisões e contratos (99:212) continua v4, embora seus títulos tenham sido renomeados v5. A quota Starter interrompeu a leitura complementar; Chrome apresentou timeout CDP. Não houve conferência visual final. Usar a planilha/este espelho para a sequência vigente até reconciliar esses interiores, sem alegar sincronização integral.
+- A coordenação usa a automação existente na janela 21→22/10, sem duplicatas. Estado ativo/encerrado fica no checkpoint; pausar no máximo às 08:00 de 22/10, ou após duas rodadas sem progresso e sem trabalho local útil. Não repetir prompts em chat ativo.
+
+### Dependências humanas que não serão substituídas por suposição
+
+1. Revisão/aprovação específica da unidade1 QA e depois das demais unidades mínimas, sem migrations históricas amplas.
+2. API_TOKEN exclusivo e chave administrativa do QA inseridos por Victor diretamente em ia→backend-qa→Ambiente; nenhum valor no chat.
+3. Publicação/configuração/flags QA e ensaio com alvo/versão autorizados; produção separada.
+4. Manifesto exato de contas/negócios/imagem sintéticos se for necessário novo QA de UI; piloto externo com responsável/ativos nomeados.
+5. Revisão do desenho IA e decisão sobre implementação/piloto; contrato final/fiscal seguem em frente própria.
+
+**Avaliação:** há avanço verificável para uma demonstração funcional assistida. O objetivo original completo não está garantido enquanto geração real e backend QA permanecerem nessas condições. Não marcar o evento como pronto antes do ensaio de 26/10.
+
+### Retornos complementares da noite (após os despachos)
+
+- **01/02 encerrado:** QA READY ainda em fbf00ee; correções estão no HEAD3d85890 e não foram publicadas. 9 testes locais novos + 2 LP + tipos. Lacuna factual de vínculo/elegibilidade após estorno histórico; política mínima ainda precisa decisão, sem bloqueio ativado. Sessão Sandbox para logs e sessão QA04 correta continuam necessárias. Fonte: docs/estado/e28-01-fechamento-lacunas-22-10.md.
+- **05/06 encerrado:** o formulário refinado já corresponde ao publicadofbf00ee; seis casos UI e manifesto de dois atores/negócios ficaram preparados, não executados. Desenho complementado com quatro exemplos e 12 critérios futuros; validação estática não prova geração nem UI. Autorização do manifesto inclui acesso comercialQA/arquivo/limpeza exata. Fonte: docs/estado/e28-05-06-envio-e-desenho-22-10.md.
+- **03/04 encerrado:** playbook pronto, aguarda nomeação do piloto; sem novos recortes artificiais.
+- **07/08 ainda ativo no snapshot:** cadeia local e precisão propostas passaram segundo comentário; aguardar checkpoint/diff final. Sem aplicação externa. Não encontrou chamador ativo n8n, corrigindo relato preliminar.
+- Planilha:18 atualizações complementares relidas sem divergência após as178 iniciais. Automação existente ACTIVE verificada, com prazo final22/10 às08h de Brasília.
+
+---
+
+## Histórico v4 e coordenação anterior (preservado)
 
 Atualizado em 20/10/2026 por autorização direta de Victor neste chat. Este arquivo espelha a coordenação; o [FigJam](https://www.figma.com/board/sQrIlGhDDaqHUtV2WacWSg) é o mapa de jornada/aceite e a [planilha](https://docs.google.com/spreadsheets/d/1xPtwgyMkgwNKVDB8L61jEmf0UDaofKhwPfT1JU4Dpk8) é o acompanhamento diário. Não certifica produção.
 

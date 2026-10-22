@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "status": "planned_not_executed_pending_specific_authorization",
+  "runLabel": "e28-upload-ui-22-10",
+  "scope": "Somente ensaio de interface do envio pronto; nao executar este manifesto como script.",
+  "target": {
+    "app": "https://v2g-webapp-qa.vercel.app",
+    "supabaseProjectId": "zskpijnqgkqwxksqmzmf",
+    "excludedProductionProjectId": "ushccxpoxjikzqnwhgfd",
+    "reviewBucket": "creative-review",
+    "noConfigurationChanges": true
+  },
+  "actors": [
+    { "label": "A", "email": "e28-upload-ui-22-10-a@example.invalid", "fullName": "E28 UI Cliente Ficticio A", "businessName": "E28 UI Negocio Ficticio A 22-10", "authUserId": null, "businessId": null },
+    { "label": "B", "email": "e28-upload-ui-22-10-b@example.invalid", "fullName": "E28 UI Cliente Ficticio B", "businessName": "E28 UI Negocio Ficticio B 22-10", "authUserId": null, "businessId": null }
+  ],
+  "actorRules": [
+    "IDs nulos significam nada criado; preencher somente com retorno real antes de qualquer dependente.",
+    "Se email ja existir, parar; nunca reaproveitar, resetar senha ou remover usuario preexistente.",
+    "Dois clientes comuns, dados_ficticios true, sem papel operador, agencia ou manager_accounts.",
+    "Senha efemera somente em memoria; nao guardar em manifesto, screenshot, log ou checkpoint.",
+    "O ensaio anterior usou webapp_legacy_access para acesso comercial QA. Repetir esse grant exige aprovacao especifica incluindo esse mecanismo; nao simula compra nem autoriza bypass em producao.",
+    "Nao alterar flags. Se acesso comercial ou bloqueio de analise paga impedir o recorte, parar e registrar a dependencia."
+  ],
+  "image": {
+    "source": "public/marca.png",
+    "uploadName": "E28-UI-fixture-marca-publica.png",
+    "purpose": "Marca publica do repositorio como insumo de teste ficticio; nao e foto privada de cliente nem imagem gerada por IA.",
+    "mime": "image/png",
+    "sizeBytes": 12084,
+    "sha256": "718e7afe3615ab1059b06c9f8bbe53b5db0c284306ee22a530fc3aa24f5def41"
+  },
+  "recordsPlanned": [
+    { "resource": "auth.users", "limit": 2, "identity": "IDs retornados pelas duas criacoes autorizadas; emails exatos acima" },
+    { "resource": "public.profiles", "limit": 2, "identity": "id igual ao authUserId registrado; conferir gatilho antes de inserir duplicado" },
+    { "resource": "public.businesses", "limit": 2, "identity": "IDs retornados, profile_id do ator e dados_ficticios true; nomes exatos acima" },
+    { "resource": "public.webapp_legacy_access", "limit": 2, "identity": "profile_id exato de cada ator; somente apos autorizacao especifica desse grant QA" },
+    { "resource": "public.creative_review_requests", "limit": 2, "identity": "Uma submissao pela UI de cada ator, mesmo PNG; capturar id real, submitted_by, business_id, nome e hash antes de considerar sucesso" },
+    { "resource": "storage.objects / creative-review", "limit": 2, "identity": "Caminho deterministico businessId/requestId de cada pedido; conferir hash antes de excluir" },
+    { "resource": "public.manager_tasks", "limit": 2, "identity": "Somente se efeito auxiliar existente criar tarefa. ID derivado pelo idDaTarefaDeRevisao(requestId), business_id e descricaoDaTarefaDeRevisao exatos; nao executar decisao" }
+  ],
+  "observedIds": { "requests": [], "objects": [], "auxiliaryTasks": [] },
+  "uiCases": [
+    { "id": "UI-01", "action": "Selecionar PNG local, substituir pelo mesmo arquivo e conferir teclado, nome, tamanho e preview", "expected": "Arquivo preservado e controle acessivel, sem envio antes da confirmacao", "status": "pending" },
+    { "id": "UI-02", "action": "Ator A escolhe WhatsApp sem promocao, confere, volta e confere novamente", "expected": "Arquivo/objetivo preservados; confirmacao obrigatoria; um envio cria um pedido/objeto", "status": "pending" },
+    { "id": "UI-03", "action": "Ator B escolhe Instagram com promocao; tentar data passada e depois data futura definida no dia do ensaio", "expected": "Data invalida impede envio; pedido valido guarda objetivo/data corretos, sem campos extras de criacao", "status": "pending" },
+    { "id": "UI-04", "action": "Recarregar galeria e entrar novamente com a mesma fixture autorizada", "expected": "Imagem e intencao persistem; links privados renovaveis sem tokens em evidencias", "status": "pending" },
+    { "id": "UI-05", "action": "Comparar galerias A e B pelas sessoes comuns", "expected": "Cada galeria mostra so seu pedido; sem acesso de gestor nem identidade compartilhada", "status": "pending" },
+    { "id": "UI-06", "action": "Conferir layout desktop/mobile e teclado na bancada local, quando disponivel", "expected": "Sem cortes ou botoes sobrepostos; foco e erros identificaveis; nao afirmar responsividade QA sem medida", "status": "pending" }
+  ],
+  "faultCasesLocalOnly": [
+    "Arquivo nao permitido / acima de 9 MB / preview invalido: fakes locais, sem uploads remotos extras.",
+    "Resposta perdida, Storage falhando e duplo clique: mocks/barreiras existentes; nao injetar falhas ou alterar configuracao do QA.",
+    "Expiracao remota de URL e concorrencia entre processos reais continuam nao medidas; nao ampliar ensaio sem novo recorte."
+  ],
+  "cleanupPlanNotExecuted": [
+    "Registrar todas as identidades reais e provas antes da limpeza; null, identidade divergente ou linha nao inventariada interrompe exclusao.",
+    "Encerrar apenas sessoes dos usuarios ficticios criados nesta execucao; nao afetar sessao pessoal ou de outra frente.",
+    "Para cada objeto inventariado, conferir projeto, bucket, caminho, pedido, negocio, dono e hash; remover apenas esse caminho exato, nunca prefixo.",
+    "Se houver tarefa auxiliar, conferir ID deterministico e todos os vinculos/textos antes de remove-la por ID exato; nao apagar tarefas por business_id em lote.",
+    "Remover pedido por id, business_id e submitted_by exatos; qualquer filho inesperado bloqueia limpeza por cascata.",
+    "Remover negocio por ID exato, profile_id e dados_ficticios true; previamente conferir dependentes e recusar se algum nao pertence ao inventario.",
+    "Remover grant legado somente dos profile_id criados; conferir dependentes de profiles/Auth antes de remover esses usuarios por ID. Nao confiar em cascade sem inventario.",
+    "Verificar ausencia dos IDs/caminhos exatos ao final; se falhar, relatar residual e nao declarar limpeza concluida."
+  ],
+  "prohibited": [
+    "Nao executar scripts/qa/e28-envio-https-21-10.mjs: cria quatro atores e testa decisoes de gestor fora deste recorte.",
+    "Nenhuma chamada paga, n8n, Meta, geracao, aprovacao, refacao, publicacao, migracao, flag, deploy ou convite real.",
+    "Nao automatizar este plano sem aprovar especificamente criacoes, grant comercial QA, upload publico de teste e limpeza restrita."
+  ]
+}

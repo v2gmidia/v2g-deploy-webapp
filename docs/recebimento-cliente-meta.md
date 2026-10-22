@@ -1,7 +1,9 @@
 # Recebimento de cliente na Meta
 
-**Estado:** procedimento operacional proposto, pronto para validação com um cliente-piloto  
-**Atualizado em:** 21/10/2026  
+**Estado:** procedimento operacional reconciliado com o código pós-push e pronto para validação com um cliente-piloto
+
+**Atualizado em:** 21/10/2026, bloco noturno 21→22/10
+
 **Escopo:** cliente já pagou, concluiu o onboarding e precisa entregar os acessos mínimos para a V2G operar e medir anúncios.
 
 **Mapa visual:** [V2G | Recebimento de cliente | Meta](https://www.figma.com/board/DGGCCnjlOlmy5vzsa11yoW)
@@ -45,12 +47,13 @@ Adicionar a V2G como parceira não concede automaticamente permissão à API. Ad
 - A WebApp usa Graph API `v25.0` (`lib/meta/oauth.ts:15`).
 - Na escolha, conta e Página são revalidadas contra a conexão atual antes da gravação (`app/(fluxo)/conectar/escolher/actions.ts:65-95`).
 - A conexão guarda uma credencial de usuário protegida e os ativos selecionados para o negócio.
+- Existe um publicador Meta direto em `lib/meta/publicar.ts`, usando o token da conexão, mas a busca de consumidores em 21/10 não encontrou rota ou action que chame `publicarCampanha`; o próprio repositório registra esse caminho como não ligado (`lib/campanha/ativacao.ts:16-17`). Ele não deve ser tratado como runtime atual.
 
 ### Backend
 
 - O cliente Meta do backend está em Graph API `v23.0` (`backend_v2g/src/meta/graph.py:67`).
 - Existe suporte interno a token por pedido, isolado por contexto concorrente (`backend_v2g/src/meta/graph.py:112-162`).
-- O caminho atual de `POST /campanhas` monta `PedidoDeSubida` sem preencher `token_de_acesso` (`backend_v2g/src/api/rotas.py:3398-3409`). Na prática, o runtime cai na credencial de System User configurada no backend.
+- O caminho atual de `POST /campanhas` monta `PedidoDeSubida` sem preencher `token_de_acesso` (`backend_v2g/src/api/rotas.py:3410` e bloco seguinte, inspecionado pós-push). Na prática, o runtime cai na credencial de System User configurada no backend; o comentário do próprio cliente confirma que a escolha de quem preencherá o token do pedido ainda não foi tomada (`backend_v2g/src/meta/graph.py:128-162`).
 
 ### n8n
 
@@ -64,6 +67,13 @@ Adicionar a V2G como parceira não concede automaticamente permissão à API. Ad
 2. A WebApp captura token de usuário, mas a publicação atual do backend usa System User por padrão.
 3. O n8n ainda aceita IDs digitados pelo operador, o que cria risco de cruzar clientes.
 4. A narrativa anterior de App Review misturou conexão do usuário com publicação por System User.
+
+### Dependências vizinhas já provadas, sem ampliar o aceite Meta
+
+- O envio/revisão de imagem tem uma rodada anterior de **17 verificações HTTPS** com Auth, banco e Storage (`docs/estado/e28-qa-publicado-e-ensaio-https-21-10.md:31-55`). Isso prova o recorte da peça, não acesso a ativos Meta, leitura de métricas ou publicação.
+- Compra e e-mail têm provas próprias de Sandbox/QA e testes direcionados. Elas não substituem confirmação de contrato, acesso Meta ou entrega de uma mensagem específica do piloto.
+- O serviço `ia / backend-qa` existe no painel e o HTTPS do painel foi visto, mas o backend continua não implantado/sem funcionamento comprovado. Schema e segredos exclusivos de QA têm portões próprios (`backend_v2g/docs/estado/e28-backend-qa-https-schema-preparado-21-10.md`).
+- Permanecem três aceites independentes: **acesso manual aos ativos**, **API de leitura** e **API de publicação**. Um verde não fecha os outros dois.
 
 ## 4. Modelo-alvo (TO-BE)
 
@@ -107,6 +117,54 @@ O cliente compartilha os ativos com a V2G. O operador confere os IDs, registra e
 | Dataset/pixel | ver eventos e, se necessário, gerenciar | medição e otimização quando contratado | acesso se o produto não usa o ativo |
 | WhatsApp | nenhum no fluxo atual | não faz parte do recebimento padrão | mensagens e administração |
 | Meta for Developers | nenhum para cliente | app é infraestrutura da V2G | administrador, desenvolvedor ou testador |
+
+## 6.1 Checklist copiável para Victor e cliente
+
+Preencher antes da conversa de acesso. **Não enviar senha, token, código de 2FA, chave ou captura que exponha segredo.**
+
+```text
+RECEBIMENTO META — DADOS DO CLIENTE
+
+Negócio na V2G
+[ ] Nome do negócio:
+[ ] CNPJ usado na compra/onboarding:
+[ ] Responsável autorizado a adicionar parceiro e compartilhar ativos:
+[ ] E-mail/canal seguro desse responsável:
+[ ] 2FA ativa na conta do responsável: sim / não
+
+Ativos Meta
+[ ] ID do portfólio empresarial do cliente:
+[ ] Nome + ID da conta de anúncios (act_...):
+[ ] Nome + ID da Página:
+[ ] @ + ID do Instagram, se usado:
+[ ] Nome + ID do dataset/pixel, somente se usado:
+[ ] Proprietário atual de cada ativo confirmado: sim / não
+[ ] Restrição, dívida, limite ou bloqueio conhecido na conta:
+
+Operação
+[ ] Operador V2G responsável:
+[ ] Objetivo da primeira campanha:
+[ ] Destino aprovado (site, formulário, WhatsApp ou outro):
+[ ] Verba e período aprovados:
+[ ] Peça/versão aprovada identificada:
+[ ] Acesso financeiro NÃO solicitado à V2G:
+[ ] Papel no Meta for Developers NÃO solicitado ao cliente:
+```
+
+O responsável do cliente precisa ter autoridade suficiente **no portfólio do próprio cliente** para adicionar a V2G e compartilhar os ativos. Isso não significa conceder controle total à V2G. A V2G recebe apenas as tarefas da matriz acima.
+
+### Evidência que fica em cada passagem
+
+1. **Responsável/2FA:** nome, função, horário da confirmação e estado “2FA confirmada”, sem registrar código.
+2. **Inventário:** tabela com nome, ID, proprietário e uso de cada ativo.
+3. **Parceria:** captura/registro de que o portfólio V2G aparece como parceiro, sem dados sensíveis.
+4. **Tarefas mínimas:** lista de tarefas efetivamente concedidas por ativo.
+5. **Atribuição interna:** operador V2G, negócio atendido e data; nenhuma pessoa fora da operação.
+6. **Leitura manual:** ativo aberto no Gerenciador, nome/ID e horário; não vale como prova de API.
+7. **API de leitura:** requisição autorizada, identidade do negócio/conta, período, fonte, status e resultado; desconhecido não vira zero.
+8. **Vínculo:** `business_id`, execução, conta, Página, Instagram/campanha e fonte dos IDs.
+9. **Publicação:** aprovação da versão, operador, IDs retornados e estado lido na Meta; pedido enviado não significa “no ar”.
+10. **Fechamento:** pendências, saída manual usada e responsável pelo próximo ato.
 
 ## 7. Exceções operacionais
 
@@ -166,6 +224,31 @@ Todos os identificadores abaixo são fictícios e servem apenas como contrato de
 - Instagram: `17841400000000000`;
 - dataset opcional: `987654321098765`.
 
+### Mesa local com dois negócios na mesma conversa
+
+Este roteiro só organiza o ensaio; não cria fixture externa e não duplica a ponte integrada de 16 cenários do 07/08.
+
+| Campo | Negócio A | Negócio B |
+|---|---|---|
+| negócio V2G | `biz_demo_001` | `biz_demo_002` |
+| execução | `00000000-0000-4000-8000-000000000001` | `00000000-0000-4000-8000-000000000002` |
+| conta | `act_123456789012345` | `act_223456789012345` |
+| Página | `123456789012345` | `223456789012345` |
+| Instagram | `17841400000000000` | `17841400000000001` |
+| canal de destino | `canal_demo_compartilhado` | `canal_demo_compartilhado` |
+
+Sequência da mesa:
+
+1. registrar em uma única conversa os pedidos de A e B, sempre prefixados pelo negócio e pela conta;
+2. selecionar A e conferir que somente IDs, leitura e evidências de A aparecem;
+3. selecionar B e repetir a conferência com os IDs de B;
+4. demonstrar que o mesmo canal de destino não une negócio, conta, campanha, peça ou métrica;
+5. tentar enviar a execução de A com a conta/Página de B; o contrato deve negar antes de qualquer escrita externa;
+6. mostrar que uma leitura da conta própria da V2G não comprova leitura de uma conta externa compartilhada;
+7. registrar os três aceites separadamente: manual, leitura API e publicação API.
+
+Cobertura reaproveitada do 07/08: os 16 cenários locais já verificam dono/negócio/carteira divergentes, ausência de sessão/contrato e conflito de associação preservado (`backend_v2g/docs/estado/e28-conexao-leitura-local-executada-21-10.md:18-42`). Esta mesa não os reimplementa. O que falta é a prova HTTPS com conta externa autorizada e backend-qa implantado.
+
 ### Roteiro do revisor
 
 1. acessar a URL de teste e entrar com o usuário fornecido;
@@ -199,6 +282,12 @@ Entregar: URL de teste, usuário de teste, pré-condições, conjunto de IDs fic
 3. **Backend/n8n:** eliminar IDs livres e definir a credencial por pedido sem fallback cruzado.
 4. **App Review:** preparar evidências, vídeos e notas; não reenviar ainda.
 5. **Victor:** aprovar qualquer mudança de código, workflow, Meta, credencial ou submissão.
+
+### Próximo ato humano único
+
+Victor deve escolher **uma conta-piloto externa autorizada** e informar, pelo canal seguro combinado, somente: responsável autorizado, ID do portfólio, ID/nome da conta de anúncios, ID/nome da Página, Instagram/dataset se realmente usados e qual operador V2G acompanhará a sessão. Depois disso, a primeira atividade é uma conversa assistida de inventário e compartilhamento, sem publicação.
+
+Continuam exigindo autorização específica: criar conta/usuário/fixture externa; enviar convite ou conceder permissão; compartilhar ativos; aplicar schema/migration; inserir ou trocar segredo/configuração; implantar backend-qa; executar chamada Meta de escrita; publicar campanha; usar verba; alterar n8n; e reenviar o App Review.
 
 ## 12. Fontes e limites
 
