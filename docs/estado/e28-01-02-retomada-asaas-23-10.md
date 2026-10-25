@@ -1,5 +1,117 @@
 # E28 01 e 02 Retomada Asaas e diagnóstico do 422
 
+## Atualização de 25/10 às 17h41 BRT — bloqueador identificado
+
+Este adendo atualiza as hipóteses/portões de 23/10 abaixo, preservados como
+histórico. Um bloco encerrado, sem deploy, migration, reativação, replay remoto,
+cobrança, estorno, criação de assinatura ou acesso. Não há novo documento paralelo.
+
+### A Causa comprovada e limite da conclusão
+
+O Central conferiu diretamente no Sandbox a configuração **V2G WebApp QA
+pagamentos**, endpoint fixo `/api/webhooks/asaas-payment`, ainda INTERROMPIDA,
+não apagada. O bloqueador é PAYMENT_CONFIRMED do ensaio de R$ 500 já conhecido,
+posteriormente estornado; as tentativas de 21–22/10 retornaram exatamente
+`{"erro":"confirmacao_divergente"}`. Não reabri a investigação, não pedi novamente
+logs/login e não confundi com a fila temporária antiga. Fonte desta evidência:
+passagem do Central em 25/10, após leitura direta do painel.
+
+Confronto de código + teste confirma o defeito: o handler antigo consulta o
+estado financeiro atual e rejeita a confirmação histórica quando a cobrança já
+está REFUNDED, antes de verificar o evento persistido. O ramo de resposta está
+identificado pelo corpo exato. A falta da correção no QA mantém esse bloqueador
+sem recuperação segura. Isso não determina retroativamente o estado canônico
+ou a causa da PRIMEIRA tentativa de 21/10, antes do estorno; não inventei esse
+timestamp. A sequência atual necessária já está identificada.
+
+### B Correção existente e preservação
+
+Git começou limpo, HEAD **`1abc8b62e31a3c6024222a845d4801ff034529cf`**. A correção
+de replay entrou em **`3d85890520f32271fd0ae147dd63c2e906dec5ee`** e está no HEAD:
+`app/api/webhooks/asaas-payment/route.ts:60` e
+`lib/contratacao/confirmacao-canonica.ts:21`. O helper permanece idêntico ao
+commit de introdução, confirmado pelo diff. Não dupliquei nem reescrevi runtime.
+
+O aceite histórico exige MESMO evento, pedido, cobrança, assinatura, valor,
+vencimento e identidade canônica. Devolve 200 histórico sem RPC de aprovação,
+sem e-mail/assinatura ou atualização de acesso. Evento ausente, consulta falha
+ou divergência real continuam recusados. Estorno original vai à RPC idempotente;
+não se fabrica REFUNDED para apagar a pendência.
+
+Acrescentei somente uma regressão em `scripts/conferir-webhook-estorno-handler.mjs`:
+três reentregas concorrentes da confirmação estornada, inclusive com pedido
+pendente, retornam histórico sem gravar/reaprovar nem executar efeitos.
+
+**Limite de acesso preservado:** o webhook não concede novo acesso por esse
+replay. Já `vincular-core`, `acesso.ts` e elegibilidade ainda usam aprovação
+histórica; esse caminho de login/concessão continua com a pendência comercial
+e de implementação registrada abaixo. Não afirmei acesso correto por mera
+chegada de REFUNDED, nem ativei revogação global/alterei direitos anteriores.
+
+### C Testes dirigidos
+
+- `node scripts/conferir-webhook-estorno-handler.mjs`: **11/11**, incluindo a
+  nova regressão concorrente, aceite histórico exato e negativa de divergência.
+- `node scripts/conferir-422-versao-publicada.mjs`: **6/6**, commit QA antigo vs
+  árvore atual com fixtures. O 422 reproduzido coincide com a resposta do painel.
+- `pnpm typecheck`: PASS. Sem build/reinício, suíte global ou ensaio financeiro.
+- Nenhum teste enviou evento ao QA/Asaas; HTTP 200 é prova LOCAL, não entrega real.
+
+### D Versão servida pelo QA fixo e banco — leitura de 25/10
+
+Vercel confirmou o mesmo alias `https://v2g-webapp-qa.vercel.app`, projeto
+`prj_1IAiggJ2vbiT2h4kmbTW3UZIAStn`, deploy READY
+`dpl_6QmuUHG8SZ2kDGyvoeTCEiC4crZS`, ainda no commit
+**`fbf00ee3af7fb3cc8c06931138011a49bcd85236`**. Push informado por Victor não
+atualizou esse alias. Não usei GET/HEAD como prova de webhook. Produção não tocada.
+
+SELECT QA `zskpijnqgkqwxksqmzmf`: o pedido conhecido continua com CREATED e
+CONFIRMED, sem REFUNDED; aprovação histórica e vínculo de perfil presentes,
+assinatura nula. A RPC inicial 3DS existe. Os objetos das duas novas migrations
+financeira/documental continuam ausentes. Não foi aplicado SQL.
+
+### E Sequência exata e menor autorização externa
+
+1. **Publicação escolhida e backup.** Victor/Central fixa a versão QA. A correção
+   mínima de replay já contida em `3d85890` usa o ledger/RPC existentes: não exige
+   migration nova só para esse ramo. Se publicar o pacote completo atual
+   `1abc8b6`, antes aplicar individualmente a migration financeira
+   `20261022152629_asaas_estados_processamento.sql`, após backup e preflight do
+   manifesto. Ela é necessária aos novos estados de risco/RECEIVED, não ao
+   reconhecimento histórico isolado. Hash permanece
+   `F2E6A009626F68CAE310546B4510EC789C30FFEC8F1B5C527A3BD5AFCF6B7F15`.
+2. A migration documental `20261022200400_manual_contract_evidence.sql`, hash
+   `B66218D8F34CB6795C99C90937B5DA61B517E061969D163EF77A44376550E4DA`, é unidade
+   independente para a conferência histórica; não é condição para escoar este
+   webhook. Cada aplicação tem autorização própria. Nada de db push geral.
+3. Publicar **somente no QA** a versão revisada, conferir SHA/alias/projeto e
+   banco/ACL. Guardar versão anterior e backup para recuperação. A aprovação de
+   publicação não implica reativar webhook. Não habilitar novas flags por dedução.
+4. Com autorização ESPECÍFICA posterior, retomar apenas **V2G WebApp QA pagamentos**.
+   A retomada permite reentrega dos eventos existentes; não cria nova cobrança.
+   Não apagar, remover, marcar entregue manualmente nem mexer na fila temporária.
+   Não assumo que o painel permita testar um evento mantendo a fila interrompida:
+   se não permitir, o primeiro HTTP real só será provado depois desta retomada.
+5. Acompanhar o mesmo PAYMENT_CONFIRMED: exigir 200 histórico no log e uma única
+   ocorrência já existente no ledger, sem assinatura/e-mail/aprovação novos. Então
+   exigir o REFUNDED original com 2xx, exatamente uma gravação da mesma cobrança
+   e projeção pública refunded. Se faltar evento retido, parar e solicitar
+   recuperação específica; não forjar dado. Se voltar erro, interromper o ensaio
+   da configuração atual conforme plano autorizado, preservar resposta e estado.
+6. Conferir identidade/negócio e ausência de nova concessão por esse replay.
+   Não homologar compra ativa usando este pedido estornado. Preservar Auth e
+   negócios anteriores; o aceite amplo de concessão por negócio continua separado.
+
+Menor ato para destravar agora: **autorizar a publicação QA de uma versão que
+contenha a correção**, escolhendo explicitamente hotfix de replay ou pacote
+completo com a unidade financeira prévia. Depois, autorização separada para
+retomar a configuração atual e acompanhar os dois eventos. Não faltam mais as
+informações do painel solicitadas em 23/10. O manifesto existente continua sendo
+`scripts/manifesto-qa-01-02.mjs`; seus dados externos embutidos são snapshot de
+23/10, e este adendo registra a leitura atual, sem apresentar o script como live.
+
+---
+
 23/10/2026, manhã de Brasília. Bloco de diagnóstico e preparação concluído.
 Leituras externas: Gmail, metadata de deploy, SELECT no QA e calendário.
 Sem envio, escrita no banco, replay remoto, nova cobrança, publicação ou acesso

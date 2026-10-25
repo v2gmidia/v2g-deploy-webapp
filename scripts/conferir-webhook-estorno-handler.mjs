@@ -48,6 +48,15 @@ test('replay do evento registrado apos estorno recebe 200 sem recorrencia ou ema
   assert.deepEqual(filtros,{ provider_event_id:confirmado.id,order_id:id,provider_charge_id:'pay_fixture',
     event_type:'PAYMENT_CONFIRMED',amount_cents:50000,due_date:'2026-10-21',provider_subscription_id:null });
 });
+
+test('repeticoes concorrentes estornadas nao reaprovam nem liberam um pedido pendente', async () => {
+  const c=contexto({statusPedido:'awaiting_payment'});
+  const respostas=await Promise.all([c.notify(confirmado),c.notify(confirmado),c.notify(confirmado)]);
+  assert.deepEqual(respostas.map(r=>r.status),[200,200,200]);
+  assert.ok(respostas.every(r=>r.body.historico===true));
+  assert.deepEqual(c.calls.map(x=>x[0]),['ledger','ledger','ledger']);
+  assert.equal(c.eventos.size,0); // Nenhuma RPC de aprovacao, efeito externo ou nova gravacao.
+});
 test('evento nao persistido ou ledger indisponivel nunca recebe aceite historico', async () => {
   for(const opcoes of [{registrado:false},{falhaLedger:true}]) {
     const c=contexto(opcoes);
