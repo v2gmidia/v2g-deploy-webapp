@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import vm from 'node:vm';
 import { prepararEmailPagamento, despacharEmailPagamento } from '../lib/contratacao/email-pagamento.ts';
+import { OCORRENCIAS_PUBLICAS } from '../lib/contratacao/estado-pagamento-publico.ts';
 const pedido = { orderId: '00000000-0000-4000-8000-000000000001', email: 'comprador@example.invalid', negocio: 'Negocio ficticio',
   statusPedido: 'payment_approved', chargeId: 'pay_fake', customerId: 'cus_fake', subscriptionId: null, totalCentavos: 50000, primeiraCompra: true };
 const pagamento = { id: 'pay_fake', customer: 'cus_fake', status: 'CONFIRMED', value: 500, subscription: null };
@@ -56,7 +57,8 @@ function adaptador({ enabled = false, adverso = false, canonical = pagamento, fl
     billing_period: 'monthly', provider_first_due_date: '2026-10-21', provider_card_flow: flow };
   const admin = { from(table) {
     operations.push(table); let mode = 'select';
-    const q = { select: () => q, eq: () => q, in: async () => ({ count: adverso ? 1 : 0, error: null }),
+    const q = { select: () => q, eq: () => q, in: async (_column,types) => ({
+      count: typeof adverso === 'string' ? Number(types.includes(adverso)) : adverso ? 1 : 0, error: null }),
       upsert: async body => { row ??= { id: 'email-id', status: 'queued', payload: body.payload }; return { error: null }; },
       update: values => { mode = 'update'; if (values.status !== 'sending' || reserva) Object.assign(row, values); return q; },
       maybeSingle: async () => ({ data: reserva ? { id: 'email-id' } : null, error: null }),
@@ -66,7 +68,7 @@ function adaptador({ enabled = false, adverso = false, canonical = pagamento, fl
   const modules = {
     'server-only': {}, './asaas-sandbox': { asaasSandbox: async () => ({ ok: true, body: canonical }) },
     './ambiente-checkout': { checkoutSandboxSeguroNesteServidor: () => true },
-    './estado-pagamento-publico': { OCORRENCIAS_PUBLICAS: ['PAYMENT_REFUNDED'] },
+    './estado-pagamento-publico': { OCORRENCIAS_PUBLICAS },
     './email-pagamento': { prepararEmailPagamento, despacharEmailPagamento },
   };
   const m = { exports: {} };
@@ -92,4 +94,11 @@ test('estorno impede e-mail e avulsa 3DS inicial aceita assinatura posterior sep
   const refund = adaptador({ enabled: true, adverso: true }); assert.equal(await refund.run(), true); assert.equal(refund.state().sends, 0);
   const flow = adaptador({ enabled: true, flow: 'initial_3ds', sub: 'sub_ja_criada' });
   assert.equal(await flow.run(), true); assert.equal(flow.state().sends, 1);
+});
+
+test('negativa de risco bloqueia email de pago; analise aprovada nao encobre pagamento canonico', async () => {
+  const denied=adaptador({enabled:true,adverso:'PAYMENT_REPROVED_BY_RISK_ANALYSIS'});
+  assert.equal(await denied.run(),true); assert.equal(denied.state().sends,0);
+  const paid=adaptador({enabled:true,adverso:'PAYMENT_APPROVED_BY_RISK_ANALYSIS'});
+  assert.equal(await paid.run(),true); assert.equal(paid.state().sends,1);
 });

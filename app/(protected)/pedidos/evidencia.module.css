@@ -1,0 +1,9 @@
+.campos { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 24px; }
+.campos input, .campos select { width: 100%; min-width: 0; }
+.confirmacoes { display: grid; gap: 16px; margin-block: 16px; }
+.secao { margin-block: 32px; }
+.secao summary { cursor: pointer; padding-block: 16px; }
+.conteudo { display: grid; gap: 24px; }
+.registro { border-top: 1px solid var(--line); padding-block: 24px; overflow-wrap: anywhere; }
+.registro h3 { margin-block: 0 12px; }
+@media (max-width: 700px) { .campos { grid-template-columns: 1fr; } }

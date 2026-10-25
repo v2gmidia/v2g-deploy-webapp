@@ -1,4 +1,54 @@
-# Execução V2G até o evento de 28/10 — espelho do plano v5
+# Execução V2G até o evento de 28/10 — espelho do plano v7
+
+## Estado vigente — revisão humana de 23/10
+
+**Direção de Victor:** hoje navegar no aplicativo e decidir o que aceita, o que precisa mudar e o que adia. Sábado24/domingo25 construção e integração; segunda26 piloto/ensaio; terça27 correções/congelamento; evento28. São metas condicionadas à prova.
+
+**Quatro frentes consultadas e com retorno:**01/02 reproduziu offline o422 da versãoQA antiga, confirmou correção local existente e preparou manifesto/preflight;03/04 entregou roteiro de seleção/onboarding/primeiro piloto;05/06 confirmou uploadQA e geração real indisponível;07/08 confirmou unidade1QA aplicada, sem prova posterior de API/números. Nenhuma frente foi mantida em repetição. Automação recorrente continua pausada.
+
+**Faltas do núcleo:** acesso vigente por pessoa/negócio; contexto/direitos e execução durável da imagem com galeria privada; backendQA e números integrados; ensaio publicado. Tokenização Asaas foi aprovada23/10 e3DS já estava liberado. Contrato/NFS-e e suas automações são evidências/recortes separados.
+
+**Instrumentos:** planilha original atualizada e relida em Agora—Victor, Resumo01–08 e Plano diário; nova aba Revisão23-10 para oito decisões, todas inicialmente A testar.31IDs/prazos históricos preservados. **Figma RELIDO, NÃO ATUALIZADO:** quota Starter recusou a escrita; seus cartões/calendário/decisões ainda estão v5. Delta v7 preservado em handoffs/figma-v7-revisao-23-10-pendente.json; isso não é aplicação. A planilha/este espelho refletem a decisão mais recente.
+
+**Avaliação:** o objetivo completo não está pronto nem garantido para26/10; geração real, acesso e números são riscos explícitos. Aprovação visual hoje define escopo e não certifica integração.
+
+Detalhamento por etapa, rotas de revisão, fontes e próximos passos: [revisao-23-10-central.md](handoffs/revisao-23-10-central.md). Abaixo permanece o histórico anterior, sem promover suas metas a provas.
+
+---
+
+## Histórico — plano v6 e treino de 22/10
+
+
+## Estado vigente — treino de 22/10, atualização após 17h BRT
+
+### Encerramento18h31 — coordenação PAUSADA; quatro frentes paradas
+
+Runtime local isolado/defaultOFF concluído:24testes/Ruff/mypy no relatório, sem app atual/QA de leitura modificados. POST503 sem dispatcher e fontes ausentes bloqueiam; não é imagem real/QA/worker. Central confrontou checkpoint/módulo/status; recebeu fechamento único do runtime. As quatro frentes chegaram à revisão/portões dos próximos recortes; automação PAUSED via ferramenta e arquivo confirmado. Não faltam só autorizações: concessão por negócio, fonte de contexto/direitos, dispatcher e galeria/identidade integrada ainda precisam de implementação/prova. Relatório curto e cinco faltas ordenadas: [fechamento-treino-22-10.md](handoffs/fechamento-treino-22-10.md). Painel/Resumo/Plano diário atualizados e relidos. Figma NÃO RELIDO/ATUALIZADO; sincronização visual pendente. Nenhum novo bloco, suite repetida, deploy, unidade2, gasto ou mensagem a pessoa. Retomada só com nova direção humana;26/10e28/10continuam metas sem garantia da entrega completa.
+
+### Atualização 18h01 — adapters concluídos, montagem local isolada com07/08
+
+05/06 entregou adapters SQL psycopg/Storage e diagnóstico das fontes existentes;18cenários integrados+17unitários locais no relatório. Central leu checkpoint/código: fontes atuais NÃO comprovam documentos/direitos/referências/orçamento, por isso loader real retorna indisponível. Não houve ligação remota/primeira imagem real. 05/06 encerrou com lista de faltas. Contrato concreto de assembly foi enviado ao07/08, que iniciou factory/runtime LOCAL defaultOFF em módulo separado, sem montar em produção ou QA GET-only; sem dispatcher durável, submissão continua bloqueada. Unidade2 de métricas permanece não autorizada. Demaisfrentes paradas; próximos portões/cursores/recibos em handoffs/treino-22-10-central.md. Planilha atualizada/relida; Figma NÃO RELIDO/ATUALIZADO. Progresso verificável nesta rodada, coordenação continua por haver esse recorte útil, sem repetir testes ou tarefas.
+
+### Atualização 17h31 — dois blocos locais concluídos, adapters do gerador em execução
+
+01/02 concluiu conferência histórica/Pix restrita por pessoa/negócio, sem cobrança ou acesso automático (10 testes + SQL descartável + tipos no relatório); Central leu checkpoint/componentes/diff. Frente parada na identificação do piloto, política de acesso e pacote QA autorizado. 05/06 concluiu passagem local WebApp→FastAPI→mock→SQL/Storage instrumentados→biblioteca (18 cenários e11 testes adapter); router ainda não montado e sem geração real. Central enviou um novo bloco local concreto somente para adapters SQL/Storage e contexto confiável, sem rede externa ou gasto. 03/04 e07/08 continuam nos portões já registrados. Nenhum teste repetido pelo Central. Últimos cursores, limites, provas e mensagens exatas em handoffs/treino-22-10-central.md; este adendo prevalece sobre os estados iniciais da rodada abaixo. Automação continua ACTIVE por haver trabalho útil; Figma NÃO RELIDO/ATUALIZADO.
+
+Esta seção e a decisão humana de 22/10 substituem os estados antigos abaixo. O histórico noturno é preservado, não descreve a rodada atual. Registro exato dos prompts, recibos, cursores e limites: [treino-22-10-central.md](handoffs/treino-22-10-central.md).
+
+- **Prioridades:** geração e arquivo recuperável, acesso ao negócio correto e números confiáveis. Venda próxima assistida por Pix. Meta humana de primeira passagem de clientes na segunda **26/10**, também data do ensaio; não é prova de prontidão. 27/10 correção/congelamento, 28/10 evento.
+- **Autorização IA atual:** geração real voltou a ser prioridade; implementação local sem gasto autorizada. O limite temporário de “somente desenho” registrado nos snapshots anteriores está superado. Piloto pago, fixtures externas e publicação continuam separados.
+- **01/02 em execução:** registro local restrito de evidência da contratação histórica por pessoa/negócio e pacote QA revisável. Não fabricar Asaas, pagamento, contrato ou acesso. Correções anteriores: 52 testes locais + 25 cenários SQL + tipos; publicação e validação novas ainda pendentes.
+- **03/04 encerrado:** 22 testes dirigidos do cenário local de agência com dois negócios passaram, sem defeito novo/código alterado. Delta operacional registrado. Aguarda a ficha mínima de UM primeiro cliente real; não haverá repetição de teste/playbook. Fonte: [piloto agência local](estado/e28-03-04-piloto-agencia-local-22-10.md).
+- **05/06 em execução:** integração LOCAL WebApp→backend→provedor simulado→arquivo→biblioteca e adaptador real sem chamada paga. Os 27 testes anteriores provam laboratório simulado; geração real para cliente ainda não comprovada. Dono único durável, snapshot, autorização, custo e retomada exigidos; QA GET-only não será relaxado.
+- **07/08 encerrou a unidade 1 REAL:** QA zskpijnqgkqwxksqmzmf, ledger **20261022200154**, hash integral conferido, quatro tabelas vazias/RLS/zero policies/ACL SELECT-only para service_role; anon/authenticated sem acesso. Catálogo/ACL anteriores comparados e preservados. Parado antes da unidade 2, que exige autorização própria. Isso NÃO resolve nem reavalia o 502. Fonte: backend/docs/estado/e28-07-unidade-1-autorizada-22-10.md (relatório e evidências lidos pelo Central).
+- **Asaas:** Central respondeu à Alice; chamado **1895741** em análise de tokenização, até quatro dias úteis. Contrato não obrigatório para prosseguir. 3DS inicial não cobre mensalidades; tokenização de produção ainda sem aprovação comprovada. Não reenviar rascunhos.
+- **Piloto humano:** outra empresa de Victor com dois negócios; nomes cadastrais, identidades, ativos e permissões reais ainda não confirmados. Cauã/designer em negociação e venda futura são relatos humanos, não registros ou acessos concedidos.
+- **Apresentação:** nova aba “Agora — Victor” no calendário original, com função utilizável, prova faltante, próxima ação humana e dono. Resumo 01-08 reconciliado por evidências, sem percentuais artificiais. Figma NÃO RELIDO/ATUALIZADO nesta rodada; quota anterior conhecida e atualização pendente, sem alegar sincronização integral.
+- **Coordenação:** quatro prompts enviados e início confirmado. Automação existente reativada a cada 30 minutos, com limite máximo de 22/10 20:00 BRT, parada por ausência de ação útil e resumo final por frente. 03/04 e 07/08 receberam pedido único de fechamento, sem novo bloco. Não interromper chat ativo nem repetir prompt por horário.
+
+**Domínio:** www abriu no Chrome e respondeu 200; sem www expirou no IP 216.198.79.1 nesta rede. Alternativa recomendada 64.29.17.1 respondeu com redirect. DNS NÃO foi alterado pelo Central; não há autorização específica confirmada para essa troca. Não tratar agradecimento como prova de correção.
+
+## Histórico anterior — manter como evidência datada
 
 ## Encerramento da noite 21→22/10 — 22/10, 01:46
 

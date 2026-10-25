@@ -688,4 +688,18 @@ export const MIGRATIONS: MigrationDeclarada[] = [
     ],
     foraDoAlcance: ["proposta local NAO aplicada; flag QA separada", "operador autenticado, origem e lead preservados; direct_pix legado nao convertido", "RPCs comerciais novas sem remover RPCs self-service; 3DS exige dependencia anterior"],
   },
+  {
+    arquivo: "20261022152629_asaas_estados_processamento.sql",
+    cria: [{ tipo: "rpc", nome: "evento_asaas_impede_confirmacao" }],
+    foraDoAlcance: ["proposta local NAO aplicada", "estados intermediarios nao aprovam pagamento; negativa bloqueia confirmacao tardia da mesma cobranca", "RPCs preservam grants, origem, IDs e replay; RECEIVED tambem confirma a primeira cobranca 3DS"],
+  },
+  {
+    arquivo: "20261022200400_manual_contract_evidence.sql",
+    cria: [
+      { tipo: "tabela", nome: "commercial_manual_evidence" },
+      { tipo: "rpc", nome: "registrar_evidencia_manual" },
+      { tipo: "rpc", nome: "revisar_evidencia_manual" },
+    ],
+    foraDoAlcance: ["proposta LOCAL nao aplicada; depende de carteira e ledger existentes, nao da ativacao do checkout/3DS", "registro documental por negocio nao concede acesso nem aprova pagamento", "identidade exata, deduplicacao, RLS/ACL e ocorrencias exigem teste SQL/QA"],
+  },
 ];

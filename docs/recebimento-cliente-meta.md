@@ -1,8 +1,8 @@
 # Recebimento de cliente na Meta
 
-**Estado:** procedimento operacional reconciliado com o código pós-push e pronto para validação com um cliente-piloto
+**Estado:** procedimento operacional reconciliado e passagem dos primeiros dez clientes preparada para começar por um cliente-piloto autorizado
 
-**Atualizado em:** 21/10/2026, bloco noturno 21→22/10
+**Atualizado em:** 22/10/2026
 
 **Escopo:** cliente já pagou, concluiu o onboarding e precisa entregar os acessos mínimos para a V2G operar e medir anúncios.
 
@@ -297,3 +297,193 @@ Continuam exigindo autorização específica: criar conta/usuário/fixture exter
 - Documentação oficial: [níveis de acesso da Graph API](https://developers.facebook.com/docs/graph-api/overview/access-levels/), [acesso a Páginas](https://www.facebook.com/help/289207354498410/) e [adicionar parceiro ao portfólio empresarial](https://www.facebook.com/business/help/1717412048538897).
 
 Este documento não comprova publicação real, acesso atual de um cliente nem aprovação da Meta. Esses estados só fecham com evidência executada no ambiente correspondente.
+
+## 13. Passagem dos primeiros dez clientes para a plataforma
+
+Esta seção organiza a passagem operacional dos dez clientes relatados pelo Victor. `C01` a `C10` são **lugares de controle**, não nomes de clientes, pagamentos confirmados, contas criadas ou acessos concedidos. Cada lugar começa sem estado operacional até que uma fonte verificável seja ligada a ele.
+
+### Regras da passagem
+
+1. Começar por **um** cliente-piloto autorizado. Os outros nove permanecem aguardando; não são processados em lote antes do aceite do piloto.
+2. Não criar nova compra para cliente que já contratou. A contratação histórica precisa ser localizada e reconciliada com pessoa, negócio e acesso pela frente `E28-01-A`; se faltar o vínculo técnico LP → pedido → acesso, a pendência pertence a `E28-01-B`.
+3. Não unir duas empresas porque usam o mesmo grupo, e-mail, telefone, responsável ou canal de WhatsApp. O vínculo é pelo negócio da V2G e seus IDs verificáveis.
+4. Cliente não recebe papel no Meta for Developers. Acesso comercial é concedido por parceria/portfólio e limitado aos ativos necessários.
+5. Acesso manual, leitura pela API e publicação pela API continuam com aceites independentes.
+6. Nenhuma senha, token, código de 2FA, chave, cartão ou segredo entra nesta matriz.
+7. “Pedido enviado”, “parceiro adicionado” e “campanha criada” não significam, respectivamente, pagamento confirmado, API autorizada ou anúncio em veiculação.
+
+### Ficha copiável por negócio
+
+Criar uma ficha desta para cada lugar `C01` a `C10`. Um campo sem fonte permanece `não verificado`; não completar por inferência.
+
+```text
+PASSAGEM PARA A PLATAFORMA — C__
+
+Identidade e responsabilidade
+[ ] Cliente/negócio identificado:
+[ ] Fonte da identificação:
+[ ] Responsável autorizado do cliente:
+[ ] O que essa pessoa pode autorizar:
+[ ] Gestor V2G responsável:
+
+Contratação e conta V2G
+[ ] Conta WebApp:
+[ ] business_id:
+[ ] Pedido/contratação histórica:
+[ ] Estado da prova de pagamento/contratação:
+[ ] Se falta reconciliação: E28-01-A / E28-01-B
+[ ] Não foi criada nova compra para substituir contratação histórica:
+
+Ativos Meta — preencher somente os usados
+[ ] Portfólio empresarial — nome/ID/proprietário:
+[ ] Conta de anúncios — nome/ID/proprietário:
+[ ] Página — nome/ID/proprietário:
+[ ] Instagram — @/ID/proprietário ou não usado:
+[ ] Dataset/pixel — nome/ID/proprietário ou não usado:
+[ ] Tarefas efetivamente concedidas em cada ativo:
+[ ] Acesso manual comprovado em sessão do gestor:
+[ ] Leitura pela API comprovada separadamente:
+[ ] Publicação pela API comprovada separadamente:
+
+Onboarding e primeira operação
+[ ] Onboarding/marca:
+[ ] Materiais recebidos e fonte:
+[ ] Hipótese inicial registrada como hipótese:
+[ ] Peça e versão exatas aprovadas:
+[ ] Forma da aprovação registrada:
+[ ] Orçamento, período e conta autorizados:
+
+Campanha e dados
+[ ] Campaign ID:
+[ ] Ad set ID:
+[ ] Ad ID:
+[ ] Creative ID + versão da peça:
+[ ] Fonte das métricas:
+[ ] Período/fuso/atribuição da leitura:
+[ ] Data/hora da coleta:
+[ ] Vínculo negócio → conta → campanha → anúncio → criativo confirmado:
+
+Controle da passagem
+[ ] Etapa atual:
+[ ] Evidência disponível:
+[ ] Impedimento:
+[ ] Responsável pelo impedimento:
+[ ] Próximo ato único:
+```
+
+### Matriz dos dez lugares
+
+As células vazias são intencionais. O estado só muda quando houver evidência ligada à ficha daquele lugar.
+
+| Lugar | Cliente / `business_id` / conta WebApp | Contratação histórica e prova | Responsável cliente / gestor V2G | Ativos e proprietários | Onboarding, materiais, hipótese, peça e orçamento | IDs de campanha e contrato de métricas | Etapa / evidência / impedimento / dono / próximo ato |
+|---|---|---|---|---|---|---|---|
+| C01 | — | — | — | — | — | — | — |
+| C02 | — | — | — | — | — | — | — |
+| C03 | — | — | — | — | — | — | — |
+| C04 | — | — | — | — | — | — | — |
+| C05 | — | — | — | — | — | — | — |
+| C06 | — | — | — | — | — | — | — |
+| C07 | — | — | — | — | — | — | — |
+| C08 | — | — | — | — | — | — | — |
+| C09 | — | — | — | — | — | — | — |
+| C10 | — | — | — | — | — | — | — |
+
+## 14. Roteiro do gestor — um piloto antes dos outros nove
+
+| Ordem | Ação real | Evidência mínima | Caminho manual válido / bloqueio |
+|---|---|---|---|
+| 1 | Selecionar um cliente-piloto autorizado; conferir identidade, contratação histórica, conta WebApp e negócio. | fonte da contratação, pessoa correta, `business_id` e ficha C__ aberta | se a prova histórica não fecha, encaminhar a `E28-01-A`; se o vínculo LP/pedido/acesso falta, `E28-01-B`. Não gerar nova compra. |
+| 2 | O responsável do cliente adiciona a V2G como parceira e compartilha apenas os ativos necessários. O gestor testa o acesso manual. | portfólio, ativo, proprietário, tarefa concedida e sessão do gestor | reunião assistida de acesso. Não pedir senha/2FA, papel Developers, finanças ou controle total desnecessário. |
+| 3 | Conferir nomes, IDs, proprietários e permissões contra as telas/fontes da Meta. | inventário datado e proprietário de cada ativo | acesso manual verde não torna API verde. Registrar leitura e publicação por API como aceites separados. |
+| 4 | Entregar os contratos mínimos às frentes responsáveis. | handoff identificado pelo lugar C__, negócio e fonte dos IDs | para `07/08`: `business_id`, conta, owners, fonte, período e autorização de leitura; para `05/06`: negócio, materiais, hipótese e peça/versão aprovada. Nunca incluir token. |
+| 5 | Depois da aprovação formal da peça exata, conta/orçamento corretos e autorização específica, o gestor publica manualmente. | aprovação, operador, horário e IDs retornados pela Meta | publicação manual é o caminho atual. Pedido enviado não é “no ar”; registrar estado lido na Meta. Publicação por API permanece capacidade separada. |
+| 6 | Conferir os dados no app usando sessão comum do cliente, sem papel Meta Developers. | cliente vê somente o próprio negócio, conta e período; fonte e atualização visíveis | o operador ver a tela não substitui o cliente. Métricas seguem `E28-07-A/B/C`; ensaio externo com sessão comum é `E28-07-D`. |
+| 7 | Fazer a conferência final com o cliente, registrar pendências e passar para a rotina. | aceite da passagem, impedimentos, dono e próximo ato | só replicar o processo para C02–C10 depois que o piloto cumprir o aceite abaixo. |
+
+### Aceite do piloto
+
+O piloto termina quando:
+
+- pessoa, contratação, conta WebApp e `business_id` pertencem ao mesmo negócio;
+- ativos necessários têm ID, proprietário, tarefa concedida e acesso manual comprovados;
+- peça/versão, conta, orçamento e autorização da operação são inequívocos;
+- publicação manual, quando autorizada, tem IDs e estado lido na Meta;
+- dados exibidos ao cliente têm conta, fonte, período, fuso, atribuição e horário de coleta;
+- dado ausente continua ausente/desconhecido, nunca vira zero inventado;
+- outro negócio é negado e nenhum canal compartilhado une empresas;
+- toda pendência tem dono e próximo ato.
+
+### Método disponível, ação humana e capacidade futura
+
+| Tema | Método já disponível | Ação humana necessária | Ainda não declarar pronto |
+|---|---|---|---|
+| Conta V2G | multiconta e onboarding preservados no recorte 03/04 | identificar o negócio correto e reconciliar contratação histórica | importação automática dos dez clientes |
+| Acesso Meta | parceria e tarefas mínimas nos ativos | cliente concede; gestor confere manualmente | Developers para cliente, acesso implícito ou API liberada pela parceria |
+| Peça | materiais e aprovação da versão pelo procedimento vigente | cliente aprova versão exata; gestor registra | geração/publicação automática por arrasto |
+| Publicação | operação manual pelo Gerenciador quando autorizada | gestor confere conta, orçamento e autorização | publicação API sem aceite próprio |
+| Métricas | contrato de leitura preparado pela frente 07/08 | entregar IDs/owner/fonte/período e comparar a mesma janela | números externos confiáveis antes de `E28-07-A/B/C/D` |
+| Reunião | agenda externa do Google e confirmação por e-mail | conferir reserva, remarcar/cancelar pelo Google e guardar evidência humana | agenda própria, sincronização automática ou reserva única certificada |
+
+### Handoffs sem segredo
+
+- **Para 01/02:** lugar C__, pessoa/negócio, fonte da contratação histórica, pedido encontrado ou ausente e divergência objetiva. `E28-01-A` reconcilia pagamento, pessoa, negócio e próximo acesso; `E28-01-B` trata a continuidade do vínculo LP → pedido → acesso. Contrato/nota seguem o procedimento de `E28-02-A`, sem declarar assinatura ou emissão sem prova.
+- **Para 05/06:** lugar C__, `business_id`, marca/materiais com fonte, hipótese identificada como hipótese, peça/versão exata, aprovação e autorização de orçamento. Não enviar token nem tratar peça aprovada como anúncio no ar.
+- **Para 07/08:** lugar C__, `business_id`, conta de anúncios, campanha/conjunto/anúncio/creative quando existirem, proprietário/autorização, fonte, período, fuso, atribuição e horário de coleta. `E28-07-A` prova acesso/origem; `E28-07-B` liga campanha ao negócio; `E28-07-C` confere os números; `E28-07-D` ensaia cliente externo em sessão comum.
+
+### Próximo ato humano único para iniciar
+
+Victor escolhe **um** lugar para ser o piloto e fornece, por canal seguro: nome do cliente, fonte da contratação histórica, conta/e-mail WebApp, responsável autorizado do cliente, gestor V2G, ID do portfólio, nome/ID da conta de anúncios e da Página, mais Instagram/dataset somente se usados. O primeiro encontro apenas preenche a ficha, reconcilia a contratação e testa acesso manual; não cria nova compra, campanha, convite ou publicação por este documento.
+
+## 15. Delta do piloto de agência com dois negócios
+
+O cenário informado pelo Victor é uma agência/responsável que atende dois negócios clientes. Isso define o formato do ensaio, mas **não identifica** a empresa, os anunciantes, o contratante, o pagador, os proprietários dos ativos ou as permissões atuais.
+
+### Papéis que permanecem separados
+
+- **Agência/responsável:** pessoa ou empresa que coordena a operação e pode representar os negócios somente até o limite comprovado da sua autorização.
+- **Negócio anunciante:** empresa cuja marca, oferta, materiais, conta de anúncios, Página, Instagram, campanha e métricas estão sendo operados.
+- **Pagador/contratante:** pessoa ou empresa ligada à contratação da V2G e à prova financeira correspondente. Pode coincidir com a agência ou com um anunciante, mas isso não é presumido.
+- **Operador V2G:** pessoa autorizada internamente a executar a passagem. A intenção de Cauã operar não comprova contratação, convite, atribuição ou permissão.
+
+Uma mesma conta WebApp pode exigir seleção entre negócios autorizados, mas os dados continuam separados por `business_id`. Usar o mesmo responsável, e-mail, grupo de WhatsApp, agência ou pagador não autoriza unir onboarding, respostas, materiais, reunião, conta de anúncios ou métricas.
+
+Uma conta de anúncios também **não vira automaticamente dois negócios** porque a agência atende ambos. Se a mesma conta aparecer nos dois inventários, a associação fica bloqueada para decisão humana até existir prova de proprietário, anunciante, contratação e regra comercial. Este documento não escolhe o desenho jurídico/comercial.
+
+### Ensaio local reutilizado
+
+A regressão local dirigida de 22/10 confirmou no código existente:
+
+1. dois negócios autorizados exigem escolha explícita;
+2. preferência/cookie não autoriza ID forjado, revogado ou pendente;
+3. um terceiro usuário ou perfil sem pedido aprovado não recebe o negócio;
+4. pedidos mistos não vazam liberação entre negócios;
+5. abas antigas de onboarding/contas/marca não gravam após a troca de negócio;
+6. retomada preserva respostas, contas, procedência e blocos do negócio correto;
+7. onboarding concluído mantém reunião pendente até confirmação externa;
+8. e-mail, calendário, CNPJ ou vínculo ambíguo de outro negócio não confirmam a reunião.
+
+Isso fecha o cenário **LOCAL fictício** de 03/04. Não comprova a agência real, os dois clientes, o terceiro usuário real, QA, produção, acesso Meta ou API.
+
+### Ficha mínima ainda ausente para autorizar o primeiro negócio real
+
+Preencher somente para o primeiro negócio do piloto. O segundo aguarda o aceite do primeiro.
+
+```text
+PILOTO DE AGÊNCIA — PRIMEIRO NEGÓCIO
+
+[ ] Nome cadastral da agência/responsável:
+[ ] Pessoa autorizada e fonte do poder para representar o anunciante:
+[ ] Nome cadastral e CNPJ do primeiro negócio anunciante:
+[ ] Quem é o contratante da V2G e fonte da contratação histórica:
+[ ] Quem é o pagador e relação comprovada com o anunciante:
+[ ] Conta/e-mail WebApp que fará a seleção dos negócios:
+[ ] business_id existente ou confirmação de que ainda precisa ser reconciliado:
+[ ] Gestor V2G responsável; se for Cauã, estado verificável da autorização interna:
+[ ] Nome/ID/proprietário do portfólio empresarial do anunciante:
+[ ] Nome/ID/proprietário da conta de anúncios:
+[ ] Nome/ID/proprietário da Página:
+[ ] Instagram e dataset somente se usados, com ID e proprietário:
+[ ] Confirmação de que nenhum desses ativos será associado ao segundo negócio por inferência:
+```
+
+Não incluir senha, token, código de 2FA, chave, cartão ou captura que exponha segredo. Com essa ficha conferida, o próximo ato é uma sessão assistida para testar **somente acesso manual** ao primeiro negócio. Leitura API e publicação API continuam aceites posteriores e separados.

@@ -35,7 +35,7 @@ export async function garantirAssinaturaApos3ds(pedido: PedidoParaAssinatura3ds,
   const payment = await deps.lerCobranca(pedido.provider_charge_id);
   if (!payment || payment.id !== pedido.provider_charge_id || payment.customer !== pedido.provider_customer_id
       || payment.externalReference !== pedido.id || payment.billingType !== "CREDIT_CARD"
-      || payment.status !== "CONFIRMED" || payment.deleted === true
+      || !["CONFIRMED", "RECEIVED"].includes(String(payment.status)) || payment.deleted === true
       || payment.value !== pedido.total_cents / 100 || payment.dueDate !== pedido.provider_first_due_date
       || payment.subscription != null) return false;
   const valida = async (sub: Registro) => {

@@ -14,6 +14,20 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-22 — Passagem assistida e coordenação até revisão de Victor
+
+**Direção humana no Central.** Victor pediu novos blocos aos quatro chats, acompanhamento enquanto treina e parada quando não houver ação autônoma útil ou houver repetição. A apresentação do andamento deve mostrar em linguagem simples o que funciona, o que falta para o cliente, o próximo ato, o responsável e a menor ação humana necessária.
+
+**Ordem comercial atual.** A próxima venda continuará assistida por Pix, sem encaminhar o comprador imediatamente ao site. A intenção é levar clientes à plataforma na segunda-feira, 26/10, também data do ensaio; é meta, não operação comprovada. Isso atualiza a prioridade de compra única de 21/10 para o período imediato, sem abandonar o checkout futuro nem criar autorização de cobrança/produção.
+
+**Piloto de passagem.** A outra empresa de Victor, que atende dois negócios, será o cenário inicial de agência/multiconta. Nome cadastral, IDs, responsáveis e ativos não foram confirmados. Preparar/ensaiar localmente com dados fictícios; criação/vínculo/acesso reais têm portão próprio. A intenção de trazer clientes não autoriza misturar dados, operar ativos ou conceder permissões por dedução. Designer e Cauã em negociação, e venda próxima, são relatos humanos, não contratação concluída.
+
+**Geração e autorização QA já confirmadas anteriormente no Central.** Victor respondeu “Sim, geração real é prioridade”: implementação pode avançar em blocos locais sem gasto, substituindo o limite temporário de somente desenho. Piloto pago/publicação continuam separados. Também respondeu “Autorizar somente a unidade 1 no QA” à pergunta que nomeava zskpijnqgkqwxksqmzmf, quatro tabelas backend vazias/protegidas e parada antes da unidade 2. Essa autorização específica não alcança demais unidades, migrations financeiras, fixtures ou deploy.
+
+**Limites.** Sem commit, push, merge, deploy, segredos, chamadas pagas, campanhas, mensagens a pessoas ou configuração externa por autonomia genérica. Central pode coordenar somente os quatro chats autorizados. As decisões de política comercial ainda não tomadas permanecem explícitas; não liberar acesso por aprovação financeira histórica de compra estornada.
+
+**Registro:** handoffs/treino-22-10-central.md. Ensaio 26/10, congelamento 27/10 e evento 28/10 continuam metas condicionadas à prova.
+
 ### 2026-10-21 — Desconto à vista também no semestral
 
 **Correção direta de Victor no chat.** Há desconto por pagamento à vista tanto no semestral quanto no anual. A ausência de desconto semestral registrada em 06/10 fica substituída por esta confirmação. Não remover a opção semestral por causa daquele registro antigo. O código atual calcula 5% no semestral (R$ 2.850 por conta) e 12% no anual (R$ 5.280 por conta); nenhum percentual ou preço foi alterado neste bloco.

@@ -93,7 +93,7 @@ export async function POST(req: NextRequest) {
       try { emailOk = await processarEmailPagamento(admin, pedido.id, financeiro.cobrancaId); }
       catch { emailOk = false; }
     }
-    if (financeiro.tipo === "PAYMENT_CONFIRMED") {
+    if (ehAprovacao) {
       try { assinaturaOk = await processarAssinatura3ds(admin, pedido.id); }
       catch { assinaturaOk = false; }
     }

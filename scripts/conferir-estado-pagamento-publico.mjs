@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import ts from 'typescript';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { estadoPagamentoPublico, ehEstadoPagamentoPublico, mensagemEstadoPagamento } from '../lib/contratacao/estado-pagamento-publico.ts';
+import { estadoPagamentoPublico, ehEstadoPagamentoPublico, mensagemEstadoPagamento, OCORRENCIAS_PUBLICAS } from '../lib/contratacao/estado-pagamento-publico.ts';
 import { consultarEstadoPagamento } from '../lib/contratacao/consultar-estado-pagamento.ts';
 import { temaDoCookie } from '../lib/tema.ts';
 
@@ -42,11 +42,19 @@ test('estorno concluido prevalece sobre eventos tardios e ordem de chegada', () 
 });
 test('recusa, falha 3DS e contestacao pedem revisao sem prometer pagamento ou acesso', () => {
   for (const tipo of ['PAYMENT_CHARGEBACK_REQUESTED', 'PAYMENT_CHARGEBACK_DISPUTE',
-    'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED', 'PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED']) {
+    'PAYMENT_CREDIT_CARD_CAPTURE_REFUSED', 'PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED',
+    'PAYMENT_REPROVED_BY_RISK_ANALYSIS']) {
+    assert.ok(OCORRENCIAS_PUBLICAS.includes(tipo));
     const estado = estadoPagamentoPublico('payment_approved', ocorrencias(tipo));
     assert.equal(estado, 'payment_review');
     assert.doesNotMatch(mensagemEstadoPagamento(estado), /já pode criar|confirmado pelo Asaas/);
   }
+});
+
+test('risco pendente/aprovado e autorizado nao entram na projecao adversa nem antecipam pagamento', async () => {
+  for (const tipo of ['PAYMENT_AWAITING_RISK_ANALYSIS','PAYMENT_APPROVED_BY_RISK_ANALYSIS','PAYMENT_AUTHORIZED'])
+    assert.equal(OCORRENCIAS_PUBLICAS.includes(tipo),false);
+  assert.equal(await consultarEstadoPagamento(banco(),{...pedido,status:'awaiting_payment'}),'awaiting_payment');
 });
 test('consulta fica restrita ao pedido E cobranca inicial; nao mistura outro ciclo', async () => {
   const db = banco(ocorrencias('PAYMENT_REFUNDED'));

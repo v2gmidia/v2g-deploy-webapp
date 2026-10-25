@@ -63,13 +63,20 @@ test('callback ou pedido pendente nao cria assinatura', async () => {
   assert.equal(d.calls.length, 0);
 });
 test('pagamento, cliente, valor, data, origem e status precisam coincidir com a consulta canonica', async () => {
-  for (const change of [{ status: 'PENDING' }, { status: 'RECEIVED' }, { customer: 'cus_outro' },
+  for (const change of [{ status: 'PENDING' }, { status: 'AUTHORIZED' }, { status: 'AWAITING_RISK_ANALYSIS' }, { customer: 'cus_outro' },
     { id: 'pay_outro' }, { value: 501 }, { externalReference: 'outro' }, { deleted: true },
     { dueDate: '2099-02-01' }, { subscription: 'sub_outro' }]) {
     const d = deps({ lerCobranca: async () => ({ ...payment, ...change }) });
     assert.equal(await garantirAssinaturaApos3ds(base, d, '2099-01-31'), false);
     assert.equal(d.calls.length, 0);
   }
+});
+
+test('RECEIVED canonico tambem permite recorrencia do proximo mes, nao uma nova primeira cobranca', async () => {
+  const d = deps({ lerCobranca: async () => ({ ...payment, status: 'RECEIVED' }) });
+  assert.equal(await garantirAssinaturaApos3ds(base, d, '2099-01-31'), true);
+  assert.equal(d.calls.filter(c => c[0] === 'criar').length, 1);
+  assert.equal(d.calls.find(c => c[0] === 'criar')[1].nextDueDate, '2099-02-28');
 });
 test('token ausente, estorno/contestacao e vencimento passado bloqueiam nova recorrencia', async () => {
   for (const [d, hoje] of [

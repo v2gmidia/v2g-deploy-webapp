@@ -5,6 +5,7 @@ import { tituloDaAba } from "@/lib/titulos";
 import { ultimoDocumentoPorPedido, type DocumentoPorPedido } from "@/lib/contratacao/documentos";
 import { AprovarPix, ComprovantePix, NovoPedidoPix } from "./Formularios";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
+import { ConferenciasManuais } from "./ConferenciasManuais";
 
 export const metadata = tituloDaAba("/pedidos");
 export const dynamic = "force-dynamic";
@@ -28,7 +29,7 @@ type PedidoAssistido = {
 };
 
 export default async function PedidosPage({ searchParams }: {
-  searchParams: Promise<{ registro?: string }>;
+  searchParams: Promise<{ registro?: string; negocio?: string }>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -80,7 +81,7 @@ export default async function PedidosPage({ searchParams }: {
     console.error("[pedidos] falha ao consultar ::", error instanceof Error ? error.message : "erro desconhecido");
     falhaConsulta = true;
   }
-  const { registro } = await searchParams;
+  const { registro, negocio } = await searchParams;
   const vinculoLeadAtivo = process.env.V2G_LEAD_ORDER_LINK_ENABLED === "true";
   const avisos: Record<string, string> = {
     asaas: "Pedido de teste registrado. Confira os dados antes de abrir o pagamento pelo Asaas. Nenhuma cobrança ou mensagem foi criada por este registro.",
@@ -97,6 +98,7 @@ export default async function PedidosPage({ searchParams }: {
       <p>Contabilizei informou Simples Nacional, item de serviço 17.06 e código municipal 170601000 para a V2G. Fonte: resposta repassada por Gabriel em 07/10.</p>
       <p>Antes de emitir: conferir o serviço no cadastro fiscal do Asaas, alíquotas e retenções com a contabilidade, dados do tomador e competência da cobrança. Nenhuma emissão automática está ativa.</p>
     </section>
+    <ConferenciasManuais businessId={negocio} operatorId={user.id}/>
     {avisos[registro ?? ""] && <p className="form-notice">{avisos[registro ?? ""]}</p>}
     {!falhaConsulta && <NovoPedidoPix referencia={crypto.randomUUID()} vinculoLeadAtivo={vinculoLeadAtivo} asaasAtivo={asaasAtivo} />}
     <h2>Pedidos recentes</h2>
