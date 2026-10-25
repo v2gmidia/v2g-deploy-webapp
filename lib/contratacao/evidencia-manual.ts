@@ -1,4 +1,4 @@
-import { cnpjTemDigitosValidos } from "./qualificacao.ts";
+import { lerDocumentoContratante } from "./documento-contratante.ts";
 import { OCORRENCIAS_PUBLICAS } from "./estado-pagamento-publico.ts";
 
 export const UUID_EVIDENCIA = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -18,11 +18,11 @@ export function validarEvidenciaManual(form: FormData, hoje = hojeDaEvidencia())
   const campo = (nome: string) => typeof form.get(nome) === "string" ? String(form.get(nome)).trim() : "";
   const id=campo("id"), business_id=campo("businessId"), order_id=campo("orderId") || null,
     proposed_profile_id=campo("profileId") || null, claimed_email=campo("email").toLowerCase(),
-    claimed_cnpj=campo("cnpj").replace(/\D/g,""), source_system=campo("source"),
+    claimed_cnpj=lerDocumentoContratante(campo("cnpj"))?.numero ?? "", source_system=campo("source"),
     source_reference=campo("reference"), source_date=campo("sourceDate");
   if (![id,business_id,...[order_id,proposed_profile_id].filter((x): x is string => x !== null)].every(x=>UUID_EVIDENCIA.test(x))
     || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(claimed_email) || claimed_email.length>254
-    || !cnpjTemDigitosValidos(claimed_cnpj)) return {erro:"Confira negócio, pedido, perfil, e-mail e CNPJ exatos. Não use dados aproximados."};
+    || !claimed_cnpj) return {erro:"Confira negócio, pedido, perfil, e-mail e CPF ou CNPJ do contratante exatos. Não use dados aproximados."};
   if (source_system!=="direct_pix" && source_system!=="historical_contract") return {erro:"Informe se a evidência é de Pix ou de contratação histórica."};
   if (source_reference.length<5 || source_reference.length>300 || /[\r\n\x00]/.test(source_reference)) return {erro:"Informe uma referência localizável, de 5 a 300 caracteres, sem senha ou chave."};
   if (!/^\d{4}-\d{2}-\d{2}$/.test(source_date) || !Number.isFinite(Date.parse(source_date+"T12:00:00Z"))

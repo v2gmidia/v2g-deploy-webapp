@@ -12,7 +12,7 @@ export function CriteriosSenha({ senha, id }: { senha: string; id: string }) {
     { ok: criterios.especial, texto: "Caractere especial, como !, ? ou @" },
   ];
 
-  return <ul className="criterios-senha" id={id} aria-label="Para uma senha forte, inclua:">
+  return <ul className="criterios-senha" id={id} aria-label="Critérios para criar a senha:">
     {itens.map(({ ok, texto }) => <li key={texto} className={ok ? "atendido" : undefined}>
       <span aria-hidden="true">{ok ? "✓" : "○"}</span>{texto}
     </li>)}

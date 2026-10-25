@@ -54,7 +54,7 @@ export const PASSOS: Passo[] = [
       "Depois de concluir as perguntas, o próximo passo é escolher um horário. A reunião só estará marcada quando a reserva for confirmada.",
   },
   {
-    titulo: "O negócio precisa ter CNPJ e vender pelo WhatsApp.",
+    titulo: "O contratante informa CPF ou CNPJ e vende pelo WhatsApp.",
     sub: "Essas duas condições são declaradas antes da compra. O gestor também avalia o Instagram e pode recomendar ajustes de marca e atendimento.",
     icone: (
       <svg width="28" height="28" viewBox="0 0 10 10" fill="currentColor" aria-hidden="true">
@@ -86,7 +86,7 @@ export const PASSOS: Passo[] = [
     recibo: [
       "Vendas e retorno não são garantidos",
       "Primeira campanha publicada pelo gestor após as conferências",
-      "CNPJ e venda pelo WhatsApp são condições da compra",
+      "CPF ou CNPJ do contratante e venda pelo WhatsApp são condições da compra",
       "Permanência mínima de seis meses; consulte o contrato",
     ],
   },

@@ -14,6 +14,24 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-10-25 — Mínimo de senha revisado e confirmação após redefinição
+
+**Direção de Victor, transmitida pelo Central:** retirar a exigência fixa de 15 caracteres, manter os requisitos fortes existentes e corrigir a conclusão da redefinição sem perder os dois controles de mostrar/ocultar senha. Escolha de implementação local neste bloco: mínimo de 12 caracteres com maiúscula, minúscula, número e símbolo, confirmação igual e recusa de padrões previsíveis. O indicador descreve critérios atendidos; tamanho isolado não mede segurança. Login com senha existente não recebe essa nova validação.
+
+**Escopo:** código, testes e configuração Auth apenas local; sem alterar Auth remoto, senha real, usuário, deploy ou migration. A política do provedor no QA precisa ser conferida antes da publicação coordenada. A recuperação deve terminar em confirmação pública com ação de entrar; falha de logout não pode esconder uma senha já salva. A prova de acesso a negócio estornado é registrada separadamente e não autoriza bloquear toda a conta.
+
+**Registro:** `estado/e28-01-02-senha-retorno-acesso-25-10.md`.
+
+### 2026-10-25 — Contratante pode usar CPF ou CNPJ
+
+**Decisão direta de Victor, transmitida pelo Central com implementação local autorizada.** Contratação, primeiro acesso, identificação comercial, multiconta, agenda e evidências passam a aceitar CPF válido de 11 dígitos ou CNPJ válido de 14 dígitos, com tipo explícito `cpf|cnpj`. Esta decisão substitui a exigência histórica de CNPJ como condição de contratação. Continua vigente a condição de venda por conversa no WhatsApp neste recorte.
+
+**Identidade e compatibilidade.** Documento do contratante não é documento do titular do cartão. Dígitos verificadores não comprovam titularidade ou situação cadastral; não consultar nem inferir Receita. Manter IDs, CNPJs e nomes técnicos legados nesta transição, acrescentando tipo explícito. Um mesmo e-mail ou documento pode aparecer em negócios distintos: não fundir negócios/pedidos por nome, contato ou documento. Reenvio da mesma referência e vínculo explícito do lead conservam sua idempotência.
+
+**Escopo autorizado.** Implementação e testes locais, migration aditiva revisável, documentação e rollback. Sem aplicação no Supabase, commit, push, deploy, dados reais, cobrança, e-mail, contrato, nota ou Meta. LP, backend e contrato não são editados neste bloco; suas dependências ficam registradas separadamente. A decisão não altera a pendência de acesso pós-estorno nem autoriza liberar acesso pela aprovação histórica de compra estornada.
+
+**Registro:** `estado/e28-01-02-cpf-cnpj-contratante-25-10.md`.
+
 ### 2026-10-22 — Passagem assistida e coordenação até revisão de Victor
 
 **Direção humana no Central.** Victor pediu novos blocos aos quatro chats, acompanhamento enquanto treina e parada quando não houver ação autônoma útil ou houver repetição. A apresentação do andamento deve mostrar em linguagem simples o que funciona, o que falta para o cliente, o próximo ato, o responsável e a menor ação humana necessária.

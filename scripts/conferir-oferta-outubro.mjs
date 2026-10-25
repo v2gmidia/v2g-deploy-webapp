@@ -12,12 +12,12 @@ test("a cobrança base é mensal por conta de anúncios e não aplica desconto i
   assert.equal(mensalidadeBaseCentavos(Number.MAX_SAFE_INTEGER), null);
 });
 
-test("sem declaração positiva de CNPJ e venda por WhatsApp não há qualificação", () => {
+test("sem declaração positiva de CPF/CNPJ do contratante e venda por WhatsApp não há qualificação", () => {
   assert.deepEqual(avaliarQualificacao({ declaraTerCnpj: true, declaraVenderPeloWhatsApp: true }), {
     apto: true, motivos: [],
   });
   assert.deepEqual(avaliarQualificacao({ declaraTerCnpj: null, declaraVenderPeloWhatsApp: true }), {
-    apto: false, motivos: ["cnpj_nao_declarado"],
+    apto: false, motivos: ["documento_nao_declarado"],
   });
   assert.deepEqual(avaliarQualificacao({ declaraTerCnpj: true, declaraVenderPeloWhatsApp: false }), {
     apto: false, motivos: ["venda_por_whatsapp_nao_declarada"],

@@ -702,4 +702,14 @@ export const MIGRATIONS: MigrationDeclarada[] = [
     ],
     foraDoAlcance: ["proposta LOCAL nao aplicada; depende de carteira e ledger existentes, nao da ativacao do checkout/3DS", "registro documental por negocio nao concede acesso nem aprova pagamento", "identidade exata, deduplicacao, RLS/ACL e ocorrencias exigem teste SQL/QA"],
   },
+  {
+    arquivo: "20261025215302_cpf_cnpj_contratante_v0.sql",
+    cria: [
+      { tipo: "coluna", tabela: "commercial_orders", nome: "contractor_document_type" },
+      { tipo: "coluna", tabela: "onboarding_meetings", nome: "contractor_document_type" },
+      { tipo: "coluna", tabela: "commercial_manual_evidence", nome: "contractor_document_type" },
+      { tipo: "rpc", nome: "documento_contratante_valido" },
+    ],
+    foraDoAlcance: ["proposta LOCAL NAO aplicada; exige cadeia comercial, agenda e evidencia manual", "tipo gerado, checksum, triggers e preservacao de CNPJs existentes exigem SQL", "RPCs preservam ACL; nova referencia nao funde negocios por email/documento; unicidades de pedido/lead/negocio/evento Google preservadas", "aplicacao/reversao e locks requerem backup e autorizacao individual; sem revogacao de acesso ou dados reais"],
+  },
 ];

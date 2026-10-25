@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { escolherNegocioAction, type EscolhaNegocioState } from "./actions";
 
 interface NegocioNaLista { id: string; name: string; cnpj: string | null; codigo: string }
@@ -20,7 +21,7 @@ export function FormularioNegocio({ negocios, selecionado }: {
         aria-current={selecionado === negocio.id ? "true" : undefined} disabled={pendente}>
         <span className="esc-texto">
           <b>{negocio.name}</b>
-          <span>{negocio.cnpj ? `CNPJ ${negocio.cnpj}` : `Cadastro ${negocio.codigo}`}</span>
+          <span>{negocio.cnpj ? identificarDocumentoContratante(negocio.cnpj) : `Cadastro ${negocio.codigo}`}</span>
         </span>
         <span aria-hidden="true" className="escolha-seta">→</span>
       </button>)}

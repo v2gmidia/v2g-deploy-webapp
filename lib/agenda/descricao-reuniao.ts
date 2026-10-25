@@ -1,5 +1,6 @@
 import { lacunasParaReuniao, lerBriefingDeTrafego } from "../onboarding/briefing-trafego.ts";
 import { documento } from "../onboarding/marca.ts";
+import { identificarDocumentoContratante } from "../contratacao/documento-contratante.ts";
 
 function resumir(valor: string): string {
   const limpo = valor.replace(/[\x00-\x1f\x7f]+/g, " ").replace(/\s+/g, " ").trim();
@@ -11,7 +12,7 @@ export function descricaoDaReuniao(onboarding: unknown, cnpj: string): string {
   const respostas = documento(documento(onboarding).respostas);
   const briefing = lerBriefingDeTrafego(onboarding);
   const linhas = [
-    `Negócio atendido: CNPJ ${cnpj}. Reunião inicial V2G de 25 minutos.`,
+    `Contratante: ${identificarDocumentoContratante(cnpj)}. Reunião inicial V2G de 25 minutos.`,
     "Respostas declaradas no onboarding quando a reserva foi feita; confira a ficha atual no WebApp.",
   ];
   for (const [chave, rotulo] of [

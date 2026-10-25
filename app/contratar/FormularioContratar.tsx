@@ -37,8 +37,8 @@ export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso, turns
           onChange={editar("email")} readOnly={Boolean(emailDoAcesso)} required /></label>
         {emailDoAcesso && <p>Este pedido será vinculado ao e-mail da sua sessão atual.</p>}
         <label>WhatsApp com DDD<input name="whatsapp" type="tel" autoComplete="tel" value={campos.whatsapp} onChange={editar("whatsapp")} required /></label>
-        <label>Razão social<input name="razaoSocial" autoComplete="organization" maxLength={200} value={campos.razaoSocial} onChange={editar("razaoSocial")} required /></label>
-        <label>CNPJ<input name="cnpj" inputMode="numeric" placeholder="00.000.000/0000-00" value={campos.cnpj} onChange={editar("cnpj")} required /></label>
+        <label>Nome ou razão social do contratante<input name="razaoSocial" autoComplete="organization" maxLength={200} value={campos.razaoSocial} onChange={editar("razaoSocial")} required /></label>
+        <label>CPF ou CNPJ do contratante<input name="cnpj" inputMode="numeric" maxLength={18} placeholder="CPF ou CNPJ, com ou sem pontuação" value={campos.cnpj} onChange={editar("cnpj")} required /></label>
       </div>
       <fieldset className="contratar-declaracoes">
         <legend>Antes de continuar</legend>

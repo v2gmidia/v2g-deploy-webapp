@@ -120,6 +120,6 @@ test("convite da reunião resume declarações e lacunas sem transformar oferta 
 
 test("convite sem resposta não afirma perfil, diferencial ou ausência de dúvidas", () => {
   const descricao = descricaoDaReuniao({}, "00000000000191");
-  assert.match(descricao, /CNPJ 00000000000191/);
+  assert.match(descricao, /CNPJ 00\.000\.000\/0001-91/);
   assert.doesNotMatch(descricao, /Diferencial:|Quem compra:|Para confirmar na reunião:/);
 });

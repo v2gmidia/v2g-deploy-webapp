@@ -7,16 +7,18 @@ export const OFERTA_OUTUBRO = {
 } as const;
 
 export type MotivoDeInaptidao =
-  | "cnpj_nao_declarado"
+  | "documento_nao_declarado"
   | "venda_por_whatsapp_nao_declarada";
 
-/** Declaração pré-compra; não consulta CNPJ nem comprova operação comercial. */
+/** Declaração pré-compra; não consulta cadastro nem comprova operação comercial. */
 export function avaliarQualificacao(entrada: {
-  declaraTerCnpj: boolean | null;
+  declaraDocumentoContratante?: boolean | null;
+  /** Compatibilidade de chamada anterior: agora significa documento CPF ou CNPJ informado. */
+  declaraTerCnpj?: boolean | null;
   declaraVenderPeloWhatsApp: boolean | null;
 }): { apto: boolean; motivos: MotivoDeInaptidao[] } {
   const motivos: MotivoDeInaptidao[] = [];
-  if (entrada.declaraTerCnpj !== true) motivos.push("cnpj_nao_declarado");
+  if ((entrada.declaraDocumentoContratante ?? entrada.declaraTerCnpj) !== true) motivos.push("documento_nao_declarado");
   if (entrada.declaraVenderPeloWhatsApp !== true) {
     motivos.push("venda_por_whatsapp_nao_declarada");
   }

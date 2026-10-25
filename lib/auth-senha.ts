@@ -1,7 +1,9 @@
 /** Regra comum ao primeiro acesso e à redefinição de senha. */
-export const TAMANHO_MINIMO_SENHA = 15;
+export const TAMANHO_MINIMO_SENHA = 12;
 
 const SENHAS_PREVISIVEIS = new Set([
+  "senha123456!",
+  "password123!",
   "123456789012345",
   "1234567890123456",
   "password123456789",

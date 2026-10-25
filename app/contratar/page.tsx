@@ -25,7 +25,7 @@ export default async function ContratarPage() {
         <h1 id="contratar-titulo">Seus anúncios, com acompanhamento de perto.</h1>
         <p>A V2G cuida da operação de mídia. Você acompanha os próximos passos do negócio e, quando houver dados disponíveis, o desempenho dos anúncios.</p>
         <p className="contratar-proximo">Depois da compra aprovada, você cria seu acesso, preenche as informações do negócio e escolhe um horário para conversar com o gestor. A primeira campanha é publicada por ele após os preparativos.</p>
-        <p className="contratar-limite">A verba de anúncios é paga à parte. Nesta fase, você precisa informar o CNPJ da empresa e vender por conversa no WhatsApp.</p>
+        <p className="contratar-limite">A verba de anúncios é paga à parte. Informe o CPF ou CNPJ do contratante. Nesta fase, seu negócio precisa vender por conversa no WhatsApp.</p>
         {podeRetomar && <p className="contratar-retomar"><a href={`/contratar/pagamento?ref=${encodeURIComponent(refAnterior)}`}>Retomar meu pedido de teste</a><span>Consulte o pagamento iniciado neste navegador antes de fazer outro pedido.</span></p>}
       </section>
       <FormularioContratar referencia={randomUUID()} apiAtiva={apiAtiva}

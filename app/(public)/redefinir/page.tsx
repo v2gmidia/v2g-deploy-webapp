@@ -37,7 +37,7 @@ export default async function RedefinirPage({ searchParams }: RedefinirPageProps
         ) : (
           <>
             <h1>Defina sua nova senha.</h1>
-            <p className="entrada-introducao">Escolha uma senha forte para proteger sua conta.</p>
+            <p className="entrada-introducao">Escolha uma combinação única de letras, números e símbolos.</p>
             <RedefinirForm />
             <p className="entrada-ajuda">Depois de salvar, sua sessão atual é encerrada e você entra de novo com a senha nova.</p>
           </>

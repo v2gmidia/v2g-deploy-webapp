@@ -9,8 +9,6 @@ export interface RedefinirActionState {
   error?: string;
 }
 
-const initialState: RedefinirActionState = {};
-
 export async function redefinirAction(
   _prevState: RedefinirActionState,
   formData: FormData,
@@ -21,11 +19,13 @@ export async function redefinirAction(
   const erroSenha = validarNovaSenha(senha, confirmarSenha);
   if (erroSenha) return { error: erroSenha };
 
-  const supabase = await createClient();
-  const { error } = await supabase.auth.updateUser({ password: senha });
-
-  if (error) {
-    return { error: mensagemDeErroAuth(error, "redefinicao", "/redefinir") };
+  let supabase: Awaited<ReturnType<typeof createClient>>;
+  try {
+    supabase = await createClient();
+    const { error } = await supabase.auth.updateUser({ password: senha });
+    if (error) return { error: mensagemDeErroAuth(error, "redefinicao", "/redefinir") };
+  } catch {
+    return { error: "Não foi possível confirmar a alteração. Tente entrar com a nova senha ou peça outro link de recuperação." };
   }
 
   // A senha já mudou: falha no encerramento não pode parecer falha ao salvá-la.
@@ -38,5 +38,3 @@ export async function redefinirAction(
   // página atual como link expirado antes de um estado local ser exibido.
   redirect(saidaConfirmada ? "/redefinir/concluido" : "/redefinir/concluido?aviso=sessao");
 }
-
-export { initialState as redefinirInitialState };

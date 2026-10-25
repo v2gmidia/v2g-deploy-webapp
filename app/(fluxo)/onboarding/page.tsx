@@ -1,4 +1,5 @@
 import { carregarEstadoAction } from "./actions";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { Chat } from "./Chat";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -64,17 +65,14 @@ export default async function OnboardingPage() {
   } catch {
     console.error("[onboarding] CNPJ da compra indisponível");
   }
-  const digitos = cnpj?.replace(/\D/g, "") ?? "";
-  const cnpjExibido = /^\d{14}$/.test(digitos)
-    ? digitos.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5")
-    : null;
+  const cnpjExibido = cnpj ? identificarDocumentoContratante(cnpj) : null;
 
   return (
     <div className="onb-v2 onb-v2-conversa">
       <header className="onb-v2-topo">
         <Marca editorial href="/inicio" />
         <div className="onb-v2-topo-direita">
-          {cnpjExibido && <p className="onb-v2-identidade">CNPJ da conta: <strong>{cnpjExibido}</strong></p>}
+          {cnpjExibido && <p className="onb-v2-identidade">Contratante: <strong>{cnpjExibido}</strong></p>}
           <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com uma pessoa</a>
         </div>
       </header>

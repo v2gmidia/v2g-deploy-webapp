@@ -1,4 +1,5 @@
 import { Marca } from "@/components/ui/Marca";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { AgendaPropria } from "./AgendaPropria";
 import type { EstadoAgenda } from "./agenda-actions";
 import styles from "./Conclusao.module.css";
@@ -14,9 +15,7 @@ type Estado = { erro: string } | {
 };
 
 export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }: { estado: Estado; cnpj?: string | null; agenda?: EstadoAgenda }) {
-  const digitos = cnpj?.replace(/\D/g, "") ?? "";
-  const cnpjExibido = /^\d{14}$/.test(digitos)
-    ? digitos.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, "$1.$2.$3/$4-$5") : null;
+  const cnpjExibido = cnpj ? identificarDocumentoContratante(cnpj) : null;
   return <div className="onb-v2 onb-v2-etapa">
     <header className="onb-v2-topo"><Marca editorial href="/inicio" /><a href="/onboarding/marca">Rever minhas respostas</a></header>
     <section className={styles.conteudo}>
@@ -38,7 +37,7 @@ export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }
         <section className={styles.agendamento}>
           <a className={styles.acaoPrincipal} href={AGENDA_INICIAL_URL} target="_blank" rel="noopener noreferrer">Escolher horário no Google</a>
           {cnpjExibido && <div className={styles.identidade}>
-            <span>CNPJ para informar no formulário</span>
+            <span>CPF ou CNPJ do contratante para informar no formulário</span>
             <strong>{cnpjExibido}</strong>
           </div>}
           <p className={styles.orientacao}>Depois de reservar, o Google enviará um e-mail com a data, o link da reunião e as opções para remarcar ou cancelar.</p>

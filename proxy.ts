@@ -90,6 +90,11 @@ function obterPapel(user: { app_metadata?: Record<string, unknown> } | null): st
 }
 
 export async function proxy(request: NextRequest) {
+  // Resultado informativo, sem dados ou permissao: deve abrir mesmo depois
+  // do logout ou com Auth indisponivel. Nao dispensa sessao de outra rota.
+  if ((request.method === "GET" || request.method === "HEAD")
+      && request.nextUrl.pathname === "/redefinir/concluido")
+    return NextResponse.next({ request });
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

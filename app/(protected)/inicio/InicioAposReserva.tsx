@@ -21,7 +21,7 @@ export function InicioAposReserva({ inicio, fim }: { inicio: string; fim: string
     },
     {
       titulo: "Seu negócio",
-      texto: "A opção Conta está destacada no menu. Ali você revê os dados e os acessos deste negócio. Se tiver mais de um CNPJ, troque de negócio pelo menu no topo ou na lateral.",
+      texto: "A opção Conta está destacada no menu. Ali você revê os dados e os acessos deste negócio. Se tiver mais de um negócio, troque pelo menu no topo ou na lateral.",
       href: "/conta", rotulo: "Ver minha conta",
     },
     {

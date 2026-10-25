@@ -1,3 +1,5 @@
+import { normalizarDocumentoContratante } from "../contratacao/documento-contratante.ts";
+
 export type PedidoDaFila = {
   id: string;
   buyer_email: string;
@@ -84,10 +86,12 @@ export function prioridadeDaCompra(pedido: PedidoDaFila): number {
 
 export function filtrarCompras(pedidos: PedidoDaFila[], busca: string, filtro: FiltroDeCompras): PedidoDaFila[] {
   const termo = busca.trim().toLocaleLowerCase("pt-BR");
+  const documentoBuscado = normalizarDocumentoContratante(termo);
   return pedidos.filter((pedido) => {
     const corresponde = !termo || [pedido.legal_name, pedido.buyer_email, pedido.cnpj, pedido.id,
       pedido.source_lead_id?.toString() ?? ""]
-      .some((campo) => campo.toLocaleLowerCase("pt-BR").includes(termo));
+      .some((campo) => campo.toLocaleLowerCase("pt-BR").includes(termo))
+      || (documentoBuscado.length >= 11 && pedido.cnpj === documentoBuscado);
     if (!corresponde) return false;
     const prioridade = prioridadeDaCompra(pedido);
     if (filtro === "atencao") return prioridade <= 2;

@@ -26,7 +26,7 @@ export function ambienteTs({env={},ports={},fetch=()=>{throw Error('rede nao aut
     const js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,
       target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
     vm.runInNewContext(js,{module,exports:module.exports,require:specifier=>load(specifier,dirname(file)),
-      process:{env},fetch,Buffer,Headers,Response,FormData,URL,AbortSignal,Intl,Date,console},{filename:file});
+      process:{env},fetch,Buffer,Headers,Response,FormData,URL,URLSearchParams,AbortSignal,Intl,Date,console},{filename:file});
     return module.exports;
   }
   return {load:file=>load(resolve(file))};

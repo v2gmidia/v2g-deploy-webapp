@@ -69,8 +69,8 @@ export async function criarPedidoPixAction(
   } catch {
     console.error("[pedidos] falha ao criar pedido");
     return { erro: lead
-      ? "Não foi possível registrar. Confira se ID, CNPJ, e-mail e WhatsApp são exatamente os mesmos do pré-cadastro e se o lead já virou pedido."
-      : "Não foi possível registrar. Confira se já há pedido Pix pendente para este e-mail e CNPJ." };
+      ? "Não foi possível registrar. Confira se ID, CPF ou CNPJ do contratante, e-mail e WhatsApp são exatamente os mesmos do pré-cadastro e se o lead já virou pedido."
+      : "Não foi possível registrar. Confira os dados e a referência do pedido antes de tentar novamente." };
   }
   revalidatePath("/pedidos");
   redirect("/pedidos?registro=criado");

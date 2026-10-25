@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { randomUUID } from "node:crypto";
 import { carteiraDaEvidencia } from "@/lib/contratacao/evidencia-manual-servidor";
 import { hojeDaEvidencia, IMPEDIMENTOS_EVIDENCIA, situacaoEvidencia, UUID_EVIDENCIA, type EvidenciaManual } from "@/lib/contratacao/evidencia-manual";
@@ -35,7 +36,7 @@ export async function ConferenciasManuais({businessId,operatorId}:{businessId?:s
             const situacao=situacaoEvidencia(e,(pedidos.data??[]).find(x=>x.id===e.order_id)??null,eventos.data??[],integra);
             return <section key={e.id} className={styles.registro}>
               <h3>{e.source_system==="direct_pix" ? "Pix direto" : "Contratação histórica"} · {e.source_date}</h3>
-              <p><strong>{rotulos[situacao]}</strong></p><p>{e.claimed_email} · CNPJ {e.claimed_cnpj}</p>
+              <p><strong>{rotulos[situacao]}</strong></p><p>{e.claimed_email} · {identificarDocumentoContratante(e.claimed_cnpj)}</p>
               <p>Referência: {e.source_reference}</p><p className="note">Pedido: {e.order_id||"sem pedido associado"}. Perfil proposto: {e.proposed_profile_id||"ainda não indicado"}.</p>
               <p className="note">Registro {e.id}, em {e.recorded_at}, por {e.recorded_by}.</p>
               {e.review_note && <p>Conferência: {e.review_note} · {e.reviewed_at} · responsável {e.reviewed_by}.</p>}

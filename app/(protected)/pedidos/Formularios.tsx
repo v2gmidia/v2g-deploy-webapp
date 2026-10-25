@@ -30,10 +30,10 @@ export function NovoPedidoPix({ referencia, vinculoLeadAtivo = false, asaasAtivo
       <label>ID do lead da LP
         <input name="sourceLeadId" type="number" min="1" step="1" required inputMode="numeric" />
       </label>
-      <p className="note">O servidor só cria o pedido se este ID existir e CNPJ, e-mail e WhatsApp coincidirem exatamente com o pré-cadastro.</p>
+      <p className="note">O servidor só cria o pedido se este ID existir e CPF ou CNPJ do contratante, e-mail e WhatsApp coincidirem exatamente com o pré-cadastro.</p>
     </>}
-    <label>Razão social<input name="legalName" required maxLength={200} /></label>
-    <label>CNPJ<input name="cnpj" required inputMode="numeric" maxLength={18} /></label>
+    <label>Nome ou razão social do contratante<input name="legalName" required maxLength={200} /></label>
+    <label>CPF ou CNPJ do contratante<input name="cnpj" required inputMode="numeric" maxLength={18} /></label>
     <label>E-mail da compra<input name="email" type="email" required maxLength={254} /></label>
     {asaasAtivo && <label>Nome completo do comprador<input name="buyerName" required maxLength={120} /></label>}
     {(asaasAtivo || (vinculoLeadAtivo && origem === "v2g_site")) && <label>{origem === "v2g_site" ? "WhatsApp do pré-cadastro" : "WhatsApp do comprador"}
@@ -49,7 +49,7 @@ export function NovoPedidoPix({ referencia, vinculoLeadAtivo = false, asaasAtivo
       <option value="asaas_card">Cartão pelo Asaas</option>
       <option value="asaas_pix">Pix pelo Asaas · somente plano à vista</option>
     </select></label>}
-    <label><input type="checkbox" name="declaresCnpj" value="yes" required /> O comprador declarou que tem CNPJ.</label>
+    <label><input type="checkbox" name="declaresCnpj" value="yes" required /> Conferi o CPF ou CNPJ informado pelo contratante.</label>
     <label><input type="checkbox" name="sellsByWhatsApp" value="yes" required /> O comprador declarou que vende pelo WhatsApp.</label>
     {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
     <button className="cta" type="submit" disabled={pendente}>Registrar pedido pendente</button>

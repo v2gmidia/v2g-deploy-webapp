@@ -1,5 +1,129 @@
 # E28 01 e 02 Retomada Asaas e diagnóstico do 422
 
+## Prova visual recebida em 25/10 — acesso após estorno reproduzido
+
+**Fonte:** conferência autenticada do Central com Victor, comunicada a este
+chat após o bloco CPF/CNPJ. Não houve nova navegação ou consulta remota aqui.
+Na QA04, o seletor exibiu cinco negócios. Foi aberto primeiro
+**V2G QA Multiconta B — FICTÍCIA**; depois, pelo menu,
+**V2G QA 3DS Final 21-10 — FICTICIA**. O aplicativo navegou para `/inicio` e
+exibiu este último como negócio ativo. O pedido correspondente já estava
+classificado como estornado na auditoria financeira abaixo.
+
+Isso eleva a pendência de acesso de inferência por código/dados para
+**lacuna reproduzida na interface autenticada**. Não é compra ativa nem nova
+concessão pelo webhook. Não foi implementada revogação global, suspensão da
+conta ou alteração dos demais negócios. Tratamento futuro deve distinguir o
+pedido/negócio estornado e preservar direitos independentes.
+
+As correções locais posteriores de senha/retorno, sem alterar essa política,
+ficam no checkpoint `e28-01-02-senha-retorno-acesso-25-10.md`.
+
+## Conferência somente leitura de 25/10 às 18h42 BRT — persistência e acesso
+
+**Fonte direta:** SELECTs pelo conector Supabase no QA, medidos entre
+21:42:17 e 21:42:48 UTC, e leitura das policies atuais. Sem impersonar sessão,
+navegar pelo login, reenviar evento, chamar provedor ou alterar dados. Não foram
+lidos tokens, senhas, payloads de e-mail ou metadados completos da conta.
+
+### Fatos persistidos
+
+- Exatamente um pedido do ensaio. A cobrança inicial e o business_id continuam
+  correspondentes aos registros anteriores; e-mail e buyer_profile_id coincidem
+  com a QA04. Negócio **V2G QA 3DS Final 21-10 — FICTICIA**, ativo, marcado fictício,
+  pertencente à QA04 e sem claim_email pendente.
+- Ledger do pedido: exatamente um PAYMENT_CREATED inicial, um PAYMENT_CONFIRMED
+  inicial e **um PAYMENT_REFUNDED**, recebido em 25/10 às 18:34:48 BRT. O estorno
+  confere cobrança inicial, valor de R$ 500, vencimento e assinatura nula. Não há
+  duplicata desse tipo para o pedido.
+- A função real `estadoPagamentoPublico`, avaliada localmente com o status e o
+  tipo de ocorrência lidos, retorna **refunded**. É prova da projeção sobre dados
+  reais, não de uma tela autenticada ou de alteração de `commercial_orders.status`.
+  O status bruto do pedido continua **payment_approved**, deliberadamente separado
+  da projeção financeira.
+- Zero linhas no ledger para a parcela futura ignorada ou sua assinatura; zero
+  pedidos vinculados a esses identificadores. Assinatura do pedido continua nula.
+  A cobrança inicial corresponde a um único pedido.
+- O único evento comercial do pedido é a confirmação original de 21/10. A única
+  linha da outbox permanece accepted, criada/atualizada em 21/10; zero mudanças
+  na outbox da QA04 em 25/10. Aprovação/updated_at do pedido continuam em 21/10;
+  updated_at do negócio é de 21/10. Zero pedidos, negócios ou eventos comerciais
+  da QA04 criados em 25/10.
+
+Esses dados comprovam ausência dos efeitos extras nesses registros do QA e são
+coerentes com o ramo somente leitura publicado. Não há trilha completa de todas
+as concessões anteriores; timestamps não substituem esse histórico. Ausência de
+nova cobrança/assinatura/e-mail no provedor é a evidência do Central registrada
+abaixo, não uma nova consulta externa deste bloco. Não foi criado evento falso.
+
+### Acesso: pendência separada da conciliação financeira
+
+Uma única conta QA04, e-mail verificado, sem papel operador e sem acesso legado.
+Ela possui cinco negócios, todos com pedido historicamente payment_approved:
+**v2g teste**, **V2G QA Multiconta B — FICTÍCIA**,
+**QA Etapa 01 Seguranca FICTICIA**,
+**V2G QA Compra Unica 21-10 — FICTICIA** e
+**V2G QA 3DS Final 21-10 — FICTICIA**. Os três últimos têm estorno inicial no ledger.
+
+As policies SELECT atuais restringem businesses pelo profile_id e pedidos pelo
+buyer_profile_id; não conferem estorno. Em `lib/contratacao/acesso.ts` e
+`lib/multiconta/elegibilidade.ts`, a elegibilidade ainda usa a aprovação histórica,
+identidade do comprador e propriedade do negócio, sem a projeção financeira.
+Logo, pelos dados e regras lidos, **os cinco continuam elegíveis**, inclusive o
+ensaio estornado. Isso não é compra ativa nem prova autenticada de navegação.
+O webhook não concedeu esse acesso agora; os vínculos já existiam. Não foi
+revogado acesso, alterado proprietário ou corrigida política neste bloco.
+
+### Roteiro curto para Victor e Central conferirem lado a lado
+
+Conta em todas as etapas: **victor.cabral+v2gqa04@v2gmidia.com.br**, usando a senha
+recuperada pelo próprio Victor; não compartilhar senha/código.
+
+| URL/ação | Tela e negócio esperados | Critério PASS/FAIL |
+|---|---|---|
+| `https://v2g-webapp-qa.vercel.app/entrar?modo=login&adicionar=1` → entrar | Conta QA04; conferir o e-mail em Conta | PASS se a identidade for QA04; outra conta invalida o ensaio |
+| `https://v2g-webapp-qa.vercel.app/escolher-negocio` | Pela regra atual, os cinco negócios listados acima; verificar nomes, sem selecionar empresa real | PASS de correspondência se forem os negócios da QA04; empresa alheia é FAIL de isolamento |
+| Selecionar **V2G QA Multiconta B — FICTÍCIA** → `https://v2g-webapp-qa.vercel.app/conta` | Nome do negócio selecionado e e-mail QA04 | PASS de navegação se ambos coincidirem e não houver tela vazia; não certifica compra ativa |
+| Voltar ao seletor e observar **V2G QA 3DS Final 21-10 — FICTICIA** | O código atual permite esse negócio apesar do estorno | Se aparecer/abrir, confirma a pendência conhecida; é FAIL para o objetivo de bloquear acesso por compra estornada, sem invalidar o estorno financeiro |
+| No navegador original do ensaio, `https://v2g-webapp-qa.vercel.app/contratar` → **Retomar meu pedido de teste** | Pedido original, mensagem de estorno integral e nenhum formulário para pagar | PASS financeiro se mostrar estorno integral, sem convidar a criar acesso/pagar novamente. Se o pedido retomado não for o ensaio final ou o link não existir, BLOQUEADO por contexto do navegador; não criar pedido para contornar |
+
+O link de pagamento completo contém referência privada e não foi copiado.
+Saldo desta rodada: **estorno persistido e projeção aceitos; efeitos extras não
+observados no QA; controle de acesso pós-estorno pendente; prova visual humana
+a realizar**. Próximo bloco precisa tratar o acesso por negócio sem suspensão
+global, preservando direitos independentes; nenhuma mudança foi iniciada aqui.
+
+## Prova remota de 25/10 — bloqueio do webhook resolvido no QA
+
+**Fonte:** evidência comunicada pelo Central após conferência remota; não foi
+reexecutada neste bloco documental. Este registro substitui os próximos portões
+de publicação/retomada e o estado penalizado descritos nos adendos abaixo,
+preservados como histórico.
+
+- Commit `d2af20f` promovido somente no projeto `v2g-webapp-qa`; deployment READY
+  e `/entrar` do alias estável respondeu HTTP 200. O destino chamado production
+  pela Vercel pertence ao projeto QA; produção real da V2G não foi alterada.
+- Na configuração atual **V2G WebApp QA pagamentos**, foi removida a penalização
+  de exatamente um evento. A configuração temporária antiga permaneceu pausada.
+- A reentrega original PAYMENT_CREATED retornou HTTP 200 com
+  `{"ok":true,"historico":true,"ignorado":true}`.
+- O PAYMENT_REFUNDED seguinte retornou HTTP 200 com `{"ok":true}`. A configuração
+  atual deixou de aparecer penalizada.
+- Segundo a conferência do Central, não houve nova cobrança, assinatura, e-mail
+  ou concessão de acesso, nem alteração em produção real.
+
+**Aceito neste recorte:** recuperação segura da sequência histórica no endpoint
+QA, incluindo a entrega do estorno. Isso não certifica produção, compra nova,
+acesso correto pós-estorno ou encerramento integral das etapas 01/02. A resposta
+HTTP não substitui uma consulta independente ao ledger/estado para afirmar a
+conciliação persistida; essa consulta não integra a evidência recebida aqui.
+
+Próxima prova útil é a conferência somente leitura do evento e estado financeiro
+persistidos no QA, sem novo replay ou operação financeira. Os demais portões
+comerciais, de acesso, contrato e fiscal continuam separados. Neste bloco foi
+editado apenas este checkpoint; não foram executados eventos ou testes externos
+nem reproduzidos identificadores de cobrança, cliente, assinatura ou deployment.
+
 ## Atualização de 25/10 — órfão PAYMENT_CREATED após limpeza do ensaio
 
 **Evidência nova recebida do Central:** após publicação e reativação autorizadas,

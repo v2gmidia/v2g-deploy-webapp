@@ -1,6 +1,7 @@
 "use server";
 
 import { randomUUID } from "node:crypto";
+import { lerDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { revalidatePath } from "next/cache";
 import { sugerirHorarios } from "@/lib/agenda/horarios";
 import { avaliarHorario, podeRemarcar, type IntervaloOcupado } from "@/lib/agenda/regras";
@@ -45,7 +46,7 @@ async function contexto(businessIdEsperado: string): Promise<{
     .range(inicio, fim));
   if (!pedidos) return null;
   const email = user.email.trim().toLowerCase();
-  const pedido = pedidos.find((item) => /^\d{14}$/.test(item.cnpj ?? "")
+  const pedido = pedidos.find((item) => lerDocumentoContratante(item.cnpj)
     && item.buyer_email?.trim().toLowerCase() === email
     && (!item.buyer_profile_id || item.buyer_profile_id === user.id));
   if (!pedido) return null;
@@ -183,7 +184,7 @@ export async function reservarHorarioAction(inicio: string, businessIdEsperado: 
     if (erroPendente || !pendente) {
       const ativa = await reservaAtiva(ctx.businessId);
       const conciliada = ativa ? await conciliarReservaAtiva(ativa) : null;
-      return conciliada ? estadoDaReserva(conciliada) : { status: "erro", mensagem: "Este horário ou CNPJ já tem uma reserva ativa. Atualize as opções ou fale com a equipe." };
+      return conciliada ? estadoDaReserva(conciliada) : { status: "erro", mensagem: "Este horário ou negócio já tem uma reserva ativa. Atualize as opções ou fale com a equipe." };
     }
     try {
       await criarEventoGoogle({ eventId, inicio: inicioDate.toISOString(), fim: fimDate.toISOString(),

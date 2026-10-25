@@ -35,6 +35,8 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`e28-01-02-senha-retorno-acesso-25-10.md`](./e28-01-02-senha-retorno-acesso-25-10.md) | 25/10/2026 | Mínimo local 12 com classes, retorno de redefinição, export Next, confirmação pública e recuperação PKCE; prova visual do acesso após estorno registrada. | **Sim.** Publicação/ensaio QA e política Auth remota; acesso pós-estorno por negócio ainda pendente. |
+| [`e28-01-02-cpf-cnpj-contratante-25-10.md`](./e28-01-02-cpf-cnpj-contratante-25-10.md) | 25/10/2026 | Contratação/primeiro acesso, multiconta, agenda e evidências com CPF ou CNPJ; titular separado, sem fusão automática; migration e testes locais. | **Sim.** Migration não aplicada; revisão/backup/QA, LP, contrato/fiscal e consumidores externos. |
 | [`gestor-carteira-analise-referencias-20-10.md`](./gestor-carteira-analise-referencias-20-10.md) | 20/10/2026 | Mesa navegável pelas referências: tabela/cartões, análise por conta, orçamento, gráficos, ranking e diagnóstico; dados sintéticos. | **Sim.** Carregador real, metas, isolamento por agência e QA autenticado. |
 | [`criativos-pedido-validade-20-10.md`](./criativos-pedido-validade-20-10.md) | 20/10/2026 | Prévia do pedido rejeita data de promoção vencida; ensaio local com passado/hoje/futuro. | **Sim.** Mobile/tema, persistência, fontes, provedor e QA. |
 | [`criativos-pedido-auditoria-20-10.md`](./criativos-pedido-auditoria-20-10.md) | 20/10/2026 | Teste interativo local do pedido; detectou prazo vencido aceito e título fora da escala. | **Parcial.** Prazo corrigido em `criativos-pedido-validade-20-10.md`; mobile/tema e fluxo autenticado faltam. |

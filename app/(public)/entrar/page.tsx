@@ -8,7 +8,7 @@ import { IconeVisibilidadeSenha as IconeVisibilidade } from "@/components/ui/Ico
 import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
 import { SITE_PUBLICO_ORIGEM } from "@/lib/site-publico";
 import { forcaDaSenha } from "@/lib/auth-senha";
-import { cnpjTemDigitosValidos } from "@/lib/contratacao/qualificacao";
+import { lerDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { signInAction, signUpAction, type AuthActionState } from "./actions";
 
 const initialState: AuthActionState = {};
@@ -34,7 +34,7 @@ function EntrarContent() {
   const [senhaRepetida, setSenhaRepetida] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarRepeticao, setMostrarRepeticao] = useState(false);
-  const cnpjInvalido = cnpj.length === 14 && !cnpjTemDigitosValidos(cnpj);
+  const cnpjInvalido = cnpj.replace(/\D/g, "").length >= 11 && !lerDocumentoContratante(cnpj);
   const forca = forcaDaSenha(senhaNova);
   const repeticaoDiferente = senhaRepetida.length > 0 && senhaNova !== senhaRepetida;
   const destino = (modo: "cadastro" | "login") => {
@@ -62,7 +62,7 @@ function EntrarContent() {
         {mode === "cadastro" ? (
           <>
             <h1>Vamos criar seu acesso.</h1>
-            <p className="entrada-introducao">O primeiro acesso é liberado após a aprovação da compra. Use o e-mail e o CNPJ informados no pedido.</p>
+            <p className="entrada-introducao">O primeiro acesso é liberado após a aprovação da compra. Use o e-mail e o CPF ou CNPJ do contratante informados no pedido.</p>
 
             {signUpState.error && <p className="form-error" role="alert">{signUpState.error}</p>}
             {signUpState.message && <p className="form-notice" role="status">{signUpState.message}</p>}
@@ -114,15 +114,15 @@ function EntrarContent() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="cnpj-cadastro">CNPJ da empresa contratante</label>
+                <label htmlFor="cnpj-cadastro">CPF ou CNPJ do contratante</label>
                 <input id="cnpj-cadastro" name="cnpj" type="text" inputMode="numeric"
-                  pattern="[0-9]{14}" maxLength={14} value={cnpj}
-                  onChange={evento => setCnpj(evento.target.value.replace(/\D/g, "").slice(0, 14))}
-                  placeholder="Somente os 14 números" autoComplete="off"
+                  minLength={11} maxLength={18} value={cnpj}
+                  onChange={evento => setCnpj(evento.target.value)}
+                  placeholder="CPF ou CNPJ usado na compra" autoComplete="off"
                   aria-invalid={cnpjInvalido} aria-describedby="cnpj-ajuda" required />
-                {cnpjInvalido && <p className="entrada-validacao entrada-validacao-erro" id="cnpj-ajuda" role="status">Os dígitos deste CNPJ não conferem.</p>}
-                {!cnpjInvalido && <p className="note" id="cnpj-ajuda">Digite somente números. Confira o CNPJ usado na compra.</p>}
-                <p className="note">Use o mesmo CNPJ informado na compra. Um login pode acessar mais de uma empresa.</p>
+                {cnpjInvalido && <p className="entrada-validacao entrada-validacao-erro" id="cnpj-ajuda" role="status">Confira os 11 dígitos do CPF ou os 14 do CNPJ.</p>}
+                {!cnpjInvalido && <p className="note" id="cnpj-ajuda">Use o CPF ou CNPJ do contratante informado no pedido, com ou sem pontuação.</p>}
+                <p className="note">Um login pode acessar mais de um negócio. O documento não junta os cadastros.</p>
               </div>
               <div className="field">
                 <label htmlFor="senha-cadastro">Crie uma senha</label>
@@ -136,8 +136,8 @@ function EntrarContent() {
                   <IconeVisibilidade visivel={mostrarSenha} /></button></span>
                 {forca !== "vazia" && <div className={`entrada-forca entrada-forca-${forca}`} id="forca-senha" role="status">
                   <span aria-hidden="true"><i /><i /><i /></span>
-                  <strong>Senha {forca === "media" ? "média" : forca}</strong>
-                  {forca !== "forte" && <small>Continue até ficar forte para criar o acesso.</small>}
+                  <strong>{forca === "forte" ? "Critérios atendidos" : "Confira os critérios da senha"}</strong>
+                  {forca !== "forte" && <small>Inclua os itens abaixo para criar o acesso.</small>}
                 </div>}
                 <CriteriosSenha senha={senhaNova} id="criterios-senha" />
               </div>

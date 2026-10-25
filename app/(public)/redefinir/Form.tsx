@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/Button";
 import { CriteriosSenha } from "@/components/ui/CriteriosSenha";
 import { IconeVisibilidadeSenha } from "@/components/ui/IconeVisibilidadeSenha";
 import { TAMANHO_MINIMO_SENHA } from "@/lib/auth-senha";
-import { redefinirAction, redefinirInitialState } from "./actions";
+import { redefinirAction, type RedefinirActionState } from "./actions";
+
+const redefinirInitialState: RedefinirActionState = {};
 
 export function RedefinirForm() {
   const [state, formAction, pending] = useActionState(redefinirAction, redefinirInitialState);

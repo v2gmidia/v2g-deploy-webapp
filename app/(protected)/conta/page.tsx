@@ -11,6 +11,7 @@ import { signOutAction } from "../actions";
 import { tituloDaAba } from "@/lib/titulos";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { ultimoDocumentoPorPedido } from "@/lib/contratacao/documentos";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 
 export const metadata = tituloDaAba("/conta");
 
@@ -60,7 +61,7 @@ export default async function ContaPage() {
   const variasContasAtivas = !contasAtivas?.error && (contasAtivas?.count ?? 0) > 1;
 
   const consultaPedidos = business ? await supabase.from("commercial_orders")
-    .select("id, status, origin, billing_period, unit_count, total_cents, payment_method")
+    .select("id, cnpj, status, origin, billing_period, unit_count, total_cents, payment_method")
     .eq("business_id", business.id).eq("buyer_profile_id", user.id)
     .order("created_at", { ascending: false }).limit(100) : null;
   const pedidos = consultaPedidos?.data ?? [];
@@ -300,7 +301,7 @@ export default async function ContaPage() {
                       : pedido.status === "proof_received" ? "Comprovante recebido; aprovação pendente. "
                         : pedido.status === "cancelled" ? "Pedido cancelado. "
                           : "Pedido aguardando pagamento ou análise. "}
-                    {pedido.unit_count} {pedido.unit_count === 1 ? "conta de anúncio" : "contas de anúncio"} · {pedido.billing_period === "annual_upfront" ? "anual à vista" : pedido.billing_period === "semiannual_upfront" ? "semestral à vista" : "mensal"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}.
+                    {identificarDocumentoContratante(pedido.cnpj)} · {pedido.unit_count} {pedido.unit_count === 1 ? "conta de anúncio" : "contas de anúncio"} · {pedido.billing_period === "annual_upfront" ? "anual à vista" : pedido.billing_period === "semiannual_upfront" ? "semestral à vista" : "mensal"} · {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.total_cents / 100)}.
                   </p>)}
                   {pedidos.length === 100 && <p className="foot-line">Mostrando os 100 pedidos mais recentes deste negócio.</p>}
                   <p className="foot-line">Estes registros não informam próxima cobrança, recibo nem liquidação bancária.</p>

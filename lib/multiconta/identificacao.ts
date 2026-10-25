@@ -1,3 +1,4 @@
+/** cnpj e nome tecnico legado: transporta CPF ou CNPJ do contratante. */
 export interface PedidoParaIdentificarNegocio {
   business_id: string | null;
   cnpj: string;

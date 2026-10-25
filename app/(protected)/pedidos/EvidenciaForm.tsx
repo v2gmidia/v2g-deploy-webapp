@@ -16,7 +16,7 @@ export function EvidenciaForm({businessId,referencia,hoje}:{businessId:string;re
     <input type="hidden" name="id" value={referencia}/><input type="hidden" name="businessId" value={businessId}/>
     <div className={styles.campos}>
       <div className="field"><label htmlFor="evidencia-email">E-mail indicado para o cliente</label><input id="evidencia-email" name="email" type="email" required maxLength={254}/></div>
-      <div className="field"><label htmlFor="evidencia-cnpj">CNPJ da contratação</label><input id="evidencia-cnpj" name="cnpj" inputMode="numeric" required maxLength={18}/></div>
+      <div className="field"><label htmlFor="evidencia-cnpj">CPF ou CNPJ do contratante</label><input id="evidencia-cnpj" name="cnpj" inputMode="numeric" required maxLength={18}/></div>
       <div className="field"><label htmlFor="evidencia-order">ID do pedido existente, se houver</label><input id="evidencia-order" name="orderId" maxLength={36}/></div>
       <div className="field"><label htmlFor="evidencia-profile">ID do perfil existente, se houver</label><input id="evidencia-profile" name="profileId" maxLength={36}/></div>
       <div className="field"><label htmlFor="evidencia-source">Origem da evidência</label><select id="evidencia-source" name="source" required defaultValue="">
@@ -38,7 +38,7 @@ export function RevisarEvidenciaForm({id,businessId}:{id:string;businessId:strin
       <option value="">Selecione a decisão</option><option value="checked">Conferida pela equipe</option><option value="rejected">Recusada</option></select></div>
     <div className="field"><label htmlFor={`nota-${id}`}>O que foi conferido ou motivo da recusa</label><textarea id={`nota-${id}`} name="note" required minLength={5} maxLength={1000} rows={3}/></div>
     <div className={styles.confirmacoes}>
-      <label><input type="checkbox" name="identityChecked" value="yes"/> Conferi pessoa, e-mail, CNPJ e negócio na fonte, sem aproximação de dados.</label>
+      <label><input type="checkbox" name="identityChecked" value="yes"/> Conferi pessoa, e-mail, CPF ou CNPJ do contratante e negócio na fonte, sem aproximação de dados.</label>
       <label><input type="checkbox" name="sourceChecked" value="yes"/> Localizei e conferi a evidência. Para Pix, conferi o crédito na conta recebedora e a identificação da transferência, não apenas a imagem.</label>
     </div>
     <p className="note">As duas conferências são obrigatórias para marcar como conferida. Esta decisão não aprova pagamento no pedido, não assina contrato e não concede acesso.</p>

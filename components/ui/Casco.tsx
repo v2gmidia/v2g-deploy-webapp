@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
 import { DataDeHoje, Saudacao } from "@/components/ui/Saudacao";
@@ -79,12 +80,12 @@ function MenuNegocios({ negocios, negocioAtivoId, rotuloDaConta, inicial, acaoSa
         {negocios.map((negocio) =>
           <button key={negocio.id} type="submit" name="businessId" value={negocio.id}
             className="business-option" aria-current={negocio.id === negocioAtivoId ? "true" : undefined}
-            aria-label={`Abrir ${negocio.name}, ${negocio.cnpj ? `CNPJ ${negocio.cnpj}` : `cadastro ${negocio.id.slice(0, 8)}`}`}>
+            aria-label={`Abrir ${negocio.name}, ${negocio.cnpj ? identificarDocumentoContratante(negocio.cnpj) : `cadastro ${negocio.id.slice(0, 8)}`}`}>
             <AvatarDoNegocio nome={negocio.name} url={negocio.logoUrl} />
             <span className="business-option-text">
               <span className="business-name">{negocio.name}</span>
               <span className="business-identity">{negocio.cnpj
-                ? `CNPJ ${negocio.cnpj}` : `Cadastro ${negocio.id.slice(0, 8)}`}</span>
+                ? identificarDocumentoContratante(negocio.cnpj) : `Cadastro ${negocio.id.slice(0, 8)}`}</span>
             </span>
             {negocio.id === negocioAtivoId && <span className="business-current">Atual</span>}
           </button>)}

@@ -34,7 +34,7 @@ export const MENSAGEM_GENERICA =
  */
 export const MENSAGEM_CADASTRO_NEUTRA =
   "Confira sua caixa de entrada e spam para o link de confirmação. " +
-  "Ele é enviado apenas quando uma nova conta é criada para uma compra aprovada com este e-mail e CNPJ. " +
+  "Ele é enviado apenas quando uma nova conta é criada para uma compra aprovada com este e-mail e CPF ou CNPJ do contratante. " +
   "Se o link não chegar, confira os dados da compra. Se você já tem conta, entre ou recupere sua senha.";
 
 const MSG_EMAIL_INVALIDO = "Esse e-mail não parece válido. Confira e tente de novo.";

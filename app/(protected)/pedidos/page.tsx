@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { tituloDaAba } from "@/lib/titulos";
@@ -106,7 +107,7 @@ export default async function PedidosPage({ searchParams }: {
     {!falhaConsulta && data?.length === 0 && <p>Nenhum pedido assistido registrado.</p>}
     {!falhaConsulta && (data ?? []).map((pedido) => <section className="auth-card" key={pedido.id}>
       <h3>{pedido.legal_name}</h3>
-      <p>{pedido.buyer_email} · CNPJ {pedido.cnpj}</p>
+      <p>{pedido.buyer_email} · {identificarDocumentoContratante(pedido.cnpj)}</p>
       <p>Pedido: {pedido.id} · Negócio: {pedido.business_id || "vínculo indisponível; conferir antes de liberar"}.</p>
       {pedido.source_system === "v2g_site" && pedido.source_lead_id && <div className="form-notice">
         <strong>Origem rastreada: lead #{pedido.source_lead_id} da LP.</strong>
@@ -135,7 +136,7 @@ export default async function PedidosPage({ searchParams }: {
             : "sem nota autorizada registrada nesta consulta"}.</p>
         </>)}
       {pedido.proof_reference && <p>Comprovante: {pedido.proof_reference}</p>}
-      {pedido.status === "payment_approved" && <p className="note">Próximo passo: orientar o comprador a entrar em /entrar com o e-mail desta compra. No primeiro acesso, ele informa o CNPJ e confirma o próprio e-mail. Na seleção, conferir este negócio antes de continuar para o Início. Contrato e nota são acompanhados separadamente.</p>}
+      {pedido.status === "payment_approved" && <p className="note">Próximo passo: orientar o comprador a entrar em /entrar com o e-mail desta compra. No primeiro acesso, ele informa o CPF ou CNPJ do contratante e confirma o próprio e-mail. Na seleção, conferir este negócio antes de continuar para o Início. Contrato e nota são acompanhados separadamente.</p>}
       {pedido.payment_method === "direct_pix" && pedido.status === "awaiting_payment" && <ComprovantePix orderId={pedido.id} />}
       {pedido.payment_method === "direct_pix" && pedido.status === "proof_received" && <AprovarPix orderId={pedido.id} />}
     </section>)}

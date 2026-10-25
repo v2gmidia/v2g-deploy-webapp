@@ -91,8 +91,11 @@ export async function GET(request: NextRequest) {
   if (code) {
     const { data, error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      if (data.user) await vincularComprasAprovadas(data.user);
-      return NextResponse.redirect(`${origin}${next}`);
+      // No PKCE o type pode nao vir na URL. O SDK devolve a origem guardada
+      // com o verifier; recovery nunca deve cair no Início ou reivindicar compras.
+      const recuperacao = type === "recovery" || ("redirectType" in data && data.redirectType === "recovery");
+      if (data.user && !recuperacao) await vincularComprasAprovadas(data.user);
+      return NextResponse.redirect(`${origin}${recuperacao ? "/redefinir" : next}`);
     }
     registrarErroAuth(error, "confirmacao", "/auth/confirmar");
     return recusar(origin);
@@ -101,8 +104,8 @@ export async function GET(request: NextRequest) {
   if (tokenHash && type) {
     const { data, error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
     if (!error) {
-      if (data.user) await vincularComprasAprovadas(data.user);
-      return NextResponse.redirect(`${origin}${next}`);
+      if (data.user && type !== "recovery") await vincularComprasAprovadas(data.user);
+      return NextResponse.redirect(`${origin}${type === "recovery" ? "/redefinir" : next}`);
     }
     registrarErroAuth(error, "confirmacao", "/auth/confirmar");
     return recusar(origin);

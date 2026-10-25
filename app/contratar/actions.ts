@@ -22,7 +22,7 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
   const { data: { user } } = await supabase.auth.getUser();
   const emailPedido = String(form.get("email") ?? "").trim().toLowerCase();
   if (user?.email && user.email.trim().toLowerCase() !== emailPedido)
-    return { erro: "Use o e-mail deste acesso para adicionar outro CNPJ. Para usar outro e-mail, saia e entre novamente." };
+    return { erro: "Use o e-mail deste acesso para adicionar outro negócio. Para usar outro e-mail, saia e entre novamente." };
   const validacao = validarCompra(form);
   if (!validacao.dados) return { erro: validacao.erro };
   const dados = validacao.dados;

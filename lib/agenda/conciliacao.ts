@@ -1,3 +1,4 @@
+import { lerDocumentoContratante } from "../contratacao/documento-contratante.ts";
 /** Contrato normalizado: só um evento lido da agenda, nunca o clique no link. */
 type IdentidadeDoEvento = {
   calendarId: string;
@@ -47,9 +48,7 @@ export function calendarioDaReservaAindaConfigurado(
 }
 
 function cnpjNumerico(valor: string): string | null {
-  if (!/^[\d.\-/\s]+$/.test(valor)) return null;
-  const digitos = valor.replace(/\D/g, "");
-  return digitos.length === 14 ? digitos : null;
+  return lerDocumentoContratante(valor)?.numero ?? null;
 }
 
 function instanteComFuso(valor: string): number | null {

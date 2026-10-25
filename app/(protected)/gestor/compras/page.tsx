@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
@@ -134,7 +135,7 @@ export default async function ComprasDoGestorPage({ searchParams }: {
       {movimentoPorPedido.size > 0 && <p className="form-warning">{movimentoPorPedido.size} pedido(s) com ocorrência financeira registrada nesta consulta. Confira a cobrança e a data no Asaas antes de decidir sobre acesso ou campanha.</p>}
       <form className={styles.filtros} action="/gestor/compras" method="get">
         {negocioId && <input type="hidden" name="negocio" value={negocioId} />}
-        <label>Buscar pedido <input type="search" name="q" defaultValue={busca} placeholder="Empresa, e-mail, CNPJ ou pedido" /></label>
+        <label>Buscar pedido <input type="search" name="q" defaultValue={busca} placeholder="Negócio, e-mail, CPF, CNPJ ou pedido" /></label>
         <label>Mostrar <select name="filtro" defaultValue={filtro}>
           <option value="todas">Todas as contratações</option>
           <option value="atencao">Precisam de atenção</option>
@@ -149,7 +150,7 @@ export default async function ComprasDoGestorPage({ searchParams }: {
         : visiveis.length === 0 ? <p>Nenhum pedido corresponde aos filtros.</p> : null}
       <div className={styles.lista}>{visiveis.map((pedido) => <section className={`auth-card ${styles.cartao}`} key={pedido.id}>
         <h2>{pedido.legal_name}</h2>
-        <p>{pedido.buyer_email} · CNPJ {pedido.cnpj}</p>
+        <p>{pedido.buyer_email} · {identificarDocumentoContratante(pedido.cnpj)}</p>
         {pedido.source_system === "v2g_site" && pedido.source_lead_id && <p className="form-notice">
           Lead #{pedido.source_lead_id} da LP · origem {pedido.source_lead_origin || "não informada"} · UTMs {[
             pedido.source_lead_utm_source, pedido.source_lead_utm_medium,

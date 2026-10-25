@@ -1,8 +1,9 @@
 import { valorDoPedidoCentavos } from "./preco.ts";
-import { cnpjTemDigitosValidos } from "./qualificacao.ts";
+import { lerDocumentoContratante, type TipoDocumentoContratante } from "./documento-contratante.ts";
 
 type DadosPedidoAssistido = {
   ref: string; email: string; legalName: string; cnpj: string;
+  documentoTipo: TipoDocumentoContratante;
   unitCount: number; billingPeriod: "monthly" | "semiannual_upfront" | "annual_upfront";
   lead: { id: number; whatsapp: string } | null;
 };
@@ -13,15 +14,15 @@ export function validarPedidoAssistido(form: FormData, vinculoLeadAtivo: boolean
   const ref = String(form.get("ref") ?? "").trim();
   const email = String(form.get("email") ?? "").trim().toLowerCase();
   const legalName = String(form.get("legalName") ?? "").trim();
-  const cnpj = String(form.get("cnpj") ?? "").replace(/\D/g, "");
+  const documento = lerDocumentoContratante(form.get("cnpj"));
   const unitCount = Number(form.get("unitCount"));
   const billingPeriod = String(form.get("billingPeriod") ?? "");
   if (form.get("declaresCnpj") !== "yes" || form.get("sellsByWhatsApp") !== "yes")
-    return { erro: "Confirme as declarações de CNPJ e venda por WhatsApp antes de registrar." };
+    return { erro: "Confirme o CPF ou CNPJ do contratante e a venda por WhatsApp antes de registrar." };
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ref)
       || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254
-      || legalName.length < 2 || legalName.length > 200 || !cnpjTemDigitosValidos(cnpj))
-    return { erro: "Confira e-mail, razão social e os dígitos do CNPJ." };
+      || legalName.length < 2 || legalName.length > 200 || !documento)
+    return { erro: "Confira e-mail, nome ou razão social e o CPF ou CNPJ do contratante." };
   if (billingPeriod !== "monthly" && billingPeriod !== "annual_upfront" && !(asaas && billingPeriod === "semiannual_upfront"))
     return { erro: "Escolha o período disponível para o Pix assistido." };
   if (!Number.isSafeInteger(unitCount) || unitCount < 1 || unitCount > 100)
@@ -47,7 +48,7 @@ export function validarPedidoAssistido(form: FormData, vinculoLeadAtivo: boolean
     if (idInformado || (!asaas && whatsapp))
       return { erro: "Há dados de pré-cadastro informados. Selecione a origem LP para preservar o vínculo." };
   }
-  return { dados: { ref, email, legalName, cnpj, unitCount, billingPeriod: billingPeriod as DadosPedidoAssistido["billingPeriod"], lead } };
+  return { dados: { ref, email, legalName, cnpj: documento.numero, documentoTipo: documento.tipo, unitCount, billingPeriod: billingPeriod as DadosPedidoAssistido["billingPeriod"], lead } };
 }
 
 export function validarPedidoAsaasAssistido(form: FormData, vinculoLeadAtivo: boolean) {
