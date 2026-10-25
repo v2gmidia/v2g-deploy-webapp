@@ -1,5 +1,66 @@
 # E28 01 e 02 Retomada Asaas e diagnóstico do 422
 
+## Atualização de 25/10 — órfão PAYMENT_CREATED após limpeza do ensaio
+
+**Evidência nova recebida do Central:** após publicação e reativação autorizadas,
+o PAYMENT_CONFIRMED histórico passou com HTTP 200 `{"ok":true,"historico":true}`.
+O próximo evento sequencial, PAYMENT_CREATED da parcela futura excluída do
+ensaio, retornou HTTP 503 `{"erro":"vinculo_pendente"}`. A configuração atual
+foi penalizada novamente. Isso substitui o bloqueador e a versão remota descritos
+no adendo de 17h41; não foi feita outra leitura externa neste bloco.
+
+**Causa no código:** a consulta inicial procura o pedido por
+`provider_subscription_id` quando o evento contém assinatura. Com esse vínculo
+nulo, retorna 503 antes de consultar a cobrança canônica. A ausência do vínculo
+é conhecida; não se deduz daqui quando ou por que ele ficou nulo.
+
+**Correção somente local:** `lib/contratacao/ensaio-encerrado.ts` e ramo restrito
+no handler. Só executa após autenticação, guard QA/Sandbox, schema 3DS ativo e
+consulta inicial sem pedido e sem erro. Consulta a cobrança pelo seu ID; só usa
+o `externalReference` canônico para procurar o pedido se ele também coincidir
+com o payload. Não há lista de IDs reais nem exceção por contato/semelhança.
+
+Para retornar 200 histórico/ignorado, exige cumulativamente:
+
+- PAYMENT_CREATED/PENDING de cartão, IDs de cobrança/cliente/assinatura, valor,
+  vencimento e referência exatos; parcela canônica PENDING e deleted=true.
+- Pedido self_service/payment_approved, monthly/asaas_card/initial_3ds, sem
+  checkout ou assinatura vinculada, cobrança inicial distinta, cliente e valor
+  iguais; reserva de criação persistida e primeiro vencimento da assinatura
+  exatamente no ciclo seguinte ao inicial e igual ao da parcela recebida.
+- Negócio do pedido explicitamente marcado `dados_ficticios=true`; confirmação
+  inicial persistida no ledger com pedido, cobrança, assinatura nula, valor e
+  vencimento correspondentes.
+- Assinatura canônica do mesmo cliente/pedido/valor/forma, MONTHLY,
+  INACTIVE/deleted=true, nextDueDate no ciclo imediatamente posterior à parcela.
+- Cobrança inicial canônica com mesma identidade, sem assinatura, REFUNDED e
+  estornos DONE somando o valor integral. Estorno pendente, parcial ou inválido
+  impede o aceite.
+
+São apenas leituras. Não grava vínculo, evento, aprovação, pedido ou acesso;
+não cria assinatura/cobrança, não envia e-mail e não modifica flags. Falha de
+consulta, 404, ausência de prova ou qualquer divergência mantém 503
+`vinculo_pendente`. Compra nova/ativa não recebe aceite silencioso. O ramo normal
+de eventos com vínculo preserva o comportamento existente. Nenhuma coluna ou
+migration nova é necessária: reserva, ledger e marca fictícia já são evidências
+persistidas; seus valores atuais ainda serão conferidos pelo runtime no QA.
+
+**Prova local:** `node --test scripts/conferir-webhook-ensaio-encerrado.mjs
+scripts/conferir-webhook-estorno-handler.mjs`: 49/49. Inclui órfão encerrado,
+novo sem vínculo, identidade divergente, assinatura/parcela ativa, prova ausente,
+estorno incompleto/inválido, indisponibilidade, schema/token, replay concorrente
+e ausência de efeitos. Testes executam handler e verificador reais com portas
+em memória e IDs fictícios; não provam a entrega remota. `pnpm typecheck`: PASS.
+Manifesto local inclui hashes do novo helper e do novo teste.
+
+**Menor próximo portão:** revisar/versionar o pacote e publicar somente QA por
+Victor/Central; depois, com autorização própria para retomar a configuração
+atual, observar a reentrega original e a sequência até REFUNDED. Se alguma prova
+exigida estiver ausente no QA, preservar 503 e obter a evidência faltante; não
+inventar ledger nem afrouxar identidade. Neste bloco não houve commit, push,
+deploy, migration, acesso a painéis, alteração de configuração ou operação
+financeira; não se removeu nem reprocessou evento.
+
 ## Atualização de 25/10 às 17h41 BRT — bloqueador identificado
 
 Este adendo atualiza as hipóteses/portões de 23/10 abaixo, preservados como

@@ -9,6 +9,7 @@ import { processarEmailPagamento } from "@/lib/contratacao/processar-email-pagam
 import { origemAsaasNoServidor } from "@/lib/contratacao/origem-asaas-servidor";
 import { asaasSandbox } from "@/lib/contratacao/asaas-sandbox";
 import { confirmacaoCanonicaConfere, replayEstornadoJaRegistrado } from "@/lib/contratacao/confirmacao-canonica";
+import { reconhecerEnsaioEncerrado } from "@/lib/contratacao/ensaio-encerrado";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -45,7 +46,12 @@ export async function POST(req: NextRequest) {
   const { data: pedido, error } = financeiro.assinaturaId
     ? await consulta.eq("provider_subscription_id", financeiro.assinaturaId).maybeSingle()
     : await consulta.eq("provider_charge_id", financeiro.cobrancaId).maybeSingle();
-  if (error || !pedido) return NextResponse.json({ erro: "vinculo_pendente" }, { status: 503 });
+  if (error) return NextResponse.json({ erro: "vinculo_pendente" }, { status: 503 });
+  if (!pedido) {
+    if (schema3ds && await reconhecerEnsaioEncerrado(admin, financeiro, payload))
+      return NextResponse.json({ ok: true, historico: true, ignorado: true });
+    return NextResponse.json({ erro: "vinculo_pendente" }, { status: 503 });
+  }
   if (!await origemAsaasNoServidor(admin, pedido, assistidoAtivo))
     return NextResponse.json({ erro: "pedido_divergente" }, { status: 422 });
   const assistido = pedido.origin === "assisted";

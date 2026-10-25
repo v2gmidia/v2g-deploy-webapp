@@ -26,6 +26,7 @@ const migrations=[
 ].map(([file,qaVersion,dependencies,state])=>({file,sha256:sha('supabase/migrations/'+file),observedQaVersion:qaVersion,dependencies,state}));
 const files=[
   'app/api/webhooks/asaas-payment/route.ts','lib/contratacao/confirmacao-canonica.ts',
+  'lib/contratacao/ensaio-encerrado.ts','scripts/conferir-webhook-ensaio-encerrado.mjs',
   'lib/contratacao/evento-financeiro.ts','lib/contratacao/estado-pagamento-publico.ts','lib/contratacao/assinatura-apos-3ds.ts',
   'app/(protected)/pedidos/page.tsx','app/(protected)/pedidos/ConferenciasManuais.tsx','app/(protected)/pedidos/EvidenciaForm.tsx',
   'app/(protected)/pedidos/evidencias-actions.ts','app/(protected)/pedidos/evidencia.module.css',
