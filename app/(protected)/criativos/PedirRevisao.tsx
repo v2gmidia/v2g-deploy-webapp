@@ -29,6 +29,9 @@ export function PedirRevisao({ businessId, hoje, previa = false }: { businessId:
   const [incerto, setIncerto] = useState(false);
   const [imagemUrl, setImagemUrl] = useState<string | null>(null);
   const ajudaDoArquivo = useId();
+  const erroDaValidade = useId();
+  const validadeVencida = promocao && Boolean(validade) && validade < hoje;
+  const preparoCompleto = Boolean(arquivo && objetivo && (!promocao || (validade && !validadeVencida)));
   useEffect(() => {
     if (!arquivo) { setImagemUrl(null); return; }
     const url = URL.createObjectURL(arquivo);
@@ -170,13 +173,16 @@ export function PedirRevisao({ businessId, hoje, previa = false }: { businessId:
       }} />Este criativo tem uma promoção com prazo</label>
       {promocao && <label className={estilos.data}>Até quando a promoção vale?
         <input type="date" value={validade} min={hoje} required disabled={fase !== "pronto"}
+          aria-invalid={validadeVencida} aria-describedby={validadeVencida ? erroDaValidade : undefined}
           onInput={(e) => setValidade(e.currentTarget.value)} onChange={(e) => setValidade(e.target.value)} />
-        <small>A data acompanha o pedido para o gestor conferir.</small>
+        {validadeVencida
+          ? <small id={erroDaValidade} className="form-error" role="alert">Essa data já passou. Escolha hoje ou uma data futura.</small>
+          : <small>A data acompanha o pedido para o gestor conferir.</small>}
       </label>}
     </div>
     </div>
     <div className={estilos.rodapePreparo}><p>Confira os dados antes de enviar para revisão.</p>
-      <button className="cta" type="submit" disabled={!arquivo || fase !== "pronto"}>Conferir criativo<IconeSeta /></button>
+      <button className="cta" type="submit" disabled={!preparoCompleto || fase !== "pronto"}>Conferir criativo<IconeSeta /></button>
     </div>
     </div>{conferindo && <>
       <h3 ref={resumo} tabIndex={-1}>Confira seu criativo</h3>

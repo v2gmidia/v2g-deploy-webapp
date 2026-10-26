@@ -1,0 +1,40 @@
+{
+  "resultado": "PASSOU",
+  "ambiente": "LOCAL FICTICIO",
+  "provas": [
+    {
+      "passo": "gerado: biblioteca 1",
+      "pedido": "Pedido: 55555555-5555-4555-8555-555555555555",
+      "contagem": "Trabalhos: 1 · Recibos fictícios: 1 · Envios: 1 · Consultas: 4"
+    },
+    {
+      "passo": "geração OFF + consulta: biblioteca 1",
+      "pedido": "Pedido: 55555555-5555-4555-8555-555555555555",
+      "contagem": "Trabalhos: 1 · Recibos fictícios: 1 · Envios: 1 · Consultas: 4"
+    },
+    {
+      "passo": "reload com geração OFF: biblioteca 1",
+      "pedido": "Pedido: 55555555-5555-4555-8555-555555555555",
+      "contagem": "Trabalhos: 1 · Recibos fictícios: 1 · Envios: 1 · Consultas: 4"
+    },
+    {
+      "passo": "fonte da biblioteca indisponível: erro, contagem desconhecida, sem falso vazio"
+    },
+    {
+      "passo": "reload com fonte indisponível: erro, sem Nenhuma peça aqui"
+    },
+    {
+      "passo": "fonte restaurada, geração ainda OFF: biblioteca 1",
+      "pedido": "Pedido: 55555555-5555-4555-8555-555555555555",
+      "contagem": "Trabalhos: 1 · Recibos fictícios: 1 · Envios: 1 · Consultas: 4"
+    },
+    {
+      "passo": "geração ON novamente: biblioteca 1, sem nova geração",
+      "pedido": "Pedido: 55555555-5555-4555-8555-555555555555",
+      "contagem": "Trabalhos: 1 · Recibos fictícios: 1 · Envios: 1 · Consultas: 6"
+    },
+    {
+      "passo": "negócio B: biblioteca 0 confirmada, sem card do A"
+    }
+  ]
+}

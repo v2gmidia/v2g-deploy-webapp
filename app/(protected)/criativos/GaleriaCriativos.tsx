@@ -44,16 +44,17 @@ function ArteDeExemplo({ tipo }: { tipo: NonNullable<ItemDaGaleria["arte"]> }) {
 }
 
 function CardDoCriativo({ item }: { item: ItemDaGaleria }) {
+  const [imagemFalhou, setImagemFalhou] = useState(false);
   const avisoDeExclusao = typeof item.expiraEmDias === "number"
     ? item.expiraEmDias <= 1 ? "Arquivo expira amanhã" : `Arquivo expira em ${item.expiraEmDias} dias`
     : null;
 
   return <article className="criativo-card">
     <div className="criativo-card-imagem">
-      {item.imagemUrl
+      {item.imagemUrl && !imagemFalhou
         // A origem é privada e chega como URL assinada após conferir o negócio.
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={item.imagemUrl} alt={`Prévia de ${item.nome}`} loading="lazy" />
+        ? <img src={item.imagemUrl} alt={`Prévia de ${item.nome}`} loading="lazy" onError={() => setImagemFalhou(true)} />
         : item.arte
           ? <ArteDeExemplo tipo={item.arte} />
           : <div className="criativo-sem-previa"><IconeImagem /><span>Prévia indisponível</span></div>}
@@ -86,7 +87,9 @@ function CardDoCriativo({ item }: { item: ItemDaGaleria }) {
   </article>;
 }
 
-export function GaleriaCriativos({ itens, previa = false }: { itens: ItemDaGaleria[]; previa?: boolean }) {
+export function GaleriaCriativos({ itens, previa = false, falhou = false, carregando = false }: {
+  itens: ItemDaGaleria[]; previa?: boolean; falhou?: boolean; carregando?: boolean;
+}) {
   const contagens = useMemo(() => new Map(ABAS.map((aba) => [
     aba.id, itens.filter((item) => item.grupo === aba.id).length,
   ])), [itens]);
@@ -104,12 +107,15 @@ export function GaleriaCriativos({ itens, previa = false }: { itens: ItemDaGaler
         const ativa = abaAtiva === aba.id;
         return <button key={aba.id} type="button" aria-pressed={ativa}
           className={ativa ? "ativa" : undefined} onClick={() => setAbaAtiva(aba.id)}>
-          {aba.rotulo}<span>{contagens.get(aba.id) ?? 0}</span>
+          {aba.rotulo}<span>{falhou || carregando ? "—" : contagens.get(aba.id) ?? 0}</span>
         </button>;
       })}
     </div>
+    {falhou ? <p className="form-warning" role="alert">Não foi possível conferir toda a biblioteca agora. Isso não significa que os criativos foram removidos.</p> : null}
     {visiveis.length > 0
       ? <div className="criativos-grade">{visiveis.map((item) => <CardDoCriativo key={item.id} item={item} />)}</div>
+      : falhou ? <p role="status">A biblioteca está indisponível. Tente consultar novamente.</p>
+      : carregando ? <p role="status">Carregando a biblioteca deste negócio…</p>
       : <div className="criativos-vazio"><IconeImagem /><div><h3>Nenhuma peça aqui.</h3><p>Quando um criativo chegar a esta etapa, ele aparece nesta galeria.</p></div></div>}
   </section>;
 }

@@ -53,3 +53,34 @@ As fixtures de 21/10 foram limpas naquele ensaio. **O upload de 25/10 não foi l
 - Nenhum upload, exclusão, teste remoto/local do produto, chamada paga, migração, build/restart, commit/push/deploy ou mensagem a outro chat/pessoa foi feito por esta frente nesta rodada.
 
 **Parado após o registro solicitado.** Completar casos pendentes ou limpar o upload depende de direção específica do Central/Victor; não foi iniciado outro bloco.
+
+## Atualização do Central — segundo percurso autenticado em 25/10
+
+Esta seção é mais recente e corrige a interpretação do primeiro percurso sem apagar seu histórico.
+
+### Resultado comprovado no QA
+
+- Victor autorizou o envio do arquivo fictício `public/marca.png` para **V2G QA Multiconta B — FICTÍCIA**.
+- O caminho usado foi WhatsApp, sem promoção. A tela exigiu confirmação explícita e respondeu: “Peça recebida para revisão do gestor. Ela ainda não foi publicada.”
+- Após recarregar `/criativos`, a biblioteca mostrou `Em revisão 1`, `Sem anúncio`, objetivo WhatsApp, sem promoção e data de envio 25/10/2026.
+- Ao trocar para `v2g teste`, apareceu outro card com o mesmo nome. A consulta somente leitura confirmou que não era vazamento: existem duas solicitações distintas, cada uma com `id` e `business_id` próprios. Não associar ou limpar itens apenas pelo nome `marca.png`.
+- O negócio ativo foi restaurado para **V2G QA Multiconta B — FICTÍCIA**. O segundo ensaio, de Instagram com promoção, foi preparado e revisado, mas **não enviado**; a recarga final descartou esse formulário local.
+- Em viewport móvel de 390 x 844, o formulário, a navegação e a ação principal permaneceram utilizáveis, sem sobreposição observada. O viewport foi restaurado ao final.
+
+### Falha de UX encontrada e correção local
+
+No QA publicado, uma data anterior ao dia atual era recusada pela validação do navegador, mas sem uma explicação visível suficiente. Em `app/(protected)/criativos/PedirRevisao.tsx`, o código local agora:
+
+- mostra “Essa data já passou. Escolha hoje ou uma data futura.” com anúncio acessível de erro;
+- marca o campo com `aria-invalid` e associa a mensagem por `aria-describedby`;
+- mantém “Conferir criativo” desabilitado até haver imagem, objetivo e, quando aplicável, uma data válida.
+
+Verificações locais após a correção: `pnpm typecheck` passou; os três conferidores direcionados passaram com **43 testes, 0 falhas**. A correção ainda não está comprovada no QA publicado e depende do fluxo manual de push/deploy do Victor.
+
+### Estado honesto após esta atualização
+
+- **PASS em QA:** envio WhatsApp sem promoção; confirmação explícita; persistência após recarga; vínculo separado entre os dois negócios; layout móvel básico.
+- **PARCIAL em QA:** Instagram com promoção, data futura e retorno à edição preservaram os dados, mas não houve envio final.
+- **CORRIGIDO APENAS LOCALMENTE:** mensagem de data vencida e trava correta da ação principal.
+- **NÃO TESTADO NESTA ATUALIZAÇÃO:** novo login, segundo usuário independente, arquivo inválido, substituição de arquivo, decisão do gestor, publicação Meta e produção.
+- Nenhum anúncio foi publicado, nenhuma peça foi apagada, nenhuma migração foi aplicada e nenhum deploy foi feito pelo Central.

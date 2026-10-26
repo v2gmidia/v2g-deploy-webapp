@@ -12,11 +12,15 @@ import type { GrupoDaGaleria, ItemDaGaleria } from "./GaleriaCriativos";
 import { carregarPedidosDaSessao } from "@/lib/criativos/pedidos-da-sessao";
 import { PedidoDeImagem } from "./PedidoDeImagem";
 import { resumoDaIntencao } from "@/lib/criativos/intencao-envio";
+import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
+import { UUID_GERACAO } from "@/lib/criativos/geracao/contrato-fila";
 
 export const metadata = tituloDaAba("/criativos");
 
 type PecaDaCampanha = {
   id: string;
+  business_id: string;
+  copy: { generation?: { requestId?: string; simulated?: boolean } } | null;
   file_name: string | null;
   storage_path: string | null;
   status: string | null;
@@ -26,6 +30,10 @@ type PecaDaCampanha = {
   updated_at: string;
   arquivado_em: string | null;
 };
+
+function pecaGerada(peca: PecaDaCampanha): boolean {
+  return Boolean(peca.copy?.generation || peca.storage_path?.startsWith("geracao/"));
+}
 
 type PedidoDeRevisao = {
   id: string;
@@ -45,6 +53,7 @@ const dataCurta = new Intl.DateTimeFormat("pt-BR", {
 
 function grupoDaPeca(peca: PecaDaCampanha): GrupoDaGaleria {
   if (peca.arquivado_em || peca.status === "paused" || peca.status === "rejected") return "arquivados";
+  if (pecaGerada(peca)) return "biblioteca";
   if (peca.published_at || peca.external_ad_id) return "biblioteca";
   return "revisao";
 }
@@ -79,6 +88,7 @@ export default async function CriativosPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const negocioId = estado.negocioId;
   const pedidosHabilitados = process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && Boolean(negocioId);
+  const geracaoHabilitada = pedidosHabilitados && process.env.V2G_CREATIVE_BACKEND_ENABLED === "true";
   const pedidosCriacao = pedidosHabilitados
     ? await carregarPedidosDaSessao(negocioId!) : { pedidos: [], falhou: false };
   const partesHoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo",
@@ -88,7 +98,7 @@ export default async function CriativosPage() {
 
   const [pecasResposta, revisoesResposta] = negocioId ? await Promise.all([
     supabase.from("creatives")
-      .select("id, file_name, storage_path, status, published_at, external_ad_id, created_at, updated_at, arquivado_em")
+      .select("id, business_id, copy, file_name, storage_path, status, published_at, external_ad_id, created_at, updated_at, arquivado_em")
       .eq("business_id", negocioId).eq("uso", "campanha")
       .order("created_at", { ascending: false }).limit(120),
     revisaoHabilitada
@@ -101,14 +111,16 @@ export default async function CriativosPage() {
     { data: [] as PedidoDeRevisao[], error: null },
   ];
 
-  const pecas = (pecasResposta.data ?? []) as PecaDaCampanha[];
+  const pecas = ((pecasResposta.data ?? []) as PecaDaCampanha[]).filter((peca) => peca.business_id === negocioId);
   const revisoesRecebidas = (revisoesResposta.data ?? []) as PedidoDeRevisao[];
   const revisoes = revisoesRecebidas.filter((pedido) => pedido.business_id === negocioId);
   const revisaoInconsistente = revisoes.length !== revisoesRecebidas.length
     || revisoes.some((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed"
       && !caminhoConfereComRevisao(pedido));
   const admin = user && negocioId ? createAdminClient() : null;
-  const caminhosDasPecas = pecas.map((peca) => peca.storage_path).filter((c): c is string => Boolean(c));
+  // Arquivos gerados não entram no assinador genérico. A leitura autenticada
+  // revalida pedido, backend, caminho canônico e hash a cada abertura.
+  const caminhosDasPecas = pecas.filter((peca) => !pecaGerada(peca)).map((peca) => peca.storage_path).filter((c): c is string => Boolean(c));
   const caminhosDasRevisoes = revisoes
     .filter((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed"
       && caminhoConfereComRevisao(pedido))
@@ -129,12 +141,15 @@ export default async function CriativosPage() {
     ...pecas.map((peca) => ({
       id: `peca-${peca.id}`,
       nome: peca.file_name || "Criativo sem nome",
-      imagemUrl: peca.storage_path ? (urlPorPeca.get(peca.storage_path) ?? null) : null,
+      imagemUrl: pecaGerada(peca)
+        ? geracaoHabilitada && typeof peca.copy?.generation?.requestId === "string" && UUID_GERACAO.test(peca.copy.generation.requestId)
+          ? urlImagemGerada(peca.copy.generation.requestId, negocioId!) : null
+        : peca.storage_path ? (urlPorPeca.get(peca.storage_path) ?? null) : null,
       grupo: grupoDaPeca(peca),
-      ...estadoDaPeca(peca.status),
+      ...(pecaGerada(peca) ? { estado: peca.copy?.generation?.simulated === true ? "Imagem fictícia de teste" : "Arquivo gerado — conferir acesso", tom: "neutro" as const } : estadoDaPeca(peca.status)),
       criadoEm: `Criado em ${dataCurta.format(new Date(peca.created_at))}`,
       detalhe: peca.arquivado_em ? `Arquivado em ${dataCurta.format(new Date(peca.arquivado_em))}` : null,
-      acao: { rotulo: "Ver anúncio", href: "/anuncios" },
+      acao: pecaGerada(peca) ? null : { rotulo: "Ver anúncio", href: "/anuncios" },
       associacoes: peca.published_at || peca.external_ad_id
         ? [{ nome: "Usado em anúncio", href: "/anuncios" }]
         : [],
@@ -162,13 +177,13 @@ export default async function CriativosPage() {
   const falhaDaGaleria = pecasResposta.error || revisoesResposta.error;
 
   return <>
-    {falhaDaGaleria ? <p className="form-warning">Parte da biblioteca não pôde ser carregada agora. Tente novamente mais tarde.</p> : null}
     {revisaoInconsistente ? <p className="form-warning">Uma peça está com o vínculo do arquivo inconsistente; sua prévia não foi aberta. Peça ajuda à equipe para conferir o envio.</p> : null}
     <TelaDeCriativos
       itens={itens}
+      bibliotecaFalhou={Boolean(falhaDaGaleria)}
       criacao={pedidosHabilitados ? <PedidoDeImagem key={negocioId} businessId={negocioId!}
         requestId={randomUUID()} hoje={hoje} pedidos={pedidosCriacao.pedidos}
-        falhou={pedidosCriacao.falhou} /> : null}
+        falhou={pedidosCriacao.falhou} geracaoHabilitada={geracaoHabilitada} /> : null}
       envioDisponivel={revisaoHabilitada && Boolean(negocioId)}
       envio={revisaoHabilitada && negocioId
         ? <PedirRevisao key={negocioId} businessId={negocioId} hoje={hoje} />

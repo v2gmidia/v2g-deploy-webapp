@@ -1,0 +1,156 @@
+.shell {
+  display: block;
+  min-height: 100vh;
+  background: var(--canvas);
+}
+
+.pagina {
+  display: block;
+  width: min(100%, 1180px);
+  margin-inline: auto;
+  padding: 48px 40px 72px;
+  box-sizing: border-box;
+}
+
+.pagina p { max-width: 70ch; overflow-wrap: anywhere; }
+
+.cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 40px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cabecalho h1 {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--fs-destaque);
+  font-weight: 550;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.cabecalho h1::after {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 9px;
+  background: var(--cobalt-ink);
+  content: "";
+}
+
+.cabecalho p { margin: 10px 0 0; color: var(--ink-soft); }
+
+.contexto {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 3px;
+  min-width: 190px;
+  padding-left: 20px;
+  border-left: 1px solid var(--line);
+}
+
+.contexto span { color: var(--ink-mute); font-size: var(--fs-legenda); }
+.contexto strong { color: var(--ink); font-size: var(--fs-corpo); font-weight: 550; }
+
+.fluxo {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--raio-card);
+  background: var(--surface-2);
+}
+
+.fluxoTopo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 24px;
+}
+
+.fluxoTopo h2 { margin: 0; color: var(--ink); font-size: var(--fs-bloco); font-weight: 550; }
+.fluxoTopo p { margin: 6px 0 0; color: var(--ink-soft); }
+.acoesTopo { display: flex; flex: 0 0 auto; flex-wrap: wrap; gap: 8px; }
+.acoesTopo :global(.cta) { width: auto; min-height: 44px; margin: 0; padding: 9px 13px; }
+
+.inicio {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px;
+  background: var(--task-surface);
+}
+
+.inicio strong { color: var(--ink); font-size: var(--fs-titulo); font-weight: 550; }
+.inicio p { margin: 4px 0 0; color: var(--ink-soft); }
+.inicio :global(.cta) { flex: 0 0 auto; width: auto; margin: 0; }
+.carregando { margin: 0; padding: 20px 0; color: var(--ink-soft); }
+.recuperacao { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 20px; background: var(--warn-soft); color: var(--warn); }
+.recuperacao p { margin: 0; }
+.recuperacao :global(.cta) { width: auto; margin: 0; }
+
+.laboratorio {
+  margin-top: 24px;
+  border-block: 1px solid var(--line);
+}
+
+.laboratorio summary {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 56px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.laboratorio summary span { font-weight: 550; }
+.laboratorio summary small { color: var(--ink-mute); font-size: var(--fs-legenda); }
+.laboratorioCorpo { padding: 8px 0 28px; }
+.gradeTecnica { display: flex; flex-wrap: wrap; gap: 8px; }
+.gradeTecnica :global(.cta) { width: auto; min-height: 40px; margin: 0; padding: 8px 12px; font-size: var(--fs-legenda); }
+
+.evidencias {
+  display: grid;
+  grid-template-columns: minmax(180px, 2fr) repeat(4, minmax(90px, 1fr));
+  margin: 24px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.evidencias div { min-width: 0; padding: 14px 14px 0 0; }
+.evidencias dt { color: var(--ink-mute); font-size: var(--fs-legenda); }
+.evidencias dd { margin: 3px 0 0; overflow: hidden; color: var(--ink); font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+
+.shell :global(.criativo-card-imagem) {
+  background:
+    radial-gradient(circle at 76% 22%, color-mix(in srgb, var(--cobalt-ink) 18%, transparent), transparent 34%),
+    linear-gradient(145deg, var(--task-surface), var(--canvas));
+}
+.shell :global(.criativo-card-imagem img) { opacity: .08; filter: saturate(0); }
+.shell :global(.criativo-card-imagem::after) {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  left: 16px;
+  color: var(--ink);
+  content: "SIMULAÇÃO LOCAL";
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+
+@media (max-width: 760px) {
+  .pagina { padding: 28px 20px 88px; }
+  .cabecalho, .fluxoTopo, .inicio, .recuperacao { align-items: stretch; flex-direction: column; }
+  .cabecalho { gap: 20px; margin-bottom: 28px; }
+  .contexto { min-width: 0; padding: 14px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+  .fluxo { padding: 20px; }
+  .acoesTopo, .acoesTopo :global(.cta), .inicio :global(.cta), .recuperacao :global(.cta) { width: 100%; }
+  .acoesTopo :global(.cta) { justify-content: center; }
+  .laboratorio summary { align-items: flex-start; flex-direction: column; justify-content: center; gap: 0; }
+  .evidencias { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .evidencias div:first-child { grid-column: 1 / -1; }
+}

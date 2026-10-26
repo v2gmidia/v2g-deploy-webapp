@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { GaleriaCriativos, type ItemDaGaleria } from "./GaleriaCriativos";
 
-export function TelaDeCriativos({ itens, envio, analise, criacao, envioDisponivel = true, retencaoAtiva = false, previa = false }: {
+export function TelaDeCriativos({ itens, envio, analise, criacao, envioDisponivel = true, retencaoAtiva = false, previa = false, bibliotecaFalhou = false }: {
   itens: ItemDaGaleria[];
   envio: ReactNode;
   analise?: ReactNode;
@@ -9,6 +9,7 @@ export function TelaDeCriativos({ itens, envio, analise, criacao, envioDisponive
   retencaoAtiva?: boolean;
   previa?: boolean;
   envioDisponivel?: boolean;
+  bibliotecaFalhou?: boolean;
 }) {
   return <div className="criativos-editorial">
     <header className="criativos-topo">
@@ -17,7 +18,7 @@ export function TelaDeCriativos({ itens, envio, analise, criacao, envioDisponive
         ? <a className="cta criativos-subir" href="#subir-criativo"><IconeUpload />Subir criativo</a>
         : <a className="cta ghost criativos-subir" href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com a equipe</a>}
     </header>
-    <GaleriaCriativos itens={itens} previa={previa} />
+    <GaleriaCriativos itens={itens} previa={previa} falhou={bibliotecaFalhou} />
     {criacao}
     <section className="criativos-envio" id="subir-criativo" aria-labelledby="subir-titulo">
       <div className="criativos-envio-copy"><h2 id="subir-titulo">{envioDisponivel ? "Já tenho um criativo" : "Envio indisponível"}</h2>

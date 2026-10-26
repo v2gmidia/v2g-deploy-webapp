@@ -1,0 +1,26 @@
+{
+  "resultado": "PASSOU",
+  "ambiente": "LOCAL FICTICIO",
+  "provas": [
+    {
+      "passo": "submetido",
+      "pedido": "55555555-5555-4555-8555-555555555555",
+      "contagens": "Trabalhos: 1 · Recibos fictícios: 0 · Envios: 1 · Consultas: 2"
+    },
+    {
+      "passo": "preparar repetido",
+      "pedido": "55555555-5555-4555-8555-555555555555",
+      "contagens": "Trabalhos: 1 · Recibos fictícios: 0 · Envios: 1 · Consultas: 2"
+    },
+    {
+      "passo": "reload real 1, sem preparar",
+      "pedido": "55555555-5555-4555-8555-555555555555",
+      "contagens": "Trabalhos: 1 · Recibos fictícios: 0 · Envios: 1 · Consultas: 4"
+    },
+    {
+      "passo": "reload real 2, sem preparar",
+      "pedido": "55555555-5555-4555-8555-555555555555",
+      "contagens": "Trabalhos: 1 · Recibos fictícios: 0 · Envios: 1 · Consultas: 6"
+    }
+  ]
+}

@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { guardarPedidoDaSessao } from "@/lib/criativos/pedidos-da-sessao";
 import { RECADOS_DO_PEDIDO } from "@/lib/criativos/pedido-imagem";
+import { filaPeloBackend } from "@/lib/criativos/geracao/backend-da-sessao";
+import type { AndamentoGeracao } from "@/lib/criativos/geracao/contrato-fila";
+import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
 
 export type EstadoDoPedido = { ok?: boolean; erro?: string; id?: string; repetido?: boolean };
 
@@ -28,4 +31,18 @@ export async function guardarPedidoAction(
   } catch {
     return { erro: RECADOS_DO_PEDIDO.indisponivel };
   }
+}
+
+/** POST só cria/retoma o job durável; não chama worker, gerador ou Meta. */
+export async function acompanharGeracaoAction(businessId: string, requestId: string,
+  operacao: "submeter" | "consultar" | "cancelar" = "consultar",
+): Promise<AndamentoGeracao> {
+  if (process.env.V2G_CREATIVE_REQUESTS_ENABLED !== "true"
+    || !["submeter", "consultar", "cancelar"].includes(operacao)) return { ok: false, motivo: "indisponivel" };
+  const r = await filaPeloBackend({ businessId, requestId, operacao });
+  if (!r.ok) return r;
+  const e = r.estado;
+  return { ok: true, requestId: e.request_id, businessId: e.business_id, jobId: e.id,
+    status: e.status, simulada: true, consultarEm: e.poll_after_ms,
+    imagemUrl: e.status === "artifact_available" ? urlImagemGerada(e.request_id, e.business_id) : null };
 }
