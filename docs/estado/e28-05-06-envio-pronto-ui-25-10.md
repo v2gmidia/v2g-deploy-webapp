@@ -84,3 +84,14 @@ Verificações locais após a correção: `pnpm typecheck` passou; os três conf
 - **CORRIGIDO APENAS LOCALMENTE:** mensagem de data vencida e trava correta da ação principal.
 - **NÃO TESTADO NESTA ATUALIZAÇÃO:** novo login, segundo usuário independente, arquivo inválido, substituição de arquivo, decisão do gestor, publicação Meta e produção.
 - Nenhum anúncio foi publicado, nenhuma peça foi apagada, nenhuma migração foi aplicada e nenhum deploy foi feito pelo Central.
+
+## Atualização de publicação QA — 25/10 à noite
+
+- O commit `46dca3f1c168c5c01a928991dff44495f5ab4d27` foi publicado **somente** no projeto `v2g-webapp-qa` após autorização explícita de Victor.
+- A primeira tentativa de apontar o alias para a Preview revelou que aquele artefato não tinha as variáveis do ambiente estável e retornou erro interno por ausência da configuração Supabase. O alias foi restaurado imediatamente antes de prosseguir.
+- Pelo painel da Vercel, a opção “Promote to Production” criou o deployment `dpl_Gd3EXW6eUq4MhtikVUBFWxUp8jZ2` com `target=production` **dentro do projeto QA**, usando as variáveis corretas. Estado final: `READY`, sem erro de alias.
+- `https://v2g-webapp-qa.vercel.app/criativos` abriu autenticado após a publicação. O negócio ativo permaneceu `V2G QA Multiconta B — FICTÍCIA` e o card enviado anteriormente continuou em revisão.
+- A correção da validade foi comprovada no QA: data vencida exibiu a mensagem esperada, `aria-invalid=true` e manteve “Conferir criativo” desabilitado. O formulário de ensaio foi descartado por recarga; nenhuma segunda peça foi enviada.
+- A consulta de logs do novo deployment não encontrou registros `error` ou `fatal` na janela do ensaio.
+
+Limites preservados: este deployment é do projeto QA, não do projeto WebApp de produção. Não houve migração, cobrança, chamada paga de geração, decisão do gestor ou publicação na Meta.
