@@ -79,6 +79,8 @@ export interface OpcoesChamada {
   params?: Record<string, string | number | boolean | undefined | null>;
   /** Nome curto para o log. Sem isto, erro no log não diz de onde veio. */
   contexto?: string;
+  /** JWT da sessao humana, somente em chamadas que o backend valida separadamente. */
+  tokenDaSessao?: string;
   /**
    * Guarda o corpo da resposta de erro em `FalhaBackend.detalhe`.
    *
@@ -133,6 +135,7 @@ async function chamar(
       method: metodo,
       headers: {
         "X-V2G-Token": cfg.token,
+        ...(opcoes.tokenDaSessao ? { Authorization: `Bearer ${opcoes.tokenDaSessao}` } : {}),
         Accept: "application/json",
         // ============================================================
         // COM `FormData`, O `Content-Type` NÃO SE ESCREVE À MÃO.

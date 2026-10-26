@@ -36,7 +36,7 @@ export async function criarHarnessFila({dispatcherReal=false}={}) {
   }
   for(const f of ['supabase/migrations/20261021001651_creative_generation_requests.sql','scripts/sql/proposta-geracao-backend-22-10.sql',backend+'/docs/qa/geracao/proposta-dispatch-fake-25-10.sql']) await db.exec(readFileSync(f,'utf8'));
   if(dispatcherReal)await db.exec(readFileSync(backend+'/docs/qa/geracao/proposta-dispatch-real-26-10.sql','utf8'));
-  let child,seq=0,actor=A,business=BA,manifesto,perderResposta=false,recusarDownload=false,publico=false,falhasRecibo=0,bibliotecaFalhou=false;
+  let child,seq=0,actor=A,business=BA,manifesto,perderResposta=false,recusarDownload=false,publico=false,falhasRecibo=0,bibliotecaFalhou=false,tokenDaFixture;
   const requests=[],pending=new Map(),txs=new Map();
   const send=m=>child?.stdin.writable&&child.stdin.write(JSON.stringify(enc(m))+'\n');
   const rpc=m=>new Promise((resolve,reject)=>{const id=++seq;const timer=setTimeout(()=>reject(Error('fixture_timeout')),20000);
@@ -71,7 +71,8 @@ export async function criarHarnessFila({dispatcherReal=false}={}) {
     const atual=child;const timeout=setTimeout(()=>{atual.kill();},2000);
     atual.once('exit',()=>{clearTimeout(timeout);resolve();});atual.stdin.end();
   });}
-  function cliente() {return {auth:{getUser:async()=>({data:{user:actor?{id:actor}:null},error:null})},from(table) {
+  function cliente() {return {auth:{getUser:async()=>({data:{user:actor?{id:actor}:null},error:null}),
+    getSession:async()=>({data:{session:actor?{user:{id:actor},access_token:tokenDaFixture===undefined?(actor===A?'fixture-user-a':'fixture-user-b'):tokenDaFixture}:null},error:null})},from(table) {
     assert.ok(['creative_generation_requests','creatives'].includes(table));const filters={};
     async function rows() {if(!actor)return [];const result=await db.query(`select t.* from ${table} t join businesses b on b.id=t.business_id where b.profile_id=$1`,[actor]);
       return result.rows.filter(r=>Object.entries(filters).every(([k,v])=>r[k]===v))
@@ -91,9 +92,8 @@ export async function criarHarnessFila({dispatcherReal=false}={}) {
       const r=await db.query('select bytes from local_object_store where path=$1',[path]);return {data:r.rows[0]?new Blob([r.rows[0].bytes],{type:'image/png'}):null,error:null};}};}}})},
   },fetch:async(url,opt)=>{
     const u=new URL(url);assert.equal(u.origin,'http://fixture.invalid');requests.push({method:opt.method,path:u.pathname});
-    // Identidade fake adicionada SÓ no transporte do harness; nunca no código do produto.
     const r=await rpc({method:opt.method,path:u.pathname+u.search,body:opt.body?JSON.parse(opt.body):undefined,
-      headers:{...opt.headers,'X-Fixture-Session':actor}});
+      headers:opt.headers});
     if(perderResposta&&opt.method==='POST'){perderResposta=false;throw Error('resposta_perdida_fixture');}
     return new Response(JSON.stringify(r.body.body),{status:r.body.status});
   }});
@@ -105,7 +105,7 @@ export async function criarHarnessFila({dispatcherReal=false}={}) {
     return actions.guardarPedidoAction({},f);
   }
   async function reset() {
-    await stop();actor=A;business=BA;requests.length=0;perderResposta=false;recusarDownload=false;publico=false;falhasRecibo=0;bibliotecaFalhou=false;env.V2G_CREATIVE_BACKEND_ENABLED='true';env.V2G_CREATIVE_REAL_SUBMISSION_ENABLED='false';
+    await stop();actor=A;business=BA;tokenDaFixture=undefined;requests.length=0;perderResposta=false;recusarDownload=false;publico=false;falhasRecibo=0;bibliotecaFalhou=false;env.V2G_CREATIVE_BACKEND_ENABLED='true';env.V2G_CREATIVE_REAL_SUBMISSION_ENABLED='false';
     await db.exec('truncate creative_generation_jobs,creative_generation_requests,creatives,local_object_store,local_provider_calls,businesses,profiles cascade');
     await db.query('insert into profiles values($1),($2)',[A,B]);await db.query('insert into businesses(id,profile_id,dados_ficticios) values($1,$2,true),($3,$4,true)',[BA,A,BB,B]);
     const fixture=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64');
@@ -134,6 +134,7 @@ export async function criarHarnessFila({dispatcherReal=false}={}) {
     falharBiblioteca:valor=>{bibliotecaFalhou=valor;},
     imagem:(biz=business,id=ID)=>imagem.GET(new Request(`http://fixture.invalid/criativos/imagem-gerada/${id}?negocio=${biz}`),{params:Promise.resolve({requestId:id})}),
     ator:(perfil,negocio)=>{actor=perfil;business=negocio;},
+    definirTokenDeEnsaio:valor=>{tokenDaFixture=valor;},
     perderResposta:()=>{perderResposta=true;},downloadFalha:v=>{recusarDownload=v;},bucketPublico:v=>{publico=v;},
     falharProcessamento:async()=>{
       falhasRecibo=3;

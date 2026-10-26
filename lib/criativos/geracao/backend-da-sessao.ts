@@ -48,16 +48,19 @@ export async function geracaoPeloBackend(entrada: {
   try {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
+    const { data: { session }, error: erroSessao } = await supabase.auth.getSession();
     const ativo = await negocioAtivoDaSessao();
-    if (error || !user || !UUID.test(user.id) || ativo.status !== "selecionado" || ativo.negocio.id !== entrada.businessId)
+    if (error || erroSessao || !user || !session?.access_token || session.user.id !== user.id
+      || !UUID.test(user.id) || ativo.status !== "selecionado" || ativo.negocio.id !== entrada.businessId)
       return { ok: false, motivo: "negocio_mudou" };
     const base = `/criativos/geracao/${ativo.negocio.id}`;
+    const opcoes = { contexto: "geracao-criativo", tokenDaSessao: session.access_token };
     const resultado = entrada.operacao === "executar" || entrada.operacao === "submeter"
-      ? await enviar(base, { request_id: entrada.requestId, profile_id: user.id }, { contexto: "geracao-criativo" })
+      ? await enviar(base, { request_id: entrada.requestId, profile_id: user.id }, opcoes)
       : entrada.operacao === "cancelar"
-      ? await enviar(`${base}/${entrada.requestId}/cancelar`, { profile_id: user.id }, { contexto: "cancelar-geracao-criativo" })
+      ? await enviar(`${base}/${entrada.requestId}/cancelar`, { profile_id: user.id }, opcoes)
       : await obter(`${base}/${entrada.requestId}${entrada.operacao === "biblioteca" ? "/biblioteca" : ""}`,
-        { params: { profile_id: user.id }, contexto: "estado-geracao-criativo" });
+        { params: { profile_id: user.id }, ...opcoes });
     if (!resultado.ok) {
       if (resultado.http === 404) return { ok: false, motivo: "nao_iniciado" };
       if (resultado.http === 409) return { ok: false, motivo: "contexto_pendente" };

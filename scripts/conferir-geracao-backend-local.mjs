@@ -44,7 +44,8 @@ const raw=(method,path,body,headers={'X-V2G-Token':'fixture-machine-local'})=>rp
 const call=(operacao='executar',requestId=ID,businessId=BA)=>geracaoPeloBackend({requestId,businessId,operacao});
 const row=async()=> (await db.query('select * from creative_generation_jobs where request_id=$1',[ID])).rows[0];
 
-function cliente(){return {auth:{getUser:async()=>({data:{user:estado.profile?{id:estado.profile}:null},error:null})},from(t){
+function cliente(){return {auth:{getUser:async()=>({data:{user:estado.profile?{id:estado.profile}:null},error:null}),
+ getSession:async()=>({data:{session:estado.profile?{user:{id:estado.profile},access_token:'fixture-sessao'}:null},error:null})},from(t){
  assert.equal(t,'creative_generation_requests');const filtros={};const q={select(){return q;},eq(k,v){filtros[k]=v;return q;},
  async maybeSingle(){const r=await db.query('select * from creative_generation_requests where id=$1 and business_id=$2 and requested_by=$3',
  [filtros.id,filtros.business_id,estado.profile]);return {data:r.rows[0]??null,error:null};},

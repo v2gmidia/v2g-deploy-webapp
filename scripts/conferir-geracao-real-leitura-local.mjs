@@ -30,7 +30,8 @@ function harness() {
   const a=ambienteTs({env,ports:{
     'next/cache':{revalidatePath(){}},
     '@/lib/multiconta/ativo':{negocioAtivoDaSessao:async()=>({status:'selecionado',negocio:{id:s.business}})},
-    '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:s.profile?{id:s.profile}:null},error:null})},from(table){
+    '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:s.profile?{id:s.profile}:null},error:null}),
+      getSession:async()=>({data:{session:s.profile?{user:{id:s.profile},access_token:'fixture-jwt'}:null},error:null})},from(table){
       assert.ok(['creatives','creative_generation_requests'].includes(table));const filtros={};const q={select(colunas){
         for(const coluna of (table==='creatives'?['id','business_id','type','uso','storage_path','copy','arquivado_em']:['id','business_id','requested_by']))assert.ok(colunas.split(', ').includes(coluna));return q;
       },eq(k,v){filtros[k]=v;return q;},async maybeSingle(){return {error:null,data:table==='creative_generation_requests'
@@ -39,7 +40,7 @@ function harness() {
           copy:{generation:{version:1,requestId:pedido,jobId:job,attemptId:attempt,snapshotHash:row.snapshot_hash,artifactHash:sha,simulated:s.simuladoNoArquivo}}}};}};return q;
     }})},
     '@/lib/supabase/admin':{createAdminClient:()=>({storage:{getBucket:async()=>({error:null,data:{public:false}}),from:()=>({download:async()=>({error:null,data:new Blob([s.corromper?Buffer.from('ALTERADO'):png])})})}})},
-  },fetch:async(url,opt)=>{assert.equal(new URL(url).origin,'http://fixture.invalid');s.chamadas.push({method:opt.method,url});
+  },fetch:async(url,opt)=>{assert.equal(new URL(url).origin,'http://fixture.invalid');assert.equal(opt.headers.Authorization,'Bearer fixture-jwt');s.chamadas.push({method:opt.method,url});
     if(s.off)throw Error('conexao_fixture');return new Response(JSON.stringify(s.http===200?s.dto:{detail:'SQL PRIVADO'}),{status:s.http});}});
   return {s,env,load:a.load,acao:(operacao='consultar')=>a.load('app/(protected)/criativos/geracao-actions.ts').acompanharGeracaoAction(business,pedido,operacao),
     arquivo:()=>a.load('lib/criativos/geracao/imagem-privada.ts').lerImagemGerada(pedido,business)};

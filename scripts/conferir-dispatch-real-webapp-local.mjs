@@ -35,3 +35,13 @@ test('escopo/autoria e cancelamento real permanecem fechados',async()=>{
   assert.equal((await h.consultar('consultar',BA)).motivo,'negocio_mudou');assert.equal((await h.imagem(BA)).status,404);
   h.ator(A,BA);const n=h.requests.length;assert.equal((await h.consultar('cancelar')).motivo,'submissao_real_pendente');assert.equal(h.requests.length,n);
 });
+test('sessão ausente ou token humano inválido não criam job nem chamam provider',async()=>{
+  h.env.V2G_CREATIVE_REAL_SUBMISSION_ENABLED='true';
+  h.definirTokenDeEnsaio('');
+  assert.equal((await h.consultar('submeter')).motivo,'negocio_mudou');
+  assert.equal(h.requests.length,0);
+  h.definirTokenDeEnsaio('fixture-token-invalido');
+  assert.equal((await h.consultar('submeter')).ok,false);
+  assert.equal(await h.count('creative_generation_jobs'),0);
+  assert.equal(await h.count('local_provider_calls'),0);
+});

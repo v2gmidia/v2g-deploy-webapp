@@ -35,6 +35,7 @@ Regras que fazem a pasta continuar legível:
 
 | documento | data | o que cobre | pendências abertas |
 |---|---|---|---|
+| [`e28-06-ponte-identidade-local-26-10.md`](./e28-06-ponte-identidade-local-26-10.md) | 26/10/2026 | Token humano do WebApp validado pelo Supabase Auth no backend de geração; ensaio integrado fictício. | **Sim.** Injeção em serviço isolado, contexto aprovado, schema/Storage e QA autenticado; sem geração paga. |
 | [`e28-01-02-senha-retorno-acesso-25-10.md`](./e28-01-02-senha-retorno-acesso-25-10.md) | 25/10/2026 | Mínimo local 12 com classes, retorno de redefinição, export Next, confirmação pública e recuperação PKCE; prova visual do acesso após estorno registrada. | **Sim.** Publicação/ensaio QA e política Auth remota; acesso pós-estorno por negócio ainda pendente. |
 | [`e28-01-02-cpf-cnpj-contratante-25-10.md`](./e28-01-02-cpf-cnpj-contratante-25-10.md) | 25/10/2026 | Contratação/primeiro acesso, multiconta, agenda e evidências com CPF ou CNPJ; titular separado, sem fusão automática; migration e testes locais. | **Sim.** Migration não aplicada; revisão/backup/QA, LP, contrato/fiscal e consumidores externos. |
 | [`gestor-carteira-analise-referencias-20-10.md`](./gestor-carteira-analise-referencias-20-10.md) | 20/10/2026 | Mesa navegável pelas referências: tabela/cartões, análise por conta, orçamento, gráficos, ranking e diagnóstico; dados sintéticos. | **Sim.** Carregador real, metas, isolamento por agência e QA autenticado. |
