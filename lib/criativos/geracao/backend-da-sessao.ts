@@ -2,7 +2,8 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { enviar, obter } from "@/lib/backend/cliente";
-import { estadoDaFilaValido, type EstadoFila } from "./contrato-fila";
+import { estadoDaFilaValido, estadoDaFilaRealValido, type EstadoFila } from "./contrato-fila";
+import { modoGeracaoNoApp, submissaoRealHabilitada } from "./configuracao-app";
 
 export interface EstadoGeracaoBackend {
   version: 1; id: string; request_id: string; business_id: string; attempt_id: string;
@@ -15,7 +16,7 @@ const HASH = /^[a-f0-9]{64}$/;
 const dinheiro = (v: unknown) => typeof v === "string" && /^\d+(\.\d+)?$/.test(v);
 function valido(r: unknown, requestId: string, businessId: string): r is EstadoGeracaoBackend {
   if (!r || typeof r !== "object" || Array.isArray(r)) return false;
-  if ("contract" in r) return estadoDaFilaValido(r, requestId, businessId);
+  if ("contract" in r) return estadoDaFilaValido(r, requestId, businessId) || estadoDaFilaRealValido(r, requestId, businessId);
   const e = r as EstadoGeracaoBackend;
   return e.version === 1 && e.request_id === requestId && e.business_id === businessId
     && typeof e.id === "string" && UUID.test(e.id) && typeof e.attempt_id === "string" && UUID.test(e.attempt_id)
@@ -27,7 +28,7 @@ function valido(r: unknown, requestId: string, businessId: string): r is EstadoG
     && (e.billed_usd === null || !e.simulated && dinheiro(e.billed_usd));
 }
 export type RetornoGeracao = { ok: true; estado: EstadoGeracaoBackend }
-  | { ok: false; motivo: "indisponivel" | "negocio_mudou" | "conferir_estado" | "nao_iniciado" | "contexto_pendente" };
+  | { ok: false; motivo: "indisponivel" | "negocio_mudou" | "conferir_estado" | "nao_iniciado" | "contexto_pendente" | "submissao_real_pendente" };
 
 /** Porta desligada por padrão; a UI de fila passa por filaPeloBackend.
  * Não usa o worker TS de laboratório. POST perdido não significa não executado.
@@ -37,6 +38,12 @@ export async function geracaoPeloBackend(entrada: {
   requestId: string; businessId: string; operacao: "executar" | "submeter" | "consultar" | "biblioteca" | "cancelar";
 }): Promise<RetornoGeracao> {
   if (process.env.V2G_CREATIVE_BACKEND_ENABLED !== "true") return { ok: false, motivo: "indisponivel" };
+  // Dispatcher real de 26/10: POST só enfileira. Mantê-lo OFF sem o portão
+  // explícito do piloto; não aumentar timeout nem iniciar worker pelo clique.
+  // "executar" permanece somente compatibilidade do laboratório interno anterior.
+  if ((entrada.operacao === "submeter" && modoGeracaoNoApp() !== "fila_ficticia" && !submissaoRealHabilitada())
+    || (entrada.operacao === "cancelar" && modoGeracaoNoApp() !== "fila_ficticia"))
+    return { ok: false, motivo: "submissao_real_pendente" };
   if (!UUID.test(entrada.requestId) || !UUID.test(entrada.businessId)) return { ok: false, motivo: "indisponivel" };
   try {
     const supabase = await createClient();
@@ -63,6 +70,26 @@ export async function geracaoPeloBackend(entrada: {
   } catch {
     return { ok: false, motivo: "conferir_estado" };
   }
+}
+
+/** DTO real existente, apenas LEITURA. Não inventa fila, recibo nem custo pago zero. */
+export function estadoRealPersistidoValido(valor: unknown, pedido: string, negocio: string): valor is EstadoGeracaoBackend {
+  return estadoDaFilaRealValido(valor, pedido, negocio) || Boolean(valor && typeof valor === "object" && !("contract" in valor)
+    && valido(valor, pedido, negocio) && valor.simulated === false);
+}
+
+export async function geracaoNoAppPeloBackend(entrada: {
+  requestId: string; businessId: string; operacao: "submeter" | "consultar" | "biblioteca" | "cancelar";
+}): Promise<RetornoGeracao> {
+  if (modoGeracaoNoApp() === "fila_ficticia") return filaPeloBackend(entrada);
+  if (entrada.operacao === "cancelar" || entrada.operacao === "submeter" && !submissaoRealHabilitada())
+    return { ok: false, motivo: "submissao_real_pendente" };
+  const r = await geracaoPeloBackend(entrada);
+  if (!r.ok) return r;
+  // POST novo exige contrato durável real; DTO síncrono anterior só é legível.
+  return (entrada.operacao === "submeter" ? estadoDaFilaRealValido(r.estado, entrada.requestId, entrada.businessId)
+    : estadoRealPersistidoValido(r.estado, entrada.requestId, entrada.businessId))
+    ? r : { ok: false, motivo: "conferir_estado" };
 }
 
 /** A UI só consome fila assíncrona; o DTO síncrono legado fica no laboratório. */

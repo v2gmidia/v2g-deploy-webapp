@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { acompanharGeracaoAction } from "./geracao-actions";
-import { RECADOS_GERACAO, ROTULOS_GERACAO, type AndamentoGeracao } from "@/lib/criativos/geracao/contrato-fila";
+import { RECADOS_GERACAO, rotuloDoAndamento, type AndamentoGeracao } from "@/lib/criativos/geracao/contrato-fila";
 import styles from "./pedido-de-imagem.module.css";
 
 type Operacao = "consultar" | "submeter" | "cancelar";
@@ -63,27 +63,28 @@ export function AndamentoDaImagem({ businessId, requestId, habilitada,
     {simulacao ? <p className={styles.avisoSimulacao}>Imagem fictícia para testar o fluxo. Nenhum anúncio será publicado.</p> : null}
     <div className={styles.estado} role="status" aria-live="polite" aria-atomic="true">
       {!estado ? <p>Consultando o pedido…</p> : estado.ok
-        ? <><strong>{ROTULOS_GERACAO[estado.status]}</strong>
+        ? <><strong>{rotuloDoAndamento(estado.status, estado.simulada)}</strong>
           {estado.status === "queued" ? <p>Seu pedido está guardado e aguarda processamento.</p> : null}
           {estado.status === "storage_pending" ? <p>A imagem foi recebida. Estamos concluindo o arquivo, sem criar outra imagem.</p> : null}
           {estado.status === "reconciliation_required" ? <p>Estamos conferindo o que aconteceu. Nenhuma nova criação será iniciada por esta consulta.</p> : null}
           {estado.status === "failed" ? <p>O processamento foi encerrado. O pedido foi preservado para a equipe conferir.</p> : null}
           {estado.status === "cancelled" ? <p>Este pedido foi cancelado e não será reenviado automaticamente.</p> : null}
-          {estado.status === "artifact_available" ? <p>Arquivo de teste guardado na biblioteca deste negócio. Nenhum anúncio foi publicado.</p> : null}</>
+          {estado.status === "artifact_available" ? <p>{estado.simulada ? "Arquivo de teste guardado" : "Imagem guardada"} na biblioteca deste negócio. Nenhum anúncio foi publicado.</p> : null}</>
         : <p className={estado.motivo === "conferir_estado" ? "form-error" : "form-warning"}>{RECADOS_GERACAO[estado.motivo]}</p>}
     </div>
     {estado?.ok && estado.imagemUrl ? <div className={simulacao ? styles.resultadoSimulado : undefined}>
       {imagemFalhou ? <p className="form-warning" role="alert">Não foi possível abrir a imagem com o acesso atual. Consulte o andamento para conferir novamente.</p>
-        : <img className={styles.resultado} src={estado.imagemUrl} alt="Imagem fictícia do teste de criação"
+        : <img className={styles.resultado} src={estado.imagemUrl} alt={estado.simulada ? "Imagem fictícia do teste de criação" : "Imagem criada para este negócio"}
           width={1088} height={1088} onError={() => setImagemFalhou(true)} />}
       {simulacao && !imagemFalhou ? <span aria-hidden="true">SIMULAÇÃO LOCAL</span> : null}
     </div> : null}
     <div className={styles.acoes}>
-      {falha === "nao_iniciado" ? <button type="button" className="cta" disabled={pendente}
-        onClick={() => { void chamar("submeter"); }}>Criar imagem de teste</button> : null}
+      {estado && !estado.ok && estado.motivo === "nao_iniciado"
+        && (estado.podeSubmeter === true || simulacao && estado.podeSubmeter === undefined) ? <button type="button" className="cta" disabled={pendente}
+        onClick={() => { void chamar("submeter"); }}>{estado.tipoCriacao === "real" ? "Criar imagem" : "Criar imagem de teste"}</button> : null}
       <button type="button" className="cta ghost" disabled={pendente || falha === "negocio_mudou"}
         onClick={() => { void chamar("consultar"); }}>{pendente ? "Atualizando…" : "Atualizar andamento"}</button>
-      {estado?.ok && estado.status === "queued" ? <button type="button" className="cta ghost" disabled={pendente}
+      {estado?.ok && estado.status === "queued" && estado.simulada ? <button type="button" className="cta ghost" disabled={pendente}
         onClick={() => { void chamar("cancelar"); }}>Cancelar pedido na fila</button> : null}
     </div>
   </div>;

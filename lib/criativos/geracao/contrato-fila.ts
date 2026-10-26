@@ -15,6 +15,32 @@ export interface EstadoFila {
     width: 1088; height: 1088; mime: "image/png"; source: "fake-png-v1";
     authored_by: string; simulated: true } | null;
 }
+export interface EstadoFilaReal extends Omit<EstadoFila, "simulated" | "billed_usd" | "error" | "cost" | "result" | "status"> {
+  status: Exclude<StatusFila, "cancelled">; simulated: false; billed_usd: string | null;
+  error: "storage_retry" | "provider_outcome_unknown" | "context_unavailable" | null;
+  cost: null;
+  result: null | Omit<NonNullable<EstadoFila["result"]>, "source" | "simulated"> & { source: "gpt-image-2"; simulated: false };
+}
+export function estadoDaFilaRealValido(valor: unknown, pedido: string, negocio: string): valor is EstadoFilaReal {
+  if (!valor || typeof valor !== "object" || Array.isArray(valor)) return false;
+  const e = valor as EstadoFilaReal;
+  const terminal = ["artifact_available", "failed", "reconciliation_required"].includes(e.status);
+  if (e.contract !== "creative-generation-queue-v1" || e.version !== 1 || e.simulated !== false
+    || !UUID_GERACAO.test(pedido) || !UUID_GERACAO.test(negocio) || e.request_id !== pedido || e.business_id !== negocio
+    || ![e.id, e.attempt_id].every(v => typeof v === "string" && UUID_GERACAO.test(v))
+    || !["queued", "running", "storage_pending", "artifact_available", "reconciliation_required", "failed"].includes(e.status)
+    || typeof e.snapshot_hash !== "string" || !HASH.test(e.snapshot_hash)
+    || !(e.artifact_sha256 === null || typeof e.artifact_sha256 === "string" && HASH.test(e.artifact_sha256))
+    || e.currency !== "USD" || !monetario(e.estimated_usd) || !monetario(e.reserved_usd)
+    || !(e.billed_usd === null || monetario(e.billed_usd)) || e.cost !== null
+    || e.idempotency_key !== `creative_generation_request:${pedido}:v1` || e.poll_after_ms !== (terminal ? null : 2000)
+    || ![null, "storage_retry", "provider_outcome_unknown", "context_unavailable"].includes(e.error)) return false;
+  const r = e.result;
+  if (e.status !== "artifact_available") return r === null;
+  return e.error === null && Boolean(r && r.private_reference === e.id && r.creative_id === e.id
+    && r.sha256 === e.artifact_sha256 && r.width === 1088 && r.height === 1088 && r.mime === "image/png"
+    && r.source === "gpt-image-2" && r.simulated === false && typeof r.authored_by === "string" && UUID_GERACAO.test(r.authored_by));
+}
 export function filaTerminal(status: StatusFila): boolean {
   return ["artifact_available", "failed", "cancelled"].includes(status);
 }
@@ -42,17 +68,21 @@ export function estadoDaFilaValido(valor: unknown, pedido: string, negocio: stri
 
 /** Projeção para o cliente: não transporta hashes, custos, exceções ou caminhos. */
 export type AndamentoGeracao = { ok: true; requestId: string; businessId: string; jobId: string;
-  status: StatusFila; simulada: true; consultarEm: 2000 | null; imagemUrl: string | null }
-  | { ok: false; motivo: "indisponivel" | "negocio_mudou" | "conferir_estado" | "nao_iniciado" | "contexto_pendente" };
+  status: StatusFila; simulada: boolean; consultarEm: 2000 | null; imagemUrl: string | null }
+  | { ok: false; motivo: "indisponivel" | "negocio_mudou" | "conferir_estado" | "nao_iniciado" | "contexto_pendente" | "submissao_real_pendente"; podeSubmeter?: boolean; tipoCriacao?: "real" | "ficticia" };
 export const RECADOS_GERACAO = {
   indisponivel: "A criação de imagens está indisponível agora. Seu pedido continua guardado.",
   negocio_mudou: "O negócio ou o acesso mudou. Atualize a página para continuar no negócio correto.",
   conferir_estado: "Não foi possível confirmar o andamento. Consulte este mesmo pedido antes de tentar novamente.",
   nao_iniciado: "Este pedido ainda não entrou na fila de criação.",
   contexto_pendente: "Precisamos conferir o contexto e os materiais deste negócio antes de continuar.",
+  submissao_real_pendente: "Seu pedido está guardado. A criação ainda aguarda a liberação da equipe.",
 } as const;
 export const ROTULOS_GERACAO: Record<StatusFila, string> = {
   queued: "Na fila", running: "Criando imagem", storage_pending: "Guardando imagem",
   artifact_available: "Imagem de teste disponível", failed: "Não foi possível concluir",
   cancelled: "Pedido cancelado", reconciliation_required: "Conferindo o resultado",
 };
+export function rotuloDoAndamento(status: StatusFila, simulada: boolean): string {
+  return status === "artifact_available" && !simulada ? "Imagem criada" : ROTULOS_GERACAO[status];
+}

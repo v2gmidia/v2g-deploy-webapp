@@ -14,7 +14,7 @@ export function PedidoDeImagem({ businessId, requestId, hoje, pedidos, falhou, p
   return <section className={styles.secao} aria-labelledby="criar-peca-titulo">
     <h2 id="criar-peca-titulo" className="section-title">Criar uma imagem</h2>
     {previa ? <p className="form-warning" role="status">Prévia local da interface. Nada é guardado aqui e nenhum serviço externo é chamado. Use apenas dados fictícios.</p> : null}
-    <p>{geracaoHabilitada ? "Conte o que precisa aparecer. O pedido fica guardado neste negócio e você acompanha cada etapa da criação." : "Conte o que precisa aparecer. O pedido fica guardado, mas a criação automática ainda não está disponível."}</p>
+    <p>{geracaoHabilitada ? "Conte o que precisa aparecer. O pedido fica guardado neste negócio e você acompanha o andamento por aqui. A criação ainda depende de liberação." : "Conte o que precisa aparecer. O pedido fica guardado, mas a criação automática ainda não está disponível."}</p>
     <Formulario key={id} businessId={businessId} requestId={id} hoje={hoje}
       previa={previa} geracaoHabilitada={geracaoHabilitada} novoPedido={() => setId(crypto.randomUUID())} />
     <div className={styles.historico} aria-labelledby="pedidos-criacao-titulo">

@@ -16,14 +16,15 @@ const sha=v=>createHash('sha256').update(v).digest('hex');
 const enc=v=>v instanceof Uint8Array?{$bytes:Buffer.from(v).toString('base64')}:v instanceof Date?v.toISOString():Array.isArray(v)?v.map(enc):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,enc(x)])):v;
 const dec=v=>v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).length===1&&v.$bytes?Buffer.from(v.$bytes,'base64'):Array.isArray(v)?v.map(dec):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,dec(x)])):v;
 
-export async function criarHarnessFila() {
+export async function criarHarnessFila({dispatcherReal=false}={}) {
   const {PGlite}=await import(pathToFileURL(process.env.V2G_PGLITE_MODULE??'C:/Users/victo/v2g-finance/node_modules/@electric-sql/pglite/dist/index.js').href);
   const db=new PGlite();
   await db.exec(`create role anon;create role authenticated;create role service_role bypassrls;
     create schema auth;create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
     create table profiles(id uuid primary key);create table businesses(id uuid primary key,profile_id uuid references profiles,dados_ficticios boolean not null,onboarding jsonb not null default '{}'::jsonb);
     create table campaigns(id uuid primary key);create table analysis_runs(id uuid primary key);
-    create table local_object_store(path text primary key,bytes bytea not null,hash text not null);`);
+    create table local_object_store(path text primary key,bytes bytea not null,hash text not null);
+    create table local_provider_calls(id bigint generated always as identity primary key);`);
   const init=readFileSync('supabase/migrations/0001_init.sql','utf8');
   await db.exec(init.match(/create table public\.creatives \([\s\S]*?\n\);/)[0]);
   for(const f of ['0008_publicar_campanha.sql','0010_perfil_empresa.sql','0014_identidade_do_negocio.sql']) {
@@ -34,6 +35,7 @@ export async function criarHarnessFila() {
     }
   }
   for(const f of ['supabase/migrations/20261021001651_creative_generation_requests.sql','scripts/sql/proposta-geracao-backend-22-10.sql',backend+'/docs/qa/geracao/proposta-dispatch-fake-25-10.sql']) await db.exec(readFileSync(f,'utf8'));
+  if(dispatcherReal)await db.exec(readFileSync(backend+'/docs/qa/geracao/proposta-dispatch-real-26-10.sql','utf8'));
   let child,seq=0,actor=A,business=BA,manifesto,perderResposta=false,recusarDownload=false,publico=false,falhasRecibo=0,bibliotecaFalhou=false;
   const requests=[],pending=new Map(),txs=new Map();
   const send=m=>child?.stdin.writable&&child.stdin.write(JSON.stringify(enc(m))+'\n');
@@ -58,7 +60,8 @@ export async function criarHarnessFila() {
     } catch(e) {send({sql_result:m.sql_id,error:e.code??'sql_fixture'});}
   }
   async function start() {
-    child=spawn(backend+'/.venv/Scripts/python.exe',['-X','utf8','-u','tests/integracao/geracao_fila_bridge.py'],{cwd:backend,stdio:['pipe','pipe','pipe']});
+    child=spawn(backend+'/.venv/Scripts/python.exe',['-X','utf8','-u','tests/integracao/geracao_fila_bridge.py'],{cwd:backend,stdio:['pipe','pipe','pipe'],
+      env:{SystemRoot:process.env.SystemRoot,V2G_TEST_REAL_DISPATCH:dispatcherReal?'1':'0',PYTHONIOENCODING:'utf-8'}});
     child.stderr.on('data',()=>{});child.stdin.on('error',()=>{});
     child.on('exit',code=>{for(const p of pending.values())p.reject(Error('bridge_exit_'+code));pending.clear();});
     createInterface({input:child.stdout}).on('line',line=>{const m=dec(JSON.parse(line));if(m.sql_id){void sqlMessage(m);return;}const p=pending.get(m.id);pending.delete(m.id);p?.resolve(m);});
@@ -77,7 +80,8 @@ export async function criarHarnessFila() {
       async maybeSingle(){return {data:(await rows())[0]??null,error:null};},then(resolve,reject){return rows().then(data=>({data,error:null})).then(resolve,reject);},
       async insert(p){try{await db.query('insert into creative_generation_requests(id,business_id,requested_by,content_hash,payload) select $1,$2,$3,$4,$5 where exists(select 1 from businesses where id=$2 and profile_id=$3)',[p.id,p.business_id,p.requested_by,p.content_hash,JSON.stringify(p.payload)]);return {error:null};}catch(e){return {error:{code:e.code}};}}};return q;
   }};}
-  const env={V2G_CREATIVE_REQUESTS_ENABLED:'true',V2G_CREATIVE_BACKEND_ENABLED:'true',V2G_BACKEND_URL:'http://fixture.invalid',V2G_BACKEND_TOKEN:'fixture-machine-local'};
+  const env={V2G_CREATIVE_REQUESTS_ENABLED:'true',V2G_CREATIVE_BACKEND_ENABLED:'true',V2G_CREATIVE_APP_MODE:dispatcherReal?'real_dispatch':'fila_ficticia',
+    V2G_CREATIVE_REAL_SUBMISSION_ENABLED:'false',V2G_BACKEND_URL:'http://fixture.invalid',V2G_BACKEND_TOKEN:'fixture-machine-local'};
   const a=ambienteTs({env,ports:{
     'next/cache':{revalidatePath(){}},
     '@/lib/supabase/server':{createClient:async()=>cliente()},
@@ -101,8 +105,8 @@ export async function criarHarnessFila() {
     return actions.guardarPedidoAction({},f);
   }
   async function reset() {
-    await stop();actor=A;business=BA;requests.length=0;perderResposta=false;recusarDownload=false;publico=false;falhasRecibo=0;bibliotecaFalhou=false;env.V2G_CREATIVE_BACKEND_ENABLED='true';
-    await db.exec('truncate creative_generation_jobs,creative_generation_requests,creatives,local_object_store,businesses,profiles cascade');
+    await stop();actor=A;business=BA;requests.length=0;perderResposta=false;recusarDownload=false;publico=false;falhasRecibo=0;bibliotecaFalhou=false;env.V2G_CREATIVE_BACKEND_ENABLED='true';env.V2G_CREATIVE_REAL_SUBMISSION_ENABLED='false';
+    await db.exec('truncate creative_generation_jobs,creative_generation_requests,creatives,local_object_store,local_provider_calls,businesses,profiles cascade');
     await db.query('insert into profiles values($1),($2)',[A,B]);await db.query('insert into businesses(id,profile_id,dados_ficticios) values($1,$2,true),($3,$4,true)',[BA,A,BB,B]);
     const fixture=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64');
     for(const[id,uso,prefix]of[[LOGO,'logo','identidade'],[REF,'campanha','referencias']]) {
@@ -112,7 +116,7 @@ export async function criarHarnessFila() {
     const doc={versao:'fixture-v1',conteudo:'FICTICIO: nao usar em cliente',revisado_por:'fixture',revisado_em:'2026-10-25T15:00:00Z',business_id:null,nicho_id:null};
     manifesto={business_id:BA,request_id:ID,nicho_id:'fixture',nicho_confirmado:true,central:doc,nicho:{...doc,nicho_id:'fixture'},cores:'#123ABC',
       materiais:[['logo',LOGO,'identidade'],['referencia',REF,'referencias']].map(([uso,id,prefix])=>({id,business_id:BA,caminho:`${prefix}/${BA}/${id}.png`,sha256:sha(fixture),uso,autorizacao_id:'FICTICIA',revisado_por:'fixture',permitido:true,fonte:'fixture',observado_em:doc.revisado_em,condicao_de_uso:'somente teste'})),
-      destino_autorizado:'mock',politica_versao:'fixture',estimativa_usd:'0.000000000000000001',reserva_usd:'1',limite_usd:'1'};
+      destino_autorizado:dispatcherReal?'gpt-image-2':'mock',politica_versao:'fixture',estimativa_usd:'0.000000000000000001',reserva_usd:'1',limite_usd:'1'};
     await start();
   }
   await reset();
@@ -139,6 +143,6 @@ export async function criarHarnessFila() {
       }
     },
     reboot:async()=>{await stop();await start();},close:async()=>{await stop();await db.close();},
-    count:async table=>{assert.ok(['creative_generation_jobs','creative_generation_dispatch','creative_generation_fake_receipts','creatives'].includes(table));return Number((await db.query(`select count(*) n from ${table}`)).rows[0].n);},
+    count:async table=>{assert.ok(['creative_generation_jobs','creative_generation_dispatch','creative_generation_real_dispatch','creative_generation_fake_receipts','creatives','local_provider_calls'].includes(table));return Number((await db.query(`select count(*) n from ${table}`)).rows[0].n);},
   };
 }

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { guardarPedidoDaSessao } from "@/lib/criativos/pedidos-da-sessao";
 import { RECADOS_DO_PEDIDO } from "@/lib/criativos/pedido-imagem";
-import { filaPeloBackend } from "@/lib/criativos/geracao/backend-da-sessao";
+import { geracaoNoAppPeloBackend } from "@/lib/criativos/geracao/backend-da-sessao";
+import { modoGeracaoNoApp, submissaoRealHabilitada } from "@/lib/criativos/geracao/configuracao-app";
+import { filaTerminal } from "@/lib/criativos/geracao/contrato-fila";
 import type { AndamentoGeracao } from "@/lib/criativos/geracao/contrato-fila";
 import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
 
@@ -33,16 +35,18 @@ export async function guardarPedidoAction(
   }
 }
 
-/** POST só cria/retoma o job durável; não chama worker, gerador ou Meta. */
+/** Submissão real exige modo/flag específicos, ainda OFF fora dos testes. */
 export async function acompanharGeracaoAction(businessId: string, requestId: string,
   operacao: "submeter" | "consultar" | "cancelar" = "consultar",
 ): Promise<AndamentoGeracao> {
   if (process.env.V2G_CREATIVE_REQUESTS_ENABLED !== "true"
     || !["submeter", "consultar", "cancelar"].includes(operacao)) return { ok: false, motivo: "indisponivel" };
-  const r = await filaPeloBackend({ businessId, requestId, operacao });
-  if (!r.ok) return r;
+  const r = await geracaoNoAppPeloBackend({ businessId, requestId, operacao });
+  if (!r.ok) return { ...r, podeSubmeter: r.motivo === "nao_iniciado" && (modoGeracaoNoApp() === "fila_ficticia" || submissaoRealHabilitada()),
+    tipoCriacao: modoGeracaoNoApp() === "fila_ficticia" ? "ficticia" : "real" };
   const e = r.estado;
   return { ok: true, requestId: e.request_id, businessId: e.business_id, jobId: e.id,
-    status: e.status, simulada: true, consultarEm: e.poll_after_ms,
+    status: e.status, simulada: e.simulated,
+    consultarEm: filaTerminal(e.status) || (!e.simulated && e.status === "reconciliation_required") ? null : 2000,
     imagemUrl: e.status === "artifact_available" ? urlImagemGerada(e.request_id, e.business_id) : null };
 }
