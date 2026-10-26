@@ -145,3 +145,179 @@ direitos, mas não é catálogo persistente nem loader de fontes aprovadas.
 Ainda faltam ponte de identidade humana, fontes persistentes aprovadas,
 ambiente gravável isolado e piloto nominal com provedor/teto autorizados.
 Não habilitar geração apenas mudando flag. Código novo permanece local.
+
+### Atualização — unidades 4 e 5 autorizadas e aplicadas em sequência
+
+Victor autorizou expressamente: “seguir o 4 e o 5, quando chegar no 6 me chama”.
+Alvo conferido novamente: Supabase QA `zskpijnqgkqwxksqmzmf`, projeto
+`v2g-webapp-qa`, ACTIVE_HEALTHY. Cada unidade foi executada isoladamente,
+após cópia do catálogo anterior fora do Git, preflight e hash integral do SQL.
+
+**Unidade 4:** `04_metricas_moeda_sem_backfill.sql`, SHA256
+`ee8f11d9950296cd9e743da35a69c488bd389bca302fdeb8ca6ff4e6a3e7e039`.
+Backup anterior: `C:/Users/victo/v2g-backups/qa-unidade4-schema-before-20261026.json`.
+Antes: unidades 1–3 no ledger, `metricas_diarias` ausente, execuções e criativos
+vazios, nenhum índice/constraint conflitante. Aplicada em transação explícita
+por `apply_migration` como `qa_bkd_0004_metricas_moeda_sem_backfill`, ledger
+**20261026153101**. Pós: tabela de 11 colunas e zero linhas, três índices
+contando PK, quatro constraints; moeda anulável e sem default; conversões
+`numeric(12,2)` como previsto antes da unidade 5. RLS ativa, zero policies,
+service_role SELECT true/escrita false, anon/authenticated sem acesso.
+
+**Unidade 5:** `05_metricas_precisao_decimal.sql`, SHA256
+`e4ccb9cbdce18bf638f9e13a3f18f3ab6bd1e9cdda0975e2b66ce5793562670b`.
+Backup anterior: `C:/Users/victo/v2g-backups/qa-unidade5-schema-before-20261026.json`.
+Antes: unidade 4 no ledger, tabela vazia e conversões com escala 2. Aplicada
+em transação explícita por `apply_migration` como
+`qa_bkd_0005_metricas_precisao_decimal`, ledger **20261026153128**.
+Pós: conversões `numeric` sem escala fixa, tabela ainda vazia, moeda sem
+default/anulável, RLS e ACL preservadas. A consulta confirmou o tipo e a
+escala; não inserimos linha remota nem fizemos ensaio de roundtrip nesta rodada.
+
+Parada antes da **unidade 6**. Nenhum deploy do backend, fixture, campanha,
+geração paga ou alteração em produção decorre destes DDLs. Serviço backend QA
+continuava 502 na última prova válida; schema parcial não comprova boot.
+
+### Atualização posterior — unidade 6 autorizada e aplicada
+
+Victor autorizou expressamente apenas a unidade 6. Projeto QA
+`zskpijnqgkqwxksqmzmf`/`v2g-webapp-qa` ACTIVE_HEALTHY reconferido; SQL
+`06_respostas_do_dono.sql` SHA256
+`801c9d91d8b700779d7852af08257d433d85728ab49959dd608792dd243ec673`.
+Preflight: unidades 1–5 registradas; tabela e índice ausentes; execuções e
+métricas vazias. Backup de catálogo anterior, sem linhas de negócio, salvo
+fora do Git em
+`C:/Users/victo/v2g-backups/qa-unidade6-schema-before-20261026.json`.
+
+SQL aplicado em transação explícita por `apply_migration` como
+`qa_bkd_0006_respostas_do_dono`; ledger real **20261026154234**. Consulta
+posterior: tabela de nove colunas e zero linhas, dois índices contando PK,
+seis constraints incluindo resposta não vazia, origem limitada a app/WhatsApp/
+gestor, números não negativos e FK de execução. RLS ativa, zero policies;
+service_role SELECT true/escrita false, anon/authenticated sem acesso.
+
+**Parada antes da unidade 7.** Não foram inseridas respostas, vendas ou
+receita; nenhum endpoint/deploy/métrica integrada foi homologado por este DDL.
+
+### Atualização posterior — pacote de schema QA concluído até a unidade 9
+
+Victor autorizou concluir após a unidade 6. Interpretação comunicada antes do
+ato: completar as unidades 7, 8 e 9 do pacote QA. Cada SQL foi lido, hash
+conferido com o manifesto, preflight e backup de catálogo separados, aplicado
+em transação única e verificado antes de avançar. Projeto
+`zskpijnqgkqwxksqmzmf`/`v2g-webapp-qa` ACTIVE_HEALTHY reconferido.
+
+| Unidade | SQL SHA256 | Backup catálogo prévio fora Git | Ledger real | Pós-prova |
+|---|---|---|---|---|
+| 7 `qa_bkd_0007_execucoes_de_rotina` | `7a69dc6f22a8e97f4ba5604a277941cc391cb3691f49b9d85dfc28e64f0e3654` | `C:/Users/victo/v2g-backups/qa-unidade7-schema-before-20261026.json` | `20261026154345` | 9 colunas, 0 linhas; `ok`/fim anuláveis; PK e índice; RLS/ACL fechadas |
+| 8 `qa_bkd_0008_perguntas_apresentadas` | `d6a43e3660efde32729837953cbef0667f9e93da5f4ba594a34933b39ab540cc` | `C:/Users/victo/v2g-backups/qa-unidade8-schema-before-20261026.json` | `20261026154408` | 6 colunas, 0 linhas; FK, origem e PK; PK e índice; RLS/ACL fechadas |
+| 9 `qa_bkd_0009_campanhas_criacao` | `b8cd27fdf1a592e0f3dd41189ffdcffc3a81ef97ae6240a61a83ad3483d67b0b` | `C:/Users/victo/v2g-backups/qa-unidade9-schema-before-20261026.json` | `20261026154442` | 14 colunas, 0 linhas; idempotência e exceção de backfill verificadas; RLS/ACL fechadas |
+
+Consulta final das **sete tabelas exigidas pela guarda de boot**: todas existem,
+com RLS ativa, zero policies, `service_role` somente SELECT e nenhum acesso
+para anon/authenticated. As nove unidades QA constam no ledger. São provas do
+catálogo remoto, não da execução da guarda do backend: não foram inseridas
+fixtures nem usada credencial de API neste ensaio.
+
+Em 26/10, GET público de `https://ia-backend-qa.5hue9s.easypanel.host/saude`
+ainda respondeu **502**. Não foi feita publicação/configuração Easypanel ou
+WebApp por consequência dos DDLs. Próximo recorte: conferir versão/log e
+presença (sem ler valores) das configurações do serviço QA; publicar a versão
+QA com a cerca somente leitura e testar `/saude`, 401 sem token, 404 para
+negócio indevido e 200 para negócio/fixture autorizados. Só depois validar
+conta/período na tela e ativar o indicador de backend verificado.
+
+### Diagnóstico do serviço backend QA — autorização posterior de Victor
+
+No Easypanel, `ia/backend-qa` estava sem implantação e os logs aguardavam o
+início do serviço. A fonte configurada é `v2gmidia/backend_v2g`, ramo `main`,
+Dockerfile `infra/Dockerfile`. O domínio público apontava à porta 80, enquanto
+o container escuta a porta 8000. A rota foi corrigida no painel para 8000;
+o painel confirmou a atualização. O ambiente estava vazio: foram salvas e
+reconferidas **somente pelos nomes** as 14 configurações não secretas da cerca
+QA de leitura, conforme `backend_v2g/docs/qa/backend-qa-runtime-leitura-22-10.md`.
+`API_TOKEN` e `SUPABASE_SERVICE_ROLE_KEY` não constavam na última conferência;
+nenhum valor privado foi lido ou impresso. O backend não foi implantado e a
+prova HTTPS de boot/autenticação/leitura segue pendente.
+
+No Vercel, somente no projeto `v2g-webapp-qa`, target `production` do QA, foi
+incluída a URL não secreta `V2G_BACKEND_URL` do serviço Easypanel. A variável
+privada `V2G_BACKEND_TOKEN` ainda não constava. A alteração não entrou no
+deployment QA existente; precisa de nova publicação depois de o backend
+subir e de o token coincidir. O indicador
+`V2G_QA_MANAGER_BACKEND_READ_VERIFIED` permanece `false`. Nenhuma métrica
+foi consultada ou apresentada como real neste recorte.
+
+Consulta somente leitura ao projeto QA confirmou que o negócio fictício do
+ensaio existe (`dados_ficticios=true`) e tem uma atribuição exata ao operador,
+mas tem **zero** `execucoes` no backend e `metricas_diarias` tem **zero** linhas
+no projeto. Assim, mesmo após o boot, esse recorte deve retornar “sem execução”
+até que uma fixture fictícia, identificada e reversível seja inserida com
+autorização. Nenhum número de campanha real pode ser deduzido dessa base vazia.
+
+### Prova posterior do backend QA no HTTPS
+
+Após Victor salvar privadamente `SUPABASE_SERVICE_ROLE_KEY` e `API_TOKEN` no
+Easypanel, a presença dos **nomes** foi conferida sem ler valores. O ramo
+`main` remoto do backend apontava para `d4a75e80cab17e01130a1b935f5b791c7098e3a3`.
+O serviço `ia/backend-qa` foi implantado pelo painel. GET público `/saude`
+respondeu **200**, `ambiente=production`, `db` mock=false, provedores mock=true,
+observador inativo, `esquema=true` e sete tabelas conferidas sem pendências.
+GET do consolidado sem token e com token inválido respondeu **401** em HTTPS.
+
+Como as tabelas estavam vazias, foi inserida **somente no projeto QA** uma
+execução de ensaio e uma linha de métrica para o negócio marcado
+`dados_ficticios=true` e já atribuído ao operador correto. Identificadores de
+limpeza: execução `e2800000-0000-4000-8000-000000000026`, conta
+`act_999000000026`, campanha `999000000026`, dia `2026-10-24`. Valores
+fictícios: R$12,34 investidos, oito cliques, 400 impressões e 2,125 resultados
+atribuídos; **não são resultados da V2G nem coleta da Meta**. A transação
+verificou o negócio fictício, a atribuição e a ausência anterior dos IDs.
+Depois dela havia exatamente uma execução e uma métrica dessa fixture.
+
+Com o `API_TOKEN` lido **apenas pelo processo dentro do próprio container**,
+sem expor seu valor no comando ou resultado, o GET HTTPS do consolidado
+retornou **200** com o mesmo `business_id`, recorte `2026-10-20`–`2026-10-26`,
+conta fictícia `act_999000000026`, 1234 centavos e oito cliques. O mesmo
+negócio com `profile_id` divergente retornou **404**; GET de rota fora da lista
+permitida retornou **403**. O serviço está de pé e a cerca de leitura foi
+observada. A prova de isolamento por usuário humano ainda pertence ao WebApp.
+
+Na última consulta ao Vercel, `V2G_BACKEND_TOKEN` continuava ausente do projeto
+`v2g-webapp-qa`; o formulário Secret/Production ficou preparado para Victor
+colar privadamente o token. Sem ele, não publicar o WebApp com backend verified.
+
+### Fechamento das etapas 1–3 de leitura QA, após o token da Vercel
+
+Victor salvou `V2G_BACKEND_TOKEN` no projeto **`v2g-webapp-qa`**, target
+`production` desse projeto, tipo `sensitive`; o conector confirmou apenas nome,
+tipo e alvo, sem descriptografar. A guarda `V2G_QA_MANAGER_BACKEND_READ_VERIFIED`
+foi mudada para `true` apenas no mesmo projeto QA após a prova HTTPS
+200/401/404/403 acima. Foi criado o deployment QA
+`dpl_J3womZi4mhGocjUGzfuQ697cbJYU` usando o SHA exato
+`2ad1785e5dee4f27382912aa282550d8bffa9221`, `withLatestCommit=false`,
+sem incluir o HEAD mais novo de geração. Deployment **READY**, alias estável
+`v2g-webapp-qa.vercel.app`, sem erro de alias.
+
+Chrome autenticado como operador atribuído abriu
+`/supergestor/homologacao` no alias estável. A tela exibiu o negócio
+**FICTÍCIO**, conta `act_999000000026`, campanha `999000000026`, período
+`20/10/2026`–`26/10/2026`, R$12,34, 400 impressões, oito cliques e 2,125
+resultados atribuídos. Esses valores coincidem com a **fixture de ensaio**
+da tabela backend, não com Meta real. A tela mostrou leitura parcial (um dia
+observado) e não converteu resultados em conversas ou vendas. Parâmetros
+`businessId` e `desde` adulterados na URL não mudaram negócio, conta, período
+nem valor. GET da rota sem cookie retornou **307** para login. Operador
+não atribuído e cliente externo não foram reensaiados nesta versão; a guarda
+existente foi inspecionada no código, e as provas anteriores permanecem.
+
+**Limite de evidência:** a linha sintética usa `canal=meta` e o contrato
+traduz isso na UI como “Meta Marketing API”, embora a linha tenha sido inserida
+manualmente para QA. O banner da página e o nome do negócio dizem “fictício”,
+mas a fonte dentro da ficha pode induzir erro se alguém ignorar o contexto.
+Antes de demonstrar métricas reais ou reaproveitar a tela para cliente,
+substituir essa fixture por ingestão verificada e validar a fonte de ponta a
+ponta. A fixture permanece no QA para reprodução; removê-la exige excluir
+primeiro a métrica da campanha `999000000026` e depois a execução
+`e2800000-0000-4000-8000-000000000026`, com nova autorização explícita.
+Produção, Meta, cobrança e geração paga não foram alteradas neste recorte.
