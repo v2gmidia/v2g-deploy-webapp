@@ -10,6 +10,11 @@ const mocks = {
   "next/cache": "export const revalidatePath = p => globalThis.__pedidosOffline.revalidar(p);",
   "@/lib/supabase/server": "export const createClient = async () => globalThis.__pedidosOffline.cliente();",
   "@/lib/multiconta/ativo": "export const negocioAtivoDaSessao = async () => globalThis.__pedidosOffline.ativo();",
+  "@/lib/jev/catalogo-da-sessao": "export const catalogoBarbeariaDisponivel = async () => globalThis.__pedidosOffline.referenciaPermitida;",
+  "@/lib/criativos/geracao/backend-da-sessao": "export const geracaoNoAppPeloBackend = async () => { throw Error('fora do ensaio'); };",
+  "@/lib/criativos/geracao/configuracao-app": "export const modoGeracaoNoApp = () => 'desligado'; export const submissaoRealHabilitada = () => false;",
+  "@/lib/criativos/geracao/contrato-fila": "export const filaTerminal = () => true;",
+  "@/lib/criativos/geracao/imagem-privada": "export const urlImagemGerada = () => null;",
 };
 const arquivos = {
   "@/lib/criativos/pedidos-da-sessao": "../lib/criativos/pedidos-da-sessao.ts",
@@ -42,9 +47,10 @@ const id = "32345678-1234-4234-8234-123456789012";
 let estado;
 beforeEach(() => {
   process.env.V2G_CREATIVE_REQUESTS_ENABLED = "true";
-  estado = { linhas: [], profileId, businessId, falha: false, insercoes: 0, revalidacoes: [], consultas: 0 };
+  estado = { linhas: [], profileId, businessId, referenciaPermitida: false, falha: false, insercoes: 0, revalidacoes: [], consultas: 0 };
 });
 globalThis.__pedidosOffline = {
+  get referenciaPermitida() { return estado.referenciaPermitida; },
   ativo: () => estado.businessId ? { status: "selecionado", negocio: { id: estado.businessId } } : { status: "sem_sessao" },
   revalidar: (p) => estado.revalidacoes.push(p),
   cliente: () => ({
@@ -109,4 +115,19 @@ test("payload e hash válidos não dispensam conferência de status", async () =
   assert.equal(estado.linhas[0].content_hash, hashDoPedido(estado.linhas[0].payload));
   estado.linhas[0].status = "generated";
   assert.deepEqual(await carregarPedidosDaSessao(businessId), { pedidos: [], falhou: true });
+});
+test("action mantém referência escolhida após recarga e não aceita troca no mesmo pedido", async () => {
+  estado.referenciaPermitida = true;
+  const f = formulario(); f.set("referenciaId", "700155112131034");
+  assert.equal((await guardarPedidoAction({}, f)).ok, true);
+  const leitura = await carregarPedidosDaSessao(businessId);
+  assert.equal(leitura.pedidos[0].payload.referenciaId, "700155112131034");
+  f.set("referenciaId", "1077371334754860");
+  assert.equal((await guardarPedidoAction({}, f)).ok, undefined);
+  assert.equal(estado.insercoes, 1);
+});
+test("action recusa referência em negócio sem catálogo", async () => {
+  const f = formulario(); f.set("referenciaId", "700155112131034");
+  assert.equal((await guardarPedidoAction({}, f)).ok, undefined);
+  assert.equal(estado.insercoes, 0);
 });

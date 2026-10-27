@@ -9,11 +9,14 @@ import { analisarPecaAction } from "./actions";
 import { solicitarRevisaoAction } from "./revisao-actions";
 import { OBJETIVOS_DO_ENVIO, validarIntencaoDoEnvio, type ObjetivoDoEnvio } from "@/lib/criativos/intencao-envio";
 import estilos from "./PedirRevisao.module.css";
+import { ReferenciasDoNicho } from "./ReferenciasDoNicho";
 
 type Aviso = { tom: "notice" | "warning" | "error"; texto: string; motivos?: string[] };
 type Fase = "pronto" | "enviando" | "analisando";
 
-export function PedirRevisao({ businessId, hoje, previa = false }: { businessId: string; hoje: string; previa?: boolean }) {
+export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisponiveis = false }: {
+  businessId: string; hoje: string; previa?: boolean; referenciasDisponiveis?: boolean;
+}) {
   const router = useRouter();
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [id, setId] = useState(() => crypto.randomUUID());
@@ -28,6 +31,7 @@ export function PedirRevisao({ businessId, hoje, previa = false }: { businessId:
   const [confirmado, setConfirmado] = useState(false);
   const [incerto, setIncerto] = useState(false);
   const [imagemUrl, setImagemUrl] = useState<string | null>(null);
+  const [referenciaId, setReferenciaId] = useState("");
   const ajudaDoArquivo = useId();
   const erroDaValidade = useId();
   const validadeVencida = promocao && Boolean(validade) && validade < hoje;
@@ -68,6 +72,7 @@ export function PedirRevisao({ businessId, hoje, previa = false }: { businessId:
       dados.set("promocao", promocao ? "sim" : "nao");
       dados.set("validade", promocao ? validade : "");
       dados.set("confirmado", confirmado ? "sim" : "nao");
+      dados.set("referenciaId", referenciaId);
       const resultado = await solicitarRevisaoAction(dados);
       if (!resultado.ok) {
         setAviso({ tom: "error", texto: resultado.recado });
@@ -77,7 +82,7 @@ export function PedirRevisao({ businessId, hoje, previa = false }: { businessId:
       setIncerto(false);
       setConferindo(false);
       setConfirmado(false);
-      setObjetivo(""); setPromocao(false); setValidade("");
+      setObjetivo(""); setPromocao(false); setValidade(""); setReferenciaId("");
       setArquivo(null);
       setId(crypto.randomUUID());
       if (campo.current) campo.current.value = "";
@@ -180,6 +185,7 @@ export function PedirRevisao({ businessId, hoje, previa = false }: { businessId:
           : <small>A data acompanha o pedido para o gestor conferir.</small>}
       </label>}
     </div>
+    {referenciasDisponiveis ? <ReferenciasDoNicho valor={referenciaId} escolher={setReferenciaId} desabilitado={fase !== "pronto"} /> : null}
     </div>
     <div className={estilos.rodapePreparo}><p>Confira os dados antes de enviar para revisão.</p>
       <button className="cta" type="submit" disabled={!preparoCompleto || fase !== "pronto"}>Conferir criativo<IconeSeta /></button>
@@ -189,7 +195,8 @@ export function PedirRevisao({ businessId, hoje, previa = false }: { businessId:
       <div className={estilos.resumo}>
         {imagemUrl && <img className={estilos.previa} src={imagemUrl} alt="Prévia do criativo escolhido" />}
         <dl><dt>Arquivo</dt><dd>{arquivo?.name}</dd><dt>Objetivo</dt><dd>{OBJETIVOS_DO_ENVIO.find((o) => o.valor === objetivo)?.rotulo}</dd>
-          <dt>Promoção com prazo</dt><dd>{promocao ? `Até ${validade.split("-").reverse().join("/")}` : "Não informada"}</dd></dl>
+          <dt>Promoção com prazo</dt><dd>{promocao ? `Até ${validade.split("-").reverse().join("/")}` : "Não informada"}</dd>
+          <dt>Referência</dt><dd>{referenciaId ? `Anúncio público ${referenciaId}` : "Nenhuma escolhida"}</dd></dl>
       </div>
       <label className={estilos.marcacao}><input type="checkbox" required checked={confirmado}
         disabled={fase !== "pronto" || incerto} onChange={(e) => setConfirmado(e.target.checked)} />Conferi a imagem, o objetivo e a validade.</label>

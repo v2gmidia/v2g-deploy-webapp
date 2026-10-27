@@ -5,12 +5,13 @@ export const OBJETIVOS_DO_ENVIO = [
 ] as const;
 
 export type ObjetivoDoEnvio = typeof OBJETIVOS_DO_ENVIO[number]["valor"];
-export type IntencaoDoEnvio = {
-  version: 1;
+type BaseDaIntencao = {
   objective: ObjetivoDoEnvio;
   promotionEndsOn: string | null;
   confirmedAt: string;
 };
+export type IntencaoDoEnvio = (BaseDaIntencao & { version: 1 })
+  | (BaseDaIntencao & { version: 2; referenceId: string });
 
 export function hojeEmSaoPaulo(agora = new Date()): string {
   const partes = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo",
@@ -46,8 +47,10 @@ export function validarIntencaoDoEnvio(entrada: {
 export function lerIntencaoDoEnvio(valor: unknown): IntencaoDoEnvio | null {
   if (!valor || typeof valor !== "object" || Array.isArray(valor)) return null;
   const item = valor as Record<string, unknown>;
-  if (Object.keys(item).sort().join(",") !== "confirmedAt,objective,promotionEndsOn,version" ||
-    item.version !== 1 || !ehObjetivo(item.objective) ||
+  const v1 = item.version === 1 && Object.keys(item).sort().join(",") === "confirmedAt,objective,promotionEndsOn,version";
+  const v2 = item.version === 2 && Object.keys(item).sort().join(",") === "confirmedAt,objective,promotionEndsOn,referenceId,version"
+    && typeof item.referenceId === "string" && /^\d{10,20}$/.test(item.referenceId);
+  if (!(v1 || v2) || !ehObjetivo(item.objective) ||
     !(item.promotionEndsOn === null || ehData(item.promotionEndsOn)) ||
     typeof item.confirmedAt !== "string" ||
     !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(item.confirmedAt) ||
@@ -58,7 +61,8 @@ export function lerIntencaoDoEnvio(valor: unknown): IntencaoDoEnvio | null {
 
 export function mesmaIntencaoDoEnvio(anterior: unknown, nova: IntencaoDoEnvio): boolean {
   const lida = lerIntencaoDoEnvio(anterior);
-  return lida !== null && lida.objective === nova.objective && lida.promotionEndsOn === nova.promotionEndsOn;
+  return lida !== null && lida.objective === nova.objective && lida.promotionEndsOn === nova.promotionEndsOn
+    && (lida.version === 2 ? lida.referenceId : null) === (nova.version === 2 ? nova.referenceId : null);
 }
 
 export function resumoDaIntencao(valor: unknown, hoje: string): string {
@@ -66,9 +70,10 @@ export function resumoDaIntencao(valor: unknown, hoje: string): string {
   const item = lerIntencaoDoEnvio(valor);
   if (!item) return "Objetivo ou validade inconsistentes. Confira o envio com a equipe.";
   const objetivo = OBJETIVOS_DO_ENVIO.find((opcao) => opcao.valor === item.objective)!.rotulo;
-  if (!item.promotionEndsOn) return `${objetivo}. Sem promoção com prazo informado.`;
+  const referencia = item.version === 2 ? ` Referência pública: anúncio ${item.referenceId}.` : "";
+  if (!item.promotionEndsOn) return `${objetivo}. Sem promoção com prazo informado.${referencia}`;
   const data = item.promotionEndsOn.split("-").reverse().join("/");
-  return `${objetivo}. Promoção até ${data}${item.promotionEndsOn < hoje ? " — prazo encerrado" : ""}.`;
+  return `${objetivo}. Promoção até ${data}${item.promotionEndsOn < hoje ? " — prazo encerrado" : ""}.${referencia}`;
 }
 
 /** Bloqueia só a aprovação interna; não agenda nem pausa anúncios. */

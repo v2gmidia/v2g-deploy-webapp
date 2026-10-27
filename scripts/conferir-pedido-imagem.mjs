@@ -94,3 +94,19 @@ test("hash adulterado e tentativa de outro perfil não viram replay válido", as
   sessao = { profileId: "outro-perfil", businessId: negocio };
   assert.equal((await enviar()).motivo, "envio_alterado");
 });
+test("referência aprovada vincula o pedido; troca no replay exige novo ID", async () => {
+  const referenciaId = "700155112131034";
+  assert.equal((await enviar({ referenciaId, referenciasHabilitadas: true })).ok, true);
+  assert.equal(linhas.get(id).payload.versao, 2);
+  assert.equal(linhas.get(id).payload.referenciaId, referenciaId);
+  assert.equal((await enviar({ referenciaId, referenciasHabilitadas: true })).repetido, true);
+  assert.equal((await enviar({ referenciaId: "1077371334754860", referenciasHabilitadas: true })).motivo, "envio_alterado");
+  assert.equal(insercoes, 1);
+});
+test("referência forjada ou catálogo fechado não escreve", async () => {
+  for (const extra of [{ referenciaId: "700155112131034", referenciasHabilitadas: false },
+    { referenciaId: "https://evil.example", referenciasHabilitadas: true },
+    { referenciaId: "999999999999999", referenciasHabilitadas: true }])
+    assert.equal((await enviar(extra)).ok, false);
+  assert.equal(insercoes, 0);
+});

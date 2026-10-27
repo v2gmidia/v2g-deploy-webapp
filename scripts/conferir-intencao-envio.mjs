@@ -35,6 +35,14 @@ test("replay preserva confirmação original e compara objetivo/prazo", () => {
   assert.equal(mesmaIntencaoDoEnvio(intencao, { ...intencao, objective: "instagram_visits" }), false);
   assert.equal(mesmaIntencaoDoEnvio(null, intencao), false);
 });
+test("referência histórica é legível e sua troca não vira replay", () => {
+  const comReferencia = { ...intencao, version: 2, referenceId: "700155112131034" };
+  assert.deepEqual(lerIntencaoDoEnvio(comReferencia), comReferencia);
+  assert.equal(mesmaIntencaoDoEnvio(comReferencia, { ...comReferencia, confirmedAt: "2026-10-22T03:00:00.000Z" }), true);
+  assert.equal(mesmaIntencaoDoEnvio(comReferencia, { ...comReferencia, referenceId: "1077371334754860" }), false);
+  assert.equal(mesmaIntencaoDoEnvio(intencao, comReferencia), false);
+  assert.match(resumoDaIntencao(comReferencia, "2026-10-21"), /700155112131034/);
+});
 test("histórico vencido continua legível, mas não autoriza aprovação", () => {
   const oferta = { ...intencao, promotionEndsOn: "2026-10-21" };
   assert.equal(impedimentoParaAprovarEnvio(oferta, "2026-10-21"), null);
@@ -55,10 +63,12 @@ const mocks = {
   "@/lib/multiconta/ativo": "export const negocioAtivoDaSessao = async () => globalThis.__envioOffline.ativo();",
   "@/lib/estado/cliente": "export const estadoDoCliente = async () => { throw Error('análise deve permanecer desligada'); };",
   "@/lib/gestor/sincronizar-revisao": "export const sincronizarTarefaDeRevisao = async () => { globalThis.__envioOffline.tarefas++; };",
+  "@/lib/jev/catalogo-da-sessao": "export const catalogoBarbeariaDisponivel = async () => globalThis.__envioOffline.referenciaPermitida;",
 };
 const arquivos = {
   "@/lib/criativos/intencao-envio": "../lib/criativos/intencao-envio.ts",
   "@/lib/criativos/revisao": "../lib/criativos/revisao.ts",
+  "@/lib/jev/catalogo-barbearia": "../lib/jev/catalogo-barbearia.ts",
 };
 const hooks = registerHooks({
   resolve(s, c, next) {
@@ -86,10 +96,11 @@ beforeEach(() => {
   process.env.V2G_CREATIVE_REVIEW_ENABLED = "true";
   process.env.V2G_MANAGER_WORK_ENABLED = "true";
   process.env.V2G_CREATIVE_AUTO_ANALYSIS_ENABLED = "false";
-  estado = { linhas: [], bytes: new Map(), perfil, negocio, papel: "operador", consultas: 0,
+  estado = { linhas: [], bytes: new Map(), perfil, negocio, papel: "operador", consultas: 0, referenciaPermitida: false,
     insercoes: 0, uploads: 0, tarefas: 0, revalidacoes: [], falhaBanco: false, falhaUpload: false, responsavel: perfil };
 });
 globalThis.__envioOffline = {
+  get referenciaPermitida() { return estado.referenciaPermitida; },
   get revalidacoes() { return estado.revalidacoes; },
   get tarefas() { return estado.tarefas; }, set tarefas(n) { estado.tarefas = n; },
   ativo: () => ({ status: "selecionado", negocio: { id: estado.negocio } }),
@@ -171,6 +182,18 @@ test("replay com outro objetivo não troca intenção nem arquivo", async () => 
   await solicitarRevisaoAction(formulario());
   assert.equal((await solicitarRevisaoAction(formulario({ objetivo: "instagram_visits" }))).ok, false);
   assert.equal(estado.uploads, 1); assert.equal(estado.linhas[0].upload_intent.objective, "whatsapp_messages");
+});
+test("referência escolhida fica na peça e replay com outra é recusado", async () => {
+  estado.referenciaPermitida = true;
+  assert.equal((await solicitarRevisaoAction(formulario({ referenciaId: "700155112131034" }))).ok, true);
+  assert.equal(estado.linhas[0].upload_intent.referenceId, "700155112131034");
+  assert.equal((await solicitarRevisaoAction(formulario({ referenciaId: "1077371334754860" }))).ok, false);
+  assert.equal(estado.insercoes, 1); assert.equal(estado.uploads, 1);
+});
+test("envio recusa referência fora do catálogo autorizado antes da gravação", async () => {
+  assert.equal((await solicitarRevisaoAction(formulario({ referenciaId: "700155112131034" }))).ok, false);
+  assert.equal((await solicitarRevisaoAction(formulario({ referenciaId: "https://evil.example" }))).ok, false);
+  assert.equal(estado.insercoes, 0); assert.equal(estado.uploads, 0);
 });
 test("promoção persiste o prazo e não pode ser alterada no replay", async () => {
   const f = formulario({ promocao: "sim", validade: "2099-10-28" });

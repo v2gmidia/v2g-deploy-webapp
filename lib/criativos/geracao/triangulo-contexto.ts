@@ -6,7 +6,7 @@ import { UUID_GERACAO } from "./contrato-fila";
 import { canonico } from "./contexto";
 import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 
-type Origem = "identidade_cliente" | "pinterest" | "anuncios_nicho";
+type Origem = "identidade_cliente" | "anuncios_nicho";
 type Aprovacao = { id: string; businessId: string; requestId: string; materialId: string;
   sha256: string; finalidade: "gerar_imagem"; destino: "gpt-image-2"; por: string; em: string };
 export interface MaterialDoTriangulo {
@@ -52,8 +52,8 @@ function fonteConfere(m: MaterialDoTriangulo): boolean {
   try {
     const u = new URL(m.fonte);
     if (u.protocol !== "https:" || u.username || u.password || u.port) return false;
-    if (m.classe === "pinterest") return u.hostname === "pinterest.com" || u.hostname.endsWith(".pinterest.com");
-    return (u.hostname === "facebook.com" || u.hostname === "www.facebook.com") && u.pathname.startsWith("/ads/library/");
+    return (u.hostname === "facebook.com" || u.hostname === "www.facebook.com")
+      && u.pathname === "/ads/library/" && /^\d{10,20}$/.test(u.searchParams.get("id") ?? "");
   } catch { return false; }
 }
 
@@ -86,11 +86,11 @@ export function prepararTrianguloDoServidor(e: EntradaDoTriangulo):
       || d.nichoId !== (tipo === "nicho" ? e.nichoId : null)
       || ![null, p.business_id].includes(e.escopoDocumentos[tipo])) faltas.add(`documento_${tipo}_ausente_ou_divergente`);
   }
-  for (const classe of ["identidade_cliente", "pinterest", "anuncios_nicho"] as const) {
+  for (const classe of ["identidade_cliente", "anuncios_nicho"] as const) {
     if (e.materiais.filter(m => m.classe === classe).length !== 1) faltas.add(`${classe}_ausente_ou_duplicado`);
   }
-  if (e.materiais.length !== 3 || new Set(e.materiais.map(m => m.id)).size !== 3
-    || new Set(e.materiais.map(m => m.sha256)).size !== 3) faltas.add("materiais_duplicados_ou_excedentes");
+  if (e.materiais.length !== 2 || new Set(e.materiais.map(m => m.id)).size !== 2
+    || new Set(e.materiais.map(m => m.sha256)).size !== 2) faltas.add("materiais_duplicados_ou_excedentes");
   for (const m of e.materiais) {
     const prefixo = `${m.classe === "identidade_cliente" ? "identidade" : "referencias"}/${p.business_id}/`;
     const a = m.aprovacao;

@@ -14,6 +14,7 @@ import { PedidoDeImagem } from "./PedidoDeImagem";
 import { resumoDaIntencao } from "@/lib/criativos/intencao-envio";
 import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
 import { UUID_GERACAO } from "@/lib/criativos/geracao/contrato-fila";
+import { catalogoBarbeariaDisponivel } from "@/lib/jev/catalogo-da-sessao";
 
 export const metadata = tituloDaAba("/criativos");
 
@@ -87,6 +88,7 @@ export default async function CriativosPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const negocioId = estado.negocioId;
+  const referenciasDisponiveis = negocioId ? await catalogoBarbeariaDisponivel(negocioId) : false;
   const pedidosHabilitados = process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && Boolean(negocioId);
   const geracaoHabilitada = pedidosHabilitados && process.env.V2G_CREATIVE_BACKEND_ENABLED === "true";
   const pedidosCriacao = pedidosHabilitados
@@ -183,10 +185,12 @@ export default async function CriativosPage() {
       bibliotecaFalhou={Boolean(falhaDaGaleria)}
       criacao={pedidosHabilitados ? <PedidoDeImagem key={negocioId} businessId={negocioId!}
         requestId={randomUUID()} hoje={hoje} pedidos={pedidosCriacao.pedidos}
-        falhou={pedidosCriacao.falhou} geracaoHabilitada={geracaoHabilitada} /> : null}
+        falhou={pedidosCriacao.falhou} geracaoHabilitada={geracaoHabilitada}
+        referenciasDisponiveis={referenciasDisponiveis} /> : null}
       envioDisponivel={revisaoHabilitada && Boolean(negocioId)}
       envio={revisaoHabilitada && negocioId
-        ? <PedirRevisao key={negocioId} businessId={negocioId} hoje={hoje} />
+        ? <PedirRevisao key={negocioId} businessId={negocioId} hoje={hoje}
+          referenciasDisponiveis={referenciasDisponiveis} />
         : null}
       analise={amostra
         ? <AmostraDeVereditos qual={amostra} />

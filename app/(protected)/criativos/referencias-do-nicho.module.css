@@ -1,0 +1,14 @@
+.bloco { margin: 22px 0; padding: 18px 20px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); }
+.bloco summary { cursor: pointer; font-weight: 650; color: var(--ink); }
+.bloco summary:hover { color: var(--cobalt-ink); }
+.bloco p { max-width: 68ch; color: var(--ink-soft); line-height: 1.6; }
+.bloco fieldset { margin: 20px 0 0; padding: 0; border: 0; }
+.bloco legend { margin-bottom: 8px; font-weight: 650; }
+.linha { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; min-height: 48px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.linha label { display: inline-flex; align-items: center; gap: 10px; min-width: 145px; cursor: pointer; }
+.linha input { width: 18px; height: 18px; accent-color: var(--cobalt); }
+.linha span { color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+.linha a { color: var(--cobalt-ink); text-underline-offset: 3px; }
+.linha :is(a, input):focus-visible, .bloco summary:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; }
+.nota { font-size: var(--fs-legenda); }
+@media (max-width: 620px) { .bloco { padding: 16px; } .linha { align-items: flex-start; flex-direction: column; } }

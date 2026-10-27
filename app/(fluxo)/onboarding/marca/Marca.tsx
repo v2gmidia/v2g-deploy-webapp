@@ -85,7 +85,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   return <>
     <p className="mission-tag">Sua primeira missão · passo 2 de 3</p>
     <h1 className="auth-h">O visual da sua marca</h1>
-    <p className="auth-sub">Envie logos, fotos e aplicações da marca. Pode escolher várias imagens e conferir as cores sugeridas antes de continuar.</p>
+    <p className="auth-sub">Envie seu logo principal e imagens que mostrem as cores da sua marca. Isso nos ajuda a criar anúncios com a sua identidade. Vamos sugerir uma paleta para você conferir e corrigir antes de continuar.</p>
     <details className={styles.revisao}>
       <summary>Rever o que você contou sobre o negócio</summary>
       {Object.entries(estado.respostasBasicas).map(([chave, resposta]) =>

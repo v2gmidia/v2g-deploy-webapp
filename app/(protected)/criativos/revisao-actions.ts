@@ -11,6 +11,8 @@ import { hojeEmSaoPaulo, mesmaIntencaoDoEnvio, validarIntencaoDoEnvio,
   type IntencaoDoEnvio } from "@/lib/criativos/intencao-envio";
 import { BUCKET_REVISAO, caminhoDaRevisao, podeRepetirEnvio,
   podeAnalisarAposEnvio, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem, type StatusRevisao } from "@/lib/criativos/revisao";
+import { referenciaDaBiblioteca } from "@/lib/jev/catalogo-barbearia";
+import { catalogoBarbeariaDisponivel } from "@/lib/jev/catalogo-da-sessao";
 
 export type ResultadoDaSolicitacao =
   | { ok: true; id: string; repetido: boolean; analisarAgora: boolean }
@@ -50,8 +52,7 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
     validade: dados.get("validade"), confirmado: dados.get("confirmado") === "sim",
   }, hojeEmSaoPaulo());
   if (!intencaoValidada.ok) return { ok: false, recado: intencaoValidada.erro };
-  const intencao: IntencaoDoEnvio = { version: 1, objective: intencaoValidada.objetivo,
-    promotionEndsOn: intencaoValidada.validade, confirmedAt: new Date().toISOString() };
+  const referenciaId = dados.get("referenciaId");
 
   try {
     const supabase = await createClient();
@@ -59,6 +60,14 @@ export async function solicitarRevisaoAction(dados: FormData): Promise<Resultado
     const negocio = await negocioAtivoDaSessao();
     if (erroSessao || !user || negocio.status !== "selecionado" || negocio.negocio.id !== businessId)
       return { ok: false, recado: "A conta selecionada mudou. Atualize a página antes de enviar." };
+    if (referenciaId !== null && referenciaId !== "" &&
+      (!referenciaDaBiblioteca(referenciaId) || !await catalogoBarbeariaDisponivel(businessId)))
+      return { ok: false, recado: "A referência não está disponível para este negócio. Atualize a página." };
+    const base = { objective: intencaoValidada.objetivo,
+      promotionEndsOn: intencaoValidada.validade, confirmedAt: new Date().toISOString() };
+    const intencao: IntencaoDoEnvio = typeof referenciaId === "string" && referenciaId
+      ? { version: 2, ...base, referenceId: referenciaId }
+      : { version: 1, ...base };
 
     const bytes = new Uint8Array(await arquivo.arrayBuffer());
     const mimeType = tipoRealDaImagem(bytes);

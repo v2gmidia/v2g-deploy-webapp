@@ -8,6 +8,8 @@ import { modoGeracaoNoApp, submissaoRealHabilitada } from "@/lib/criativos/gerac
 import { filaTerminal } from "@/lib/criativos/geracao/contrato-fila";
 import type { AndamentoGeracao } from "@/lib/criativos/geracao/contrato-fila";
 import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
+import { catalogoBarbeariaDisponivel } from "@/lib/jev/catalogo-da-sessao";
+import { buscarPedidoDaSessao } from "@/lib/criativos/pedidos-da-sessao";
 
 export type EstadoDoPedido = { ok?: boolean; erro?: string; id?: string; repetido?: boolean };
 
@@ -26,6 +28,10 @@ export async function guardarPedidoAction(
       objetivo: dados.get("objetivo"), oferta: dados.get("oferta"), acao: dados.get("acao"),
       promocao: dados.get("promocao") === "on", validade: dados.get("validade"),
       confirmado: dados.get("confirmado") === "on",
+      referenciaId: dados.get("referenciaId"),
+      referenciasHabilitadas: Boolean(dados.get("referenciaId"))
+        && typeof dados.get("businessId") === "string"
+        && await catalogoBarbeariaDisponivel(dados.get("businessId") as string),
     }, hoje);
     if (!resultado.ok) return { erro: RECADOS_DO_PEDIDO[resultado.motivo] };
     revalidatePath("/criativos");
@@ -41,6 +47,11 @@ export async function acompanharGeracaoAction(businessId: string, requestId: str
 ): Promise<AndamentoGeracao> {
   if (process.env.V2G_CREATIVE_REQUESTS_ENABLED !== "true"
     || !["submeter", "consultar", "cancelar"].includes(operacao)) return { ok: false, motivo: "indisponivel" };
+  if (operacao === "submeter") {
+    const pedido = await buscarPedidoDaSessao(businessId, requestId);
+    if (!pedido) return { ok: false, motivo: "conferir_estado" };
+    if (pedido.payload.versao === 2) return { ok: false, motivo: "contexto_pendente" };
+  }
   const r = await geracaoNoAppPeloBackend({ businessId, requestId, operacao });
   if (!r.ok) return { ...r, podeSubmeter: r.motivo === "nao_iniciado" && (modoGeracaoNoApp() === "fila_ficticia" || submissaoRealHabilitada()),
     tipoCriacao: modoGeracaoNoApp() === "fila_ficticia" ? "ficticia" : "real" };

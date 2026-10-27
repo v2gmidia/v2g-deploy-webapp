@@ -1,14 +1,16 @@
 import { createHash } from "node:crypto";
+import { referenciaDaBiblioteca } from "../jev/catalogo-barbearia.ts";
 
 /** Pedido durável, ainda sem autorização de gasto, uso por IA ou publicação. */
-export interface ConteudoDoPedido {
-  versao: 1;
+interface ConteudoBase {
   objetivo: string;
   oferta: string;
   acao: string;
   promocao: boolean;
   validade: string | null;
 }
+export type ConteudoDoPedido = (ConteudoBase & { versao: 1 })
+  | (ConteudoBase & { versao: 2; referenciaId: string });
 
 export interface PedidoDeImagem {
   id: string;
@@ -39,6 +41,7 @@ export function hashDoPedido(payload: ConteudoDoPedido): string {
   return createHash("sha256").update(JSON.stringify([
     payload.versao, payload.objetivo, payload.oferta, payload.acao,
     payload.promocao, payload.validade,
+    ...(payload.versao === 2 ? [payload.referenciaId] : []),
   ])).digest("hex");
 }
 
@@ -53,6 +56,8 @@ export async function registrarPedidoDeImagem(entrada: {
   promocao: boolean;
   validade: unknown;
   confirmado: boolean;
+  referenciaId?: unknown;
+  referenciasHabilitadas?: boolean;
 }, portas: {
   sessao: () => Promise<{ profileId: string; businessId: string } | null>;
   repositorio: RepositorioDePedidos;
@@ -77,8 +82,13 @@ export async function registrarPedidoDeImagem(entrada: {
       || new Date(`${validade}T12:00:00Z`).toISOString().slice(0, 10) !== validade
       || validade < portas.hoje)) return { ok: false, motivo: "prazo_invalido" };
 
-    const payload: ConteudoDoPedido = { versao: 1, objetivo, oferta, acao,
-      promocao: entrada.promocao, validade };
+    const referenciaId = entrada.referenciaId === null || entrada.referenciaId === undefined || entrada.referenciaId === ""
+      ? null : entrada.referenciaId;
+    if (referenciaId !== null && (!entrada.referenciasHabilitadas || !referenciaDaBiblioteca(referenciaId)))
+      return { ok: false, motivo: "dados_invalidos" };
+    const base = { objetivo, oferta, acao, promocao: entrada.promocao, validade };
+    const payload: ConteudoDoPedido = referenciaId === null ? { versao: 1, ...base }
+      : { versao: 2, ...base, referenciaId: referenciaId as string };
     const pedido: Omit<PedidoDeImagem, "created_at"> = {
       id: entrada.id.toLowerCase(), business_id: sessao.businessId,
       requested_by: sessao.profileId, content_hash: hashDoPedido(payload),

@@ -37,7 +37,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
   return <section className={styles.logoBloco}>
     <div>
       <h2>Logo principal</h2>
-      <p>Se tiver, indique o logo que prefere usar. PNG, JPG, WebP e AVIF funcionam; HEIC depende do navegador. Mesmo uma imagem de 500 × 500 pode entrar como referência. A equipe confere a nitidez antes de usar no anúncio.</p>
+      <p>Envie a versão que deve aparecer nos seus anúncios. Se tiver um arquivo com fundo transparente, prefira essa versão. O logo ajuda a preservar sua marca; você confere as cores sugeridas antes de continuar. Aceitamos PNG, JPG, WebP e AVIF; HEIC depende do navegador.</p>
     </div>
     {logo && <div className={styles.logoAtual}>
       {logo.url ? <img src={logo.url} alt="Logo atual do negócio" />

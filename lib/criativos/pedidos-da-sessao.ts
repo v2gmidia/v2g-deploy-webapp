@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { hashDoPedido, registrarPedidoDeImagem, type PedidoDeImagem,
   type RepositorioDePedidos } from "./pedido-imagem";
+import { idPublicoDeAnuncioValido } from "../jev/catalogo-barbearia.ts";
 
 const COLUNAS = "id, business_id, requested_by, content_hash, payload, status, created_at";
 
@@ -14,10 +15,11 @@ export function pedidoPersistidoValido(linha: unknown, businessId: string): linh
   return r.business_id === businessId && typeof r.id === "string"
     && typeof r.requested_by === "string" && r.status === "awaiting_configuration"
     && typeof r.created_at === "string" && Number.isFinite(Date.parse(r.created_at))
-    && Boolean(p && p.versao === 1 && typeof p.objetivo === "string"
+    && Boolean(p && (p.versao === 1 || p.versao === 2) && typeof p.objetivo === "string"
       && typeof p.oferta === "string" && typeof p.acao === "string"
       && typeof p.promocao === "boolean"
-      && (p.validade === null || typeof p.validade === "string"))
+      && (p.validade === null || typeof p.validade === "string")
+      && (p.versao === 1 || idPublicoDeAnuncioValido(p.referenciaId)))
     && r.content_hash === hashDoPedido(p);
 }
 
@@ -71,4 +73,13 @@ export async function carregarPedidosDaSessao(businessId: string): Promise<{
   } catch {
     return { pedidos: [], falhou: true };
   }
+}
+
+export async function buscarPedidoDaSessao(businessId: string, requestId: string): Promise<PedidoDeImagem | null> {
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado" || ativo.negocio.id !== businessId) return null;
+  const supabase = await createClient();
+  const r = await supabase.from("creative_generation_requests").select(COLUNAS)
+    .eq("business_id", businessId).eq("id", requestId).maybeSingle();
+  return !r.error && pedidoPersistidoValido(r.data, businessId) ? r.data : null;
 }

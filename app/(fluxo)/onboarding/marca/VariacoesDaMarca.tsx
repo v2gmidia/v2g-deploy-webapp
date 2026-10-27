@@ -48,7 +48,7 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
   }, {});
   return <section className={styles.logoBloco}>
     <h2>Outras imagens da sua marca</h2>
-    <p>Escolha vários logos, fotos, aplicações e referências de uma vez. PNG, JPG, WebP e AVIF funcionam; HEIC depende do navegador. Imagens pequenas são ajustadas para o cadastro, e a equipe confere a nitidez antes de criar um anúncio. Você pode guardar até 24 imagens; restam {restantes} vagas.</p>
+    <p>Envie outras versões do logo ou imagens próprias em que as cores da sua marca aparecem bem, como embalagem, fachada ou peça já usada. Elas ajudam a completar a paleta. A equipe confere a nitidez antes de criar um anúncio. Aceitamos PNG, JPG, WebP e AVIF; HEIC depende do navegador. Você pode guardar até 24 imagens; restam {restantes} vagas.</p>
     {variacoes.length > 0 && <div className={styles.variacoes}>
       {variacoes.map((item) => <figure key={item.id}>
         {item.url ? <img src={item.url} alt={`Versão da marca: ${item.nome}`} />
