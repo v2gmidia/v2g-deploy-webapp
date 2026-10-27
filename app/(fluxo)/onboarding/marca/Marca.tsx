@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
-import { TEXTO_DA_DECLARACAO } from "@/app/(protected)/conta/declaracao";
+import { TEXTO_DA_DECLARACAO, TEXTO_DO_LIMITE_DE_IA } from "@/app/(protected)/conta/declaracao";
 import { coresDaLogo, PAPEIS_DA_COR } from "@/lib/identidade/cores-da-logo";
 import { juntarPaleta } from "@/lib/identidade/paleta";
 import { salvarMarcaAction, type EstadoMarca } from "./actions";
@@ -98,6 +98,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
       <>
         {erro && <p className="form-error" role="alert">{erro}</p>}
         {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
+        <p className="form-warning"><strong>Envio não autoriza uso por IA.</strong> {TEXTO_DO_LIMITE_DE_IA}</p>
         <p className={styles.declaracao}>{TEXTO_DA_DECLARACAO}</p>
         <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo], "logo-principal")} aoMudarUpload={aoMudarUpload} />
         <VariacoesDaMarca businessId={estado.businessId} variacoes={variacoes} aoEscolher={(arquivos) => proporCores(arquivos, "imagem-de-apoio")} aoMudarUpload={aoMudarUpload} />

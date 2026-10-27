@@ -1,5 +1,7 @@
 # E28 — etapa 5: ligação local ao dispatcher real — 26/10/2026
 
+> RESOLVIDO no bloco posterior de 26→27/10: a exigência histórica de Pinterest/três materiais abaixo foi substituída por **logo próprio autorizado + cores confirmadas + uma referência Meta revisada como direção abstrata**, sem pixels do concorrente. Pinterest fica fora. Provas e pendências vigentes: [contrato e catálogo persistido](./e28-05-06-contrato-catalogo-alinhados-27-10.md). O texto abaixo preserva o estado medido naquele momento, não define o recorte atual.
+
 **Entregue neste bloco:** WebApp consome o contrato durável real final de 07/08, preserva pedido/retomada/arquivo/biblioteca e distingue resultado real de simulação. O adaptador de contexto exige identidade + referência Pinterest + anúncio do nicho, com origem, direitos e versão. **Não houve imagem criada por IA nesta rodada.** A execução ponta a ponta foi testada com o dispatcher real e o provider explicitamente substituído por função de pixels/contador, sem rede paga. A fonte persistente do contexto, a identidade humana e o ambiente de execução ainda não estão ligados no app.
 
 ## 0. O que falta, dono e menor prova

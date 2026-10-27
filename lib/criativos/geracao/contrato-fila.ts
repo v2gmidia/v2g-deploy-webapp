@@ -3,6 +3,21 @@ export const UUID_GERACAO = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-
 const HASH = /^[a-f0-9]{64}$/;
 const monetario = (v: unknown) => typeof v === "string" && /^\d+(\.\d+)?$/.test(v);
 export type StatusFila = "queued" | "running" | "storage_pending" | "artifact_available" | "reconciliation_required" | "failed" | "cancelled";
+export interface ProvaContextoV2 {
+  version: 2; reference_id: string; brand_material_id: string; brand_sha256: string;
+  approvals_sha256: string; catalog_version: number; catalog_sha256: string;
+}
+export function provaContextoV2Valida(v: unknown): v is ProvaContextoV2 {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+  const p = v as ProvaContextoV2;
+  return Object.keys(p).length === 7 && p.version === 2 && typeof p.reference_id === "string"
+    && /^\d{10,20}$/.test(p.reference_id) && typeof p.brand_material_id === "string" && UUID_GERACAO.test(p.brand_material_id)
+    && [p.brand_sha256, p.approvals_sha256, p.catalog_sha256].every(h => typeof h === "string" && HASH.test(h))
+    && Number.isSafeInteger(p.catalog_version) && p.catalog_version >= 1;
+}
+export function provasContextoIguais(a: unknown, b: ProvaContextoV2): boolean {
+  return provaContextoV2Valida(a) && Object.keys(b).every(k => a[k as keyof ProvaContextoV2] === b[k as keyof ProvaContextoV2]);
+}
 export interface EstadoFila {
   contract: "creative-generation-queue-v1"; version: 1;
   id: string; request_id: string; business_id: string; attempt_id: string;
@@ -14,6 +29,7 @@ export interface EstadoFila {
   result: { private_reference: string; creative_id: string; sha256: string;
     width: 1088; height: 1088; mime: "image/png"; source: "fake-png-v1";
     authored_by: string; simulated: true } | null;
+  context_proof?: ProvaContextoV2;
 }
 export interface EstadoFilaReal extends Omit<EstadoFila, "simulated" | "billed_usd" | "error" | "cost" | "result" | "status"> {
   status: Exclude<StatusFila, "cancelled">; simulated: false; billed_usd: string | null;
@@ -26,6 +42,7 @@ export function estadoDaFilaRealValido(valor: unknown, pedido: string, negocio: 
   const e = valor as EstadoFilaReal;
   const terminal = ["artifact_available", "failed", "reconciliation_required"].includes(e.status);
   if (e.contract !== "creative-generation-queue-v1" || e.version !== 1 || e.simulated !== false
+    || ("context_proof" in e && !provaContextoV2Valida(e.context_proof))
     || !UUID_GERACAO.test(pedido) || !UUID_GERACAO.test(negocio) || e.request_id !== pedido || e.business_id !== negocio
     || ![e.id, e.attempt_id].every(v => typeof v === "string" && UUID_GERACAO.test(v))
     || !["queued", "running", "storage_pending", "artifact_available", "reconciliation_required", "failed"].includes(e.status)
@@ -48,6 +65,7 @@ export function estadoDaFilaValido(valor: unknown, pedido: string, negocio: stri
   if (!valor || typeof valor !== "object" || Array.isArray(valor)) return false;
   const e = valor as EstadoFila;
   if (e.contract !== "creative-generation-queue-v1" || e.version !== 1
+    || ("context_proof" in e && !provaContextoV2Valida(e.context_proof))
     || !UUID_GERACAO.test(pedido) || !UUID_GERACAO.test(negocio)
     || e.request_id !== pedido || e.business_id !== negocio
     || ![e.id, e.attempt_id].every((v) => typeof v === "string" && UUID_GERACAO.test(v))

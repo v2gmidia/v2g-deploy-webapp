@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MAXIMO_DE_FOTOS, validar, type UsoDeIdentidade } from "./regras";
 import { tipoFotoRegistrado, tipoFotoValido, type TipoFotoDoNegocio } from "./tipo-foto";
+import { provenienciaDoUploadCliente } from "./proveniencia-upload";
 
 /**
  * Guardar, listar e arquivar a identidade visual do negócio.
@@ -191,6 +192,7 @@ export async function guardarImagem(entrada: {
   }
 
   const novoId = randomUUID();
+  const registradoEm = new Date().toISOString();
   const { data: linha, error: erroLinha } = await supa
     .from("creatives")
     .insert({
@@ -206,8 +208,9 @@ export async function guardarImagem(entrada: {
       // responder, dois anos depois, o que exatamente foi declarado.
       copy: {
         ...(tipoFoto ? { identidade: { tipoFoto } } : {}),
+        origemMaterial: provenienciaDoUploadCliente(entrada.bytes, registradoEm),
         declaracao: {
-          em: new Date().toISOString(),
+          em: registradoEm,
           texto: entrada.textoDaDeclaracao,
         },
         dimensao: { largura: veredito.largura, altura: veredito.altura },

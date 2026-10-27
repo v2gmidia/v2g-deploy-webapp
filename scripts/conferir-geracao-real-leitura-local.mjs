@@ -15,6 +15,7 @@ assert.equal(bytesFixture.status,0,bytesFixture.stderr);
 const png=Buffer.from(bytesFixture.stdout.trim(),'base64');
 const sha=createHash('sha256').update(png).digest('hex');
 const row={version:1,id:job,request_id:pedido,business_id:business,attempt_id:attempt,status:'artifact_available',simulated:false,
+  snapshot:{versao_contexto:1},
   snapshot_hash:'a'.repeat(64),artifact_sha256:sha,currency:'USD',estimated_usd:'0.000000000000000001',reserved_usd:'1',billed_usd:null};
 function serializerReal() {
   const backend='C:/Users/victo/OneDrive/Documentos/GitHub/backend_v2g';
@@ -25,6 +26,8 @@ function serializerReal() {
 }
 const realDto=serializerReal();
 function harness() {
+  const payload={versao:1,objetivo:'Objetivo FICTICIO',oferta:'Oferta FICTICIA',acao:'Acao FICTICIA',promocao:false,validade:null};
+  const contentHash=createHash('sha256').update(JSON.stringify(Object.values(payload))).digest('hex');
   const s={profile:perfil,business,off:false,dto:structuredClone(realDto),http:200,corromper:false,donoDoPedido:perfil,simuladoNoArquivo:false,chamadas:[]};
   const env={V2G_CREATIVE_REQUESTS_ENABLED:'true',V2G_CREATIVE_BACKEND_ENABLED:'true',V2G_BACKEND_URL:'http://fixture.invalid',V2G_BACKEND_TOKEN:'fixture-token'};
   const a=ambienteTs({env,ports:{
@@ -33,9 +36,9 @@ function harness() {
     '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:s.profile?{id:s.profile}:null},error:null}),
       getSession:async()=>({data:{session:s.profile?{user:{id:s.profile},access_token:'fixture-jwt'}:null},error:null})},from(table){
       assert.ok(['creatives','creative_generation_requests'].includes(table));const filtros={};const q={select(colunas){
-        for(const coluna of (table==='creatives'?['id','business_id','type','uso','storage_path','copy','arquivado_em']:['id','business_id','requested_by']))assert.ok(colunas.split(', ').includes(coluna));return q;
+        for(const coluna of (table==='creatives'?['id','business_id','type','uso','storage_path','copy','arquivado_em']:['id','business_id','requested_by','payload']))assert.ok(colunas.split(', ').includes(coluna));return q;
       },eq(k,v){filtros[k]=v;return q;},async maybeSingle(){return {error:null,data:table==='creative_generation_requests'
-        ? {id:pedido,business_id:business,requested_by:s.donoDoPedido}
+        ? {id:pedido,business_id:business,requested_by:s.donoDoPedido,payload,content_hash:contentHash,status:'awaiting_configuration',created_at:'2026-10-26T12:00:00Z'}
         : {id:job,business_id:business,type:'image',uso:'campanha',arquivado_em:null,storage_path:`geracao/${business}/${job}/${attempt}.png`,
           copy:{generation:{version:1,requestId:pedido,jobId:job,attemptId:attempt,snapshotHash:row.snapshot_hash,artifactHash:sha,simulated:s.simuladoNoArquivo}}}};}};return q;
     }})},
@@ -71,7 +74,7 @@ test('arquivo real exige registro, autoria, simulação coerente, PNG e hash',as
   h.s.corromper=true;assert.equal(await h.arquivo(),null);assert.ok(h.s.chamadas.every(c=>c.method==='GET'));
 });
 test('outro negócio/sessão e fonte indisponível nunca abrem arquivo ou retry',async()=>{
-  const h=harness();h.s.business=job;assert.equal((await h.acao()).motivo,'negocio_mudou');assert.equal(await h.arquivo(),null);assert.equal(h.s.chamadas.length,0);
+  const h=harness();h.s.business=job;assert.equal((await h.acao()).motivo,'conferir_estado');assert.equal(await h.arquivo(),null);assert.equal(h.s.chamadas.length,0);
   h.s.business=business;h.s.profile=null;assert.equal(await h.arquivo(),null);h.s.profile=perfil;
   h.s.off=true;assert.equal((await h.acao()).ok,false);assert.equal(h.s.chamadas.length,1);assert.ok(h.s.chamadas.every(c=>c.method==='GET'));
 });

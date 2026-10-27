@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { TEXTO_DA_DECLARACAO } from "@/app/(protected)/conta/declaracao";
 import { TETO_DO_NAVEGADOR_BYTES, TETO_DO_NAVEGADOR_MB } from "@/lib/criativos/limites.mjs";
+import { provenienciaDoUploadCliente } from "@/lib/identidade/proveniencia-upload";
 
 const BUCKET = "v2g-midia";
 
@@ -53,11 +54,15 @@ export async function enviarGuiaVisualAction(_prev: GuiaState, formData: FormDat
   });
   if (upload.error) return { erro: "Não foi possível guardar o PDF. Tente novamente." };
   const novoId = randomUUID();
+  const registradoEm = new Date().toISOString();
   const gravacao = await admin.from("creatives").insert({
     id: novoId,
     business_id: businessId, uso: "referencia", type: "guia_identidade_pdf",
     file_name: nome, storage_path: caminho, status: "draft",
-    copy: { declaracao: { em: new Date().toISOString(), texto: TEXTO_DA_DECLARACAO } },
+    copy: {
+      origemMaterial: provenienciaDoUploadCliente(bytes, registradoEm),
+      declaracao: { em: registradoEm, texto: TEXTO_DA_DECLARACAO },
+    },
   }).select("id").single();
   if (gravacao.error || !gravacao.data) {
     // A resposta da inserção pode falhar depois de a linha existir. Nunca

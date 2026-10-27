@@ -17,3 +17,8 @@ export const TEXTO_DA_DECLARACAO =
   "Pode mandar foto em que você aparece. Foto de funcionário, cliente ou " +
   "qualquer outra pessoa não dá — quem aparece no anúncio precisa ter " +
   "autorizado, e essa autorização é da pessoa, não sua.";
+
+/** Aviso de limite, não aceite: upload e autorização para IA são atos separados. */
+export const TEXTO_DO_LIMITE_DE_IA =
+  "Guardar estes arquivos não autoriza a V2G a enviá-los para uma IA. " +
+  "Essa autorização será pedida separadamente quando você solicitar uma peça.";

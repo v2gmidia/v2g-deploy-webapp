@@ -5,6 +5,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { geracaoNoAppPeloBackend, type EstadoGeracaoBackend } from "./backend-da-sessao";
 import { UUID_GERACAO, estadoDaFilaValido, estadoDaFilaRealValido } from "./contrato-fila";
+import { provasContextoIguais } from "./contrato-fila";
+import { carregarProvaV2DaSessao } from "./prova-v2-da-sessao";
+import { pedidoPersistidoValido } from "../pedidos-da-sessao";
 
 export function urlImagemGerada(requestId: string, businessId: string): string {
   return `/criativos/imagem-gerada/${requestId}?negocio=${businessId}`;
@@ -34,17 +37,22 @@ export async function lerImagemGerada(requestId: string, businessId: string): Pr
     const { data: { user }, error } = await supabase.auth.getUser();
     const ativo = await negocioAtivoDaSessao();
     if (error || !user || ativo.status !== "selecionado" || ativo.negocio.id !== businessId) return null;
+    const pedido = await supabase.from("creative_generation_requests").select("id, business_id, requested_by, payload, content_hash, status, created_at")
+      .eq("id", requestId).eq("business_id", businessId).maybeSingle();
+    if (pedido.error || !pedido.data || pedido.data.id !== requestId || pedido.data.business_id !== businessId
+      || pedido.data.requested_by !== user.id || !pedidoPersistidoValido(pedido.data, businessId)) return null;
+    const prova = pedido.data.payload.versao === 2 ? await carregarProvaV2DaSessao(pedido.data) : null;
+    if (pedido.data.payload.versao === 2 && !prova) return null;
     const resposta = await geracaoNoAppPeloBackend({ requestId, businessId, operacao: "biblioteca" });
     if (!resposta.ok || resposta.estado.status !== "artifact_available") return null;
+    if (prova && !estadoDaFilaValido(resposta.estado, requestId, businessId)
+      && !estadoDaFilaRealValido(resposta.estado, requestId, businessId)) return null;
+    if (prova && !provasContextoIguais(resposta.estado.context_proof, prova)) return null;
     if (resposta.estado.simulated && (!estadoDaFilaValido(resposta.estado, requestId, businessId)
       || resposta.estado.result?.authored_by !== user.id)) return null;
     if (estadoDaFilaRealValido(resposta.estado, requestId, businessId) && resposta.estado.result?.authored_by !== user.id) return null;
     // O DTO real não traz authored_by. A autoria é relida do pedido pela sessão,
     // além da identidade/propriedade que o próprio backend confere em /biblioteca.
-    const pedido = await supabase.from("creative_generation_requests").select("id, business_id, requested_by")
-      .eq("id", requestId).eq("business_id", businessId).maybeSingle();
-    if (pedido.error || !pedido.data || pedido.data.id !== requestId || pedido.data.business_id !== businessId
-      || pedido.data.requested_by !== user.id) return null;
     const r = await supabase.from("creatives").select("id, business_id, type, uso, storage_path, copy, arquivado_em")
       .eq("business_id", businessId).eq("id", resposta.estado.id).maybeSingle();
     if (r.error || !arquivoDaFilaConfere(r.data, resposta.estado)) return null;

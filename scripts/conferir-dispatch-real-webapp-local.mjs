@@ -32,7 +32,7 @@ test('resultado incerto vira reconciliação terminal, sem polling/retry automá
 });
 test('escopo/autoria e cancelamento real permanecem fechados',async()=>{
   h.env.V2G_CREATIVE_REAL_SUBMISSION_ENABLED='true';await h.consultar('submeter');h.ator(B,BB);
-  assert.equal((await h.consultar('consultar',BA)).motivo,'negocio_mudou');assert.equal((await h.imagem(BA)).status,404);
+  assert.equal((await h.consultar('consultar',BA)).motivo,'conferir_estado');assert.equal((await h.imagem(BA)).status,404);
   h.ator(A,BA);const n=h.requests.length;assert.equal((await h.consultar('cancelar')).motivo,'submissao_real_pendente');assert.equal(h.requests.length,n);
 });
 test('sessão ausente ou token humano inválido não criam job nem chamam provider',async()=>{

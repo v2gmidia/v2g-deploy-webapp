@@ -1,5 +1,56 @@
 # E28 01/02 — senha, retorno e prova de acesso após estorno, 25/10/2026
 
+## Atualização de 26/10 — publicação e limite da prova atual
+
+- Alias `v2g-webapp-qa.vercel.app` consultado na Vercel: projeto
+  `v2g-webapp-qa`, deployment `dpl_J3womZi4mhGocjUGzfuQ697cbJYU`, READY,
+  commit `2ad1785e5dee4f27382912aa282550d8bffa9221`. Os arquivos de
+  recuperação, callback, proxy e elegibilidade/acesso conferidos não têm
+  diferenças entre esse commit e o HEAD local. O portão de publicação abaixo
+  é histórico; a prova humana do fluxo continua pendente nesta versão.
+- `pnpm conferir:recuperacao`: 24/24 passaram nesta conferência local.
+- Consulta somente leitura no QA, às 22:46 BRT de 26/10: QA04 confirmada,
+  não bloqueada e sem papel de operador; um negócio correspondente a
+  **V2G QA Multiconta B — FICTÍCIA**, ativo e de sua propriedade, com pedido
+  aprovado associado ao perfil/e-mail e sem evento inicial adverso encontrado.
+  Isso comprova dados e condições consultadas, não uma sessão autenticada atual
+  nem adimplência recorrente canônica.
+- **NÃO VERIFICADO no navegador atual:** a tentativa de ler a aba QA já aberta
+  no Chrome expirou na conexão de controle (`Emulation.setFocusEmulationEnabled`,
+  10 segundos). Foi consultada uma única alternativa: a sessão do navegador
+  integrado não tinha nenhuma aba V2G WebApp aberta. Encerrado sem novo login,
+  senha/código, criação de conta, seleção de negócio ou teste financeiro.
+- A falha já reproduzida de acesso após estorno permanece bloqueio separado.
+  Não usar o negócio estornado **V2G QA 3DS Final 21-10 — FICTICIA** como prova
+  de acesso válido. A migration CPF/CNPJ permanece não aplicada no QA e não é
+  requisito para o roteiro mínimo com a conta e o negócio B existentes.
+
+### Roteiro mínimo proposto para 27/10 — acesso ao piloto
+
+1. Victor entra com a conta existente
+   `victor.cabral+v2gqa04@v2gmidia.com.br` no QA
+   `https://v2g-webapp-qa.vercel.app/entrar?modo=login&adicionar=1`.
+   A senha e eventuais códigos ficam somente com ele, sem envio no chat.
+2. No seletor de negócios, escolhe exatamente
+   **V2G QA Multiconta B — FICTÍCIA**. Não adicionar negócio, contratar,
+   criar usuário ou usar a compra estornada como alternativa.
+3. Abre `/conta` e confere juntos o e-mail QA04 e o nome do negócio
+   selecionado. Esses dois sinais aparecem na página
+   (`app/(protected)/conta/page.tsx`, perfil e negócio atual).
+4. Abre `/inicio` e confirma que permanece no negócio B. Se houver erro,
+   outro negócio, ausência do negócio B ou falha da sessão, registrar
+   **NÃO VERIFICADO** e parar, sem fabricar acesso ou repetir compra.
+5. Somente com essa prova, entregar o negócio selecionado à frente do ensaio
+   de uma imagem. Este roteiro não comprova geração, integração financeira
+   completa nem política de bloqueio após estorno.
+
+Menor ação de Victor: autenticar a QA04 existente e selecionar o negócio B.
+Não há necessidade comprovada de nova compra ou da migration CPF/CNPJ para
+esse roteiro. Não há nova decisão financeira necessária neste bloco. QA
+READY no commit `2ad1785` é a versão medida em 26/10; reconferir se houver
+nova publicação antes do ensaio. A execução autenticada de 27/10 continua
+pendente; a tentativa alternativa de 26/10 já foi encerrada acima.
+
 ## 0. Estado e próximo portão
 
 Bloco local separado, iniciado após concluir CPF/CNPJ. Código e testes prontos;

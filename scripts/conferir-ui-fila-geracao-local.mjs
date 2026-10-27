@@ -28,7 +28,7 @@ test('resposta POST perdida: consultar o mesmo pedido, sem replay automático',a
 });
 test('troca de negócio e outro ator negam consulta/imagem sem revelar resultado anterior',async()=>{
   await h.consultar('submeter');await h.worker();h.ator(B,BB);
-  assert.equal((await h.consultar('consultar',BA)).motivo,'negocio_mudou');assert.equal((await h.imagem(BA)).status,404);
+  assert.equal((await h.consultar('consultar',BA)).motivo,'conferir_estado');assert.equal((await h.imagem(BA)).status,404);
   assert.equal((await h.pedidos()).pedidos.length,0);assert.equal((await h.consultar()).ok,false);
   h.ator(B,BA);assert.equal((await h.consultar()).ok,false);assert.equal((await h.imagem()).status,404);
   h.ator(A,BA);assert.equal((await h.imagem()).status,200);

@@ -61,6 +61,18 @@ export interface ExcecaoDeIdentidade {
 
 export const EXCECOES: ExcecaoDeIdentidade[] = [
   {
+    arquivo: "app/(protected)/criativos/imagem-gerada/[requestId]/route.ts",
+    autorizacao: "posse",
+    oQueEntra: "`params.requestId` e `?negocio=` da URL da imagem gerada",
+    porque:
+      "`lerImagemGerada` valida os UUIDs, `auth.getUser()` e o negócio ativo sob sessão/RLS. " +
+      "Relê o pedido filtrando por ID e negócio e exige `requested_by === user.id`; v2 exige fontes " +
+      "persistidas vigentes e `context_proof` correspondente à referência, marca e catálogo. " +
+      "Confere o resultado no backend autenticado e a linha de `creatives` do mesmo negócio, " +
+      "incluindo caminho, tentativa e hashes. Só então usa o admin para baixar do bucket privado " +
+      "e validar os bytes. Falha devolve 404; a resposta usa cache privado sem armazenamento.",
+  },
+  {
     arquivo: "app/(internal)/revops/actions.ts",
     autorizacao: "papel",
     oQueEntra: "`opportunityId` e a referencia externa da fonte, vindos dos formularios internos",

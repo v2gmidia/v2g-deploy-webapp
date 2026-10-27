@@ -34,11 +34,11 @@ export interface ManifestoBackend {
     autorizacao_id: string; revisado_por: string; permitido: true; fonte: string; observado_em: string; condicao_de_uso: string }[];
   destino_autorizado: "gpt-image-2"; politica_versao: string; estimativa_usd: string; reserva_usd: string; limite_usd: string;
 }
-const hash = (s: string) => createHash("sha256").update(s).digest("hex");
-const temHash = (v: unknown): v is string => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
-const temTexto = (v: unknown, max = 2000): v is string => typeof v === "string" && Boolean(v.trim()) && v.length <= max;
-const uuid = (v: unknown): v is string => typeof v === "string" && UUID_GERACAO.test(v) && v === v.toLowerCase();
-function data(v: string, agora: string): boolean {
+export const hashContexto = (s: string) => createHash("sha256").update(s).digest("hex");
+export const temHash = (v: unknown): v is string => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+export const temTexto = (v: unknown, max = 2000): v is string => typeof v === "string" && Boolean(v.trim()) && v.length <= max;
+export const uuidContexto = (v: unknown): v is string => typeof v === "string" && UUID_GERACAO.test(v) && v === v.toLowerCase();
+export function dataContexto(v: string, agora: string): boolean {
   return typeof v === "string" && /T.*(?:Z|[+-]\d{2}:\d{2})$/.test(v)
     && Number.isFinite(Date.parse(v)) && Date.parse(v) <= Date.parse(agora);
 }
@@ -62,12 +62,10 @@ function fonteConfere(m: MaterialDoTriangulo): boolean {
  * Não recebe FormData/HTTP, não busca Pinterest/Meta, não lê bytes nem chama um modelo.
  * Só conectar após 07/08 fornecer fonte persistente confiável das aprovações.
  */
-export function prepararTrianguloDoServidor(e: EntradaDoTriangulo):
-  { ok: true; manifesto: ManifestoBackend; hash: string; hashesDocumentos: { central: string; nicho: string } }
-  | { ok: false; pendencias: string[] } {
+export function conferirBaseContexto(e: Omit<EntradaDoTriangulo, "materiais">): Set<string> {
   const faltas = new Set<string>();
   const p = e.pedido;
-  if (!uuid(p.id) || !uuid(p.business_id) || !uuid(e.profileId) || p.requested_by !== e.profileId
+  if (!uuidContexto(p.id) || !uuidContexto(p.business_id) || !uuidContexto(e.profileId) || p.requested_by !== e.profileId
     || p.status !== "awaiting_configuration" || p.content_hash !== hashDoPedido(p.payload)) faltas.add("pedido_ou_dono_divergente");
   if (!Number.isFinite(Date.parse(e.agora))) faltas.add("data_de_conferencia_invalida");
   if (!e.nichoConfirmado || !temTexto(e.nichoId, 200)) faltas.add("nicho_nao_confirmado");
@@ -76,42 +74,58 @@ export function prepararTrianguloDoServidor(e: EntradaDoTriangulo):
   if (p.payload.promocao && (!prazo || !/^\d{4}-\d{2}-\d{2}$/.test(prazo)
     || !Number.isFinite(Date.parse(`${prazo}T12:00:00Z`))
     || new Date(`${prazo}T12:00:00Z`).toISOString().slice(0, 10) !== prazo || prazo < hoje)) faltas.add("promocao_vencida_ou_sem_prazo");
-  if (e.cores.businessId !== p.business_id || !temTexto(e.cores.origem) || !data(e.cores.confirmadoEm, e.agora)
+  if (e.cores.businessId !== p.business_id || !temTexto(e.cores.origem) || !dataContexto(e.cores.confirmadoEm, e.agora)
     || !Array.isArray(e.cores.valores) || e.cores.valores.length < 1 || e.cores.valores.length > 6
     || e.cores.valores.some(c => !/^#[0-9a-fA-F]{6}$/.test(c))) faltas.add("identidade_nao_confirmada");
   for (const tipo of ["central", "nicho"] as const) {
     const d = e.documentos[tipo];
     if (!d || d.tipo !== tipo || !temTexto(d.versao, 120) || !temTexto(d.conteudo, 12000)
-      || !temTexto(d.revisadoPor, 200) || !data(d.revisadoEm, e.agora)
+      || !temTexto(d.revisadoPor, 200) || !dataContexto(d.revisadoEm, e.agora)
       || d.nichoId !== (tipo === "nicho" ? e.nichoId : null)
       || ![null, p.business_id].includes(e.escopoDocumentos[tipo])) faltas.add(`documento_${tipo}_ausente_ou_divergente`);
   }
+  const piloto = e.autorizacaoPiloto;
+  const estimativa = usd(piloto?.estimativaUsd), reserva = usd(piloto?.reservaUsd), limite = usd(piloto?.limiteUsd);
+  if (!piloto || !temTexto(piloto.id, 200) || piloto.businessId !== p.business_id || piloto.requestId !== p.id
+    || piloto.quantidade !== 1 || piloto.destino !== "gpt-image-2" || !temTexto(piloto.por, 200) || !dataContexto(piloto.em, e.agora)
+    || estimativa === null || reserva === null || limite === null || estimativa <= 0n || estimativa > reserva || reserva > limite)
+    faltas.add("piloto_uma_imagem_sem_autorizacao_ou_orcamento");
+  if (!temTexto(e.politicaVersao, 120)) faltas.add("politica_sem_versao");
+  return faltas;
+}
+
+export function conferirMaterialContexto(m: MaterialDoTriangulo, e: Omit<EntradaDoTriangulo, "materiais">): boolean {
+  const p = e.pedido;
+  const prefixo = `${m.classe === "identidade_cliente" ? "identidade" : "referencias"}/${p.business_id}/`;
+  const a = m.aprovacao;
+  const relativo = m.caminho.startsWith(prefixo) ? m.caminho.slice(prefixo.length) : "";
+  return uuidContexto(m.id) && m.businessId === p.business_id && temHash(m.sha256) && temTexto(m.versao, 120)
+    && Boolean(relativo) && !/[%\\?#]/.test(relativo) && !relativo.split("/").some(s => !s || s === "." || s === "..")
+    && dataContexto(m.observadoEm, e.agora) && dataContexto(m.revisadoEm, e.agora) && temTexto(m.revisadoPor, 200)
+    && temTexto(m.condicaoDeUso) && fonteConfere(m)
+    && m.nichoId === (m.classe === "identidade_cliente" ? null : e.nichoId)
+    && Boolean(a && temTexto(a.id, 200) && a.businessId === p.business_id && a.requestId === p.id && a.materialId === m.id
+      && a.sha256 === m.sha256 && a.finalidade === "gerar_imagem" && a.destino === "gpt-image-2"
+      && temTexto(a.por, 200) && dataContexto(a.em, e.agora));
+}
+
+/** Legado v1: referência em arquivo exige licença própria. Não adapta pedidos v2. */
+export function prepararTrianguloDoServidor(e: EntradaDoTriangulo):
+  { ok: true; manifesto: ManifestoBackend; hash: string; hashesDocumentos: { central: string; nicho: string } }
+  | { ok: false; pendencias: string[] } {
+  const faltas = conferirBaseContexto(e);
+  if (e.pedido.payload.versao !== 1) faltas.add("referencia_publica_exige_contexto_v2");
   for (const classe of ["identidade_cliente", "anuncios_nicho"] as const) {
     if (e.materiais.filter(m => m.classe === classe).length !== 1) faltas.add(`${classe}_ausente_ou_duplicado`);
   }
   if (e.materiais.length !== 2 || new Set(e.materiais.map(m => m.id)).size !== 2
     || new Set(e.materiais.map(m => m.sha256)).size !== 2) faltas.add("materiais_duplicados_ou_excedentes");
   for (const m of e.materiais) {
-    const prefixo = `${m.classe === "identidade_cliente" ? "identidade" : "referencias"}/${p.business_id}/`;
-    const a = m.aprovacao;
-    const relativo = m.caminho.startsWith(prefixo) ? m.caminho.slice(prefixo.length) : "";
-    if (!uuid(m.id) || m.businessId !== p.business_id || !temHash(m.sha256) || !temTexto(m.versao, 120)
-      || !relativo || /[%\\?#]/.test(relativo) || relativo.split("/").some(s => !s || s === "." || s === "..")
-      || !data(m.observadoEm, e.agora) || !data(m.revisadoEm, e.agora) || !temTexto(m.revisadoPor, 200)
-      || !temTexto(m.condicaoDeUso) || !fonteConfere(m)
-      || m.nichoId !== (m.classe === "identidade_cliente" ? null : e.nichoId)) faltas.add(`material_${m.classe}_invalido`);
-    if (!a || !temTexto(a.id, 200) || a.businessId !== p.business_id || a.requestId !== p.id || a.materialId !== m.id
-      || a.sha256 !== m.sha256 || a.finalidade !== "gerar_imagem" || a.destino !== "gpt-image-2"
-      || !temTexto(a.por, 200) || !data(a.em, e.agora)) faltas.add(`autorizacao_${m.classe}_ausente_ou_divergente`);
+    if (!conferirMaterialContexto(m, e)) faltas.add(`material_ou_autorizacao_${m.classe}_divergente`);
   }
   const piloto = e.autorizacaoPiloto;
-  const estimativa = usd(piloto?.estimativaUsd), reserva = usd(piloto?.reservaUsd), limite = usd(piloto?.limiteUsd);
-  if (!piloto || !temTexto(piloto.id, 200) || piloto.businessId !== p.business_id || piloto.requestId !== p.id
-    || piloto.quantidade !== 1 || piloto.destino !== "gpt-image-2" || !temTexto(piloto.por, 200) || !data(piloto.em, e.agora)
-    || estimativa === null || reserva === null || limite === null || estimativa <= 0n || estimativa > reserva || reserva > limite)
-    faltas.add("piloto_uma_imagem_sem_autorizacao_ou_orcamento");
-  if (!temTexto(e.politicaVersao, 120)) faltas.add("politica_sem_versao");
   if (faltas.size) return { ok: false, pendencias: [...faltas] };
+  const p = e.pedido;
   function documento(tipo: "central" | "nicho"): DocumentoBackend {
     const d = e.documentos[tipo]!;
     return { versao: d.versao, conteudo: d.conteudo, revisado_por: d.revisadoPor, revisado_em: d.revisadoEm,
@@ -132,6 +146,6 @@ export function prepararTrianguloDoServidor(e: EntradaDoTriangulo):
   };
   const serializado = canonico(manifesto);
   if (Buffer.byteLength(serializado) > 65536) return { ok: false, pendencias: ["contexto_excessivo"] };
-  return { ok: true, manifesto: JSON.parse(serializado) as ManifestoBackend, hash: hash(serializado),
-    hashesDocumentos: { central: hash(manifesto.central.conteudo), nicho: hash(manifesto.nicho.conteudo) } };
+  return { ok: true, manifesto: JSON.parse(serializado) as ManifestoBackend, hash: hashContexto(serializado),
+    hashesDocumentos: { central: hashContexto(manifesto.central.conteudo), nicho: hashContexto(manifesto.nicho.conteudo) } };
 }

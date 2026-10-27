@@ -4,12 +4,14 @@ import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { enviar, obter } from "@/lib/backend/cliente";
 import { estadoDaFilaValido, estadoDaFilaRealValido, type EstadoFila } from "./contrato-fila";
 import { modoGeracaoNoApp, submissaoRealHabilitada } from "./configuracao-app";
+import type { ProvaContextoV2 } from "./contrato-fila";
 
 export interface EstadoGeracaoBackend {
   version: 1; id: string; request_id: string; business_id: string; attempt_id: string;
   status: "queued" | "running" | "storage_pending" | "artifact_available" | "reconciliation_required" | "failed" | "cancelled";
   simulated: boolean; snapshot_hash: string; artifact_sha256: string | null;
   currency: "USD"; estimated_usd: string; reserved_usd: string; billed_usd: string | null;
+  context_proof?: ProvaContextoV2;
 }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const HASH = /^[a-f0-9]{64}$/;

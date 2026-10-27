@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { TEXTO_DA_DECLARACAO } from "@/app/(protected)/conta/declaracao";
 import { TETO_DO_NAVEGADOR_BYTES } from "@/lib/criativos/limites.mjs";
 import { lerDimensao, tipoReal } from "@/lib/identidade/dimensoes";
+import { provenienciaDoUploadCliente } from "@/lib/identidade/proveniencia-upload";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -94,11 +95,15 @@ export async function enviarVariacoesAction(_prev: VariacoesState, formData: For
     const upload = await admin.storage.from(BUCKET).upload(path, arquivo.bytes, { contentType: arquivo.tipo, upsert: false });
     if (upload.error) break;
     const novoId = randomUUID();
+    const registradoEm = new Date().toISOString();
     const gravacao = await admin.from("creatives").insert({
       id: novoId,
       business_id: businessId, uso: "referencia", type: TIPO,
       file_name: arquivo.nome, storage_path: path, status: "draft",
-      copy: { declaracao: { em: new Date().toISOString(), texto: TEXTO_DA_DECLARACAO } },
+      copy: {
+        origemMaterial: provenienciaDoUploadCliente(arquivo.bytes, registradoEm),
+        declaracao: { em: registradoEm, texto: TEXTO_DA_DECLARACAO },
+      },
     }).select("id").single();
     if (gravacao.error || !gravacao.data) {
       // O banco pode ter inserido a linha e perdido a resposta. Confere por

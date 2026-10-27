@@ -2,6 +2,8 @@
 
 ## Resultado
 
+> ATUALIZAÇÃO no bloco posterior de 26→27/10: a menção histórica a “três materiais” no fim deste documento foi superada. O recorte vigente é logo próprio autorizado + cores confirmadas + referência Meta por metadados/direção abstrata; Pinterest está fora. Ver [contrato e catálogo persistido](./e28-05-06-contrato-catalogo-alinhados-27-10.md). A prova de identidade desta sessão permanece com seus limites originais.
+
 O WebApp agora encaminha ao backend de geração o token de sessão do usuário no cabeçalho `Authorization`, além do token de máquina já existente. Antes de chamar o backend, confere `auth.getUser()`, a sessão, o mesmo `user.id` e o negócio ativo. O backend tem um verificador injetável que consulta o Supabase Auth `/auth/v1/user` para obter o `profile_id` verdadeiro. UUID enviado no corpo ou token de máquina não substituem essa prova.
 
 O verificador ainda **não foi injetado em um serviço implantado**. A factory de geração permanece local/default OFF; não houve chamada paga, escrita remota, flag, deploy ou mudança em produção. O backend QA de métricas continua somente leitura, separado desta factory.
