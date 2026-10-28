@@ -1,0 +1,48 @@
+{
+  "versao": 2,
+  "data": "2026-10-28",
+  "estado": "direcao_visual_e_copy_para_revisao_sem_arte_final",
+  "substitui_direcao": "manifesto.json",
+  "fonte_da_decisao": "Decisao de Victor transmitida pela Central neste chat em 28/10/2026",
+  "decisoes_recebidas": {
+    "destino": "whatsapp",
+    "objetivo": "medir_conversas",
+    "operacao_geografica": "Brasil",
+    "publico_exato_aprovado": false,
+    "moeda_do_teto": "BRL",
+    "teto_total_centavos": 50000,
+    "periodo_definido": false,
+    "verba_diaria_definida": false,
+    "publicar_junto_com_victor": true,
+    "autorizacao_de_publicar_agora": false
+  },
+  "proposta": {
+    "frase_da_arte": "Você cuida do negócio.\nA V2G cuida dos anúncios.",
+    "apoio_na_arte": "Gestão de anúncios com acompanhamento humano.",
+    "chamada_na_arte": "Converse com a V2G",
+    "texto_principal": "Um novo jeito de investir em anúncios.\n\nVocê cuida do negócio. A V2G cuida da operação dos seus anúncios, com acompanhamento de um supergestor humano.\n\nQuer entender como funciona para a sua empresa? Converse com a gente pelo WhatsApp.",
+    "titulo": "Você cuida do negócio. A V2G, dos anúncios.",
+    "descricao": "Conheça a V2G. Converse pelo WhatsApp.",
+    "botao_meta_proposto": "Enviar mensagem",
+    "numero_publico_candidato": null,
+    "numero_confirmado_final": "2928",
+    "destino_confirmado_por_victor": "whatsapp_da_pagina_v2g",
+    "nota_atualizacao": "Contato anterior removido em 28/10; nova arte por design local em arte-local-v3/manifesto.json. Este arquivo preserva o briefing V2 anterior.",
+    "numero_e_conexao_meta_confirmados_para_campanha": false,
+    "promocao": false,
+    "formato_proposto": "feed_quadrado_1080x1080",
+    "arte_final": null,
+    "hash_arte_final": null,
+    "aprovacao_da_versao_exata_no_app": false
+  },
+  "producao": {
+    "entrega_deste_bloco": "briefing_visual_e_copy_em_markdown",
+    "imagem_gerada_neste_bloco": false,
+    "chamada_ao_agente_v2g": false,
+    "chamada_paga": false,
+    "arquivo_png_v1_apenas_referencia_historica": "public/criativos/v2g-clareza-feed-v1.png",
+    "marca_propria_vetorial_disponivel": "public/marca-editorial.svg",
+    "midia_concorrente": false,
+    "passo_seguinte": "Victor revisa direcao e copy; produzir arte final por designer ou por piloto do agente com autorizacao especifica; conferir e aprovar arquivo exato antes de upload/publicacao autorizados"
+  }
+}

@@ -91,6 +91,20 @@
 .entrada-editorial .entrada-campo-senha input { padding-right: 56px; }
 .entrada-editorial .entrada-campo-senha button { display: grid; place-items: center; position: absolute; inset: 4px 4px 4px auto; width: 44px; border: 0; border-radius: 3px; background: transparent; color: var(--cobalt-ink); cursor: pointer; }
 .entrada-editorial .entrada-campo-senha button:hover { background: var(--surface); }
+.entrada-editorial .field .entrada-flutuante { display: block; position: relative; }
+.entrada-editorial .entrada-flutuante input { min-height: 62px; border-radius: 14px; padding: 24px 16px 8px; transition: border-color 180ms ease-out, background-color 180ms ease-out; }
+.entrada-editorial .entrada-flutuante.entrada-campo-senha input { padding-right: 60px; }
+.entrada-editorial .entrada-flutuante label { position: absolute; top: 19px; left: 16px; max-width: calc(100% - 76px); margin: 0; color: var(--ink-soft); font-size: 16px; font-weight: 400; line-height: 24px; text-transform: none; letter-spacing: normal; transform-origin: left top; transition: transform 180ms cubic-bezier(.16, 1, .3, 1), color 180ms ease-out; cursor: text; }
+.entrada-editorial .entrada-flutuante input:focus + label,
+.entrada-editorial .entrada-flutuante input:not(:placeholder-shown) + label,
+.entrada-editorial .entrada-flutuante input:autofill + label { transform: translateY(-13px) scale(.75); }
+.entrada-editorial .entrada-flutuante input:focus + label { color: var(--cobalt-ink); }
+.entrada-editorial .entrada-flutuante input[aria-invalid="true"] + label { color: var(--crit); }
+.entrada-editorial .entrada-flutuante button { border-radius: 10px; }
+.entrada-editorial .entrada-recuperar { display: flex; justify-content: flex-end; margin-top: 4px; }
+.entrada-editorial .entrada-recuperar a { display: inline-flex; align-items: center; min-height: 44px; font-size: 14px; }
+.entrada-editorial .entrada-formulario form > .cta { border-radius: 14px; transition: background-color 160ms ease-out, transform 160ms ease-out; }
+.entrada-editorial .entrada-formulario form > .cta:active:not(:disabled) { transform: scale(.99); }
 .entrada-editorial .entrada-validacao { margin-top: 8px; font-size: 12px; line-height: 1.5; }
 .entrada-editorial .entrada-validacao-erro { color: var(--crit); }
 .entrada-editorial .field input[aria-invalid="true"] { border-color: var(--crit); }

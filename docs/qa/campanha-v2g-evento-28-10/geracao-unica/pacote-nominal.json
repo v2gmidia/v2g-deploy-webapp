@@ -1,0 +1,119 @@
+{
+  "pacote": "v2g-uma-geracao-2026-10-28",
+  "versao_do_pacote": 1,
+  "tipo": "proposta_revisavel_nao_e_payload_executavel",
+  "veredito": "NO_GO",
+  "business_id_nominal": "4406fcdb-9737-48d9-8cef-8aabb4eaf3ad",
+  "nome": "V2G",
+  "profile_id_proprietario_observado": "ca842864-295c-48c5-bf5c-6ac744de81c0",
+  "atividade_declarada": "Marketing de performance",
+  "nicho_tecnico_aprovado": null,
+  "referencia_publica": null,
+  "regra_de_referencia": "nenhuma; arte original com identidade propria; contrato atual ainda nao suporta este recorte",
+  "ambiente_alvo_proposto": {
+    "tipo": "QA de geracao isolado",
+    "supabase_ref": "zskpijnqgkqwxksqmzmf",
+    "bucket_v2g_midia_publico_observado": false,
+    "servico_https_nominal_aprovado": null,
+    "publicacao_e_configuracao_autorizadas": false,
+    "tabelas_public_de_geracao_esperadas_encontradas_na_leitura": []
+  },
+  "identidade_observada": {
+    "fonte": "businesses.onboarding.marca",
+    "confirmada_em": "2026-10-27T23:44:41.951Z",
+    "aparenciaNaoSei": false,
+    "coresConfirmadas": ["#051020", "#E9FE64", "#0D41D9", "#001C67"],
+    "logo_candidato": {
+      "id": "1f1d88e7-6028-4ddf-b738-cb2f535b2c5d",
+      "uso": "logo",
+      "bucket": "v2g-midia",
+      "storage_path": "identidade/4406fcdb-9737-48d9-8cef-8aabb4eaf3ad/logo-007604ec-f034-40b9-881c-49179985c446.png",
+      "sha256_declarado_pela_proveniencia": "be351545b432a2a7b022bf8138adb84ac99f518cb14de61bb87f8e8a4beb9248",
+      "proveniencia": "upload_cliente",
+      "finalidade_upload": "identidade_visual",
+      "registrado_em": "2026-10-27T23:41:48.934Z",
+      "bytes_baixados_neste_bloco": false,
+      "hash_recalculado_dos_bytes_neste_bloco": false,
+      "envio_externo_ia_autorizado": false,
+      "approval_id": null
+    },
+    "imagens_de_entrada_maximo": 1,
+    "fachada_rostos_fotos_ou_material_privado_adicional": false
+  },
+  "instrucao": {
+    "prompt": "prompt.txt",
+    "negativo": "negativo.txt",
+    "integridade_local_arquivo": "integridade.json",
+    "documentos_central_e_especifico_revisados": false,
+    "documento_central_candidato": "docs/criativos-base-central.md",
+    "documento_central_sha256": "c27821c694e50f7f2ff62538b709154e2ca05857c933d1c0ea5d6e5aae1ae2bd",
+    "documento_central_e_modelo_sao_desenho_nao_prompt_aprovado_para_execucao": true,
+    "aprovacao_da_instrucao_compilada": false,
+    "instrucao_compilada_sha256": null,
+    "prova_contexto_backend": null
+  },
+  "provedor_proposto": {
+    "empresa": "OpenAI",
+    "modelo_do_adaptador_atual": "gpt-image-2",
+    "destino_dados": "https://api.openai.com/v1/images/edits",
+    "qualidade_atual": "high",
+    "tamanho_atual_feed": "1088x1088",
+    "formato": "PNG",
+    "autorizacao_provedor_e_material": false,
+    "acesso_cota_disponibilidade_real_conferidos": false
+  },
+  "limites_propostos_nao_aprovados": {
+    "quantidade_imagens": 1,
+    "tentativas_provedor": 1,
+    "refacoes": 0,
+    "retry_apos_inicio_provedor": 0,
+    "moeda": "USD",
+    "limite_usd": "0.50",
+    "reserva_usd_proposta": "0.50",
+    "estimativa_total_usd": null,
+    "billed_usd": null,
+    "limite_aprovado_por_victor": false,
+    "autorizacao_custo_id": null,
+    "estimar_texto_logo_e_saida_antes_da_chamada": true,
+    "se_nao_houver_limite_superior_confiavel": "nao_executar",
+    "usa_teto_de_midia_R500_como_autorizacao_de_geracao": false
+  },
+  "estado_real": {
+    "request_id": null,
+    "job_id": null,
+    "attempt_id": null,
+    "provider_request_id": null,
+    "provider_started_at": null,
+    "artifact_sha256": null,
+    "creative_id": null,
+    "fila": "nao_criada",
+    "artefato": "nao_gerado",
+    "autorizacao_executar": false
+  },
+  "saida_esperada_somente_apos_execucao_autorizada": {
+    "bucket": "v2g-midia",
+    "publico": false,
+    "padrao_objeto": "geracao/{business_id}/{job_id}/{attempt_id}.png",
+    "rota_webapp": "/criativos/imagem-gerada/{request_id}?negocio={business_id}",
+    "exigir_simulated_false_e_prova_backend": true,
+    "novo_login_mesmos_pedido_job_hash_e_creative": true,
+    "outro_usuario_ou_negocio_sem_bytes": true
+  },
+  "bloqueios": [
+    "tabelas_public_de_pedido_fila_dispatch_aprovacoes_e_catalogo_ausentes_no_QA_consultado",
+    "contexto_v2_restrito_a_barbearia_e_referencia_publica_obrigatoria",
+    "contexto_v1_exige_arquivo_de_referencia_e_nao_e_fallback_sem_referencia",
+    "submissao_real_v2_bloqueada_no_WebApp_independente_de_flags",
+    "materiais_e_cores_salvos_nao_sao_autorizacao_IA",
+    "documentos_e_aprovacoes_persistentes_deste_recorte_ausentes",
+    "servico_isolado_e_prova_HTTPS_de_geracao_nao_conferidos_neste_bloco",
+    "orcamento_exato_ainda_nao_aprovado_nem_estimado_para_entrada_e_saida"
+  ],
+  "contingencia": {
+    "arquivo": "public/criativos/v2g-clareza-feed-v1.png",
+    "sha256": "c89622c2035efdc2251fd42a277e1242bee2c9c0a1c3a61495d98eab6186615a",
+    "estado": "peca_existente_para_revisao; nao_gerada_pelo_agente_neste_bloco",
+    "aprovada_para_publicar": false,
+    "atende_texto_da_direcao_v2": false
+  }
+}

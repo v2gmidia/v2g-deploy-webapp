@@ -1,0 +1,37 @@
+{
+  "versao": 5,
+  "data": "2026-10-28",
+  "origem": "design_local_deterministico",
+  "decisao": "Victor pediu diretamente somente headline e CTA, retirando o apoio humano da peca; substitui a direcao V4 neste aspecto.",
+  "headline": "Gestão de tráfego sem gestor de tráfego.",
+  "cta": "Saiba como funciona",
+  "apoio": null,
+  "png": {
+    "arquivo": "v2g-gestao-sem-gestor-v5.png",
+    "largura": 1080,
+    "altura": 1080,
+    "bytes": 288537,
+    "sha256": "9bbdac4682bfbf634cde6a83b0ca69e561c5f4eb21d5c6e54adac86e52603adf"
+  },
+  "fonte": "arte.html",
+  "copy": "copy.txt",
+  "preview": "previa.html",
+  "verificacao": {
+    "desktop_inspecionado": true,
+    "font_loaded": true,
+    "overflow": false,
+    "mobile": "leitura-mobile-358.png: reducao local do PNG final, nao screenshot de navegador"
+  },
+  "exportacao": "Captura JPEG convertida localmente para PNG sem redimensionar; original preservado.",
+  "v4_preservada": true,
+  "gerado_pelo_agente_v2g": false,
+  "chamadas_pagas": 0,
+  "publicado": false,
+  "destino_campanha_preservado": "conversas WhatsApp da Pagina V2G, final 2928; CTA na arte nao altera destino/objetivo",
+  "hashes": {
+    "arte.html": "b2a0b43b7ee776281d5341e877d0bcd285867e9af4685e918618253d27b5521b",
+    "copy.txt": "4157a9ab6b751ba97a21d29e87d0c5bb2c2abed77d194b915544e081e9bee149",
+    "archivo-latin.woff2": "7150c0ec5ad356453013d11affec1fbab95de0dd2dcecb043b4f1cb7f87c4ba4",
+    "leitura-mobile-358.png": "2ac31b9f74263a16d45f1b48832be3357018f23d91d1599e0457b1f49990de48"
+  }
+}

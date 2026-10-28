@@ -1,0 +1,6 @@
+{
+  "algoritmo": "sha256",
+  "tipo": "integridade_dos_arquivos_locais_nao_e_aprovacao",
+  "prompt.txt": "e301b8e26d039e3a9c0d8ab5a8a9d680aebf8550f40debd1bb3a7a8d25ffe7cd",
+  "negativo.txt": "15fd5d5f629bb50541d51865a962c4148aa033d3dd7de8e80de0ee7d0a8ad451"
+}

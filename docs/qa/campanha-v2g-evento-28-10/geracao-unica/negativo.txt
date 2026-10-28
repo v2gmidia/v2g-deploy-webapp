@@ -1,0 +1,13 @@
+RESTRIÇÕES A ANEXAR À INSTRUÇÃO APROVADA
+Sem dizer ou sugerir: “sem gestor de tráfego”, “sem humanos”, “IA faz tudo”, “100% automático”, “renda garantida”, “mais vendas garantidas” ou ausência de participação do cliente.
+Sem promessas de faturamento, lucro, leads, taxa de conversão, retorno ou prazo de resultado.
+Sem preço, desconto, promoção, teto de mídia exibido como mensalidade, testemunho ou número de clientes.
+Sem rostos, fachada, ambiente, produto físico ou capturas de tela inventadas.
+Sem material de concorrentes, fotos externas, busca de referência pública ou reprodução de anúncio alheio.
+Sem deformar, reconstruir ou redesenhar o logo próprio.
+Sem trocar ou omitir as palavras “acompanhamento humano”.
+Sem caracteres trocados, acentos errados, texto ilegível, cortes, marca d'água ou frases adicionais.
+Sem gradientes, circuitos, robôs, gráficos, números de desempenho ou painel fictício.
+Sem mais de uma imagem, formatos adicionais, variantes ou refações automáticas.
+
+Este arquivo é conteúdo da instrução, não um parâmetro nativo “negative_prompt” da API. O backend deve incorporar e versionar essas restrições na mesma instrução aprovada, sem criar outro gerador ou ignorar os documentos/contexto confiáveis.

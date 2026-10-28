@@ -83,7 +83,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const tema = escolhido === "sistema" ? null : escolhido;
 
   return (
-    <html lang="pt-BR" className={archivo.variable} data-tema={tema ?? undefined}>
+    <html lang="pt-BR" className={archivo.variable} data-tema={tema ?? undefined} data-scroll-behavior="smooth">
       <body><NavegacaoCarregando />{children}</body>
     </html>
   );

@@ -1,0 +1,67 @@
+{
+  "versao": 3,
+  "data": "2026-10-28",
+  "estado": "candidata_pendente_revisao_victor",
+  "producao": "design_local_deterministico",
+  "gerado_pelo_agente_v2g": false,
+  "chamadas_pagas": 0,
+  "publicado": false,
+  "png": {
+    "arquivo": "v2g-negocio-anuncios-v3.png",
+    "mime_type": "image/png",
+    "largura": 1080,
+    "altura": 1080,
+    "size_bytes": 372404,
+    "sha256": "219fc8cb11324a5850b89fdbe37ebfa9c1b1fce80ed90d0e0ba08768dfff0cd9"
+  },
+  "proveniencia": {
+    "fonte_editavel": "arte.html",
+    "fonte_editavel_sha256": "3577a6941a1f3c181dd693fb5c3c8122c0cfc5aa4df39c1200da5aadd4cdabda",
+    "simbolo_vetorial_proprio": "public/marca-editorial.svg",
+    "simbolo_sha256": "3426a913324ee21a6c7ea99ec2be98d387c429dd17b63863c669414d8ae7d8e0",
+    "aplicacao_simbolo": "geometria inline, cor lima da marca",
+    "wordmark": "V2G midia composto com a tipografia Archivo ja usada no aplicativo",
+    "fonte": "archivo-latin.woff2",
+    "fonte_origem_local": ".next/static/media/75affa71d1e2f6a7-s.p.17-aodiw50953.woff2",
+    "fonte_sha256": "7150c0ec5ad356453013d11affec1fbab95de0dd2dcecb043b4f1cb7f87c4ba4",
+    "midia_concorrente": false,
+    "material_privado_cliente": false,
+    "downloads_externos": false
+  },
+  "conteudo": {
+    "frase": "Você cuida do negócio. A V2G cuida dos anúncios.",
+    "apoio": "Gestão de anúncios com acompanhamento humano.",
+    "cta": "Converse com a V2G",
+    "texto_anuncio": "copy.txt",
+    "texto_anuncio_sha256": "8ca3e48eda0902bee866511c5fad043ebd640276b6bd75382b598ccfd2e7881c"
+  },
+  "campanha_decidida_por_victor": {
+    "objetivo": "Leads",
+    "conversao": "conversas_whatsapp",
+    "destino": "whatsapp_da_pagina_v2g",
+    "numero_confirmado_final": "2928",
+    "url_completa_nao_inferida": null,
+    "regiao": "Brasil",
+    "publico_exato": "pendente_revisao",
+    "moeda": "BRL",
+    "orcamento_total_centavos": 50000,
+    "periodo": null,
+    "publicar_junto_com_victor": true,
+    "autorizacao_de_publicar_agora": false
+  },
+  "verificacao_local": {
+    "renderizacao": "Navegador 1080x1080; captura original JPEG preservada; conversao local de formato para PNG sem redimensionamento",
+    "fonte_carregada": true,
+    "mobile_viewport": [
+      390,
+      844
+    ],
+    "imagem_exibida_css_px": 358,
+    "mobile_sem_overflow_horizontal": true,
+    "mobile_inspecionado_visualmente": true,
+    "prova_mobile": "previa-mobile.png",
+    "prova_mobile_sha256": "3dcaf9eb5e7004e395e52013e287623e0c661d2534b2c0cfd8785558cd60de94",
+    "previa_real_meta": false,
+    "aprovacao_arquivo_exato_no_app": false
+  }
+}

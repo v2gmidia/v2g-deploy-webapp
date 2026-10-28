@@ -1,0 +1,72 @@
+{
+  "versao": 1,
+  "estado": "candidata_pendente_revisao_victor",
+  "direcao_substituida_por": "direcao-v2.json",
+  "arquivo_v1_preservado_para_historico_e_regressao": true,
+  "data": "2026-10-28",
+  "arquivo": "public/criativos/v2g-clareza-feed-v1.png",
+  "sha256": "c89622c2035efdc2251fd42a277e1242bee2c9c0a1c3a61495d98eab6186615a",
+  "mime_type": "image/png",
+  "largura": 1254,
+  "altura": 1254,
+  "size_bytes": 1388613,
+  "proveniencia": {
+    "origem_declarada": "arquivo proprio V2G indicado por Victor via Central",
+    "registro_git": "e5a8655",
+    "fonte_editavel_ou_licenca_independente_localizada": false,
+    "midia_concorrente_utilizada_neste_bloco": false,
+    "aprovacao_para_anuncio": false
+  },
+  "proposta_para_revisao": {
+    "objetivo_do_envio": "whatsapp_messages",
+    "promocao": false,
+    "validade": null,
+    "texto_principal": "Seu negócio investe em anúncios. Você precisa de clareza para decidir.\n\nConheça a proposta da V2G para cuidar da operação dos seus anúncios, com acompanhamento e conversa direta.\n\nFale com a gente pelo WhatsApp.",
+    "titulo": "Mais clareza para seus anúncios",
+    "descricao": "Conheça a V2G pelo WhatsApp.",
+    "botao": "Enviar mensagem",
+    "destino_proposto": null,
+    "destino_confirmado_por_victor": "whatsapp_da_pagina_v2g",
+    "numero_confirmado_final": "2928",
+    "nota_destino": "Contato anterior removido em 28/10; nao inferir URL completa pelos ultimos quatro digitos. Metadados V1 preservados como historico; consultar arte-local-v3/manifesto.json para a nova candidata.",
+    "destino_confirmado_no_gerenciador_meta": false,
+    "verba_autorizada": null,
+    "publico_e_regiao_aprovados": false,
+    "publicacao_autorizada": false
+  },
+  "qa_observado_somente_leitura": {
+    "projeto": "zskpijnqgkqwxksqmzmf",
+    "business_id_candidato_nao_autorizacao": "4406fcdb-9737-48d9-8cef-8aabb4eaf3ad",
+    "nome": "V2G",
+    "dados_ficticios": false,
+    "tem_proprietario": true,
+    "gestores_atribuidos": 0,
+    "execucoes": 0,
+    "pedidos_revisao": 0,
+    "registro_mesmos_bytes_em_outro_negocio": {
+      "business_id_ficticio": "0542c574-7c15-41ff-a269-22ce56ca25f2",
+      "review_request_id": "b58d11e5-8d7d-4ef6-9f7f-8c8d5c1df095",
+      "status": "changes_requested",
+      "objeto_privado_registrado": true,
+      "reutilizar_como_aprovacao_v2g": false
+    }
+  },
+  "vinculos_a_confirmar": {
+    "business_id_confirmado": null,
+    "operator_profile_id": null,
+    "review_request_id_v2g": null,
+    "creative_id_webapp": null,
+    "id_execucao": null,
+    "id_conta_anuncio": null,
+    "id_pagina": null,
+    "id_instagram": null,
+    "id_campanha": null,
+    "id_conjunto": null,
+    "id_anuncio": null,
+    "id_criativo_meta": null,
+    "moeda": null,
+    "timezone_name": null,
+    "desde": null,
+    "ate": null
+  }
+}

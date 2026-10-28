@@ -26,6 +26,9 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
   const [fase, setFase] = useState<Fase>("pronto");
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const campo = useRef<HTMLInputElement>(null);
+  const entradasDoArrasto = useRef(0);
+  const [arrastando, setArrastando] = useState(false);
+  const [erroArquivo, setErroArquivo] = useState<string | null>(null);
   const resumo = useRef<HTMLHeadingElement>(null);
   const [objetivo, setObjetivo] = useState<ObjetivoDoEnvio | "">("");
   const [promocao, setPromocao] = useState(false);
@@ -46,6 +49,25 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
     return () => URL.revokeObjectURL(url);
   }, [arquivo]);
   useEffect(() => { if (conferindo) resumo.current?.focus(); }, [conferindo]);
+
+  function escolherArquivo(arquivos: File[]) {
+    if (fase !== "pronto" || incerto) return;
+    if (!arquivos.length) return;
+    const escolhido = arquivos[0]!;
+    if (arquivos.length !== 1 || escolhido.size < 1 || escolhido.size > TAMANHO_MAXIMO_REVISAO ||
+      !["image/jpeg", "image/png"].includes(escolhido.type)) {
+      setArquivo(null);
+      if (campo.current) campo.current.value = "";
+      setErroArquivo(arquivos.length > 1
+        ? "Escolha uma imagem por vez. Cada criativo tem seu próprio pedido de revisão."
+        : "Escolha uma imagem JPG ou PNG de até 9 MB.");
+      return;
+    }
+    setArquivo(escolhido);
+    setErroArquivo(null);
+    setId(crypto.randomUUID());
+    setAviso(null);
+  }
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
@@ -142,14 +164,36 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
     <div hidden={conferindo} className={estilos.preparo}>
     <div className={estilos.colunaImagem}>
       <h3>Sua imagem</h3>
-      <label className={estilos.zonaArquivo}>
+      <label className={estilos.zonaArquivo} data-arrastando={arrastando || undefined}
+        onDragEnter={(evento) => {
+          if (!evento.dataTransfer.types.includes("Files") || fase !== "pronto" || incerto) return;
+          evento.preventDefault();
+          entradasDoArrasto.current += 1;
+          setArrastando(true);
+        }}
+        onDragOver={(evento) => {
+          evento.preventDefault();
+          evento.dataTransfer.dropEffect = fase === "pronto" && !incerto ? "copy" : "none";
+        }}
+        onDragLeave={() => {
+          entradasDoArrasto.current = Math.max(0, entradasDoArrasto.current - 1);
+          if (!entradasDoArrasto.current) setArrastando(false);
+        }}
+        onDrop={(evento) => {
+          evento.preventDefault();
+          entradasDoArrasto.current = 0;
+          setArrastando(false);
+          if (fase !== "pronto" || incerto) return;
+          const arquivos = Array.from(evento.dataTransfer.files);
+          if (!arquivos.length) return;
+          if (campo.current) campo.current.files = evento.dataTransfer.files;
+          escolherArquivo(arquivos);
+        }}>
       <input className={estilos.entradaArquivo} ref={campo} type="file" accept="image/jpeg,image/png"
         aria-label={arquivo ? "Trocar imagem" : "Selecionar imagem"} aria-describedby={ajudaDoArquivo}
-        required disabled={fase !== "pronto"}
+        required disabled={fase !== "pronto" || incerto}
         onChange={(evento) => {
-          setArquivo(evento.target.files?.[0] ?? null);
-          setId(crypto.randomUUID());
-          setAviso(null);
+          escolherArquivo(Array.from(evento.target.files ?? []));
         }} />
       {arquivo && imagemUrl ? <>
         <div className={estilos.imagemEscolhida}><img src={imagemUrl} alt="Prévia do criativo escolhido" /></div>
@@ -159,12 +203,14 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
         </div>
       </> : <div className={estilos.escolhaVazia}>
         <span className={estilos.iconeImagem}><IconeImagem /></span>
-        <strong>Seu próximo criativo começa aqui</strong>
-        <span>Escolha a imagem pronta do seu negócio.</span>
+        <strong>{arrastando ? "Solte a imagem aqui" : "Vamos escolher seu criativo?"}</strong>
+        <span>Selecione uma imagem pronta do seu negócio<span className={estilos.conviteArrastar}> ou arraste o arquivo para cá</span>.</span>
         <span className={estilos.selecionar}><IconeUpload />Selecionar imagem</span>
       </div>}
       </label>
+      <span className="sr-only" role="status">{arrastando ? "Solte uma imagem JPG ou PNG para selecionar." : arquivo ? `Imagem selecionada: ${arquivo.name}. Ainda não enviada.` : ""}</span>
       <p id={ajudaDoArquivo} className={estilos.formato}>JPG ou PNG · até 9 MB</p>
+      {erroArquivo && <p className="form-error" role="alert">{erroArquivo}</p>}
     </div>
     <div className={estilos.configuracao}>
     <fieldset className={estilos.objetivos} disabled={fase !== "pronto"}>
@@ -214,6 +260,7 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
         <button className="cta" type="submit" disabled={!confirmado || fase !== "pronto"}>{fase === "enviando" ? "Enviando criativo..." : fase === "analisando" ? "Analisando imagem..." : incerto ? "Conferir o mesmo envio" : "Enviar para revisão"}</button>
       </div>
     </>}
+    {fase !== "pronto" && <p className={estilos.andamento} role="status"><span aria-hidden="true" />{fase === "enviando" ? "Enviando seu criativo. Aguarde a confirmação." : "Imagem recebida. Conferindo a análise…"}</p>}
     <p className={estilos.limite}>O gestor revisa antes da publicação. Enviar não coloca o anúncio no ar.</p>
     {incerto && <p className="form-warning">Não altere o pedido ainda. <a href="/criativos">Confira a galeria</a> ou tente confirmar o mesmo envio.</p>}
     {aviso && <div className={aviso.tom === "notice" ? "form-notice" : aviso.tom === "warning" ? "form-warning" : "form-error"} role="status">

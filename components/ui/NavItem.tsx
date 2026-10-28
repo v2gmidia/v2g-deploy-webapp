@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import Link from "next/link";
 
 interface NavItemProps {
   href: string;
@@ -28,13 +29,14 @@ export function NavItem({ href, icone, children, ativo: ativoInformado }: NavIte
   const ativo = ativoInformado ?? (pathname === destino || pathname.startsWith(`${destino}/`));
 
   return (
-    <a
+    <Link
       className={`nav-item${ativo ? " active" : ""}`}
       href={destino}
+      prefetch={false}
       aria-current={ativo ? "page" : undefined}
     >
       {icone}
       <span>{children}</span>
-    </a>
+    </Link>
   );
 }

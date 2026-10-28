@@ -1,0 +1,16 @@
+.pagina { min-height: 100svh; padding: 28px clamp(16px, 4vw, 64px); background: var(--canvas); color: var(--ink); font-family: var(--body); }
+.cabecalho { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 20px; }
+.cabecalho h1 { margin: 0; font-size: clamp(24px, 3vw, 34px); font-weight: 550; letter-spacing: -.03em; }
+.cabecalho p { margin: 10px 0 0; color: var(--ink-soft); font-size: 14px; }
+.cabecalho a { display: inline-flex; align-items: center; min-height: 44px; color: var(--cobalt-ink); font-size: 14px; text-underline-offset: 4px; }
+.controles { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 16px; margin: 24px 0 12px; }
+.controles > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.controles button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--control-line); border-radius: 12px; background: var(--surface-2); color: var(--ink); font: inherit; cursor: pointer; }
+.controles button[aria-pressed="true"] { background: var(--cobalt); border-color: var(--cobalt); color: var(--white); }
+.pagina :focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 4px; }
+.instrucao { max-width: 80ch; min-height: 44px; margin: 0 0 20px; color: var(--ink-soft); font-size: 14px; line-height: 1.6; }
+.palco { display: flex; justify-content: center; min-width: 0; }
+.palco iframe { display: block; height: 780px; border: 1px solid var(--control-line); background: var(--surface); }
+.celular { width: 390px; max-width: 100%; border-radius: 24px; box-shadow: 0 12px 32px rgb(0 0 0 / .18); }
+.computador { width: 100%; border-radius: 12px; }
+@media (max-width: 620px) { .pagina { padding: 20px 10px; } .palco iframe { height: 75svh; } .controles button { padding-inline: 12px; font-size: 14px; } }

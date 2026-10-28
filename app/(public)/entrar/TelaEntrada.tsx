@@ -16,11 +16,12 @@ type AcaoAuth = (estado: AuthActionState, dados: FormData) => Promise<AuthAction
 
 /** Mesma interface na rota real e na bancada; a bancada injeta ações sem rede. */
 export function TelaEntrada({
-  mode, next = "", adicionar = false, signUpAction, signInAction,
+  mode, next = "", adicionar = false, caminhoDaEntrada = "/entrar", signUpAction, signInAction,
 }: {
   mode: "cadastro" | "login";
   next?: string;
   adicionar?: boolean;
+  caminhoDaEntrada?: string;
   signUpAction: AcaoAuth;
   signInAction: AcaoAuth;
 }) {
@@ -39,7 +40,7 @@ export function TelaEntrada({
     const busca = new URLSearchParams({ modo });
     if (next) busca.set("next", next);
     if (adicionar) busca.set("adicionar", "1");
-    return `/entrar?${busca.toString()}`;
+    return `${caminhoDaEntrada}?${busca.toString()}`;
   };
 
   const [signUpState, signUpFormAction, signUpPending] = useActionState(
@@ -138,17 +139,19 @@ export function TelaEntrada({
                 </p>
               </div>
               <div className="field">
-                <label htmlFor="email-cadastro">Seu melhor e-mail</label>
+                <span className="entrada-flutuante">
                 <input
                   id="email-cadastro"
                   name="email"
                   type="email"
-                  placeholder="voce@seunegocio.com.br"
+                  placeholder=" "
                   autoComplete="email"
                   value={emailCadastro}
                   onChange={evento => setEmailCadastro(evento.target.value)}
                   required
                 />
+                <label htmlFor="email-cadastro">Seu melhor e-mail</label>
+                </span>
               </div>
               <div className="field">
                 <label htmlFor="cnpj-cadastro">CPF ou CNPJ do contratante</label>
@@ -162,13 +165,12 @@ export function TelaEntrada({
                 <p className="note">Um login pode acessar mais de um negócio. O documento não junta os cadastros.</p>
               </div>
               <div className="field">
-                <label htmlFor="senha-cadastro">Crie uma senha</label>
-                <span className="entrada-campo-senha"><input
+                <span className="entrada-campo-senha entrada-flutuante"><input
                   id="senha-cadastro" name="senha" type={mostrarSenha ? "text" : "password"}
-                  placeholder="Crie sua senha" autoComplete="new-password"
+                  placeholder=" " autoComplete="new-password"
                   value={senhaNova} onChange={evento => setSenhaNova(evento.target.value)}
                   aria-describedby="forca-senha criterios-senha" required
-                /><button type="button" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                /><label htmlFor="senha-cadastro">Crie uma senha</label><button type="button" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
                   aria-pressed={mostrarSenha} onClick={() => setMostrarSenha(valor => !valor)}>
                   <IconeVisibilidade visivel={mostrarSenha} /></button></span>
                 {forca !== "vazia" && <div className={`entrada-forca entrada-forca-${forca}`} id="forca-senha" role="status">
@@ -179,15 +181,14 @@ export function TelaEntrada({
                 <CriteriosSenha senha={senhaNova} id="criterios-senha" />
               </div>
               <div className="field">
-                <label htmlFor="senha-confirmar-cadastro">Repita a senha</label>
-                <span className="entrada-campo-senha"><input
+                <span className="entrada-campo-senha entrada-flutuante"><input
                   id="senha-confirmar-cadastro" name="confirmarSenha"
                   type={mostrarRepeticao ? "text" : "password"}
-                  placeholder="Digite a mesma senha" autoComplete="new-password"
+                  placeholder=" " autoComplete="new-password"
                   value={senhaRepetida} onChange={evento => setSenhaRepetida(evento.target.value)}
                   aria-invalid={repeticaoDiferente}
                   aria-describedby={repeticaoDiferente ? "confirmacao-senha" : undefined} required
-                /><button type="button" aria-label={mostrarRepeticao ? "Ocultar confirmação" : "Mostrar confirmação"}
+                /><label htmlFor="senha-confirmar-cadastro">Repita a senha</label><button type="button" aria-label={mostrarRepeticao ? "Ocultar confirmação" : "Mostrar confirmação"}
                   aria-pressed={mostrarRepeticao} onClick={() => setMostrarRepeticao(valor => !valor)}>
                   <IconeVisibilidade visivel={mostrarRepeticao} /></button></span>
                 {repeticaoDiferente && <p className="entrada-validacao entrada-validacao-erro" id="confirmacao-senha" role="status">As senhas estão diferentes.</p>}
@@ -209,29 +210,35 @@ export function TelaEntrada({
             <form action={signInFormAction}>
               <input type="hidden" name="next" value={next} />
               <div className="field">
-                <label htmlFor="email-login">E-mail</label>
+                <span className="entrada-flutuante">
                 <input
                   id="email-login"
                   name="email"
                   type="email"
-                  placeholder="voce@seunegocio.com.br"
+                  placeholder=" "
                   autoComplete="email"
                   required
                 />
+                <label htmlFor="email-login">E-mail</label>
+                </span>
               </div>
               <div className="field">
-                <div className="entrada-senha-label">
-                  <label htmlFor="senha-login">Senha</label>
-                  <a href="/recuperar">Esqueci minha senha</a>
-                </div>
+                <span className="entrada-campo-senha entrada-flutuante">
                 <input
                   id="senha-login"
                   name="senha"
-                  type="password"
-                  placeholder="Sua senha"
+                  type={mostrarSenha ? "text" : "password"}
+                  placeholder=" "
                   autoComplete="current-password"
                   required
                 />
+                <label htmlFor="senha-login">Senha</label>
+                <button type="button" aria-label={mostrarSenha ? "Ocultar senha" : "Mostrar senha"}
+                  aria-pressed={mostrarSenha} onClick={() => setMostrarSenha(valor => !valor)}>
+                  <IconeVisibilidade visivel={mostrarSenha} />
+                </button>
+                </span>
+                <div className="entrada-recuperar"><a href="/recuperar">Esqueci minha senha</a></div>
               </div>
               <Button type="submit" disabled={signInPending}>
                 {signInPending ? "Entrando…" : "Entrar"}

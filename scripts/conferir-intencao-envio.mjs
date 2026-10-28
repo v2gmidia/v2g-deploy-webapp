@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { after, beforeEach, test } from "node:test";
 import { registerHooks } from "node:module";
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { hojeEmSaoPaulo, validarIntencaoDoEnvio, lerIntencaoDoEnvio,
   mesmaIntencaoDoEnvio, resumoDaIntencao, impedimentoParaAprovarEnvio } from "../lib/criativos/intencao-envio.ts";
 
@@ -165,6 +167,33 @@ function formulario(extra = {}) {
   f.set("arquivo", new File([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])], "fixture.png", { type: "image/png" }));
   return f;
 }
+
+test("peça candidata V2G atravessa envio e revisão fictícios com bytes exatos, sem publicar nem mudar de negócio", async () => {
+  const manifesto = JSON.parse(readFileSync(new URL('../docs/qa/campanha-v2g-evento-28-10/manifesto.json', import.meta.url), 'utf8'));
+  const bytes = readFileSync(new URL('../public/criativos/v2g-clareza-feed-v1.png', import.meta.url));
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), manifesto.sha256);
+  assert.equal(bytes.length, manifesto.size_bytes);
+  assert.equal(bytes.readUInt32BE(16), manifesto.largura);
+  assert.equal(bytes.readUInt32BE(20), manifesto.altura);
+  const dados = formulario();
+  dados.set('arquivo', new File([bytes], 'v2g-clareza-feed-v1.png', { type: 'image/png' }));
+  const recebido = await solicitarRevisaoAction(dados);
+  assert.equal(recebido.ok, true); assert.equal(recebido.analisarAgora, false);
+  assert.equal(estado.linhas[0].status, 'awaiting_review');
+  assert.equal(estado.linhas[0].sha256, manifesto.sha256);
+  assert.deepEqual(estado.bytes.get(`${negocio}/${id}`), new Uint8Array(bytes));
+  const outroNegocio = '42345678-1234-4234-8234-123456789012';
+  estado.negocio = outroNegocio; dados.set('businessId', outroNegocio);
+  assert.equal((await solicitarRevisaoAction(dados)).ok, false);
+  assert.equal(estado.linhas[0].business_id, negocio);
+  estado.negocio = negocio;
+  const decisao = new FormData(); decisao.set('id', id); decisao.set('decisao', 'approved_for_manual_publish');
+  decisao.set('nota', 'Aprovação exclusivamente fictícia do ensaio local; sem autorização externa.');
+  assert.ok((await revisarPecaAction({}, decisao)).ok);
+  assert.equal(estado.linhas[0].status, 'approved_for_manual_publish');
+  assert.equal(estado.linhas.length, 1); assert.equal(estado.uploads, 1);
+  assert.equal(manifesto.proposta_para_revisao.publicacao_autorizada, false);
+});
 test("action grava arquivo privado e intenção; replay mantém uma peça e confirmação original", async () => {
   assert.deepEqual(await solicitarRevisaoAction(formulario()), { ok: true, id, repetido: false, analisarAgora: false });
   const salvo = structuredClone(estado.linhas[0]);

@@ -1,0 +1,93 @@
+{
+  "versao": 4,
+  "data": "2026-10-28",
+  "estado": "candidata_pendente_revisao_victor",
+  "origem": "design_local_deterministico",
+  "gerado_pelo_agente_v2g": false,
+  "chamadas_pagas": 0,
+  "publicado": false,
+  "v3_preservada": true,
+  "png": {
+    "arquivo": "v2g-gestao-sem-gestor-v4.png",
+    "mime_type": "image/png",
+    "largura": 1080,
+    "altura": 1080,
+    "bytes": 353908,
+    "sha256": "4e5f7ed447eacb223d0bb64a597281ca0a30e29a4db67665032620fc8aac8507"
+  },
+  "conteudo": {
+    "headline_exata": "Gestão de tráfego sem gestor de tráfego.",
+    "apoio": "Gestão de anúncios com acompanhamento humano.",
+    "cta": "Converse com a V2G",
+    "texto_anuncio": "copy.txt"
+  },
+  "proveniencia": {
+    "fonte": "arte.html",
+    "simbolo": "public/marca-editorial.svg",
+    "simbolo_sha256": "3426a913324ee21a6c7ea99ec2be98d387c429dd17b63863c669414d8ae7d8e0",
+    "fonte_tipografica": "Archivo local, mesma WOFF2 da V3",
+    "cores": [
+      "#051020",
+      "#FFFFFF",
+      "#B0E9FD",
+      "#E9FE64"
+    ],
+    "midia_terceiros": false,
+    "imagem_privada_cliente": false,
+    "downloads": false,
+    "referencia_frase": "../lp/index.html:44",
+    "referencia_hierarquia": "instrucao de Victor transmitida pela Central; print original nao inspecionado neste chat"
+  },
+  "verificacao": {
+    "fonte_carregada_no_browser": true,
+    "headline_dom_exata": true,
+    "desktop": {
+      "viewport": [
+        1080,
+        1080
+      ],
+      "conteudo_sem_overflow": true,
+      "inspecionado": true
+    },
+    "mobile_dom": {
+      "viewport": [
+        390,
+        844
+      ],
+      "imagem_css_px": 358,
+      "sem_overflow_horizontal": true
+    },
+    "mobile_visual": {
+      "arquivo": "leitura-mobile-358.png",
+      "metodo": "reducao local do PNG final a 358px; nao e screenshot de navegador",
+      "inspecionado": true
+    },
+    "limite": "Captura movel do navegador divergiu do DOM e nao foi usada como prova de leitura. Nao houve previa na Meta.",
+    "contraste_sobre_marinho": {
+      "ffffff": 19.07,
+      "b0e9fd": 14.45,
+      "e9fe64": 17.09
+    },
+    "exportacao": "Captura JPEG original preservada; conversao local para PNG sem redimensionamento da arte final; nao recupera compressao JPEG."
+  },
+  "campanha": {
+    "objetivo": "Leads",
+    "conversao": "conversas_whatsapp",
+    "destino": "whatsapp_da_pagina_v2g",
+    "numero_final": "2928",
+    "url_completa": null,
+    "regiao": "Brasil",
+    "teto_total_centavos_BRL": 50000,
+    "publico_exato": "pendente",
+    "periodo": null,
+    "publicar_com_victor": true,
+    "autorizacao_publicar_agora": false
+  },
+  "hashes_sha256": {
+    "arte.html": "738ce9851f292edaf9f5066053f756719a3f688cbeff948219e961ceda5289af",
+    "archivo-latin.woff2": "7150c0ec5ad356453013d11affec1fbab95de0dd2dcecb043b4f1cb7f87c4ba4",
+    "copy.txt": "101cc081070befaf1a3258ea62ce1864877168de618c03405376964fc67f31c5",
+    "v2g-gestao-sem-gestor-v4.png": "4e5f7ed447eacb223d0bb64a597281ca0a30e29a4db67665032620fc8aac8507",
+    "leitura-mobile-358.png": "9d2b19ee5dbc903fc5dcaeccf80f3eb6cb5d54c4a48c1f4f0aa11b3cd2bff221"
+  }
+}

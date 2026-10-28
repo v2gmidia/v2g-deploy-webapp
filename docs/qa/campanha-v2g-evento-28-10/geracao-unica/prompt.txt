@@ -1,0 +1,32 @@
+Crie UMA proposta original de anúncio estático da própria V2G mídia para o Feed, quadrada, 1088 × 1088 pixels, em português do Brasil, legível no celular.
+
+CONTEXTO DO NEGÓCIO
+A V2G cuida da operação dos anúncios dos clientes com acompanhamento de um supergestor humano. O cliente continua participando do cadastro, das aprovações e das decisões de verba. A proposta é o dono não precisar operar os anúncios sozinho, não a ausência de pessoas na gestão. O objetivo desta peça é iniciar conversas no WhatsApp; não prometer vendas, receita ou retorno.
+
+IDENTIDADE PRÓPRIA
+Use exclusivamente o logo próprio anexado para este pedido, depois de sua autorização de uso. Preserve proporções, símbolo e letras do logo, sem redesenhar, estilizar ou substituir a marca. Não busque imagens na internet. Nenhuma referência pública ou imagem concorrente faz parte deste pedido. Não há fotos de pessoas, fachada ou ambiente.
+Paleta confirmada no cadastro deste negócio: #051020, #E9FE64, #0D41D9, #001C67. Use #051020 como fundo e #E9FE64 como destaque. Branco é permitido como neutro de contraste. Não introduza outra cor de marca.
+
+COMPOSIÇÃO
+Design tipográfico limpo, com amplo espaço livre e margens internas de aproximadamente 80 pixels. Logo no alto à esquerda, sem competir com o texto. Tipografia no estilo da família Archivo, clara e forte. Nenhum gráfico, painel, circuito, robô, foto ou ilustração decorativa. Nada cortado nas bordas.
+
+TEXTOS EXATOS DA ARTE
+Texto principal em quatro linhas, grande:
+Você cuida
+do negócio.
+A V2G cuida
+dos anúncios.
+
+As duas primeiras linhas em branco; as duas seguintes em #E9FE64.
+
+Abaixo, em tamanho menor mas ainda legível:
+Gestão de anúncios com acompanhamento humano.
+
+Na parte inferior, com separação clara:
+Converse com a V2G
+
+CONDIÇÕES
+Não acrescente preço, desconto, prazo, depoimento, número de clientes, indicador de desempenho, URL, telefone ou outra frase. Não use o teto de mídia de R$ 500 como preço do serviço na arte. Não diga que a V2G elimina o gestor ou que os anúncios funcionam sem acompanhamento humano. O botão real de mensagem será configurado na Meta, fora desta imagem.
+
+ENTREGA
+Uma única imagem PNG, sem versões extras. A saída será submetida à revisão humana; gerar esta proposta não autoriza aprovação, upload ou publicação. Em caso de texto incorreto ou logo alterado, a peça será recusada, sem refação paga automática.

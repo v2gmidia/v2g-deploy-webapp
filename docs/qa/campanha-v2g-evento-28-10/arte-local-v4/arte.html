@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>V2G — peça estática V4 — design local para revisão</title>
+  <style>
+    @font-face{font-family:Archivo;src:url("archivo-latin.woff2") format("woff2");font-weight:100 900;font-style:normal;font-display:block}
+    *{box-sizing:border-box}
+    html,body{margin:0;width:1080px;height:1080px;background:#051020;overflow:hidden}
+    body{font-family:Archivo,sans-serif;color:#fff;-webkit-font-smoothing:antialiased}
+    .arte{width:1080px;height:1080px;position:relative;padding:72px 80px 68px;background:#051020}
+    .marca{display:flex;align-items:center;gap:22px;height:66px}
+    .marca svg{width:62px;height:62px;flex:none;color:#e9fe64}
+    .marca-nome{font-size:57px;line-height:1;font-weight:720;letter-spacing:-.04em}
+    .marca-nome span{font-size:41px;font-weight:350;letter-spacing:-.035em;margin-left:12px}
+    h1{margin:110px 0 0;font-size:112px;line-height:1.08;letter-spacing:-.035em;font-weight:750}
+    h1 span{display:block}
+    h1 .destaque{color:#b0e9fd}
+    h1 .inicio-destaque{margin-top:18px}
+    .apoio{font-size:40px;line-height:1.25;font-weight:440;letter-spacing:-.015em;margin:50px 0 0}
+    .apoio span{display:block}
+    .chamada{position:absolute;left:80px;right:80px;bottom:68px;display:flex;align-items:center;justify-content:space-between;border-top:1px solid #536073;padding-top:29px;font-size:38px;line-height:1.2;font-weight:580;letter-spacing:-.015em}
+    .chamada svg{width:52px;height:38px;color:#e9fe64;flex:none}
+  </style>
+</head>
+<body>
+<!-- V4: frase exata da LP por decisão de Victor. Hierarquia transmitida pela Central: primeira parte clara, segunda azul claro. Identidade própria, Archivo e símbolo vetorial existente; apoio humano legível. Design local determinístico, não gerado pelo agente V2G. V3 preservada. -->
+<main class="arte" aria-label="Proposta de anúncio da V2G mídia">
+  <header class="marca" aria-label="V2G mídia">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 50" aria-hidden="true"><g fill="currentColor"><rect x="10" y="0" width="30" height="10" rx="1.6"/><rect x="0" y="10" width="10" height="10" rx="1.6"/><rect x="40" y="10" width="10" height="10" rx="1.6"/><rect x="10" y="20" width="10" height="10" rx="1.6"/><rect x="30" y="20" width="10" height="10" rx="1.6"/><rect x="0" y="30" width="10" height="10" rx="1.6"/><rect x="40" y="30" width="10" height="10" rx="1.6"/><rect x="10" y="40" width="20" height="10" rx="1.6"/></g></svg>
+    <div class="marca-nome">V2G<span>mídia</span></div>
+  </header>
+  <h1 aria-label="Gestão de tráfego sem gestor de tráfego."><span>Gestão de tráfego</span> <span class="destaque inicio-destaque">sem gestor</span> <span class="destaque">de tráfego.</span></h1>
+  <p class="apoio"><span>Gestão de anúncios com</span><span>acompanhamento humano.</span></p>
+  <div class="chamada"><span>Converse com a V2G</span><svg viewBox="0 0 52 38" fill="none" stroke="currentColor" stroke-width="2.8" aria-hidden="true"><path d="M2 19h45M32 4l15 15-15 15"/></svg></div>
+</main>
+</body>
+</html>

@@ -199,9 +199,13 @@
 }
 @media (max-width: 900px) {
   .app-shell.v2g-editorial { display: block; }
-  .v2g-editorial .sidebar { top: auto; padding: 7px 8px calc(7px + env(safe-area-inset-bottom)); height: auto; overflow: visible; border-top: 1px solid var(--sidebar-line); }
+  .v2g-editorial .sidebar { top: auto; left: max(10px, env(safe-area-inset-left)); right: max(10px, env(safe-area-inset-right)); bottom: calc(10px + env(safe-area-inset-bottom)); width: auto; max-width: 520px; margin-inline: auto; padding: 6px; height: auto; overflow: visible; border: 1px solid var(--sidebar-line); border-radius: 24px; box-shadow: 0 8px 24px rgb(0 0 0 / .22); }
   .v2g-editorial .side-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; width: 100%; }
-  .v2g-editorial .side-nav .nav-item { padding: 8px 2px; min-height: 54px; font-size: var(--fs-legenda); line-height: 1.3; gap: 4px; flex-direction: column; justify-content: center; }
+  .v2g-editorial .side-nav .nav-item { padding: 8px 2px; min-height: 56px; min-width: 0; border-radius: 18px; font-size: var(--fs-legenda); line-height: 1.3; gap: 5px; flex-direction: column; justify-content: center; transition: background-color 180ms ease-out, color 180ms ease-out, transform 180ms cubic-bezier(.16, 1, .3, 1); }
+  .v2g-editorial .side-nav .nav-item::before { display: none; }
+  .v2g-editorial .side-nav .nav-item.active { background: var(--cobalt); color: var(--white); }
+  .v2g-editorial .side-nav .nav-item:active { transform: scale(.94); }
+  .v2g-editorial .side-nav .nav-item:focus-visible { outline-offset: 1px; }
   .v2g-editorial .nav-item.active::after { display: none; }
   .v2g-editorial .canvas { padding: 28px 24px calc(40px + var(--barra-h) + env(safe-area-inset-bottom)); }
   .v2g-editorial .topbar { padding: 12px 24px; gap: 16px; }
@@ -224,6 +228,11 @@
   .v2g-editorial .canvas { padding-inline: 16px; }
   .v2g-editorial .page-head { margin-bottom: 24px; }
   .v2g-editorial .page-head h1 { font-size: 28px; }
+}
+@media (max-width: 380px) {
+  .v2g-editorial .sidebar { left: max(6px, env(safe-area-inset-left)); right: max(6px, env(safe-area-inset-right)); padding: 4px; border-radius: 20px; }
+  .v2g-editorial .side-nav { gap: 1px; }
+  .v2g-editorial .side-nav .nav-item { padding-inline: 0; border-radius: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .v2g-editorial *, .v2g-editorial *::before, .v2g-editorial *::after { animation: none; transition: none; scroll-behavior: auto; }
