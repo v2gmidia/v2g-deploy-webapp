@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useRef } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
 import { prepararImagemDaMarca } from "@/lib/identidade/preparar-arquivo-cliente";
@@ -15,6 +15,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
 }) {
   const router = useRouter();
   const formulario = useRef<HTMLFormElement>(null);
+  const [selecionado, setSelecionado] = useState("");
   const [resultado, enviar, enviando] = useActionState(async (anterior: IdentidadeState, dados: FormData) => {
     const arquivo = dados.get("arquivo");
     if (!(arquivo instanceof File)) return { erro: "Escolha uma imagem para o logo principal." };
@@ -27,6 +28,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
       if (resposta.ok) {
         await aoEscolher(preparado.arquivo);
         formulario.current?.reset();
+        setSelecionado("");
         router.refresh();
       }
       return resposta;
@@ -44,12 +46,16 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
         : <p className="form-warning">Logo salvo, mas a prévia está indisponível. Atualize antes de trocar.</p>}
       <span>Logo salvo: {logo.nomeDoArquivo}</span>
     </div>}
-    <form ref={formulario} action={enviar} className={styles.logoForm}>
+    <form ref={formulario} action={enviar} className={styles.logoForm} aria-busy={enviando}>
       <input type="hidden" name="businessId" value={businessId} />
       <input type="hidden" name="uso" value="logo" />
-      <input type="file" name="arquivo" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" aria-label="Escolher o logo da empresa" />
-      <button className="cta" type="submit" disabled={enviando}>{enviando ? "Enviando…" : logo ? "Trocar logo" : "Enviar logo"}</button>
+      <label className={styles.arquivoBotao} htmlFor="logo-principal">{logo ? "Escolher outro logo" : "Escolher logo"}</label>
+      <input id="logo-principal" className={styles.arquivoInput} type="file" name="arquivo" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif"
+        aria-label="Escolher o logo da empresa" onChange={(evento) => setSelecionado(evento.target.files?.[0]?.name ?? "")} />
+      <span className={styles.arquivoSelecionado} role="status">{selecionado || (logo ? "Logo atual salvo" : "Nenhum arquivo selecionado")}</span>
+      <button className="cta" type="submit" disabled={enviando || !selecionado}>{enviando ? "Enviando logo…" : logo ? "Salvar novo logo" : "Enviar logo"}</button>
     </form>
+    {enviando && <p className={styles.statusAcao} role="status" aria-live="polite">Preparando e enviando o logo…</p>}
     {resultado.erro && <p className="form-error" role="alert">{resultado.erro}</p>}
     {resultado.ok && <p className="form-notice" role="status">{resultado.ok}</p>}
   </section>;

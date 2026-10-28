@@ -1,7 +1,8 @@
 import type { ReactNode } from "react";
 import { GaleriaCriativos, type ItemDaGaleria } from "./GaleriaCriativos";
+import { fraseDeVeiculacao, type EstadoDeVeiculacao } from "@/lib/veiculacao/estado";
 
-export function TelaDeCriativos({ itens, envio, analise, criacao, envioDisponivel = true, retencaoAtiva = false, previa = false, bibliotecaFalhou = false }: {
+export function TelaDeCriativos({ itens, envio, analise, criacao, envioDisponivel = true, retencaoAtiva = false, previa = false, bibliotecaFalhou = false, veiculacao }: {
   itens: ItemDaGaleria[];
   envio: ReactNode;
   analise?: ReactNode;
@@ -10,10 +11,13 @@ export function TelaDeCriativos({ itens, envio, analise, criacao, envioDisponive
   previa?: boolean;
   envioDisponivel?: boolean;
   bibliotecaFalhou?: boolean;
+  veiculacao?: EstadoDeVeiculacao;
 }) {
   return <div className="criativos-editorial">
     <header className="criativos-topo">
-      <div className="page-head"><h1>Criativos</h1><p>Sua biblioteca de imagens e vídeos.</p></div>
+      <div className="page-head"><h1>Criativos</h1><p>Sua biblioteca de imagens e vídeos.</p>
+        {veiculacao ? <p className="res-veiculacao">Situação do negócio: {fraseDeVeiculacao(veiculacao, "manchete")}</p> : null}
+      </div>
       {envioDisponivel
         ? <a className="cta criativos-subir" href="#subir-criativo"><IconeUpload />Subir criativo</a>
         : <a className="cta ghost criativos-subir" href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar com a equipe</a>}

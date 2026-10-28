@@ -71,8 +71,8 @@ export function pendenciaDoOnboarding(
     rotulo: "Conferir visual da marca",
   };
   if (!reuniaoConfirmada) return {
-    titulo: "A confirmação da reunião ainda está pendente",
-    corpo: "Seu cadastro está concluído. Se você marcou pelo Google, o clique em “Já marquei meu horário” não comprova a reserva; confira o e-mail do Google enquanto a V2G aguarda uma confirmação verificável.",
+    titulo: "Cadastro concluído. Vamos à reunião",
+    corpo: "As informações do seu negócio estão salvas. Se você recebeu o e-mail do Google, não escolha outro horário. Abrir a agenda não comprova a reserva; a V2G só confirma quando localiza o evento.",
     href: "/onboarding/concluido",
     rotulo: "Conferir reunião",
   };

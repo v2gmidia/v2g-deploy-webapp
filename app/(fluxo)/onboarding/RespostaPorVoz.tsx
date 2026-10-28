@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { recadoDeFalhaDaTranscricao, recadoDeFalhaDoMicrofone } from "@/lib/onboarding/voz";
 import styles from "./ChatConversa.module.css";
 
 const MAX_TEMPO = 60_000;
@@ -42,7 +43,7 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
     const pedido = fetch("/api/onboarding/transcrever/ao-vivo", { method: "POST", cache: "no-store" })
       .then(async (resposta) => {
         const dados = await resposta.json().catch(() => null) as { token?: unknown; expiresAt?: unknown } | null;
-        if (!resposta.ok || typeof dados?.token !== "string") throw new Error("Não consegui conectar o microfone.");
+        if (!resposta.ok || typeof dados?.token !== "string") throw new Error(recadoDeFalhaDaTranscricao(resposta.status));
         token.current = { valor: dados.token,
           expira: typeof dados.expiresAt === "number" ? dados.expiresAt : Date.now() + 45_000 };
         return dados.token;
@@ -66,10 +67,6 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
 
   useEffect(() => { aoOcupar(iniciando || gravando || enviando); }, [iniciando, gravando, enviando, aoOcupar]);
   useEffect(() => () => { aoOcupar(false); }, [aoOcupar]);
-  useEffect(() => {
-    if (!navigator.mediaDevices?.getUserMedia || typeof RTCPeerConnection === "undefined") return;
-    void obterToken().catch(() => {});
-  }, []);
   useEffect(() => {
     vivo.current = true;
     return () => {
@@ -126,16 +123,16 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
     trechosConcluidos.current = [];
     paradaSolicitada.current = false;
     try {
-      // Permissão do microfone e sessão temporária não dependem uma da outra.
-      const [captura, sessao] = await Promise.allSettled([
-        navigator.mediaDevices.getUserMedia({ audio: true }),
-        obterToken(),
-      ]);
-      if (captura.status === "fulfilled") fluxo.current = captura.value;
-      if (captura.status !== "fulfilled") throw new Error("Não consegui abrir o microfone.");
-      if (sessao.status !== "fulfilled") throw new Error("Não consegui conectar o microfone.");
-      const stream = captura.value;
-      const tokenDeVoz = sessao.value;
+      // Só pede uma sessão externa depois que a pessoa autoriza e o aparelho
+      // entrega o microfone. Negar a permissão não cria sessão no provedor.
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      } catch (falha) {
+        throw new Error(recadoDeFalhaDoMicrofone(falha));
+      }
+      fluxo.current = stream;
+      const tokenDeVoz = await obterToken();
       if (!vivo.current) { liberar(); return; }
 
       const peer = new RTCPeerConnection();
@@ -192,6 +189,7 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
   }
 
   return <div className={styles.voz}>
+    <span className={styles.vozRotulo}>Responder por voz</span>
     <button type="button" disabled={(!gravando && ocupado) || iniciando || enviando} aria-pressed={gravando}
       title={gravando ? "Parar e conferir transcrição" : iniciando ? "Conectando microfone" : enviando ? "Finalizando transcrição" : "Falar e ver a transcrição ao vivo"}
       aria-label={gravando ? "Parar e conferir transcrição" : iniciando ? "Conectando microfone" : enviando ? "Finalizando transcrição" : "Falar e ver a transcrição ao vivo"}

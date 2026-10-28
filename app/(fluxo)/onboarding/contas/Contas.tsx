@@ -24,10 +24,11 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
   const [estado, setEstado] = useState(inicial);
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  const [operacao, setOperacao] = useState<"salvar" | "reabrir" | null>(null);
   const [ajustando, setAjustando] = useState<ChaveDeConta | null>(null);
   const [rascunho, setRascunho] = useState("");
   const [confirmandoNaoSei, setConfirmandoNaoSei] = useState<ChaveDeConta | null>(null);
+  const enviando = operacao !== null;
 
   const { contas, leituras } = estado;
 
@@ -74,7 +75,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
 
   async function enviar(entrada: Omit<Parameters<typeof salvarContaAction>[0], "businessId">) {
     if (enviando || aviso) return;
-    setEnviando(true);
+    setOperacao("salvar");
     setErro(null);
     setAviso(null);
     try {
@@ -98,13 +99,13 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     } catch {
       setAviso("Não conseguimos confirmar se a resposta foi salva. Recarregue para conferir antes de enviar de novo.");
     } finally {
-      setEnviando(false);
+      setOperacao(null);
     }
   }
 
   async function reabrir(conta: ChaveDeConta) {
     if (enviando || aviso) return;
-    setEnviando(true);
+    setOperacao("reabrir");
     setErro(null);
     setAviso(null);
     try {
@@ -125,16 +126,16 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
     } catch {
       setAviso("Não conseguimos confirmar se a pergunta foi reaberta. Recarregue para conferir antes de tentar novamente.");
     } finally {
-      setEnviando(false);
+      setOperacao(null);
     }
   }
 
   const pergunta: Record<ChaveDeConta, string> = {
-    ticket: "Qual é o valor médio de uma venda sua? Pense no que o cliente costuma pagar; não precisa listar preços de cada serviço.",
-    custo: "Você sabe quanto custa, em média, entregar uma venda? Pense em produto, material e comissão. Se não souber, deixe para conferir com o gestor.",
+    ticket: "Qual é o ticket médio das suas vendas?",
+    custo: "Quanto custa, em média, entregar uma venda?",
     lucro: estado.margem
-      ? `Dessa sobra aproximada de ${dinheiro(estado.margem, "BRL")}, quanto você precisa manter por venda?`
-      : "Quanto você precisa manter por venda?",
+      ? `Depois de pagar o custo da venda, qual valor mínimo precisa ficar com o seu negócio?`
+      : "Qual valor mínimo precisa ficar com o seu negócio em cada venda?",
   };
 
   const contador: Record<ChaveDeConta, string> = {
@@ -155,6 +156,11 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       </p>
 
       {aviso && <p className="form-warning" role="status">{aviso} <button type="button" onClick={() => window.location.reload()}>Recarregar</button></p>}
+      {enviando && (
+        <p className="conta-salvando" role="status" aria-live="polite">
+          {operacao === "reabrir" ? "Reabrindo a pergunta…" : "Salvando sua resposta…"}
+        </p>
+      )}
 
       {/* ---- o que já fechou ---- */}
       {(["ticket", "custo", "lucro"] as ChaveDeConta[])
@@ -215,7 +221,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
         })}
 
       {atual && (
-        <section className="hero-card">
+        <section className="hero-card" aria-busy={enviando}>
           <span className="eyebrow">{contador[atual]}</span>
           {erro && <p className="form-error" role="alert">{erro}</p>}
 
@@ -255,7 +261,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                     disabled={indisponivel}
                     onClick={() => enviar({ conta: atual, escolha: rascunho })}
                   >
-                    {enviando ? "…" : "Salvar"}
+                    {enviando ? "Salvando…" : "Salvar"}
                   </button>
                 </div>
               ) : (
@@ -272,11 +278,12 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       })
                     }
                   >
-                    É mais ou menos isso
+                    {enviando ? "Salvando…" : "É mais ou menos isso"}
                   </button>
                   <button
                     className="text-fallback"
                     type="button"
+                    disabled={indisponivel}
                     onClick={() => {
                       setAjustando(atual);
                       setRascunho("");
@@ -301,9 +308,25 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
 
               <p className="conta-pergunta">{pergunta[atual]}</p>
 
-              {atual === "custo" && (
+              {atual === "ticket" && (
                 <p className="conta-hint">
-                  Conte material, produto, comissão. Não conte aluguel nem salário fixo.
+                  É o valor que cada cliente costuma pagar numa compra. Se você vende itens diferentes, pense numa venda comum.
+                </p>
+              )}
+
+              {atual === "custo" && (
+                <details className="conta-ajuda">
+                  <summary>O que entra nesse custo?</summary>
+                  <p id="ajuda-custo">
+                    Mercadoria ou insumos, impostos e taxas da venda, entrega, comissões e trabalho diretamente ligado a ela.
+                    Não inclua todo o aluguel ou a folha se não conseguir atribuí-los a uma venda.
+                  </p>
+                </details>
+              )}
+
+              {atual === "lucro" && estado.margem !== null && (
+                <p className="conta-hint">
+                  Hoje sobram cerca de {dinheiro(estado.margem, "BRL")} antes dos anúncios. Informe quanto dessa sobra não pode ser usado para conquistar o cliente.
                 </p>
               )}
 
@@ -334,7 +357,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       disabled={indisponivel}
                       onClick={() => enviar({ conta: "ticket", escolha: rascunho })}
                     >
-                      {enviando ? "…" : "Enviar"}
+                      {enviando ? "Salvando…" : "Conferir"}
                     </button>
                   </div>
                   <p className="conta-hint">Digite um valor em reais. Por exemplo, 50 aparece como R$ 50,00.</p>
@@ -366,10 +389,11 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                   <label htmlFor="custo-direto">Se souber o custo de uma venda, digite em reais</label>
                   <div className="fallback-field">
                     <input id="custo-direto" inputMode="decimal" placeholder="Ex.: 50,00" value={rascunho}
+                      aria-describedby="ajuda-custo"
                       onChange={(e) => setRascunho(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); enviar({ conta: "custo", escolha: rascunho }); } }} />
                     {previa !== null && <span className="conta-previa">{dinheiro(previa, "BRL")}</span>}
-                    <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "custo", escolha: rascunho })}>Conferir</button>
+                    <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "custo", escolha: rascunho })}>{enviando ? "Salvando…" : "Conferir"}</button>
                   </div>
                 </div>}
                 {!estado.ticketEmFaixa && <p className="conta-hint">Ou escolha uma estimativa para conferir antes de salvar:</p>}
@@ -412,10 +436,10 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
                       onChange={(e) => setRascunho(e.target.value)}
                       onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); enviar({ conta: "lucro", escolha: rascunho }); } }} />
                     {previa !== null && <span className="conta-previa">{dinheiro(previa, "BRL")}</span>}
-                    <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "lucro", escolha: rascunho })}>Conferir</button>
+                    <button className="mini-send" type="button" disabled={indisponivel} onClick={() => enviar({ conta: "lucro", escolha: rascunho })}>{enviando ? "Salvando…" : "Conferir"}</button>
                   </div>
                 </div>}
-                <p className="conta-hint">Se não souber esse valor, deixe para a conversa. Uma preferência como “quero crescer” não define um valor em reais.</p>
+                <p className="conta-hint">Se não souber, marque “Não sei”. O gestor resolve essa conta com você sem inventar um valor.</p>
                 <div className="chips-row">
                   {estado.margem === null && <p className="conta-hint">Sem a sobra por venda, esta conta fica para a conversa com o gestor.</p>}
                   <button
@@ -430,12 +454,12 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
               )}
               {confirmandoNaoSei === atual && (
                 <div className="pendencia-bloco" role="group" aria-label="Confirmar que não sabe responder">
-                  <p>Tem certeza de que não consegue estimar? Pense em uma venda recente ou num valor aproximado. Não precisa ser exato.</p>
+                  <p>Tudo bem deixar essa conta para a conversa com o gestor. Quer marcar esta resposta como “Não sei”?</p>
                   <div className="chips-row">
                     <button className="chip-opt" type="button" disabled={indisponivel}
-                      onClick={() => setConfirmandoNaoSei(null)}>Vou tentar responder</button>
+                      onClick={() => setConfirmandoNaoSei(null)}>Voltar e responder</button>
                     <button className="chip-opt" type="button" disabled={indisponivel}
-                      onClick={() => enviar({ conta: atual, escolha: "", naoSei: true })}>Ainda não sei</button>
+                      onClick={() => enviar({ conta: atual, escolha: "", naoSei: true })}>{enviando ? "Salvando…" : "Confirmar: não sei"}</button>
                   </div>
                   <p className="conta-hint">O gestor verá essa pendência. Você poderá voltar e informar o valor quando souber.</p>
                 </div>

@@ -9,8 +9,8 @@ import { tituloDaAba } from "@/lib/titulos";
 import { TelaDoInicio } from "./TelaDoInicio";
 import { lerPendenciaDoNegocio } from "@/lib/onboarding/pendencia-do-negocio";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
-import { InicioAposReserva } from "./InicioAposReserva";
 import { consolidadoDoNegocio } from "@/lib/backend/dia-seguinte";
+import { resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -136,9 +136,10 @@ export default async function InicioPage({
 
   // A consulta histórica não altera a jornada nem as perguntas sobre ontem.
   // O limite mensal sempre considera o mês atual, independentemente do calendário.
+  const esperaResultados = resultadosSaoEsperados(estado);
   let investidoNoMesCentavos: number | null = null;
-  let acumuladoDoPeriodo: EstadoDoCliente["diaSeguinte"]["acumulado"] | undefined = fixture ? undefined : null;
-  if (!fixture && estado.negocioId && user) {
+  let acumuladoDoPeriodo: EstadoDoCliente["diaSeguinte"]["acumulado"] | undefined = fixture || !esperaResultados ? undefined : null;
+  if (!fixture && esperaResultados && estado.negocioId && user) {
     const args = { businessId: estado.negocioId, profileId: user.id };
     const desdeMes = `${hoje.slice(0, 8)}01`;
     const mensal = consolidadoDoNegocio({ ...args, desde: desdeMes, ate: hoje });
@@ -157,8 +158,6 @@ export default async function InicioPage({
     ? await lerPendenciaDoNegocio(estado.negocioId)
     : { pendencia: null, falha: false, reserva: null };
   const { pendencia: pendenciaOnboarding, reserva } = leituraDaPendencia;
-  if (reserva && !estado.diaSeguinte.execucao && estado.campanhasNoAr.length === 0)
-    return <InicioAposReserva inicio={reserva.starts_at} fim={reserva.ends_at} />;
 
   const { data: ultimaDecisao, error: erroDecisao } = estado.negocioId ? await supabase
     .from("decisions")
@@ -205,6 +204,7 @@ export default async function InicioPage({
       diaDaPergunta={diaDaPergunta}
       atrasados={atrasados}
       pendenciaOnboarding={pendenciaOnboarding}
+      recepcaoOnboarding={leituraDaPendencia.cadastroConcluido ? { reserva, falhaReuniao: leituraDaPendencia.falha } : null}
       falhaPendencia={leituraDaPendencia.falha}
       intervalo={intervalo}
       acumuladoDoPeriodo={acumuladoDoPeriodo}

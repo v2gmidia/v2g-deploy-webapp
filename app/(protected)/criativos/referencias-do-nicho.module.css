@@ -11,4 +11,16 @@
 .linha a { color: var(--cobalt-ink); text-underline-offset: 3px; }
 .linha :is(a, input):focus-visible, .bloco summary:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; }
 .nota { font-size: var(--fs-legenda); }
+.orientacao { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--line); }
+.campos { display: grid; gap: 8px; margin: 20px 0; max-width: 68ch; }
+.campos label { margin-top: 12px; font-weight: 650; }
+.campos :is(input, textarea), .textoOrientacao { box-sizing: border-box; width: 100%; min-width: 0; padding: 12px; border: 1px solid var(--control-line, var(--ink-mute)); border-radius: 6px; background: var(--surface-2); color: var(--ink); font: inherit; line-height: 1.6; resize: vertical; }
+.campos textarea::placeholder { color: var(--ink-mute); opacity: 1; }
+.campos textarea:focus-visible, .textoOrientacao:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; }
+.rotuloTexto { display: block; margin: 20px 0 8px; font-weight: 650; }
+.textoOrientacao { display: block; max-width: 75ch; margin-bottom: 16px; }
+.orientacao button { min-height: 44px; max-width: 100%; white-space: normal; }
+.conferencia { display: flex; gap: 10px; align-items: flex-start; margin: 18px 0; line-height: 1.6; }
+.conferencia input { flex: 0 0 18px; width: 18px; height: 18px; margin-top: 4px; accent-color: var(--cobalt); }
+.conferencia input:focus-visible { outline: 2px solid var(--cobalt); outline-offset: 3px; }
 @media (max-width: 620px) { .bloco { padding: 16px; } .linha { align-items: flex-start; flex-direction: column; } }

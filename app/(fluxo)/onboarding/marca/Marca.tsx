@@ -6,6 +6,7 @@ import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
 import { TEXTO_DA_DECLARACAO, TEXTO_DO_LIMITE_DE_IA } from "@/app/(protected)/conta/declaracao";
 import { coresDaLogo, PAPEIS_DA_COR } from "@/lib/identidade/cores-da-logo";
 import { juntarPaleta } from "@/lib/identidade/paleta";
+import { validarInstagram, validarSite } from "@/lib/onboarding/enderecos";
 import { salvarMarcaAction, type EstadoMarca } from "./actions";
 import { LogoDaMarca } from "./LogoDaMarca";
 import { VariacoesDaMarca } from "./VariacoesDaMarca";
@@ -32,15 +33,26 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   const [erro, setErro] = useState<string | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [erroInstagram, setErroInstagram] = useState<string | null>(null);
+  const [erroSite, setErroSite] = useState<string | null>(null);
   const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
 
   async function salvar() {
     if (enviando || aviso || uploadsAtivos > 0 || analisesAtivas > 0) return;
+    const instagramNormalizado = instagram.trim() ? validarInstagram(instagram) : "";
+    const siteNormalizado = semSite ? "" : validarSite(site);
+    const novoErroInstagram = instagram.trim() && !instagramNormalizado ? "Use apenas um @usuário válido ou cole a URL do perfil no Instagram." : null;
+    const novoErroSite = !semSite && !siteNormalizado ? "Informe um domínio ou endereço válido, como seunegocio.com.br." : null;
+    setErroInstagram(novoErroInstagram);
+    setErroSite(novoErroSite);
+    if (novoErroInstagram || novoErroSite) return;
+    if (instagramNormalizado) setInstagram(instagramNormalizado);
+    if (siteNormalizado) setSite(siteNormalizado);
     setEnviando(true);
     setErro(null);
     setAviso(null);
     try {
-      const r = await salvarMarcaAction({ businessId: estado.businessId, site, siteNaoTenho: semSite, instagram, aparencia,
+      const r = await salvarMarcaAction({ businessId: estado.businessId, site: siteNormalizado ?? "", siteNaoTenho: semSite, instagram: instagramNormalizado ?? "", aparencia,
         coresConfirmadas: coresConferidas ? cores : [], aparenciaNaoSei: naoSei });
       if (!r.ok && r.recarregar) setAviso("Não conseguimos confirmar a gravação. Algumas respostas podem ter sido salvas. Recarregue para conferir antes de enviar de novo.");
       else if (!r.ok) setErro(r.erro ?? "Não conseguimos salvar esta etapa.");
@@ -98,6 +110,12 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
       <>
         {erro && <p className="form-error" role="alert">{erro}</p>}
         {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}
+        <ol className={styles.marcos} aria-label="Progresso do visual da marca">
+          <li data-concluido={Boolean(logo)}>{logo ? "Logo salvo" : "Logo ainda não enviado"}</li>
+          <li data-concluido={cores.length > 0}>{cores.length > 0 ? "Cores sugeridas ou adicionadas" : "Cores ainda não definidas"}</li>
+          <li data-concluido={coresConferidas}>{coresConferidas ? "Cores confirmadas" : "Cores aguardando confirmação"}</li>
+          <li data-concluido={estado.concluido}>{estado.concluido ? "Dados salvos" : "Dados ainda não salvos"}</li>
+        </ol>
         <p className="form-warning"><strong>Envio não autoriza uso por IA.</strong> {TEXTO_DO_LIMITE_DE_IA}</p>
         <p className={styles.declaracao}>{TEXTO_DA_DECLARACAO}</p>
         <LogoDaMarca businessId={estado.businessId} logo={logo} aoEscolher={(arquivo) => proporCores([arquivo], "logo-principal")} aoMudarUpload={aoMudarUpload} />
@@ -105,7 +123,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
         <section className={styles.coresBloco}>
           <h2>Essas são as cores da sua marca?</h2>
           <p>A logo principal vem primeiro; as outras imagens ajudam a completar uma paleta coerente. Você escolhe quais tons manter e pode ajustar cada cor antes de confirmar.</p>
-          {analisesAtivas > 0 && <p role="status">Analisando cores…</p>}
+          {analisesAtivas > 0 && <p className={styles.statusAcao} role="status" aria-live="polite">Imagem salva. Analisando as cores agora…</p>}
           {recadoLogo && <p role="status">{recadoLogo}</p>}
           {cores.length > 0 && <>
             <div className={styles.cores}>
@@ -134,15 +152,31 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
         </section>
         <div className={styles.campo}>
           <label htmlFor="instagram">Instagram da marca (se tiver)</label>
-          <input id="instagram" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="@seunegocio" />
+          <input id="instagram" value={instagram} aria-invalid={Boolean(erroInstagram)} aria-describedby={erroInstagram ? "erro-instagram" : undefined}
+            onChange={(e) => { setInstagram(e.target.value); setErroInstagram(null); }}
+            onBlur={() => {
+              if (!instagram.trim()) return;
+              const normalizado = validarInstagram(instagram);
+              if (normalizado) setInstagram(normalizado);
+              else setErroInstagram("Use apenas um @usuário válido ou cole a URL do perfil no Instagram.");
+            }} placeholder="@seunegocio" />
+          {erroInstagram && <p id="erro-instagram" className={styles.erroCampo} role="alert">{erroInstagram}</p>}
         </div>
         <div className={styles.campo}>
           <label htmlFor="site">Site</label>
-          <input id="site" value={site} disabled={semSite} onChange={(e) => setSite(e.target.value)} placeholder="seunegocio.com.br" />
+          <input id="site" value={site} disabled={semSite} aria-invalid={Boolean(erroSite)} aria-describedby={erroSite ? "erro-site" : undefined}
+            onChange={(e) => { setSite(e.target.value); setErroSite(null); }}
+            onBlur={() => {
+              if (!site.trim() || semSite) return;
+              const normalizado = validarSite(site);
+              if (normalizado) setSite(normalizado);
+              else setErroSite("Informe um domínio ou endereço válido, como seunegocio.com.br.");
+            }} placeholder="seunegocio.com.br" />
+          {erroSite && <p id="erro-site" className={styles.erroCampo} role="alert">{erroSite}</p>}
         </div>
         <label className={styles.opcao}><input type="checkbox" checked={semSite} onChange={(e) => {
           setSemSite(e.target.checked);
-          if (e.target.checked) setSite("");
+          if (e.target.checked) { setSite(""); setErroSite(null); }
           else if (!site) setSite(estado.site);
         }} /> Não tenho site</label>
         <div className={styles.campo}>
@@ -163,7 +197,8 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
           }}>Ainda não sei</button>
           <p className="conta-hint">O gestor verá essa pendência na conversa.</p>
         </div>}
-        <button className="cta" type="button" disabled={enviando || !!aviso || uploadsAtivos > 0 || analisesAtivas > 0} onClick={salvar}>{enviando ? "Salvando…" : uploadsAtivos > 0 ? "Enviando materiais…" : analisesAtivas > 0 ? "Analisando cores…" : "Guardar e escolher horário"}</button>
+        {enviando && <p className={styles.statusAcao} role="status" aria-live="polite">Salvando os dados da marca…</p>}
+        <button className="cta" type="button" disabled={enviando || !!aviso || uploadsAtivos > 0 || analisesAtivas > 0} onClick={salvar}>{enviando ? "Salvando dados…" : uploadsAtivos > 0 ? "Enviando materiais…" : analisesAtivas > 0 ? "Analisando cores…" : "Guardar e escolher horário"}</button>
       </>}
   </>;
 }

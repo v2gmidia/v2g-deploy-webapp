@@ -5,6 +5,7 @@ import { SeletorDeAtividade } from "@/components/ui/SeletorDeAtividade";
 import { exemplosDaAtividade } from "@/lib/onboarding/atividades";
 import { NAO_SEI_BRIEFING } from "@/lib/onboarding/briefing-trafego";
 import { cidadeDeclaradaValida, formatarCep } from "@/lib/onboarding/localizacao";
+import { juntarTextoEFala, recadoDaVozIndisponivel, type EstadoDaVoz } from "@/lib/onboarding/voz";
 import { RespostaPorVoz } from "./RespostaPorVoz";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
 import { ORDEM, PERGUNTAS, RAIO_KM, proximaPergunta, type Pergunta } from "./perguntas";
@@ -27,8 +28,18 @@ function alcanceDaFala(fala: string): string | null {
   return null;
 }
 
-export function Chat({ businessId, inicial, vozHabilitada }: {
-  businessId: string; inicial: Record<string, RespostaGravada>; vozHabilitada: boolean;
+function VozIndisponivel({ estado, compacta = false }: {
+  estado: Exclude<EstadoDaVoz, "disponivel">;
+  compacta?: boolean;
+}) {
+  return <span className={`${styles.vozIndisponivel} ${compacta ? styles.vozIndisponivelCompacta : ""}`}>
+    <strong>Responder por voz:</strong> {recadoDaVozIndisponivel(estado)}
+  </span>;
+}
+
+export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvarRespostaAction }: {
+  businessId: string; inicial: Record<string, RespostaGravada>; estadoDaVoz: EstadoDaVoz;
+  salvarResposta?: typeof salvarRespostaAction;
 }) {
   const [respostas, setRespostas] = useState(inicial);
   const [conviteAceito, setConviteAceito] = useState(false);
@@ -41,8 +52,10 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
   const [confirmandoNaoSei, setConfirmandoNaoSei] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [respostaPendente, setRespostaPendente] = useState<{
-    perguntaId: string; texto: string; fase: "enviando" | "escrevendo";
+    perguntaId: string; texto: string;
   } | null>(null);
+  const [demorado, setDemorado] = useState(false);
+  const [confirmacao, setConfirmacao] = useState("");
   const [vozOcupada, setVozOcupada] = useState(false);
   const [falaAtividade, setFalaAtividade] = useState<{ texto: string; sequencia: number } | null>(null);
   const [falaParcial, setFalaParcial] = useState("");
@@ -52,6 +65,9 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
   const mensagens = useRef<HTMLElement>(null);
   const textoAntesDaVoz = useRef("");
   const sequenciaDeVoz = useRef(0);
+  const envioTravado = useRef(false);
+  const aviso = useRef<HTMLDivElement>(null);
+  const proximoPasso = useRef<HTMLParagraphElement>(null);
 
   const pendente = proximaPergunta(ORDEM.filter((id) => !!respostas[id]));
   const atual = editando ? QUESTOES.find((p) => p.id === editando) ?? pendente : pendente;
@@ -59,14 +75,24 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
   const salvas = QUESTOES.filter((p) => respostas[p.id]);
   const exemplos = exemplosDaAtividade(respostas.ramo?.texto ?? "");
   const mostrarConvite = !conviteAceito && salvas.length === 0 && !editando;
+  const vozHabilitada = estadoDaVoz === "disponivel";
+  const vozIndisponivel = estadoDaVoz === "disponivel" ? null : estadoDaVoz;
 
   useEffect(() => {
-    campo.current?.focus();
-  }, [atual?.id]);
+    if (enviando) return;
+    if (!incerto) envioTravado.current = false;
+    if (erro) aviso.current?.focus();
+    else (campo.current ?? proximoPasso.current)?.focus({ preventScroll: true });
+  }, [atual?.id, enviando, incerto, erro, conviteAceito]);
+  useEffect(() => {
+    if (!enviando) return;
+    const tempo = window.setTimeout(() => setDemorado(true), 8000);
+    return () => window.clearTimeout(tempo);
+  }, [enviando]);
   useEffect(() => {
     const caixa = mensagens.current;
-    if (caixa) caixa.scrollTo({ top: caixa.scrollHeight, behavior: "smooth" });
-  }, [atual?.id, conviteAceito, respostas]);
+    if (caixa) caixa.scrollTo({ top: caixa.scrollHeight, behavior: "instant" });
+  }, [atual?.id, conviteAceito, respostas, respostaPendente]);
 
   function limparEdicao() {
     setEditando(null); setTexto(""); setCidade(""); setCep(""); setAlcanceLocal(null); setTextoAberto(false); setConfirmandoNaoSei(false); setFalaAtividade(null); setFalaParcial(""); setErro(null);
@@ -89,9 +115,10 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
     setTextoAberto(resposta.origem === "texto");
     setConfirmandoNaoSei(false);
     setErro(null);
+    setConfirmacao("");
   }
   async function enviar(pergunta: Pergunta, valor: string, origem: "chip" | "texto") {
-    if (enviando || incerto || vozOcupada) return;
+    if (envioTravado.current || enviando || incerto || vozOcupada) return;
     if (pergunta.pedeCidade && origem === "chip" && valor !== "Brasil inteiro" && !cidade.trim()) { setErro("Informe sua cidade para escolher a distância."); return; }
     if (pergunta.pedeCidade && origem === "chip" && valor !== "Brasil inteiro" && !cidadeDeclaradaValida(cidade)) {
       setErro("Confira o nome da cidade, sem números."); return;
@@ -102,20 +129,20 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
     if (!valor.trim()) { setErro("Escreva uma resposta antes de continuar."); campo.current?.focus(); return; }
     if (pergunta.minimo && !(pergunta.admiteNaoSei && origem === "chip" && valor === NAO_SEI_BRIEFING)
       && valor.trim().length < pergunta.minimo.tamanho) { setErro(pergunta.minimo.recado); campo.current?.focus(); return; }
-    setEnviando(true); setErro(null);
-    setRespostaPendente({ perguntaId: pergunta.id, texto: valor, fase: "enviando" });
+    // A trava antecede o próximo render: Enter e clique no mesmo instante
+    // não podem iniciar duas gravações.
+    envioTravado.current = true;
+    setEnviando(true); setErro(null); setDemorado(false); setConfirmacao("");
+    setRespostaPendente({ perguntaId: pergunta.id, texto: valor });
     try {
-      const resultado = await salvarRespostaAction({ businessId, qid: pergunta.id, texto: valor, origem,
+      const resultado = await salvarResposta({ businessId, qid: pergunta.id, texto: valor, origem,
         ...(pergunta.pedeCidade && origem === "chip" && valor !== "Brasil inteiro"
           ? { cidade: cidade.trim(), cep: valor === "Só aqui perto (até 5 km)" ? cep.trim() : "" } : {}) });
       if (!resultado.ok && resultado.recarregar) { setIncerto(true); setErro("Não conseguimos confirmar a gravação. Recarregue para conferir antes de tentar novamente."); return; }
       if (!resultado.ok) { setErro(resultado.erro ?? "Não conseguimos salvar. Tente novamente."); return; }
       if (!resultado.estado) { setIncerto(true); setErro("A resposta pode ter sido salva. Recarregue para conferir antes de continuar."); return; }
-      setRespostaPendente((anterior) => anterior ? { ...anterior, fase: "escrevendo" } : null);
-      // A próxima pergunta aparece depois da confirmação da gravação.
-      // A pausa curta deixa perceptível a troca sem prolongar o envio.
-      await new Promise<void>((resolver) => window.setTimeout(resolver, 280));
       setRespostas(resultado.estado.respostas); limparEdicao();
+      setConfirmacao("Resposta salva.");
     } catch {
       setIncerto(true); setErro("Não sabemos se a resposta foi salva. Recarregue para conferir antes de tentar novamente.");
     } finally { setRespostaPendente(null); setEnviando(false); }
@@ -138,7 +165,7 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
     } else if (atual.pedeCidade) {
       setFalaParcial(trecho);
     } else {
-      setTexto([textoAntesDaVoz.current, trecho].filter(Boolean).join(" "));
+      setTexto(juntarTextoEFala(textoAntesDaVoz.current, trecho));
     }
   }
   function receberVoz(fala: string) {
@@ -160,14 +187,14 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
         setTexto(fala.trim());
       }
     } else {
-      setTexto([textoAntesDaVoz.current, fala.trim()].filter(Boolean).join(" "));
+      setTexto(juntarTextoEFala(textoAntesDaVoz.current, fala));
     }
   }
 
   return <main className={styles.jornada}>
     <div className={styles.andamento}><span>Sobre seu negócio</span><strong>{salvas.length} de {QUESTOES.length} respostas</strong><small>Cerca de 15 min</small></div>
     <div className={styles.progresso} role="progressbar" aria-valuemin={0} aria-valuemax={QUESTOES.length} aria-valuenow={salvas.length} aria-label="Respostas sobre seu negócio"><span style={{ width: `${salvas.length / QUESTOES.length * 100}%` }} /></div>
-    <section ref={mensagens} className={styles.mensagens} aria-label="Conversa sobre seu negócio" aria-live="polite">
+    <section ref={mensagens} className={styles.mensagens} aria-label="Conversa sobre seu negócio">
       {mostrarConvite && <div className={styles.introducao}>
         <h1>Vamos preparar seu negócio.</h1>
         <p>São três etapas: seu negócio, suas contas e o visual da marca. Reserve cerca de 15 minutos. Cada resposta fica salva para você continuar depois.</p>
@@ -178,21 +205,20 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
           <button type="button" disabled={enviando || incerto || vozOcupada} onClick={() => corrigir(p)}>Corrigir</button></div>
       </div>)}
       {mostrarConvite ? <div className={styles.balao}><span>V2G</span><p>Comece pelo nome do negócio. Depois vamos entender o que você oferece, quem compra e onde atende.</p></div> :
-      atual ? <div className={`${styles.balao} ${styles.perguntaAtual}`} key={atual.id}><span>V2G · pergunta {indice + 1} de {QUESTOES.length}</span><p>{partes(atual)[0]}</p>
+      atual ? <div className={`${styles.balao} ${styles.perguntaAtual}`} key={atual.id}><span>V2G · pergunta {indice + 1} de {QUESTOES.length}</span><p ref={proximoPasso} tabIndex={-1}>{partes(atual)[0]}</p>
         {partes(atual)[1] && <small>{partes(atual)[1]}</small>}
         {atual.id === "descricao" && <small>Conte os principais produtos ou serviços. Você pode listar mais de um; a escolha do primeiro anúncio fica para a reunião.</small>}
-      </div> : <div className={`${styles.balao} ${styles.encerramento}`}><span>V2G</span><p>Suas respostas estão guardadas. Agora vamos conferir as contas do negócio.</p>
+      </div> : <div className={`${styles.balao} ${styles.encerramento}`}><span>V2G</span><p ref={proximoPasso} tabIndex={-1}>Suas respostas estão guardadas. Agora vamos conferir as contas do negócio.</p>
         <a className={styles.primario} href="/onboarding/contas">Continuar para as contas</a></div>}
-      {respostaPendente && respostaPendente.perguntaId === atual?.id && <div className={styles.pendente} role="status" aria-live="polite">
+      {respostaPendente && respostaPendente.perguntaId === atual?.id && <div className={styles.pendente}>
         <div className={`${styles.balao} ${styles.cliente}`}><span>Você</span><p>{respostaPendente.texto}</p>
-          {respostaPendente.fase === "enviando" && <small>Enviando resposta…</small>}</div>
-        <div className={styles.digitando} aria-label={respostaPendente.fase === "enviando" ? "Salvando sua resposta" : "Escrevendo próxima pergunta"}>
-          <span aria-hidden="true"><i /><i /><i /></span>
-          Escrevendo…
-        </div>
+          <small>Aguardando confirmação</small></div>
       </div>}
     </section>
     <div className={styles.rodape}>
+      <p id="estado-envio-onboarding" className={styles.estadoEnvio} role="status" aria-live="polite" aria-atomic="true">
+        {enviando ? (demorado ? "Ainda aguardando a confirmação. Não é preciso enviar novamente." : "Salvando sua resposta… Aguarde a confirmação.") : confirmacao}
+      </p>
       {mostrarConvite ? <div className={styles.conviteAcoes}><button className={styles.primario} type="button" onClick={() => setConviteAceito(true)}>Começar a preparar meu negócio</button><a href="/inicio">Fazer depois</a></div> :
       atual ? <>
         {seletorDeAtividade && <SeletorDeAtividade ocupado={ocupado}
@@ -202,6 +228,7 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
         {seletorDeAtividade && vozHabilitada && <div className={styles.vozAvulsa}><span>Ou fale seu tipo de negócio:</span>
           <RespostaPorVoz key={atual.id} ocupado={enviando || incerto} aoIniciar={iniciarVoz} aoParcial={receberParcial} aoTranscrever={receberVoz} aoOcupar={setVozOcupada} />
         </div>}
+        {seletorDeAtividade && !enviando && !incerto && vozIndisponivel && <VozIndisponivel estado={vozIndisponivel} />}
         {!seletorDeAtividade && atual.opcoes.length > 0 && <div className={styles.opcoes}>
           {atual.opcoes.map((opcao) => <button type="button" key={opcao.echo} disabled={ocupado}
             aria-pressed={atual.pedeCidade && opcao.echo !== "Brasil inteiro" ? alcanceLocal === opcao.echo : undefined}
@@ -213,7 +240,7 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
         </div>}
         {confirmandoNaoSei && atual.admiteNaoSei && <div className={styles.confirmacao} role="group" aria-label="Confirmar resposta pendente">
           <p>O gestor vai conferir este ponto com você na reunião.</p>
-          <div><button type="button" onClick={() => setConfirmandoNaoSei(false)}>Vou responder</button>
+          <div><button type="button" disabled={ocupado} onClick={() => setConfirmandoNaoSei(false)}>Vou responder</button>
             <button type="button" disabled={ocupado} onClick={() => void enviar(atual, NAO_SEI_BRIEFING, "chip")}>Ainda não sei mesmo</button></div>
         </div>}
         {atual.pedeCidade && alcanceLocal && <div className={styles.local}>
@@ -225,22 +252,27 @@ export function Chat({ businessId, inicial, vozHabilitada }: {
           <RespostaPorVoz key={atual.id} ocupado={enviando || incerto} aoIniciar={iniciarVoz} aoParcial={receberParcial} aoTranscrever={receberVoz} aoOcupar={setVozOcupada} />
           {falaParcial && <span className={styles.falaParcial}>{falaParcial}</span>}
         </div>}
-        {!seletorDeAtividade && atual.chipAbreTexto && !textoAberto && <button className={styles.textoLivre} type="button" onClick={() => setTextoAberto(true)}>Escrever do meu jeito</button>}
-        {mostrarTexto && <form className={styles.compositor} onSubmit={(e) => { e.preventDefault(); void enviar(atual, texto, "texto"); }}>
+        {atual.pedeCidade && !mostrarTexto && !enviando && !incerto && vozIndisponivel && <VozIndisponivel estado={vozIndisponivel} />}
+        {!seletorDeAtividade && atual.chipAbreTexto && !textoAberto && <button className={styles.textoLivre} type="button" disabled={ocupado} onClick={() => setTextoAberto(true)}>Escrever do meu jeito</button>}
+        {mostrarTexto && <form className={styles.compositor} aria-busy={enviando} onSubmit={(e) => { e.preventDefault(); void enviar(atual, texto, "texto"); }}>
           <label htmlFor="resposta-onboarding">{atual.fallbackLabel ?? "Sua resposta"}</label>
-          <textarea id="resposta-onboarding" ref={campo as React.RefObject<HTMLTextAreaElement>} rows={2} maxLength={800} value={texto}
-            onChange={(e) => setTexto(e.target.value)} placeholder={exemplos[atual.id] ?? atual.fallbackPlaceholder ?? "Escreva sua resposta"} disabled={ocupado}
+          <textarea id="resposta-onboarding" ref={campo as React.RefObject<HTMLTextAreaElement>} rows={2} maxLength={800} value={enviando ? "" : texto}
+            aria-describedby={erro ? "erro-envio-onboarding" : "estado-envio-onboarding"}
+            onChange={(e) => setTexto(e.target.value)} placeholder={enviando ? "Sua resposta está sendo salva…" : exemplos[atual.id] ?? atual.fallbackPlaceholder ?? "Escreva sua resposta"} disabled={enviando || vozOcupada} readOnly={incerto}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void enviar(atual, texto, "texto"); } }} />
           <div className={styles.compositorAcoes}>
-            <span className={styles.compositorNota}>Enter envia · Shift + Enter pula linha</span>
+            <span className={styles.compositorNota}>{enviando ? "Aguarde para continuar" : incerto ? "Texto preservado para você conferir ou copiar" : "Enter envia · Shift + Enter pula linha"}</span>
             {vozHabilitada && <RespostaPorVoz key={atual.id} ocupado={enviando || incerto} textoAtual={texto}
               aoIniciar={iniciarVoz} aoParcial={receberParcial}
               aoTranscrever={receberVoz}
               aoOcupar={setVozOcupada} />}
-            <button className={styles.enviar} type="submit" disabled={enviando || incerto || vozOcupada || !texto.trim()} aria-label={enviando ? "Salvando resposta" : "Enviar resposta"}><IconeEnviar /></button>
+            {!enviando && !incerto && vozIndisponivel && <VozIndisponivel estado={vozIndisponivel} compacta />}
+            <button className={styles.enviar} type="submit" disabled={enviando || incerto || vozOcupada || !texto.trim()} aria-label={enviando ? "Salvando resposta" : "Enviar resposta"}>
+              {enviando ? <span className={styles.envioIndicador} aria-hidden="true" /> : <IconeEnviar />}
+            </button>
           </div>
         </form>}
-        {erro && <div className={incerto ? "form-warning" : "form-error"} role="alert">{erro}{incerto && <button type="button" onClick={() => window.location.reload()}>Recarregar</button>}</div>}
+        {erro && <div id="erro-envio-onboarding" ref={aviso} tabIndex={-1} className={incerto ? "form-warning" : "form-error"} role="alert">{erro}{incerto && <button type="button" onClick={() => window.location.reload()}>Recarregar</button>}</div>}
         {editando && <button className={styles.cancelar} type="button" disabled={enviando || incerto || vozOcupada} onClick={cancelarEdicao}>Cancelar correção</button>}
       </> : <p>Você pode revisar suas respostas acima ou seguir para as contas.</p>}
     </div>

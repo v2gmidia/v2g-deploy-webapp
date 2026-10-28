@@ -15,6 +15,7 @@ import { resumoDaIntencao } from "@/lib/criativos/intencao-envio";
 import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
 import { UUID_GERACAO } from "@/lib/criativos/geracao/contrato-fila";
 import { catalogoBarbeariaDisponivel } from "@/lib/jev/catalogo-da-sessao";
+import { carregarContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio-da-sessao";
 
 export const metadata = tituloDaAba("/criativos");
 
@@ -25,7 +26,6 @@ type PecaDaCampanha = {
   file_name: string | null;
   storage_path: string | null;
   status: string | null;
-  published_at: string | null;
   external_ad_id: string | null;
   created_at: string;
   updated_at: string;
@@ -55,7 +55,8 @@ const dataCurta = new Intl.DateTimeFormat("pt-BR", {
 function grupoDaPeca(peca: PecaDaCampanha): GrupoDaGaleria {
   if (peca.arquivado_em || peca.status === "paused" || peca.status === "rejected") return "arquivados";
   if (pecaGerada(peca)) return "biblioteca";
-  if (peca.published_at || peca.external_ad_id) return "biblioteca";
+  // Vínculo registrado não atesta exibição atual; a situação é do negócio.
+  if (peca.external_ad_id) return "biblioteca";
   return "revisao";
 }
 
@@ -91,8 +92,12 @@ export default async function CriativosPage() {
   const referenciasDisponiveis = negocioId ? await catalogoBarbeariaDisponivel(negocioId) : false;
   const pedidosHabilitados = process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && Boolean(negocioId);
   const geracaoHabilitada = pedidosHabilitados && process.env.V2G_CREATIVE_BACKEND_ENABLED === "true";
-  const pedidosCriacao = pedidosHabilitados
-    ? await carregarPedidosDaSessao(negocioId!) : { pedidos: [], falhou: false };
+  const [contextoCriativo, pedidosCriacao] = await Promise.all([
+    negocioId && (revisaoHabilitada || pedidosHabilitados)
+      ? carregarContextoDoCriativo(negocioId) : Promise.resolve(null),
+    pedidosHabilitados ? carregarPedidosDaSessao(negocioId!)
+      : Promise.resolve({ pedidos: [], falhou: false }),
+  ]);
   const partesHoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo",
     year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   const parteHoje = (nome: Intl.DateTimeFormatPartTypes) => partesHoje.find((p) => p.type === nome)!.value;
@@ -100,7 +105,7 @@ export default async function CriativosPage() {
 
   const [pecasResposta, revisoesResposta] = negocioId ? await Promise.all([
     supabase.from("creatives")
-      .select("id, business_id, copy, file_name, storage_path, status, published_at, external_ad_id, created_at, updated_at, arquivado_em")
+      .select("id, business_id, copy, file_name, storage_path, status, external_ad_id, created_at, updated_at, arquivado_em")
       .eq("business_id", negocioId).eq("uso", "campanha")
       .order("created_at", { ascending: false }).limit(120),
     revisaoHabilitada
@@ -152,8 +157,8 @@ export default async function CriativosPage() {
       criadoEm: `Criado em ${dataCurta.format(new Date(peca.created_at))}`,
       detalhe: peca.arquivado_em ? `Arquivado em ${dataCurta.format(new Date(peca.arquivado_em))}` : null,
       acao: pecaGerada(peca) ? null : { rotulo: "Ver anúncio", href: "/anuncios" },
-      associacoes: peca.published_at || peca.external_ad_id
-        ? [{ nome: "Usado em anúncio", href: "/anuncios" }]
+      associacoes: peca.external_ad_id
+        ? [{ nome: "Vínculo registrado com anúncio", href: "/anuncios" }]
         : [],
     })),
     ...revisoes.map((pedido) => ({
@@ -179,18 +184,21 @@ export default async function CriativosPage() {
   const falhaDaGaleria = pecasResposta.error || revisoesResposta.error;
 
   return <>
+    {negocioId && (revisaoHabilitada || pedidosHabilitados) && !contextoCriativo
+      ? <p className="form-warning">Não conseguimos recuperar os dados do cadastro para este preparo. Atualize a página ou preencha os campos necessários; isso não significa que suas respostas foram apagadas.</p> : null}
     {revisaoInconsistente ? <p className="form-warning">Uma peça está com o vínculo do arquivo inconsistente; sua prévia não foi aberta. Peça ajuda à equipe para conferir o envio.</p> : null}
     <TelaDeCriativos
       itens={itens}
+      veiculacao={estado.veiculacao}
       bibliotecaFalhou={Boolean(falhaDaGaleria)}
       criacao={pedidosHabilitados ? <PedidoDeImagem key={negocioId} businessId={negocioId!}
         requestId={randomUUID()} hoje={hoje} pedidos={pedidosCriacao.pedidos}
         falhou={pedidosCriacao.falhou} geracaoHabilitada={geracaoHabilitada}
-        referenciasDisponiveis={referenciasDisponiveis} /> : null}
+        referenciasDisponiveis={referenciasDisponiveis} contexto={contextoCriativo ?? undefined} /> : null}
       envioDisponivel={revisaoHabilitada && Boolean(negocioId)}
       envio={revisaoHabilitada && negocioId
         ? <PedirRevisao key={negocioId} businessId={negocioId} hoje={hoje}
-          referenciasDisponiveis={referenciasDisponiveis} />
+          referenciasDisponiveis={referenciasDisponiveis} contexto={contextoCriativo ?? undefined} />
         : null}
       analise={amostra
         ? <AmostraDeVereditos qual={amostra} />

@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { calendarioDaReservaAindaConfigurado, conciliarReserva, horarioConfirmadoGoogle } from "../lib/agenda/conciliacao.ts";
+import { calendarioDaReservaAindaConfigurado, conciliarReserva, horarioConfirmadoGoogle,
+  selecionarReservaExterna } from "../lib/agenda/conciliacao.ts";
 import { descricaoDaReuniao } from "../lib/agenda/descricao-reuniao.ts";
 import { CriacaoGoogleRecusada, rejeicaoDefinitivaDaCriacao } from "../lib/agenda/falhas-criacao.ts";
 
@@ -11,6 +12,12 @@ const conferir = (atual, candidatos = [candidato]) => conciliarReserva(atual, "a
 const evento = { calendarId: "agenda-v2g", eventId: "evento-1", etag: "versao-1", status: "confirmed",
   inicio: "2026-10-14T13:00:00-03:00", fim: "2026-10-14T13:25:00-03:00",
   emailParticipante: "CLIENTE@example.com", cnpjInformado: "00000000000191" };
+const eventoExterno = { id: "evento-externo-1", etag: "versao-externa-1", status: "confirmed",
+  resumo: "Reunião inicial V2G (Cliente)",
+  descricao: "**Reservado por** Cliente cliente@example.com\n**CNPJ do negócio atendido** CNPJ 00.000.000/0001-91",
+  inicio: "2026-10-28T10:00:00-03:00", fim: "2026-10-28T10:25:00-03:00",
+  participantes: ["gestor@v2gmidia.com.br", "CLIENTE@example.com"],
+  htmlLink: "https://www.google.com/calendar/event?eid=seguro" };
 
 test("troca de calendário mantém a reserva bloqueada para revisão", () => {
   assert.equal(calendarioDaReservaAindaConfigurado("agenda-v2g", "agenda-v2g"), true);
@@ -53,6 +60,29 @@ test("e-mail ou calendário de outro negócio não confirma reunião", () => {
 
 test("duas compras do mesmo e-mail e CNPJ exigem revisão manual", () => {
   assert.deepEqual(conferir(evento, [candidato, { ...candidato, orderId: "pedido-2" }]),
+    { status: "revisao", motivo: "vinculo_ambiguo_ou_ausente" });
+});
+
+test("reserva da página pública só entra com título, evento, participante e CNPJ verificáveis", () => {
+  const resultado = selecionarReservaExterna([eventoExterno], "agenda-v2g", [candidato]);
+  assert.equal(resultado.status, "encontrada");
+  assert.equal(resultado.evento.id, eventoExterno.id);
+  const comHtml = selecionarReservaExterna([{ ...eventoExterno,
+    descricao: "<b>CNPJ do negócio atendido</b>: CNPJ&nbsp;00.000.000/0001-91" }], "agenda-v2g", [candidato]);
+  assert.equal(comHtml.status, "encontrada");
+});
+
+test("sem evento externo confirmado a reunião permanece pendente", () => {
+  assert.deepEqual(selecionarReservaExterna([], "agenda-v2g", [candidato]), { status: "ausente" });
+  assert.deepEqual(selecionarReservaExterna([{ ...eventoExterno, status: "cancelled" }], "agenda-v2g", [candidato]), { status: "ausente" });
+  assert.deepEqual(selecionarReservaExterna([{ ...eventoExterno, resumo: "Outro compromisso" }], "agenda-v2g", [candidato]), { status: "ausente" });
+});
+
+test("duplicidade externa ou dois negócios compatíveis exigem revisão e não liberam nova reserva", () => {
+  assert.deepEqual(selecionarReservaExterna([eventoExterno, { ...eventoExterno, id: "evento-externo-2" }], "agenda-v2g", [candidato]),
+    { status: "revisao", motivo: "mais_de_um_evento" });
+  const outroNegocio = { ...candidato, businessId: "negocio-2", orderId: "pedido-2" };
+  assert.deepEqual(selecionarReservaExterna([eventoExterno], "agenda-v2g", [candidato, outroNegocio]),
     { status: "revisao", motivo: "vinculo_ambiguo_ou_ausente" });
 });
 

@@ -6,6 +6,7 @@ import { test, beforeEach, after } from 'node:test';
 import { registerHooks } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import path from 'node:path';
+import { readFile } from 'node:fs/promises';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const allowed = new Set([
@@ -53,6 +54,7 @@ const marcaDoc = await import('../lib/onboarding/marca.ts');
 const { patchDoBlocoUm } = await import('../lib/onboarding/documento.ts');
 const { buscarAtividades } = await import('../lib/onboarding/atividades.ts');
 const { lerBriefingDeTrafego, lacunasParaReuniao, NAO_SEI_BRIEFING } = await import('../lib/onboarding/briefing-trafego.ts');
+const { validarInstagram, validarSite } = await import('../lib/onboarding/enderecos.ts');
 const oldTime = '2026-09-01T00:00:00.000Z';
 const resposta = texto => ({texto, echo:texto, origem:'texto', em:oldTime});
 const documentFixture = () => ({
@@ -895,4 +897,59 @@ test('ação repetida ou antiga não troca uma conta já fechada por não sei', 
   assert.equal((await saveConta({conta:'custo',escolha:'10',confirmando:true})).ok,false);
   assert.deepEqual(row,depois);
   assert.deepEqual(events,[]);
+});
+
+test('contas torna a espera visível, bloqueia repetição e preserva o rascunho em falha', async () => {
+  const fonte = await readFile(path.join(root, 'app/(fluxo)/onboarding/contas/Contas.tsx'), 'utf8');
+  const inicioEnvio = fonte.indexOf('setOperacao("salvar")');
+  const esperaServidor = fonte.indexOf('await salvarContaAction');
+  const limpezaDoRascunho = fonte.indexOf('setRascunho("")', esperaServidor);
+  const tratamentoDaFalha = fonte.indexOf('if (!r.ok)', esperaServidor);
+
+  assert.ok(inicioEnvio >= 0 && inicioEnvio < esperaServidor, 'o estado de espera começa antes da chamada lenta');
+  assert.match(fonte, /const indisponivel = enviando \|\| !!aviso/);
+  assert.match(fonte, /aria-busy=\{enviando\}/);
+  assert.match(fonte, /role="status" aria-live="polite"/);
+  assert.match(fonte, /Salvando sua resposta…/);
+  assert.match(fonte, /disabled=\{indisponivel\}/);
+  assert.ok(tratamentoDaFalha >= 0 && tratamentoDaFalha < limpezaDoRascunho, 'uma falha retorna antes de limpar a resposta digitada');
+});
+
+test('contas explica as três perguntas sem inventar valor e mantém não sei como resposta legítima', async () => {
+  const fonte = await readFile(path.join(root, 'app/(fluxo)/onboarding/contas/Contas.tsx'), 'utf8');
+  assert.match(fonte, /Qual é o ticket médio das suas vendas\?/);
+  assert.match(fonte, /O que entra nesse custo\?/);
+  assert.match(fonte, /qual valor mínimo precisa ficar com o seu negócio\?/);
+  assert.match(fonte, /Confirmar: não sei/);
+  assert.match(fonte, /aria-describedby="ajuda-custo"/);
+});
+
+test('marca normaliza perfis conhecidos do Instagram e rejeita texto livre', () => {
+  assert.equal(validarInstagram('  @Minha.Marca  '), '@minha.marca');
+  assert.equal(validarInstagram('https://www.instagram.com/Minha_Marca/'), '@minha_marca');
+  assert.equal(validarInstagram('instagram.com/Minha_Marca?hl=pt-br'), '@minha_marca');
+  assert.equal(validarInstagram('minha marca'), null);
+  assert.equal(validarInstagram('https://instagram.com/reel/abc'), null);
+  assert.equal(validarInstagram('@marca!'), null);
+});
+
+test('marca normaliza domínio com https e rejeita endereço inseguro ou sem domínio', () => {
+  assert.equal(validarSite('  exemplo.com.br  '), 'https://exemplo.com.br');
+  assert.equal(validarSite('https://exemplo.com.br/contato'), 'https://exemplo.com.br/contato');
+  assert.equal(validarSite('meu site.com.br'), null);
+  assert.equal(validarSite('localhost'), null);
+  assert.equal(validarSite('https://usuario:senha@exemplo.com.br'), null);
+});
+
+test('marca expõe estados reais de envio e erros junto aos campos', async () => {
+  const marcaFonte = await readFile(path.join(root, 'app/(fluxo)/onboarding/marca/Marca.tsx'), 'utf8');
+  const logoFonte = await readFile(path.join(root, 'app/(fluxo)/onboarding/marca/LogoDaMarca.tsx'), 'utf8');
+  assert.match(marcaFonte, /Salvando os dados da marca…/);
+  assert.match(marcaFonte, /aria-invalid=\{Boolean\(erroInstagram\)\}/);
+  assert.match(marcaFonte, /aria-invalid=\{Boolean\(erroSite\)\}/);
+  assert.match(marcaFonte, /Logo salvo/);
+  assert.match(marcaFonte, /Cores confirmadas/);
+  assert.match(logoFonte, /Preparando e enviando o logo…/);
+  assert.match(logoFonte, /className=\{styles\.arquivoInput\}/);
+  assert.match(logoFonte, /disabled=\{enviando \|\| !selecionado\}/);
 });

@@ -43,7 +43,7 @@ function leitura({ user = { id: 'perfil-autenticado' }, data = { onboarding: {} 
     'server-only': {},
     '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user } }) }, from: t => query(t, false) }) },
     '@/lib/supabase/admin': { createAdminClient: () => { chamadas.push(['admin']); return { from: t => query(t, true) }; } },
-    '@/lib/agenda/google': { agendaGoogleConfigurada: () => true },
+    '@/lib/agenda/google': { agendaGoogleConfigurada: () => true, agendaGoogleLeituraConfigurada: () => true },
     './marca': { fluxoAguardaReuniao: () => fluxo },
     './conclusao': { estadoDaConclusao: () => ({ concluido }), pendenciaDoOnboarding: (_, confirmada) => confirmada ? null : pendencia },
   });

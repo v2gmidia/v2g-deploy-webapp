@@ -34,7 +34,9 @@ const dados = (onboarding) => ({
 test("cadastro concluído continua com reunião pendente sem confirmação externa", () => {
   const pendencia = pendenciaDoOnboarding(dados(documentoCompleto()), false);
   assert.equal(pendencia?.href, "/onboarding/concluido");
+  assert.match(pendencia?.corpo ?? "", /informações do seu negócio estão salvas/);
   assert.match(pendencia?.corpo ?? "", /não comprova a reserva/);
+  assert.doesNotMatch(pendencia?.corpo ?? "", /reunião marcada|vamos chamar no WhatsApp/i);
 });
 
 test("reserva confirmada remove a pendência da reunião", () => {

@@ -10,13 +10,16 @@ import { solicitarRevisaoAction } from "./revisao-actions";
 import { OBJETIVOS_DO_ENVIO, validarIntencaoDoEnvio, type ObjetivoDoEnvio } from "@/lib/criativos/intencao-envio";
 import estilos from "./PedirRevisao.module.css";
 import { ReferenciasDoNicho } from "./ReferenciasDoNicho";
+import { contextoDesteNegocio, type ContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio";
 
 type Aviso = { tom: "notice" | "warning" | "error"; texto: string; motivos?: string[] };
 type Fase = "pronto" | "enviando" | "analisando";
 
-export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisponiveis = false }: {
+export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisponiveis = false, contexto }: {
   businessId: string; hoje: string; previa?: boolean; referenciasDisponiveis?: boolean;
+  contexto?: ContextoDoCriativo;
 }) {
+  const contextoSeguro = contextoDesteNegocio(contexto, businessId);
   const router = useRouter();
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [id, setId] = useState(() => crypto.randomUUID());
@@ -185,7 +188,11 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
           : <small>A data acompanha o pedido para o gestor conferir.</small>}
       </label>}
     </div>
-    {referenciasDisponiveis ? <ReferenciasDoNicho valor={referenciaId} escolher={setReferenciaId} desabilitado={fase !== "pronto"} /> : null}
+    {referenciasDisponiveis ? <ReferenciasDoNicho valor={referenciaId} escolher={setReferenciaId} desabilitado={fase !== "pronto"}
+      orientacao={{ objetivo: OBJETIVOS_DO_ENVIO.find(o => o.valor === objetivo)?.rotulo || "", promocao,
+        acao: objetivo === "whatsapp_messages" ? "Convidar a conversar pelo WhatsApp oficial da empresa."
+          : objetivo === "instagram_visits" ? "Convidar a visitar o perfil oficial da empresa no Instagram." : "",
+        validade: promocao ? validade : null, hoje }} contexto={contextoSeguro} /> : null}
     </div>
     <div className={estilos.rodapePreparo}><p>Confira os dados antes de enviar para revisão.</p>
       <button className="cta" type="submit" disabled={!preparoCompleto || fase !== "pronto"}>Conferir criativo<IconeSeta /></button>

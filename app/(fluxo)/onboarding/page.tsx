@@ -7,6 +7,7 @@ import { cnpjsDoComprador, type PedidoParaIdentificarNegocio } from "@/lib/multi
 import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
 import { tituloDaAba } from "@/lib/titulos";
 import { Marca } from "@/components/ui/Marca";
+import { estadoDaVoz } from "@/lib/onboarding/voz";
 import "./onboarding-editorial.css";
 
 export const metadata = tituloDaAba("/onboarding");
@@ -77,7 +78,10 @@ export default async function OnboardingPage() {
         </div>
       </header>
       <Chat businessId={businessId} inicial={respostas}
-        vozHabilitada={!!process.env.OPENAI_API_KEY && process.env.V2G_VOICE_TRANSCRIPTION_ENABLED !== "false"} />
+        estadoDaVoz={estadoDaVoz(
+          Boolean(process.env.OPENAI_API_KEY),
+          process.env.V2G_VOICE_TRANSCRIPTION_ENABLED === "false",
+        )} />
     </div>
   );
 }

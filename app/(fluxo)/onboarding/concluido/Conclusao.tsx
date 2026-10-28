@@ -1,6 +1,7 @@
 import { Marca } from "@/components/ui/Marca";
 import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { AgendaPropria } from "./AgendaPropria";
+import { AgendaExterna } from "./AgendaExterna";
 import type { EstadoAgenda } from "./agenda-actions";
 import styles from "./Conclusao.module.css";
 
@@ -33,23 +34,9 @@ export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }
       <p className="mission-tag">Sua primeira missão · passo 3 de 3</p>
       <h1 className="auth-h">Respostas guardadas. Vamos conversar?</h1>
       <p className="auth-sub">Escolha um horário de 25 minutos para alinhar seus anúncios com o gestor.</p>
-      {agenda.status === "legado" ? <>
-        <section className={styles.agendamento}>
-          <a className={styles.acaoPrincipal} href={AGENDA_INICIAL_URL} target="_blank" rel="noopener noreferrer">Escolher horário no Google</a>
-          {cnpjExibido && <div className={styles.identidade}>
-            <span>CPF ou CNPJ do contratante para informar no formulário</span>
-            <strong>{cnpjExibido}</strong>
-          </div>}
-          <p className={styles.orientacao}>Depois de reservar, o Google enviará um e-mail com a data, o link da reunião e as opções para remarcar ou cancelar.</p>
-        </section>
-        <section className={styles.reservaFeita}>
-          <div>
-            <h2>Já reservou?</h2>
-            <p>Use o e-mail do Google para consultar sua reserva. Enquanto a confirmação não chega à V2G, esta etapa continuará pendente no Início.</p>
-          </div>
-          <a className={styles.acaoSecundaria} href="/inicio">Ir para o Início</a>
-        </section>
-      </> : <AgendaPropria inicial={agenda} businessId={estado.businessId} />}
+      {agenda.status === "legado"
+        ? <AgendaExterna businessId={estado.businessId} url={AGENDA_INICIAL_URL} documento={cnpjExibido} />
+        : <AgendaPropria inicial={agenda} businessId={estado.businessId} />}
       <section className={styles.reuniao}>
         <h2>O que acontece na reunião</h2>
         <p>Vamos conferir o WhatsApp que recebe clientes, acessos e materiais do primeiro anúncio.</p>

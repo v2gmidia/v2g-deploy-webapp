@@ -57,11 +57,11 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
         <RemoverVariacao businessId={businessId} id={item.id} />
       </figure>)}
     </div>}
-    <form ref={formulario} action={enviar} className={styles.anexoForm}>
+    <form ref={formulario} action={enviar} className={styles.anexoForm} aria-busy={enviando}>
       <input type="hidden" name="businessId" value={businessId} />
       <label className={styles.anexoBotao} htmlFor="imagens-marca">＋ Anexar imagens</label>
       <input id="imagens-marca" type="file" name="arquivos" accept="image/png,image/jpeg,image/webp,image/avif,image/heic,image/heif" multiple aria-label="Escolher várias imagens da marca" onChange={(evento) => setSelecionados(Array.from(evento.target.files ?? [], (arquivo) => arquivo.name))} />
-      <span className={styles.anexoSelecionados}>{selecionados.length ? `${selecionados.length} selecionada(s): ${selecionados.join(", ")}` : "Escolha as imagens que tiver. Você pode voltar depois."}</span>
+      <span className={styles.anexoSelecionados} role="status" aria-live="polite">{selecionados.length ? `${selecionados.length} selecionada(s): ${selecionados.join(", ")}` : "Escolha as imagens que tiver. Você pode voltar depois."}</span>
       <button className={styles.anexoEnviar} type="submit" disabled={enviando || restantes === 0 || selecionados.length === 0} aria-label="Enviar imagens da marca">{enviando ? "Enviando…" : "↑ Enviar"}</button>
     </form>
     <p>{restantes === 0 ? "Limite atingido. Remova uma imagem para enviar outra." : "Você pode enviar em mais de uma rodada, até 12 imagens e 9 MB por rodada."}</p>

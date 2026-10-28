@@ -119,6 +119,13 @@
 .entrada-editorial .entrada-ajuda a { display: inline-flex; align-items: center; min-height: 44px; }
 .entrada-editorial .entrada-voltar { display: inline-flex; align-items: center; min-height: 44px; margin-top: 20px; font-size: 14px; }
 .entrada-editorial .entrada-nota { color: var(--ink-soft); font-size: 14px; line-height: 1.7; margin-bottom: 24px; }
+.entrada-editorial .entrada-confirmacao { text-align: center; overflow-wrap: anywhere; }
+.entrada-editorial .entrada-confirmacao-icone { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 24px; border-radius: 50%; background: var(--good-soft); color: var(--good); }
+.entrada-editorial .entrada-confirmacao-icone svg { width: 32px; height: 32px; stroke-width: 2; }
+.entrada-editorial .entrada-confirmacao > p { color: var(--ink-soft); font-size: 16px; line-height: 1.65; }
+.entrada-editorial .entrada-confirmacao .entrada-confirmacao-proximo { margin-top: 20px; color: var(--ink); }
+.entrada-editorial .entrada-confirmacao .cta { display: flex; align-items: center; justify-content: center; margin-top: 28px; }
+.entrada-editorial .entrada-confirmacao .entrada-voltar { margin-top: 12px; }
 .entrada-editorial .entrada-legal { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px 28px; padding-top: 16px; }
 .entrada-editorial .entrada-legal a { display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-soft); font-size: 12px; text-decoration: none; }
 .entrada-editorial .entrada-legal a:hover { text-decoration: underline; }

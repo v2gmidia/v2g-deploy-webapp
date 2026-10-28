@@ -88,13 +88,38 @@
 }
 
 .reservaFeita p,
-.reuniao p {
+.reuniao p,
+.reservaPendente p {
   max-width: 58ch;
   margin: 0;
   color: #49606a;
   font-size: 14px;
   line-height: 1.6;
 }
+
+.alertaDuplicidade {
+  margin: 24px 0 0;
+  padding: 14px 16px;
+  border: 1px solid #ba7d23;
+  border-radius: 6px;
+  background: #fff4de;
+  color: #35230a;
+  line-height: 1.55;
+}
+
+.reservaPendente {
+  margin-top: 30px;
+  padding: 24px;
+  border: 1px solid #83c5cf;
+  border-radius: 6px;
+  background: #e4f4f9;
+}
+
+.reservaPendente h2 { margin: 0 0 10px; color: #102a35; font-family: Archivo, Arial, sans-serif; font-size: 22px; }
+.reservaPendente .acaoPrincipal { margin-top: 16px; }
+.tentarNovamente { margin-top: 20px; padding-top: 16px; border-top: 1px solid #83c5cf; color: #49606a; }
+.tentarNovamente summary { color: #0b40da; font-weight: 700; cursor: pointer; }
+.tentarNovamente a { color: #0b40da; font-weight: 700; }
 
 .acaoSecundaria {
   flex: none;

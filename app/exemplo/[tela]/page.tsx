@@ -112,7 +112,7 @@ export default async function ExemploPage({
     if (!modulo) notFound();
     return <div className="auth-shell"><main className="auth-wrap"><div className="onb-v2">
       <header className="onb-v2-topo"><Marca editorial href="/inicio" /><span>Prévia local da interface</span></header>
-      <modulo.Chat businessId="00000000-0000-4000-8000-000000000004" inicial={{}} vozHabilitada={false} />
+      <modulo.Chat businessId="00000000-0000-4000-8000-000000000004" inicial={{}} estadoDaVoz="nao_configurada" />
     </div></main></div>;
   }
   if (tela === "onboarding-conversa-nicho") {
@@ -120,7 +120,7 @@ export default async function ExemploPage({
     if (!modulo) notFound();
     return <div className="auth-shell"><main className="auth-wrap"><div className="onb-v2">
       <header className="onb-v2-topo"><Marca editorial href="/inicio" /><span>Prévia local do tipo de negócio</span></header>
-      <modulo.Chat businessId="00000000-0000-4000-8000-000000000004" vozHabilitada={false}
+      <modulo.Chat businessId="00000000-0000-4000-8000-000000000004" estadoDaVoz="nao_configurada"
         inicial={{ nome: { texto: "Salão Exemplo", origem: "texto", echo: "Salão Exemplo", em: "2026-10-15T00:00:00.000Z" } }} />
     </div></main></div>;
   }
@@ -221,7 +221,8 @@ export default async function ExemploPage({
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
       <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} retencaoAtiva previa envioDisponivel={buscaCriativos.envio !== "indisponivel"}
         envio={buscaCriativos.envio === "indisponivel" ? null : <envio.PedirRevisao
-          businessId="f0000000-0000-4000-8000-000000000099" hoje={datas.hojeEmSaoPaulo()} previa />} />
+          businessId="f0000000-0000-4000-8000-000000000099" hoje={datas.hojeEmSaoPaulo()} previa
+          referenciasDisponiveis={buscaCriativos.referencias === "barbearia"} />} />
     </Casco>;
   }
 
@@ -237,13 +238,14 @@ export default async function ExemploPage({
   }
 
   if (tela === "criativos-pedido-duravel") {
+    const buscaPedido = await searchParams;
     const modulo = ehDesenvolvimento ? await import("@/app/(protected)/criativos/PedidoDeImagem") : null;
     if (!modulo) notFound();
     return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
       <modulo.PedidoDeImagem businessId="00000000-0000-4000-8000-000000000004"
         requestId="00000000-0000-4000-8000-000000000005" hoje={diaEmSaoPaulo(agora)}
-        pedidos={[]} falhou={false} previa />
+        pedidos={[]} falhou={false} previa referenciasDisponiveis={buscaPedido.referencias === "barbearia"} />
     </Casco>;
   }
 

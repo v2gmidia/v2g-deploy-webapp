@@ -1162,6 +1162,9 @@
 }
 
 /* QA: uma pendência compacta, sem deslocar o resumo para outra tela. */
+.v2g-editorial .inicio-resultados-aviso { margin-top: 32px; }
+.v2g-editorial .inicio-resultados-aviso h2 { font-size: var(--fs-bloco); font-weight: 500; }
+.v2g-editorial .inicio-resultados-aviso a { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
 .v2g-editorial .inicio-pendencia-compacta {
   display: flex;
   align-items: center;

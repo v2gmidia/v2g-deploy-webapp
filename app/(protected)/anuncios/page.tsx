@@ -357,10 +357,10 @@ function BackendNaoRespondeu() {
         </svg>
       </div>
       <h2>Não conseguimos atualizar seus resultados agora.</h2>
-      <p className="res-falha-sub">Sua campanha não mudou por causa disso.</p>
+      <p className="res-falha-sub">Ainda não conseguimos confirmar os dados deste negócio.</p>
       <p>
-        Os números vêm do Facebook, e ele não respondeu desta vez. Seus anúncios continuam
-        exatamente como estavam, e nada do que você já aprovou foi desfeito.
+        A leitura dos anúncios falhou. Isso não confirma a situação atual de uma campanha
+        nem altera uma campanha por si só.
       </p>
 
       <div className="res-falha-nota">
@@ -371,12 +371,10 @@ function BackendNaoRespondeu() {
         </svg>
         <div>
           <b>Por que isso acontece</b>
-          {/* Sem promessa de prazo: ninguém aqui mede quando o Facebook
-              volta. O "em até 48 horas" que já custou caro em produção
-              nasceu de uma frase gentil exatamente deste formato. */}
           <p>
-            Às vezes o Facebook demora para responder. Quando a conexão voltar, seus números
-            aparecem aqui de novo sozinhos — você não precisa fazer nada.
+            Pode faltar o vínculo com a conta de anúncios, a autorização de leitura
+            ou a resposta da fonte de dados. A equipe precisa conferir a causa antes
+            de apresentar números.
           </p>
         </div>
       </div>

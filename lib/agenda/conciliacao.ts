@@ -40,6 +40,52 @@ export type ConciliacaoDaReserva =
   | { status: "cancelado"; businessId: string; orderId: string;
     chaveEvento: string; versao: string };
 
+export type EventoExternoParaConciliar = {
+  id: string; etag: string | null; status: string; resumo: string | null; descricao: string | null;
+  inicio: string | null; fim: string | null; participantes: string[]; htmlLink: string | null;
+};
+
+export type ReservaExternaSelecionada = {
+  status: "encontrada"; evento: EventoExternoParaConciliar;
+} | { status: "ausente" } | { status: "revisao"; motivo: string };
+
+function documentoDoFormulario(descricao: string | null): string | null {
+  if (!descricao) return null;
+  const legivel = descricao.replace(/<[^>]*>/g, " ").replace(/\*+/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ").replace(/\s+/g, " ");
+  const trecho = legivel.match(/CNPJ do neg[oó]cio atendido\s*:?\s*(?:CNPJ|CPF)?\s*([0-9.\/-]+)/i)?.[1];
+  return trecho ? lerDocumentoContratante(trecho)?.numero ?? null : null;
+}
+
+/**
+ * Seleciona reserva criada pela página pública sem transformar coincidência em certeza.
+ * Mais de um evento ou mais de um pedido compatível exige revisão humana.
+ */
+export function selecionarReservaExterna(
+  eventos: EventoExternoParaConciliar[], calendarId: string, candidatos: VinculoEsperado[],
+): ReservaExternaSelecionada {
+  let encontrouIdentidadeExterna = false;
+  const compativeis = eventos.flatMap((evento) => {
+    if (evento.status !== "confirmed" || !evento.resumo?.startsWith("Reunião inicial V2G")
+      || !evento.etag || !evento.inicio || !evento.fim) return [];
+    const documentos = documentoDoFormulario(evento.descricao);
+    if (!documentos) return [];
+    const emails = [...new Set(evento.participantes.map((email) => email.trim().toLowerCase()))];
+    if (candidatos.some((candidato) => cnpjNumerico(candidato.cnpj) === documentos
+      && emails.includes(candidato.emailVerificado.trim().toLowerCase()))) encontrouIdentidadeExterna = true;
+    const conciliacoes = emails.map((emailParticipante) => conciliarReserva({
+      calendarId, eventId: evento.id, etag: evento.etag!, status: "confirmed",
+      inicio: evento.inicio!, fim: evento.fim!, emailParticipante, cnpjInformado: documentos,
+    }, calendarId, candidatos)).filter((resultado) => resultado.status === "reservado");
+    return conciliacoes.length === 1 ? [evento] : [];
+  });
+  if (compativeis.length === 0) return encontrouIdentidadeExterna
+    ? { status: "revisao", motivo: "vinculo_ambiguo_ou_ausente" }
+    : { status: "ausente" };
+  if (compativeis.length > 1) return { status: "revisao", motivo: "mais_de_um_evento" };
+  return { status: "encontrada", evento: compativeis[0]! };
+}
+
 /** Uma mudança de calendário não prova que o evento antigo desapareceu. */
 export function calendarioDaReservaAindaConfigurado(
   calendarIdDaReserva: string, calendarIdAtual: string | null,

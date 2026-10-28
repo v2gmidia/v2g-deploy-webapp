@@ -14,12 +14,26 @@ export function agendaGoogleConfigurada(): boolean {
     && !!process.env.GOOGLE_CALENDAR_ID;
 }
 
+/** Leitura da agenda externa pode ser ligada sem autorizar o WebApp a criar ou apagar eventos. */
+export function agendaGoogleLeituraConfigurada(): boolean {
+  return (agendaGoogleConfigurada() || process.env.V2G_AGENDA_EXTERNA_READ_ENABLED === "true")
+    && !!process.env.GOOGLE_CALENDAR_CLIENT_ID
+    && !!process.env.GOOGLE_CALENDAR_CLIENT_SECRET
+    && !!process.env.GOOGLE_CALENDAR_REFRESH_TOKEN
+    && !!process.env.GOOGLE_CALENDAR_ID;
+}
+
 export function calendarIdConfigurado(): string | null {
   return agendaGoogleConfigurada() ? process.env.GOOGLE_CALENDAR_ID! : null;
 }
 
+
+export function calendarIdLeituraConfigurado(): string | null {
+  return agendaGoogleLeituraConfigurada() ? process.env.GOOGLE_CALENDAR_ID! : null;
+}
+
 async function accessToken(): Promise<string> {
-  if (!agendaGoogleConfigurada()) throw new Error("agenda_nao_configurada");
+  if (!agendaGoogleLeituraConfigurada()) throw new Error("agenda_nao_configurada");
   const corpo = new URLSearchParams({
     client_id: process.env.GOOGLE_CALENDAR_CLIENT_ID!,
     client_secret: process.env.GOOGLE_CALENDAR_CLIENT_SECRET!,
@@ -113,7 +127,7 @@ export async function lerEventoGoogle(eventId: string): Promise<{
   id: string; etag: string | null; status: string; businessId: string | null; htmlLink: string | null;
   inicio: string | null; fim: string | null;
 } | null> {
-  const calendarId = calendarIdConfigurado();
+  const calendarId = calendarIdLeituraConfigurado();
   if (!calendarId) throw new Error("agenda_nao_configurada");
   const resposta = await chamarGoogle(`/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`, { method: "GET" });
   if (resposta.status === 404 || resposta.status === 410) return null;
@@ -136,6 +150,47 @@ export async function lerEventoGoogle(eventId: string): Promise<{
     htmlLink: "htmlLink" in dados && typeof dados.htmlLink === "string" ? dados.htmlLink : null,
     inicio, fim,
   };
+}
+
+export type EventoExternoGoogle = {
+  id: string; etag: string | null; status: string; htmlLink: string | null;
+  resumo: string | null; descricao: string | null; inicio: string | null; fim: string | null;
+  participantes: string[];
+};
+
+/** Lista somente uma janela limitada; não cria, altera nem responde eventos. */
+export async function listarEventosExternosGoogle(inicio: Date, fim: Date): Promise<EventoExternoGoogle[]> {
+  const calendarId = calendarIdLeituraConfigurado();
+  if (!calendarId) throw new Error("agenda_nao_configurada");
+  const encontrados: EventoExternoGoogle[] = [];
+  let pageToken: string | null = null;
+  do {
+    const params = new URLSearchParams({
+      timeMin: inicio.toISOString(), timeMax: fim.toISOString(), singleEvents: "true",
+      showDeleted: "true", maxResults: "2500",
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+    const resposta = await chamarGoogle(`/calendars/${encodeURIComponent(calendarId)}/events?${params}`, { method: "GET" });
+    if (!resposta.ok) throw new Error("falha_listagem_eventos_google");
+    const dados: unknown = await resposta.json();
+    if (!dados || typeof dados !== "object" || !("items" in dados) || !Array.isArray(dados.items))
+      throw new Error("listagem_eventos_google_invalida");
+    for (const bruto of dados.items) {
+      if (!bruto || typeof bruto !== "object" || !("id" in bruto) || typeof bruto.id !== "string") continue;
+      const campo = (nome: string) => nome in bruto && typeof bruto[nome as keyof typeof bruto] === "string"
+        ? bruto[nome as keyof typeof bruto] as string : null;
+      const instante = (nome: "start" | "end") => nome in bruto && bruto[nome] && typeof bruto[nome] === "object"
+        && "dateTime" in bruto[nome] && typeof bruto[nome].dateTime === "string" ? bruto[nome].dateTime : null;
+      const participantes = "attendees" in bruto && Array.isArray(bruto.attendees)
+        ? bruto.attendees.flatMap((item: unknown) => item && typeof item === "object" && "email" in item && typeof item.email === "string" ? [item.email] : [])
+        : [];
+      encontrados.push({ id: bruto.id, etag: campo("etag"), status: campo("status") ?? "unknown",
+        htmlLink: campo("htmlLink"), resumo: campo("summary"), descricao: campo("description"),
+        inicio: instante("start"), fim: instante("end"), participantes });
+    }
+    pageToken = "nextPageToken" in dados && typeof dados.nextPageToken === "string" ? dados.nextPageToken : null;
+  } while (pageToken);
+  return encontrados;
 }
 
 export async function apagarEventoGoogle(eventId: string): Promise<boolean> {

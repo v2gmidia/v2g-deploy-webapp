@@ -57,7 +57,9 @@ export function AgendaPropria({ inicial, businessId }: {
     {estado.url && <p><a href={estado.url} target="_blank" rel="noopener noreferrer">Ver no Google Agenda</a></p>}
     <p>Você também recebe o convite no e-mail confirmado da compra. Há apenas uma reserva ativa para este negócio.</p>
     <a className={styles.primario} href="/inicio">Conhecer meu painel →</a>
-    {!estado.podeRemarcar ?
+    {!estado.gerenciadaNoApp ?
+      <p>Esta reserva veio da página pública do Google. Use o e-mail de confirmação para remarcar ou cancelar; o WebApp apenas confere o estado do evento.</p> :
+      !estado.podeRemarcar ?
       <p>O prazo para trocar o horário terminou. Se não puder comparecer, <a href="https://wa.me/5521936182176?text=Oi!%20N%C3%A3o%20vou%20conseguir%20comparecer%20%C3%A0%20reuni%C3%A3o%20inicial%20da%20V2G." target="_blank" rel="noopener noreferrer">avise a equipe</a>.</p> :
       !confirmarCancelamento ? <button className="chip-opt" type="button" onClick={() => setConfirmarCancelamento(true)}>Cancelar ou trocar horário</button> :
       <div role="group" aria-label="Confirmar cancelamento">

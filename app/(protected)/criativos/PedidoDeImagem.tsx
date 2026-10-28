@@ -7,10 +7,13 @@ import styles from "./pedido-de-imagem.module.css";
 import { AndamentoDaImagem } from "./AndamentoDaImagem";
 import { ReferenciasDoNicho } from "./ReferenciasDoNicho";
 import { URL_BIBLIOTECA } from "@/lib/jev/catalogo-barbearia";
+import { contextoDesteNegocio, type ContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio";
+import { ContextoDoNegocio, OrigemDoCampo } from "./ContextoDoNegocio";
 
-export function PedidoDeImagem({ businessId, requestId, hoje, pedidos, falhou, previa = false, geracaoHabilitada = false, referenciasDisponiveis = false }: {
+export function PedidoDeImagem({ businessId, requestId, hoje, pedidos, falhou, previa = false, geracaoHabilitada = false, referenciasDisponiveis = false, contexto }: {
   businessId: string; requestId: string; hoje: string;
   pedidos: PedidoDeImagem[]; falhou: boolean; previa?: boolean; geracaoHabilitada?: boolean; referenciasDisponiveis?: boolean;
+  contexto?: ContextoDoCriativo;
 }) {
   const [id, setId] = useState(requestId);
   return <section className={styles.secao} aria-labelledby="criar-peca-titulo">
@@ -19,6 +22,7 @@ export function PedidoDeImagem({ businessId, requestId, hoje, pedidos, falhou, p
     <p>{geracaoHabilitada ? "Conte o que precisa aparecer. O pedido fica guardado neste negócio e você acompanha o andamento por aqui. A criação ainda depende de liberação." : "Conte o que precisa aparecer. O pedido fica guardado, mas a criação automática ainda não está disponível."}</p>
     <Formulario key={id} businessId={businessId} requestId={id} hoje={hoje}
       previa={previa} geracaoHabilitada={geracaoHabilitada} referenciasDisponiveis={referenciasDisponiveis}
+      contexto={contextoDesteNegocio(contexto, businessId)}
       novoPedido={() => setId(crypto.randomUUID())} />
     <div className={styles.historico} aria-labelledby="pedidos-criacao-titulo">
       <h3 id="pedidos-criacao-titulo">Pedidos de criação</h3>
@@ -42,14 +46,15 @@ export function PedidoDeImagem({ businessId, requestId, hoje, pedidos, falhou, p
   </section>;
 }
 
-function Formulario({ businessId, requestId, hoje, novoPedido, previa, geracaoHabilitada, referenciasDisponiveis }: {
+function Formulario({ businessId, requestId, hoje, novoPedido, previa, geracaoHabilitada, referenciasDisponiveis, contexto }: {
   businessId: string; requestId: string; hoje: string; novoPedido: () => void; previa: boolean; geracaoHabilitada: boolean; referenciasDisponiveis: boolean;
+  contexto?: ContextoDoCriativo;
 }) {
   const [estado, action, pendente] = useActionState<EstadoDoPedido, FormData>(previa
     ? async () => ({ erro: "Prévia local: o pedido não foi guardado. O envio real exige sessão autorizada e persistência habilitada." })
     : guardarPedidoAction, {});
-  const [objetivo, setObjetivo] = useState("");
-  const [oferta, setOferta] = useState("");
+  const [objetivo, setObjetivo] = useState(contexto?.objetivo?.valor ?? "");
+  const [oferta, setOferta] = useState(contexto?.oferta?.valor ?? "");
   const [acao, setAcao] = useState("");
   const [promocao, setPromocao] = useState(false);
   const [validade, setValidade] = useState("");
@@ -61,18 +66,22 @@ function Formulario({ businessId, requestId, hoje, novoPedido, previa, geracaoHa
     <input type="hidden" name="requestId" value={requestId} />
     <input type="hidden" name="businessId" value={businessId} />
     <input type="hidden" name="referenciaId" value={referenciaId} />
+    <ContextoDoNegocio contexto={contexto} />
     <fieldset disabled={travado}>
       <legend className="sr-only">Dados do pedido de criação</legend>
       <label htmlFor="criacao-objetivo">Qual é o objetivo desta peça?</label>
       <textarea id="criacao-objetivo" name="objetivo" rows={2} required minLength={2} maxLength={500}
         value={objetivo} onChange={(e) => setObjetivo(e.target.value)} placeholder="Ex.: apresentar um serviço novo" />
+      <OrigemDoCampo campo={contexto?.objetivo} valor={objetivo} />
       <label htmlFor="criacao-oferta">O que será anunciado?</label>
       <textarea id="criacao-oferta" name="oferta" rows={3} required minLength={2} maxLength={500}
         value={oferta} onChange={(e) => setOferta(e.target.value)} placeholder="Produto, serviço ou oferta; inclua preço somente se for real" />
+      <OrigemDoCampo campo={contexto?.oferta} valor={oferta} />
       <label htmlFor="criacao-acao">O que a pessoa deve fazer depois?</label>
       <input id="criacao-acao" name="acao" required minLength={2} maxLength={200}
         value={acao} onChange={(e) => setAcao(e.target.value)} placeholder="Ex.: chamar no WhatsApp da empresa" />
-      {referenciasDisponiveis ? <ReferenciasDoNicho valor={referenciaId} escolher={setReferenciaId} desabilitado={travado} /> : null}
+      {referenciasDisponiveis ? <ReferenciasDoNicho valor={referenciaId} escolher={setReferenciaId} desabilitado={travado}
+        orientacao={{ objetivo, oferta, acao, promocao, validade: promocao ? validade : null, hoje }} contexto={contexto} /> : null}
       <label className={styles.opcao}><input type="checkbox" name="promocao" checked={promocao}
         onChange={(e) => setPromocao(e.target.checked)} />É uma promoção por tempo limitado</label>
       {promocao ? <><label htmlFor="criacao-validade">Até quando vale?</label>

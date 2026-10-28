@@ -10,6 +10,8 @@ import type { ConsolidadoDoNegocio } from "@/lib/dia-seguinte/tipos";
 import { SeletorDePeriodo } from "./SeletorDePeriodo";
 import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
 import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
+import { cabeRecepcaoDoCadastro, resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
+import { RecepcaoDoCadastro, type RecepcaoOnboarding } from "./RecepcaoDoCadastro";
 import {
   estadoNaLista,
   fasesDaCadeia,
@@ -266,6 +268,7 @@ export function TelaDoInicio({
   diaDaPergunta,
   atrasados,
   pendenciaOnboarding = null,
+  recepcaoOnboarding = null,
   falhaPendencia = false,
   intervalo,
   acumuladoDoPeriodo,
@@ -279,6 +282,7 @@ export function TelaDoInicio({
   diaDaPergunta: string;
   atrasados: string[];
   pendenciaOnboarding?: PendenciaDoOnboarding | null;
+  recepcaoOnboarding?: RecepcaoOnboarding | null;
   falhaPendencia?: boolean;
   intervalo?: IntervaloDoInicio;
   /** Só os resultados mudam com as datas; jornada e perguntas usam o estado atual. */
@@ -321,6 +325,21 @@ export function TelaDoInicio({
   const temProximoAcionavel = pendenciaOnboarding !== null || Boolean(proximo?.acao);
   const linkDosAnuncios = intervalo
     ? `/anuncios?desde=${intervalo.desde}&ate=${intervalo.ate}` : "/anuncios";
+
+  // Cadastro e campanha são jornadas diferentes. Celebrar o cadastro não
+  // conclui conexão, criação ou publicação, nem comprova uma reserva Google.
+  if (recepcaoOnboarding && !temNumero && cabeRecepcaoDoCadastro(estado)) return (
+    <div className="inicio-editorial">
+      {faixa}
+      <RecepcaoDoCadastro {...recepcaoOnboarding} />
+      {acumuladoDoPeriodo === null && resultadosSaoEsperados(estado) && (
+        <section className="inicio-resultados-aviso" aria-labelledby="resultados-indisponiveis-titulo">
+          <h2 id="resultados-indisponiveis-titulo">Resultados dos anúncios</h2>
+          <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Seu cadastro continua salvo. <a href={intervalo ? `/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}` : "/inicio"}>Tentar novamente</a></p>
+        </section>
+      )}
+    </div>
+  );
 
   // ============================================================
   // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
@@ -469,7 +488,7 @@ export function TelaDoInicio({
         {faixa}
         <CabecalhoDoInicio intervalo={intervalo} />
         {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do negócio agora. Tente novamente.</p>}
-        {acumuladoDoPeriodo === null && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}
+        {acumuladoDoPeriodo === null && resultadosSaoEsperados(estado) && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}
 
         {/* A tarefa vem da pendência real do onboarding ou da cadeia de execução. */}
         <div className={`inicio-topo${temProximoAcionavel ? " com-acao" : ""}`}>
