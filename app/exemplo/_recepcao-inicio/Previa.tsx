@@ -13,6 +13,7 @@ export function PreviaRecepcao({ caso }: { caso: string }) {
       intervalo={intervaloDoInicio({}, "2026-10-27")}
       acumuladoDoPeriodo={caso === "metricas" || caso === "operacao" ? null : undefined}
       recepcaoOnboarding={{
+        businessId: estado.negocioId ?? "negocio-de-exemplo",
         reserva: caso === "confirmada" ? { starts_at: "2026-10-30T17:00:00Z", ends_at: "2026-10-30T17:30:00Z" } : null,
         falhaReuniao: caso === "agenda",
       }} />

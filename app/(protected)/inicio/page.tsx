@@ -204,7 +204,7 @@ export default async function InicioPage({
       diaDaPergunta={diaDaPergunta}
       atrasados={atrasados}
       pendenciaOnboarding={pendenciaOnboarding}
-      recepcaoOnboarding={leituraDaPendencia.cadastroConcluido ? { reserva, falhaReuniao: leituraDaPendencia.falha } : null}
+      recepcaoOnboarding={leituraDaPendencia.cadastroConcluido && estado.negocioId ? { businessId: estado.negocioId, reserva, falhaReuniao: leituraDaPendencia.falha } : null}
       falhaPendencia={leituraDaPendencia.falha}
       intervalo={intervalo}
       acumuladoDoPeriodo={acumuladoDoPeriodo}

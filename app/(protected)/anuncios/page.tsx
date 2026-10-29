@@ -172,7 +172,7 @@ export default async function AnunciosPage({ searchParams }: {
       </div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
 
-      {reprovadas.length > 0 ? (
+      {resultado.estado === "indisponivel" ? null : reprovadas.length > 0 ? (
         <section className="hero-destaque">
           <span className="eyebrow">Precisa de você</span>
           <p className="hero-frase">

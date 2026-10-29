@@ -14,6 +14,7 @@ import type {
   ExecucaoDoNegocio,
 } from "@/lib/dia-seguinte/tipos";
 import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
+import { estadoDaConclusao } from "@/lib/onboarding/conclusao";
 import { andamentoDaExecucao } from "@/lib/pipeline/relogios";
 import {
   COLUNAS_DO_JULGAMENTO,
@@ -398,8 +399,12 @@ export async function estadoDoCliente(
   const esperandoPublicacao = listaDeCampanhas.filter((c) => c.published_at === null);
 
   const cadastro = montarCadastro(linha);
+  // As perguntas operacionais do backend ainda podem precisar de ajuste,
+  // mas não tornam incompleto um onboarding que o cliente já concluiu.
+  // O envio ao backend continua usando `montarCadastro` sem esta dispensa.
+  const onboardingConcluido = estadoDaConclusao(linha).concluido;
   const resumo = resumirPendencias(
-    cadastro.completo ? [] : cadastro.pendencias,
+    onboardingConcluido || cadastro.completo ? [] : cadastro.pendencias,
     agora,
   );
 

@@ -326,20 +326,8 @@ export function TelaDoInicio({
   const linkDosAnuncios = intervalo
     ? `/anuncios?desde=${intervalo.desde}&ate=${intervalo.ate}` : "/anuncios";
 
-  // Cadastro e campanha são jornadas diferentes. Celebrar o cadastro não
-  // conclui conexão, criação ou publicação, nem comprova uma reserva Google.
-  if (recepcaoOnboarding && !temNumero && cabeRecepcaoDoCadastro(estado)) return (
-    <div className="inicio-editorial">
-      {faixa}
-      <RecepcaoDoCadastro {...recepcaoOnboarding} />
-      {acumuladoDoPeriodo === null && resultadosSaoEsperados(estado) && (
-        <section className="inicio-resultados-aviso" aria-labelledby="resultados-indisponiveis-titulo">
-          <h2 id="resultados-indisponiveis-titulo">Resultados dos anúncios</h2>
-          <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Seu cadastro continua salvo. <a href={intervalo ? `/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}` : "/inicio"}>Tentar novamente</a></p>
-        </section>
-      )}
-    </div>
-  );
+  // A conclusão é mostrada uma vez por negócio, sem substituir a situação
+  // atual. Se a leitura falhar, a pessoa ainda vê o próximo passo e o aviso.
 
   // ============================================================
   // O CARD DA PERGUNTA DIÁRIA APARECE NAS DUAS TELAS DA `/inicio`.
@@ -486,6 +474,9 @@ export function TelaDoInicio({
     return (
       <div className="inicio-editorial">
         {faixa}
+        {recepcaoOnboarding && estado.negocioId && cabeRecepcaoDoCadastro(estado) && (
+          <RecepcaoDoCadastro {...recepcaoOnboarding} businessId={estado.negocioId} />
+        )}
         <CabecalhoDoInicio intervalo={intervalo} />
         {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do negócio agora. Tente novamente.</p>}
         {acumuladoDoPeriodo === null && resultadosSaoEsperados(estado) && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}

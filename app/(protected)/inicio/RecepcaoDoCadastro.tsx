@@ -1,6 +1,10 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import styles from "./RecepcaoDoCadastro.module.css";
 
 export interface RecepcaoOnboarding {
+  businessId: string;
   reserva: { starts_at: string; ends_at: string } | null;
   falhaReuniao: boolean;
 }
@@ -13,7 +17,21 @@ function horarioDaReuniao(reserva: NonNullable<RecepcaoOnboarding["reserva"]>) {
   return `${dia.format(inicio)}, das ${hora.format(inicio)} às ${hora.format(fim)} (Brasília).`;
 }
 
-export function RecepcaoDoCadastro({ reserva, falhaReuniao }: RecepcaoOnboarding) {
+export function RecepcaoDoCadastro({ businessId, reserva, falhaReuniao }: RecepcaoOnboarding) {
+  const [visivel, setVisivel] = useState(false);
+  const chave = `v2g:inicio:cadastro-concluido:v1:${businessId}`;
+  useEffect(() => {
+    try {
+      // Uma celebração por negócio neste navegador; o estado real segue no servidor.
+      if (window.localStorage.getItem(chave) === null) {
+        window.localStorage.setItem(chave, "visto");
+        setVisivel(true);
+      }
+    } catch {
+      setVisivel(true);
+    }
+  }, [chave]);
+  if (!visivel) return null;
   const confirmada = reserva !== null && !falhaReuniao;
   const horario = confirmada ? horarioDaReuniao(reserva) : null;
   return <section className={styles.recepcao} aria-labelledby="cadastro-concluido-titulo">
@@ -21,6 +39,7 @@ export function RecepcaoDoCadastro({ reserva, falhaReuniao }: RecepcaoOnboarding
       <span className={styles.concluido} aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m5 12 4 4L19 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></span>
       <div><h1 id="cadastro-concluido-titulo">Cadastro concluído!</h1>
         <p>Você terminou esta etapa. As respostas sobre seu negócio, as contas e as informações da marca estão salvas.</p></div>
+      <button type="button" className={styles.dispensar} onClick={() => setVisivel(false)} aria-label="Fechar confirmação do cadastro">Fechar</button>
     </header>
 
     <ol className={styles.progresso} aria-label="Do cadastro ao planejamento dos anúncios">
