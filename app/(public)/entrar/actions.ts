@@ -7,6 +7,9 @@ import { vincularComprasAprovadas } from "@/lib/contratacao/vincular";
 import { destinoLocalSeguro } from "@/lib/auth-destino";
 import { validarNovaSenha } from "@/lib/auth-senha";
 import { lerDocumentoContratante } from "@/lib/contratacao/documento-contratante";
+import { idDoRetornoContratado } from "@/lib/contratacao/acesso-contratado";
+import { permiteCadastroContratado } from "@/lib/contratacao/cadastro-contratado";
+import { permiteCadastroPorCompra } from "@/lib/contratacao/cadastro-por-compra";
 import {
   ehContaJaExistente,
   mensagemDeErroAuth,
@@ -74,21 +77,20 @@ export async function signUpAction(
   const erroSenha = validarNovaSenha(senha, confirmarSenha);
   if (erroSenha) return { error: erroSenha };
 
-  // Nunca criar conta nova sem pedido aprovado. O mesmo retorno neutro evita
+  // Pedido aprovado OU convite explicito por contratacao historica conferida.
+  // O mesmo retorno neutro evita
   // revelar se um e-mail pertence a um comprador ou a uma conta existente.
   try {
     const admin = createAdminClient();
-    const { data: pedido, error: erroPedido } = await admin
-      .from("commercial_orders")
-      .select("id")
-      .eq("buyer_email", email)
-      .eq("cnpj", cnpj)
-      .eq("status", "payment_approved")
-      .not("business_id", "is", null)
-      .limit(1)
-      .maybeSingle();
-    if (erroPedido) return { error: "Não foi possível conferir seu acesso. Tente novamente." };
-    if (!pedido) return { message: MENSAGEM_CADASTRO_NEUTRA };
+    const convite = idDoRetornoContratado(safeNextPath(formData));
+    if (convite) {
+      if (!await permiteCadastroContratado(admin, convite, email, cnpj))
+        return { message: MENSAGEM_CADASTRO_NEUTRA };
+    } else {
+      const permitido = await permiteCadastroPorCompra(admin,email,cnpj);
+      if (permitido === null) return { error: "Não foi possível conferir seu acesso. Tente novamente." };
+      if (!permitido) return { message: MENSAGEM_CADASTRO_NEUTRA };
+    }
   } catch {
     return { error: "Não foi possível conferir seu acesso. Tente novamente." };
   }
@@ -100,7 +102,9 @@ export async function signUpAction(
     email,
     password: senha,
     options: {
-      data: { full_name: nome, whatsapp },
+      data: { full_name: nome, whatsapp,
+        ...(idDoRetornoContratado(safeNextPath(formData)) ? {access_flow:"historical_contract"} : {}),
+      },
       emailRedirectTo: `${siteUrl}/auth/confirmar`,
     },
   });

@@ -6,6 +6,8 @@ import { vincularComprasAprovadasComCliente } from "@/lib/contratacao/vincular-c
 
 /** Vincula compras aprovadas pelo e-mail verificado; falha mantém acesso fechado. */
 export async function vincularComprasAprovadas(user: User): Promise<void> {
+  // Denial-only marker: never grants permissions. Historical acceptance uses an explicit ID.
+  if (user.user_metadata?.access_flow === "historical_contract") return;
   if (!user.email || !user.email_confirmed_at) return;
   try {
     await vincularComprasAprovadasComCliente(createAdminClient(), user);

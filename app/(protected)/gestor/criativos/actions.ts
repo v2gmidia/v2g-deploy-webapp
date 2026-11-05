@@ -1,9 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { createHash } from "node:crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { BUCKET_REVISAO, caminhoConfereComRevisao } from "@/lib/criativos/revisao";
+import { BUCKET_REVISAO, caminhoConfereComRevisao, TAMANHO_MAXIMO_REVISAO, tipoRealDaImagem } from "@/lib/criativos/revisao";
 import { sincronizarTarefaDeRevisao } from "@/lib/gestor/sincronizar-revisao";
 import { hojeEmSaoPaulo, impedimentoParaAprovarEnvio } from "@/lib/criativos/intencao-envio";
 
@@ -14,8 +15,8 @@ export async function revisarPecaAction(_anterior: EstadoDaRevisao,
   if (process.env.V2G_CREATIVE_REVIEW_ENABLED !== "true")
     return { erro: "A fila de revisão não está disponível neste ambiente." };
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.app_metadata?.papel !== "operador") return { erro: "Acesso não autorizado." };
+  const { data: { user }, error: erroSessao } = await supabase.auth.getUser();
+  if (erroSessao || user?.app_metadata?.papel !== "operador") return { erro: "Acesso não autorizado." };
   const id = dados.get("id");
   const decisao = dados.get("decisao");
   const nota = dados.get("nota");
@@ -27,7 +28,7 @@ export async function revisarPecaAction(_anterior: EstadoDaRevisao,
   try {
     const admin = createAdminClient();
     const pendente = await admin.from("creative_review_requests")
-      .select("id, business_id, file_path, upload_intent").eq("id", id).eq("status", "awaiting_review")
+      .select("id, business_id, file_path, sha256, size_bytes, mime_type, upload_intent").eq("id", id).eq("status", "awaiting_review")
       .maybeSingle();
     if (pendente.error) return { erro: "Não foi possível conferir a peça. Tente novamente." };
     if (!pendente.data) return { erro: "Esta peça já foi decidida ou não está mais na fila. Atualize a página." };
@@ -37,23 +38,31 @@ export async function revisarPecaAction(_anterior: EstadoDaRevisao,
       const impedimento = impedimentoParaAprovarEnvio(pendente.data.upload_intent, hojeEmSaoPaulo());
       if (impedimento) return { erro: impedimento };
     }
-    if (process.env.V2G_MANAGER_WORK_ENABLED === "true") {
-      const conta = await admin.from("manager_accounts").select("operator_profile_id")
-        .eq("business_id", pendente.data.business_id).maybeSingle();
-      if (conta.error) return { erro: "Não foi possível conferir o gestor responsável. Tente novamente." };
-      if (conta.data?.operator_profile_id !== user.id)
-        return { erro: "Só o gestor responsável por esta conta pode decidir a revisão." };
-    }
+    // A opção de tarefas não concede acesso à revisão de outras carteiras.
+    const conta = await admin.from("manager_accounts").select("business_id, operator_profile_id")
+      .eq("business_id", pendente.data.business_id).eq("operator_profile_id", user.id).maybeSingle();
+    if (conta.error) return { erro: "Não foi possível conferir o gestor responsável. Tente novamente." };
+    if (conta.data?.business_id !== pendente.data.business_id || conta.data?.operator_profile_id !== user.id)
+      return { erro: "Só o gestor responsável por esta conta pode decidir a revisão." };
     // A action também pode ser chamada sem passar pela tela. Confirme que o
     // arquivo privado existe antes de aceitar uma decisão sobre a peça.
     const arquivo = await admin.storage.from(BUCKET_REVISAO).download(pendente.data.file_path);
     if (arquivo.error || !arquivo.data)
       return { erro: "A imagem não está disponível agora. Não registre a decisão sem conferir a peça." };
+    if (!Number.isInteger(pendente.data.size_bytes) || pendente.data.size_bytes < 1 ||
+        pendente.data.size_bytes > TAMANHO_MAXIMO_REVISAO || arquivo.data.size !== pendente.data.size_bytes ||
+        typeof pendente.data.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(pendente.data.sha256))
+      return { erro: "Não foi possível confirmar a versão enviada. Atualize a fila antes de decidir." };
+    const bytes = new Uint8Array(await arquivo.data.arrayBuffer());
+    if (tipoRealDaImagem(bytes) !== pendente.data.mime_type ||
+        createHash("sha256").update(bytes).digest("hex") !== pendente.data.sha256)
+      return { erro: "O arquivo está diferente da versão enviada. Não registre a decisão; peça a conferência do envio." };
     const registro = await admin.from("creative_review_requests")
       .update({ status: decisao, review_note: nota.trim() || null,
         reviewed_by: user.id, reviewed_at: new Date().toISOString(), updated_at: new Date().toISOString() })
       .eq("id", id).eq("business_id", pendente.data.business_id)
       .eq("file_path", pendente.data.file_path)
+      .eq("sha256", pendente.data.sha256)
       .eq("status", "awaiting_review").select("id").maybeSingle();
     if (registro.error) return { erro: "Não foi possível registrar a decisão. Tente novamente." };
     if (!registro.data) return { erro: "Esta peça já foi decidida ou não está mais na fila. Atualize a página." };
@@ -68,6 +77,7 @@ export async function revisarPecaAction(_anterior: EstadoDaRevisao,
     revalidatePath("/gestor/criativos");
     revalidatePath("/gestor/tarefas");
     revalidatePath("/gestor");
+    revalidatePath("/supergestor");
     revalidatePath("/criativos");
     return { ok: tarefaPendente
       ? "Decisão registrada. Confira a tarefa interna de revisão, que pode continuar aberta. A publicação da campanha continua manual."
@@ -84,8 +94,8 @@ export async function sincronizarTarefaPecaAction(_anterior: EstadoDaRevisao,
       process.env.V2G_MANAGER_WORK_ENABLED !== "true")
     return { erro: "A fila interna não está ativa neste ambiente." };
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.app_metadata?.papel !== "operador") return { erro: "Acesso não autorizado." };
+  const { data: { user }, error: erroSessao } = await supabase.auth.getUser();
+  if (erroSessao || user?.app_metadata?.papel !== "operador") return { erro: "Acesso não autorizado." };
   const id = dados.get("id");
   if (typeof id !== "string" || !/^[0-9a-f-]{36}$/i.test(id))
     return { erro: "Peça inválida." };

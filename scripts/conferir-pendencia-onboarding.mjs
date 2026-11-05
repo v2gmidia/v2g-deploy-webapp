@@ -69,3 +69,10 @@ test("o Início lê a execução pela rota do backend, sem depender da tabela lo
   assert.match(fonte, /execucaoDoNegocio\(/);
   assert.match(fonte, /const execucao = execucaoDoDiaSeguinte/);
 });
+
+test("o Início aplica a agenda conciliada somente ao negócio ativo", () => {
+  const fonte = readFileSync("app/(protected)/inicio/page.tsx", "utf8");
+  assert.match(fonte, /carregarAgendaAction\(estado\.negocioId\)/);
+  assert.match(fonte, /aplicarAgendaConferida\(leituraDaPendencia, agendaConferida\)/);
+  assert.doesNotMatch(fonte, /carregarAgendaAction\([^)]*searchParams/);
+});

@@ -9,6 +9,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const allowed = new Set([
   "lib/multiconta/ativo.ts", "lib/multiconta/escolha.ts",
   "lib/multiconta/elegibilidade.ts", "lib/multiconta/paginacao.ts",
+  "lib/contratacao/acesso-contratado.ts",
+  "lib/contratacao/direito-por-pedido.ts", "lib/contratacao/consultar-estado-pagamento.ts",
+  "lib/contratacao/estado-pagamento-publico.ts",
 ].map((p) => pathToFileURL(path.join(root, p)).href));
 const mocks = {
   "server-only": "export {};",
@@ -39,7 +42,7 @@ after(() => { hooks.deregister(); globalThis.fetch = fetchBefore; delete globalT
 
 const antigo = { id: "a", name: "Antigo", created_at: "2026-10-05T00:00:00Z" };
 const novo = { id: "b", name: "Novo", created_at: "2026-10-07T00:00:00Z" };
-const pendente = { business_id: "b", status: "proof_received", buyer_email: "cliente@exemplo.com", buyer_profile_id: null };
+const pendente = { id:"pedido-b",payment_method:"direct_pix",provider_charge_id:null,business_id: "b", status: "proof_received", buyer_email: "cliente@exemplo.com", buyer_profile_id: null };
 let estado;
 beforeEach(() => {
   estado = {
@@ -86,7 +89,7 @@ globalThis.__multicontaOffline = {
     return { from(table) {
       assert.equal(table, "commercial_orders");
       return { select: (columns) => {
-        assert.equal(columns, "business_id, status, buyer_email, buyer_profile_id");
+        assert.equal(columns, "id, business_id, status, buyer_email, buyer_profile_id, payment_method, provider_charge_id");
         const query = { in: (column, ids) => {
           assert.equal(column, "business_id");
           assert.deepEqual(ids, estado.businesses.map((b) => b.id));

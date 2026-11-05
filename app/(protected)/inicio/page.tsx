@@ -7,7 +7,8 @@ import { diasAtrasados } from "@/lib/dia-seguinte/dias-em-aberto";
 import { estadoDoCliente, type EstadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
 import { TelaDoInicio } from "./TelaDoInicio";
-import { lerPendenciaDoNegocio } from "@/lib/onboarding/pendencia-do-negocio";
+import { aplicarAgendaConferida, lerPendenciaDoNegocio } from "@/lib/onboarding/pendencia-do-negocio";
+import { carregarAgendaAction } from "@/app/(fluxo)/onboarding/concluido/agenda-actions";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 import { consolidadoDoNegocio } from "@/lib/backend/dia-seguinte";
 import { resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
@@ -154,9 +155,13 @@ export default async function InicioPage({
   // A escolha do negócio sempre permanece no Início. Esta leitura resolve
   // qual pendência do onboarding deve aparecer aqui, sem transformar uma
   // declaração sobre a agenda externa em prova de reserva.
-  const leituraDaPendencia = !fixture && estado.negocioId
+  let leituraDaPendencia = !fixture && estado.negocioId
     ? await lerPendenciaDoNegocio(estado.negocioId)
     : { pendencia: null, falha: false, reserva: null };
+  if (!fixture && estado.negocioId && leituraDaPendencia.cadastroConcluido) {
+    const agendaConferida = await carregarAgendaAction(estado.negocioId);
+    leituraDaPendencia = aplicarAgendaConferida(leituraDaPendencia, agendaConferida);
+  }
   const { pendencia: pendenciaOnboarding, reserva } = leituraDaPendencia;
 
   const { data: ultimaDecisao, error: erroDecisao } = estado.negocioId ? await supabase

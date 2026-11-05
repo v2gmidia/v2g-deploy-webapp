@@ -25,7 +25,7 @@ function cliente({ legado = false, pedido = false, negocioProprio = true, falha 
         range: async (inicio, fim) => ({
           data: pedido && emailConsultado === emailDaCompra
             ? Array.from({ length: Math.max(0, Math.min(totalPedidos, fim + 1) - inicio) },
-              (_, indice) => ({ business_id: indice + inicio === totalPedidos - 1
+              (_, indice) => ({ id:`pedido-${inicio+indice}`,status:"payment_approved",payment_method:"direct_pix",provider_charge_id:null, business_id: indice + inicio === totalPedidos - 1
                 ? "b1" : `outro-${indice + inicio}` }))
             : [],
           error: falha || (falhaSegundaPagina && inicio === 1000)

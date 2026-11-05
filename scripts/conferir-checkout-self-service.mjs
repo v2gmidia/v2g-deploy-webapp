@@ -60,11 +60,11 @@ test("gravação e reenvio do webhook são protegidos pela transação SQL", () 
   assert.match(sql, /semiannual_upfront.*then 285000/);
 });
 
-test("cadastro posterior confere CNPJ e pedido aprovado antes de criar usuário", () => {
+test("cadastro delega a conferência da compra antes de criar usuário", () => {
   const action = readFileSync(new URL("../app/(public)/entrar/actions.ts", import.meta.url), "utf8");
-  assert.match(action, /\.eq\("cnpj", cnpj\)/);
-  assert.match(action, /\.eq\("status", "payment_approved"\)/);
-  assert.ok(action.indexOf(".eq(\"status\", \"payment_approved\")") < action.indexOf("supabase.auth.signUp"));
+  // Behavior (document/email/ledger/A-B) runs in conferir-primeiro-acesso-compra.
+  const conferencia = action.indexOf("await permiteCadastroPorCompra(admin,email,cnpj)");
+  assert.ok(conferencia >= 0 && conferencia < action.indexOf("supabase.auth.signUp"));
 });
 
 test("sandbox jamais usa o banco real, mesmo com a flag de checkout ligada", () => {

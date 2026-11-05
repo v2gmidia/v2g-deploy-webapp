@@ -43,8 +43,8 @@ for(const [doc,tipo] of [[cpf,'cpf'],[cnpj,'cnpj']]) {
   });
   test(`primeiro acesso ${tipo}: action real confere documento exato antes de criar conta`,async()=>{
     let cadastrado=0;const filtros=[];
-    const q={select:()=>q,eq:(k,v)=>{filtros.push([k,v]);return q;},not:()=>q,limit:()=>q,
-      maybeSingle:async()=>({data:{id:ref},error:null})};
+    const q={select:()=>q,eq:(k,v)=>{filtros.push([k,v]);return q;},not:()=>q,order:()=>q,
+      range:async()=>({data:[{id:ref,business_id:ref,status:'payment_approved',payment_method:'direct_pix',provider_charge_id:null}],error:null})};
     const auth=ambienteTs({env:{NEXT_PUBLIC_SITE_URL:'https://qa.example.invalid'},ports:{
       'next/navigation':{redirect:redirecionar},
       '@/lib/supabase/server':{createClient:async()=>({auth:{signUp:async()=>{cadastrado++;return {data:{session:null},error:null};}}})},
@@ -77,7 +77,7 @@ for(const [doc,tipo] of [[cpf,'cpf'],[cnpj,'cnpj']]) {
   });
 }
 test('primeiro acesso sem pedido nao cria conta mesmo com documento valido',async()=>{
-  const q={select:()=>q,eq:()=>q,not:()=>q,limit:()=>q,maybeSingle:async()=>({data:null,error:null})};
+  const q={select:()=>q,eq:()=>q,not:()=>q,order:()=>q,range:async()=>({data:[],error:null})};
   const action=ambienteTs({ports:{'next/navigation':{redirect:redirecionar},
     '@/lib/supabase/server':{createClient:async()=>{throw Error('Nao criar conta sem pedido');}},
     '@/lib/supabase/admin':{createAdminClient:()=>({from:()=>q})},
@@ -112,7 +112,7 @@ for(const [contratante,titular] of [[cpf,cnpj],[cnpj,cpf]]) test('pagamento real
 });
 test('mesmo email acessa negocios CPF e CNPJ distintos; documento igual nao une os IDs',()=>{
   const negocios=['a','b','c'].map(id=>({id,name:'Negocio '+id,created_at:'2026-10-25T12:00:00Z'}));
-  const pedidos=negocios.map((b,i)=>({business_id:b.id,cnpj:i===1?cnpj:cpf,buyer_email:email,buyer_profile_id:'perfil',status:'payment_approved'}));
+  const pedidos=negocios.map((b,i)=>({business_id:b.id,cnpj:i===1?cnpj:cpf,buyer_email:email,buyer_profile_id:'perfil',status:'payment_approved',direitoFinanceiro:true}));
   const documentos=cnpjsDoComprador(['a','b','c'],pedidos,'perfil',email);
   assert.deepEqual([...documentos],[['a',cpf],['b',cnpj],['c',cpf]]);
   assert.equal(negociosLiberados({negocios,pedidos,perfilId:'perfil',emailVerificado:email,legadoEm:null,operador:false}).length,3);

@@ -1,0 +1,5 @@
+.section { max-width: 46rem; display: grid; gap: var(--sp-6, 1.5rem); }
+.form { display: grid; gap: var(--sp-5, 1.25rem); min-width: 0; }
+.confirmacao { display: flex; align-items: flex-start; gap: var(--sp-2, .5rem); }
+.confirmacao input { flex: 0 0 auto; margin-top: .25rem; }
+.link { overflow-wrap: anywhere; }

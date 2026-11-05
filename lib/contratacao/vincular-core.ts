@@ -1,5 +1,7 @@
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { lerTodasPaginas, lerTodasPaginasEmLotes } from "../multiconta/paginacao.ts";
+import { pedidosComDireito, type PedidoComPagamento } from "./direito-por-pedido.ts";
+import { consultarEstadoPagamento } from "./consultar-estado-pagamento.ts";
 
 type PedidoParaVinculo = {
   id: string;
@@ -24,16 +26,17 @@ export function pedidosAutorizadosParaVinculo(
 export async function vincularComprasAprovadasComCliente(admin: SupabaseClient, user: User): Promise<void> {
   if (!user.email || !user.email_confirmed_at) return;
   const email = user.email.trim().toLowerCase();
-  const pedidos = await lerTodasPaginas<PedidoParaVinculo>((inicio, fim) => admin.from("commercial_orders")
-    .select("id, business_id, buyer_profile_id")
+  const pedidos = await lerTodasPaginas<PedidoParaVinculo & PedidoComPagamento>((inicio, fim) => admin.from("commercial_orders")
+    .select("id, business_id, buyer_profile_id, status, payment_method, provider_charge_id")
     .eq("buyer_email", email)
     .eq("status", "payment_approved")
     .not("business_id", "is", null)
     .order("id", { ascending: true })
     .range(inicio, fim));
   if (!pedidos?.length) return;
-  const elegiveis = pedidos.filter((pedido) =>
-    pedido.business_id && (pedido.buyer_profile_id === null || pedido.buyer_profile_id === user.id));
+  const elegiveis = await pedidosComDireito(pedidos.filter((pedido) =>
+    pedido.business_id && (pedido.buyer_profile_id === null || pedido.buyer_profile_id === user.id)),
+    pedido => consultarEstadoPagamento(admin,pedido));
   if (!elegiveis.length) return;
   const businessIds = [...new Set(elegiveis.map((pedido) => pedido.business_id)
     .filter((id): id is string => !!id))];

@@ -16,6 +16,8 @@ import { PainelDeAnuncios, type AnuncioDaLista } from "./PainelDeAnuncios";
 import { intervaloDoInicio, rotuloDoIntervalo } from "@/lib/inicio/periodo";
 import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 import { SeletorDePeriodo } from "../inicio/SeletorDePeriodo";
+import { anunciosDoNegocioSelecionado } from "@/lib/backend";
+import { InventarioDeAnunciosMeta } from "./AnunciosMeta";
 
 export const metadata = tituloDaAba("/anuncios");
 
@@ -41,6 +43,11 @@ export const metadata = tituloDaAba("/anuncios");
  * `GET /negocios/{id}/consolidado` e, para cada ficha de `porExecucao`,
  * `GET /execucoes/{id}/consolidado`. **A ordem é a segurança** — ver o
  * bloco daquele arquivo.
+ *
+ * 29/10: a leitura principal Meta passa pela coleção autenticada
+ * `/negocios/{business_id}/meta/campanhas`, independente do gerador.
+ * O caminho acima continua como histórico por rodada, explicitamente separado.
+ * Não ter execução já não é prova de que o negócio não tem anúncio na Meta.
  * ============================================================
  *
  * ============================================================
@@ -67,7 +74,8 @@ export default async function AnunciosPage({ searchParams }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const agora = new Date();
-  const intervalo = intervaloDoInicio(await searchParams, diaEmSaoPaulo(agora));
+  const busca = await searchParams;
+  const intervalo = intervaloDoInicio(busca, diaEmSaoPaulo(agora));
   const supabase = await createClient();
   const {
     data: { user },
@@ -91,10 +99,13 @@ export default async function AnunciosPage({ searchParams }: {
 
   const pecas = criativos ?? [];
 
-  const resultado =
+  const [resultado, inventarioMeta] = await Promise.all([
     user && estado.negocioId
-      ? await resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id, intervalo })
-      : null;
+      ? resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id, intervalo })
+      : Promise.resolve(null),
+    anunciosDoNegocioSelecionado({ desde: intervalo.desde, ate: intervalo.ate,
+      contaId: typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined }),
+  ]);
 
   // ============================================================
   // "NÃO TEM CAMPANHA" E "O BACKEND ESTÁ FORA" SÃO TELAS DIFERENTES.
@@ -104,12 +115,16 @@ export default async function AnunciosPage({ searchParams }: {
   // `/inicio` degradando calada, que este repositório já pagou.
   // ============================================================
   if (resultado === null || resultado.estado === "sem-execucao") {
-    return <>
+    return <div className="anuncios-editorial">
+      <FaixaReconectar />
+      <header className="anuncios-topo-novo"><div className="page-head"><h1>Anúncios</h1>
+        <p>Acompanhe as campanhas e os anúncios da conta vinculada ao seu negócio.</p></div>
+        <a className="cta" href="/criativos">Abrir criativos</a></header>
       <div className="anuncios-periodo"><a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-      <SemAnuncioNenhum proximo={estado.proximo} fotos={estado.melhoras.fotos} />
-    </>;
+      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} />
+    </div>;
   }
 
   // O `foiReprovada` no lugar do `p.status === "rejected"` escrito à mão:
@@ -144,7 +159,9 @@ export default async function AnunciosPage({ searchParams }: {
         <h1>Anúncios</h1>
         <p>Acompanhe cada anúncio e o que ele produziu até agora.</p>
         {/* ============================================================
-            A ÚNICA AFIRMAÇÃO DE VEICULAÇÃO DESTA TELA. ITENS B3 e C6.
+            AFIRMAÇÃO LEGADA DE VEICULAÇÃO. ITENS B3 e C6.
+            Suprimida quando a consulta Meta respondeu: o inventário novo
+            apresenta status configurado/efetivo por objeto, sem afirmar “no ar”.
 
             No nível do NEGÓCIO, porque é o nível em que o backend
             responde: `veiculacao` só existe em
@@ -157,12 +174,12 @@ export default async function AnunciosPage({ searchParams }: {
             exatamente no caso em que ela devia admitir. É a mesma regra
             do `estado: "indisponivel"` logo abaixo.
             ============================================================ */}
-        <p className="res-veiculacao">
+        {!inventarioMeta.ok && <p className="res-veiculacao">
           {fraseDeVeiculacao(estado.veiculacao, "manchete")}{" "}
           <span className="hint-inline">
             {fraseDeVeiculacao(estado.veiculacao, "apoio")}
           </span>
-        </p>
+        </p>}
        </div>
        <a className="cta" href="/criativos">Abrir criativos</a>
       </header>
@@ -171,8 +188,12 @@ export default async function AnunciosPage({ searchParams }: {
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
       </div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
+      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} />
 
-      {resultado.estado === "indisponivel" ? null : reprovadas.length > 0 ? (
+      <div className="section-title"><h2>Histórico por rodada da V2G</h2></div>
+      <p className="hint">Histórico do negócio, sem filtro por conta. Os mesmos anúncios podem aparecer na consulta Meta acima; não some os números das duas fontes.</p>
+
+      {resultado.estado === "indisponivel" || inventarioMeta.ok ? null : reprovadas.length > 0 ? (
         <section className="hero-destaque">
           <span className="eyebrow">Precisa de você</span>
           <p className="hero-frase">

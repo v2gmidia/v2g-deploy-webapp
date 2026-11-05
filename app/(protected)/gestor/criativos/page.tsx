@@ -15,15 +15,15 @@ export default async function CriativosDoGestorPage({ searchParams }: {
   searchParams: Promise<{ negocio?: string; peca?: string; pagina?: string }>;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.app_metadata?.papel !== "operador") notFound();
+  const { data: { user }, error: erroSessao } = await supabase.auth.getUser();
+  if (erroSessao || user?.app_metadata?.papel !== "operador") notFound();
   if (process.env.V2G_CREATIVE_REVIEW_ENABLED !== "true")
     return <div className="canvas"><h1>Revisão de criativos</h1><p>A fila ainda não foi ativada neste ambiente.</p></div>;
   try {
     const admin = createAdminClient();
     const parametros = await searchParams;
     const trabalhoAtivo = process.env.V2G_MANAGER_WORK_ENABLED === "true";
-    const tituloFila = trabalhoAtivo ? "Ver minhas peças" : "Ver a fila de peças";
+    const tituloFila = "Ver minhas peças";
     const negocioId = typeof parametros.negocio === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(parametros.negocio)
       ? parametros.negocio : null;
     const pecaId = typeof parametros.peca === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(parametros.peca)
@@ -35,15 +35,18 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       <p className="form-warning">O negócio informado não é válido.</p><p><a href="/gestor/criativos">{tituloFila}</a></p></div>;
     if (parametros.peca && !pecaId) return <div className="canvas"><h1>Revisão de criativos</h1>
       <p className="form-warning">A peça informada não é válida.</p><p><a href="/gestor/criativos">{tituloFila}</a></p></div>;
-    const atribuicoes = trabalhoAtivo ? await admin.from("manager_accounts")
-      .select("business_id").eq("operator_profile_id", user.id).limit(1000) : null;
-    if (atribuicoes && (atribuicoes.error || !atribuicoes.data)) throw new Error("atribuições indisponíveis");
-    if (atribuicoes?.data?.length === 1000)
+    const atribuicoes = await admin.from("manager_accounts")
+      .select("business_id, operator_profile_id").eq("operator_profile_id", user.id).limit(1000);
+    if (atribuicoes.error || !atribuicoes.data || atribuicoes.data.some((item) =>
+      item.operator_profile_id !== user.id || typeof item.business_id !== "string" ||
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(item.business_id)))
+      throw new Error("atribuições indisponíveis");
+    if (atribuicoes.data.length === 1000)
       return <div className="canvas"><h1>Revisão de criativos</h1>
         <p className="form-warning">A carteira ultrapassou o limite desta consulta. A lista de peças das suas contas poderia ficar incompleta.</p>
         <p><a href="/gestor">Voltar à carteira</a></p></div>;
-    const meusNegocios = (atribuicoes?.data ?? []).map((item) => item.business_id);
-    if (trabalhoAtivo && negocioId && !meusNegocios.includes(negocioId))
+    const meusNegocios = [...new Set(atribuicoes.data.map((item) => item.business_id))];
+    if (negocioId && !meusNegocios.includes(negocioId))
       return <div className="canvas"><h1>Revisão de criativos</h1>
         <p className="form-warning">Esta conta não está na sua carteira de gestor.</p>
         <p><a href="/gestor/criativos">{tituloFila}</a></p></div>;
@@ -55,10 +58,10 @@ export default async function CriativosDoGestorPage({ searchParams }: {
     const consultaHistorico = admin.from("creative_review_requests")
       .select(colunas).neq("status", "awaiting_review");
     const pendentesDaConta = negocioId ? consultaPendentes.eq("business_id", negocioId)
-      : trabalhoAtivo ? consultaPendentes.in("business_id", meusNegocios) : consultaPendentes;
+      : consultaPendentes.in("business_id", meusNegocios);
     const historicoDaConta = negocioId ? consultaHistorico.eq("business_id", negocioId)
-      : trabalhoAtivo ? consultaHistorico.in("business_id", meusNegocios) : consultaHistorico;
-    const [pendentes, historico] = trabalhoAtivo && meusNegocios.length === 0
+      : consultaHistorico.in("business_id", meusNegocios);
+    const [pendentes, historico] = meusNegocios.length === 0
       ? [{ data: [], count: 0, error: null }, { data: [], error: null }]
       : await Promise.all([
         (pecaId ? pendentesDaConta.eq("id", pecaId) : pendentesDaConta)
@@ -70,6 +73,9 @@ export default async function CriativosDoGestorPage({ searchParams }: {
     if (pendentes.error || historico.error || !pendentes.data || !historico.data)
       throw new Error("fila indisponível");
     const pedidos = [...pendentes.data, ...historico.data];
+    if (pedidos.some((pedido) => !meusNegocios.includes(pedido.business_id) ||
+      (negocioId && pedido.business_id !== negocioId) || (pecaId && pedido.id !== pecaId)))
+      throw new Error("peça fora da carteira consultada");
     const ids = [...new Set(pedidos.map((pedido) => pedido.business_id))];
     const nomesConsultados = negocioId ? [negocioId] : ids;
     const negocios = ids.length ? await admin.from("businesses")
@@ -88,7 +94,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       <p>Peças enviadas pelos clientes, por negócio. Aprovação interna não publica uma campanha.</p></div>
       <p><a href="/gestor">Voltar à carteira</a>{negocioId && <> · <a href="/gestor/criativos">{tituloFila}</a></>}</p>
       {negocioId && <p>Conta selecionada: {nomes.get(negocioId) ?? negocioId}</p>}
-      {trabalhoAtivo && meusNegocios.length === 0 && <p>Nenhuma conta atribuída a você. Consulte a carteira ou assuma uma conta na fila de tarefas.</p>}
+      {meusNegocios.length === 0 && <p>Nenhuma conta atribuída a você. Consulte a carteira ou assuma uma conta na fila de tarefas.</p>}
       {paginaInformada.invalida && !pecaId && <p className="form-warning">Página inválida; mostrando a primeira página.</p>}
       {!pecaId && pagina > 1 && (totalPendentes === null || totalPendentes === 0) &&
         <p><a href={destinoPaginaCriativos(negocioId, 1)}>Voltar à primeira página de peças</a></p>}

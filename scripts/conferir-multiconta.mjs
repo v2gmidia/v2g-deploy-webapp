@@ -24,7 +24,7 @@ test("paginação reúne pedidos além do limite e preserva a autorização", as
   const registros = Array.from({ length: 1001 }, (_, indice) => ({
     ...pendente, business_id: `outro-${indice}`,
   }));
-  registros[1000] = { ...pendente, business_id: "b", status: "payment_approved" };
+  registros[1000] = { ...pendente, business_id: "b", status: "payment_approved", direitoFinanceiro:true };
   const faixas = [];
   const pedidos = await lerTodasPaginas(async (inicio, fim) => {
     faixas.push([inicio, fim]);
@@ -100,11 +100,11 @@ test("compra pendente não libera outro negócio do mesmo perfil legado", () => 
 test("aprovação do pedido libera o novo negócio ao comprador verificado", () => {
   assert.deepEqual(negociosLiberados({
     ...base, negocios: [antigo, novo],
-    pedidos: [{ ...pendente, status: "payment_approved" }],
+    pedidos: [{ ...pendente, status: "payment_approved", direitoFinanceiro:true }],
   }).map((negocio) => negocio.id), ["a", "b"]);
   assert.deepEqual(negociosLiberados({
     ...base, emailVerificado: null, negocios: [novo],
-    pedidos: [{ ...pendente, status: "payment_approved" }],
+    pedidos: [{ ...pendente, status: "payment_approved", direitoFinanceiro:true }],
   }), []);
 });
 
@@ -112,8 +112,8 @@ test("pedidos mistos não vazam liberação entre negócios", () => {
   const outro = { ...novo, id: "c", name: "Outro negócio" };
   const pedidos = [
     { ...pendente, business_id: "b" },
-    { ...pendente, business_id: "c", status: "payment_approved", buyer_email: "outro@exemplo.com" },
-    { ...pendente, business_id: "b", status: "payment_approved" },
+    { ...pendente, business_id: "c", status: "payment_approved", direitoFinanceiro:true, buyer_email: "outro@exemplo.com" },
+    { ...pendente, business_id: "b", status: "payment_approved", direitoFinanceiro:true },
   ];
   assert.deepEqual(negociosLiberados({ ...base, negocios: [antigo, novo, outro], pedidos })
     .map((negocio) => negocio.id), ["a", "b"]);
@@ -128,11 +128,11 @@ test("novo perfil sem pedido não ganha acesso pela propriedade da linha", () =>
   }), []);
   assert.deepEqual(negociosLiberados({
     ...base, legadoEm: null, negocios: [novo],
-    pedidos: [{ ...pendente, status: "payment_approved", buyer_email: "outro@exemplo.com" }],
+    pedidos: [{ ...pendente, status: "payment_approved", direitoFinanceiro:true, buyer_email: "outro@exemplo.com" }],
   }), []);
   assert.deepEqual(negociosLiberados({
     ...base, legadoEm: null, negocios: [novo],
-    pedidos: [{ ...pendente, status: "payment_approved", buyer_profile_id: "outra-pessoa" }],
+    pedidos: [{ ...pendente, status: "payment_approved", direitoFinanceiro:true, buyer_profile_id: "outra-pessoa" }],
   }), []);
 });
 
@@ -204,13 +204,14 @@ function clienteDeTeste(respostas) {
 }
 
 const usuarioVerificado = { id: "pessoa-a", email: "Cliente@Exemplo.com", email_confirmed_at: "2026-10-11T00:00:00Z" };
+const pagamentoManual = {status:"payment_approved",payment_method:"direct_pix",provider_charge_id:null};
 
 test("reivindicação parcial só grava pedido do negócio que passou a pertencer ao perfil", async () => {
   const cliente = clienteDeTeste([
     { data: [
-      { id: "pedido-meu", business_id: "meu", buyer_profile_id: null },
-      { id: "pedido-alheio", business_id: "alheio", buyer_profile_id: null },
-      { id: "pedido-outro", business_id: "meu", buyer_profile_id: "pessoa-b" },
+      { ...pagamentoManual,id: "pedido-meu", business_id: "meu", buyer_profile_id: null },
+      { ...pagamentoManual,id: "pedido-alheio", business_id: "alheio", buyer_profile_id: null },
+      { ...pagamentoManual,id: "pedido-outro", business_id: "meu", buyer_profile_id: "pessoa-b" },
     ], error: null },
     { error: null },
     { data: [{ id: "meu" }], error: null },
@@ -229,7 +230,7 @@ test("reivindicação parcial só grava pedido do negócio que passou a pertence
 });
 
 test("falha na conferência de propriedade mantém pedido sem vínculo", async () => {
-  const pedido = { id: "pedido", business_id: "meu", buyer_profile_id: null };
+  const pedido = { ...pagamentoManual,id: "pedido", business_id: "meu", buyer_profile_id: null };
   const semPropriedade = clienteDeTeste([
     { data: [pedido], error: null }, { error: null }, { data: [], error: null },
   ]);
@@ -259,7 +260,7 @@ test("e-mail não verificado não reivindica negócio nem pedido", async () => {
 
 test("vínculo lê todas as páginas e grava no máximo cem pedidos por lote", async () => {
   const pedidos = Array.from({ length: 1001 }, (_, indice) => ({
-    id: `pedido-${indice}`, business_id: "meu", buyer_profile_id: null,
+    ...pagamentoManual,id: `pedido-${indice}`, business_id: "meu", buyer_profile_id: null,
   }));
   const cliente = clienteDeTeste([
     { data: pedidos.slice(0, 1000), error: null },
@@ -284,7 +285,7 @@ test("vínculo lê todas as páginas e grava no máximo cem pedidos por lote", a
 test("erro na página posterior impede toda reivindicação", async () => {
   const cliente = clienteDeTeste([
     { data: Array.from({ length: 1000 }, (_, indice) => ({
-      id: `pedido-${indice}`, business_id: "meu", buyer_profile_id: null,
+      ...pagamentoManual,id: `pedido-${indice}`, business_id: "meu", buyer_profile_id: null,
     })), error: null },
     { data: null, error: new Error("indisponível") },
   ]);
@@ -295,7 +296,7 @@ test("erro na página posterior impede toda reivindicação", async () => {
 
 test("cento e um negócios dividem filtros de propriedade sem misturar pedidos", async () => {
   const pedidos = Array.from({ length: 101 }, (_, indice) => ({
-    id: `pedido-${indice}`, business_id: `negocio-${indice}`, buyer_profile_id: null,
+    ...pagamentoManual,id: `pedido-${indice}`, business_id: `negocio-${indice}`, buyer_profile_id: null,
   }));
   const cliente = clienteDeTeste([
     { data: pedidos, error: null },

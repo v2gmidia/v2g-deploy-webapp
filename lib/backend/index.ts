@@ -1,5 +1,7 @@
 import "server-only";
 
+export { anunciosDoNegocioSelecionado } from "./anuncios-do-negocio";
+
 /** Leitura da carteira com sessão e atribuição verificadas antes da chamada. */
 export { lerMetricasDaCarteira, type ResultadoDaLeituraDaCarteira } from "./metricas-da-carteira";
 

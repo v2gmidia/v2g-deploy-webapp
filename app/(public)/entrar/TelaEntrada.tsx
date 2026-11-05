@@ -94,7 +94,9 @@ export function TelaEntrada({
         ) : (
           <>
             <h1>Vamos criar seu acesso.</h1>
-            <p className="entrada-introducao">O primeiro acesso é liberado após a aprovação da compra. Use o e-mail e o CPF ou CNPJ do contratante informados no pedido.</p>
+            <p className="entrada-introducao">{next.startsWith("/acesso-contratado/")
+              ? "Use o e-mail e o CPF ou CNPJ conferidos pela equipe na sua contratação. Depois de confirmar seu e-mail, volte ao link recebido para abrir seu negócio."
+              : "O primeiro acesso é liberado após a aprovação da compra. Use o e-mail e o CPF ou CNPJ do contratante informados no pedido."}</p>
 
             {signUpState.error && <p ref={erroCadastro} tabIndex={-1} className="form-error" role="alert">{signUpState.error}</p>}
 

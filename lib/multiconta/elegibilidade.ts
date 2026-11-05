@@ -1,11 +1,13 @@
 import type { NegocioAcessivel } from "./escolha";
+import type { PedidoComPagamento } from "../contratacao/direito-por-pedido";
 
 export type NegocioDoPerfil = NegocioAcessivel & { created_at: string };
-export type PedidoDoNegocio = {
+export type PedidoDoNegocio = PedidoComPagamento & {
   business_id: string | null;
   status: string;
   buyer_email: string | null;
   buyer_profile_id: string | null;
+  direitoFinanceiro?: boolean;
 };
 
 /** A propriedade da linha não basta: cada negócio comprado precisa estar liberado. */
@@ -16,6 +18,8 @@ export function negociosLiberados(entrada: {
   emailVerificado: string | null;
   legadoEm: string | null;
   operador: boolean;
+  acessosContratados?: { business_id: string; accepted_by: string | null; recipient_email: string;
+    accepted_at: string | null; revoked_at: string | null }[];
 }): NegocioAcessivel[] {
   const { negocios, pedidos, perfilId, emailVerificado, legadoEm, operador } = entrada;
   const marcoLegado = legadoEm ? Date.parse(legadoEm) : NaN;
@@ -37,8 +41,10 @@ export function negociosLiberados(entrada: {
 
   return negocios.filter((negocio) => {
     if (operador) return true;
+    if (email && entrada.acessosContratados?.some(g => g.business_id === negocio.id
+      && g.accepted_by === perfilId && g.recipient_email === email && g.accepted_at && !g.revoked_at)) return true;
     const pedidosDoNegocio = pedidosPorNegocio.get(negocio.id) ?? [];
-    const aprovado = pedidosDoNegocio.some((pedido) => pedido.status === "payment_approved"
+    const aprovado = pedidosDoNegocio.some((pedido) => pedido.status === "payment_approved" && pedido.direitoFinanceiro === true
       && !!email && pedido.buyer_email?.trim().toLowerCase() === email
       && (pedido.buyer_profile_id === perfilId || pedido.buyer_profile_id === null));
     if (aprovado && email) return true;

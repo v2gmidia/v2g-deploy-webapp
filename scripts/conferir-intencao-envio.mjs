@@ -99,7 +99,7 @@ beforeEach(() => {
   process.env.V2G_MANAGER_WORK_ENABLED = "true";
   process.env.V2G_CREATIVE_AUTO_ANALYSIS_ENABLED = "false";
   estado = { linhas: [], bytes: new Map(), perfil, negocio, papel: "operador", consultas: 0, referenciaPermitida: false,
-    insercoes: 0, uploads: 0, tarefas: 0, revalidacoes: [], falhaBanco: false, falhaUpload: false, responsavel: perfil };
+    insercoes: 0, uploads: 0, downloads: 0, tarefas: 0, revalidacoes: [], falhaBanco: false, falhaUpload: false, responsavel: perfil };
 });
 globalThis.__envioOffline = {
   get referenciaPermitida() { return estado.referenciaPermitida; },
@@ -107,7 +107,7 @@ globalThis.__envioOffline = {
   get tarefas() { return estado.tarefas; }, set tarefas(n) { estado.tarefas = n; },
   ativo: () => ({ status: "selecionado", negocio: { id: estado.negocio } }),
   cliente: () => ({ auth: { getUser: async () => ({ data: { user: estado.perfil ?
-    { id: estado.perfil, app_metadata: { papel: estado.papel } } : null }, error: null }) } }),
+    { id: estado.perfil, app_metadata: { papel: estado.papel }, user_metadata: { papel: "operador" } } : null }, error: estado.falhaSessao ? {} : null }) } }),
   admin: () => ({
     from(tabela) {
       estado.consultas++;
@@ -135,7 +135,9 @@ globalThis.__envioOffline = {
       };
       function executar() {
         if (estado.falhaBanco) return { data: null, error: { message: "segredo-nao-exibir" } };
-        if (tabela === "manager_accounts") return { data: { operator_profile_id: estado.responsavel }, error: null };
+        if (tabela === "manager_accounts") return { data: estado.semAtribuicao ? null :
+          { business_id: estado.negocioAtribuido ?? filtros.business_id, operator_profile_id: estado.responsavel },
+          error: estado.falhaAtribuicao ? {} : null };
         const linha = estado.linhas.find((l) => Object.entries(filtros).every(([k, v]) => l[k] === v));
         if (linha && alteracao?.status === "awaiting_review" && estado.falhaFinalizacao) {
           const modo = estado.falhaFinalizacao;
@@ -156,7 +158,11 @@ globalThis.__envioOffline = {
         if (estado.falhaUpload) return { error: {} };
         estado.bytes.set(caminho, new Uint8Array(bytes)); return { error: null };
       },
-      async download(caminho) { return { data: estado.bytes.get(caminho) ?? null, error: null }; },
+      async download(caminho) {
+        estado.downloads++;
+        const bytes = estado.bytes.get(caminho);
+        return { data: bytes ? new Blob([bytes]) : null, error: null };
+      },
     }; } },
   }),
 };
@@ -352,4 +358,54 @@ test("outro gestor e papel de cliente não conseguem decidir a revisão", async 
   estado.papel = "cliente";
   assert.match((await revisarPecaAction({}, f)).erro, /não autorizado/);
   assert.equal(estado.linhas[0].status, "awaiting_review");
+});
+
+for (const trabalhoAtivo of ["true", "false"]) {
+  for (const [nome, alterar] of [
+    ["outro gestor", () => { estado.responsavel = "outro"; }],
+    ["sem atribuição", () => { estado.semAtribuicao = true; }],
+    ["atribuição de outro negócio", () => { estado.negocioAtribuido = "42345678-1234-4234-8234-123456789012"; }],
+    ["falha na atribuição", () => { estado.falhaAtribuicao = true; }],
+    ["sessão inválida apesar do usuário", () => { estado.falhaSessao = true; }],
+    ["papel editável pelo usuário", () => { estado.papel = "cliente"; }],
+  ]) test(`decisão nega ${nome} com tarefas ${trabalhoAtivo}, antes de baixar arquivo`, async () => {
+    await solicitarRevisaoAction(formulario());
+    process.env.V2G_MANAGER_WORK_ENABLED = trabalhoAtivo;
+    alterar();
+    const f = new FormData(); f.set("id", id); f.set("decisao", "rejected"); f.set("nota", "Recusa de teste.");
+    assert.ok((await revisarPecaAction({}, f)).erro);
+    assert.equal(estado.downloads, 0);
+    assert.equal(estado.linhas[0].status, "awaiting_review");
+    assert.equal(estado.linhas[0].reviewed_by, undefined);
+  });
+}
+
+for (const [nome, alterar] of [
+  ["conteúdo diferente do mesmo tamanho", () => { estado.bytes.get(`${negocio}/${id}`)[7] = 99; }],
+  ["tamanho diferente", () => { estado.bytes.set(`${negocio}/${id}`, new Uint8Array([1])); }],
+  ["hash ausente", () => { delete estado.linhas[0].sha256; }],
+  ["tipo registrado divergente", () => { estado.linhas[0].mime_type = "image/jpeg"; }],
+  ["arquivo ausente", () => { estado.bytes.clear(); }],
+]) test(`nenhuma decisão aceita versão inconsistente: ${nome}`, async () => {
+  await solicitarRevisaoAction(formulario()); alterar();
+  for (const decisao of ["approved_for_manual_publish", "changes_requested", "rejected"]) {
+    const f = new FormData(); f.set("id", id); f.set("decisao", decisao); f.set("nota", "Decisão de teste.");
+    assert.ok((await revisarPecaAction({}, f)).erro);
+    assert.equal(estado.linhas[0].status, "awaiting_review");
+    assert.equal(estado.linhas[0].reviewed_by, undefined);
+  }
+});
+
+test("gestor atribuído decide versão exata com tarefas desligadas; segunda decisão não sobrescreve", async () => {
+  await solicitarRevisaoAction(formulario());
+  process.env.V2G_MANAGER_WORK_ENABLED = "false";
+  const f = new FormData(); f.set("id", id); f.set("decisao", "changes_requested"); f.set("nota", "Aumentar o texto da oferta.");
+  assert.ok((await revisarPecaAction({}, f)).ok);
+  const original = structuredClone(estado.linhas[0]);
+  assert.equal(original.reviewed_by, perfil);
+  assert.ok(original.reviewed_at);
+  assert.ok(estado.revalidacoes.includes("/supergestor"));
+  f.set("decisao", "rejected"); f.set("nota", "Tentativa posterior.");
+  assert.ok((await revisarPecaAction({}, f)).erro);
+  assert.deepEqual(estado.linhas[0], original);
 });

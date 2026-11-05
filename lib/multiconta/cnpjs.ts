@@ -3,6 +3,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cnpjsDoComprador, type PedidoParaIdentificarNegocio } from "./identificacao";
 import { lerTodasPaginasEmLotes } from "./paginacao";
+import { acessosContratadosDoPerfil } from "../contratacao/acesso-contratado";
 
 /** Identifica apenas negócios já liberados e pedidos do comprador verificado. */
 export async function cnpjsDosNegociosLiberados(
@@ -19,5 +20,11 @@ export async function cnpjsDosNegociosLiberados(
     .order("id", { ascending: false })
     .range(inicio, fim));
   if (!pedidos) throw new Error("pedidos indisponíveis");
-  return cnpjsDoComprador(ids, pedidos, perfilId, emailVerificado);
+  const documentos = cnpjsDoComprador(ids, pedidos, perfilId, emailVerificado);
+  const concessoes = await acessosContratadosDoPerfil(admin, {
+    id: perfilId, email: emailVerificado, email_confirmed_at: "verificado-pelo-chamador",
+  });
+  for (const g of concessoes) if (ids.includes(g.business_id) && !documentos.has(g.business_id))
+    documentos.set(g.business_id, g.contractor_document);
+  return documentos;
 }

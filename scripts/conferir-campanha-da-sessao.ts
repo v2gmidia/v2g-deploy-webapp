@@ -185,17 +185,19 @@ secao("3. nenhum id de URL, query ou formulário chega perto disso");
     const codigo = a.texto.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
 
     // ============================================================
-    // Exceção aprovada em 19/10: Anúncios recebe apenas datas validadas.
-    // Identificadores continuam exclusivamente da sessão e de porExecucao.
-    // O teste offline conferir-qa-interface também exercita a ordem e os argumentos.
+    // Datas validadas (19/10) e seleção da conta Meta vinculada (29/10).
+    // O legado continua recebendo SOMENTE negócio/perfil da sessão e intervalo.
+    // A conta da URL só vai à nova leitura, que reconfere RLS e vínculo.
     // ============================================================
     ok(
       a.caminho === "app/(protected)/anuncios/page.tsx"
-        ? /intervaloDoInicio\(await searchParams, diaEmSaoPaulo\(agora\)\)/.test(codigo)
+        ? /const busca = await searchParams/.test(codigo)
+          && /intervaloDoInicio\(busca, diaEmSaoPaulo\(agora\)\)/.test(codigo)
           && !/searchParams\s*[.\[]|\bparams\s*[:.]/.test(codigo)
+          && !/busca\.(?:businessId|business_id|profileId|profile_id|idExecucao|id_execucao|campanha)/.test(codigo)
           && /resultadoDoNegocio\(\{ businessId: estado\.negocioId, profileId: user\.id, intervalo \}\)/.test(codigo)
         : !/\bsearchParams\b|\bparams\s*[:.]/.test(codigo),
-      `\`${a.caminho}\` não recebe identidade da URL; Anúncios admite apenas o intervalo validado`,
+      `\`${a.caminho}\` mantém identidade do legado na sessão; conta da URL exige vínculo na nova leitura`,
     );
     ok(
       /businessId:\s*estado\.negocioId/.test(codigo),

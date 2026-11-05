@@ -13,8 +13,10 @@ import { normalizar } from "@/lib/nichos/busca";
 import styles from "./Gestor.module.css";
 import { Suspense } from "react";
 import { LeituraDaConta } from "@/components/gestor/leitura/LeituraDaConta";
-import { diaDeOntemEmSaoPaulo } from "@/lib/dia-seguinte/dia";
-import { intervaloMesa } from "@/lib/gestor/painel";
+import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { intervaloDoInicio } from "@/lib/inicio/periodo";
+
+export type BuscaDoGestor = { q?: string; filtro?: string; metricas?: string; desde?: string; ate?: string; conta?: string };
 
 export const metadata = tituloDaAba("/gestor");
 export const dynamic = "force-dynamic";
@@ -26,7 +28,7 @@ function respostaParaReuniao(resposta: RespostaDeBriefing): string {
 
 /** Visão interna de leitura. Cada número representa linha do banco, nunca métrica da Meta. */
 export default async function GestorPage({ searchParams }: {
-  searchParams: Promise<{ q?: string; filtro?: string; metricas?: string }>;
+  searchParams: Promise<BuscaDoGestor>;
 }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -122,7 +124,7 @@ export default async function GestorPage({ searchParams }: {
       !!responsaveis.data && !responsaveisParciais;
     const negocioDaLeitura = leituraDisponivel && typeof parametros.metricas === "string"
       ? linhas.find((l) => l.id === parametros.metricas && minhasContas.has(l.id)) : undefined;
-    const periodoDaLeitura = intervaloMesa(diaDeOntemEmSaoPaulo(new Date()), 7);
+    const periodoDaLeitura = intervaloDoInicio(parametros, diaEmSaoPaulo(new Date()));
     const filaPessoalIndisponivel = trabalhoIndisponivel || trabalhoParcial || parcial ||
       (!!revisoes && (!!revisoesDaCarteira?.error || revisoesParciais));
     const acoesPessoais = trabalhoAtivo && !filaPessoalIndisponivel
@@ -154,7 +156,7 @@ export default async function GestorPage({ searchParams }: {
       </header>
       {negocioDaLeitura && <Suspense fallback={<p role="status">Conferindo a leitura da conta...</p>}>
         <LeituraDaConta businessId={negocioDaLeitura.id} nome={negocioDaLeitura.nome}
-          desde={periodoDaLeitura.inicio} ate={periodoDaLeitura.fim} />
+          intervalo={periodoDaLeitura} contaId={typeof parametros.conta === "string" ? parametros.conta : parametros.conta ? "invalida" : undefined} />
       </Suspense>}
       {leituraAtiva && parametros.metricas && !negocioDaLeitura && <p className="form-warning" role="status">Não foi possível autorizar a leitura desta conta nesta carteira. Nenhum número foi consultado.</p>}
       {revisoes?.error && <p className="form-warning">A fila de criativos não pôde ser consultada agora.</p>}
@@ -270,7 +272,7 @@ export default async function GestorPage({ searchParams }: {
                 </details>}</div>
               <div className={styles.destinos}>
                 {leituraDisponivel && minhasContas.has(linha.id) && <a
-                  href={`?${new URLSearchParams({ q: busca, filtro, metricas: linha.id }).toString()}#leitura-da-carteira`}>Ver números</a>}
+                  href={`?${new URLSearchParams({ q: busca, filtro, metricas: linha.id, desde: periodoDaLeitura.desde, ate: periodoDaLeitura.ate }).toString()}#leitura-da-carteira`}>Ver números</a>}
                 <a href={`/revisar-perfil?negocio=${encodeURIComponent(linha.id)}#ficha-${encodeURIComponent(linha.id)}`}>Abrir ficha</a>
                 <a href={`/gestor/negocio/${encodeURIComponent(linha.id)}/marca`}>Ver materiais de marca</a>
                 {(linha.origem === "pedido" || fonteOperacionalIncompleta) && <a href={`/gestor/compras?negocio=${encodeURIComponent(linha.id)}`}>Ver contratações</a>}

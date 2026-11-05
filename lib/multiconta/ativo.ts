@@ -6,6 +6,9 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { escolherNegocio, type EscolhaDeNegocio } from "./escolha";
 import { negociosLiberados, type PedidoDoNegocio } from "./elegibilidade";
 import { lerTodasPaginas, lerTodasPaginasEmLotes } from "./paginacao";
+import { acessosContratadosDoPerfil } from "../contratacao/acesso-contratado";
+import { pedidoMantemDireito } from "../contratacao/direito-por-pedido";
+import { consultarEstadoPagamento } from "../contratacao/consultar-estado-pagamento";
 
 export const COOKIE_NEGOCIO_ATIVO = "v2g_negocio_ativo";
 
@@ -50,18 +53,23 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
   if (precisaPedidos && data.length) {
     try {
       const admin = createAdminClient();
-      const resultado = await lerTodasPaginasEmLotes(data.map((negocio) => negocio.id), (lote, inicio, fim) => admin.from("commercial_orders")
-        .select("business_id, status, buyer_email, buyer_profile_id")
+      const resultado = await lerTodasPaginasEmLotes<PedidoDoNegocio>(data.map((negocio) => negocio.id), (lote, inicio, fim) => admin.from("commercial_orders")
+        .select("id, business_id, status, buyer_email, buyer_profile_id, payment_method, provider_charge_id")
         .in("business_id", lote)
         .order("id", { ascending: true })
         .range(inicio, fim));
       if (!resultado) return { status: "falha_consulta" };
-      pedidos = resultado;
+      pedidos = [];
+      for (const pedido of resultado) pedidos.push({...pedido,
+        direitoFinanceiro: await pedidoMantemDireito(pedido,
+          p => consultarEstadoPagamento(admin,p)),
+      });
     } catch {
       return { status: "falha_consulta" };
     }
   }
   const liberados = negociosLiberados({
+    acessosContratados: await acessosContratadosDoPerfil(supabase, user),
     negocios: data,
     pedidos,
     perfilId: user.id,

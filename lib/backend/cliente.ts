@@ -110,8 +110,12 @@ async function chamar(
   caminho: string,
   corpo: unknown | undefined,
   opcoes: OpcoesChamada,
+  autenticacao: "maquina" | "sessao" = "maquina",
 ): Promise<Resultado<unknown>> {
-  const cfg = configuracao();
+  const baseDaSessao = autenticacao === "sessao" ? process.env.V2G_BACKEND_URL : undefined;
+  const cfg = autenticacao === "sessao"
+    ? (baseDaSessao ? { base: baseDaSessao.replace(/\/+$/, ""), token: "" } : null)
+    : configuracao();
   const contexto = opcoes.contexto ?? caminho;
 
   if (!cfg) {
@@ -134,7 +138,7 @@ async function chamar(
     resposta = await fetch(url, {
       method: metodo,
       headers: {
-        "X-V2G-Token": cfg.token,
+        ...(autenticacao === "maquina" ? { "X-V2G-Token": cfg.token } : {}),
         ...(opcoes.tokenDaSessao ? { Authorization: `Bearer ${opcoes.tokenDaSessao}` } : {}),
         Accept: "application/json",
         // ============================================================
@@ -210,6 +214,18 @@ export async function obter(
   opcoes: OpcoesChamada = {},
 ): Promise<Resultado<unknown>> {
   return chamar("GET", caminho, undefined, opcoes);
+}
+
+/** GET da coleção Meta: só Bearer humano; não envia nem exige token de máquina. */
+export async function obterAnunciosComSessao(args: {
+  businessId: string; tokenDaSessao: string; desde: string; ate: string; contaId: string;
+}): Promise<Resultado<unknown>> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(args.businessId)
+    || !/^\S{1,16000}$/.test(args.tokenDaSessao)) return falha("nao_autorizado");
+  return chamar("GET", `/negocios/${encodeURIComponent(args.businessId)}/meta/campanhas`, undefined, {
+    contexto: "anuncios-meta", tokenDaSessao: args.tokenDaSessao,
+    params: { desde: args.desde, ate: args.ate, conta_id: args.contaId },
+  }, "sessao");
 }
 
 /**
