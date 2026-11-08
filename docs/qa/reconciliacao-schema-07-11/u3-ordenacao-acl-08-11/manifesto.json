@@ -1,0 +1,227 @@
+{
+  "status": "PREPARACAO_LOCAL_TESTADA_SEM_APLICACAO",
+  "revision": "ordenacao-acl-08-11-COLLATE-C-sem-alterar-grants",
+  "project_id": "zskpijnqgkqwxksqmzmf",
+  "groups": [
+    3,
+    4,
+    5,
+    7,
+    11
+  ],
+  "absentObjects": 9,
+  "newTables": [
+    "pessoas_do_negocio",
+    "entrevistas",
+    "propostas_de_perfil",
+    "itens_da_proposta",
+    "divergencias_de_cadastro"
+  ],
+  "columns": [
+    [
+      "creatives",
+      "pessoa_id",
+      "uuid"
+    ]
+  ],
+  "checks": [
+    [
+      "creatives",
+      "creatives_uso_check"
+    ]
+  ],
+  "constraints": [
+    [
+      "creatives",
+      "creatives_pessoa_negocio_fkey"
+    ]
+  ],
+  "indexes": [
+    [
+      "creatives",
+      "creatives_pessoa_id_idx"
+    ]
+  ],
+  "functions": [
+    "aplicar_proposta",
+    "escrever_apenas_se_livre"
+  ],
+  "helpers": [
+    "registrar_procedencia",
+    "procedencia_do_campo",
+    "set_atualizado_em",
+    "owns_business"
+  ],
+  "applyName": "qa_reconciliacao_u3_perfil_procedencia_20261108",
+  "returnName": "qa_reconciliacao_u3_perfil_procedencia_retorno_20261108",
+  "ledger": {
+    "before": 46,
+    "after": 47,
+    "afterReturn": 48
+  },
+  "applyFields": [
+    {
+      "tabela": "businesses",
+      "campo": "name",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "city",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "cep",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "niche",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "description",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "atende_somente_no_local",
+      "tipo": "booleano"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "business_hours",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "availability",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "delivery_time",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "payment_policy",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "guarantee",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "differentiators",
+      "tipo": "lista"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "site_url",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "instagram_handle",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "avg_ticket_min",
+      "tipo": "numero"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "avg_ticket_max",
+      "tipo": "numero"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "avg_direct_cost",
+      "tipo": "numero"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "target_profit_per_customer",
+      "tipo": "numero"
+    },
+    {
+      "tabela": "businesses",
+      "campo": "monthly_budget",
+      "tipo": "numero"
+    },
+    {
+      "tabela": "narrativa_negocio",
+      "campo": "quem_somos",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "narrativa_negocio",
+      "campo": "historia",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "narrativa_negocio",
+      "campo": "por_que_existe",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "narrativa_negocio",
+      "campo": "para_quem",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "narrativa_negocio",
+      "campo": "o_que_nao_fazemos",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "identidade_visual",
+      "campo": "tom_de_voz",
+      "tipo": "texto"
+    },
+    {
+      "tabela": "identidade_visual",
+      "campo": "observacoes",
+      "tipo": "texto"
+    }
+  ],
+  "writeFields": [
+    "name",
+    "city",
+    "cep",
+    "niche",
+    "description",
+    "atende_somente_no_local",
+    "business_hours",
+    "availability",
+    "delivery_time",
+    "payment_policy",
+    "guarantee",
+    "differentiators",
+    "site_url",
+    "instagram_handle",
+    "avg_ticket_min",
+    "avg_ticket_max",
+    "avg_direct_cost",
+    "target_profit_per_customer",
+    "monthly_budget"
+  ],
+  "intentionalChanges": [
+    "FKs compostas por negocio",
+    "transcricao nullable desde criacao",
+    "ACEITO nao aceita override",
+    "origem NULL recusada",
+    "allowlist explicita de perfil",
+    "locks antes da leitura de procedencia"
+  ],
+  "baselineU2": {
+    "version": "20261108005549",
+    "receiptSha256": "1015348fa9b053457375ab22e623205417b4f620ba30dafc55e81f3b347766a1"
+  }
+}
