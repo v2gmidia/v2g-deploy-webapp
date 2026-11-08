@@ -8,6 +8,7 @@ import type { DiaDoConsolidado } from "@/lib/dia-seguinte/tipos";
 import type { IntervaloDoInicio } from "@/lib/inicio/periodo";
 import type { ConsolidadoDoNegocio } from "@/lib/dia-seguinte/tipos";
 import { SeletorDePeriodo } from "./SeletorDePeriodo";
+import { AtualizarInicio } from "./AtualizarInicio";
 import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
 import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import { cabeRecepcaoDoCadastro, resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
@@ -479,7 +480,7 @@ export function TelaDoInicio({
         )}
         <CabecalhoDoInicio intervalo={intervalo} />
         {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do negócio agora. Tente novamente.</p>}
-        {acumuladoDoPeriodo === null && resultadosSaoEsperados(estado) && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}
+        {acumuladoDoPeriodo === null && resultadosSaoEsperados(estado) && <div className="form-warning"><p role="status">Não foi possível carregar os resultados deste período.</p><AtualizarInicio /></div>}
 
         {/* A tarefa vem da pendência real do onboarding ou da cadeia de execução. */}
         <div className={`inicio-topo${temProximoAcionavel ? " com-acao" : ""}`}>
@@ -641,7 +642,7 @@ export function TelaDoInicio({
     <div className="inicio-editorial">
       {faixa}
       <CabecalhoDoInicio intervalo={intervalo} />
-        {acumuladoDoPeriodo === null && <p className="form-warning" role="status">Não foi possível carregar os resultados deste período. Tente novamente.</p>}
+        {acumuladoDoPeriodo === null && <div className="form-warning"><p role="status">Não foi possível carregar os resultados deste período.</p><AtualizarInicio /></div>}
 
       {/* A mesma composição do estado sem números: estado, tarefa e
           acompanhamento. Os números continuam condicionados a temNumero. */}

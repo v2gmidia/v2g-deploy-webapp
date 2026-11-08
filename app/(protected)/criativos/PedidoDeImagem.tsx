@@ -9,6 +9,7 @@ import { ReferenciasDoNicho } from "./ReferenciasDoNicho";
 import { URL_BIBLIOTECA } from "@/lib/jev/catalogo-barbearia";
 import { contextoDesteNegocio, type ContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio";
 import { ContextoDoNegocio, OrigemDoCampo } from "./ContextoDoNegocio";
+import { useEsperaLocal } from "./useEsperaLocal";
 
 export function PedidoDeImagem({ businessId, requestId, hoje, pedidos, falhou, previa = false, geracaoHabilitada = false, referenciasDisponiveis = false, contexto }: {
   businessId: string; requestId: string; hoje: string;
@@ -62,7 +63,8 @@ function Formulario({ businessId, requestId, hoje, novoPedido, previa, geracaoHa
   const [referenciaId, setReferenciaId] = useState("");
   const vencida = promocao && Boolean(validade) && validade < hoje;
   const travado = pendente || estado.ok === true;
-  return <form action={action} className={styles.formulario}>
+  const espera = useEsperaLocal(pendente ? "guardar" : null);
+  return <form action={action} className={styles.formulario} aria-busy={pendente}>
     <input type="hidden" name="requestId" value={requestId} />
     <input type="hidden" name="businessId" value={businessId} />
     <input type="hidden" name="referenciaId" value={referenciaId} />
@@ -92,6 +94,9 @@ function Formulario({ businessId, requestId, hoje, novoPedido, previa, geracaoHa
       <label className={styles.opcao}><input type="checkbox" name="confirmado" required checked={confirmado}
         onChange={(e) => setConfirmado(e.target.checked)} />Conferi a oferta, o prazo e o destino da resposta.</label>
     </fieldset>
+    <div role="status" aria-live="polite" aria-atomic="true">{espera.visivel ? <p>{espera.longa
+      ? "Ainda aguardando a confirmação de que o pedido foi guardado. Isso não confirma geração de imagem. Não prepare outro pedido para repetir esta tentativa."
+      : "Guardando o pedido neste negócio. A criação da imagem é uma etapa separada."}</p> : null}</div>
     {estado.erro ? <p className="form-error" role="alert">{estado.erro}</p> : null}
     {estado.ok ? <><p className="form-notice" role="status">{estado.repetido ? "Este pedido já estava guardado." : "Pedido guardado neste negócio."} Nenhum anúncio foi publicado.</p>
       <AndamentoDaImagem key={`${businessId}:${estado.id}`} businessId={businessId} requestId={estado.id!}

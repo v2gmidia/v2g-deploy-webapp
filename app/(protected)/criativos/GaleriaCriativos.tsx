@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import styles from "./galeria-carregamento.module.css";
+import { useEsperaLocal } from "./useEsperaLocal";
 
 export type GrupoDaGaleria = "biblioteca" | "instagram" | "revisao" | "arquivados";
 
@@ -44,17 +46,22 @@ function ArteDeExemplo({ tipo }: { tipo: NonNullable<ItemDaGaleria["arte"]> }) {
 }
 
 function CardDoCriativo({ item }: { item: ItemDaGaleria }) {
-  const [imagemFalhou, setImagemFalhou] = useState(false);
+  const [imagemFalhou, setImagemFalhou] = useState<string | null>(null);
+  const [imagemCarregada, setImagemCarregada] = useState<string | null>(null);
+  const carregando = Boolean(item.imagemUrl && imagemCarregada !== item.imagemUrl && imagemFalhou !== item.imagemUrl);
+  const espera = useEsperaLocal(carregando ? item.imagemUrl : null);
   const avisoDeExclusao = typeof item.expiraEmDias === "number"
     ? item.expiraEmDias <= 1 ? "Arquivo expira amanhã" : `Arquivo expira em ${item.expiraEmDias} dias`
     : null;
 
   return <article className="criativo-card">
-    <div className="criativo-card-imagem">
-      {item.imagemUrl && !imagemFalhou
+    <div className={`criativo-card-imagem ${styles.previa}`} aria-busy={carregando}>
+      {item.imagemUrl && imagemFalhou !== item.imagemUrl
         // A origem é privada e chega como URL assinada após conferir o negócio.
         // eslint-disable-next-line @next/next/no-img-element
-        ? <img src={item.imagemUrl} alt={`Prévia de ${item.nome}`} loading="lazy" onError={() => setImagemFalhou(true)} />
+        ? <><img src={item.imagemUrl} alt={`Prévia de ${item.nome}`} loading="lazy"
+          data-carregando={carregando || undefined} onLoad={() => setImagemCarregada(item.imagemUrl)} onError={() => setImagemFalhou(item.imagemUrl)} />
+          {carregando ? <span className={styles.espera}>{espera.visivel ? "Carregando prévia…" : <span className="sr-only">Carregando prévia</span>}</span> : null}</>
         : item.arte
           ? <ArteDeExemplo tipo={item.arte} />
           : <div className="criativo-sem-previa"><IconeImagem /><span>Prévia indisponível</span></div>}
@@ -97,7 +104,7 @@ export function GaleriaCriativos({ itens, previa = false, falhou = false, carreg
   const [abaAtiva, setAbaAtiva] = useState<GrupoDaGaleria>(primeiraComItens);
   const visiveis = itens.filter((item) => item.grupo === abaAtiva);
 
-  return <section className="criativos-galeria" aria-labelledby="galeria-titulo">
+  return <section className="criativos-galeria" aria-labelledby="galeria-titulo" aria-busy={carregando}>
     <div className="criativos-galeria-head">
       <h2 id="galeria-titulo">Sua biblioteca</h2>
       <a className="criativos-filtro" href={previa ? "/exemplo/anuncios" : "/anuncios"}>Ver anúncios<IconeSeta /></a>
@@ -112,6 +119,7 @@ export function GaleriaCriativos({ itens, previa = false, falhou = false, carreg
       })}
     </div>
     {falhou ? <p className="form-warning" role="alert">Não foi possível conferir toda a biblioteca agora. Isso não significa que os criativos foram removidos.</p> : null}
+    {carregando && visiveis.length > 0 ? <p role="status">Atualizando a biblioteca. Os criativos anteriores permanecem visíveis até a consulta terminar.</p> : null}
     {visiveis.length > 0
       ? <div className="criativos-grade">{visiveis.map((item) => <CardDoCriativo key={item.id} item={item} />)}</div>
       : falhou ? <p role="status">A biblioteca está indisponível. Tente consultar novamente.</p>

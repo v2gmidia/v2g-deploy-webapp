@@ -128,6 +128,7 @@ test('agenda reconhece CPF exato; duas compras do mesmo CPF ficam em revisao, nu
 });
 test('HTML real do primeiro acesso, compra e seletor identifica ambos sem exigir 14 digitos',()=>{
   const env=ambienteTs({ports:{
+    './espera-local.css':{},
     react:{...React,useState:valor=>[valor,()=>{}],useActionState:(_fn,estado)=>[estado,()=>{},false]},
     'next/navigation':{useSearchParams:()=>new URLSearchParams('modo=cadastro')},
     '@/components/ui/EntradaEditorial':{EntradaEditorial:({children})=>React.createElement('section',null,children)},

@@ -5,10 +5,11 @@ import { redirect } from "next/navigation";
 import { isIP } from "node:net";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
-import { asaasSandbox, idAsaas } from "@/lib/contratacao/asaas-sandbox";
+import { idAsaas } from "@/lib/contratacao/asaas-sandbox";
+import { compraDisponivel, provedorDaCompra, callback3dsCompra, schemaCompraPronto, requisicaoCompraPermitida } from "./provedor-compra";
 import { validarDadosCartao } from "@/lib/contratacao/dados-cartao";
 import { MAX_TENTATIVAS_CARTAO } from "@/lib/contratacao/retentativa-cartao";
-import { lerDispositivo3ds, callback3dsQa, urlDesafio3ds } from "./cartao-3ds";
+import { lerDispositivo3ds, urlDesafio3ds } from "./cartao-3ds";
 import { origemAsaasNoServidor } from "./origem-asaas-servidor";
 import { hashDeSeguranca, ipConfiavelDaVercel, segurancaCheckoutAtiva,
   verificarTurnstile } from "@/lib/seguranca/checkout";
@@ -25,17 +26,22 @@ function hojeEmSaoPaulo(): string {
 
 export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: FormData,
   segurancaJaVerificada = false): Promise<PagamentoState> {
-  if (!checkoutSandboxSeguroNesteServidor() || process.env.V2G_CHECKOUT_API_ENABLED !== "true")
-    return { erro: "O pagamento de teste está indisponível neste ambiente." };
+  if (!compraDisponivel() || process.env.V2G_CHECKOUT_API_ENABLED !== "true")
+    return { erro: "O pagamento está indisponível neste ambiente." };
+  if (!requisicaoCompraPermitida(await headers(),true))
+    return {erro:"Abra o pagamento pelo endereço oficial da V2G."};
   const referencia = String(form.get("ref") ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(referencia)) return { erro: "Pedido inválido. Volte ao início da contratação." };
   const admin = createAdminClient();
-  const assistidoAtivo = process.env.V2G_ASSISTED_ASAAS_ENABLED === "true";
+  if (!await schemaCompraPronto(admin)) return {erro:"O pagamento está indisponível agora."};
+  const executarAsaas = provedorDaCompra("purchase");
+  const sandbox = checkoutSandboxSeguroNesteServidor();
+  const assistidoAtivo = sandbox && process.env.V2G_ASSISTED_ASAAS_ENABLED === "true";
   const { data: pedido, error: erroPedido } = await admin.from("commercial_orders")
     .select("id, origin, status, buyer_email, buyer_name, buyer_whatsapp, legal_name, cnpj, payment_method, billing_period, total_cents, provider_customer_id, provider_charge_id, provider_subscription_id, provider_checkout_id, checkout_creation_started_at, payment_creation_started_at, payment_attempt_count")
     .eq("external_ref", referencia).maybeSingle();
   if (erroPedido || !pedido || !await origemAsaasNoServidor(admin, pedido, assistidoAtivo))
-    return { erro: "Não foi possível localizar o pedido de teste." };
+    return { erro: "Não foi possível localizar o pedido." };
   if (pedido.status !== "awaiting_payment" || pedido.provider_checkout_id
       || pedido.checkout_creation_started_at || pedido.provider_charge_id
       || pedido.provider_subscription_id || pedido.payment_creation_started_at)
@@ -66,7 +72,7 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
   let remoteIp: string | null = null;
   if (cartao) {
     if (cabecalhos.get("x-forwarded-proto") !== "https")
-      return { erro: "O teste com cartão exige uma página HTTPS de QA. Nenhum dado do cartão foi enviado." };
+      return { erro: "O pagamento com cartão exige uma conexão segura. Nenhum dado do cartão foi enviado." };
     remoteIp = ipDoProxy ?? (cabecalhos.get("cf-connecting-ip") ?? cabecalhos.get("x-forwarded-for")?.split(",")[0] ?? "").trim();
     if (!isIP(remoteIp) || remoteIp === "127.0.0.1" || remoteIp === "::1")
       return { erro: "Não foi possível identificar o IP do pagador. Nenhum dado do cartão foi enviado." };
@@ -75,23 +81,24 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
   // Uma unica tentativa externa por pedido. Timeout ou resposta ambigua exige
   // conciliacao antes de repetir, pois o Asaas pode ter criado a cobranca.
   const hoje = hojeEmSaoPaulo();
-  // Este é o fluxo direto já provado apenas no Sandbox. Produção depende do
-  // desenho cobrança avulsa 3DS -> PAYMENT_CONFIRMED -> assinatura no mês
-  // seguinte, registrado separadamente em fluxo-cartao-mensal.ts.
-  const usa3ds = pedido.billing_period === "monthly" && pedido.payment_method === "asaas_card"
+  // Produção autentica também o cartão à vista. Só o mensal gera assinatura
+  // posterior; o contexto privado de IP existe apenas para essa continuação.
+  const usa3ds = (!sandbox || pedido.billing_period === "monthly") && pedido.payment_method === "asaas_card"
     && process.env.V2G_CHECKOUT_3DS_SCHEMA_ENABLED === "true"
     && process.env.V2G_CHECKOUT_3DS_ENABLED === "true";
   const dispositivo = usa3ds ? lerDispositivo3ds(String(form.get("deviceInfo") ?? ""),
     remoteIp ?? "", cabecalhos.get("user-agent") ?? "") : null;
   if (usa3ds && (!ipDoProxy || !dispositivo))
     return { erro: "Não foi possível verificar os dados do dispositivo para autenticar o cartão. Atualize a página." };
-  const assinaturaDiretaSandbox = pedido.billing_period === "monthly" && !usa3ds;
+  const assinaturaDiretaSandbox = sandbox && pedido.billing_period === "monthly" && !usa3ds;
+  if (!sandbox && pedido.billing_period === "monthly" && !usa3ds)
+    return {erro:"A autenticação do cartão está indisponível. Nenhuma cobrança foi criada."};
   const reservadoEm = new Date().toISOString();
   const tentativasUsadas = pedido.payment_attempt_count + (cartao ? 1 : 0);
   const { data: reservado, error: erroReserva } = await admin.from("commercial_orders")
     .update({ payment_creation_started_at: reservadoEm,
       provider_first_due_date: pedido.billing_period === "monthly" ? hoje : null,
-      ...(usa3ds ? { provider_card_flow: "initial_3ds" } : {}),
+      ...(usa3ds && pedido.billing_period === "monthly" ? { provider_card_flow: "initial_3ds" } : {}),
       payment_attempt_count: tentativasUsadas })
     .eq("id", pedido.id).eq("status", "awaiting_payment")
     .eq("payment_attempt_count", pedido.payment_attempt_count)
@@ -100,7 +107,7 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
     .select("id").maybeSingle();
   if (erroReserva || !reservado)
     return { erro: "O pedido já está em processamento. Atualize a página." };
-  if (usa3ds) {
+  if (usa3ds && pedido.billing_period === "monthly") {
     const agora = new Date();
     const limpeza = await admin.from("checkout_3ds_context").delete().lt("expires_at", agora.toISOString());
     const contexto = await admin.from("checkout_3ds_context").upsert({ order_id: pedido.id,
@@ -111,10 +118,10 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
 
   let clienteId = idAsaas(pedido.provider_customer_id, "cus");
   if (!clienteId) {
-    const cliente = await asaasSandbox("/customers", { method: "POST", body: {
+    const cliente = await executarAsaas("/customers", { method: "POST", body: {
       name: pedido.legal_name, cpfCnpj: pedido.cnpj, email: pedido.buyer_email,
       mobilePhone: pedido.buyer_whatsapp, externalReference: pedido.id,
-      // No Sandbox, contatos sinteticos nao devem receber SMS ou e-mail.
+      // A confirmação usa a outbox V2G. Evitar notificações paralelas do provedor.
       notificationDisabled: true,
     } });
     const corpo = cliente.body && typeof cliente.body === "object" ? cliente.body as Record<string, unknown> : null;
@@ -134,7 +141,7 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
           .is("provider_subscription_id", null)
           .select("id").maybeSingle();
         if (!erroLiberacao && liberado)
-          return { erro: "O pagamento de teste está temporariamente indisponível. Tente novamente mais tarde." };
+          return { erro: "O pagamento está temporariamente indisponível. Tente novamente mais tarde." };
       }
       return { erro: "O cadastro do pagador não foi confirmado. A V2G precisa conferir antes de tentar novamente." };
     }
@@ -154,7 +161,7 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
       addressNumber: titular.addressNumber, mobilePhone: pedido.buyer_whatsapp },
     remoteIp,
   } : {};
-  const resposta = await asaasSandbox(assinaturaDiretaSandbox ? "/subscriptions" : "/payments", {
+  const resposta = await executarAsaas(assinaturaDiretaSandbox ? "/subscriptions" : "/payments", {
     method: "POST", timeoutMs: titular ? 65_000 : 20_000,
     body: assinaturaDiretaSandbox ? {
       customer: clienteId, billingType: "CREDIT_CARD", cycle: "MONTHLY",
@@ -166,7 +173,7 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
       dueDate: hoje, value: pedido.total_cents / 100,
       description: "Gestão de anúncios V2G", externalReference: pedido.id,
       ...dadosDoCartao,
-      ...(usa3ds ? { threeDSecure: { callbackUrl: callback3dsQa(referencia) }, deviceInfo: dispositivo } : {}),
+      ...(usa3ds ? { threeDSecure: { callbackUrl: callback3dsCompra(referencia) }, deviceInfo: dispositivo } : {}),
     },
   });
   const corpo = resposta.body && typeof resposta.body === "object" ? resposta.body as Record<string, unknown> : null;
@@ -185,7 +192,7 @@ export async function iniciarPagamentoInterno(_anterior: PagamentoState, form: F
         .is("provider_charge_id", null).is("provider_subscription_id", null)
         .select("id").maybeSingle();
       if (!erroLiberacao && liberado)
-        return { erro: "O pagamento de teste está temporariamente indisponível. Tente novamente mais tarde." };
+        return { erro: "O pagamento está temporariamente indisponível. Tente novamente mais tarde." };
     }
     if (cartao && resposta.cardDeclined) {
       // O Asaas confirma que essa recusa 400 nao persiste cobranca nem

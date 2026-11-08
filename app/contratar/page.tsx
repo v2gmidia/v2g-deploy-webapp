@@ -1,17 +1,21 @@
 import { randomUUID } from "node:crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { Marca } from "@/components/ui/Marca";
 import { createClient } from "@/lib/supabase/server";
 import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-checkout";
 import { FormularioContratar } from "./FormularioContratar";
 import "./contratar.css";
+import { compraDisponivel, schemaCompraPronto, requisicaoCompraPermitida } from "@/lib/contratacao/provedor-compra";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata = { title: "Contratar | V2G", robots: { index: false, follow: false } };
 
 export default async function ContratarPage() {
-  // Somente o projeto isolado de QA pode oferecer o sandbox em um build HTTPS.
-  if (!checkoutSandboxSeguroNesteServidor()) notFound();
+  // Modos distintos, ambos fechados sem configuração explícita.
+  if (!compraDisponivel()) notFound();
+  if (!requisicaoCompraPermitida(await headers())) notFound();
+  if (!checkoutSandboxSeguroNesteServidor() && !await schemaCompraPronto(createAdminClient())) notFound();
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const apiAtiva = process.env.V2G_CHECKOUT_API_ENABLED === "true";
@@ -26,7 +30,7 @@ export default async function ContratarPage() {
         <p>A V2G cuida da operação de mídia. Você acompanha os próximos passos do negócio e, quando houver dados disponíveis, o desempenho dos anúncios.</p>
         <p className="contratar-proximo">Depois da compra aprovada, você cria seu acesso, preenche as informações do negócio e escolhe um horário para conversar com o gestor. A primeira campanha é publicada por ele após os preparativos.</p>
         <p className="contratar-limite">A verba de anúncios é paga à parte. Informe o CPF ou CNPJ do contratante. Nesta fase, seu negócio precisa vender por conversa no WhatsApp.</p>
-        {podeRetomar && <p className="contratar-retomar"><a href={`/contratar/pagamento?ref=${encodeURIComponent(refAnterior)}`}>Retomar meu pedido de teste</a><span>Consulte o pagamento iniciado neste navegador antes de fazer outro pedido.</span></p>}
+        {podeRetomar && <p className="contratar-retomar"><a href={`/contratar/pagamento?ref=${encodeURIComponent(refAnterior)}`}>Retomar meu pedido</a><span>Consulte o pagamento iniciado neste navegador antes de fazer outro pedido.</span></p>}
       </section>
       <FormularioContratar referencia={randomUUID()} apiAtiva={apiAtiva}
         emailDoAcesso={user?.email ?? undefined}

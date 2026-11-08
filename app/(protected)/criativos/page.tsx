@@ -202,7 +202,7 @@ export default async function CriativosPage() {
         : null}
       analise={amostra
         ? <AmostraDeVereditos qual={amostra} />
-        : <Analisar podeEnviar={podeAnalisar} businessId={negocioId ?? ""} />}
+        : <Analisar key={negocioId ?? "sem-negocio"} podeEnviar={podeAnalisar} businessId={negocioId ?? ""} />}
     />
   </>;
 }

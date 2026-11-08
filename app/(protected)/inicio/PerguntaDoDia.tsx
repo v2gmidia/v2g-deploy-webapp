@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { EsperaLocal } from "@/components/ui/EsperaLocal";
 import { diaPorExtenso, dinheiro, dinheiroDeCentavos, simboloDaMoeda } from "@/lib/formato";
 import {
   centavosDeDigitos,
@@ -115,6 +116,11 @@ interface PerguntaDoDiaProps {
    */
   idExecucao: string;
   businessId: string;
+  /** A bancada injeta funções locais; as ações reais continuam validando sessão e negócio. */
+  acoes?: {
+    responder: typeof responderPerguntaDoDiaAction;
+    registrar: typeof registrarPerguntaApresentadaAction;
+  };
 }
 
 export function PerguntaDoDia({
@@ -126,7 +132,11 @@ export function PerguntaDoDia({
   valoresPorDia,
   idExecucao,
   businessId,
+  acoes,
 }: PerguntaDoDiaProps) {
+  const responder = acoes?.responder ?? responderPerguntaDoDiaAction;
+  const registrar = acoes?.registrar ?? registrarPerguntaApresentadaAction;
+  const envioEmCurso = useRef(false);
   const doDia = (d: string) =>
     d === dia
       ? { vendas: vendasAtuais, receita: receitaAtualCentavos }
@@ -231,25 +241,26 @@ export function PerguntaDoDia({
     // tudo do lado do servidor; o `catch` aqui cobre a falha de TRANSPORTE
     // da própria Server Action — rede caída no meio do POST do Next, que
     // rejeita antes de o código de lá rodar.
-    void registrarPerguntaApresentadaAction({ dia: respondendo, businessId }).catch(() => {});
-  }, [idExecucao, businessId, respondendo, temPerguntaEmAberto]);
+    void registrar({ dia: respondendo, businessId }).catch(() => {});
+  }, [idExecucao, businessId, respondendo, temPerguntaEmAberto, registrar]);
 
   async function enviar(naoSei: "vendas" | "receita" | null) {
-    if (enviando) return;
+    if (envioEmCurso.current) return;
+    envioEmCurso.current = true;
     setEnviando(true);
     setErro(null);
 
     // `undefined` = não mexeu (o servidor manda); `null` = disse "não
     // sei" (apaga de propósito). A distinção é o que impede o botão de
     // virar "não mexi" e o abrir-e-salvar de virar apagamento.
-    const resultado = await responderPerguntaDoDiaAction({
+    try {
+    const resultado = await responder({
       businessId,
       dia: respondendo,
       vendas: naoSei === "vendas" ? null : vendasDoQueFoiDigitado(vendas) ?? undefined,
       receitaCentavos: naoSei === "receita" ? null : (receitaCentavos ?? undefined),
     });
 
-    setEnviando(false);
     if (!resultado.ok) {
       setErro(resultado.erro ?? "Não consegui guardar sua resposta.");
       return;
@@ -271,6 +282,12 @@ export function PerguntaDoDia({
     // ontem. Não avança para o próximo — ver o bloco de `respondendo`.
     setPendentes((antes) => antes.filter((d) => d !== respondendo));
     voltarParaOntem();
+    } catch {
+      setErro("Não conseguimos confirmar se a resposta foi guardada. Seus valores continuam aqui; confira a conexão e tente guardar novamente.");
+    } finally {
+      envioEmCurso.current = false;
+      setEnviando(false);
+    }
   }
 
   function abrir(d: string) {
@@ -382,7 +399,7 @@ export function PerguntaDoDia({
       </div>
 
       <div className="card">
-        {erro && <p className="form-error">{erro}</p>}
+        {erro && <p className="form-error" role="alert">{erro}</p>}
 
         <p className="rc-abertura">{PERGUNTA_DE_VENDAS}</p>
         <div className="fallback-field">
@@ -489,9 +506,10 @@ export function PerguntaDoDia({
             disabled={enviando}
             onClick={() => enviar(null)}
           >
-            {enviando ? "…" : "Guardar"}
+            {enviando ? "Guardando…" : "Guardar"}
           </button>
         </div>
+        <EsperaLocal ativa={enviando} mensagem="Guardando sua resposta…" mensagemDemorada="Ainda aguardamos a confirmação de que sua resposta foi guardada. Seus valores continuam nesta tela. Aguarde antes de tentar novamente." />
 
         {/* Diz por que a gente pergunta. Sem isso, a pergunta diária vira
             cobrança sem contrapartida — e é ela que o cliente abandona

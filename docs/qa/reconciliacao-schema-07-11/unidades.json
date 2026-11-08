@@ -1,0 +1,91 @@
+{
+  "source": "../../estado/n26-divergencias-schema-pre-push-07-11.md",
+  "targetProject": "zskpijnqgkqwxksqmzmf",
+  "authorization": "PREPARACAO SOMENTE; nenhuma aplicacao autorizada",
+  "units": [
+    {
+      "id": "U1",
+      "name": "Reconexão Meta — função ausente",
+      "groups": [
+        1
+      ],
+      "objects": 1,
+      "depends": [],
+      "status": "SQL exato e ensaio local preparados"
+    },
+    {
+      "id": "U2",
+      "name": "Compatibilidade operacional e callbacks Meta",
+      "groups": [
+        2,
+        6,
+        8,
+        9,
+        10
+      ],
+      "objects": 17,
+      "depends": [
+        "U1"
+      ],
+      "status": "Plano; delta/backup/ensaio próprios ainda não preparados"
+    },
+    {
+      "id": "U3",
+      "name": "Perfil, propostas e procedência",
+      "groups": [
+        3,
+        4,
+        5,
+        7,
+        11
+      ],
+      "objects": 9,
+      "depends": [
+        "U2"
+      ],
+      "status": "Plano; delta/backup/ensaio próprios ainda não preparados"
+    },
+    {
+      "id": "U4",
+      "name": "Módulos opcionais — RevOps e pedidos criativos",
+      "groups": [
+        12,
+        14
+      ],
+      "objects": 10,
+      "depends": [
+        "U3"
+      ],
+      "status": "Plano; dois módulos independentes, manter autorizações/flags existentes"
+    },
+    {
+      "id": "U5",
+      "name": "Documentos, competência e acesso histórico",
+      "groups": [
+        13,
+        16,
+        17,
+        18
+      ],
+      "objects": 14,
+      "depends": [
+        "U3"
+      ],
+      "status": "Plano; ordem interna fiscal/evidência → CPF/CNPJ → acesso histórico"
+    },
+    {
+      "id": "U6",
+      "name": "Conciliação financeira e readiness",
+      "groups": [
+        15,
+        19
+      ],
+      "objects": 2,
+      "depends": [
+        "U2",
+        "U5"
+      ],
+      "status": "Plano; corpos financeiros completos e dependências fora de alcance exigem revisão"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+[
+  {
+    "arquivo": "lib/anuncios/contrato-meta.ts",
+    "sha256": "931b0608774f7a95a4899b2b51fde8576d4c217cd214edd901dec6aeda90b232"
+  },
+  {
+    "arquivo": "proxy.ts",
+    "sha256": "f951ccc0971fedeeafd7ac4e549bbc1999a1bc97eeaf37b4714b419688718b09"
+  },
+  {
+    "arquivo": "app/(protected)/anuncios/AnunciosMeta.tsx",
+    "sha256": "357ed85eb470a873ab9e40a6f7ec9425a37d5455376bf7e400dd783b02133b63"
+  },
+  {
+    "arquivo": "app/(protected)/anuncios/page.tsx",
+    "sha256": "8964268e1282995c5c151a3aa11f3108083bada965f0e32e9633ed5e2f1b6677"
+  },
+  {
+    "arquivo": "components/gestor/leitura/LeituraDaConta.tsx",
+    "sha256": "dbdc5080b4f89c8b1956a0b0f40452097c7be0ab2d1e646e6475efbb3064a7d1"
+  },
+  {
+    "arquivo": "scripts/conferir-anuncios-meta.mjs",
+    "sha256": "7736dd230432c984977fbeb23cfc301ba774a04322f8974afba9619bbb0dc29d"
+  },
+  {
+    "arquivo": "scripts/conferir-anuncios-meta-integracao.mjs",
+    "sha256": "b7ef54b93b05454bc02f5834a2b4459af6ce0194f20d28ed0cd22ad3de6cbcc5"
+  },
+  {
+    "arquivo": "scripts/previa-anuncios-meta.mjs",
+    "sha256": "ce9dc7d1a083097f56a37036e48db337dfd4706ff749b13e9595a5f214292c51"
+  },
+  {
+    "arquivo": "lib/anuncios/retorno-login.ts",
+    "sha256": "5808840d44b862bc9a753176fdd3c0ff2591f63031d57814ad483ea2913c2a27"
+  },
+  {
+    "arquivo": "scripts/conferir-retorno-leitura-meta.mjs",
+    "sha256": "b22f1b41c0301fea11ddb5e58c4832d5f1e15dd416e7655db2ccb35d09621e32"
+  }
+]

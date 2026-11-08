@@ -20,6 +20,20 @@ test('renovacao tem texto proprio e nao promete novo primeiro acesso', () => {
   const mail = prepararEmailPagamento({ ...pedido, primeiraCompra: false }, pagamento, site);
   assert.match(mail.text, /outro ciclo/); assert.doesNotMatch(mail.text, /criar seu primeiro acesso/);
 });
+
+test('domínio V2G decidido: pagamento/primeiro acesso e renovação usam app; alias antigo e LP são recusados',()=>{
+  for(const primeiraCompra of [true,false]) {
+    const mail=prepararEmailPagamento({...pedido,primeiraCompra},pagamento,'https://app.v2gmidia.com.br');
+    assert.ok(mail);assert.match(mail.text,/https:\/\/app\.v2gmidia\.com\.br\/entrar/);
+    assert.equal(mail.text.includes('criar seu primeiro acesso'),primeiraCompra);
+    assert.doesNotMatch(mail.text,/vercel\.app/);
+  }
+  for(const url of ['https://v2g-deploy-webapp.vercel.app','https://v2gmidia.com.br','https://www.v2gmidia.com.br',
+    'http://app.v2gmidia.com.br','https://app.v2gmidia.com.br.evil.example',
+    'https://app.v2gmidia.com.br/contratar','https://app.v2gmidia.com.br?next=evil',
+    'https://app.v2gmidia.com.br#x','https://user@app.v2gmidia.com.br','https://app.v2gmidia.com.br:444'])
+    assert.equal(prepararEmailPagamento(pedido,pagamento,url),null,url);
+});
 test('cliente, cobranca, assinatura, valor, pagamento e URL precisam conferir', () => {
   for (const patch of [{ id: 'pay_outro' }, { customer: 'cus_outro' }, { subscription: 'sub_outro' },
     { value: 499.99 }, { value: 500.001 }, { value: NaN }, { status: 'PENDING' }, { status: 'REFUNDED' }, { deleted: true }])
@@ -70,6 +84,9 @@ function adaptador({ enabled = false, adverso = false, canonical = pagamento, fl
     './ambiente-checkout': { checkoutSandboxSeguroNesteServidor: () => true },
     './estado-pagamento-publico': { OCORRENCIAS_PUBLICAS },
     './email-pagamento': { prepararEmailPagamento, despacharEmailPagamento },
+    './ambiente-producao': { processamentoProducaoSeguro: () => false },
+    './asaas-producao': { asaasProducao: () => { throw Error('QA não pode chamar produção'); } },
+    './provedor-compra': { schemaCompraPronto: () => { throw Error('QA não depende de readiness produção'); } },
   };
   const m = { exports: {} };
   vm.runInNewContext(ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText,

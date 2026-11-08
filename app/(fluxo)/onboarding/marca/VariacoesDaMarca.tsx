@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { TETO_DO_NAVEGADOR_BYTES } from "@/lib/criativos/limites.mjs";
 import { prepararImagemDaMarca } from "@/lib/identidade/preparar-arquivo-cliente";
 import { arquivarVariacaoAction, enviarVariacoesAction, type VariacaoVisual, type VariacoesState } from "./variacoes-actions";
+import { useTempoDaOperacao } from "../tempo-da-operacao";
 import styles from "./Marca.module.css";
 
 export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpload }: {
@@ -46,6 +47,7 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
       aoMudarUpload(false);
     }
   }, {});
+  const tempoDoUpload = useTempoDaOperacao(enviando);
   return <section className={styles.logoBloco}>
     <h2>Outras versões do logo</h2>
     <p>Envie somente outras versões do logo em que as cores da marca aparecem bem, como uma versão para fundo claro e outra para fundo escuro. Fotos de fachada, ambiente ou produto precisam ser classificadas separadamente e poderão ser adicionadas depois na Conta. Aceitamos PNG, JPG, WebP e AVIF; HEIC depende do navegador. Você pode guardar até 24 versões; restam {restantes} vagas.</p>
@@ -64,6 +66,11 @@ export function VariacoesDaMarca({ businessId, variacoes, aoEscolher, aoMudarUpl
       <span className={styles.anexoSelecionados} role="status" aria-live="polite">{selecionados.length ? `${selecionados.length} selecionada(s): ${selecionados.join(", ")}` : "Escolha as imagens que tiver. Você pode voltar depois."}</span>
       <button className={styles.anexoEnviar} type="submit" disabled={enviando || restantes === 0 || selecionados.length === 0} aria-label="Enviar imagens da marca">{enviando ? "Enviando…" : "↑ Enviar"}</button>
     </form>
+    {tempoDoUpload.visivel && <p className={styles.statusAcao} role="status" aria-live="polite">
+      {tempoDoUpload.demorada
+        ? "As imagens ainda estão sendo preparadas e enviadas. A seleção foi preservada; não envie novamente."
+        : "Preparando e enviando as imagens…"}
+    </p>}
     <p>{restantes === 0 ? "Limite atingido. Remova uma imagem para enviar outra." : "Você pode enviar em mais de uma rodada, até 12 imagens e 9 MB por rodada."}</p>
     {resultado.erro && <p className="form-error" role="alert">{resultado.erro}</p>}
     {resultado.ok && <p className="form-notice" role="status">{resultado.ok}</p>}

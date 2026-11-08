@@ -52,3 +52,39 @@
   .topo { min-height: 64px; }
 }
 @media (max-width: 620px) { .conteudo { padding: 20px 16px 32px; } .topo { padding-inline: 16px; } }
+
+.carteiraLoading { max-width: 1200px; margin: 0 auto; }
+.loadingTexto { margin: 0 0 1.25rem; color: var(--ink-soft); }
+.loadingEstrutura { display: grid; gap: 2rem; }
+.loadingLinha { display: block; border-radius: .35rem; background: var(--line); }
+.loadingCabecalho { display: flex; justify-content: space-between; align-items: end; gap: 2rem; }
+.loadingGrupo { display: grid; gap: .65rem; min-width: 0; }
+.loadingTitulo { width: min(26rem, 75vw); height: 2.4rem; }
+.loadingDescricao { width: min(33rem, 78vw); height: 1rem; }
+.loadingAtalhos { width: min(23rem, 32vw); height: 1rem; }
+.loadingResumo { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-block: 1px solid var(--line); }
+.loadingResumo > div { display: grid; gap: .7rem; padding: 1.2rem 1rem 1.2rem 0; }
+.loadingNumero { width: 3rem; height: 2rem; }
+.loadingRotulo { width: min(9rem, 90%); height: .85rem; }
+.loadingSecao { width: min(18rem, 60vw); height: 1.5rem; }
+.loadingFiltros { display: flex; flex-wrap: wrap; gap: .75rem; align-items: end; }
+.loadingCampo { width: 15rem; max-width: 100%; height: 2.75rem; }
+.loadingBotao { width: 5.5rem; height: 2.75rem; }
+.loadingLista { display: grid; }
+.loadingRegistro { display: grid; grid-template-columns: minmax(12rem, 1fr) minmax(15rem, 1.5fr) auto; gap: 1rem; align-items: center; min-height: 7rem; border-top: 1px solid var(--line); }
+.loadingRegistro:last-child { border-bottom: 1px solid var(--line); }
+.loadingNome { width: min(13rem, 75%); height: 1.3rem; }
+.loadingDetalhe { width: min(20rem, 85%); height: 1rem; }
+.loadingDestino { width: 8rem; height: 1rem; }
+.erroCarteira { max-width: 50rem; margin: 2rem auto; }
+.erroCarteira h1 { margin: 0 0 .75rem; }
+.erroCarteira p { color: var(--ink-soft); }
+.erroCarteira button { min-height: 44px; padding: .6rem 1rem; border: 1px solid var(--line); border-radius: var(--raio-controle); background: var(--plate); color: var(--plate-ink); font: inherit; font-weight: 700; cursor: pointer; }
+.erroCarteira button:focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 3px; }
+.feedbackNavegacao { position: fixed; z-index: 30; right: 1rem; bottom: 1rem; max-width: min(30rem, calc(100vw - 2rem)); margin: 0; padding: .8rem 1rem; border: 1px solid var(--sidebar-line); border-radius: var(--raio-controle); background: var(--plate); color: var(--plate-ink); box-shadow: 0 12px 30px -18px rgb(var(--navy-rgb) / .5); }
+@media (max-width: 900px) {
+  .loadingCabecalho { display: grid; }
+  .loadingAtalhos { width: min(23rem, 75vw); }
+  .loadingResumo { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .loadingRegistro { grid-template-columns: 1fr; gap: .55rem; padding: 1.2rem 0; }
+}

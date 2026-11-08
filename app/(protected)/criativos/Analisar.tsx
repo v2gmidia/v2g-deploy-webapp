@@ -6,6 +6,7 @@ import { ACEITOS_NO_INPUT, conferirArquivo, LADO_MINIMO_PX, TETO_DO_NAVEGADOR_MB
 import { comTetoDeEspera, EsperaEstourou } from "@/lib/criativos/espera";
 import { apresentarVeredito } from "@/lib/criativos/veredito";
 import { analisarPecaAction, type ResultadoDaAnalise } from "./actions";
+import { useEsperaLocal } from "./useEsperaLocal";
 
 /**
  * Analisar uma peça pronta — o passo 6 do teste de produto.
@@ -53,8 +54,14 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
   const [nomeDoArquivo, setNomeDoArquivo] = useState<string | null>(null);
   const [aceito, setAceito] = useState<File | null>(null);
   const [previa, setPrevia] = useState<string | null>(null);
-  const [demorando, setDemorando] = useState(false);
+  const [emCurso, setEmCurso] = useState(false);
   const campo = useRef<HTMLInputElement>(null);
+  const ocupado = useRef(false);
+  const vivo = useRef(true);
+  const saida = useRef<HTMLDivElement>(null);
+  const espera = useEsperaLocal(emCurso ? "analise" : null);
+  useEffect(() => { vivo.current = true; return () => { vivo.current = false; }; }, []);
+  useEffect(() => { if (fase.nome === "pronto") saida.current?.focus(); }, [fase]);
 
   /**
    * A MINIATURA DO QUE SUBIU.
@@ -79,33 +86,22 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
     return () => URL.revokeObjectURL(url);
   }, [aceito]);
 
-  /**
-   * A SEGUNDA LINHA, DEPOIS DE ~20 SEGUNDOS.
-   *
-   * Não é prazo e não é contagem: é o reconhecimento de que a espera
-   * passou do normal, que é o momento em que a pessoa começa a achar
-   * que travou. Medido em produção: a análise leva ~8s, então 20s já é
-   * fora da curva.
-   *
-   * Não diz quantos minutos faltam porque **ninguém sabe** — o backend
-   * não devolve estimativa. Número aqui seria invenção, da mesma
-   * família das "48 horas" que já saíram do produto.
-   */
-  useEffect(() => {
-    if (fase.nome !== "analisando") {
-      setDemorando(false);
-      return;
-    }
-    const relogio = setTimeout(() => setDemorando(true), 20_000);
-    return () => clearTimeout(relogio);
-  }, [fase.nome]);
-
   async function escolheu(e: React.ChangeEvent<HTMLInputElement>) {
+    if (ocupado.current || !podeEnviar) return;
     const arquivo = e.target.files?.[0];
     if (!arquivo) return;
+    ocupado.current = true;
+    setEmCurso(true);
     setNomeDoArquivo(arquivo.name);
 
-    const recusa = await conferirArquivo(arquivo);
+    let recusa: Recusa | null;
+    try { recusa = await conferirArquivo(arquivo); }
+    catch {
+      ocupado.current = false;
+      setEmCurso(false);
+      setFase({ nome: "pronto", resultado: { ok: false, recado: "Não foi possível conferir este arquivo. Escolha a imagem novamente." } });
+      return;
+    }
     if (recusa) {
       // O campo é limpo: deixar o nome do arquivo recusado ali sugere
       // que ele ainda vai ser enviado. A miniatura sai junto, pelo mesmo
@@ -113,6 +109,8 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
       if (campo.current) campo.current.value = "";
       setAceito(null);
       setFase({ nome: "recusado", recusa });
+      ocupado.current = false;
+      setEmCurso(false);
       return;
     }
 
@@ -141,12 +139,22 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
       recado:
         "A gente não conseguiu terminar de olhar sua imagem agora. Tente de novo em um instante.",
     };
+    let chamadaCriada = false;
 
     try {
       const dados = new FormData();
       dados.append("businessId", businessId);
       dados.append("arquivos", arquivo);
-      resultado = await comTetoDeEspera(analisarPecaAction(dados));
+      const chamada = analisarPecaAction(dados);
+      chamadaCriada = true;
+      // O teto encerra a espera, não a Server Action. Bloquear outra chamada
+      // até a original resolver evita duplicar a análise após timeout.
+      const liberar = () => {
+        ocupado.current = false;
+        if (vivo.current) setEmCurso(false);
+      };
+      void chamada.then(liberar, liberar);
+      resultado = await comTetoDeEspera(chamada);
     } catch (motivo) {
       // O que o dono lê depende do que dá para fazer a respeito, e há
       // dois casos com saídas diferentes. Nenhum deles usa a palavra
@@ -155,11 +163,12 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
         ok: false,
         recado:
           motivo instanceof EsperaEstourou
-            ? "A análise está demorando mais do que o normal e a gente parou de esperar. Sua imagem não foi publicada nem alterada — tente de novo."
+            ? "Esta tela parou de esperar, mas a análise pode continuar no servidor. Aguarde a chamada terminar antes de tentar novamente. Sua imagem não foi publicada nem alterada."
             : "A gente não conseguiu terminar de olhar sua imagem agora. Se ela for muito grande, mande em tamanho menor; se não, tente de novo em um instante.",
       };
     } finally {
-      setFase({ nome: "pronto", resultado });
+      if (!chamadaCriada) { ocupado.current = false; if (vivo.current) setEmCurso(false); }
+      if (vivo.current) setFase({ nome: "pronto", resultado });
     }
   }
 
@@ -171,7 +180,8 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
   }
 
   return (
-    <section className="analise">
+    <section className="analise" aria-busy={emCurso}>
+      {emCurso && fase.nome === "parado" && espera.visivel ? <p role="status">Conferindo o arquivo escolhido antes de enviar.</p> : null}
       {fase.nome !== "pronto" && (
         <div className="analise-envio">
           <label className="analise-alvo" htmlFor="analise-arquivo">
@@ -208,7 +218,7 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
             aria-label="Selecionar imagem"
             aria-describedby="analise-formatos"
             accept={ACEITOS_NO_INPUT}
-            disabled={!podeEnviar || fase.nome === "analisando"}
+            disabled={!podeEnviar || emCurso}
             onChange={escolheu}
           />
 
@@ -240,7 +250,7 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
               backend não devolve progresso, e número inventado aqui é
               a mesma família do "48 horas" que saiu do produto.
               ============================================================ */}
-          {fase.nome === "analisando" && (
+          {fase.nome === "analisando" && espera.visivel && (
             <div className="analise-andamento">
               {previa && (
                 <img
@@ -249,14 +259,13 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
                   alt="A imagem que você mandou para análise"
                 />
               )}
-              <span className="analise-girando" aria-hidden="true" />
               <div className="analise-dizeres" role="status">
                 <p className="analise-espera">
-                  Olhando sua imagem. Dá para esperar aqui — quando terminar, aparece nesta tela.
+                  Aguardando o envio e a análise da sua imagem. Quando terminar, o resultado aparece nesta tela.
                 </p>
-                {demorando && (
+                {espera.longa && (
                   <p className="analise-demora">
-                    Às vezes demora um pouco mais. Pode deixar esta tela aberta.
+                    A análise não informa percentual nem previsão de término. Não inicie outro envio enquanto esta chamada estiver em andamento.
                   </p>
                 )}
               </div>
@@ -265,7 +274,7 @@ export function Analisar({ podeEnviar, businessId }: { podeEnviar: boolean; busi
         </div>
       )}
 
-      {fase.nome === "pronto" && <Resultado resultado={fase.resultado} aoRecomecar={recomecar} nome={nomeDoArquivo} />}
+      {fase.nome === "pronto" && <div ref={saida} tabIndex={-1}><Resultado resultado={fase.resultado} aoRecomecar={recomecar} nome={nomeDoArquivo} emCurso={emCurso} /></div>}
     </section>
   );
 }
@@ -274,10 +283,12 @@ function Resultado({
   resultado,
   aoRecomecar,
   nome,
+  emCurso,
 }: {
   resultado: ResultadoDaAnalise;
   aoRecomecar: () => void;
   nome: string | null;
+  emCurso: boolean;
 }) {
   if (!resultado.ok) {
     return (
@@ -285,7 +296,7 @@ function Resultado({
         <p className="analise-recado" role="status">
           {resultado.recado}
         </p>
-        <button type="button" className="cta ghost" onClick={aoRecomecar}>
+        <button type="button" className="cta ghost" onClick={aoRecomecar} disabled={emCurso}>
           Tentar de novo
         </button>
       </div>

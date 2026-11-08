@@ -2,13 +2,13 @@
 
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { EntradaEditorial } from "@/components/ui/EntradaEditorial";
+import { CarregandoAcesso } from "./CarregandoAcesso";
 import { TelaEntrada } from "./TelaEntrada";
 import { signInAction, signUpAction } from "./actions";
 
 export default function EntrarPage() {
   return (
-    <Suspense fallback={<EntradaEditorial><h1>Carregando seu acesso…</h1><p role="status">Preparando o formulário de entrada.</p></EntradaEditorial>}>
+    <Suspense fallback={<CarregandoAcesso />}>
       <EntrarContent />
     </Suspense>
   );

@@ -9,6 +9,8 @@ const registro={id,business_id:business,copy:{generation:{requestId:'55555555-55
 async function pagina({geracao='false',falha=false,revisaoFalhou=false}={}) {
   const consultas=[];
   const a=ambienteTs({env:{V2G_CREATIVE_REQUESTS_ENABLED:'true',V2G_CREATIVE_BACKEND_ENABLED:geracao,V2G_CREATIVE_REVIEW_ENABLED:revisaoFalhou?'true':'false'},ports:{
+    './galeria-carregamento.module.css':{default:{previa:'previa',espera:'espera'}},
+    '@/lib/criativos/contexto-do-negocio-da-sessao':{carregarContextoDoCriativo:async()=>undefined},
     '@/lib/estado/cliente':{estadoDoCliente:async()=>({negocioId:business,diaSeguinte:{execucao:null}})},
     '@/lib/titulos':{tituloDaAba:()=>({})},
     '@/lib/multiconta/ativo':{negocioAtivoDaSessao:async()=>({status:'selecionado',negocio:{id:business}})},

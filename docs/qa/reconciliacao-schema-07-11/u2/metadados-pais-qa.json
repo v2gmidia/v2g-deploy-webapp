@@ -1,0 +1,2660 @@
+[
+  {
+    "nspname": "public",
+    "relname": "ad_accounts",
+    "relkind": "r",
+    "owner": "postgres",
+    "rls": true,
+    "forced": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "default": "gen_random_uuid()",
+        "notnull": true
+      },
+      {
+        "name": "business_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "meta_connection_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "external_id",
+        "type": "text",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "currency",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "is_active",
+        "type": "boolean",
+        "default": "true",
+        "notnull": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "ownership",
+        "type": "text",
+        "default": "'cliente'::text",
+        "notnull": true
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "default": "'ok'::text",
+        "notnull": true
+      }
+    ],
+    "constraints": [
+      {
+        "def": "UNIQUE (business_id, external_id)",
+        "name": "ad_accounts_business_id_external_id_key"
+      },
+      {
+        "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+        "name": "ad_accounts_business_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (meta_connection_id) REFERENCES meta_connections(id) ON DELETE SET NULL",
+        "name": "ad_accounts_meta_connection_id_fkey"
+      },
+      {
+        "def": "CHECK ((ownership = ANY (ARRAY['cliente'::text, 'v2g'::text])))",
+        "name": "ad_accounts_ownership_check"
+      },
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "ad_accounts_pkey"
+      },
+      {
+        "def": "CHECK ((status = ANY (ARRAY['ok'::text, 'expired'::text, 'revoked'::text, 'no_permission'::text])))",
+        "name": "ad_accounts_status_check"
+      }
+    ],
+    "indexes": [
+      {
+        "def": "CREATE UNIQUE INDEX ad_accounts_business_id_external_id_key ON public.ad_accounts USING btree (business_id, external_id)",
+        "name": "ad_accounts_business_id_external_id_key"
+      },
+      {
+        "def": "CREATE INDEX ad_accounts_business_id_idx ON public.ad_accounts USING btree (business_id)",
+        "name": "ad_accounts_business_id_idx"
+      },
+      {
+        "def": "CREATE INDEX ad_accounts_meta_connection_id_idx ON public.ad_accounts USING btree (meta_connection_id)",
+        "name": "ad_accounts_meta_connection_id_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX ad_accounts_pkey ON public.ad_accounts USING btree (id)",
+        "name": "ad_accounts_pkey"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER ad_accounts_set_updated_at BEFORE UPDATE ON public.ad_accounts FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "ad_accounts_set_updated_at",
+        "function": "set_updated_at()",
+        "handler_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "ad_accounts_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "a",
+        "name": "ad_accounts_insert_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null,
+        "permissive": true
+      },
+      {
+        "cmd": "r",
+        "name": "ad_accounts_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "w",
+        "name": "ad_accounts_update_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      }
+    ],
+    "table_acl": [
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      }
+    ],
+    "column_acl": null
+  },
+  {
+    "nspname": "public",
+    "relname": "businesses",
+    "relkind": "r",
+    "owner": "postgres",
+    "rls": true,
+    "forced": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "default": "gen_random_uuid()",
+        "notnull": true
+      },
+      {
+        "name": "profile_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "claim_email",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "short_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "niche",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "city",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "radius_km",
+        "type": "integer",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "avg_ticket",
+        "type": "numeric",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "avg_direct_cost",
+        "type": "numeric",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "target_profit_per_customer",
+        "type": "numeric",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "monthly_budget",
+        "type": "numeric",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "differentiators",
+        "type": "text[]",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "guarantee",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "delivery_time",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "payment_policy",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "availability",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "business_hours",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "onboarding",
+        "type": "jsonb",
+        "default": "'{}'::jsonb",
+        "notnull": true
+      },
+      {
+        "name": "is_active",
+        "type": "boolean",
+        "default": "true",
+        "notnull": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "dados_ficticios",
+        "type": "boolean",
+        "default": "false",
+        "notnull": true
+      },
+      {
+        "name": "avg_ticket_min",
+        "type": "numeric",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "avg_ticket_max",
+        "type": "numeric",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "cadastro_estado",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "cadastro_iniciado_em",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "cep",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "site_url",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "instagram_handle",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "atende_somente_no_local",
+        "type": "boolean",
+        "default": "true",
+        "notnull": false
+      },
+      {
+        "name": "procedencia",
+        "type": "jsonb",
+        "default": "'{}'::jsonb",
+        "notnull": true
+      },
+      {
+        "name": "geo_key",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "geo_label",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "geo_resolved_at",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      }
+    ],
+    "constraints": [
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "businesses_pkey"
+      },
+      {
+        "def": "FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE",
+        "name": "businesses_profile_id_fkey"
+      },
+      {
+        "def": "UNIQUE (short_id)",
+        "name": "businesses_short_id_key"
+      }
+    ],
+    "indexes": [
+      {
+        "def": "CREATE UNIQUE INDEX businesses_pkey ON public.businesses USING btree (id)",
+        "name": "businesses_pkey"
+      },
+      {
+        "def": "CREATE INDEX businesses_profile_id_idx ON public.businesses USING btree (profile_id)",
+        "name": "businesses_profile_id_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX businesses_short_id_key ON public.businesses USING btree (short_id)",
+        "name": "businesses_short_id_key"
+      },
+      {
+        "def": "CREATE INDEX businesses_unclaimed_idx ON public.businesses USING btree (lower(claim_email)) WHERE (profile_id IS NULL)",
+        "name": "businesses_unclaimed_idx"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER businesses_set_updated_at BEFORE UPDATE ON public.businesses FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "businesses_set_updated_at",
+        "function": "set_updated_at()",
+        "handler_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "businesses_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+        "permissive": true
+      },
+      {
+        "cmd": "a",
+        "name": "businesses_insert_own",
+        "check": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null,
+        "permissive": true
+      },
+      {
+        "cmd": "r",
+        "name": "businesses_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+        "permissive": true
+      },
+      {
+        "cmd": "w",
+        "name": "businesses_update_own",
+        "check": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+        "permissive": true
+      }
+    ],
+    "table_acl": [
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      }
+    ],
+    "column_acl": null
+  },
+  {
+    "nspname": "public",
+    "relname": "campaigns",
+    "relkind": "r",
+    "owner": "postgres",
+    "rls": true,
+    "forced": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "default": "gen_random_uuid()",
+        "notnull": true
+      },
+      {
+        "name": "business_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "ad_account_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "offer_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "analysis_run_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "objective",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "structure",
+        "type": "jsonb",
+        "default": "'{}'::jsonb",
+        "notnull": true
+      },
+      {
+        "name": "external_campaign_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "meta_status",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "default": "'draft'::text",
+        "notnull": true
+      },
+      {
+        "name": "published_at",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "publish_state",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "ativada_em",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "ativada_por",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "pausada_em",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "pausada_por",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      }
+    ],
+    "constraints": [
+      {
+        "def": "FOREIGN KEY (ad_account_id) REFERENCES ad_accounts(id) ON DELETE SET NULL",
+        "name": "campaigns_ad_account_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(id) ON DELETE SET NULL",
+        "name": "campaigns_analysis_run_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+        "name": "campaigns_business_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE SET NULL",
+        "name": "campaigns_offer_id_fkey"
+      },
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "campaigns_pkey"
+      }
+    ],
+    "indexes": [
+      {
+        "def": "CREATE INDEX campaigns_ad_account_id_idx ON public.campaigns USING btree (ad_account_id)",
+        "name": "campaigns_ad_account_id_idx"
+      },
+      {
+        "def": "CREATE INDEX campaigns_analysis_run_id_idx ON public.campaigns USING btree (analysis_run_id)",
+        "name": "campaigns_analysis_run_id_idx"
+      },
+      {
+        "def": "CREATE INDEX campaigns_business_id_idx ON public.campaigns USING btree (business_id)",
+        "name": "campaigns_business_id_idx"
+      },
+      {
+        "def": "CREATE INDEX campaigns_external_campaign_id_idx ON public.campaigns USING btree (external_campaign_id)",
+        "name": "campaigns_external_campaign_id_idx"
+      },
+      {
+        "def": "CREATE INDEX campaigns_offer_id_idx ON public.campaigns USING btree (offer_id)",
+        "name": "campaigns_offer_id_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX campaigns_pkey ON public.campaigns USING btree (id)",
+        "name": "campaigns_pkey"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER campaigns_set_updated_at BEFORE UPDATE ON public.campaigns FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "campaigns_set_updated_at",
+        "function": "set_updated_at()",
+        "handler_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "campaigns_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "a",
+        "name": "campaigns_insert_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null,
+        "permissive": true
+      },
+      {
+        "cmd": "r",
+        "name": "campaigns_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "w",
+        "name": "campaigns_update_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      }
+    ],
+    "table_acl": [
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      }
+    ],
+    "column_acl": null
+  },
+  {
+    "nspname": "public",
+    "relname": "creatives",
+    "relkind": "r",
+    "owner": "postgres",
+    "rls": true,
+    "forced": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "default": "gen_random_uuid()",
+        "notnull": true
+      },
+      {
+        "name": "business_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "campaign_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "analysis_run_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "type",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "file_name",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "storage_path",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "vision_description",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "copy",
+        "type": "jsonb",
+        "default": "'{}'::jsonb",
+        "notnull": true
+      },
+      {
+        "name": "external_adset_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "external_creative_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "external_ad_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "meta_status",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "published_at",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "uso",
+        "type": "text",
+        "default": "'campanha'::text",
+        "notnull": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "arquivado_em",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      }
+    ],
+    "constraints": [
+      {
+        "def": "FOREIGN KEY (analysis_run_id) REFERENCES analysis_runs(id) ON DELETE SET NULL",
+        "name": "creatives_analysis_run_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+        "name": "creatives_business_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE SET NULL",
+        "name": "creatives_campaign_id_fkey"
+      },
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "creatives_pkey"
+      }
+    ],
+    "indexes": [
+      {
+        "def": "CREATE INDEX creatives_analysis_run_id_idx ON public.creatives USING btree (analysis_run_id)",
+        "name": "creatives_analysis_run_id_idx"
+      },
+      {
+        "def": "CREATE INDEX creatives_business_id_idx ON public.creatives USING btree (business_id)",
+        "name": "creatives_business_id_idx"
+      },
+      {
+        "def": "CREATE INDEX creatives_campaign_id_idx ON public.creatives USING btree (campaign_id)",
+        "name": "creatives_campaign_id_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX creatives_pkey ON public.creatives USING btree (id)",
+        "name": "creatives_pkey"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER creatives_set_updated_at BEFORE UPDATE ON public.creatives FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "creatives_set_updated_at",
+        "function": "set_updated_at()",
+        "handler_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "creatives_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "a",
+        "name": "creatives_insert_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null,
+        "permissive": true
+      },
+      {
+        "cmd": "r",
+        "name": "creatives_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "w",
+        "name": "creatives_update_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      }
+    ],
+    "table_acl": [
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      }
+    ],
+    "column_acl": null
+  },
+  {
+    "nspname": "public",
+    "relname": "meta_connections",
+    "relkind": "r",
+    "owner": "postgres",
+    "rls": true,
+    "forced": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "default": "gen_random_uuid()",
+        "notnull": true
+      },
+      {
+        "name": "business_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "meta_page_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "token_secret_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "default": "'disconnected'::text",
+        "notnull": true
+      },
+      {
+        "name": "connected_at",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "instagram_account_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "meta_user_id",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "scopes",
+        "type": "text[]",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "last_error",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      }
+    ],
+    "constraints": [
+      {
+        "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+        "name": "meta_connections_business_id_fkey"
+      },
+      {
+        "def": "UNIQUE (business_id)",
+        "name": "meta_connections_business_id_key"
+      },
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "meta_connections_pkey"
+      },
+      {
+        "def": "CHECK ((status = ANY (ARRAY['disconnected'::text, 'connected'::text, 'expiring'::text, 'expired'::text, 'revoked'::text])))",
+        "name": "meta_connections_status_check"
+      }
+    ],
+    "indexes": [
+      {
+        "def": "CREATE INDEX meta_connections_business_id_idx ON public.meta_connections USING btree (business_id)",
+        "name": "meta_connections_business_id_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX meta_connections_business_id_key ON public.meta_connections USING btree (business_id)",
+        "name": "meta_connections_business_id_key"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX meta_connections_pkey ON public.meta_connections USING btree (id)",
+        "name": "meta_connections_pkey"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER meta_connections_pagina_compartilhada BEFORE UPDATE OF meta_page_id ON public.meta_connections FOR EACH ROW EXECUTE FUNCTION impedir_troca_pagina_compartilhada()",
+        "name": "meta_connections_pagina_compartilhada",
+        "function": "impedir_troca_pagina_compartilhada()",
+        "handler_md5": "29a004490e4714043a6db006d125f043"
+      },
+      {
+        "def": "CREATE TRIGGER meta_connections_set_updated_at BEFORE UPDATE ON public.meta_connections FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "meta_connections_set_updated_at",
+        "function": "set_updated_at()",
+        "handler_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "meta_connections_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "a",
+        "name": "meta_connections_insert_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null,
+        "permissive": true
+      },
+      {
+        "cmd": "r",
+        "name": "meta_connections_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "w",
+        "name": "meta_connections_update_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      }
+    ],
+    "table_acl": [
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      }
+    ],
+    "column_acl": [
+      {
+        "role": "authenticated",
+        "column": "business_id",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "business_id",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "connected_at",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "connected_at",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "connected_at",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "column": "created_at",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "created_at",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "expires_at",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "expires_at",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "expires_at",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "column": "id",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "id",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "instagram_account_id",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "last_error",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "meta_page_id",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "meta_page_id",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "meta_page_id",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "column": "meta_user_id",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "scopes",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "status",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "status",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "status",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "column": "updated_at",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "column": "updated_at",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "column": "updated_at",
+        "grantable": false,
+        "privilege": "UPDATE"
+      }
+    ]
+  },
+  {
+    "nspname": "public",
+    "relname": "metrics_daily",
+    "relkind": "r",
+    "owner": "postgres",
+    "rls": true,
+    "forced": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "default": "gen_random_uuid()",
+        "notnull": true
+      },
+      {
+        "name": "business_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "campaign_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "creative_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "ad_account_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "date",
+        "type": "date",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "impressions",
+        "type": "bigint",
+        "default": "0",
+        "notnull": true
+      },
+      {
+        "name": "clicks",
+        "type": "bigint",
+        "default": "0",
+        "notnull": true
+      },
+      {
+        "name": "spend",
+        "type": "numeric",
+        "default": "0",
+        "notnull": true
+      },
+      {
+        "name": "conversions",
+        "type": "numeric",
+        "default": "0",
+        "notnull": true
+      },
+      {
+        "name": "revenue",
+        "type": "numeric",
+        "default": "0",
+        "notnull": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "default": "now()",
+        "notnull": true
+      }
+    ],
+    "constraints": [
+      {
+        "def": "FOREIGN KEY (ad_account_id) REFERENCES ad_accounts(id) ON DELETE SET NULL",
+        "name": "metrics_daily_ad_account_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+        "name": "metrics_daily_business_id_fkey"
+      },
+      {
+        "def": "UNIQUE NULLS NOT DISTINCT (campaign_id, creative_id, date)",
+        "name": "metrics_daily_campaign_id_creative_id_date_key"
+      },
+      {
+        "def": "FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE",
+        "name": "metrics_daily_campaign_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (creative_id) REFERENCES creatives(id) ON DELETE CASCADE",
+        "name": "metrics_daily_creative_id_fkey"
+      },
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "metrics_daily_pkey"
+      }
+    ],
+    "indexes": [
+      {
+        "def": "CREATE INDEX metrics_daily_business_date_idx ON public.metrics_daily USING btree (business_id, date DESC)",
+        "name": "metrics_daily_business_date_idx"
+      },
+      {
+        "def": "CREATE INDEX metrics_daily_business_id_idx ON public.metrics_daily USING btree (business_id)",
+        "name": "metrics_daily_business_id_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX metrics_daily_campaign_id_creative_id_date_key ON public.metrics_daily USING btree (campaign_id, creative_id, date) NULLS NOT DISTINCT",
+        "name": "metrics_daily_campaign_id_creative_id_date_key"
+      },
+      {
+        "def": "CREATE INDEX metrics_daily_campaign_id_idx ON public.metrics_daily USING btree (campaign_id)",
+        "name": "metrics_daily_campaign_id_idx"
+      },
+      {
+        "def": "CREATE INDEX metrics_daily_creative_id_idx ON public.metrics_daily USING btree (creative_id)",
+        "name": "metrics_daily_creative_id_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX metrics_daily_pkey ON public.metrics_daily USING btree (id)",
+        "name": "metrics_daily_pkey"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER metrics_daily_set_updated_at BEFORE UPDATE ON public.metrics_daily FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "metrics_daily_set_updated_at",
+        "function": "set_updated_at()",
+        "handler_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "metrics_daily_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "a",
+        "name": "metrics_daily_insert_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null,
+        "permissive": true
+      },
+      {
+        "cmd": "r",
+        "name": "metrics_daily_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      },
+      {
+        "cmd": "w",
+        "name": "metrics_daily_update_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)",
+        "permissive": true
+      }
+    ],
+    "table_acl": [
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "anon",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "authenticated",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "postgres",
+        "grantable": false,
+        "privilege": "UPDATE"
+      }
+    ],
+    "column_acl": null
+  },
+  {
+    "nspname": "vault",
+    "relname": "secrets",
+    "relkind": "r",
+    "owner": "supabase_admin",
+    "rls": false,
+    "forced": false,
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "default": "gen_random_uuid()",
+        "notnull": true
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "description",
+        "type": "text",
+        "default": "''::text",
+        "notnull": true
+      },
+      {
+        "name": "secret",
+        "type": "text",
+        "default": null,
+        "notnull": true
+      },
+      {
+        "name": "key_id",
+        "type": "uuid",
+        "default": null,
+        "notnull": false
+      },
+      {
+        "name": "nonce",
+        "type": "bytea",
+        "default": "vault._crypto_aead_det_noncegen()",
+        "notnull": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "default": "CURRENT_TIMESTAMP",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "default": "CURRENT_TIMESTAMP",
+        "notnull": true
+      }
+    ],
+    "constraints": [
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "secrets_pkey"
+      }
+    ],
+    "indexes": [
+      {
+        "def": "CREATE UNIQUE INDEX secrets_name_idx ON vault.secrets USING btree (name) WHERE (name IS NOT NULL)",
+        "name": "secrets_name_idx"
+      },
+      {
+        "def": "CREATE UNIQUE INDEX secrets_pkey ON vault.secrets USING btree (id)",
+        "name": "secrets_pkey"
+      }
+    ],
+    "triggers": null,
+    "policies": null,
+    "table_acl": [
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "INSERT"
+      },
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "MAINTAIN"
+      },
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "TRIGGER"
+      },
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "supabase_admin",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "UPDATE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "supabase_admin",
+        "grantable": true,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "postgres",
+        "grantor": "supabase_admin",
+        "grantable": true,
+        "privilege": "REFERENCES"
+      },
+      {
+        "role": "postgres",
+        "grantor": "supabase_admin",
+        "grantable": true,
+        "privilege": "SELECT"
+      },
+      {
+        "role": "postgres",
+        "grantor": "supabase_admin",
+        "grantable": true,
+        "privilege": "TRUNCATE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "DELETE"
+      },
+      {
+        "role": "service_role",
+        "grantor": "supabase_admin",
+        "grantable": false,
+        "privilege": "SELECT"
+      }
+    ],
+    "column_acl": null
+  }
+]

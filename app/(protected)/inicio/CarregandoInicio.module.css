@@ -1,0 +1,16 @@
+.raiz { min-width: 0; }
+.raiz > :first-child { min-height: 48px; }
+.estrutura { visibility: hidden; }
+.estrutura[data-visivel="true"] { visibility: visible; }
+.cabecalho { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin: 0 0 28px; min-height: 48px; }
+.titulo, .periodo, .situacao, .conteudo, .numero { background: var(--surface); border: 1px solid var(--line); border-radius: var(--raio-cartao, 4px); }
+.titulo { display: block; width: 120px; height: 36px; }
+.periodo { display: block; width: 240px; height: 48px; }
+.situacao { height: 64px; margin-bottom: 28px; }
+.numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; margin-bottom: 28px; }
+.numero { padding: 24px; min-height: 148px; }
+.numero span, .numero b { display: block; height: 16px; width: 55%; background: var(--line); border-radius: 4px; }
+.numero b { width: 78%; height: 32px; margin-top: 24px; }
+.conteudo { height: 300px; }
+@media (max-width: 760px) { .numeros { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; } .numero { padding: 18px; } }
+@media (max-width: 620px) { .cabecalho { align-items: stretch; flex-direction: column; gap: 20px; } .periodo { width: 100%; } }

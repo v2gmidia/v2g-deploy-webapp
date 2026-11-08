@@ -4,24 +4,35 @@ import { asaasSandbox } from "./asaas-sandbox";
 import { checkoutSandboxSeguroNesteServidor } from "./ambiente-checkout";
 import { OCORRENCIAS_PUBLICAS } from "./estado-pagamento-publico";
 import { prepararEmailPagamento, despacharEmailPagamento, type EmailNaFila } from "./email-pagamento";
+import { processamentoProducaoSeguro } from "./ambiente-producao";
+import { asaasProducao } from "./asaas-producao";
+import { schemaCompraPronto } from "./provedor-compra";
 
-/** Adaptador inicialmente exclusivo QA. Flags falsas nao consultam a tabela nova. */
-export async function processarEmailPagamento(admin: SupabaseClient, orderId: string, chargeId: string): Promise<boolean> {
-  if (process.env.V2G_PAYMENT_EMAIL_ENABLED !== "true") return true;
-  if (!checkoutSandboxSeguroNesteServidor()) return false;
-  const key = process.env.V2G_PAYMENT_EMAIL_RESEND_API_KEY;
-  const from = process.env.V2G_PAYMENT_EMAIL_FROM;
+/** Destinatário de QA fixo; produção confirma o próprio comprador pela outbox. */
+export async function processarEmailPagamento(admin: SupabaseClient, orderId: string, chargeId: string,
+  ambiente: "sandbox" | "production" = "sandbox"): Promise<boolean> {
+  const producao = ambiente === "production";
+  if (producao) {
+    if (!processamentoProducaoSeguro() || process.env.V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED !== "true"
+      || !await schemaCompraPronto(admin)) return false;
+  } else {
+    if (process.env.V2G_PAYMENT_EMAIL_ENABLED !== "true") return true;
+    if (!checkoutSandboxSeguroNesteServidor()) return false;
+  }
+  const executarAsaas = producao ? asaasProducao : asaasSandbox;
+  const key = producao ? process.env.V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY : process.env.V2G_PAYMENT_EMAIL_RESEND_API_KEY;
+  const from = producao ? process.env.V2G_PRODUCTION_PAYMENT_EMAIL_FROM : process.env.V2G_PAYMENT_EMAIL_FROM;
   const destinoTeste = process.env.V2G_PAYMENT_EMAIL_QA_TO;
   // QA so envia ao destinatario real explicitamente confirmado pelo titular.
   if (!key || !from || !/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(from)
-      || destinoTeste !== "victor.cabral@v2gmidia.com.br") return false;
+      || (!producao && destinoTeste !== "victor.cabral@v2gmidia.com.br")) return false;
   try {
     const { data: pedido, error } = await admin.from("commercial_orders")
       .select("id,buyer_email,legal_name,status,total_cents,provider_customer_id,provider_subscription_id,provider_charge_id,billing_period,provider_first_due_date,provider_card_flow")
       .eq("id", orderId).single();
     if (error || !pedido || !pedido.provider_customer_id) return false;
     if (pedido.status !== "payment_approved") return true;
-    const resposta = await asaasSandbox(`/payments/${encodeURIComponent(chargeId)}`);
+    const resposta = await executarAsaas(`/payments/${encodeURIComponent(chargeId)}`);
     const pagamento = resposta.body as { id: string; customer: string; subscription?: string | null;
       status: string; value: number; deleted?: boolean; dueDate?: string; externalReference?: string } | null;
     if (!resposta.ok || !pagamento) return false;
@@ -39,8 +50,9 @@ export async function processarEmailPagamento(admin: SupabaseClient, orderId: st
       primeiraCompra }, pagamento, process.env.NEXT_PUBLIC_SITE_URL ?? "");
     if (!mensagem) return false;
     // Nao enviar dados de comprador QA ficticio a destinatarios arbitrarios.
-    const payload = { ...mensagem, from: `V2G <${from}>`, to: [destinoTeste],
-      subject: "[TESTE QA] V2G | Pagamento confirmado", text: `[TESTE QA — sem dinheiro real]\n${mensagem.text}` };
+    const payload = producao ? { ...mensagem, from: `V2G <${from}>` }
+      : { ...mensagem, from: `V2G <${from}>`, to: [destinoTeste!],
+        subject: "[TESTE QA] V2G | Pagamento confirmado", text: `[TESTE QA — sem dinheiro real]\n${mensagem.text}` };
     const fila = admin.from("commercial_payment_email_outbox");
     const gravacao = await fila.upsert({ order_id: orderId, provider_charge_id: chargeId, payload },
       { onConflict: "order_id,provider_charge_id", ignoreDuplicates: true });

@@ -1,0 +1,32 @@
+{
+  "local": true,
+  "remote": false,
+  "engine": "PGlite",
+  "auth": "fixture GUC; nao e Auth real",
+  "concurrency": "sequencial; sem prova de sessoes independentes",
+  "cases": [
+    "30 arquivos selados U1/U2 intactos antes",
+    "26 campos conferem CAMPOS real e 15 colunas conferem MAPA real",
+    "aplicacao/retorno, recibos SQL=JS, historico 46/47/48 e linhas legadas preservadas",
+    "canal com ledger nominal antes do corpo tambem aceito",
+    "RPC service: 0/false/lista, nulos, origens, allowlist, coercao e procedencia real",
+    "15 campos do MAPA backend continuam gravaveis",
+    "confirmado: mesmo valor ja_igual, divergente preservado com registro",
+    "proposta aplica 3 tabelas, rastreia IDs, isola B e recusa reaplicacao",
+    "pendente/descartado/forbidden e falha posterior revertem toda aplicacao",
+    "ACEITO 10/20 recusado; confirmado recusa extraido e aceita correcao manual",
+    "FKs compostas recusam cruzamento; deletar pessoa preserva business_id",
+    "RLS com owns_business real/UID simulado; CRUD proprio, isolamento, ACL RPC/clientes/servico/backend",
+    "drift de ACL/MAINTAIN/grant options/helper/defaults aborta antes do delta",
+    "drift de definicao em pai medido recusa antes do delta",
+    "uso legado invalido recusa CHECK sem corrigir/apagar dados",
+    "coluna backend legitima extra aceita e preservada; stubs nao congelam esquema QA",
+    "retorno recusa dados posteriores, indice/CHECK novo e view dependente, sem perda",
+    "retorno tambem recusa propostas/itens e divergencias posteriores",
+    "helpers QA exatos preservados; limite de extras legado demonstrado, RPC nova gera extras fixos",
+    "limite demonstrado: retorno DDL nao desfaz escrita/procedencia em tabela legada",
+    "30 arquivos selados U1/U2 intactos depois"
+  ],
+  "ok": true,
+  "passed": 21
+}

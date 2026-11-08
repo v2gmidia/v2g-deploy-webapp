@@ -27,8 +27,8 @@ export default function CarregandoAnuncios() {
   return (
     <>
       <div className="page-head">
-        <h1>Seus anúncios</h1>
-        <p>Cada anúncio e o que ele produziu até agora.</p>
+        <h1>Anúncios</h1>
+        <p>Acompanhe as campanhas e os anúncios da conta vinculada ao seu negócio.</p>
       </div>
 
       <section className="res-lista" aria-busy="true" aria-live="polite" aria-label="Carregando seus anúncios">
@@ -44,7 +44,7 @@ export default function CarregandoAnuncios() {
               <span className="res-barra" style={{ width: "30%", display: "block", height: 9 }} />
             </p>
             <div className="res-grid">
-              {[0, 1, 2, 3, 4, 5].map((j) => (
+              {[0, 1, 2, 3].map((j) => (
                 <div className="res-num" key={j}>
                   <span className="res-num-ico" />
                   <span className="res-num-corpo" style={{ flex: 1 }}>

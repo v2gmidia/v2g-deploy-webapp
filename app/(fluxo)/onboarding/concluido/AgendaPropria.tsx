@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { cancelarReservaAction, reservarHorarioAction, type EstadoAgenda } from "./agenda-actions";
+import { useTempoDaOperacao } from "../tempo-da-operacao";
 import styles from "./AgendaPropria.module.css";
 
 const data = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", weekday: "long", day: "2-digit", month: "long" });
@@ -15,30 +16,32 @@ export function AgendaPropria({ inicial, businessId }: {
   const router = useRouter();
   const [estado, setEstado] = useState<EstadoAgenda>(inicial);
   const [horario, setHorario] = useState(inicial.status === "livre" ? inicial.horarios[0] ?? "" : "");
-  const [ocupado, setOcupado] = useState(false);
+  const [operacao, setOperacao] = useState<"reservar" | "cancelar" | null>(null);
   const [confirmarCancelamento, setConfirmarCancelamento] = useState(false);
+  const ocupado = operacao !== null;
+  const tempoDaOperacao = useTempoDaOperacao(ocupado);
 
   async function reservar() {
     if (!horario || ocupado) return;
-    setOcupado(true);
+    setOperacao("reservar");
     try {
       const proximo = await reservarHorarioAction(horario, businessId);
       setEstado(proximo);
       if (proximo.status === "confirmada") router.refresh();
     }
     catch { setEstado({ status: "erro", mensagem: "Não conseguimos conferir a reserva. Atualize antes de tentar de novo." }); }
-    finally { setOcupado(false); }
+    finally { setOperacao(null); }
   }
 
   async function cancelar() {
     if (ocupado) return;
-    setOcupado(true);
+    setOperacao("cancelar");
     try {
       const proximo = await cancelarReservaAction(businessId);
       setEstado(proximo);
       if (proximo.status === "livre") setHorario(proximo.horarios[0] ?? "");
     } catch { setEstado({ status: "erro", mensagem: "Não conseguimos conferir o cancelamento. Atualize a página." }); }
-    finally { setOcupado(false); setConfirmarCancelamento(false); }
+    finally { setOperacao(null); setConfirmarCancelamento(false); }
   }
 
   if (estado.status === "erro") return <section className="pendencia-bloco" role="alert">
@@ -50,7 +53,7 @@ export function AgendaPropria({ inicial, businessId }: {
     <p>Solicitação para {data.format(new Date(estado.inicio))}, às {hora.format(new Date(estado.inicio))}. Ainda não há confirmação do Google. Não escolha outro horário; atualize esta página para conferir.</p>
     <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Conferir novamente</button>
   </section>;
-  if (estado.status === "confirmada") return <section className={styles.confirmada} role="status">
+  if (estado.status === "confirmada") return <section className={styles.confirmada} role="status" aria-busy={ocupado}>
     <span aria-hidden="true" className={styles.confirmadaIcone}>✓</span>
     <h2>Reunião confirmada</h2>
     <p>{data.format(new Date(estado.inicio))}, das {hora.format(new Date(estado.inicio))} às {hora.format(new Date(estado.fim))} (Brasília).</p>
@@ -66,10 +69,15 @@ export function AgendaPropria({ inicial, businessId }: {
         <p>Cancelar libera o horário para outra pessoa. Você poderá escolher outro até 25 minutos antes do início. Quer continuar?</p>
         <button className="chip-opt" type="button" disabled={ocupado} onClick={cancelar}>{ocupado ? "Cancelando…" : "Sim, cancelar"}</button>{" "}
         <button className="chip-opt" type="button" disabled={ocupado} onClick={() => setConfirmarCancelamento(false)}>Manter reunião</button>
+        {tempoDaOperacao.visivel && <p className={styles.statusOperacao} aria-live="polite">
+          {tempoDaOperacao.demorada
+            ? "Ainda conferindo o cancelamento com o Google. Não repita a ação."
+            : "Cancelando e conferindo a agenda…"}
+        </p>}
       </div>}
   </section>;
   if (estado.status === "legado") return null;
-  return <section className={styles.agenda}>
+  return <section className={styles.agenda} aria-busy={ocupado}>
     <h2>Escolha um horário</h2>
     {estado.horarios.length ? <>
       <p>Horários de 25 minutos, no fuso de Brasília. Escolha um e confirme aqui.</p>
@@ -78,6 +86,11 @@ export function AgendaPropria({ inicial, businessId }: {
           onClick={() => setHorario(opcao)}><strong>{data.format(new Date(opcao))}</strong><span>{hora.format(new Date(opcao))}</span></button>)}
       </div>
       <button className={styles.primario} type="button" disabled={ocupado || !horario} onClick={reservar}>{ocupado ? "Reservando…" : "Confirmar este horário"}</button>
+      {tempoDaOperacao.visivel && <p className={styles.statusOperacao} role="status" aria-live="polite">
+        {tempoDaOperacao.demorada
+          ? "Ainda conferindo a solicitação com o Google. O horário escolhido continua marcado; não confirme novamente."
+          : "Solicitando o horário e conferindo a resposta do Google…"}
+      </p>}
     </> : <p>Não há horários livres nesta janela. Fale com a equipe para combinar outra opção.</p>}
   </section>;
 }

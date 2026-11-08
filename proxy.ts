@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
+import { destinoDaLeitura } from "@/lib/anuncios/retorno-login";
 
 /**
  * 1ª camada de proteção (ver docs/arquitetura.md, Decisão 3).
@@ -170,8 +171,10 @@ export async function proxy(request: NextRequest) {
   // de lembrar por que existe.
   if (isProtected && !user) {
     const redirectUrl = request.nextUrl.clone();
+    const retornoLeitura = destinoDaLeitura(pathname, request.nextUrl.searchParams);
     redirectUrl.pathname = "/entrar";
-    redirectUrl.searchParams.set("next", pathname);
+    if (retornoLeitura) redirectUrl.search = "";
+    redirectUrl.searchParams.set("next", retornoLeitura ?? pathname);
     return redirecionar(redirectUrl);
   }
 

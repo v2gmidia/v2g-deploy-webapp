@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { TETO_DO_NAVEGADOR_BYTES, TETO_DO_NAVEGADOR_MB } from "@/lib/criativos/limites.mjs";
 import type { GuiaVisual } from "./guia-actions";
 import { enviarGuiaVisualAction, type GuiaState } from "./guia-actions";
+import { useTempoDaOperacao } from "../tempo-da-operacao";
 import styles from "./Marca.module.css";
 
 export function GuiaDaMarca({ businessId, guia, aoEscolher, aoMudarUpload }: { businessId: string; guia: GuiaVisual | null; aoEscolher: (arquivo: File) => Promise<void>; aoMudarUpload: (ativo: boolean) => void }) {
@@ -22,6 +23,7 @@ export function GuiaDaMarca({ businessId, guia, aoEscolher, aoMudarUpload }: { b
       aoMudarUpload(false);
     }
   }, {});
+  const tempoDoUpload = useTempoDaOperacao(enviando);
   useEffect(() => { if (resultado.ok) router.refresh(); }, [resultado.ok, router]);
   return <section className={styles.guiaBloco}>
     <h2>Tem um manual da marca?</h2>
@@ -33,6 +35,11 @@ export function GuiaDaMarca({ businessId, guia, aoEscolher, aoMudarUpload }: { b
       <input type="file" name="arquivo" accept="application/pdf,.pdf" aria-label="Escolher PDF da identidade visual" />
       <button className="cta" type="submit" disabled={enviando}>{enviando ? "Enviando…" : guia ? "Trocar PDF" : "Enviar PDF"}</button>
     </form>
+    {tempoDoUpload.visivel && <p className={styles.statusAcao} role="status" aria-live="polite">
+      {tempoDoUpload.demorada
+        ? "O PDF ainda está sendo guardado. Não selecione o arquivo novamente; vamos confirmar quando terminar."
+        : "Preparando e enviando o PDF…"}
+    </p>}
     {resultado.erro && <p className="form-error" role="alert">{resultado.erro}</p>}
     {resultado.ok && <p className="form-notice" role="status">{resultado.ok}</p>}
   </section>;

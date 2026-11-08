@@ -12,16 +12,53 @@ const novo = () => ({ ...exemploDoInicio(new Date('2026-10-27T15:00:00Z'), 'cheg
 const recepcao = { reserva: null, falhaReuniao: false };
 const reserva = { starts_at: '2026-10-30T17:00:00Z', ends_at: '2026-10-30T17:30:00Z' };
 const portsTela = {
-  './RecepcaoDoCadastro.module.css': { default: new Proxy({}, { get: (_, key) => key }) },
   './PerguntaDoDia': { PerguntaDoDia: () => null },
   './ConclusaoDaJornada': { ConclusaoDaJornada: () => null },
   './SeletorDePeriodo': { SeletorDePeriodo: () => React.createElement('button', null, 'Período') },
+  './AtualizarInicio': { AtualizarInicio: () => React.createElement('button', null, 'Tentar novamente') },
 };
-const { TelaDoInicio } = ambienteTs({ ports: portsTela }).load('app/(protected)/inicio/TelaDoInicio.tsx');
+
+function recepcaoNoCliente() {
+  let estado, inicializado = false, efeito;
+  const itens = new Map();
+  const localStorage = {
+    getItem(chave) { return itens.has(chave) ? itens.get(chave) : null; },
+    setItem(chave, valor) { itens.set(chave, valor); },
+  };
+  const reactCliente = {
+    ...React,
+    useState(inicial) {
+      if (!inicializado) { estado = inicial; inicializado = true; }
+      return [estado, proximo => { estado = typeof proximo === 'function' ? proximo(estado) : proximo; }];
+    },
+    useEffect(callback) { efeito = callback; },
+  };
+  const modulo = ambienteTs({
+    globals: { window: { localStorage } },
+    ports: {
+      react: reactCliente,
+      './RecepcaoDoCadastro.module.css': { default: new Proxy({}, { get: (_, key) => key }) },
+    },
+  }).load('app/(protected)/inicio/RecepcaoDoCadastro.tsx');
+  return {
+    Componente: modulo.RecepcaoDoCadastro,
+    executarEfeito() { if (efeito) efeito(); },
+    localStorage,
+  };
+}
+
 function html(over = {}) {
-  return renderToStaticMarkup(React.createElement(TelaDoInicio, { estado: novo(), ultimaDecisao: null,
-    diaDaPergunta: '2026-10-26', atrasados: [], faixa: null, recepcaoOnboarding: recepcao,
-    acumuladoDoPeriodo: null, ...over }));
+  const cliente = recepcaoNoCliente();
+  const { TelaDoInicio } = ambienteTs({ ports: {
+    ...portsTela,
+    './RecepcaoDoCadastro': { RecepcaoDoCadastro: cliente.Componente },
+  } }).load('app/(protected)/inicio/TelaDoInicio.tsx');
+  const props = { estado: novo(), ultimaDecisao: null, diaDaPergunta: '2026-10-26', atrasados: [],
+    faixa: null, recepcaoOnboarding: recepcao, acumuladoDoPeriodo: null, ...over };
+  const inicial = renderToStaticMarkup(React.createElement(TelaDoInicio, props));
+  cliente.executarEfeito();
+  const visivel = renderToStaticMarkup(React.createElement(TelaDoInicio, props));
+  return { inicial, visivel, localStorage: cliente.localStorage };
 }
 
 test('sem operação comprovada não espera resultados; desconhecido e sinais históricos mantêm consulta', () => {
@@ -37,17 +74,23 @@ test('sem operação comprovada não espera resultados; desconhecido e sinais hi
   assert.equal(cabeRecepcaoDoCadastro(estado), false);
 });
 
-test('cadastro comprovado recebe conclusão, reunião sem promessa e links úteis sem 0/4', () => {
-  const tela = html();
+test('cadastro comprovado recebe conclusão sem confundir recepção com jornada da campanha', () => {
+  const ciclo = html();
+  const tela = ciclo.visivel;
+  assert.doesNotMatch(ciclo.inicial, /Cadastro concluído!/);
+  assert.equal(ciclo.localStorage.getItem('v2g:inicio:cadastro-concluido:v1:negocio-A'), 'visto');
   assert.match(tela, /Cadastro concluído!/);
   assert.match(tela, /contas e as informações da marca estão salvas/);
   assert.match(tela, /A confirmação do horário ainda não aparece aqui/);
   for (const rota of ['/conta', '/criativos', '/anuncios', '/alertas', '/onboarding/concluido']) assert.ok(tela.includes(`href="${rota}"`));
-  assert.doesNotMatch(tela, /0 de 4|Sua campanha está sendo preparada|Não foi possível carregar|Período|reunião está confirmada|WhatsApp|gestor atribuído/);
+  assert.ok(tela.indexOf('Cadastro concluído!') < tela.indexOf('0 de 4 etapas concluídas'));
+  assert.match(tela, /<strong>Cadastro<\/strong><span>Concluído<\/span>/);
+  assert.match(tela, /<strong>Reunião<\/strong><span>Próximo passo<\/span>/);
+  assert.doesNotMatch(tela, /Não foi possível carregar|Período|reunião está confirmada|WhatsApp|gestor atribuído/);
 });
 
 test('reserva confirmada mostra data de Brasília sem concluir a reunião ou atribuir gestor', () => {
-  const tela = html({ recepcaoOnboarding: { reserva, falhaReuniao: false } });
+  const tela = html({ recepcaoOnboarding: { reserva, falhaReuniao: false } }).visivel;
   assert.match(tela, /Sua reunião está confirmada/);
   assert.match(tela, /30 de outubro de 2026, das 14:00 às 14:30 \(Brasília\)/);
   assert.match(tela, /Ver minha reunião/);
@@ -55,7 +98,7 @@ test('reserva confirmada mostra data de Brasília sem concluir a reunião ou atr
 });
 
 test('erro da agenda preserva conquista comprovada sem afirmar reserva', () => {
-  const tela = html({ recepcaoOnboarding: { reserva: null, falhaReuniao: true } });
+  const tela = html({ recepcaoOnboarding: { reserva: null, falhaReuniao: true } }).visivel;
   assert.match(tela, /Cadastro concluído!/);
   assert.match(tela, /Não conseguimos conferir seu horário agora/);
   assert.doesNotMatch(tela, /Sua reunião está confirmada/);
@@ -63,17 +106,35 @@ test('erro da agenda preserva conquista comprovada sem afirmar reserva', () => {
 
 test('falha real com estado desconhecido fica visível abaixo da recepção e permite repetir período', () => {
   const estado = { ...novo(), veiculacao: 'nao_sabemos' };
-  const tela = html({ estado, intervalo: { desde: '2026-01-01', ate: '2026-03-31' } });
+  const tela = html({ estado, intervalo: { desde: '2026-01-01', ate: '2026-03-31' } }).visivel;
   assert.match(tela, /Não foi possível carregar os resultados deste período/);
-  assert.ok(tela.indexOf('Cadastro concluído!') < tela.indexOf('Não foi possível carregar'));
-  assert.match(tela, /href="\/inicio\?desde=2026-01-01&amp;ate=2026-03-31"/);
+  const indiceRecepcao = tela.indexOf('Cadastro concluído!');
+  assert.notEqual(indiceRecepcao, -1);
+  assert.ok(indiceRecepcao < tela.indexOf('Não foi possível carregar'));
+  assert.match(tela, /<button>Tentar novamente<\/button>/);
   assert.doesNotMatch(tela, /R\$\s*0/);
+});
+
+test('retry atualiza a rota corrente sem trocar ou reconstruir o período', () => {
+  let atualizacoes = 0;
+  const { AtualizarInicio } = ambienteTs({ ports: {
+    react: { ...React, useTransition: () => [false, callback => callback()] },
+    'next/navigation': { useRouter: () => ({ refresh: () => { atualizacoes += 1; }, push: () => { throw Error('não deve navegar'); } }) },
+    '@/components/ui/EsperaLocal': { EsperaLocal: () => null },
+  } }).load('app/(protected)/inicio/AtualizarInicio.tsx');
+  const elemento = AtualizarInicio();
+  const botao = elemento.props.children[0];
+  assert.equal(botao.type, 'button');
+  assert.equal(botao.props.children, 'Tentar novamente');
+  assert.equal(botao.props.disabled, false);
+  botao.props.onClick();
+  assert.equal(atualizacoes, 1);
 });
 
 test('histórico ou execução não é substituído por recepção; falha de medição permanece', () => {
   const estado = exemploDoInicio(new Date(), 'pausado');
   assert.equal(cabeRecepcaoDoCadastro(estado), false);
-  const tela = html({ estado });
+  const tela = html({ estado }).visivel;
   assert.doesNotMatch(tela, /Cadastro concluído!/);
   assert.match(tela, /Não foi possível carregar os resultados deste período/);
   assert.equal(cabeRecepcaoDoCadastro({ ...novo(), diaSeguinte: { execucao: { idExecucao: 'execucao' }, acumulado: null } }), false);
@@ -82,7 +143,7 @@ test('histórico ou execução não é substituído por recepção; falha de med
 test('não declara conclusão quando a leitura do onboarding não a comprovou', () => {
   const tela = html({ recepcaoOnboarding: null, pendenciaOnboarding: {
     titulo: 'Ainda falta conferir o visual da marca', corpo: 'Confira o visual.', href: '/onboarding/marca', rotulo: 'Conferir marca',
-  } });
+  } }).visivel;
   assert.doesNotMatch(tela, /Cadastro concluído!/);
   assert.match(tela, /Ainda falta conferir o visual da marca/);
 });

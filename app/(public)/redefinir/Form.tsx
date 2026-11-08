@@ -6,20 +6,26 @@ import { CriteriosSenha } from "@/components/ui/CriteriosSenha";
 import { IconeVisibilidadeSenha } from "@/components/ui/IconeVisibilidadeSenha";
 import { TAMANHO_MINIMO_SENHA } from "@/lib/auth-senha";
 import { redefinirAction, type RedefinirActionState } from "./actions";
+import { EsperaFormulario, useEsperaFormulario, useFocoResultado } from "../entrar/EsperaFormulario";
+import { executarComFeedback } from "../entrar/acao-local";
 
 const redefinirInitialState: RedefinirActionState = {};
 
 export function RedefinirForm() {
-  const [state, formAction, pending] = useActionState(redefinirAction, redefinirInitialState);
+  const [state, formAction, pending] = useActionState<RedefinirActionState,FormData>((anterior,dados)=>executarComFeedback(
+    ()=>redefinirAction(anterior,dados),{error:"Não foi possível confirmar a alteração. Tente entrar com a nova senha antes de pedir outro link."}), redefinirInitialState);
   const [senha, setSenha] = useState("");
+  const [confirmacao,setConfirmacao] = useState("");
+  const espera = useEsperaFormulario(pending);
+  const erro = useFocoResultado(pending,state.error);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
   return (
     <>
-      {state.error && <p className="form-error" role="alert">{state.error}</p>}
+      {!pending && state.error && <p ref={erro} tabIndex={-1} className="form-error" role="alert">{state.error}</p>}
 
-      <form action={formAction}>
+      <form action={formAction} aria-busy={pending} onSubmit={e=>{espera.permitir(e);}}>
         <div className="field">
           <label htmlFor="senha-nova">Nova senha</label>
           <span className="entrada-campo-senha"><input
@@ -44,6 +50,7 @@ export function RedefinirForm() {
           <span className="entrada-campo-senha"><input
             id="senha-confirmar"
             name="confirmarSenha"
+            value={confirmacao} onChange={e=>setConfirmacao(e.target.value)}
             type={mostrarConfirmacao ? "text" : "password"}
             placeholder="Repita a senha"
             autoComplete="new-password"
@@ -57,6 +64,9 @@ export function RedefinirForm() {
         <Button type="submit" disabled={pending}>
           {pending ? "Salvando…" : "Salvar nova senha"}
         </Button>
+        <EsperaFormulario pendente={pending} fase={espera.fase}
+          lenta="Salvando sua nova senha. Aguarde a confirmação antes de sair."
+          longa="Ainda não recebemos a confirmação. A senha pode já ter sido alterada; evite salvar novamente. Se precisar sair, tente entrar com a nova senha antes de pedir outro link." />
       </form>
     </>
   );

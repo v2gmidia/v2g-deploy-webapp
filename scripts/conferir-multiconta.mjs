@@ -6,6 +6,7 @@ import { cnpjsDoComprador } from "../lib/multiconta/identificacao.ts";
 import { lerTodasPaginas, lerTodasPaginasEmLotes } from "../lib/multiconta/paginacao.ts";
 import { pedidosAutorizadosParaVinculo, vincularComprasAprovadasComCliente } from "../lib/contratacao/vincular-core.ts";
 import { negocioAindaNaoIniciouOnboarding } from "../lib/onboarding/entrada.ts";
+import { pilotoQaHabilitado } from "../lib/piloto-qa/acesso.ts";
 
 const empresas = [
   { id: "empresa-a", name: "Empresa A" },
@@ -134,6 +135,30 @@ test("novo perfil sem pedido não ganha acesso pela propriedade da linha", () =>
     ...base, legadoEm: null, negocios: [novo],
     pedidos: [{ ...pendente, status: "payment_approved", direitoFinanceiro:true, buyer_profile_id: "outra-pessoa" }],
   }), []);
+});
+
+test("piloto QA libera somente o negócio e o perfil exatos enquanto estiver válido", () => {
+  const grant = {
+    business_id: "b", profile_id: "pessoa-a", ad_account_external_id: "act_1165478988908157",
+    meta_page_id: "206296256098753",
+    expires_at: "2026-12-05T00:00:00Z", revoked_at: null,
+  };
+  const entrada = {
+    ...base, legadoEm: null, negocios: [novo, { ...novo, id: "c" }], pedidos: [],
+    acessosPilotoQa: [grant], agora: Date.parse("2026-11-05T00:00:00Z"),
+  };
+  assert.deepEqual(negociosLiberados(entrada).map(n => n.id), ["b"]);
+  assert.deepEqual(negociosLiberados({ ...entrada, perfilId: "pessoa-b" }), []);
+  assert.deepEqual(negociosLiberados({ ...entrada, emailVerificado: null }), []);
+  assert.deepEqual(negociosLiberados({ ...entrada, acessosPilotoQa: [{ ...grant, revoked_at: "2026-11-05T01:00:00Z" }] }), []);
+  assert.deepEqual(negociosLiberados({ ...entrada, agora: Date.parse(grant.expires_at) }), []);
+  assert.deepEqual(negociosLiberados({ ...entrada, pedidos: [pendente] }), []);
+});
+
+test("flag do piloto não funciona em outro projeto Supabase", () => {
+  assert.equal(pilotoQaHabilitado({ flag: "true", supabaseUrl: "https://zskpijnqgkqwxksqmzmf.supabase.co" }), true);
+  assert.equal(pilotoQaHabilitado({ flag: "true", supabaseUrl: "https://outro.supabase.co" }), false);
+  assert.equal(pilotoQaHabilitado({ flag: "false", supabaseUrl: "https://zskpijnqgkqwxksqmzmf.supabase.co" }), false);
 });
 
 test("legado sem negócio anterior consegue iniciar um cadastro próprio", () => {

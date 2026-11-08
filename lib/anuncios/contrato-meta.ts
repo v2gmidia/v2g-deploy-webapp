@@ -73,6 +73,12 @@ export function lerInventarioMeta(raw: unknown, esperado: {
     || !raw.avisos.every(v => typeof v === "string")) return null;
 
   const moeda = raw.moeda;
+  const diasEsperados = (Date.parse(esperado.periodo.ate) - Date.parse(esperado.periodo.desde)) / 86400000 + 1;
+  let fusoConfirmado = false;
+  if (raw.fuso) {
+    try { new Intl.DateTimeFormat("pt-BR", { timeZone: raw.fuso }); fusoConfirmado = true; }
+    catch { /* Fuso inválido não sustenta uma medição completa. */ }
+  }
   function metricas(m: unknown): MetricasMeta | null {
     if (!registro(m) || !["observado", "sem_dados", "zero_medido", "parcial"].includes(String(m.estado))
       || !inteiro(m.gasto_centavos) || !inteiro(m.impressoes) || !inteiro(m.cliques_totais)
@@ -88,6 +94,10 @@ export function lerInventarioMeta(raw: unknown, esperado: {
     if (m.estado === "sem_dados" && (dias.length || [m.gasto_centavos, m.impressoes, m.cliques_totais,
       m.cliques_no_link, m.conversas_whatsapp, m.entrega_observada_no_periodo].some(v => v !== null))) return null;
     if (m.estado !== "sem_dados" && !dias.length) return null;
+    // Datas já são únicas e internas ao intervalo. A contagem completa exige
+    // todos os dias, sem fabricar zeros para aqueles que a fonte não retornou.
+    if ((m.estado === "zero_medido" || m.estado === "observado")
+      && (dias.length !== diasEsperados || !fusoConfirmado)) return null;
     if (m.estado === "zero_medido" && (m.gasto_centavos !== 0 || m.impressoes !== 0 || m.cliques_totais !== 0)) return null;
     if (m.estado === "observado" && [m.gasto_centavos, m.impressoes, m.cliques_totais].some(v => v === null)) return null;
     const entrega = (m.impressoes !== null && m.impressoes > 0) || (m.gasto_centavos !== null && m.gasto_centavos > 0)

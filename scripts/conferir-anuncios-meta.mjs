@@ -9,6 +9,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
 import { renderToStaticMarkup } from 'react-dom/server';
 import * as contrato from '../lib/anuncios/contrato-meta.ts';
 import * as periodo from '../lib/inicio/periodo.ts';
+import * as retorno from '../lib/anuncios/retorno-login.ts';
 
 const business = '11111111-1111-4111-8111-111111111111';
 const esperado = { businessId:business, contaId:'act_9001', campanhaId:'10001', periodo:{desde:'2026-10-28',ate:'2026-10-28'} };
@@ -62,6 +63,36 @@ test('parcial preserva números medidos sem completar campos vazios',()=>{
     entrega_observada_no_periodo:true});
   const r=ler(v);assert.equal(r.campanha.metricas.gasto,300);assert.equal(r.campanha.metricas.impressoes,null);
 });
+
+for (const estado of ['zero_medido', 'observado']) {
+  test(`${estado} não pode alegar período completo com dia faltante`, () => {
+    const v = base(); v.campanha.conjuntos = [];
+    v.periodo = { desde: '2026-10-27', ate: '2026-10-28' };
+    v.campanha.metricas.estado = estado;
+    assert.equal(contrato.lerContratoMeta(v, { ...esperado, periodo: v.periodo }), null);
+  });
+  for (const fuso of [null, '', 'Fuso/Inexistente']) test(`${estado} recusa fuso não confirmado: ${fuso}`, () => {
+    const v = base(); v.fuso = fuso; v.campanha.metricas.estado = estado;
+    assert.equal(ler(v), null);
+  });
+}
+
+test('zero completo aceita dias fora de ordem e fuso válido diferente de Brasília', () => {
+  const v = base(); v.campanha.conjuntos = []; v.fuso = 'Pacific/Auckland';
+  v.periodo = { desde: '2026-10-27', ate: '2026-10-28' };
+  v.campanha.metricas.dias_com_observacao = ['2026-10-28', '2026-10-27'];
+  assert.equal(contrato.lerContratoMeta(v, { ...esperado, periodo: v.periodo }).campanha.metricas.estado, 'zero_medido');
+});
+
+test('parcial com cobertura incompleta e fuso desconhecido mantém somente o medido', () => {
+  const v = base(); v.campanha.conjuntos = []; v.fuso = null;
+  v.periodo = { desde: '2026-10-27', ate: '2026-10-28' };
+  Object.assign(v.campanha.metricas, { estado: 'parcial', cliques_totais: null });
+  const r = contrato.lerContratoMeta(v, { ...esperado, periodo: v.periodo });
+  assert.equal(r.campanha.metricas.estado, 'parcial');
+  assert.equal(r.campanha.metricas.gasto, 0); assert.equal(r.campanha.metricas.cliques, null);
+  assert.equal(r.fuso, null);
+});
 test('31 dias são aceitos; 32, datas normalizadas e intervalo invertido são recusados',()=>{
   assert.equal(contrato.periodoMetaValido({desde:'2026-10-01',ate:'2026-10-31'}),true);
   for(const p of [{desde:'2026-09-30',ate:'2026-10-31'},{desde:'2026-02-30',ate:'2026-03-01'},
@@ -81,10 +112,10 @@ export function componente() {
   const exports={};const deps={
     'react/jsx-runtime':jsxRuntime,
     '@/components/ui/Pill':{Pill:({children})=>React.createElement('span',{},children)},
-    '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,
+    '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
     './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})},
   };
-  vm.runInNewContext(codigo,{exports,Intl,Date,require:id=>{
+  vm.runInNewContext(codigo,{exports,Intl,Date,URLSearchParams,require:id=>{
     if(!(id in deps))throw Error(`Dependência não permitida: ${id}`);return deps[id];
   }});
   return exports.AnunciosMeta;

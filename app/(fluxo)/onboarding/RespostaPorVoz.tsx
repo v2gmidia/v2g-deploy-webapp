@@ -198,6 +198,11 @@ export function RespostaPorVoz({ ocupado, textoAtual, aoIniciar, aoParcial, aoTr
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="2.5" width="6" height="12" rx="3" /><path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4m-4 0h8" /></svg>}
     </button>
     {(iniciando || gravando || enviando) && <span className={styles.vozEstado} role="status">{iniciando ? "Conectando…" : gravando ? "Ouvindo e escrevendo…" : "Finalizando…"}</span>}
-    {erro && <span className={styles.vozAviso} role="alert">{erro}</span>}
+    {erro && <span className={styles.vozAviso} role="alert">
+      <span>{erro}</span>
+      <button className={styles.vozTentar} type="button" disabled={ocupado} onClick={() => void iniciar()}>
+        Tentar o microfone novamente
+      </button>
+    </span>}
   </div>;
 }

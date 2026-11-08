@@ -1,0 +1,9 @@
+Browser tab: 706642580, Title: "Ensaio local 05/06 — fictício", URL: "http://127.0.0.1:3196/".
+The following is a diff from the previous accessibility tree with ~ and + representing changed and added elements, respectively. Removed elements are summarized by ID range.
+~		30 text Chamadas fictícias:  {"consultar":2}  · Destino:  nenhum  · Publicações: 0
++			41 container
++				42 AXListMarker • 
++				43 text consultar: 2506 ms · falha fictícia
+~				38 text Criando imagem O processamento foi iniciado. A geração não informa percentual nem previsão de término. Não foi possível atualizar. Acima está o último estado confirmado deste pedido, não uma confirmação atual. Consulte o andamento novamente; nenhuma nova geração foi iniciada.
+~		40 text Render  4
+The focused UI element is 0 AXWebArea Ensaio local 05/06 — fictício, URL: 127.0.0.1:3196/

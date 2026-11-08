@@ -1,0 +1,4 @@
+.espera { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 0; color: var(--ink-soft); font: inherit; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.spinner { flex: 0 0 16px; width: 16px; height: 16px; margin-top: 3px; border: 2px solid var(--line); border-top-color: var(--cobalt-ink, var(--cobalt)); border-radius: 50%; animation: girar .8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }

@@ -1,0 +1,517 @@
+diff --git a/app/(protected)/anuncios/AnunciosMeta.tsx b/app/(protected)/anuncios/AnunciosMeta.tsx
+index d47ac42..0225b9a 100644
+--- a/app/(protected)/anuncios/AnunciosMeta.tsx
++++ b/app/(protected)/anuncios/AnunciosMeta.tsx
+@@ -1,5 +1,6 @@
+ import { Pill } from "@/components/ui/Pill";
+ import { rotuloDoIntervalo } from "@/lib/inicio/periodo";
++import { entradaDaLeitura } from "@/lib/anuncios/retorno-login";
+ import { rotuloStatusMeta, type ContextoMeta, type LeituraMeta, type ObjetoMeta, type ResultadoAnunciosMeta, type ResultadoInventarioMeta, type PeriodoMeta } from "@/lib/anuncios/contrato-meta";
+ import styles from "./anuncios-meta.module.css";
+ 
+@@ -16,9 +17,13 @@ export function AnunciosMeta({ resultado }: { resultado: ResultadoAnunciosMeta }
+   </section>;
+ }
+ 
+-export function InventarioDeAnunciosMeta({ resultado, periodo, negocioDoGestor }: {
+-  resultado: ResultadoInventarioMeta; periodo: PeriodoMeta; negocioDoGestor?: string;
++export function InventarioDeAnunciosMeta({ resultado, periodo, negocioDoGestor, contaSolicitada }: {
++  resultado: ResultadoInventarioMeta; periodo: PeriodoMeta; negocioDoGestor?: string; contaSolicitada?: string;
+ }) {
++  const retorno = new URLSearchParams({ desde: periodo.desde, ate: periodo.ate });
++  const conta = contaSolicitada ?? resultado.contaSelecionada;
++  if (conta) retorno.set("conta", conta);
++  if (negocioDoGestor) retorno.set("metricas", negocioDoGestor);
+   return <section className={styles.painel} aria-label="Anúncios da conta vinculada">
+     <h2>Anúncios da conta vinculada</h2>
+     {(resultado.contas.length > 1 || (!resultado.ok && resultado.motivo === "escopo" && resultado.contas.length > 0)) &&
+@@ -34,7 +39,7 @@ export function InventarioDeAnunciosMeta({ resultado, periodo, negocioDoGestor }
+     </form>}
+     {!resultado.ok ? <div className="form-warning" role="status">
+       <p>{resultado.mensagem}</p>
+-      {resultado.motivo === "acesso" ? <a href="/entrar?next=%2Fanuncios">Entrar novamente</a> : null}
++      {resultado.motivo === "acesso" ? <a href={entradaDaLeitura(negocioDoGestor ? "/supergestor" : "/anuncios", retorno)}>Entrar novamente</a> : null}
+     </div> : <>
+       <FonteDaConsulta leitura={resultado.dados} />
+       {resultado.dados.campanhas.length === 0 ? <p className={styles.ausente} role="status">
+diff --git a/app/(protected)/anuncios/page.tsx b/app/(protected)/anuncios/page.tsx
+index 78ea327..cb9617e 100644
+--- a/app/(protected)/anuncios/page.tsx
++++ b/app/(protected)/anuncios/page.tsx
+@@ -75,6 +75,7 @@ export default async function AnunciosPage({ searchParams }: {
+ }) {
+   const agora = new Date();
+   const busca = await searchParams;
++  const contaSolicitada = typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined;
+   const intervalo = intervaloDoInicio(busca, diaEmSaoPaulo(agora));
+   const supabase = await createClient();
+   const {
+@@ -104,7 +105,7 @@ export default async function AnunciosPage({ searchParams }: {
+       ? resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id, intervalo })
+       : Promise.resolve(null),
+     anunciosDoNegocioSelecionado({ desde: intervalo.desde, ate: intervalo.ate,
+-      contaId: typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined }),
++      contaId: contaSolicitada }),
+   ]);
+ 
+   // ============================================================
+@@ -123,7 +124,7 @@ export default async function AnunciosPage({ searchParams }: {
+       <div className="anuncios-periodo"><a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
+         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
+       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
+-      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} />
++      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} />
+     </div>;
+   }
+ 
+@@ -188,7 +189,7 @@ export default async function AnunciosPage({ searchParams }: {
+         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
+       </div>
+       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
+-      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} />
++      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} />
+ 
+       <div className="section-title"><h2>Histórico por rodada da V2G</h2></div>
+       <p className="hint">Histórico do negócio, sem filtro por conta. Os mesmos anúncios podem aparecer na consulta Meta acima; não some os números das duas fontes.</p>
+diff --git a/components/gestor/leitura/LeituraDaConta.tsx b/components/gestor/leitura/LeituraDaConta.tsx
+index 9e0e20a..0007f75 100644
+--- a/components/gestor/leitura/LeituraDaConta.tsx
++++ b/components/gestor/leitura/LeituraDaConta.tsx
+@@ -14,6 +14,6 @@ export async function LeituraDaConta({ businessId, nome, intervalo, contaId }: {
+     <div className="section-title"><h2>Números de {nome}</h2></div>
+     <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
+     {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
+-    <InventarioDeAnunciosMeta resultado={resultado} periodo={intervalo} negocioDoGestor={businessId} />
++    <InventarioDeAnunciosMeta resultado={resultado} periodo={intervalo} negocioDoGestor={businessId} contaSolicitada={contaId} />
+   </section>;
+ }
+diff --git a/lib/anuncios/contrato-meta.ts b/lib/anuncios/contrato-meta.ts
+index cb8cdc6..91ef0e4 100644
+--- a/lib/anuncios/contrato-meta.ts
++++ b/lib/anuncios/contrato-meta.ts
+@@ -73,6 +73,12 @@ export function lerInventarioMeta(raw: unknown, esperado: {
+     || !raw.avisos.every(v => typeof v === "string")) return null;
+ 
+   const moeda = raw.moeda;
++  const diasEsperados = (Date.parse(esperado.periodo.ate) - Date.parse(esperado.periodo.desde)) / 86400000 + 1;
++  let fusoConfirmado = false;
++  if (raw.fuso) {
++    try { new Intl.DateTimeFormat("pt-BR", { timeZone: raw.fuso }); fusoConfirmado = true; }
++    catch { /* Fuso inválido não sustenta uma medição completa. */ }
++  }
+   function metricas(m: unknown): MetricasMeta | null {
+     if (!registro(m) || !["observado", "sem_dados", "zero_medido", "parcial"].includes(String(m.estado))
+       || !inteiro(m.gasto_centavos) || !inteiro(m.impressoes) || !inteiro(m.cliques_totais)
+@@ -88,6 +94,10 @@ export function lerInventarioMeta(raw: unknown, esperado: {
+     if (m.estado === "sem_dados" && (dias.length || [m.gasto_centavos, m.impressoes, m.cliques_totais,
+       m.cliques_no_link, m.conversas_whatsapp, m.entrega_observada_no_periodo].some(v => v !== null))) return null;
+     if (m.estado !== "sem_dados" && !dias.length) return null;
++    // Datas já são únicas e internas ao intervalo. A contagem completa exige
++    // todos os dias, sem fabricar zeros para aqueles que a fonte não retornou.
++    if ((m.estado === "zero_medido" || m.estado === "observado")
++      && (dias.length !== diasEsperados || !fusoConfirmado)) return null;
+     if (m.estado === "zero_medido" && (m.gasto_centavos !== 0 || m.impressoes !== 0 || m.cliques_totais !== 0)) return null;
+     if (m.estado === "observado" && [m.gasto_centavos, m.impressoes, m.cliques_totais].some(v => v === null)) return null;
+     const entrega = (m.impressoes !== null && m.impressoes > 0) || (m.gasto_centavos !== null && m.gasto_centavos > 0)
+diff --git a/proxy.ts b/proxy.ts
+index a9014d8..0321f40 100644
+--- a/proxy.ts
++++ b/proxy.ts
+@@ -1,6 +1,7 @@
+ import { createServerClient } from "@supabase/ssr";
+ import { NextResponse, type NextRequest } from "next/server";
+ import { temAcessoWebApp } from "@/lib/contratacao/acesso";
++import { destinoDaLeitura } from "@/lib/anuncios/retorno-login";
+ 
+ /**
+  * 1ª camada de proteção (ver docs/arquitetura.md, Decisão 3).
+@@ -170,8 +171,10 @@ export async function proxy(request: NextRequest) {
+   // de lembrar por que existe.
+   if (isProtected && !user) {
+     const redirectUrl = request.nextUrl.clone();
++    const retornoLeitura = destinoDaLeitura(pathname, request.nextUrl.searchParams);
+     redirectUrl.pathname = "/entrar";
+-    redirectUrl.searchParams.set("next", pathname);
++    if (retornoLeitura) redirectUrl.search = "";
++    redirectUrl.searchParams.set("next", retornoLeitura ?? pathname);
+     return redirecionar(redirectUrl);
+   }
+ 
+diff --git a/scripts/conferir-anuncios-meta-integracao.mjs b/scripts/conferir-anuncios-meta-integracao.mjs
+index 2dfb67e..04c6ba1 100644
+--- a/scripts/conferir-anuncios-meta-integracao.mjs
++++ b/scripts/conferir-anuncios-meta-integracao.mjs
+@@ -9,6 +9,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
+ import { renderToStaticMarkup } from 'react-dom/server';
+ import * as contrato from '../lib/anuncios/contrato-meta.ts';
+ import * as periodo from '../lib/inicio/periodo.ts';
++import * as retorno from '../lib/anuncios/retorno-login.ts';
+ 
+ const A='11111111-1111-4111-8111-111111111111', B='22222222-2222-4222-8222-222222222222';
+ const janela={desde:'2026-10-28',ate:'2026-10-28'};
+@@ -16,7 +17,7 @@ function carregar(arquivo,deps,extras={}) {
+   const exports={};
+   const codigo=ts.transpileModule(readFileSync(arquivo,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,
+     target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+-  vm.runInNewContext(codigo,{exports,Intl,Date,URL,AbortSignal,FormData,...extras,require:id=>{
++  vm.runInNewContext(codigo,{exports,Intl,Date,URL,URLSearchParams,AbortSignal,FormData,...extras,require:id=>{
+     if(!(id in deps))throw Error(`Import não permitido: ${id}`);return deps[id];
+   }});
+   return exports;
+@@ -135,10 +136,47 @@ test('descoberta vazia e múltiplas campanhas são sucessos, sem somar ou usar e
+ 
+ const moduloTela=carregar('app/(protected)/anuncios/AnunciosMeta.tsx',{'react/jsx-runtime':jsxRuntime,
+   '@/components/ui/Pill':{Pill:({children})=>React.createElement('span',{},children)},
+-  '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,
++  '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
+   './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,k)=>String(k)})}});
+ const UI=moduloTela.InventarioDeAnunciosMeta;
+ 
++for (const gestor of [false, true]) test(`login da ${gestor ? 'mesa' : 'aba de cliente'} conserva conta mesmo quando a sessão falha antes de carregá-la`, async () => {
++  const cfg = gestor ? { noSession: true, owner: '33333333-3333-4333-8333-333333333333',
++    user: { id: 'operador-teste', app_metadata: { papel: 'operador' } },
++    env: { V2G_MANAGER_WORK_ENABLED: 'true', V2G_MANAGER_METRICS_READ_ENABLED: 'true' } } : { noSession: true };
++  const b = bancada(cfg);
++  const args = { ...janela, contaId: 'act_9001' };
++  const resultado = gestor ? await b.lerGestor({ businessId: A, ...args }) : await b.ler(args);
++  assert.equal(resultado.motivo, 'acesso'); assert.equal(resultado.contaSelecionada, null);
++  assert.equal(b.requests.length, 0);
++  const html = renderToStaticMarkup(React.createElement(UI, { resultado, periodo: janela,
++    contaSolicitada: 'act_9001', ...(gestor ? { negocioDoGestor: A } : {}) }));
++  const href = html.match(/href="([^"]+)"[^>]*>Entrar novamente/)?.[1]?.replaceAll('&amp;', '&');
++  assert.ok(href); const login = new URL(href, 'https://qa.example.invalid');
++  const next = new URL(login.searchParams.get('next'), login);
++  assert.equal(next.pathname, gestor ? '/supergestor' : '/anuncios');
++  assert.equal(next.searchParams.get('conta'), 'act_9001');
++  assert.equal(next.searchParams.get('desde'), janela.desde); assert.equal(next.searchParams.get('ate'), janela.ate);
++  assert.equal(next.searchParams.get('metricas'), gestor ? A : null);
++  assert.equal(login.searchParams.get('adicionar'), '1');
++  assert.doesNotMatch(href, /synthetic|Bearer|profile_id|business_id/);
++});
++
++for (const estado of ['zero_medido', 'observado']) test(`HTTP 200 contraditório em ${estado} não preenche números completos na tela`, async () => {
++  for (const lacuna of ['cobertura', 'fuso']) {
++    const raw = corpo(); const periodo = { desde: '2026-10-27', ate: '2026-10-28' };
++    raw.periodo = periodo;
++    Object.assign(raw.campanhas[0].metricas, { estado, gasto_centavos: 0, impressoes: 0, cliques_totais: 0,
++      dias_com_observacao: lacuna === 'cobertura' ? ['2026-10-28'] : ['2026-10-27', '2026-10-28'],
++      entrega_observada_no_periodo: false });
++    if (lacuna === 'fuso') raw.fuso = null;
++    const r = await bancada({ raw }).ler(periodo);
++    assert.equal(r.ok, false); assert.equal(r.motivo, 'resposta'); assert.ok(!('dados' in r));
++    const html = renderToStaticMarkup(React.createElement(UI, { resultado: r, periodo }));
++    assert.doesNotMatch(html, /Zero medido neste período|R\$|Campanha FICTÍCIA/);
++  }
++});
++
+ const owner='33333333-3333-4333-8333-333333333333';
+ const operador={id:'operador-teste',app_metadata:{papel:'operador'}};
+ const flags={V2G_MANAGER_WORK_ENABLED:'true',V2G_MANAGER_METRICS_READ_ENABLED:'true'};
+@@ -176,9 +214,9 @@ for(const estado of ['sem_dados','zero_medido','observado','parcial']) test(`N26
+ test('N26: componente da mesa encaminha recorte explícito e respeita default OFF',async()=>{
+   const resposta=await bancada({owner,user:operador,env:flags}).lerGestor({businessId:A,...janela});
+   const chamadas=[];
+-  function wrapper(env){return carregar('components/gestor/leitura/LeituraDaConta.tsx',{
++  function wrapper(env,leitura=resposta){return carregar('components/gestor/leitura/LeituraDaConta.tsx',{
+     'server-only':{},'react/jsx-runtime':jsxRuntime,
+-    '@/lib/backend/anuncios-do-negocio':{anunciosDoGestorAtribuido:async a=>{chamadas.push(a);return resposta;}},
++    '@/lib/backend/anuncios-do-negocio':{anunciosDoGestorAtribuido:async a=>{chamadas.push(a);return leitura;}},
+     '@/app/(protected)/anuncios/AnunciosMeta':moduloTela,
+     '@/app/(protected)/inicio/SeletorDePeriodo':{SeletorDePeriodo:()=>React.createElement('div',{},'Seletor de período')},
+   },{process:{env}}).LeituraDaConta;}
+@@ -187,6 +225,13 @@ test('N26: componente da mesa encaminha recorte explícito e respeita default OF
+   const elemento=await wrapper(flags)(args);const html=renderToStaticMarkup(elemento);
+   assert.equal(chamadas[0].desde,janela.desde);assert.equal(chamadas[0].ate,janela.ate);assert.equal(chamadas[0].contaId,'act_9001');
+   assert.match(html,/Cliente fictício/);assert.match(html,/Campanha FICTÍCIA/);
++  const acesso={ok:false,motivo:'acesso',mensagem:'Entre novamente.',contas:[],contaSelecionada:null};
++  const h=renderToStaticMarkup(await wrapper(flags,acesso)(args));
++  const href=h.match(/href="([^"]+)"[^>]*>Entrar novamente/)?.[1]?.replaceAll('&amp;','&');
++  assert.ok(href);const login=new URL(href,'https://qa.example.invalid');
++  const next=new URL(login.searchParams.get('next'),login);
++  assert.equal(next.pathname,'/supergestor');assert.equal(next.searchParams.get('conta'),'act_9001');
++  assert.equal(next.searchParams.get('metricas'),A);assert.equal(next.searchParams.get('desde'),janela.desde);
+   const pagina=readFileSync('app/(protected)/gestor/page.tsx','utf8');
+   assert.match(pagina,/intervaloDoInicio\(parametros, diaEmSaoPaulo/);assert.doesNotMatch(pagina,/intervaloMesa\(/);
+ });
+@@ -252,7 +297,7 @@ test('entrega observada aceita gasto positivo com impressões desconhecidas, sem
+   assert.equal(contrato.lerInventarioMeta(raw,{businessId:A,contaId:'act_9001',periodo:janela}),null);
+ });
+ 
+-async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]}}) {
++async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]},busca={}}) {
+   const calls=[];const leve=({children})=>React.createElement('div',{},children);
+   const data={id:'dono'};
+   const q={select(){return q;},eq(){return q;},order:async()=>({data:[]})};
+@@ -266,13 +311,23 @@ async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]}}) {
+     '@/lib/inicio/periodo':periodo,'@/lib/dia-seguinte/dia':{diaEmSaoPaulo:()=> '2026-10-29'},
+     '../inicio/SeletorDePeriodo':{SeletorDePeriodo:leve},'@/lib/backend':{anunciosDoNegocioSelecionado:async()=>meta},'./AnunciosMeta':moduloTela};
+   const modulo=carregar('app/(protected)/anuncios/page.tsx',imports);
+-  const elemento=await modulo.default({searchParams:Promise.resolve({...janela,business_id:B,idExecucao:'invasora'})});
++  const elemento=await modulo.default({searchParams:Promise.resolve({...janela,business_id:B,idExecucao:'invasora',...busca})});
+   return {html:renderToStaticMarkup(elemento),calls};
+ }
+ test('/anuncios sem execução mostra inventário manual e não o falso primeiro-anúncio-vazio',async()=>{
+   const meta=await bancada().ler(janela);const p=await pagina({meta});assert.match(p.html,/Campanha FICTÍCIA/);
+   assert.doesNotMatch(p.html,/Seu primeiro anúncio ainda não existe/);assert.equal(p.calls[0].businessId,A);assert.equal(p.calls[0].profileId,'dono');
+ });
++
++test('/anuncios real passa a conta solicitada ao retorno de login mesmo sem inventário carregado', async () => {
++  const meta = await bancada({ noSession: true }).ler({ ...janela, contaId: 'act_9003' });
++  const p = await pagina({ meta, busca: { conta: 'act_9003' } });
++  const href = p.html.match(/href="([^"]+)"[^>]*>Entrar novamente/)?.[1]?.replaceAll('&amp;', '&');
++  assert.ok(href);
++  const next = new URL(new URL(href, 'https://qa.example.invalid').searchParams.get('next'), 'https://qa.example.invalid');
++  assert.equal(next.searchParams.get('conta'), 'act_9003');
++  assert.equal(next.searchParams.get('desde'), janela.desde); assert.equal(next.searchParams.get('ate'), janela.ate);
++});
+ test('/anuncios mantém legado quando nova leitura falha, identificado como histórico',async()=>{
+   const meta=await bancada({http:503}).ler(janela);const valor={texto:'0',ausente:false};
+   const legado={estado:'com-campanhas',campanhas:[{idExecucao:'exec-legada',nome:'Rodada ANTIGA',estado:'com-dado',canal:'meta',resultado:{
+diff --git a/scripts/conferir-anuncios-meta.mjs b/scripts/conferir-anuncios-meta.mjs
+index eda2a2a..9a5d95e 100644
+--- a/scripts/conferir-anuncios-meta.mjs
++++ b/scripts/conferir-anuncios-meta.mjs
+@@ -9,6 +9,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
+ import { renderToStaticMarkup } from 'react-dom/server';
+ import * as contrato from '../lib/anuncios/contrato-meta.ts';
+ import * as periodo from '../lib/inicio/periodo.ts';
++import * as retorno from '../lib/anuncios/retorno-login.ts';
+ 
+ const business = '11111111-1111-4111-8111-111111111111';
+ const esperado = { businessId:business, contaId:'act_9001', campanhaId:'10001', periodo:{desde:'2026-10-28',ate:'2026-10-28'} };
+@@ -62,6 +63,36 @@ test('parcial preserva números medidos sem completar campos vazios',()=>{
+     entrega_observada_no_periodo:true});
+   const r=ler(v);assert.equal(r.campanha.metricas.gasto,300);assert.equal(r.campanha.metricas.impressoes,null);
+ });
++
++for (const estado of ['zero_medido', 'observado']) {
++  test(`${estado} não pode alegar período completo com dia faltante`, () => {
++    const v = base(); v.campanha.conjuntos = [];
++    v.periodo = { desde: '2026-10-27', ate: '2026-10-28' };
++    v.campanha.metricas.estado = estado;
++    assert.equal(contrato.lerContratoMeta(v, { ...esperado, periodo: v.periodo }), null);
++  });
++  for (const fuso of [null, '', 'Fuso/Inexistente']) test(`${estado} recusa fuso não confirmado: ${fuso}`, () => {
++    const v = base(); v.fuso = fuso; v.campanha.metricas.estado = estado;
++    assert.equal(ler(v), null);
++  });
++}
++
++test('zero completo aceita dias fora de ordem e fuso válido diferente de Brasília', () => {
++  const v = base(); v.campanha.conjuntos = []; v.fuso = 'Pacific/Auckland';
++  v.periodo = { desde: '2026-10-27', ate: '2026-10-28' };
++  v.campanha.metricas.dias_com_observacao = ['2026-10-28', '2026-10-27'];
++  assert.equal(contrato.lerContratoMeta(v, { ...esperado, periodo: v.periodo }).campanha.metricas.estado, 'zero_medido');
++});
++
++test('parcial com cobertura incompleta e fuso desconhecido mantém somente o medido', () => {
++  const v = base(); v.campanha.conjuntos = []; v.fuso = null;
++  v.periodo = { desde: '2026-10-27', ate: '2026-10-28' };
++  Object.assign(v.campanha.metricas, { estado: 'parcial', cliques_totais: null });
++  const r = contrato.lerContratoMeta(v, { ...esperado, periodo: v.periodo });
++  assert.equal(r.campanha.metricas.estado, 'parcial');
++  assert.equal(r.campanha.metricas.gasto, 0); assert.equal(r.campanha.metricas.cliques, null);
++  assert.equal(r.fuso, null);
++});
+ test('31 dias são aceitos; 32, datas normalizadas e intervalo invertido são recusados',()=>{
+   assert.equal(contrato.periodoMetaValido({desde:'2026-10-01',ate:'2026-10-31'}),true);
+   for(const p of [{desde:'2026-09-30',ate:'2026-10-31'},{desde:'2026-02-30',ate:'2026-03-01'},
+@@ -81,10 +112,10 @@ export function componente() {
+   const exports={};const deps={
+     'react/jsx-runtime':jsxRuntime,
+     '@/components/ui/Pill':{Pill:({children})=>React.createElement('span',{},children)},
+-    '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,
++    '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
+     './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})},
+   };
+-  vm.runInNewContext(codigo,{exports,Intl,Date,require:id=>{
++  vm.runInNewContext(codigo,{exports,Intl,Date,URLSearchParams,require:id=>{
+     if(!(id in deps))throw Error(`Dependência não permitida: ${id}`);return deps[id];
+   }});
+   return exports.AnunciosMeta;
+diff --git a/scripts/previa-anuncios-meta.mjs b/scripts/previa-anuncios-meta.mjs
+index e524322..87c701f 100644
+--- a/scripts/previa-anuncios-meta.mjs
++++ b/scripts/previa-anuncios-meta.mjs
+@@ -8,6 +8,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
+ import {renderToStaticMarkup} from 'react-dom/server';
+ import * as contrato from '../lib/anuncios/contrato-meta.ts';
+ import * as periodo from '../lib/inicio/periodo.ts';
++import * as retorno from '../lib/anuncios/retorno-login.ts';
+ 
+ const gestor=process.argv.includes('--gestor');
+ const integracao=gestor||process.argv.includes('--integracao');
+@@ -18,12 +19,12 @@ const classes=[...new Set([...cssModulo.matchAll(/\.([a-zA-Z][\w-]*)/g)].map(m=>
+ const styles=Object.fromEntries(classes.map(c=>[c,`meta_${c}`]));
+ const css=classes.reduce((s,c)=>s.replaceAll(`.${c}`,`.meta_${c}`),cssModulo);
+ const exports={};
+-const deps={'react/jsx-runtime':jsxRuntime,'@/lib/anuncios/contrato-meta':contrato,'@/lib/inicio/periodo':periodo,
++const deps={'react/jsx-runtime':jsxRuntime,'@/lib/anuncios/contrato-meta':contrato,'@/lib/inicio/periodo':periodo,'@/lib/anuncios/retorno-login':retorno,
+   '@/components/ui/Pill':{Pill:({children,tone})=>React.createElement('span',{className:`pill ${tone}`},children)},
+   './anuncios-meta.module.css':{__esModule:true,default:styles}};
+ const codigo=ts.transpileModule(readFileSync('app/(protected)/anuncios/AnunciosMeta.tsx','utf8'),{
+   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
+-vm.runInNewContext(codigo,{exports,Intl,Date,require:id=>{if(!(id in deps))throw Error('Import não permitido');return deps[id];}});
++vm.runInNewContext(codigo,{exports,Intl,Date,URLSearchParams,require:id=>{if(!(id in deps))throw Error('Import não permitido');return deps[id];}});
+ const objeto=(id,nome,sem=false)=>({id,nome,statusConfigurado:'ACTIVE',statusEfetivo:'IN_PROCESS',metricas:{
+   estado:sem?'sem_dados':'zero_medido',gasto:sem?null:0,impressoes:sem?null:0,cliques:sem?null:0,conversas:null,
+   dias:sem?[]:['2026-10-28'],entregaObservada:sem?null:false}});
+diff --git a/lib/anuncios/retorno-login.ts b/lib/anuncios/retorno-login.ts
+new file mode 100644
+--- /dev/null
++++ b/lib/anuncios/retorno-login.ts
+@@ -0,0 +1,18 @@
++/** Contexto de navegação, nunca autorização. O carregador reconfirma os vínculos após entrar. */
++export function destinoDaLeitura(pathname: string, busca: URLSearchParams): string | null {
++  if (!["/anuncios", "/gestor", "/supergestor"].includes(pathname)) return null;
++  const retorno = new URLSearchParams();
++  const campos = pathname === "/anuncios" ? ["desde", "ate", "conta"] : ["desde", "ate", "conta", "metricas"];
++  for (const campo of campos) {
++    // Não esconder entrada repetida/inválida: a validação existente deve
++    // continuar recusando-a após o login, em vez de escolher um valor sozinha.
++    for (const valor of busca.getAll(campo)) retorno.append(campo, valor);
++  }
++  const consulta = retorno.toString();
++  return pathname + (consulta ? `?${consulta}` : "");
++}
++
++/** Reusa o modo existente de login explícito, mesmo se o navegador conserva uma sessão. */
++export function entradaDaLeitura(pathname: string, busca: URLSearchParams): string {
++  return `/entrar?${new URLSearchParams({ adicionar: "1", next: destinoDaLeitura(pathname, busca) ?? "/anuncios" })}`;
++}
+diff --git a/scripts/conferir-retorno-leitura-meta.mjs b/scripts/conferir-retorno-leitura-meta.mjs
+new file mode 100644
+--- /dev/null
++++ b/scripts/conferir-retorno-leitura-meta.mjs
+@@ -0,0 +1,131 @@
++// Proxy, formulário e action reais, com Auth/acesso substituídos. Sem rede ou credenciais.
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import React from 'react';
++import { renderToStaticMarkup } from 'react-dom/server';
++import { ambienteTs } from './test-utils/ts-isolado.mjs';
++import { destinoDaLeitura, entradaDaLeitura } from '../lib/anuncios/retorno-login.ts';
++import { destinoLocalSeguro } from '../lib/auth-destino.ts';
++
++const business = '11111111-1111-4111-8111-111111111111';
++const janela = { desde: '2026-10-28', ate: '2026-11-01', conta: 'act_9001' };
++function urlLocal(caminho) {
++  const url = new URL(caminho, 'https://qa.example.invalid'); url.clone = () => new URL(url);
++  return url;
++}
++function proxyLocal({ user = null, acesso = true, renovar = false } = {}) {
++  const chamadas = [], novas = [];
++  function cookies() {
++    const valores = new Map();
++    return { getAll: () => [...valores.values()], set(nome, valor, options) {
++      const cookie = typeof nome === 'object' ? nome : { name: nome, value: valor, ...options };
++      valores.set(cookie.name, cookie);
++    } };
++  }
++  const mod = ambienteTs({ ports: {
++    'next/server': { NextResponse: {
++      next: () => ({ tipo: 'next', cookies: cookies() }),
++      redirect: u => ({ tipo: 'redirect', url: String(u), cookies: cookies() }),
++    } },
++    '@supabase/ssr': { createServerClient: (_u, _k, opcoes) => ({ auth: { getUser: async () => {
++      chamadas.push('auth');
++      if (renovar) opcoes.cookies.setAll([{ name: 'sessao-ficticia', value: 'renovada-ficticia', options: { httpOnly: true } }]);
++      return { data: { user } };
++    } } }) },
++    '@/lib/contratacao/acesso': { temAcessoWebApp: async () => { chamadas.push('acesso'); return acesso; } },
++  } }).load('proxy.ts');
++  return { chamadas, run: caminho => mod.proxy({ method: 'GET', nextUrl: urlLocal(caminho),
++    cookies: { getAll: () => novas, set: (name, value) => novas.push({ name, value }) } }) };
++}
++
++function loginLocal() {
++  const chamadas = [];
++  const auth = { signInWithPassword: async ({ email, password }) => {
++    assert.equal(email, 'teste@example.invalid'); assert.equal(password, 'valor-exclusivo-do-ensaio');
++    chamadas.push('entrar'); return { data: { user: { id: 'ator-ficticio' } }, error: null };
++  } };
++  const mod = ambienteTs({ ports: {
++    'next/navigation': { redirect: destino => { throw Object.assign(Error('redirect local'), { destino }); } },
++    '@/lib/supabase/server': { createClient: async () => ({ auth }) },
++    '@/lib/supabase/admin': { createAdminClient() { throw Error('Não criar acesso neste teste'); } },
++    '@/lib/contratacao/vincular': { vincularComprasAprovadas: async () => chamadas.push('conferir-vinculos-fake') },
++    '@/lib/contratacao/cadastro-contratado': {}, '@/lib/contratacao/cadastro-por-compra': {},
++    '@/lib/contratacao/acesso-contratado': {},
++  } }).load('app/(public)/entrar/actions.ts');
++  return { chamadas, async run(next) {
++    const f = new FormData(); f.set('email', 'teste@example.invalid'); f.set('senha', 'valor-exclusivo-do-ensaio'); f.set('next', next);
++    try { await mod.signInAction({}, f); assert.fail('A action deveria redirecionar'); }
++    catch (e) { if (!e.destino) throw e; return e.destino; }
++  } };
++}
++
++for (const caminho of ['/anuncios', '/supergestor', '/gestor']) test(`sem sessão preserva o recorte de ${caminho} até o login`, async () => {
++  const busca = new URLSearchParams({ ...janela, ...(caminho === '/anuncios' ? {} : { metricas: business }) });
++  const c = proxyLocal({ renovar: true });
++  const r = await c.run(`${caminho}?${busca}`); assert.equal(r.tipo, 'redirect');
++  const entrada = urlLocal(r.url); assert.equal(entrada.pathname, '/entrar');
++  const next = entrada.searchParams.get('next'); const retorno = urlLocal(next);
++  assert.equal(retorno.pathname, caminho);
++  for (const [k, v] of busca) assert.equal(retorno.searchParams.get(k), v);
++  assert.deepEqual([...entrada.searchParams.keys()], ['next']);
++  assert.equal(r.cookies.getAll()[0].value, 'renovada-ficticia');
++  // Página de login real recebe next; TelaEntrada é uma porta de observação.
++  let props;
++  const page = ambienteTs({ ports: {
++    'next/navigation': { useSearchParams: () => entrada.searchParams },
++    '@/components/ui/EntradaEditorial': { EntradaEditorial: ({ children }) => React.createElement('div', {}, children) },
++    './TelaEntrada': { TelaEntrada: p => { props = p; return React.createElement('div', {}, 'formulário fictício'); } },
++    './actions': { signInAction: async () => ({}), signUpAction: async () => ({}) },
++  } }).load('app/(public)/entrar/page.tsx').default;
++  renderToStaticMarkup(React.createElement(page)); assert.equal(props.next, next);
++  // Action real retorna para o mesmo caminho; Auth e conciliação são fakes.
++  const login = loginLocal(); assert.equal(await login.run(props.next), next);
++  assert.deepEqual(login.chamadas, ['entrar', 'conferir-vinculos-fake']);
++});
++
++test('retorno de leitura descarta identidade declarada, token e next externos', () => {
++  const busca = new URLSearchParams({ ...janela, business_id: 'outro', profile_id: 'outro',
++    token: 'VALOR-FICTICIO-NAO-REPASSAR', next: 'https://fora.example', metricas: business });
++  const next = destinoDaLeitura('/anuncios', busca); assert.equal(destinoLocalSeguro(next), next);
++  assert.doesNotMatch(next, /business_id|profile_id|token|fora.example|metricas|VALOR/);
++  assert.equal(destinoDaLeitura('//fora.example', busca), null);
++  assert.equal(destinoDaLeitura('/criativos', busca), null);
++});
++
++test('parâmetros repetidos e inválidos continuam visíveis à validação após o login', () => {
++  const busca = new URLSearchParams('desde=invalida&ate=2026-11-01&conta=act_9001&conta=act_9002');
++  const next = urlLocal(destinoDaLeitura('/anuncios', busca));
++  assert.deepEqual(next.searchParams.getAll('conta'), ['act_9001', 'act_9002']);
++  assert.equal(next.searchParams.get('desde'), 'invalida');
++});
++
++test('entrar novamente abre formulário explícito mesmo com sessão ainda presente no navegador', async () => {
++  const href = entradaDaLeitura('/supergestor', new URLSearchParams({ ...janela, metricas: business }));
++  const entrada = urlLocal(href); assert.equal(entrada.searchParams.get('adicionar'), '1');
++  const c = proxyLocal({ user: { id: 'operador', app_metadata: { papel: 'operador' } } });
++  assert.equal((await c.run(href)).tipo, 'next');
++  const next = entrada.searchParams.get('next'); assert.equal(urlLocal(next).pathname, '/supergestor');
++  assert.equal(await loginLocal().run(next), next);
++});
++
++test('login recusa destino externo e mantém proteção contra redirecionamento aberto', async () => {
++  for (const next of ['https://fora.example', '//fora.example', '/\\fora.example', '/entrar?next=/anuncios'])
++    assert.equal(await loginLocal().run(next), '/inicio');
++});
++
++test('contexto restaurado não concede papel nem acesso comercial', async () => {
++  const path = `/supergestor?${new URLSearchParams({ ...janela, metricas: business })}`;
++  const cliente = proxyLocal({ user: { id: 'cliente', app_metadata: {}, user_metadata: { papel: 'operador' } } });
++  assert.equal(urlLocal((await cliente.run(path)).url).pathname, '/inicio');
++  const semAcesso = proxyLocal({ user: { id: 'operador', app_metadata: { papel: 'operador' } }, acesso: false });
++  assert.equal(urlLocal((await semAcesso.run(path)).url).pathname, '/acesso-pendente');
++  const operador = proxyLocal({ user: { id: 'operador', app_metadata: { papel: 'operador' } } });
++  assert.equal((await operador.run(path)).tipo, 'next');
++});
++
++test('outras rotas e redirecionamento normal do login preservam comportamento anterior', async () => {
++  const c = proxyLocal(); const r = urlLocal((await c.run('/inicio?desde=2026-10-01')).url);
++  assert.equal(r.searchParams.get('next'), '/inicio'); assert.equal(r.searchParams.get('desde'), '2026-10-01');
++  const logado = proxyLocal({ user: { id: 'cliente', app_metadata: {} } });
++  assert.equal(urlLocal((await logado.run('/entrar')).url).pathname, '/inicio');
++});

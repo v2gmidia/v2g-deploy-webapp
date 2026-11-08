@@ -1,0 +1,16 @@
+[
+  {
+    "relname": "metrics_daily",
+    "tgname": "metrics_daily_set_updated_at",
+    "trigger_definition": "CREATE TRIGGER metrics_daily_set_updated_at BEFORE UPDATE ON public.metrics_daily FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+    "handler": "set_updated_at()",
+    "definition": "CREATE OR REPLACE FUNCTION public.set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n  new.updated_at = now();\n  return new;\nend;\n$function$\n"
+  },
+  {
+    "relname": "meta_connections",
+    "tgname": "meta_connections_pagina_compartilhada",
+    "trigger_definition": "CREATE TRIGGER meta_connections_pagina_compartilhada BEFORE UPDATE OF meta_page_id ON public.meta_connections FOR EACH ROW EXECUTE FUNCTION impedir_troca_pagina_compartilhada()",
+    "handler": "impedir_troca_pagina_compartilhada()",
+    "definition": "CREATE OR REPLACE FUNCTION public.impedir_troca_pagina_compartilhada()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n  if new.meta_page_id is distinct from old.meta_page_id\n      and (select count(*) from public.ad_accounts\n           where business_id = new.business_id and is_active = true) > 1 then\n    raise exception 'pagina compartilhada entre contas';\n  end if;\n  return new;\nend;\n$function$\n"
+  }
+]

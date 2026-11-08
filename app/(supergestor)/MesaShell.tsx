@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
 import { Marca } from "@/components/ui/Marca";
 import { PreferenciaDeTema } from "@/components/ui/PreferenciaDeTema";
+import { FeedbackDeNavegacao } from "./FeedbackDeNavegacao";
 import styles from "./Mesa.module.css";
 
 export function MesaShell({ children, nome, acaoSair, previa = false }: {
@@ -34,7 +35,7 @@ export function MesaShell({ children, nome, acaoSair, previa = false }: {
         </div>
         <PreferenciaDeTema />
       </header>
-      <main id="conteudo" className={styles.conteudo}>{children}</main>
+      <main id="conteudo" className={styles.conteudo}><Suspense fallback={null}><FeedbackDeNavegacao /></Suspense>{children}</main>
     </div>
   </div>;
 }

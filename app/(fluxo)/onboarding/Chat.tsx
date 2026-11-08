@@ -9,6 +9,7 @@ import { juntarTextoEFala, recadoDaVozIndisponivel, type EstadoDaVoz } from "@/l
 import { RespostaPorVoz } from "./RespostaPorVoz";
 import { salvarRespostaAction, type RespostaGravada } from "./actions";
 import { ORDEM, PERGUNTAS, RAIO_KM, proximaPergunta, type Pergunta } from "./perguntas";
+import { useTempoDaOperacao } from "./tempo-da-operacao";
 import styles from "./ChatConversa.module.css";
 
 const QUESTOES = ORDEM.map((id) => PERGUNTAS.find((p) => p.id === id)!);
@@ -54,7 +55,6 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
   const [respostaPendente, setRespostaPendente] = useState<{
     perguntaId: string; texto: string;
   } | null>(null);
-  const [demorado, setDemorado] = useState(false);
   const [confirmacao, setConfirmacao] = useState("");
   const [vozOcupada, setVozOcupada] = useState(false);
   const [falaAtividade, setFalaAtividade] = useState<{ texto: string; sequencia: number } | null>(null);
@@ -77,6 +77,7 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
   const mostrarConvite = !conviteAceito && salvas.length === 0 && !editando;
   const vozHabilitada = estadoDaVoz === "disponivel";
   const vozIndisponivel = estadoDaVoz === "disponivel" ? null : estadoDaVoz;
+  const tempoDoEnvio = useTempoDaOperacao(enviando);
 
   useEffect(() => {
     if (enviando) return;
@@ -84,11 +85,6 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
     if (erro) aviso.current?.focus();
     else (campo.current ?? proximoPasso.current)?.focus({ preventScroll: true });
   }, [atual?.id, enviando, incerto, erro, conviteAceito]);
-  useEffect(() => {
-    if (!enviando) return;
-    const tempo = window.setTimeout(() => setDemorado(true), 8000);
-    return () => window.clearTimeout(tempo);
-  }, [enviando]);
   useEffect(() => {
     const caixa = mensagens.current;
     if (caixa) caixa.scrollTo({ top: caixa.scrollHeight, behavior: "instant" });
@@ -132,7 +128,7 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
     // A trava antecede o próximo render: Enter e clique no mesmo instante
     // não podem iniciar duas gravações.
     envioTravado.current = true;
-    setEnviando(true); setErro(null); setDemorado(false); setConfirmacao("");
+    setEnviando(true); setErro(null); setConfirmacao("");
     setRespostaPendente({ perguntaId: pergunta.id, texto: valor });
     try {
       const resultado = await salvarResposta({ businessId, qid: pergunta.id, texto: valor, origem,
@@ -217,7 +213,9 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
     </section>
     <div className={styles.rodape}>
       <p id="estado-envio-onboarding" className={styles.estadoEnvio} role="status" aria-live="polite" aria-atomic="true">
-        {enviando ? (demorado ? "Ainda aguardando a confirmação. Não é preciso enviar novamente." : "Salvando sua resposta… Aguarde a confirmação.") : confirmacao}
+        {tempoDoEnvio.visivel
+          ? (tempoDoEnvio.demorada ? "Ainda aguardando a confirmação. Não é preciso enviar novamente." : "Salvando sua resposta… Aguarde a confirmação.")
+          : confirmacao}
       </p>
       {mostrarConvite ? <div className={styles.conviteAcoes}><button className={styles.primario} type="button" onClick={() => setConviteAceito(true)}>Começar a preparar meu negócio</button><a href="/inicio">Fazer depois</a></div> :
       atual ? <>
@@ -268,7 +266,7 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
               aoOcupar={setVozOcupada} />}
             {!enviando && !incerto && vozIndisponivel && <VozIndisponivel estado={vozIndisponivel} compacta />}
             <button className={styles.enviar} type="submit" disabled={enviando || incerto || vozOcupada || !texto.trim()} aria-label={enviando ? "Salvando resposta" : "Enviar resposta"}>
-              {enviando ? <span className={styles.envioIndicador} aria-hidden="true" /> : <IconeEnviar />}
+              {tempoDoEnvio.visivel ? <span className={styles.envioIndicador} aria-hidden="true" /> : <IconeEnviar />}
             </button>
           </div>
         </form>}

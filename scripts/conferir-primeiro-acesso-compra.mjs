@@ -4,7 +4,7 @@ import {test} from 'node:test';
 import {ambienteTs} from './test-utils/ts-isolado.mjs';
 const email='comprador@example.invalid',cpf='00000000191',cnpj='11222333000181';
 const order=(id,doc=cpf,method='asaas_card',status='payment_approved')=>({id,business_id:'business-'+id,buyer_email:email,cnpj:doc,payment_method:method,status,provider_charge_id:'pay_'+id});
-function scenario(orders,events=[],broken=false){
+function scenario(orders,events=[],broken=false,siteUrl='https://qa.example.invalid'){
  const signup=[],queries=[];
  const admin={from(table){let filters=[],single=false,start=0,end=Infinity,max=Infinity;
   const q={select:()=>q,eq:(k,v)=>{queries.push([table,k,v]);filters.push(r=>r[k]===v);return q;},
@@ -12,7 +12,7 @@ function scenario(orders,events=[],broken=false){
    order:()=>q,limit:n=>{max=n;return q;},range:(a,b)=>{start=a;end=b;return q;},maybeSingle:()=>{single=true;return q;},
    then(ok,bad){const rows=(table==='commercial_orders'?orders:events).filter(r=>filters.every(f=>f(r))).slice(start,Math.min(end+1,start+max));
     return Promise.resolve({data:broken&&table==='commercial_payment_events'?null:single?(rows[0]??null):rows,error:broken&&table==='commercial_payment_events'?{code:'unavailable'}:null}).then(ok,bad);}};return q;}};
- const {signUpAction}=ambienteTs({env:{NEXT_PUBLIC_SITE_URL:'https://qa.example.invalid'},ports:{
+ const {signUpAction}=ambienteTs({env:{NEXT_PUBLIC_SITE_URL:siteUrl},ports:{
   '@/lib/supabase/admin':{createAdminClient:()=>admin},
   '@/lib/supabase/server':{createClient:async()=>({auth:{signUp:async p=>{signup.push(p);return {data:{session:null},error:null};}}})},
   'next/navigation':{redirect:()=>{throw Error('unexpected navigation');}},
@@ -44,4 +44,11 @@ test('estorno parcial/em processamento, contestacao, sem charge e consulta indis
 });
 test('mesmo email/documento: outra compra valida permite cadastro sem fundir negocios',async()=>{
  const s=scenario([order('A'),order('B')],[{order_id:'A',provider_charge_id:'pay_A',event_type:'PAYMENT_REFUNDED'}]);await s.run();assert.equal(s.signup.length,1);
+});
+test('primeiro acesso usa domínio app V2G no emailRedirectTo sem mudar o requisito de compra confirmada',async()=>{
+ const s=scenario([order('A')],[],false,'https://app.v2gmidia.com.br');
+ await s.run();assert.equal(s.signup.length,1);
+ assert.equal(s.signup[0].options.emailRedirectTo,'https://app.v2gmidia.com.br/auth/confirmar');
+ const pending=scenario([order('A',cpf,'asaas_card','awaiting_payment')],[],false,'https://app.v2gmidia.com.br');
+ await pending.run();assert.equal(pending.signup.length,0);
 });

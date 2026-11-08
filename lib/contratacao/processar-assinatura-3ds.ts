@@ -5,10 +5,18 @@ import { asaasSandbox } from "./asaas-sandbox";
 import { garantirAssinaturaApos3ds, type PedidoParaAssinatura3ds } from "./assinatura-apos-3ds";
 import { OCORRENCIAS_PUBLICAS } from "./estado-pagamento-publico";
 import { checkoutSandboxSeguroNesteServidor } from "./ambiente-checkout";
+import { processamentoProducaoSeguro } from "./ambiente-producao";
+import { asaasProducao } from "./asaas-producao";
+import { schemaCompraPronto } from "./provedor-compra";
 
-export async function processarAssinatura3ds(admin: SupabaseClient, orderId: string): Promise<boolean> {
-  if (!checkoutSandboxSeguroNesteServidor() || process.env.V2G_CHECKOUT_3DS_SCHEMA_ENABLED !== "true"
+export async function processarAssinatura3ds(admin: SupabaseClient, orderId: string,
+  ambiente: "sandbox" | "production" = "sandbox"): Promise<boolean> {
+  const producao = ambiente === "production";
+  if (producao) {
+    if (!processamentoProducaoSeguro() || !await schemaCompraPronto(admin)) return false;
+  } else if (!checkoutSandboxSeguroNesteServidor() || process.env.V2G_CHECKOUT_3DS_SCHEMA_ENABLED !== "true"
       || process.env.V2G_CHECKOUT_3DS_ENABLED !== "true") return false;
+  const executarAsaas = producao ? asaasProducao : asaasSandbox;
   const { data: pedido, error } = await admin.from("commercial_orders")
     .select("id,status,total_cents,provider_card_flow,provider_charge_id,provider_customer_id,provider_first_due_date,provider_subscription_id,subscription_creation_started_at,provider_subscription_first_due_date")
     .eq("id", orderId).maybeSingle();
@@ -18,7 +26,7 @@ export async function processarAssinatura3ds(admin: SupabaseClient, orderId: str
     ? valor as Record<string, unknown> : null;
   return garantirAssinaturaApos3ds(pedido as PedidoParaAssinatura3ds, {
     lerCobranca: async id => {
-      const resposta = await asaasSandbox(`/payments/${id}`);
+      const resposta = await executarAsaas(`/payments/${encodeURIComponent(id)}`);
       return resposta.ok ? objeto(resposta.body) : null;
     },
     lerIpPagador: async () => {
@@ -28,13 +36,13 @@ export async function processarAssinatura3ds(admin: SupabaseClient, orderId: str
       return !contexto.error && isIP(ip) ? ip : null;
     },
     buscarAssinaturas: async id => {
-      const resposta = await asaasSandbox(`/subscriptions?externalReference=${encodeURIComponent(id)}&limit=100`);
+      const resposta = await executarAsaas(`/subscriptions?externalReference=${encodeURIComponent(id)}&limit=100`);
       const body = objeto(resposta.body);
       return resposta.ok && body?.hasMore === false && Array.isArray(body.data)
         ? body.data.filter((sub: Record<string, unknown>) => sub.externalReference === id) : null;
     },
     lerParcelas: async id => {
-      const resposta = await asaasSandbox(`/subscriptions/${encodeURIComponent(id)}/payments?limit=100`);
+      const resposta = await executarAsaas(`/subscriptions/${encodeURIComponent(id)}/payments?limit=100`);
       const body = objeto(resposta.body);
       if (!resposta.ok || body?.hasMore !== false || !Array.isArray(body.data)) return null;
       const itens = body.data.map(objeto);
@@ -51,7 +59,7 @@ export async function processarAssinatura3ds(admin: SupabaseClient, orderId: str
       return !resposta.error && resposta.data === true;
     },
     criar: async body => {
-      const resposta = await asaasSandbox("/subscriptions", { method: "POST", body, timeoutMs: 65000 });
+      const resposta = await executarAsaas("/subscriptions", { method: "POST", body, timeoutMs: 65000 });
       return resposta.ok ? objeto(resposta.body) : null;
     },
     salvar: async (id, vencimento) => {

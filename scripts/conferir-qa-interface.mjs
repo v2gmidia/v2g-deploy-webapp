@@ -27,50 +27,63 @@ test('pendência de cadastro entra no total; falha de leitura não vira tudo em 
   assert.equal(resumirPendencias({ ...base, jornadaTotal: 0 }).total, 0);
 });
 
-function leitura({ user = { id: 'perfil-autenticado' }, data = { onboarding: {} }, error = null, reserva = null, erroReserva = null, concluido = false, fluxo = true } = {}) {
+function leitura({ user = { id: 'perfil-autenticado' }, data = { onboarding: {} }, error = null, concluido = false, fluxo = true } = {}) {
   const chamadas = [];
-  function query(table, admin) {
+  function query(table) {
     const q = {
       select(cols) { chamadas.push(['select', table, cols]); return q; },
       eq(k, v) { chamadas.push(['eq', k, v]); return q; },
       order() { return q; }, limit() { return q; },
-      async maybeSingle() { chamadas.push(['leu', table]); return admin ? { data: reserva, error: erroReserva } : { data, error }; },
+      async maybeSingle() { chamadas.push(['leu', table]); return { data, error }; },
     };
     return q;
   }
   const pendencia = { titulo: 'Conferir marca', corpo: 'Revisar', href: '/onboarding/marca', rotulo: 'Conferir' };
   const modulo = carregar('lib/onboarding/pendencia-do-negocio.ts', {
     'server-only': {},
-    '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user } }) }, from: t => query(t, false) }) },
-    '@/lib/supabase/admin': { createAdminClient: () => { chamadas.push(['admin']); return { from: t => query(t, true) }; } },
-    '@/lib/agenda/google': { agendaGoogleConfigurada: () => true, agendaGoogleLeituraConfigurada: () => true },
+    '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user } }) }, from: query }) },
     './marca': { fluxoAguardaReuniao: () => fluxo },
     './conclusao': { estadoDaConclusao: () => ({ concluido }), pendenciaDoOnboarding: (_, confirmada) => confirmada ? null : pendencia },
   });
-  return { ler: modulo.lerPendenciaDoNegocio, chamadas };
+  return { ler: modulo.lerPendenciaDoNegocio, aplicar: modulo.aplicarAgendaConferida, chamadas };
 }
 
-test('leitura compartilhada filtra negócio E dono antes de qualquer acesso administrativo', async () => {
-  const { ler, chamadas } = leitura({ concluido: true, reserva: { starts_at: 'inicio', ends_at: 'fim' } });
+test('leitura compartilhada filtra negócio E dono sem transformar conclusão em reserva', async () => {
+  const { ler, chamadas } = leitura({ concluido: true });
   const resposta = await ler('negocio-autorizado');
-  assert.equal(resposta.pendencia, null);
+  assert.equal(resposta.pendencia.titulo, 'Conferir marca');
   assert.equal(resposta.falha, false);
+  assert.equal(resposta.cadastroConcluido, true);
+  assert.equal(resposta.reserva, null);
   assert.ok(chamadas.some(c => c[0] === 'eq' && c[1] === 'profile_id' && c[2] === 'perfil-autenticado'));
   assert.ok(chamadas.some(c => c[0] === 'eq' && c[1] === 'id' && c[2] === 'negocio-autorizado'));
-  assert.ok(chamadas.findIndex(c => c[0] === 'leu' && c[1] === 'businesses') < chamadas.findIndex(c => c[0] === 'admin'));
+  assert.deepEqual(chamadas.filter(c => c[0] === 'leu'), [['leu', 'businesses']]);
 });
 
-test('sem sessão, erro ou negócio inacessível não lê reserva e não afirma conclusão', async () => {
+test('sem sessão, erro ou negócio inacessível não afirma conclusão nem reserva', async () => {
   for (const caso of [{ user: null }, { data: null }, { error: { message: 'erro' } }]) {
     const { ler, chamadas } = leitura(caso);
-    assert.equal((await ler('outro-negocio')).falha, true);
-    assert.ok(!chamadas.some(c => c[0] === 'admin'));
+    const resposta = await ler('outro-negocio');
+    assert.equal(resposta.falha, true);
+    assert.equal(resposta.cadastroConcluido, undefined);
+    assert.equal(resposta.reserva, null);
+    if (caso.user === null) assert.ok(!chamadas.some(c => c[0] === 'leu'));
   }
 });
 
-test('reserva sem prova continua pendente; falha da reserva é desconhecida', async () => {
-  assert.ok((await leitura({ concluido: true }).ler('b')).pendencia);
-  assert.equal((await leitura({ concluido: true, erroReserva: {} }).ler('b')).falha, true);
+test('agenda só altera a pendência depois da conciliação explícita', async () => {
+  const modulo = leitura({ concluido: true });
+  const base = await modulo.ler('b');
+  assert.ok(base.pendencia);
+  assert.equal(base.reserva, null);
+  const falha = modulo.aplicar(base, { status: 'erro' });
+  assert.equal(falha.falha, true);
+  assert.equal(falha.reserva, null);
+  assert.ok(falha.pendencia);
+  const confirmada = modulo.aplicar(base, { status: 'confirmada', inicio: 'inicio', fim: 'fim' });
+  assert.equal(confirmada.reserva.starts_at, 'inicio');
+  assert.equal(confirmada.reserva.ends_at, 'fim');
+  assert.equal(confirmada.pendencia, null);
   assert.equal((await leitura({ fluxo: false }).ler('b')).pendencia, null);
 });
 

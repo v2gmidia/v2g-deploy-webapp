@@ -1,0 +1,163 @@
+{
+  "targetProject": "zskpijnqgkqwxksqmzmf",
+  "status": "PREPARACAO_SEM_APLICACAO",
+  "groups": [
+    2,
+    6,
+    8,
+    9,
+    10
+  ],
+  "absentObjects": 17,
+  "columns": [
+    [
+      "campaigns",
+      "publish_key",
+      "uuid"
+    ],
+    [
+      "campaigns",
+      "publish_error",
+      "text"
+    ],
+    [
+      "campaigns",
+      "publish_started_at",
+      "timestamp with time zone"
+    ],
+    [
+      "campaigns",
+      "external_adset_id",
+      "text"
+    ],
+    [
+      "campaigns",
+      "daily_budget_cents",
+      "bigint"
+    ],
+    [
+      "creatives",
+      "external_image_hash",
+      "text"
+    ],
+    [
+      "ad_accounts",
+      "min_daily_budget_cents",
+      "bigint"
+    ],
+    [
+      "ad_accounts",
+      "min_budget_checked_at",
+      "timestamp with time zone"
+    ],
+    [
+      "businesses",
+      "geo_lat",
+      "numeric"
+    ],
+    [
+      "businesses",
+      "geo_lng",
+      "numeric"
+    ],
+    [
+      "businesses",
+      "cadastro_erro",
+      "text"
+    ],
+    [
+      "businesses",
+      "whatsapp_do_anuncio",
+      "text"
+    ],
+    [
+      "campaigns",
+      "ativando_em",
+      "timestamp with time zone"
+    ]
+  ],
+  "checks": [
+    [
+      "campaigns",
+      "campaigns_publish_state_check",
+      "publish_state in ('draft','publishing','published','failed','ativando','ativa','pausada')"
+    ],
+    [
+      "creatives",
+      "creatives_status_check",
+      "status in ('draft','pending_review','approved','rejected','paused')"
+    ],
+    [
+      "businesses",
+      "businesses_cadastro_estado_check",
+      "cadastro_estado in ('enviando','enviado','falhou')"
+    ],
+    [
+      "meta_connections",
+      "meta_connections_meta_user_id_nao_vazio",
+      "meta_user_id is null or length(btrim(meta_user_id))>0"
+    ],
+    [
+      "campaigns",
+      "campaigns_ativacao_carimbada_check",
+      "(ativada_em is null)=(ativada_por is null)"
+    ],
+    [
+      "campaigns",
+      "campaigns_ativa_exige_carimbo_check",
+      "publish_state<>'ativa' or (ativada_em is not null and ativada_por is not null)"
+    ],
+    [
+      "campaigns",
+      "campaigns_pausa_carimbada_check",
+      "(pausada_em is null)=(pausada_por is null)"
+    ],
+    [
+      "campaigns",
+      "campaigns_pausada_exige_carimbo_check",
+      "publish_state<>'pausada' or (pausada_em is not null and pausada_por is not null)"
+    ]
+  ],
+  "indexes": [
+    [
+      "campaigns",
+      "campaigns_publishing_idx",
+      "create index campaigns_publishing_idx on public.campaigns(id) where publish_state='publishing'"
+    ],
+    [
+      "campaigns",
+      "campaigns_publish_key_idx",
+      "create unique index campaigns_publish_key_idx on public.campaigns(publish_key) where publish_key is not null"
+    ],
+    [
+      "campaigns",
+      "campaigns_ativando_idx",
+      "create index campaigns_ativando_idx on public.campaigns(id) where publish_state='ativando'"
+    ],
+    [
+      "campaigns",
+      "campaigns_esperando_ativacao_idx",
+      "create index campaigns_esperando_ativacao_idx on public.campaigns(business_id,published_at desc) where publish_state in ('published','pausada')"
+    ],
+    [
+      "businesses",
+      "businesses_cadastro_estado_idx",
+      "create index businesses_cadastro_estado_idx on public.businesses(cadastro_estado,cadastro_iniciado_em) where cadastro_estado is not null"
+    ],
+    [
+      "exclusoes_de_dados",
+      "exclusoes_de_dados_meta_user_id_idx",
+      "create index exclusoes_de_dados_meta_user_id_idx on public.exclusoes_de_dados(meta_user_id)"
+    ]
+  ],
+  "table": "exclusoes_de_dados",
+  "functions": [
+    "desautorizar_meta",
+    "apagar_dados_da_meta",
+    "status_da_exclusao"
+  ],
+  "applyName": "qa_reconciliacao_u2_operacional_meta_20261107",
+  "returnName": "qa_reconciliacao_u2_operacional_meta_retorno_20261107",
+  "intentionalDelta": "status publico projeta apenas seis contagens numericas; nenhum identificador ou JSON administrativo bruto",
+  "preserveExistingNullableStatus": true
+}

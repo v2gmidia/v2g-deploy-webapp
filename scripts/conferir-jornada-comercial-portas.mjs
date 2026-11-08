@@ -4,11 +4,11 @@ import { test } from 'node:test';
 import vm from 'node:vm';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
+import { resolve } from 'node:path';
 import { validarPedidoAssistido } from '../lib/contratacao/pedido-assistido.ts';
 import { lerPagamentoConfirmado } from '../lib/contratacao/pagamento-evento.ts';
 import { EVENTOS_FINANCEIROS, lerEventoFinanceiro } from '../lib/contratacao/evento-financeiro.ts';
 import { vincularComprasAprovadasComCliente } from '../lib/contratacao/vincular-core.ts';
-import { temAcessoWebApp } from '../lib/contratacao/acesso.ts';
 import { pendenciaDoOnboarding } from '../lib/onboarding/conclusao.ts';
 import { prepararEmailPagamento } from '../lib/contratacao/email-pagamento.ts';
 import { ambienteTs } from './test-utils/ts-isolado.mjs';
@@ -20,7 +20,7 @@ const initial = () => ({ id:'00000000-0000-4000-8000-000000000001', source_syste
   provider_subscription_id:null, provider_checkout_id:null, buyer_email:buyer.email, buyer_profile_id:null, business_id:'negocio-certo' });
 function ports(order) {
   const rows = { commercial_orders:[order], businesses:[{ id:'negocio-certo', profile_id:null, claim_email:buyer.email },
-    { id:'negocio-outro', profile_id:'outro-perfil', claim_email:buyer.email }], webapp_legacy_access:[] };
+    { id:'negocio-outro', profile_id:'outro-perfil', claim_email:buyer.email }], webapp_legacy_access:[], commercial_payment_events:[] };
   const events = new Set(); let mails = 0;
   const admin = { from(table) {
     let filters = [], patch = null, single = false;
@@ -45,6 +45,7 @@ function ports(order) {
     'node:crypto':require('node:crypto'),
     'next/server':{ NextResponse:{ json:(body,{status=200}={})=>({body,status}) } },
     '@/lib/supabase/admin':{ createAdminClient:()=>admin },
+    [resolve('lib/supabase/admin.ts')]:{ createAdminClient:()=>admin },
     '@/lib/contratacao/ambiente-checkout':{ checkoutSandboxSeguroNesteServidor:()=>true },
     '@/lib/contratacao/pagamento-evento':{ lerPagamentoConfirmado },
     '@/lib/contratacao/evento-financeiro':{ EVENTOS_FINANCEIROS,lerEventoFinanceiro },
@@ -59,13 +60,11 @@ function ports(order) {
       assert.ok(message); mails++; return true;
     } },
   };
-  const module={exports:{}};
-  vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../app/api/webhooks/asaas-payment/route.ts',import.meta.url),'utf8'),
-    {compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText,
-    {exports:module.exports,module,require:key=>{if(!deps[key])throw Error(key);return deps[key];},Buffer,
-      process:{env:{ASAAS_WEBHOOK_TOKEN:'x'.repeat(32),V2G_CHECKOUT_3DS_SCHEMA_ENABLED:'false'}}});
-  const notify=async(payload)=>module.exports.POST({headers:new Headers({'asaas-access-token':'x'.repeat(32)}),json:async()=>payload});
-  return {admin,rows,events,notify,get mails(){return mails;}};
+  const runtime=ambienteTs({env:{ASAAS_WEBHOOK_TOKEN:'x'.repeat(32),V2G_CHECKOUT_3DS_SCHEMA_ENABLED:'false'},ports:deps});
+  const handler=runtime.load('app/api/webhooks/asaas-payment/route.ts');
+  const acesso=runtime.load('lib/contratacao/acesso.ts').temAcessoWebApp;
+  const notify=async(payload)=>handler.POST({headers:new Headers({'asaas-access-token':'x'.repeat(32)}),json:async()=>payload});
+  return {admin,rows,events,notify,acesso:user=>acesso(admin,user),get mails(){return mails;}};
 }
 const confirmed = { id:'evt_fake',event:'PAYMENT_CONFIRMED',payment:{id:'pay_fake',customer:'cus_fake',billingType:'PIX',
   status:'CONFIRMED',value:5280,dueDate:'2099-01-01',externalReference:initial().id} };
@@ -98,12 +97,12 @@ test('Pix legado da LP permanece separado: webhook Asaas nao o aprova',async()=>
   assert.equal((await p.notify(confirmed)).status,422);
   assert.equal(p.events.size,0); assert.equal(p.mails,0);
   await vincularComprasAprovadasComCliente(p.admin,buyer);
-  assert.equal(await temAcessoWebApp(p.admin,buyer),false);
+  assert.equal(await p.acesso(buyer),false);
 });
 test('porta self-service encadeia webhook, email preparado, propriedade relida e proximo onboarding sem tomar outro negocio',async()=>{
   const order=initial(),p=ports(order);
   await vincularComprasAprovadasComCliente(p.admin,buyer);
-  assert.equal(await temAcessoWebApp(p.admin,buyer),false);
+  assert.equal(await p.acesso(buyer),false);
   assert.equal((await p.notify({...confirmed,payment:{...confirmed.payment,value:1}})).status,422);
   assert.equal((await p.notify({comprovante:true,retornoNavegador:'pago'})).status,422);
   assert.equal(p.events.size,0);
@@ -111,7 +110,7 @@ test('porta self-service encadeia webhook, email preparado, propriedade relida e
   await vincularComprasAprovadasComCliente(p.admin,{...buyer,email_confirmed_at:null});
   assert.equal(order.buyer_profile_id,null);
   await vincularComprasAprovadasComCliente(p.admin,buyer);
-  assert.equal(await temAcessoWebApp(p.admin,buyer),true);
+  assert.equal(await p.acesso(buyer),true);
   assert.equal(p.rows.businesses[0].profile_id,buyer.id);
   assert.equal(p.rows.businesses[1].profile_id,'outro-perfil');
   assert.equal(order.source_lead_id,73);

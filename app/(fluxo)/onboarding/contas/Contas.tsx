@@ -5,6 +5,7 @@ import { dinheiro } from "@/lib/formato";
 import type { ChaveDeConta } from "@/lib/cadastro/montar";
 import { reabrirContaAction, salvarContaAction, type EstadoDasContas } from "./actions";
 import { numeroDoTexto, SOBRA, TICKET_FAIXA } from "./regras";
+import { useTempoDaOperacao } from "../tempo-da-operacao";
 
 function faixaDoTicket(minimo: number | null, maximo: number | null): string {
   if (minimo === null) return "Valor informado em faixa";
@@ -29,6 +30,7 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
   const [rascunho, setRascunho] = useState("");
   const [confirmandoNaoSei, setConfirmandoNaoSei] = useState<ChaveDeConta | null>(null);
   const enviando = operacao !== null;
+  const tempoDaOperacao = useTempoDaOperacao(enviando);
 
   const { contas, leituras } = estado;
 
@@ -156,9 +158,11 @@ export function Contas({ inicial }: { inicial: EstadoDasContas }) {
       </p>
 
       {aviso && <p className="form-warning" role="status">{aviso} <button type="button" onClick={() => window.location.reload()}>Recarregar</button></p>}
-      {enviando && (
+      {tempoDaOperacao.visivel && (
         <p className="conta-salvando" role="status" aria-live="polite">
-          {operacao === "reabrir" ? "Reabrindo a pergunta…" : "Salvando sua resposta…"}
+          {tempoDaOperacao.demorada
+            ? "Ainda aguardando a confirmação. Sua resposta continua nesta tela; não envie novamente."
+            : operacao === "reabrir" ? "Reabrindo a pergunta…" : "Salvando sua resposta…"}
         </p>
       )}
 

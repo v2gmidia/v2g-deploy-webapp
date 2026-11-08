@@ -21,7 +21,7 @@ export function prepararEmailPagamento(pedido: PagamentoParaEmail, pagamento: {
   let site: URL;
   try { site = new URL(siteUrl); } catch { return null; }
   // Nao aceitar URLs/contatos fornecidos no webhook ou no formulario.
-  if (site.protocol !== "https:" || !["v2g-deploy-webapp.vercel.app", "v2g-webapp-qa.vercel.app"].includes(site.hostname)
+  if (site.protocol !== "https:" || !["app.v2gmidia.com.br", "v2g-webapp-qa.vercel.app"].includes(site.hostname)
       || site.username || site.password || site.port || site.pathname !== "/" || site.search || site.hash) return null;
   const valor = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(pedido.totalCentavos / 100);
   return { to: [pedido.email], subject: "V2G | Pagamento confirmado",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
 import { prepararImagemDaMarca } from "@/lib/identidade/preparar-arquivo-cliente";
 import { enviarImagemAction, type IdentidadeState } from "@/app/(protected)/conta/identidade-actions";
+import { useTempoDaOperacao } from "../tempo-da-operacao";
 import styles from "./Marca.module.css";
 
 export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
@@ -36,6 +37,7 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
       aoMudarUpload(false);
     }
   }, {});
+  const tempoDoUpload = useTempoDaOperacao(enviando);
   return <section className={styles.logoBloco}>
     <div>
       <h2>Logo principal</h2>
@@ -55,7 +57,11 @@ export function LogoDaMarca({ businessId, logo, aoEscolher, aoMudarUpload }: {
       <span className={styles.arquivoSelecionado} role="status">{selecionado || (logo ? "Logo atual salvo" : "Nenhum arquivo selecionado")}</span>
       <button className="cta" type="submit" disabled={enviando || !selecionado}>{enviando ? "Enviando logo…" : logo ? "Salvar novo logo" : "Enviar logo"}</button>
     </form>
-    {enviando && <p className={styles.statusAcao} role="status" aria-live="polite">Preparando e enviando o logo…</p>}
+    {tempoDoUpload.visivel && <p className={styles.statusAcao} role="status" aria-live="polite">
+      {tempoDoUpload.demorada
+        ? "O logo ainda está sendo enviado. Não escolha o arquivo novamente; vamos confirmar quando terminar."
+        : "Preparando e enviando o logo…"}
+    </p>}
     {resultado.erro && <p className="form-error" role="alert">{resultado.erro}</p>}
     {resultado.ok && <p className="form-notice" role="status">{resultado.ok}</p>}
   </section>;

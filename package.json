@@ -49,6 +49,7 @@
     "conferir:preco-contratacao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-preco-contratacao.mjs",
     "conferir:checkout": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-checkout-self-service.mjs",
     "conferir:checkout-api": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-checkout-api.mjs",
+    "conferir:checkout-producao": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-checkout-producao.mjs scripts/conferir-checkout-producao-sql.mjs",
     "conferir:documento-contratante": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-documento-contratante.mjs",
     "conferir:documento-contratante-sql": "node --test scripts/conferir-documento-contratante-sql.mjs",
     "conferir:acesso-contratado": "node --test scripts/conferir-acesso-contratado.mjs scripts/conferir-acesso-contratado-sql.mjs",

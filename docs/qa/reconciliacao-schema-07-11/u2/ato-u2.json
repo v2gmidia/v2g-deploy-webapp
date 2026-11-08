@@ -1,0 +1,30 @@
+{
+  "status": "PREPARADO_NAO_AUTORIZADO",
+  "project_id": "zskpijnqgkqwxksqmzmf",
+  "ddl_tool": "mcp__codex_apps__supabase_apply_migration",
+  "read_tool": "mcp__codex_apps__supabase_execute_sql",
+  "apply": {
+    "name": "qa_reconciliacao_u2_operacional_meta_20261107",
+    "query_file": "u2-aplicar.sql",
+    "expectedLedgerBefore": 45,
+    "expectedLedgerAfter": 46
+  },
+  "return": {
+    "name": "qa_reconciliacao_u2_operacional_meta_retorno_20261107",
+    "query_file": "u2-retornar.sql",
+    "expectedLedgerBefore": 46,
+    "expectedLedgerAfter": 47,
+    "authorization": "NOMINAL SEPARADA; retorno pode recusar por dados ou dependencias posteriores"
+  },
+  "preflight": "u2-preflight.sql",
+  "post": "u2-pos.sql",
+  "verify": "u2-verificar.sql",
+  "receipt": "one SELECT/one row/receipt JSON",
+  "backup": "PRIVADO FUTURO NAO REALIZADO",
+  "protectedU1": {
+    "version": "20261108001903",
+    "package": "../SHA256SUMS.txt"
+  },
+  "hashes": "SHA256SUMS.txt",
+  "callbacks": "status publico allowlist tipada; corpos administrativos mantem negocios; nenhuma chamada remota autorizada"
+}

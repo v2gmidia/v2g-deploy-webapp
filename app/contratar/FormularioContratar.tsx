@@ -4,13 +4,18 @@ import { startTransition, useActionState, useState } from "react";
 import { iniciarCompra, type CompraState } from "./actions";
 import { valorDoPedidoCentavos, type PeriodoDeCobranca } from "@/lib/contratacao/preco";
 import { Turnstile } from "@/components/seguranca/Turnstile";
+import { EsperaFormulario, useEsperaFormulario, useFocoResultado } from "../(public)/entrar/EsperaFormulario";
+import { executarComFeedback } from "../(public)/entrar/acao-local";
 
 const inicial: CompraState = {};
 
 export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso, turnstileSiteKey }: {
   referencia: string; apiAtiva: boolean; emailDoAcesso?: string; turnstileSiteKey?: string;
 }) {
-  const [estado, acao, pendente] = useActionState(iniciarCompra, inicial);
+  const [estado, acao, pendente] = useActionState<CompraState,FormData>((anterior,dados)=>executarComFeedback(
+    ()=>iniciarCompra(anterior,dados), {erro:"Não foi possível confirmar o registro. Retome o mesmo pedido pela contratação antes de iniciar outro."}), inicial);
+  const espera = useEsperaFormulario(pendente);
+  const erro = useFocoResultado(pendente, estado.erro);
   const [periodo, setPeriodo] = useState<PeriodoDeCobranca>("monthly");
   const [metodo, setMetodo] = useState<"asaas_pix" | "asaas_card">("asaas_card");
   const [contas, setContas] = useState(1);
@@ -24,8 +29,9 @@ export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso, turns
     <h2 id="contratar-form-titulo">Comece pela sua empresa</h2>
     <p>{apiAtiva ? "Os dados abaixo identificam o pedido. No Pix, o código de pagamento aparece na próxima tela; no cartão, você informa os dados de pagamento lá."
       : "Os dados abaixo identificam o pedido. O pagamento de teste será concluído no Asaas."}</p>
-    {estado.erro && <p className="form-error" role="alert">{estado.erro}</p>}
-    <form onSubmit={e => {
+    {!pendente && estado.erro && <p ref={erro} tabIndex={-1} className="form-error" role="alert">{estado.erro}</p>}
+    <form aria-busy={pendente} onSubmit={e => {
+      if (!espera.permitir(e)) return;
       e.preventDefault();
       const dados = new FormData(e.currentTarget);
       startTransition(() => acao(dados));
@@ -78,6 +84,9 @@ export function FormularioContratar({ referencia, apiAtiva, emailDoAcesso, turns
         {pendente ? "Preparando pagamento…" : !apiAtiva ? "Continuar para o checkout de teste"
           : metodo === "asaas_pix" ? "Gerar Pix na V2G" : "Continuar para pagar na V2G"}
       </button>
+      <EsperaFormulario pendente={pendente} fase={espera.fase}
+        lenta="Estamos registrando o pedido e preparando o pagamento. Isso ainda não confirma a compra."
+        longa="Ainda aguardamos a resposta. Evite enviar novamente. Seus dados continuam neste formulário; se precisar sair, retome o pedido pela contratação." />
       <p className="contratar-rodape">O acesso ao WebApp depende da confirmação do pagamento pelo provedor. A campanha inicial depende também de contrato assinado e preparação com o gestor.</p>
     </form>
   </section>;

@@ -9,6 +9,8 @@ import { SITE_PUBLICO_ORIGEM } from "@/lib/site-publico";
 import { forcaDaSenha } from "@/lib/auth-senha";
 import { lerDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import type { AuthActionState } from "./actions";
+import { EsperaFormulario, useEsperaFormulario, useFocoResultado } from "./EsperaFormulario";
+import { executarComFeedback } from "./acao-local";
 
 const initialState: AuthActionState = {};
 
@@ -33,6 +35,7 @@ export function TelaEntrada({
   const [senhaRepetida, setSenhaRepetida] = useState("");
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarRepeticao, setMostrarRepeticao] = useState(false);
+  const [emailLogin, setEmailLogin] = useState("");
   const cnpjInvalido = cnpj.replace(/\D/g, "").length >= 11 && !lerDocumentoContratante(cnpj);
   const forca = forcaDaSenha(senhaNova);
   const repeticaoDiferente = senhaRepetida.length > 0 && senhaNova !== senhaRepetida;
@@ -47,16 +50,19 @@ export function TelaEntrada({
     async (anterior: AuthActionState, dados: FormData) => {
       // Não repete uma conclusão se um envio já estiver enfileirado.
       if (anterior.message && !anterior.error) return anterior;
-      return signUpAction(anterior, dados);
+      return executarComFeedback(()=>signUpAction(anterior, dados),{error:"Não foi possível confirmar a solicitação. Confira seu e-mail ou tente entrar antes de solicitar outro cadastro."});
     },
     initialState,
   );
   const [signInState, signInFormAction, signInPending] = useActionState(
-    signInAction,
+    (anterior:AuthActionState,dados:FormData)=>executarComFeedback(()=>signInAction(anterior,dados),{error:"Não foi possível confirmar o acesso. Seu e-mail foi preservado; tente entrar novamente."}),
     initialState,
   );
 
   const envioTravado = useRef(false);
+  const esperaCadastro = useEsperaFormulario(signUpPending);
+  const esperaLogin = useEsperaFormulario(signInPending);
+  const erroLogin = useFocoResultado(signInPending,signInState.error);
   const tituloConfirmacao = useRef<HTMLHeadingElement>(null);
   const erroCadastro = useRef<HTMLParagraphElement>(null);
   const cadastroConcluido = Boolean(signUpState.message && !signUpState.error);
@@ -98,9 +104,10 @@ export function TelaEntrada({
               ? "Use o e-mail e o CPF ou CNPJ conferidos pela equipe na sua contratação. Depois de confirmar seu e-mail, volte ao link recebido para abrir seu negócio."
               : "O primeiro acesso é liberado após a aprovação da compra. Use o e-mail e o CPF ou CNPJ do contratante informados no pedido."}</p>
 
-            {signUpState.error && <p ref={erroCadastro} tabIndex={-1} className="form-error" role="alert">{signUpState.error}</p>}
+            {!signUpPending && signUpState.error && <p ref={erroCadastro} tabIndex={-1} className="form-error" role="alert">{signUpState.error}</p>}
 
             <form action={signUpFormAction} aria-busy={signUpPending} onSubmit={evento => {
+              if (!esperaCadastro.permitir(evento)) return;
               // Trava síncrona também cobre Enter/duplo clique antes do próximo render.
               if (envioTravado.current || signUpPending || cadastroConcluido) {
                 evento.preventDefault();
@@ -198,6 +205,9 @@ export function TelaEntrada({
               <Button type="submit" disabled={signUpPending || cnpjInvalido || forca !== "forte" || senhaNova !== senhaRepetida}>
                 {signUpPending ? "Enviando solicitação…" : "Criar minha conta"}
               </Button>
+              <EsperaFormulario pendente={signUpPending} fase={esperaCadastro.fase}
+                lenta="Conferindo sua contratação e solicitando o acesso. Aguarde a resposta."
+                longa="O serviço de acesso ainda não respondeu. Seus dados continuam aqui. Evite enviar outra solicitação enquanto aguardamos." />
             </form>
 
             <p className="entrada-ajuda">Ainda não contratou? <a href={`${SITE_PUBLICO_ORIGEM}/#plano`}>Conheça o plano V2G.</a></p>
@@ -207,9 +217,9 @@ export function TelaEntrada({
             <h1>Bom te ver de novo.</h1>
             <p className="entrada-introducao">Entre para acompanhar seus anúncios e os próximos passos do seu negócio.</p>
 
-            {signInState.error && <p className="form-error" role="alert">{signInState.error}</p>}
+            {!signInPending && signInState.error && <p ref={erroLogin} tabIndex={-1} className="form-error" role="alert">{signInState.error}</p>}
 
-            <form action={signInFormAction}>
+            <form action={signInFormAction} aria-busy={signInPending} onSubmit={e=>{esperaLogin.permitir(e);}}>
               <input type="hidden" name="next" value={next} />
               <div className="field">
                 <span className="entrada-flutuante">
@@ -219,6 +229,7 @@ export function TelaEntrada({
                   type="email"
                   placeholder=" "
                   autoComplete="email"
+                  value={emailLogin} onChange={e=>setEmailLogin(e.target.value)}
                   required
                 />
                 <label htmlFor="email-login">E-mail</label>
@@ -245,6 +256,9 @@ export function TelaEntrada({
               <Button type="submit" disabled={signInPending}>
                 {signInPending ? "Entrando…" : "Entrar"}
               </Button>
+              <EsperaFormulario pendente={signInPending} fase={esperaLogin.fase}
+                lenta="Conferindo seu acesso. Aguarde sem enviar novamente."
+                longa="O serviço de acesso está demorando a responder. Seu e-mail continua no formulário; aguardamos a confirmação para abrir o negócio." />
             </form>
 
             <p className="entrada-ajuda">Já contratou e ainda não tem acesso? <a href={destino("cadastro")}>Crie sua conta.</a></p>

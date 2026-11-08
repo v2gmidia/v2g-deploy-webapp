@@ -10,6 +10,7 @@ import { checkoutSandboxSeguroNesteServidor } from "@/lib/contratacao/ambiente-c
 import { urlCheckoutHospedadoSandbox } from "@/lib/contratacao/url-checkout";
 import { iniciarPagamentoInterno } from "@/lib/contratacao/iniciar-pagamento";
 import { iniciarCheckoutHospedado } from "./checkout-hospedado";
+import { compraDisponivel, schemaCompraPronto, requisicaoCompraPermitida } from "@/lib/contratacao/provedor-compra";
 import { hashDeSeguranca, ipConfiavelDaVercel, segurancaCheckoutAtiva,
   verificarTurnstile } from "@/lib/seguranca/checkout";
 
@@ -18,6 +19,8 @@ export type CompraState = { erro?: string };
 /** Registra o pedido e abre o pagamento dentro da V2G. O checkout hospedado
  * permanece apenas para pedidos que já tinham um link emitido. */
 export async function iniciarCompra(_anterior: CompraState, form: FormData): Promise<CompraState> {
+  if (!compraDisponivel()) return {erro:"O pagamento está indisponível neste ambiente."};
+  if (!requisicaoCompraPermitida(await headers(),true)) return {erro:"Abra a contratação pelo endereço oficial da V2G."};
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   const emailPedido = String(form.get("email") ?? "").trim().toLowerCase();
@@ -27,6 +30,7 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
   if (!validacao.dados) return { erro: validacao.erro };
   const dados = validacao.dados;
   const admin = createAdminClient();
+  if (!await schemaCompraPronto(admin)) return {erro:"A contratação está indisponível agora. Nenhum pedido foi enviado."};
   let segurancaJaVerificada = false;
   if (segurancaCheckoutAtiva()) {
     const ip = ipConfiavelDaVercel(await headers());
@@ -44,8 +48,8 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
   }
   if (process.env.V2G_CHECKOUT_API_ENABLED !== "true")
     return iniciarCheckoutHospedado(form);
-  if (!checkoutSandboxSeguroNesteServidor())
-    return { erro: "O pagamento de teste exige um banco de QA separado. Nenhum pedido foi enviado." };
+  if (!compraDisponivel())
+    return { erro: "O pagamento está indisponível neste ambiente. Nenhum pedido foi enviado." };
   const { data: pedidoId, error: erroPedido } = await admin.rpc("registrar_pedido_self_service", {
     p_ref: dados.referencia, p_email: dados.email, p_buyer_name: dados.nome,
     p_whatsapp: dados.whatsapp, p_legal_name: dados.razaoSocial,
@@ -68,6 +72,7 @@ export async function iniciarCompra(_anterior: CompraState, form: FormData): Pro
     .eq("id", pedidoId).single();
   if (erroLeitura || !pedido) return { erro: "Pedido registrado, mas não foi possível abrir o pagamento. Procure a V2G." };
   if (pedido.provider_checkout_url) {
+    if (!checkoutSandboxSeguroNesteServidor()) return {erro:"Este pedido precisa de conferência. Procure a V2G antes de pagar."};
     const link = urlCheckoutHospedadoSandbox(pedido.provider_checkout_url);
     if (!link) return { erro: "O link registrado é inválido. Procure a V2G." };
     redirect(link);

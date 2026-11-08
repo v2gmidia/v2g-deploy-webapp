@@ -1,0 +1,628 @@
+{
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "owns_business",
+      "owner": "postgres",
+      "schema": "private",
+      "definition": "CREATE OR REPLACE FUNCTION private.owns_business(target_business_id uuid)\n RETURNS boolean\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO ''\nAS $function$\n  select exists (\n    select 1\n    from public.businesses b\n    where b.id = target_business_id\n      and b.profile_id is not null\n      and b.profile_id = (select auth.uid())\n  );\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "procedencia_do_campo",
+      "owner": "postgres",
+      "schema": "public",
+      "definition": "CREATE OR REPLACE FUNCTION public.procedencia_do_campo(p_tabela text, p_business_id uuid, p_campo text)\n RETURNS text\n LANGUAGE plpgsql\n STABLE SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_chave  text;\r\n  v_origem text;\r\nbegin\r\n  v_chave := case p_tabela\r\n               when 'businesses'        then 'id'\r\n               when 'identidade_visual' then 'business_id'\r\n               when 'narrativa_negocio' then 'business_id'\r\n             end;\r\n\r\n  if v_chave is null then\r\n    raise exception\r\n      'tabela % nao guarda procedencia. As que guardam: businesses, identidade_visual, narrativa_negocio.',\r\n      p_tabela;\r\n  end if;\r\n\r\n  execute format(\r\n    'select procedencia -> $1 ->> ''origem'' from public.%I where %I = $2',\r\n    p_tabela, v_chave\r\n  ) into v_origem using p_campo, p_business_id;\r\n\r\n  -- 'desconhecida' cobre os três casos em que não há o que afirmar: campo\r\n  -- sem procedência, linha sem procedência e linha inexistente. Quem\r\n  -- pergunta \"posso confiar neste numero?\" recebe não nos três.\r\n  return coalesce(v_origem, 'desconhecida');\r\nend $function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "registrar_procedencia",
+      "owner": "postgres",
+      "schema": "public",
+      "definition": "CREATE OR REPLACE FUNCTION public.registrar_procedencia(p_tabela text, p_business_id uuid, p_campo text, p_origem text, p_por text, p_extra jsonb DEFAULT '{}'::jsonb)\n RETURNS void\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_entrada  jsonb;\r\n  v_chave    text;\r\n  v_afetadas int;\r\nbegin\r\n  if p_origem not in ('confirmado', 'manual', 'extraido') then\r\n    raise exception\r\n      'origem invalida: %. Use confirmado (o cliente viu e disse que esta certo), manual (alguem da V2G anotou na conversa) ou extraido (o agente tirou da transcricao).',\r\n      p_origem;\r\n  end if;\r\n\r\n  -- Lista branca E coluna de junção na mesma expressão. `businesses` é\r\n  -- apontada por `id`; as outras duas por `business_id`. Separar as duas\r\n  -- informações permitiria acrescentar uma tabela à lista e esquecer a\r\n  -- chave.\r\n  v_chave := case p_tabela\r\n               when 'businesses'        then 'id'\r\n               when 'identidade_visual' then 'business_id'\r\n               when 'narrativa_negocio' then 'business_id'\r\n             end;\r\n\r\n  if v_chave is null then\r\n    raise exception\r\n      'tabela % nao guarda procedencia. As que guardam: businesses, identidade_visual, narrativa_negocio.',\r\n      p_tabela;\r\n  end if;\r\n\r\n  -- Sem esta checagem, um erro de digitação vira chave que ninguém lê — e\r\n  -- a ausência de procedência passa a significar duas coisas diferentes.\r\n  if not exists (\r\n    select 1 from information_schema.columns\r\n     where table_schema = 'public' and table_name = p_tabela and column_name = p_campo\r\n  ) then\r\n    raise exception 'campo % nao existe em %', p_campo, p_tabela;\r\n  end if;\r\n\r\n  if p_campo = 'procedencia' then\r\n    raise exception 'procedencia nao tem procedencia de si mesma';\r\n  end if;\r\n\r\n  v_entrada := jsonb_build_object('origem', p_origem, 'em', now(), 'por', p_por)\r\n               || coalesce(p_extra, '{}'::jsonb);\r\n\r\n  -- `updated_em` só em businesses: as outras duas têm gatilho\r\n  -- set_atualizado_em, e mexer no campo à mão aqui esconderia um gatilho\r\n  -- que parou de funcionar.\r\n  execute format(\r\n    'update public.%I set procedencia = coalesce(procedencia, ''{}''::jsonb) || jsonb_build_object($1, $2)%s where %I = $3',\r\n    p_tabela,\r\n    case when p_tabela = 'businesses' then ', updated_at = now()' else '' end,\r\n    v_chave\r\n  ) using p_campo, v_entrada, p_business_id;\r\n\r\n  get diagnostics v_afetadas = row_count;\r\n\r\n  if v_afetadas = 0 then\r\n    if p_tabela = 'businesses' then\r\n      raise exception 'negocio % nao encontrado', p_business_id;\r\n    else\r\n      -- NÃO cria a linha. Uma linha de identidade_visual toda nula criada\r\n      -- de lado por um registro de procedência é um perfil que existe sem\r\n      -- ninguém ter dito nada. Grave o valor primeiro; na transação de\r\n      -- aplicar a proposta ele já vem antes.\r\n      raise exception\r\n        'nao existe linha em % para o negocio %. Grave o valor do campo antes de registrar a procedencia.',\r\n        p_tabela, p_business_id;\r\n    end if;\r\n  end if;\r\nend $function$\n"
+    },
+    {
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "set_atualizado_em",
+      "owner": "postgres",
+      "schema": "public",
+      "definition": "CREATE OR REPLACE FUNCTION public.set_atualizado_em()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO 'public'\nAS $function$\nbegin\n  new.atualizado_em := now();\n  return new;\nend $function$\n"
+    }
+  ],
+  "relations": [
+    {
+      "rls": true,
+      "owner": "postgres",
+      "forced": false,
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notnull": true
+        },
+        {
+          "name": "business_id",
+          "type": "uuid",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "cor_primaria",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "cor_secundaria",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "cor_destaque",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "fonte_titulo",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "fonte_corpo",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "tom_de_voz",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "observacoes",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "procedencia",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "notnull": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        },
+        {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        }
+      ],
+      "indexes": [
+        {
+          "def": "CREATE UNIQUE INDEX identidade_visual_business_id_key ON public.identidade_visual USING btree (business_id)",
+          "name": "identidade_visual_business_id_key"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX identidade_visual_pkey ON public.identidade_visual USING btree (id)",
+          "name": "identidade_visual_pkey"
+        }
+      ],
+      "nspname": "public",
+      "relkind": "r",
+      "relname": "identidade_visual",
+      "policies": [
+        {
+          "cmd": "d",
+          "name": "identidade_visual_delete_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "private.owns_business(business_id)",
+          "permissive": true
+        },
+        {
+          "cmd": "a",
+          "name": "identidade_visual_insert_own",
+          "check": "private.owns_business(business_id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "permissive": true
+        },
+        {
+          "cmd": "r",
+          "name": "identidade_visual_select_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "private.owns_business(business_id)",
+          "permissive": true
+        },
+        {
+          "cmd": "w",
+          "name": "identidade_visual_update_own",
+          "check": "private.owns_business(business_id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "private.owns_business(business_id)",
+          "permissive": true
+        }
+      ],
+      "triggers": [
+        {
+          "def": "CREATE TRIGGER identidade_visual_atualizado_em BEFORE UPDATE ON public.identidade_visual FOR EACH ROW EXECUTE FUNCTION set_atualizado_em()",
+          "name": "identidade_visual_atualizado_em",
+          "function": "set_atualizado_em()",
+          "handler_md5": "bacca89e18a8db648db31e5bbb1f45a3"
+        }
+      ],
+      "table_acl": [
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        }
+      ],
+      "column_acl": null,
+      "constraints": [
+        {
+          "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+          "name": "identidade_visual_business_id_fkey"
+        },
+        {
+          "def": "UNIQUE (business_id)",
+          "name": "identidade_visual_business_id_key"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "name": "identidade_visual_pkey"
+        }
+      ]
+    },
+    {
+      "rls": true,
+      "owner": "postgres",
+      "forced": false,
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notnull": true
+        },
+        {
+          "name": "business_id",
+          "type": "uuid",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "quem_somos",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "historia",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "por_que_existe",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "para_quem",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "o_que_nao_fazemos",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "procedencia",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "notnull": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        },
+        {
+          "name": "atualizado_em",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        }
+      ],
+      "indexes": [
+        {
+          "def": "CREATE UNIQUE INDEX narrativa_negocio_business_id_key ON public.narrativa_negocio USING btree (business_id)",
+          "name": "narrativa_negocio_business_id_key"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX narrativa_negocio_pkey ON public.narrativa_negocio USING btree (id)",
+          "name": "narrativa_negocio_pkey"
+        }
+      ],
+      "nspname": "public",
+      "relkind": "r",
+      "relname": "narrativa_negocio",
+      "policies": [
+        {
+          "cmd": "d",
+          "name": "narrativa_negocio_delete_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "private.owns_business(business_id)",
+          "permissive": true
+        },
+        {
+          "cmd": "a",
+          "name": "narrativa_negocio_insert_own",
+          "check": "private.owns_business(business_id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "permissive": true
+        },
+        {
+          "cmd": "r",
+          "name": "narrativa_negocio_select_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "private.owns_business(business_id)",
+          "permissive": true
+        },
+        {
+          "cmd": "w",
+          "name": "narrativa_negocio_update_own",
+          "check": "private.owns_business(business_id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "private.owns_business(business_id)",
+          "permissive": true
+        }
+      ],
+      "triggers": [
+        {
+          "def": "CREATE TRIGGER narrativa_negocio_atualizado_em BEFORE UPDATE ON public.narrativa_negocio FOR EACH ROW EXECUTE FUNCTION set_atualizado_em()",
+          "name": "narrativa_negocio_atualizado_em",
+          "function": "set_atualizado_em()",
+          "handler_md5": "bacca89e18a8db648db31e5bbb1f45a3"
+        }
+      ],
+      "table_acl": [
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        }
+      ],
+      "column_acl": null,
+      "constraints": [
+        {
+          "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+          "name": "narrativa_negocio_business_id_fkey"
+        },
+        {
+          "def": "UNIQUE (business_id)",
+          "name": "narrativa_negocio_business_id_key"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "name": "narrativa_negocio_pkey"
+        }
+      ]
+    }
+  ]
+}

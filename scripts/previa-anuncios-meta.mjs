@@ -8,6 +8,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
 import {renderToStaticMarkup} from 'react-dom/server';
 import * as contrato from '../lib/anuncios/contrato-meta.ts';
 import * as periodo from '../lib/inicio/periodo.ts';
+import * as retorno from '../lib/anuncios/retorno-login.ts';
 
 const gestor=process.argv.includes('--gestor');
 const integracao=gestor||process.argv.includes('--integracao');
@@ -18,12 +19,12 @@ const classes=[...new Set([...cssModulo.matchAll(/\.([a-zA-Z][\w-]*)/g)].map(m=>
 const styles=Object.fromEntries(classes.map(c=>[c,`meta_${c}`]));
 const css=classes.reduce((s,c)=>s.replaceAll(`.${c}`,`.meta_${c}`),cssModulo);
 const exports={};
-const deps={'react/jsx-runtime':jsxRuntime,'@/lib/anuncios/contrato-meta':contrato,'@/lib/inicio/periodo':periodo,
+const deps={'react/jsx-runtime':jsxRuntime,'@/lib/anuncios/contrato-meta':contrato,'@/lib/inicio/periodo':periodo,'@/lib/anuncios/retorno-login':retorno,
   '@/components/ui/Pill':{Pill:({children,tone})=>React.createElement('span',{className:`pill ${tone}`},children)},
   './anuncios-meta.module.css':{__esModule:true,default:styles}};
 const codigo=ts.transpileModule(readFileSync('app/(protected)/anuncios/AnunciosMeta.tsx','utf8'),{
   compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-vm.runInNewContext(codigo,{exports,Intl,Date,require:id=>{if(!(id in deps))throw Error('Import não permitido');return deps[id];}});
+vm.runInNewContext(codigo,{exports,Intl,Date,URLSearchParams,require:id=>{if(!(id in deps))throw Error('Import não permitido');return deps[id];}});
 const objeto=(id,nome,sem=false)=>({id,nome,statusConfigurado:'ACTIVE',statusEfetivo:'IN_PROCESS',metricas:{
   estado:sem?'sem_dados':'zero_medido',gasto:sem?null:0,impressoes:sem?null:0,cliques:sem?null:0,conversas:null,
   dias:sem?[]:['2026-10-28'],entregaObservada:sem?null:false}});

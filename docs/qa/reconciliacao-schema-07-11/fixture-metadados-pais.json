@@ -1,0 +1,274 @@
+[
+  {
+    "relname": "ad_accounts",
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "notnull": true
+      },
+      {
+        "name": "business_id",
+        "type": "uuid",
+        "notnull": true
+      },
+      {
+        "name": "meta_connection_id",
+        "type": "uuid",
+        "notnull": false
+      },
+      {
+        "name": "external_id",
+        "type": "text",
+        "notnull": true
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "notnull": false
+      },
+      {
+        "name": "currency",
+        "type": "text",
+        "notnull": false
+      },
+      {
+        "name": "is_active",
+        "type": "boolean",
+        "notnull": true
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "notnull": true
+      },
+      {
+        "name": "ownership",
+        "type": "text",
+        "notnull": true
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "notnull": true
+      }
+    ],
+    "constraints": [
+      {
+        "def": "UNIQUE (business_id, external_id)",
+        "name": "ad_accounts_business_id_external_id_key"
+      },
+      {
+        "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+        "name": "ad_accounts_business_id_fkey"
+      },
+      {
+        "def": "FOREIGN KEY (meta_connection_id) REFERENCES meta_connections(id) ON DELETE SET NULL",
+        "name": "ad_accounts_meta_connection_id_fkey"
+      },
+      {
+        "def": "CHECK ((ownership = ANY (ARRAY['cliente'::text, 'v2g'::text])))",
+        "name": "ad_accounts_ownership_check"
+      },
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "ad_accounts_pkey"
+      },
+      {
+        "def": "CHECK ((status = ANY (ARRAY['ok'::text, 'expired'::text, 'revoked'::text, 'no_permission'::text])))",
+        "name": "ad_accounts_status_check"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER ad_accounts_set_updated_at BEFORE UPDATE ON public.ad_accounts FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "ad_accounts_set_updated_at",
+        "function": "set_updated_at()",
+        "function_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "ad_accounts_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)"
+      },
+      {
+        "cmd": "a",
+        "name": "ad_accounts_insert_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null
+      },
+      {
+        "cmd": "r",
+        "name": "ad_accounts_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)"
+      },
+      {
+        "cmd": "w",
+        "name": "ad_accounts_update_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)"
+      }
+    ]
+  },
+  {
+    "relname": "meta_connections",
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "notnull": true
+      },
+      {
+        "name": "business_id",
+        "type": "uuid",
+        "notnull": true
+      },
+      {
+        "name": "meta_page_id",
+        "type": "text",
+        "notnull": false
+      },
+      {
+        "name": "token_secret_id",
+        "type": "uuid",
+        "notnull": false
+      },
+      {
+        "name": "status",
+        "type": "text",
+        "notnull": true
+      },
+      {
+        "name": "connected_at",
+        "type": "timestamp with time zone",
+        "notnull": false
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "notnull": false
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "notnull": true
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "notnull": true
+      },
+      {
+        "name": "instagram_account_id",
+        "type": "text",
+        "notnull": false
+      },
+      {
+        "name": "meta_user_id",
+        "type": "text",
+        "notnull": false
+      },
+      {
+        "name": "scopes",
+        "type": "text[]",
+        "notnull": false
+      },
+      {
+        "name": "last_error",
+        "type": "text",
+        "notnull": false
+      }
+    ],
+    "constraints": [
+      {
+        "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE CASCADE",
+        "name": "meta_connections_business_id_fkey"
+      },
+      {
+        "def": "UNIQUE (business_id)",
+        "name": "meta_connections_business_id_key"
+      },
+      {
+        "def": "PRIMARY KEY (id)",
+        "name": "meta_connections_pkey"
+      },
+      {
+        "def": "CHECK ((status = ANY (ARRAY['disconnected'::text, 'connected'::text, 'expiring'::text, 'expired'::text, 'revoked'::text])))",
+        "name": "meta_connections_status_check"
+      }
+    ],
+    "triggers": [
+      {
+        "def": "CREATE TRIGGER meta_connections_pagina_compartilhada BEFORE UPDATE OF meta_page_id ON public.meta_connections FOR EACH ROW EXECUTE FUNCTION impedir_troca_pagina_compartilhada()",
+        "name": "meta_connections_pagina_compartilhada",
+        "function": "impedir_troca_pagina_compartilhada()",
+        "function_md5": "29a004490e4714043a6db006d125f043"
+      },
+      {
+        "def": "CREATE TRIGGER meta_connections_set_updated_at BEFORE UPDATE ON public.meta_connections FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+        "name": "meta_connections_set_updated_at",
+        "function": "set_updated_at()",
+        "function_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+      }
+    ],
+    "policies": [
+      {
+        "cmd": "d",
+        "name": "meta_connections_delete_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)"
+      },
+      {
+        "cmd": "a",
+        "name": "meta_connections_insert_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": null
+      },
+      {
+        "cmd": "r",
+        "name": "meta_connections_select_own",
+        "check": null,
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)"
+      },
+      {
+        "cmd": "w",
+        "name": "meta_connections_update_own",
+        "check": "private.owns_business(business_id)",
+        "roles": [
+          "authenticated"
+        ],
+        "using": "private.owns_business(business_id)"
+      }
+    ]
+  }
+]

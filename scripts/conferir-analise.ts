@@ -23,6 +23,8 @@
  */
 
 import { readFileSync } from "node:fs";
+import vm from "node:vm";
+import ts from "typescript";
 import {
   ESPERA_DO_BACKEND_MS,
   FOLGA_DO_CORPO_BYTES,
@@ -57,6 +59,76 @@ function fonte(caminho: string): string {
 
 const TELA = "app/(protected)/criativos/Analisar.tsx";
 const ACTION = "app/(protected)/criativos/actions.ts";
+const HELPER_ESPERA = "lib/criativos/espera.ts";
+
+/** AST ignora comentários e frases: mencionar uma proteção não a executa. */
+function contemNo(no: ts.Node, atende: (no: ts.Node) => boolean): boolean {
+  return atende(no) || Boolean(ts.forEachChild(no, filho => contemNo(filho, atende) || undefined));
+}
+function importado(arquivo: ts.SourceFile, origem: string, nome: string): string | null {
+  for (const no of arquivo.statements) {
+    if (!ts.isImportDeclaration(no) || !ts.isStringLiteral(no.moduleSpecifier)
+      || no.moduleSpecifier.text !== origem) continue;
+    const nomes = no.importClause?.namedBindings;
+    if (!nomes || !ts.isNamedImports(nomes)) continue;
+    const item = nomes.elements.find(e => (e.propertyName ?? e.name).text === nome);
+    if (item) return item.name.text;
+  }
+  return null;
+}
+function protecaoDeEspera(tela: string, helper: string, limites: string): boolean {
+  const parse = (nome: string, texto: string) => ts.createSourceFile(nome, texto, ts.ScriptTarget.Latest, true);
+  const t = parse("Analisar.tsx", tela), h = parse("espera.ts", helper), l = parse("limites.mjs", limites);
+  const envolver = importado(t, "@/lib/criativos/espera", "comTetoDeEspera");
+  const analisar = importado(t, "./actions", "analisarPecaAction");
+  const teto = importado(h, "./limites.mjs", "TETO_DA_ESPERA_MS");
+  const escolheu = t.statements.find(n => ts.isFunctionDeclaration(n) && n.name?.text === "escolheu");
+  // O handler é interno ao componente; não basta uma chamada solta em outro lugar.
+  let handler: ts.Node | undefined = escolheu;
+  contemNo(t, n => {
+    if (ts.isFunctionDeclaration(n) && n.name?.text === "escolheu") handler = n;
+    return false;
+  });
+  if (!envolver || !analisar || !teto || !handler) return false;
+  const chamadas = new Set<string>();
+  contemNo(handler, n => {
+    if (ts.isVariableDeclaration(n) && ts.isIdentifier(n.name) && n.initializer
+      && ts.isCallExpression(n.initializer) && ts.isIdentifier(n.initializer.expression)
+      && n.initializer.expression.text === analisar) chamadas.add(n.name.text);
+    return false;
+  });
+  const aguardaProtegida = contemNo(handler, n => ts.isAwaitExpression(n)
+    && ts.isCallExpression(n.expression) && ts.isIdentifier(n.expression.expression)
+    && n.expression.expression.text === envolver && n.expression.arguments.length === 1
+    && ts.isIdentifier(n.expression.arguments[0]!) && chamadas.has(n.expression.arguments[0]!.text));
+  const funcao = h.statements.find(n => ts.isFunctionDeclaration(n) && n.name?.text === "comTetoDeEspera");
+  const timeout = Boolean(funcao && contemNo(funcao, n => ts.isCallExpression(n)
+    && ts.isPropertyAccessExpression(n.expression) && ts.isIdentifier(n.expression.expression)
+    && n.expression.expression.text === "AbortSignal" && n.expression.name.text === "timeout"
+    && n.arguments.length === 1 && ts.isIdentifier(n.arguments[0]!) && n.arguments[0]!.text === teto));
+  const exportaTeto = l.statements.some(n => ts.isVariableStatement(n)
+    && n.modifiers?.some(m => m.kind === ts.SyntaxKind.ExportKeyword)
+    && n.declarationList.declarations.some(d => ts.isIdentifier(d.name)
+      && d.name.text === "TETO_DA_ESPERA_MS" && Boolean(d.initializer)));
+  return aguardaProtegida && timeout && exportaTeto;
+}
+
+type HelperDeEspera = {
+  comTetoDeEspera<T>(promessa: Promise<T>): Promise<T>;
+  EsperaEstourou: new () => Error;
+};
+/** Executa o helper real; só o módulo numérico e o relógio são portas de teste. */
+function carregarEspera(codigo: string, sinal: typeof AbortSignal, teto = TETO_DA_ESPERA_MS): HelperDeEspera {
+  const exports = {};
+  const js = ts.transpileModule(codigo, { compilerOptions: {
+    module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022,
+  } }).outputText;
+  vm.runInNewContext(js, { exports, AbortSignal: sinal, AbortController, require(nome: string) {
+    if (nome !== "./limites.mjs") throw Error("Import inesperado no ensaio local");
+    return { TETO_DA_ESPERA_MS: teto };
+  } });
+  return exports as HelperDeEspera;
+}
 
 console.log("\nA análise de peça\n" + "=".repeat(64));
 
@@ -177,7 +249,7 @@ secao("3. NENHUM CAMINHO FICA EM 'analisando' — o defeito de verdade");
   );
 
   ok(
-    /TETO_DA_ESPERA_MS/.test(tela) && /AbortSignal\.timeout/.test(tela),
+    protecaoDeEspera(tela, fonte(HELPER_ESPERA), fonte("lib/criativos/limites.mjs")),
     "há teto de tempo no cliente, para a promessa que não resolve nem rejeita",
   );
 
@@ -216,6 +288,59 @@ secao("4. o teto da tela é maior que o do backend");
     valor === ESPERA_DO_BACKEND_MS,
     `\`TIMEOUTS.compliance\` (${valor}) bate com \`ESPERA_DO_BACKEND_MS\` (${ESPERA_DO_BACKEND_MS})`,
   );
+}
+
+// ------------------------------------------------------------------
+secao("5. helper real, controles negativos e estouro — sem esperar seis minutos");
+{
+  const tela = fonte(TELA), helper = fonte(HELPER_ESPERA), limites = fonte("lib/criativos/limites.mjs");
+  const negativos: Array<[string, string, string, string]> = [
+    ["helper ausente", tela, "", limites],
+    ["import do helper removido", tela.replace(/import\s*\{[^}]*comTetoDeEspera[^}]*\}\s*from\s*["']@\/lib\/criativos\/espera["'];?/, ""), helper, limites],
+    ["await sem helper", tela.replace(/await comTetoDeEspera\(chamada\)/, "await chamada"), helper, limites],
+    ["helper envolvendo outra promessa", tela.replace(/await comTetoDeEspera\(chamada\)/, "await comTetoDeEspera(Promise.resolve(null))"), helper, limites],
+    ["timeout removido", tela, helper.replace("AbortSignal.timeout(TETO_DA_ESPERA_MS)", "new AbortController().signal"), limites],
+    ["timeout apenas em comentário/string", tela, helper.replace("AbortSignal.timeout(TETO_DA_ESPERA_MS)", '"AbortSignal.timeout(TETO_DA_ESPERA_MS)"') + "\n// AbortSignal.timeout(TETO_DA_ESPERA_MS)", limites],
+    ["teto inline em vez do módulo central", tela, helper.replace("AbortSignal.timeout(TETO_DA_ESPERA_MS)", "AbortSignal.timeout(360000)"), limites],
+    ["import do teto removido", tela, helper.replace(/import[^;]*;/, ""), limites],
+    ["export do teto removido", tela, helper, limites.replace(/export const TETO_DA_ESPERA_MS[^;]*;/, "")],
+  ];
+  for (const [nome, t, h, l] of negativos) {
+    ok(!protecaoDeEspera(t, h, l), `controle negativo recusa: ${nome}`);
+  }
+
+  let prazo = NaN;
+  const relogio = new AbortController();
+  const simulado = { timeout(ms: number) { prazo = ms; return relogio.signal; } } as typeof AbortSignal;
+  const real = carregarEspera(helper, simulado);
+  const valor = { ok: true };
+  ok(await real.comTetoDeEspera(Promise.resolve(valor)) === valor, "helper preserva a resposta rápida, sem substituí-la");
+  ok(prazo === TETO_DA_ESPERA_MS, `helper passa o teto central de ${TETO_DA_ESPERA_MS} ms ao relógio`);
+  const falhaOriginal = new Error("FALHA_FICTICIA");
+  const rejeicao = await real.comTetoDeEspera(Promise.reject(falhaOriginal)).catch(e => e);
+  ok(rejeicao === falhaOriginal, "rejeição da action é preservada, sem virar timeout ou sucesso");
+  const pendente = real.comTetoDeEspera(new Promise<never>(() => {})).catch(e => e);
+  relogio.abort();
+  ok(await pendente instanceof real.EsperaEstourou, "abort do relógio rejeita a promessa pendente com EsperaEstourou");
+
+  // AbortSignal.timeout nativo fica intacto; apenas o limite importado na VM é 5 ms.
+  // Watchdog mantém o Node vivo (timeout nativo é unref) e impede teste pendurado.
+  async function estouraComRelogioNativo(codigo: string): Promise<boolean> {
+    const nativo = carregarEspera(codigo, AbortSignal, 5);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const resultado = await Promise.race([
+        nativo.comTetoDeEspera(new Promise<never>(() => {})).then(() => false, e => e instanceof nativo.EsperaEstourou),
+        new Promise<false>(resolve => { timer = setTimeout(() => resolve(false), 250); }),
+      ]);
+      return resultado;
+    } finally { clearTimeout(timer); }
+  }
+  ok(await estouraComRelogioNativo(helper), "helper real estoura com AbortSignal.timeout nativo e limite de teste de 5 ms");
+  ok(!await estouraComRelogioNativo(helper.replace("sinal.addEventListener", "new AbortController().signal.addEventListener")),
+    "controle negativo: listener desligado do relógio não passa como estouro protegido");
+  ok(!await estouraComRelogioNativo(helper.replace("new EsperaEstourou()", 'new Error("FALHA_FICTICIA")')),
+    "controle negativo: exceção genérica não passa como EsperaEstourou");
 }
 
 console.log("\n" + "=".repeat(64));

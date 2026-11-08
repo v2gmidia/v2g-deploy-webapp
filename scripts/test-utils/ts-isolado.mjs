@@ -4,7 +4,7 @@ import {resolve,dirname,isAbsolute} from 'node:path';
 import {createRequire} from 'node:module';
 import vm from 'node:vm';
 const require=createRequire(import.meta.url),ts=require('typescript');
-export function ambienteTs({env={},ports={},fetch=()=>{throw Error('rede nao autorizada no ensaio');}}={}) {
+export function ambienteTs({env={},ports={},globals={},fetch=()=>{throw Error('rede nao autorizada no ensaio');}}={}) {
   const cache=new Map(),root=resolve('.');
   const locate=(name,parent=root)=>{
     let path=name.startsWith('@/') ? resolve(root,name.slice(2)) : isAbsolute(name) ? name : resolve(parent,name);
@@ -25,7 +25,7 @@ export function ambienteTs({env={},ports={},fetch=()=>{throw Error('rede nao aut
     const module={exports:{}};cache.set(file,module);
     const js=ts.transpileModule(readFileSync(file,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,
       target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-    vm.runInNewContext(js,{module,exports:module.exports,require:specifier=>load(specifier,dirname(file)),
+    vm.runInNewContext(js,{...globals,module,exports:module.exports,require:specifier=>load(specifier,dirname(file)),
       process:{env},fetch,Buffer,Headers,Response,FormData,URL,URLSearchParams,AbortSignal,Intl,Date,console},{filename:file});
     return module.exports;
   }

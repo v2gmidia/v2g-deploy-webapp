@@ -9,6 +9,7 @@ import * as jsxRuntime from 'react/jsx-runtime';
 import { renderToStaticMarkup } from 'react-dom/server';
 import * as contrato from '../lib/anuncios/contrato-meta.ts';
 import * as periodo from '../lib/inicio/periodo.ts';
+import * as retorno from '../lib/anuncios/retorno-login.ts';
 
 const A='11111111-1111-4111-8111-111111111111', B='22222222-2222-4222-8222-222222222222';
 const janela={desde:'2026-10-28',ate:'2026-10-28'};
@@ -16,7 +17,7 @@ function carregar(arquivo,deps,extras={}) {
   const exports={};
   const codigo=ts.transpileModule(readFileSync(arquivo,'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,
     target:ts.ScriptTarget.ES2022,jsx:ts.JsxEmit.ReactJSX}}).outputText;
-  vm.runInNewContext(codigo,{exports,Intl,Date,URL,AbortSignal,FormData,...extras,require:id=>{
+  vm.runInNewContext(codigo,{exports,Intl,Date,URL,URLSearchParams,AbortSignal,FormData,...extras,require:id=>{
     if(!(id in deps))throw Error(`Import não permitido: ${id}`);return deps[id];
   }});
   return exports;
@@ -135,9 +136,46 @@ test('descoberta vazia e múltiplas campanhas são sucessos, sem somar ou usar e
 
 const moduloTela=carregar('app/(protected)/anuncios/AnunciosMeta.tsx',{'react/jsx-runtime':jsxRuntime,
   '@/components/ui/Pill':{Pill:({children})=>React.createElement('span',{},children)},
-  '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,
+  '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
   './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,k)=>String(k)})}});
 const UI=moduloTela.InventarioDeAnunciosMeta;
+
+for (const gestor of [false, true]) test(`login da ${gestor ? 'mesa' : 'aba de cliente'} conserva conta mesmo quando a sessão falha antes de carregá-la`, async () => {
+  const cfg = gestor ? { noSession: true, owner: '33333333-3333-4333-8333-333333333333',
+    user: { id: 'operador-teste', app_metadata: { papel: 'operador' } },
+    env: { V2G_MANAGER_WORK_ENABLED: 'true', V2G_MANAGER_METRICS_READ_ENABLED: 'true' } } : { noSession: true };
+  const b = bancada(cfg);
+  const args = { ...janela, contaId: 'act_9001' };
+  const resultado = gestor ? await b.lerGestor({ businessId: A, ...args }) : await b.ler(args);
+  assert.equal(resultado.motivo, 'acesso'); assert.equal(resultado.contaSelecionada, null);
+  assert.equal(b.requests.length, 0);
+  const html = renderToStaticMarkup(React.createElement(UI, { resultado, periodo: janela,
+    contaSolicitada: 'act_9001', ...(gestor ? { negocioDoGestor: A } : {}) }));
+  const href = html.match(/href="([^"]+)"[^>]*>Entrar novamente/)?.[1]?.replaceAll('&amp;', '&');
+  assert.ok(href); const login = new URL(href, 'https://qa.example.invalid');
+  const next = new URL(login.searchParams.get('next'), login);
+  assert.equal(next.pathname, gestor ? '/supergestor' : '/anuncios');
+  assert.equal(next.searchParams.get('conta'), 'act_9001');
+  assert.equal(next.searchParams.get('desde'), janela.desde); assert.equal(next.searchParams.get('ate'), janela.ate);
+  assert.equal(next.searchParams.get('metricas'), gestor ? A : null);
+  assert.equal(login.searchParams.get('adicionar'), '1');
+  assert.doesNotMatch(href, /synthetic|Bearer|profile_id|business_id/);
+});
+
+for (const estado of ['zero_medido', 'observado']) test(`HTTP 200 contraditório em ${estado} não preenche números completos na tela`, async () => {
+  for (const lacuna of ['cobertura', 'fuso']) {
+    const raw = corpo(); const periodo = { desde: '2026-10-27', ate: '2026-10-28' };
+    raw.periodo = periodo;
+    Object.assign(raw.campanhas[0].metricas, { estado, gasto_centavos: 0, impressoes: 0, cliques_totais: 0,
+      dias_com_observacao: lacuna === 'cobertura' ? ['2026-10-28'] : ['2026-10-27', '2026-10-28'],
+      entrega_observada_no_periodo: false });
+    if (lacuna === 'fuso') raw.fuso = null;
+    const r = await bancada({ raw }).ler(periodo);
+    assert.equal(r.ok, false); assert.equal(r.motivo, 'resposta'); assert.ok(!('dados' in r));
+    const html = renderToStaticMarkup(React.createElement(UI, { resultado: r, periodo }));
+    assert.doesNotMatch(html, /Zero medido neste período|R\$|Campanha FICTÍCIA/);
+  }
+});
 
 const owner='33333333-3333-4333-8333-333333333333';
 const operador={id:'operador-teste',app_metadata:{papel:'operador'}};
@@ -176,9 +214,9 @@ for(const estado of ['sem_dados','zero_medido','observado','parcial']) test(`N26
 test('N26: componente da mesa encaminha recorte explícito e respeita default OFF',async()=>{
   const resposta=await bancada({owner,user:operador,env:flags}).lerGestor({businessId:A,...janela});
   const chamadas=[];
-  function wrapper(env){return carregar('components/gestor/leitura/LeituraDaConta.tsx',{
+  function wrapper(env,leitura=resposta){return carregar('components/gestor/leitura/LeituraDaConta.tsx',{
     'server-only':{},'react/jsx-runtime':jsxRuntime,
-    '@/lib/backend/anuncios-do-negocio':{anunciosDoGestorAtribuido:async a=>{chamadas.push(a);return resposta;}},
+    '@/lib/backend/anuncios-do-negocio':{anunciosDoGestorAtribuido:async a=>{chamadas.push(a);return leitura;}},
     '@/app/(protected)/anuncios/AnunciosMeta':moduloTela,
     '@/app/(protected)/inicio/SeletorDePeriodo':{SeletorDePeriodo:()=>React.createElement('div',{},'Seletor de período')},
   },{process:{env}}).LeituraDaConta;}
@@ -187,6 +225,13 @@ test('N26: componente da mesa encaminha recorte explícito e respeita default OF
   const elemento=await wrapper(flags)(args);const html=renderToStaticMarkup(elemento);
   assert.equal(chamadas[0].desde,janela.desde);assert.equal(chamadas[0].ate,janela.ate);assert.equal(chamadas[0].contaId,'act_9001');
   assert.match(html,/Cliente fictício/);assert.match(html,/Campanha FICTÍCIA/);
+  const acesso={ok:false,motivo:'acesso',mensagem:'Entre novamente.',contas:[],contaSelecionada:null};
+  const h=renderToStaticMarkup(await wrapper(flags,acesso)(args));
+  const href=h.match(/href="([^"]+)"[^>]*>Entrar novamente/)?.[1]?.replaceAll('&amp;','&');
+  assert.ok(href);const login=new URL(href,'https://qa.example.invalid');
+  const next=new URL(login.searchParams.get('next'),login);
+  assert.equal(next.pathname,'/supergestor');assert.equal(next.searchParams.get('conta'),'act_9001');
+  assert.equal(next.searchParams.get('metricas'),A);assert.equal(next.searchParams.get('desde'),janela.desde);
   const pagina=readFileSync('app/(protected)/gestor/page.tsx','utf8');
   assert.match(pagina,/intervaloDoInicio\(parametros, diaEmSaoPaulo/);assert.doesNotMatch(pagina,/intervaloMesa\(/);
 });
@@ -252,7 +297,7 @@ test('entrega observada aceita gasto positivo com impressões desconhecidas, sem
   assert.equal(contrato.lerInventarioMeta(raw,{businessId:A,contaId:'act_9001',periodo:janela}),null);
 });
 
-async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]}}) {
+async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]},busca={}}) {
   const calls=[];const leve=({children})=>React.createElement('div',{},children);
   const data={id:'dono'};
   const q={select(){return q;},eq(){return q;},order:async()=>({data:[]})};
@@ -264,14 +309,25 @@ async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]}}) {
     '@/lib/formato':{diaPorExtenso:v=>v},'@/lib/veiculacao/estado':{fraseDeVeiculacao:()=> 'Situação histórica'},
     '@/lib/titulos':{tituloDaAba:()=>({})},'./PainelDeAnuncios':{PainelDeAnuncios:({anuncios})=>React.createElement('p',{},anuncios.map(a=>a.nome).join(', '))},
     '@/lib/inicio/periodo':periodo,'@/lib/dia-seguinte/dia':{diaEmSaoPaulo:()=> '2026-10-29'},
-    '../inicio/SeletorDePeriodo':{SeletorDePeriodo:leve},'@/lib/backend':{anunciosDoNegocioSelecionado:async()=>meta},'./AnunciosMeta':moduloTela};
+    '../inicio/SeletorDePeriodo':{SeletorDePeriodo:leve},'./AtualizacaoDaConsulta':{AtualizacaoDaConsulta:leve},
+    '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>meta},'./AnunciosMeta':moduloTela};
   const modulo=carregar('app/(protected)/anuncios/page.tsx',imports);
-  const elemento=await modulo.default({searchParams:Promise.resolve({...janela,business_id:B,idExecucao:'invasora'})});
+  const elemento=await modulo.default({searchParams:Promise.resolve({...janela,business_id:B,idExecucao:'invasora',...busca})});
   return {html:renderToStaticMarkup(elemento),calls};
 }
 test('/anuncios sem execução mostra inventário manual e não o falso primeiro-anúncio-vazio',async()=>{
   const meta=await bancada().ler(janela);const p=await pagina({meta});assert.match(p.html,/Campanha FICTÍCIA/);
   assert.doesNotMatch(p.html,/Seu primeiro anúncio ainda não existe/);assert.equal(p.calls[0].businessId,A);assert.equal(p.calls[0].profileId,'dono');
+});
+
+test('/anuncios real passa a conta solicitada ao retorno de login mesmo sem inventário carregado', async () => {
+  const meta = await bancada({ noSession: true }).ler({ ...janela, contaId: 'act_9003' });
+  const p = await pagina({ meta, busca: { conta: 'act_9003' } });
+  const href = p.html.match(/href="([^"]+)"[^>]*>Entrar novamente/)?.[1]?.replaceAll('&amp;', '&');
+  assert.ok(href);
+  const next = new URL(new URL(href, 'https://qa.example.invalid').searchParams.get('next'), 'https://qa.example.invalid');
+  assert.equal(next.searchParams.get('conta'), 'act_9003');
+  assert.equal(next.searchParams.get('desde'), janela.desde); assert.equal(next.searchParams.get('ate'), janela.ate);
 });
 test('/anuncios mantém legado quando nova leitura falha, identificado como histórico',async()=>{
   const meta=await bancada({http:503}).ler(janela);const valor={texto:'0',ausente:false};

@@ -14,6 +14,22 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-11-06 — Domínio da compra e do aplicativo V2G
+
+**Decisão direta de Victor no Central.** A landing page permanece em `v2gmidia.com.br`; compra e aplicativo usarão `app.v2gmidia.com.br`, com contratação em `https://app.v2gmidia.com.br/contratar`. O endereço `v2g-deploy-webapp.vercel.app/contratar` não é o endereço produtivo aprovado. O futuro `/contratar` da LP encaminhará para o aplicativo somente depois do ensaio completo aprovado.
+
+**Motivo:** manter compra e acesso sob a marca V2G, preservando a separação de projetos LP/WebApp e do QA.
+
+**Bloco LOCAL aprovado nominalmente por Victor via Central em 06/11.** Ajustar validação da origem/hostname/Turnstile, links de pagamento/primeiro acesso e callback 3DS, com testes fictícios e compra/processamento OFF por padrão. A variável de domínio produtivo da Vercel pode conter domínio próprio e também existe em previews; não substitui a checagem de ambiente, projeto, banco ou host da requisição. Sem configuração/DNS, credenciais, banco remoto, cobrança, envio, commit, push ou deploy. Não editar/ligar a LP neste bloco.
+
+**Registro:** `estado/n26-p1-dominio-app-local-06-11.md`.
+
+### 2026-11-05 — Piloto da Piligrin com Dúú Gomes e FamFire
+
+**Direção direta de Victor.** A Piligrin será a agência do piloto. Victor informou inicialmente Dúú Gomes (fábrica alimentícia) e FamFire (arquitetura de incêndios, construção) como dois anunciantes com tráfego pago. Após o áudio de Cauã relatando que FamFire ainda não tem Meta nem anúncios, Victor confirmou **Dúú Gomes primeiro; FamFire depois, como implantação futura**. Cauã será o gestor V2G responsável pela operação assistida, com Victor na primeira rodada. Os limites e o procedimento operacional serão definidos com Victor depois.
+
+**Motivo:** ensaiar o fluxo com a agência de Victor e dois negócios que ela já atende, antes de ampliar a operação. A escolha nominal substitui a pendência de identificação do cenário no registro de 22/10; não comprova, por si, contratação V2G, autoridade sobre ativos, contas de anúncios, autorização de publicação ou acesso do cliente à WebApp. A Piligrin e cada anunciante precisam de identidade e vínculos separados. Registro do checkpoint atual em `estado/piloto-piligrin-caua-05-11.md`.
+
 ### 2026-10-25 — Mínimo de senha revisado e confirmação após redefinição
 
 **Direção de Victor, transmitida pelo Central:** retirar a exigência fixa de 15 caracteres, manter os requisitos fortes existentes e corrigir a conclusão da redefinição sem perder os dois controles de mostrar/ocultar senha. Escolha de implementação local neste bloco: mínimo de 12 caracteres com maiúscula, minúscula, número e símbolo, confirmação igual e recusa de padrões previsíveis. O indicador descreve critérios atendidos; tamanho isolado não mede segurança. Login com senha existente não recebe essa nova validação.

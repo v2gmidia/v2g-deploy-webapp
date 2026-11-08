@@ -1,5 +1,6 @@
 import type { NegocioAcessivel } from "./escolha";
 import type { PedidoComPagamento } from "../contratacao/direito-por-pedido";
+import type { AcessoPilotoQa } from "../piloto-qa/acesso";
 
 export type NegocioDoPerfil = NegocioAcessivel & { created_at: string };
 export type PedidoDoNegocio = PedidoComPagamento & {
@@ -20,8 +21,11 @@ export function negociosLiberados(entrada: {
   operador: boolean;
   acessosContratados?: { business_id: string; accepted_by: string | null; recipient_email: string;
     accepted_at: string | null; revoked_at: string | null }[];
+  acessosPilotoQa?: AcessoPilotoQa[];
+  agora?: number;
 }): NegocioAcessivel[] {
   const { negocios, pedidos, perfilId, emailVerificado, legadoEm, operador } = entrada;
+  const agora = entrada.agora ?? Date.now();
   const marcoLegado = legadoEm ? Date.parse(legadoEm) : NaN;
   const email = emailVerificado?.trim().toLowerCase() ?? null;
   const pedidosPorNegocio = new Map<string, PedidoDoNegocio[]>();
@@ -41,6 +45,11 @@ export function negociosLiberados(entrada: {
 
   return negocios.filter((negocio) => {
     if (operador) return true;
+    // Um pedido real, até pendente ou estornado, encerra este atalho de QA.
+    if (email && !pedidosPorNegocio.has(negocio.id)
+      && entrada.acessosPilotoQa?.some(g => g.business_id === negocio.id
+      && g.profile_id === perfilId && g.revoked_at === null
+      && Number.isFinite(Date.parse(g.expires_at)) && Date.parse(g.expires_at) > agora)) return true;
     if (email && entrada.acessosContratados?.some(g => g.business_id === negocio.id
       && g.accepted_by === perfilId && g.recipient_email === email && g.accepted_at && !g.revoked_at)) return true;
     const pedidosDoNegocio = pedidosPorNegocio.get(negocio.id) ?? [];

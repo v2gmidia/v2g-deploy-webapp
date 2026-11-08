@@ -11,6 +11,7 @@ import { OBJETIVOS_DO_ENVIO, validarIntencaoDoEnvio, type ObjetivoDoEnvio } from
 import estilos from "./PedirRevisao.module.css";
 import { ReferenciasDoNicho } from "./ReferenciasDoNicho";
 import { contextoDesteNegocio, type ContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio";
+import { useEsperaLocal } from "./useEsperaLocal";
 
 type Aviso = { tom: "notice" | "warning" | "error"; texto: string; motivos?: string[] };
 type Fase = "pronto" | "enviando" | "analisando";
@@ -26,6 +27,8 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
   const [fase, setFase] = useState<Fase>("pronto");
   const [aviso, setAviso] = useState<Aviso | null>(null);
   const campo = useRef<HTMLInputElement>(null);
+  const emCurso = useRef(false);
+  const mensagem = useRef<HTMLDivElement>(null);
   const entradasDoArrasto = useRef(0);
   const [arrastando, setArrastando] = useState(false);
   const [erroArquivo, setErroArquivo] = useState<string | null>(null);
@@ -42,6 +45,7 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
   const erroDaValidade = useId();
   const validadeVencida = promocao && Boolean(validade) && validade < hoje;
   const preparoCompleto = Boolean(arquivo && objetivo && (!promocao || (validade && !validadeVencida)));
+  const espera = useEsperaLocal(fase === "pronto" ? null : fase);
   useEffect(() => {
     if (!arquivo) { setImagemUrl(null); return; }
     const url = URL.createObjectURL(arquivo);
@@ -49,6 +53,7 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
     return () => URL.revokeObjectURL(url);
   }, [arquivo]);
   useEffect(() => { if (conferindo) resumo.current?.focus(); }, [conferindo]);
+  useEffect(() => { if (fase === "pronto" && aviso) mensagem.current?.focus(); }, [fase, aviso]);
 
   function escolherArquivo(arquivos: File[]) {
     if (fase !== "pronto" || incerto) return;
@@ -71,7 +76,7 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
 
   async function enviar(evento: React.FormEvent<HTMLFormElement>) {
     evento.preventDefault();
-    if (!arquivo || fase !== "pronto") return;
+    if (!arquivo || fase !== "pronto" || emCurso.current) return;
     if (arquivo.size < 1 || arquivo.size > TAMANHO_MAXIMO_REVISAO ||
       !["image/jpeg", "image/png"].includes(arquivo.type)) {
       setAviso({ tom: "error", texto: "Escolha uma imagem JPG ou PNG de até 9 MB." });
@@ -85,6 +90,7 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
       setAviso({ tom: "notice", texto: "Conferência testada na prévia. Nenhum arquivo ou pedido foi gravado, analisado ou publicado." });
       return;
     }
+    emCurso.current = true; // A trava vale antes do próximo render, inclusive no duplo clique.
     setFase("enviando");
     setAviso(null);
     let recebido = false;
@@ -150,12 +156,13 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
           : "Peça recebida para revisão, mas a análise automática não terminou nesta tela. Confira a galeria antes de enviar de novo; ela não foi publicada." }
         : { tom: "error", texto: "A conexão foi interrompida. Confira a galeria antes de repetir o envio." });
     } finally {
+      emCurso.current = false;
       setFase("pronto");
       router.refresh();
     }
   }
 
-  return <form onSubmit={enviar} className={estilos.formulario}>
+  return <form onSubmit={enviar} className={estilos.formulario} aria-busy={fase !== "pronto"}>
     {previa && <p className="form-warning">Prévia local · sem envio, análise ou publicação.</p>}
     <ol className={estilos.etapa} aria-label="Etapas do envio">
       <li aria-current={!conferindo ? "step" : undefined}><span>1</span>Preparar criativo</li>
@@ -260,10 +267,14 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
         <button className="cta" type="submit" disabled={!confirmado || fase !== "pronto"}>{fase === "enviando" ? "Enviando criativo..." : fase === "analisando" ? "Analisando imagem..." : incerto ? "Conferir o mesmo envio" : "Enviar para revisão"}</button>
       </div>
     </>}
-    {fase !== "pronto" && <p className={estilos.andamento} role="status"><span aria-hidden="true" />{fase === "enviando" ? "Enviando seu criativo. Aguarde a confirmação." : "Imagem recebida. Conferindo a análise…"}</p>}
+    <div role="status" aria-live="polite" aria-atomic="true">
+      {espera.visivel && <p className={estilos.andamento}>{fase === "enviando"
+        ? espera.longa ? "Ainda aguardando a confirmação do envio e do arquivo. Não envie outra cópia; o percentual enviado não está disponível nesta tela." : "Enviando seu criativo. Aguarde a confirmação do arquivo."
+        : espera.longa ? "Arquivo recebido para revisão. Aguardando a análise automática; ela não informa progresso nem previsão de término. O anúncio não foi publicado." : "Arquivo recebido para revisão. Aguardando a análise automática."}</p>}
+    </div>
     <p className={estilos.limite}>O gestor revisa antes da publicação. Enviar não coloca o anúncio no ar.</p>
     {incerto && <p className="form-warning">Não altere o pedido ainda. <a href="/criativos">Confira a galeria</a> ou tente confirmar o mesmo envio.</p>}
-    {aviso && <div className={aviso.tom === "notice" ? "form-notice" : aviso.tom === "warning" ? "form-warning" : "form-error"} role="status">
+    {aviso && <div ref={mensagem} tabIndex={-1} className={aviso.tom === "notice" ? "form-notice" : aviso.tom === "warning" ? "form-warning" : "form-error"} role="status">
       <p>{aviso.texto}</p>
       {aviso.motivos && aviso.motivos.length > 0 && <ul>{aviso.motivos.map((motivo, indice) => <li key={`${indice}-${motivo}`}>{motivo}</li>)}</ul>}
     </div>}

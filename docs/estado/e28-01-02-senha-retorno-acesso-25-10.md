@@ -1,5 +1,21 @@
 # E28 01/02 — senha, retorno e prova de acesso após estorno, 25/10/2026
 
+## Atualização de 05/11 — entrada autenticada conferida no navegador
+
+Após Victor informar nova recuperação e autenticação, a aba Chrome indicada
+abriu `/escolher-negocio`. Foi selecionado **V2G QA Multiconta B — FICTÍCIA**.
+Em `/conta`, o perfil exibiu `victor.cabral+v2gqa04@v2gmidia.com.br` e o mesmo
+negócio selecionado. O plano exibiu explicitamente aprovação simulada, sem
+pagamento. O retorno a `/inicio` terminou o carregamento e mostrou o conteúdo
+do negócio B, sem tela preta ou 404 neste percurso.
+
+**PASS:** sessão QA04, seleção do negócio B, Conta e retorno ao Início.
+**Limite:** não foi observada a submissão da nova senha nem a transição real
+de salvamento até a confirmação. Não certifica pagamento, recorrência,
+revogação após estorno, dados Meta ou produção. Nenhuma nova compra, conta,
+cobrança, permissão ou alteração de cadastro foi realizada nesta conferência.
+O negócio permaneceu aberto na aba indicada por Victor.
+
 ## Atualização de 26/10 — publicação e limite da prova atual
 
 - Alias `v2g-webapp-qa.vercel.app` consultado na Vercel: projeto

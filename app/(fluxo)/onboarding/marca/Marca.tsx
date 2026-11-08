@@ -11,6 +11,7 @@ import { salvarMarcaAction, type EstadoMarca } from "./actions";
 import { LogoDaMarca } from "./LogoDaMarca";
 import { VariacoesDaMarca } from "./VariacoesDaMarca";
 import type { VariacaoVisual } from "./variacoes-actions";
+import { useTempoDaOperacao } from "../tempo-da-operacao";
 import styles from "./Marca.module.css";
 
 export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo: ImagemDeIdentidade | null; variacoes: VariacaoVisual[] }) {
@@ -35,6 +36,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   const [enviando, setEnviando] = useState(false);
   const [erroInstagram, setErroInstagram] = useState<string | null>(null);
   const [erroSite, setErroSite] = useState<string | null>(null);
+  const tempoDaPersistencia = useTempoDaOperacao(enviando);
   const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
 
   async function salvar() {
@@ -197,7 +199,11 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
           }}>Ainda não sei</button>
           <p className="conta-hint">O gestor verá essa pendência na conversa.</p>
         </div>}
-        {enviando && <p className={styles.statusAcao} role="status" aria-live="polite">Salvando os dados da marca…</p>}
+        {tempoDaPersistencia.visivel && <p className={styles.statusAcao} role="status" aria-live="polite">
+          {tempoDaPersistencia.demorada
+            ? "Ainda confirmando os dados da marca. Seus campos continuam preservados; não envie novamente."
+            : "Salvando os dados da marca…"}
+        </p>}
         <button className="cta" type="button" disabled={enviando || !!aviso || uploadsAtivos > 0 || analisesAtivas > 0} onClick={salvar}>{enviando ? "Salvando dados…" : uploadsAtivos > 0 ? "Enviando materiais…" : analisesAtivas > 0 ? "Analisando cores…" : "Guardar e escolher horário"}</button>
       </>}
   </>;

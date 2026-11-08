@@ -1,5 +1,6 @@
 import { Pill } from "@/components/ui/Pill";
 import { rotuloDoIntervalo } from "@/lib/inicio/periodo";
+import { entradaDaLeitura } from "@/lib/anuncios/retorno-login";
 import { rotuloStatusMeta, type ContextoMeta, type LeituraMeta, type ObjetoMeta, type ResultadoAnunciosMeta, type ResultadoInventarioMeta, type PeriodoMeta } from "@/lib/anuncios/contrato-meta";
 import styles from "./anuncios-meta.module.css";
 
@@ -16,13 +17,17 @@ export function AnunciosMeta({ resultado }: { resultado: ResultadoAnunciosMeta }
   </section>;
 }
 
-export function InventarioDeAnunciosMeta({ resultado, periodo, negocioDoGestor }: {
-  resultado: ResultadoInventarioMeta; periodo: PeriodoMeta; negocioDoGestor?: string;
+export function InventarioDeAnunciosMeta({ resultado, periodo, negocioDoGestor, contaSolicitada }: {
+  resultado: ResultadoInventarioMeta; periodo: PeriodoMeta; negocioDoGestor?: string; contaSolicitada?: string;
 }) {
+  const retorno = new URLSearchParams({ desde: periodo.desde, ate: periodo.ate });
+  const conta = contaSolicitada ?? resultado.contaSelecionada;
+  if (conta) retorno.set("conta", conta);
+  if (negocioDoGestor) retorno.set("metricas", negocioDoGestor);
   return <section className={styles.painel} aria-label="Anúncios da conta vinculada">
     <h2>Anúncios da conta vinculada</h2>
     {(resultado.contas.length > 1 || (!resultado.ok && resultado.motivo === "escopo" && resultado.contas.length > 0)) &&
-      <form className={styles.escolha} action={negocioDoGestor ? "/supergestor" : "/anuncios"} method="get">
+      <form data-consulta-anuncios className={styles.escolha} action={negocioDoGestor ? "/supergestor" : "/anuncios"} method="get">
       {negocioDoGestor && <input type="hidden" name="metricas" value={negocioDoGestor} />}
       <input type="hidden" name="desde" value={periodo.desde} /><input type="hidden" name="ate" value={periodo.ate} />
       <label htmlFor="meta-conta">Conta de anúncios</label>
@@ -34,7 +39,7 @@ export function InventarioDeAnunciosMeta({ resultado, periodo, negocioDoGestor }
     </form>}
     {!resultado.ok ? <div className="form-warning" role="status">
       <p>{resultado.mensagem}</p>
-      {resultado.motivo === "acesso" ? <a href="/entrar?next=%2Fanuncios">Entrar novamente</a> : null}
+      {resultado.motivo === "acesso" ? <a href={entradaDaLeitura(negocioDoGestor ? "/supergestor" : "/anuncios", retorno)}>Entrar novamente</a> : null}
     </div> : <>
       <FonteDaConsulta leitura={resultado.dados} />
       {resultado.dados.campanhas.length === 0 ? <p className={styles.ausente} role="status">

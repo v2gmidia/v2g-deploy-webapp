@@ -14,6 +14,6 @@ export async function LeituraDaConta({ businessId, nome, intervalo, contaId }: {
     <div className="section-title"><h2>Números de {nome}</h2></div>
     <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
     {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-    <InventarioDeAnunciosMeta resultado={resultado} periodo={intervalo} negocioDoGestor={businessId} />
+    <InventarioDeAnunciosMeta resultado={resultado} periodo={intervalo} negocioDoGestor={businessId} contaSolicitada={contaId} />
   </section>;
 }

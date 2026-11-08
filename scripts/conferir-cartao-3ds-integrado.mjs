@@ -156,16 +156,18 @@ test('todos os arquivos de migration tem manifesto, sem fingir aplicacao no banc
   const files = readdirSync(new URL('../supabase/migrations/', import.meta.url)).filter(f => f.endsWith('.sql')).sort();
   assert.deepEqual(MIGRATIONS.map(m => m.arquivo).sort(), files);
 });
-test('integracao liga formulario, cobranca avulsa, persistencia e webhook sem permitir producao', () => {
+test('integracao liga formulario, cobranca avulsa, persistencia e webhook com modo QA explícito', () => {
   const source = readFileSync(new URL('../lib/contratacao/iniciar-pagamento.ts', import.meta.url), 'utf8');
   const form = readFileSync(new URL('../app/contratar/pagamento/PagamentoFormulario.tsx', import.meta.url), 'utf8');
-  const webhook = readFileSync(new URL('../app/api/webhooks/asaas-payment/route.ts', import.meta.url), 'utf8');
+  const wrapper = readFileSync(new URL('../app/api/webhooks/asaas-payment/route.ts', import.meta.url), 'utf8');
+  const webhook = readFileSync(new URL('../lib/contratacao/webhook-pagamento.ts', import.meta.url), 'utf8');
+  assert.match(wrapper, /processarWebhookPagamento\(req, "sandbox"\)/);
   assert.match(source, /checkoutSandboxSeguroNesteServidor\(\)/);
   assert.match(source, /V2G_CHECKOUT_3DS_SCHEMA_ENABLED/);
   assert.match(source, /V2G_CHECKOUT_3DS_ENABLED/);
-  assert.match(source, /threeDSecure: \{ callbackUrl: callback3dsQa\(referencia\) \}/);
+  assert.match(source, /threeDSecure: \{ callbackUrl: callback3dsCompra\(referencia\) \}/);
   assert.match(form, /getTimezoneOffset\(\) \/ 60/);
   assert.match(webhook, /registrar_evento_inicial_3ds/);
-  assert.match(webhook, /processarAssinatura3ds\(admin, pedido.id\)/);
+  assert.match(webhook, /processarAssinatura3ds\(admin, pedido.id, ambiente\)/);
   assert.ok(source.indexOf('if (erroSalvar || !salvo)') < source.indexOf('redirect(desafio)'));
 });

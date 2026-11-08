@@ -1,0 +1,12 @@
+.pagina { min-width: 0; }
+.topo { display: flex; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.barra { display: block; height: 16px; width: 60%; background: var(--line); border-radius: var(--raio-controle, 4px); }
+.abas { display: flex; flex-wrap: wrap; gap: 20px; padding-block: 24px; border-bottom: 1px solid var(--line); }
+.abas .barra { width: 100px; }
+.grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-block: 24px 40px; }
+.item { min-width: 0; display: grid; gap: 18px; }
+.imagem { aspect-ratio: 1; background: var(--surface); border: 1px solid var(--line); }
+.envio { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; padding-block: 32px; border-top: 1px solid var(--line); }
+.campos { display: grid; align-content: start; gap: 24px; }
+@media (max-width: 980px) { .grade { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .grade, .envio { grid-template-columns: minmax(0, 1fr); } }

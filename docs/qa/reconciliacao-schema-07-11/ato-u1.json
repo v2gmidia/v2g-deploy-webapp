@@ -1,0 +1,22 @@
+{
+  "status": "PREPARADO_NAO_AUTORIZADO",
+  "project_id": "zskpijnqgkqwxksqmzmf",
+  "ddl_tool": "mcp__codex_apps__supabase_apply_migration",
+  "read_tool": "mcp__codex_apps__supabase_execute_sql",
+  "apply": {
+    "name": "qa_reconciliacao_u1_meta_reconexao_20261107",
+    "query_file": "u1-aplicar.sql"
+  },
+  "return": {
+    "name": "qa_reconciliacao_u1_meta_reconexao_retorno_20261107",
+    "query_file": "u1-retornar.sql",
+    "authorization": "separada"
+  },
+  "receipt": {
+    "pre": "u1-preflight.sql",
+    "post": "u1-pos.sql",
+    "format": "one SELECT / one row / receipt JSON"
+  },
+  "ledger": "preservar anteriores; adicionar exatamente uma entrada nominal por fase; sem repair/delete manual",
+  "hash_file": "SHA256SUMS.txt"
+}

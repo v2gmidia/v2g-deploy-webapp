@@ -18,6 +18,7 @@ import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 import { SeletorDePeriodo } from "../inicio/SeletorDePeriodo";
 import { anunciosDoNegocioSelecionado } from "@/lib/backend";
 import { InventarioDeAnunciosMeta } from "./AnunciosMeta";
+import { AtualizacaoDaConsulta } from "./AtualizacaoDaConsulta";
 
 export const metadata = tituloDaAba("/anuncios");
 
@@ -75,6 +76,7 @@ export default async function AnunciosPage({ searchParams }: {
 }) {
   const agora = new Date();
   const busca = await searchParams;
+  const contaSolicitada = typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined;
   const intervalo = intervaloDoInicio(busca, diaEmSaoPaulo(agora));
   const supabase = await createClient();
   const {
@@ -104,7 +106,7 @@ export default async function AnunciosPage({ searchParams }: {
       ? resultadoDoNegocio({ businessId: estado.negocioId, profileId: user.id, intervalo })
       : Promise.resolve(null),
     anunciosDoNegocioSelecionado({ desde: intervalo.desde, ate: intervalo.ate,
-      contaId: typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined }),
+      contaId: contaSolicitada }),
   ]);
 
   // ============================================================
@@ -115,7 +117,7 @@ export default async function AnunciosPage({ searchParams }: {
   // `/inicio` degradando calada, que este repositório já pagou.
   // ============================================================
   if (resultado === null || resultado.estado === "sem-execucao") {
-    return <div className="anuncios-editorial">
+    return <AtualizacaoDaConsulta hoje={intervalo.hoje}><div className="anuncios-editorial">
       <FaixaReconectar />
       <header className="anuncios-topo-novo"><div className="page-head"><h1>Anúncios</h1>
         <p>Acompanhe as campanhas e os anúncios da conta vinculada ao seu negócio.</p></div>
@@ -123,8 +125,8 @@ export default async function AnunciosPage({ searchParams }: {
       <div className="anuncios-periodo"><a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} />
-    </div>;
+      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} />
+    </div></AtualizacaoDaConsulta>;
   }
 
   // O `foiReprovada` no lugar do `p.status === "rejected"` escrito à mão:
@@ -152,7 +154,7 @@ export default async function AnunciosPage({ searchParams }: {
   }) : [];
 
   return (
-    <div className="anuncios-editorial">
+    <AtualizacaoDaConsulta hoje={intervalo.hoje}><div className="anuncios-editorial">
       <FaixaReconectar />
       <header className="anuncios-topo-novo">
        <div className="page-head">
@@ -188,7 +190,7 @@ export default async function AnunciosPage({ searchParams }: {
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
       </div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} />
+      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} />
 
       <div className="section-title"><h2>Histórico por rodada da V2G</h2></div>
       <p className="hint">Histórico do negócio, sem filtro por conta. Os mesmos anúncios podem aparecer na consulta Meta acima; não some os números das duas fontes.</p>
@@ -282,7 +284,7 @@ export default async function AnunciosPage({ searchParams }: {
 
 
       </div>
-    </div>
+    </div></AtualizacaoDaConsulta>
   );
 }
 

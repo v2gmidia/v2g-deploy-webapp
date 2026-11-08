@@ -30,6 +30,12 @@
   font-family: var(--body);
   padding: 0 max(24px, calc((100vw - 1180px) / 2));
 }
+.contratar-esqueleto > div { display: grid; gap: 20px; }
+.contratar-esqueleto span { display: block; min-block-size: 20px; background: var(--line); border-radius: 4px; }
+.contratar-esqueleto .titulo { block-size: 36px; inline-size: 75%; }
+.contratar-esqueleto .campo { block-size: 52px; }
+.contratar-consulta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-block: 16px; }
+.contratar-consulta button { min-block-size: 44px; padding: 8px 16px; font: inherit; cursor: pointer; }
 .contratar-shell ::selection { background: #B0E9FD; color: var(--plate); }
 .contratar-shell :focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 3px; }
 .contratar-topo {

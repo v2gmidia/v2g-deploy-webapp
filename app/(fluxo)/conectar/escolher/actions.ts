@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { listarContasDeAnuncio, listarPaginas } from "@/lib/meta/graph";
+import { acessosPilotoQa } from "@/lib/piloto-qa/acesso";
 
 export interface EscolhaState {
   erro?: string;
@@ -85,7 +86,7 @@ export async function salvarEscolhaAction(
     return { erro: "Não conseguimos conferir as contas agora. Tente de novo em alguns minutos." };
   }
 
-  const { error: erroEscolha } = await admin.rpc("registrar_conta_contratada", {
+  let { error: erroEscolha } = await admin.rpc("registrar_conta_contratada", {
     p_business_id: business.id,
     p_connection_id: conexao.id,
     p_external_id: contaExterna,
@@ -93,6 +94,28 @@ export async function salvarEscolhaAction(
     p_currency: moeda,
     p_page_id: paginaId,
   });
+
+  // O piloto QA é uma concessão explícita de uma conta exata, sem pedido
+  // fictício. A função no banco repete a validação e recusa negócio comprado.
+  if (erroEscolha?.message.includes("negocio novo sem pedido aprovado")) {
+    const grants = await acessosPilotoQa(admin, user.id, [business.id]);
+    const grant = grants.find(item => item.ad_account_external_id === contaExterna);
+    if (grant && grant.meta_page_id !== paginaId) {
+      return { erro: "A Página selecionada não corresponde à conta deste piloto." };
+    }
+    if (grant) {
+      const piloto = await admin.rpc("registrar_conta_piloto_qa", {
+        p_business_id: business.id,
+        p_connection_id: conexao.id,
+        p_profile_id: user.id,
+        p_external_id: contaExterna,
+        p_name: contaNome || contaExterna,
+        p_currency: moeda,
+        p_page_id: paginaId,
+      });
+      erroEscolha = piloto.error;
+    }
+  }
 
   if (erroEscolha) {
     console.error("[conectar] falha ao gravar escolha ::", erroEscolha.message);

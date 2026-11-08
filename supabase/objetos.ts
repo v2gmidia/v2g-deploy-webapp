@@ -713,6 +713,11 @@ export const MIGRATIONS: MigrationDeclarada[] = [
     foraDoAlcance: ["proposta LOCAL NAO aplicada; exige cadeia comercial, agenda e evidencia manual", "tipo gerado, checksum, triggers e preservacao de CNPJs existentes exigem SQL", "RPCs preservam ACL; nova referencia nao funde negocios por email/documento; unicidades de pedido/lead/negocio/evento Google preservadas", "aplicacao/reversao e locks requerem backup e autorizacao individual; sem revogacao de acesso ou dados reais"],
   },
   {
+    arquivo: "20261026193000_referencia_publica_pedido_criativo.sql",
+    cria: [],
+    foraDoAlcance: ["altera somente constraints de payload e upload_intent; sem novos objetos no OpenAPI", "compatibilidade v1/v2 e limites de referencia exigem prova SQL; arquivo existente no repo nao comprova aplicacao"],
+  },
+  {
     arquivo: "20261104040711_historical_contract_access.sql",
     cria: [
       { tipo: "tabela", nome: "historical_contract_access" },
@@ -722,5 +727,18 @@ export const MIGRATIONS: MigrationDeclarada[] = [
       { tipo: "rpc", nome: "revogar_acesso_contratado" },
     ],
     foraDoAlcance: ["LOCAL NAO aplicada; depende de evidencia manual, CPF/CNPJ, carteira e trigger privado de Auth", "concessao explicita e auditada por negocio, sem pedido/pagamento; RLS/ACL, replay e aceitacao exigem SQL/QA", "guard de handle_new_user suprime associacao por email neste cadastro; flag desligada por padrao", "revogacao remove somente esta permissao; outras fontes de acesso devem ser conferidas separadamente"],
+  },
+  {
+    arquivo: "20261105233528_qa_pilot_access.sql",
+    cria: [
+      { tipo: "tabela", nome: "qa_pilot_access" },
+      { tipo: "rpc", nome: "registrar_conta_piloto_qa" },
+    ],
+    foraDoAlcance: ["LOCAL NAO aplicada; concessao exata depende de flag e projeto QA", "sem pedido, unidade, cobranca ou direito de ativar campanha", "RLS, grants, expiração e revogação ensaiados em SQL local; QA autenticado ainda pendente"],
+  },
+  {
+    arquivo: "20261105194728_public_checkout_production_readiness.sql",
+    cria: [{ tipo: "rpc", nome: "checkout_producao_schema_v1" }],
+    foraDoAlcance: ["LOCAL NAO aplicada; transacao falha se a cadeia comercial faltar", "confere RLS, colunas, ACL de RPCs, unicidades e checksum documental; nao certifica corpos completos das RPCs", "grants service_role explicitos, nenhuma abertura publica; homologacao Asaas, email e deploy sao portoes externos"],
   },
 ];

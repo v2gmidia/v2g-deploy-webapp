@@ -9,6 +9,7 @@ import { lerTodasPaginas, lerTodasPaginasEmLotes } from "./paginacao";
 import { acessosContratadosDoPerfil } from "../contratacao/acesso-contratado";
 import { pedidoMantemDireito } from "../contratacao/direito-por-pedido";
 import { consultarEstadoPagamento } from "../contratacao/consultar-estado-pagamento";
+import { acessosPilotoQa, pilotoQaHabilitado } from "../piloto-qa/acesso";
 
 export const COOKIE_NEGOCIO_ATIVO = "v2g_negocio_ativo";
 
@@ -70,6 +71,8 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
   }
   const liberados = negociosLiberados({
     acessosContratados: await acessosContratadosDoPerfil(supabase, user),
+    acessosPilotoQa: user.email_confirmed_at && pilotoQaHabilitado()
+      ? await acessosPilotoQa(createAdminClient(), user.id, data.map(negocio => negocio.id)) : [],
     negocios: data,
     pedidos,
     perfilId: user.id,

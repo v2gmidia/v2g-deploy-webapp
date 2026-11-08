@@ -1,0 +1,8 @@
+.espera-01-02 { min-block-size: 1.5em; margin-block: 12px; color: var(--ink-soft); line-height: 1.5; overflow-wrap: anywhere; }
+.espera-01-02:empty { margin-block: 0; min-block-size: 0; }
+.esqueleto-acesso-01-02 { display: grid; gap: 20px; }
+.esqueleto-acesso-01-02 .linha { display: block; block-size: 20px; background: var(--line); border-radius: 4px; }
+.esqueleto-acesso-01-02 .titulo { inline-size: 75%; block-size: 36px; margin-block-end: 12px; }
+.esqueleto-acesso-01-02 .campo { block-size: 52px; }
+.esqueleto-acesso-01-02 .curta { inline-size: 45%; }
+/* Esqueleto estático: sem shimmer, spinner ou movimento a reduzir. */
