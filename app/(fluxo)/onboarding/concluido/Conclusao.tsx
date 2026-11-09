@@ -12,7 +12,7 @@ type Estado = { erro: string } | {
   businessId: string;
   concluido: boolean;
   faltamBasicas: unknown[];
-  contasProntas: boolean;
+  contasProntas?: boolean;
 };
 
 export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }: { estado: Estado; cnpj?: string | null; agenda?: EstadoAgenda }) {
@@ -28,8 +28,7 @@ export function Conclusao({ estado, cnpj = null, agenda = { status: "legado" } }
       <h1 className="auth-h">Seu onboarding ainda não terminou.</h1>
       <p className="auth-sub">Suas respostas já dadas continuam guardadas.</p>
       {estado.faltamBasicas.length ? <a className="cta" href="/onboarding">Continuar perguntas do negócio</a> :
-        !estado.contasProntas ? <a className="cta" href="/onboarding/contas">Continuar contas</a> :
-        <a className="cta" href="/onboarding/marca">Conferir visual da marca</a>}
+        <a className="cta" href="/onboarding/marca">Conferir materiais e visual da marca</a>}
     </> : <>
       <p className="mission-tag">Sua primeira missão · passo 3 de 3</p>
       <h1 className="auth-h">Respostas guardadas. Vamos conversar?</h1>

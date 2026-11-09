@@ -3,14 +3,9 @@
  *
  *   node scripts/conferir-cadastro.ts
  *
- * O schema é baixado do `/openapi.json` na hora, e não copiado à mão para
- * dentro do teste. Uma cópia à mão envelhece em silêncio: o backend aperta
- * uma restrição, o teste continua verde, e a descoberta acontece como 422 em
- * produção. Baixar é o que faz este script poder falhar por um motivo que
- * ninguém escreveu aqui.
- *
- * O `/openapi.json` responde SEM token (backend-integracao.md §0), então
- * este script roda em qualquer máquina, sem segredo nenhum.
+ * O schema vem de um OpenAPI LOCAL exportado pela candidata backend. Não
+ * consulta produção e não usa mock escrito à mão. Passe o caminho em
+ * `V2G_OPENAPI_LOCAL` ou como primeiro argumento.
  *
  * ELE NÃO CHAMA `POST /cadastro`. Aquilo abre execução de verdade
  * ("Primeiro toque do cliente. Abre a execucao.") e sujaria a fila que o
@@ -29,8 +24,7 @@ import {
 } from "../lib/cadastro/montar.ts";
 import { CAMPOS_DO_CLIENTE } from "../lib/perfil/catalogo-cliente.ts";
 
-const URL_SCHEMA =
-  process.env.V2G_BACKEND_URL?.replace(/\/$/, "") ?? "https://api.v2gmidia.com.br";
+const CAMINHO_SCHEMA_LOCAL = process.env.V2G_OPENAPI_LOCAL ?? process.argv[2];
 
 // ------------------------------------------------------- validador mínimo
 
@@ -245,12 +239,17 @@ let falhas = 0;
 const ok = (m: string) => console.log(`  ok    ${m}`);
 const nok = (m: string) => { falhas++; console.log(`  FALHA ${m}`); };
 
-const resposta = await fetch(`${URL_SCHEMA}/openapi.json`);
-if (!resposta.ok) {
-  console.error(`Não consegui baixar o schema: HTTP ${resposta.status}`);
+if (!CAMINHO_SCHEMA_LOCAL) {
+  console.error("Informe V2G_OPENAPI_LOCAL com o OpenAPI exportado pela candidata backend.");
   process.exit(2);
 }
-const spec = (await resposta.json()) as Schema;
+let spec: Schema;
+try {
+  spec = JSON.parse(readFileSync(CAMINHO_SCHEMA_LOCAL, "utf8")) as Schema;
+} catch {
+  console.error(`Não consegui ler o OpenAPI local: ${CAMINHO_SCHEMA_LOCAL}`);
+  process.exit(2);
+}
 const schemaCadastro = (spec["components"] as Schema)?.["schemas"] as
   | Record<string, Schema>
   | undefined;
@@ -260,7 +259,7 @@ if (!alvo) {
   process.exit(2);
 }
 
-console.log(`schema de ${URL_SCHEMA}/openapi.json`);
+console.log(`schema local: ${CAMINHO_SCHEMA_LOCAL}`);
 console.log(`obrigatórios no schema: ${JSON.stringify(alvo["required"])}\n`);
 
 // --- 0. o validador detecta alguma coisa?
@@ -305,8 +304,11 @@ if (!completo.completo) {
   else ok("o payload valida contra o schema baixado");
 }
 
-// --- 2. os seis obrigatórios, um a um, nos DOIS sentidos
+// --- 2. campos do contrato legado, um a um, nos DOIS sentidos
 console.log("\n2. cada obrigatório ausente");
+const ECONOMIA_FORA_DA_ENTRADA = new Set<CampoObrigatorio>([
+  "ticket_medio", "custo_direto_medio", "lucro_desejado_por_cliente",
+]);
 for (const campo of Object.keys(APAGAR) as CampoObrigatorio[]) {
   const negocio = negocioCompleto();
   APAGAR[campo](negocio);
@@ -330,7 +332,11 @@ for (const campo of Object.keys(APAGAR) as CampoObrigatorio[]) {
     delete mutilado[campo];
     const errosLa = validar(mutilado, alvo, spec);
     if (errosLa.length === 0) {
-      nok(`${campo}: nós barramos, o schema aceita — a regra é nossa, não deles`);
+      if (ECONOMIA_FORA_DA_ENTRADA.has(campo)) {
+        ok(`${campo}: opcional no backend atual; a trava existe só no montador legado não automático`);
+      } else {
+        nok(`${campo}: nós barramos, o schema aceita — a regra é nossa, não deles`);
+      }
       continue;
     }
   }

@@ -105,18 +105,18 @@ function resultados(ok = true) {
 
 test('mesmo intervalo vai ao negócio e às execuções, sempre depois da autorização', async () => {
   const { ler, chamadas } = resultados();
-  const intervalo = intervaloDoInicio({ desde: '2025-01-01', ate: '2025-03-31', idExecucao: 'invasora' }, '2026-10-19');
+  const intervalo = intervaloDoInicio({ desde: '2026-10-01', ate: '2026-10-07', idExecucao: 'invasora' }, '2026-10-19');
   const resposta = await ler({ businessId: 'negocio', profileId: 'perfil', intervalo: { ...intervalo, businessId: 'outro', profileId: 'outro', idExecucao: 'invasora' } });
   assert.equal(chamadas[0][0], 'negocio');
   assert.equal(chamadas[0][1].businessId, 'negocio');
   assert.equal(chamadas[0][1].profileId, 'perfil');
   for (const [tipo, args] of chamadas) {
     if (tipo === 'negocio' || tipo === 'execucao') {
-      assert.equal(args.desde, '2025-01-01'); assert.equal(args.ate, '2025-03-31');
+      assert.equal(args.desde, '2026-10-01'); assert.equal(args.ate, '2026-10-07');
     }
     if (tipo !== 'negocio') assert.equal(args.idExecucao, 'permitida');
   }
-  assert.equal(resposta.periodo.desde, '2025-01-01');
+  assert.equal(resposta.periodo.desde, '2026-10-01');
 });
 
 test('negócio não autorizado bloqueia toda consulta de execução', async () => {
@@ -128,7 +128,9 @@ test('negócio não autorizado bloqueia toda consulta de execução', async () =
 test('regressões de apresentação: conclusão, envio indisponível e datas', () => {
   const inicio = readFileSync('app/(protected)/inicio/TelaDoInicio.tsx', 'utf8');
   assert.match(inicio, /jornadaConcluida && !temProximoAcionavel && !falhaPendencia/);
-  assert.ok(inicio.indexOf('<ConclusaoDaJornada') > inicio.indexOf('<section className="sinais-bloco">', inicio.indexOf('const donoRespondeu')));
+  // A primeira ocorrência agora pertence ao ramo Meta. O ramo legado
+  // continua exibindo a conclusão depois dos sinais que o cliente consulta.
+  assert.ok(inicio.lastIndexOf('<ConclusaoDaJornada') > inicio.indexOf('<section className="sinais-bloco">', inicio.indexOf('const donoRespondeu')));
   const criativos = readFileSync('app/(protected)/criativos/TelaDeCriativos.tsx', 'utf8');
   assert.match(criativos, /envioDisponivel\s*\? <a[^>]+href="#subir-criativo"/);
   assert.ok(criativos.includes('Envio indisponível'));

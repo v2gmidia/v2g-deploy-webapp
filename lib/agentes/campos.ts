@@ -194,7 +194,7 @@ export const CAMPOS = [
     dinheiro: true,
     rotulo: "Ticket médio (mínimo)",
     guia:
-      "Menor valor típico de uma venda, em reais. Se a pessoa deu um valor único, use o mesmo aqui e no máximo.",
+      "Menor valor típico de um PEDIDO ou VENDA COMPLETA, em reais, explicitamente informado como ticket médio. Preço de produto, unidade, embalagem, pacote ou fardo NÃO é ticket: não proponha este campo a partir dessa referência, nem multiplique quantidades para chegar a uma venda. Se a pessoa informou explicitamente um único ticket médio, use o mesmo aqui e no máximo. Ausência permanece ausente.",
   },
   {
     tabela: "businesses",
@@ -202,7 +202,7 @@ export const CAMPOS = [
     tipo: "numero",
     dinheiro: true,
     rotulo: "Ticket médio (máximo)",
-    guia: "Maior valor típico de uma venda, em reais.",
+    guia: "Maior valor típico de um PEDIDO ou VENDA COMPLETA, em reais, explicitamente informado como ticket médio. Não converter preço de produto, unidade, embalagem, pacote ou fardo em ticket. Não calcular quantidade, margem, custo ou lucro para preencher este campo; ausência permanece ausente.",
   },
   {
     tabela: "businesses",

@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NOME_PROVISORIO } from "@/lib/cadastro/montar";
 import { gravarCamposDoCliente, type CampoParaGravar } from "@/lib/cadastro/procedencia";
 import { migrarChaves, perguntaPorId, RAIO_KM } from "./perguntas";
-import { dispararSeCompleto } from "@/lib/pipeline/disparar";
+import { conferirCadastroOperacionalSeCompleto } from "@/lib/pipeline/conferir-cadastro-operacional";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { validarInstagram, validarSite } from "@/lib/onboarding/enderecos";
 import { cidadeDeclaradaValida } from "@/lib/onboarding/localizacao";
@@ -161,11 +161,11 @@ export async function salvarRespostaAction(entrada: {
   cidade?: string;
   cep?: string;
 }): Promise<SalvarResultado> {
-  // A resposta antiga continua legível no histórico, mas a decisão atual
-  // deixa o primeiro anúncio com o gestor. Bloquear também na action impede
-  // que uma aba velha ou chamada forjada grave uma escolha nova do cliente.
+  // A referência de preço opcional tem action própria e estrutura
+  // (unidade, certeza e fonte). Esta resposta livre legada não volta a ser
+  // usada como oferta nem pode virar ticket por acidente.
   if (entrada.qid === "oferta")
-    return { ok: false, erro: "O foco do primeiro anúncio será definido com o gestor." };
+    return { ok: false, erro: "Use a etapa de referência de preço para registrar essa informação." };
   const pergunta = perguntaPorId(entrada.qid);
   if (!pergunta) return { ok: false, erro: "Pergunta desconhecida." };
   if (entrada.origem !== "chip" && entrada.origem !== "texto")
@@ -189,10 +189,10 @@ export async function salvarRespostaAction(entrada: {
   // descobrir isso como 422 três telas adiante. O recado não cita o
   // número — ver `perguntas.ts`.
   if (pergunta.minimo && !(pergunta.admiteNaoSei && entrada.origem === "chip" && texto === NAO_SEI_BRIEFING)
-    && texto.length < pergunta.minimo.tamanho) {
+    && [...texto].length < pergunta.minimo.tamanho) {
     return { ok: false, erro: pergunta.minimo.recado };
   }
-  if (["descricao", "oferta", "publico", "motivo", "resultado", "diferencial", "prova"].includes(entrada.qid) && texto.length > 800)
+  if (["nome", "contratante", "operador", "descricao", "oferta", "publico", "motivo", "resultado", "diferencial", "prova", "destino"].includes(entrada.qid) && texto.length > 800)
     return { ok: false, erro: "Resuma sua resposta em até 800 caracteres." };
   if (entrada.qid === "instagram" && !(entrada.origem === "chip" && texto === "Não tenho Instagram")) {
     const normalizado = validarInstagram(texto);
@@ -239,18 +239,28 @@ export async function salvarRespostaAction(entrada: {
     em: new Date().toISOString(),
   };
 
+  const operador = respostas.operador?.texto;
+  const contratoOperacionalAtivo = entrada.qid === "operador"
+    || (respostas as unknown as Record<string, unknown>)._contrato_operacional === "cadastro_operacional.v2";
+  const modeloDeAcesso = operador === "O próprio anunciante opera os anúncios" ? "direto"
+    : operador === "Uma agência ou gestor opera para o anunciante" ? "agencia_operadora"
+    : null;
+  const perfilCanonicoDireto = modeloDeAcesso === "direto" || !contratoOperacionalAtivo;
+
   // ---- campos de perfil ----
   //
-  // O TICKET SAIU DAQUI. Ele é a primeira conta do bloco 2
-  // (`/onboarding/contas`), porque o backend quer um escalar e a faixa
-  // sozinha não fecha — ver `docs/onboarding-expandido.md` §3.2 e §4.3.
+  // Ticket, custo e lucro não entram no onboarding operacional. A rota de
+  // referência de preço guarda unidade/certeza no JSON e nunca alimenta
+  // automaticamente as colunas de ticket.
   //
   // Nada aqui é `update` direto: cada campo vai pela
   // `confirmar_campo_do_cliente`, que grava valor e procedência juntos.
   // O cliente é a origem da afirmação, então a origem é `confirmado` —
   // ver §4.1 do desenho.
   const campos: CampoParaGravar[] = [];
-  if (entrada.qid === "nome") campos.push({ campo: "name", valor: texto });
+  // Em B2B2B, o nome/nicho/descrição do anunciante vivem no JSON versionado.
+  // Não renomeamos a linha da agência nem promovemos a identidade pelo nome.
+  if (entrada.qid === "nome" && perfilCanonicoDireto) campos.push({ campo: "name", valor: texto });
   // SEMPRE `confirmado`, e não existe mais nada além disso.
   //
   // A atividade vem como texto declarado, seja da lista de exemplos da
@@ -260,11 +270,11 @@ export async function salvarRespostaAction(entrada: {
   // A `aproximacao` existiu por algumas horas em 22/08, para marcar
   // escolha feita numa lista de reserva. A reserva saiu (ver
   // `lib/nichos/escolha.ts`), e com ela a marcação e a migration `0021`.
-  if (entrada.qid === "ramo") campos.push({ campo: "niche", valor: texto });
-  if (entrada.qid === "descricao") campos.push({ campo: "description", valor: texto });
-  if (entrada.qid === "instagram" && texto !== "Não tenho Instagram") campos.push({ campo: "instagram_handle", valor: texto });
-  if (entrada.qid === "site" && texto !== "Não tenho site") campos.push({ campo: "site_url", valor: texto });
-  if (entrada.qid === "praca") {
+  if (entrada.qid === "ramo" && perfilCanonicoDireto) campos.push({ campo: "niche", valor: texto });
+  if (entrada.qid === "descricao" && perfilCanonicoDireto) campos.push({ campo: "description", valor: texto });
+  if (entrada.qid === "instagram" && texto !== "Não tenho Instagram" && perfilCanonicoDireto) campos.push({ campo: "instagram_handle", valor: texto });
+  if (entrada.qid === "site" && texto !== "Não tenho site" && perfilCanonicoDireto) campos.push({ campo: "site_url", valor: texto });
+  if (entrada.qid === "praca" && perfilCanonicoDireto) {
     // Cidade só existe quando veio do campo dedicado. Na resposta
     // escrita à mão ("atendo o interior todo") não dá para inferir sem
     // chutar, então a coluna fica nula e o texto vive no jsonb.
@@ -280,7 +290,7 @@ export async function salvarRespostaAction(entrada: {
   // raio ainda coincidem com aquela escolha, deixam de ser fatos atuais:
   // não inferimos números nem município da nova frase. Uma correção feita
   // depois em outra tela, com valor diferente, é preservada.
-  const esvaziar = entrada.qid === "praca" && entrada.origem === "chip" && texto === "Brasil inteiro" &&
+  const esvaziar = !perfilCanonicoDireto ? [] : entrada.qid === "praca" && entrada.origem === "chip" && texto === "Brasil inteiro" &&
     pracaAnterior?.origem === "chip" ? [
       ...(pracaAnterior.cidade && linha.city === pracaAnterior.cidade ? ["city"] : []),
       ...(pracaAnterior.cep && linha.cep === pracaAnterior.cep ? ["cep"] : []),
@@ -323,7 +333,10 @@ export async function salvarRespostaAction(entrada: {
   }
   const { data: mesclado, error } = await supabase.rpc("mesclar_blocos_onboarding", {
     p_business_id: linha.id,
-    p_patch: patchDoBlocoUm({ [entrada.qid]: respostas[entrada.qid] }),
+    p_patch: patchDoBlocoUm({
+      [entrada.qid]: respostas[entrada.qid],
+      ...(contratoOperacionalAtivo ? { _contrato_operacional: "cadastro_operacional.v2" } : {}),
+    } as Record<string, unknown>),
   });
 
   if (error || mesclado !== true) {
@@ -346,7 +359,7 @@ export async function salvarRespostaAction(entrada: {
   // disparo — e nada na tela contaria isso, porque as pendências ficariam
   // vazias e o `/inicio` pararia de cobrar. Falha silenciosa, do tipo que
   // só aparece quando alguém pergunta por que a campanha não saiu.
-  await dispararSeCompleto();
+  await conferirCadastroOperacionalSeCompleto();
 
   return {
     ok: true,

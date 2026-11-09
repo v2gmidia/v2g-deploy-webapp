@@ -215,7 +215,7 @@ export default async function GestorPage({ searchParams }: {
           visiveis.length === 0 ? <p>Nenhum negócio corresponde aos filtros.</p> :
           <div className={styles.lista}>{visiveis.map((linha) =>
             <article className={styles.linha} key={linha.id}>
-              <div><h3>{linha.nome}</h3><small>{linha.id}</small></div>
+              <div><h3>{linha.nome}</h3>{linha.operadoPor && <small>Operado por {linha.operadoPor} · </small>}<small>{linha.id}</small></div>
               <div className={styles.acao}><b>{proximaAcaoConfiavel(linha.proximaAcao, fonteOperacionalIncompleta)}</b>
                 <span>{linha.contas} conta(s) retornada(s) · {linha.pendenciasCadastro} campo(s) pendente(s)</span>
                 {trabalhoAtivo && !trabalhoIndisponivel && <span>{resumoDoTrabalhoDaConta({

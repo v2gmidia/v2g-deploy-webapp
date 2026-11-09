@@ -1054,3 +1054,13 @@ neste bloco de UI.
 **Registro:** `app/(protected)/criativos/TelaDeCriativos.tsx`,
 `GaleriaCriativos.tsx`, `page.tsx` e `app/criativos-editorial.css`.
 
+### 2026-11-09 — Onboarding operacional sem custo e lucro obrigatórios
+
+**Decisão de Victor:** retirar do onboarding inicial as perguntas de custo direto por venda e lucro desejado. Não mantê-las como etapa opcional escondida nem substituí-las pela mesma exigência com outra redação. A dificuldade real do cliente em saber esses dados não deve produzir números inventados, zeros ou bloqueio do cadastro operacional e da leitura de campanhas existentes.
+
+**Contexto confirmado do piloto:** Piligrin é a agência contratante/operadora no modelo B2B2B; Dúú Gomes é o anunciante, cujos dados alimentam a operação. O acesso atual fica com a agência. Isso não elimina o atendimento B2B direto nem autoriza criar acesso direto do Dúú ou implementar CRM.
+
+**Proposta para a referência de oferta:** registrar preço opcional com unidade/fonte/certeza, separado do ticket médio. Victor relatou aproximadamente R$ 69–70 por fardo do Dúú, possivelmente seis bebidas, quantidade ainda não confirmada. Não foi aprovado transformar esse relato em ticket médio ou preço unitário calculado.
+
+**Situação da implementação:** após aprovação explícita, o novo fluxo foi implementado e testado localmente nos dois repositórios candidatos QA. Completude operacional, diagnóstico e prontidão de cada ação foram separados; não houve preenchimento compensatório, nova execução ou alteração externa. A versão nova ainda depende do commit/push manual e da publicação/homologação QA, sem produção. Proposta em `docs/estado/n26-onboarding-operacional-b2b2b-proposta-09-11.md`; resultado medido e destinos em `docs/estado/n26-onboarding-operacional-implementacao-qa-09-11.md`.
+

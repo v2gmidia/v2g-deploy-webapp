@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { dinheiro } from "@/lib/formato";
 import { gravarCamposDoCliente } from "@/lib/cadastro/procedencia";
 import { validarOrcamento } from "@/lib/meta/orcamento";
-import { dispararSeCompleto } from "@/lib/pipeline/disparar";
+import { conferirCadastroOperacionalSeCompleto } from "@/lib/pipeline/conferir-cadastro-operacional";
 import { DIAS, PISO_MENSAL_DA_CASA } from "@/lib/verba/limites";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
@@ -152,8 +152,8 @@ export async function definirVerbaAction(
   // única pergunta que não tem "não sei" e a única que mora fora do
   // onboarding. Então este é o lugar onde o disparo mais acontece de
   // fato. Ainda assim a decisão não é daqui: quem decide é
-  // `dispararSeCompleto`, com a mesma regra das outras duas superfícies.
-  await dispararSeCompleto();
+  // Conferência operacional não cria execução nem dispara pipeline.
+  await conferirCadastroOperacionalSeCompleto();
 
   // O "Pronto" seco afirmava que estava tudo certo para anunciar — e a
   // tela não sabe disso enquanto o piso do Meta for desconhecido. Diz o

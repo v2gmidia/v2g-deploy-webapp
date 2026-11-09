@@ -7,7 +7,7 @@ export interface LeituraDaPendencia {
   pendencia: PendenciaDoOnboarding | null;
   falha: boolean;
   reserva: { starts_at: string; ends_at: string } | null;
-  /** Só true após conferir respostas, contas e marca do negócio autorizado. */
+  /** Só true após conferir respostas operacionais e marca do negócio autorizado. */
   cadastroConcluido?: boolean;
 }
 
@@ -46,7 +46,7 @@ export async function lerPendenciaDoNegocio(businessId: string): Promise<Leitura
   const indisponivel: LeituraDaPendencia = { pendencia: null, falha: true, reserva: null };
   if (!user) return indisponivel;
   const { data: jornada, error } = await supabase.from("businesses")
-    .select("onboarding, site_url, avg_ticket_min, avg_ticket_max, avg_direct_cost, target_profit_per_customer")
+    .select("onboarding, site_url")
     .eq("id", businessId).eq("profile_id", user.id).maybeSingle();
   if (error || !jornada) return indisponivel;
   if (!fluxoAguardaReuniao(jornada.onboarding)) return { pendencia: null, falha: false, reserva: null };

@@ -48,3 +48,11 @@ export function fluxoAguardaReuniao(onboarding: unknown): boolean {
   const doc = documento(onboarding);
   return "respostas" in doc || "contas" in doc;
 }
+
+/** Só autorização explícita libera o caminho legado que cria execução. */
+export function publicacaoAutorizada(onboarding: unknown): boolean {
+  const valor = documento(onboarding).autorizacao_publicacao;
+  if (!valor || typeof valor !== "object" || Array.isArray(valor)) return false;
+  const autorizacao = valor as Record<string, unknown>;
+  return autorizacao.estado === "autorizada" && typeof autorizacao.em === "string";
+}

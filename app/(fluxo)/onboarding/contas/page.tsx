@@ -1,13 +1,16 @@
-import { carregarContasAction } from "./actions";
-import { Contas } from "./Contas";
+import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { lerReferenciaDePreco } from "@/lib/onboarding/referencia-preco";
+import { ReferenciaDePreco } from "./ReferenciaDePreco";
 import { tituloDaAba } from "@/lib/titulos";
 import { Marca } from "@/components/ui/Marca";
 import "../onboarding-editorial.css";
+import "./referencia-preco.css";
 
-export const metadata = tituloDaAba("/onboarding/contas");
+export const metadata = { ...tituloDaAba("/onboarding/contas"), title: "Referência de preço · V2G" };
 
 /**
- * Bloco 2 do onboarding — as contas.
+ * Referência opcional de preço. Links antigos não reabrem perguntas econômicas.
  *
  * ROTA PRÓPRIA, e não o fim do `/onboarding`: o "não sei" se resolve por
  * telefone, noutro dia, e o retorno precisa de URL. Ver
@@ -19,16 +22,21 @@ export const metadata = tituloDaAba("/onboarding/contas");
  * renderização, sem piscar tela vazia.
  */
 export default async function ContasPage() {
-  const estado = await carregarContasAction();
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const ativo = await negocioAtivoDaSessao();
+  const negocioId = ativo.status === "selecionado" && user ? ativo.negocio.id : null;
+  const leitura = negocioId && user ? await supabase.from("businesses").select("id, onboarding")
+    .eq("id", negocioId).eq("profile_id", user.id).maybeSingle() : null;
 
-  if ("erro" in estado) {
+  if (!leitura || leitura.error || !leitura.data || !negocioId) {
     return (
       <div className="auth-grid solo">
         <section className="auth-card">
-          <h1 className="auth-h">Não consegui abrir suas contas.</h1>
-          <p className="auth-sub">{estado.erro}</p>
-          <a className="cta" href="/onboarding">
-            Voltar para o onboarding
+          <h1 className="auth-h">Não consegui abrir a referência de preço.</h1>
+          <p className="auth-sub">Confira o negócio selecionado e tente novamente.</p>
+          <a className="cta" href="/escolher-negocio">
+            Conferir negócio selecionado
           </a>
         </section>
       </div>
@@ -39,10 +47,12 @@ export default async function ContasPage() {
     <div className="onb-v2 onb-v2-etapa">
       <header className="onb-v2-topo">
         <Marca editorial href="/inicio" />
-        <a href="/onboarding">Rever meu negócio</a>
+        <a href="/onboarding">Rever as informações</a>
       </header>
       <section className="onb-v2-conteudo">
-        <Contas inicial={estado} />
+        <h1 className="auth-h">Quer incluir uma referência de preço?</h1>
+        <p className="auth-sub">É opcional. Um preço por produto, fardo ou serviço ajuda a equipe a entender a oferta. Você pode continuar sem informar.</p>
+        <ReferenciaDePreco businessId={negocioId} atual={lerReferenciaDePreco(leitura.data.onboarding)} />
       </section>
     </div>
   );

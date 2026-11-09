@@ -16,7 +16,7 @@
  * as três compartilham é o `montarCadastro`, que é o dado.
  */
 
-import type { Pendencia } from "./montar";
+import type { Pendencia, PendenciaOperacional } from "./montar";
 
 /**
  * O prazo até o bloco trocar de dono.
@@ -87,7 +87,7 @@ function lista(itens: string[]): string {
  * do dia 5 testável sem esperar cinco dias.
  */
 export function resumirPendencias(
-  pendencias: Pendencia[],
+  pendencias: Pendencia[] | PendenciaOperacional[],
   agora: Date,
 ): ResumoDePendencias {
   if (pendencias.length === 0) {

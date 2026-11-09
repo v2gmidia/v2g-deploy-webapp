@@ -14,10 +14,6 @@ interface Linha {
   onboarding: unknown;
   site_url: string | null;
   instagram_handle: string | null;
-  avg_ticket_min: number | null;
-  avg_ticket_max: number | null;
-  avg_direct_cost: number | null;
-  target_profit_per_customer: number | null;
 }
 
 export interface EstadoMarca {
@@ -27,7 +23,8 @@ export interface EstadoMarca {
   siteNaoTenhoDeclarado: boolean;
   marca: RespostasDaMarca | null;
   concluido: boolean;
-  contasProntas: boolean;
+  /** Compatibilidade de bancada; economia não é mais uma guarda. */
+  contasProntas?: boolean;
   respostasBasicas: ReturnType<typeof respostasBasicas>;
   faltamBasicas: PerguntaBasica[];
 }
@@ -46,7 +43,7 @@ async function obter(): Promise<{ erro: string } | { linha: Linha; profileId: st
   const ativo = await negocioAtivoDaSessao();
   if (ativo.status !== "selecionado") return { erro: "Escolha um negócio para continuar." };
   const { data, error } = await supabase.from("businesses")
-    .select("id, onboarding, site_url, instagram_handle, avg_ticket_min, avg_ticket_max, avg_direct_cost, target_profit_per_customer")
+    .select("id, onboarding, site_url, instagram_handle")
     .eq("profile_id", user.id).eq("id", ativo.negocio.id).maybeSingle();
   if (error) {
     console.error("[marca] falha ao buscar negócio ::", error.message);
@@ -58,17 +55,28 @@ async function obter(): Promise<{ erro: string } | { linha: Linha; profileId: st
 
 function estado(linha: Linha): EstadoMarca {
   const doc = documento(linha.onboarding);
-  const { marca, faltamBasicas, contasProntas, concluido } = estadoDaConclusao(linha);
+  const respostas = doc.respostas && typeof doc.respostas === "object" && !Array.isArray(doc.respostas)
+    ? doc.respostas as Record<string, unknown> : {};
+  const operador = respostas.operador && typeof respostas.operador === "object" && !Array.isArray(respostas.operador)
+    ? (respostas.operador as { texto?: unknown }).texto : null;
+  const agenciaOperadora = operador === "Uma agência ou gestor opera para o anunciante";
+  const contatosBrutos = respostas._contatos_anunciante;
+  const contatos = contatosBrutos && typeof contatosBrutos === "object" && !Array.isArray(contatosBrutos)
+    ? contatosBrutos as Record<string, unknown> : {};
+  const siteDoAnunciante = contatos.site_nao_tem === true ? ""
+    : typeof contatos.site_url === "string" ? contatos.site_url : "";
+  const instagramDoAnunciante = typeof contatos.instagram_handle === "string" ? contatos.instagram_handle : "";
+  const { marca, faltamBasicas, concluido } = estadoDaConclusao(linha);
   return {
     businessId: linha.id,
-    site: linha.site_url ?? "",
-    instagram: linha.instagram_handle ?? "",
-    siteNaoTenhoDeclarado: (doc.respostas as Record<string, { texto?: string }> | undefined)?.site?.texto === "Não tenho site",
+    site: agenciaOperadora ? siteDoAnunciante : linha.site_url ?? "",
+    instagram: agenciaOperadora ? instagramDoAnunciante : linha.instagram_handle ?? "",
+    siteNaoTenhoDeclarado: agenciaOperadora ? contatos.site_nao_tem === true
+      : (doc.respostas as Record<string, { texto?: string }> | undefined)?.site?.texto === "Não tenho site",
     marca,
     concluido,
     respostasBasicas: respostasBasicas(doc),
     faltamBasicas,
-    contasProntas,
   };
 }
 
@@ -92,7 +100,6 @@ export async function salvarMarcaAction(entrada: {
   if (entrada.businessId !== r.linha.id) return { ok: false, erro: "O negócio selecionado mudou. Atualize esta página." };
   const anterior = estado(r.linha);
   if (anterior.faltamBasicas.length) return { ok: false, erro: "Termine as perguntas sobre seu negócio antes de concluir." };
-  if (!anterior.contasProntas) return { ok: false, erro: "Termine suas contas antes de continuar." };
 
   const aparencia = entrada.aparencia.trim();
   if (entrada.coresConfirmadas !== undefined &&
@@ -116,14 +123,21 @@ export async function salvarMarcaAction(entrada: {
   const instagram = entrada.instagram.trim() ? validarInstagram(entrada.instagram) : null;
   if (entrada.instagram.trim() && !instagram) return { ok: false, erro: "Confira o @ do Instagram." };
   const campos: CampoParaGravar[] = [];
-  if (site && site !== anterior.site) campos.push({ campo: "site_url", valor: site });
-  if (instagram && instagram !== anterior.instagram) campos.push({ campo: "instagram_handle", valor: instagram });
-  const esvaziar = [
+  const docAnterior = documento(r.linha.onboarding);
+  const respostasAnteriores = docAnterior.respostas && typeof docAnterior.respostas === "object" && !Array.isArray(docAnterior.respostas)
+    ? docAnterior.respostas as Record<string, unknown> : {};
+  const operadorAnterior = respostasAnteriores.operador && typeof respostasAnteriores.operador === "object" && !Array.isArray(respostasAnteriores.operador)
+    ? (respostasAnteriores.operador as { texto?: unknown }).texto : null;
+  const agenciaOperadora = operadorAnterior === "Uma agência ou gestor opera para o anunciante";
+  if (!agenciaOperadora && site && site !== anterior.site) campos.push({ campo: "site_url", valor: site });
+  if (!agenciaOperadora && instagram && instagram !== anterior.instagram) campos.push({ campo: "instagram_handle", valor: instagram });
+  const esvaziar = agenciaOperadora ? [] : [
     ...(entrada.siteNaoTenho && anterior.site ? ["site_url"] : []),
     ...(!instagram && anterior.instagram ? ["instagram_handle"] : []),
   ];
   const visual = entrada.aparenciaNaoSei ? "" : aparencia;
   if (anterior.concluido && campos.length === 0 && esvaziar.length === 0 && anterior.marca &&
+      anterior.site === (site ?? "") && anterior.instagram === (instagram ?? "") &&
       anterior.marca.aparencia === visual &&
       JSON.stringify(anterior.marca.coresConfirmadas) === JSON.stringify(cores) &&
       anterior.marca.aparenciaNaoSei === entrada.aparenciaNaoSei &&
@@ -150,6 +164,15 @@ export async function salvarMarcaAction(entrada: {
     p_patch: {
       marca: { aparencia: visual, coresConfirmadas: cores,
         aparenciaNaoSei: entrada.aparenciaNaoSei, siteNaoTenho: entrada.siteNaoTenho, em: agora },
+      ...(agenciaOperadora ? { versao: 2, respostas: { _contatos_anunciante: {
+        ...((respostasAnteriores._contatos_anunciante && typeof respostasAnteriores._contatos_anunciante === "object"
+          && !Array.isArray(respostasAnteriores._contatos_anunciante))
+          ? respostasAnteriores._contatos_anunciante as Record<string, unknown> : {}),
+        site_url: site || null,
+        instagram_handle: instagram || null,
+        site_nao_tem: entrada.siteNaoTenho,
+        em: agora,
+      } } } : {}),
       ...(anterior.concluido ? {} : { conclusao: { em: agora, proximoPasso: "agendamento_pendente" } }),
     },
   });

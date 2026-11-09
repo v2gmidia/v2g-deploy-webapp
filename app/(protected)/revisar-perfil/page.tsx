@@ -103,13 +103,17 @@ export default async function QuemEstaEsperandoPage({ searchParams }: {
       const negocio = linha as unknown as NegocioParaCadastro;
       const r = montarCadastro(negocio);
       if (r.completo) return null;
-      const naoSei = r.pendencias
+      const pendencias = r.pendencias.filter((pendencia) => ![
+        "ticket_medio", "custo_direto_medio", "lucro_desejado_por_cliente",
+      ].includes(pendencia.campo));
+      if (pendencias.length === 0) return null;
+      const naoSei = pendencias
         .map((p) => (p.motivo === "nao_sei" ? diasDesde(p.desde, agora) : null))
         .filter((d): d is number => d !== null);
       return {
         id: negocio.id,
         nome: negocio.name ?? "(sem nome)",
-        pendencias: r.pendencias,
+        pendencias,
         diasEsperando: naoSei.length > 0 ? Math.max(...naoSei) : null,
       };
     })

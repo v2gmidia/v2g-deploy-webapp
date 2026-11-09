@@ -43,11 +43,8 @@ export const BLOCOS: readonly {
   {
     id: "numeros",
     titulo: "Seus números",
-    // Primeiro de propósito. O desenho parte da premissa de que ele revisa
-    // três campos e sai — então os três primeiros têm que ser os que custam
-    // dinheiro quando estão errados.
     abertura:
-      "Comece por estes. É deles que sai quanto a IA pode gastar para te trazer um cliente.",
+      "Confira o limite mensal. Ticket só deve ser informado quando houver uma média real de pedido; preço por unidade não substitui essa medida.",
   },
   { id: "oferta", titulo: "O que você vende" },
   { id: "lugar", titulo: "Onde e quando" },
@@ -168,7 +165,7 @@ const APRESENTACAO: Record<ChaveDoCatalogo, Apresentacao> = {
   "businesses.avg_ticket_min": {
     bloco: "numeros",
     rotulo: "Quanto uma venda costuma dar",
-    ajuda: "O que entra, em média, quando alguém compra. Se varia, dá a faixa.",
+    ajuda: "Histórico opcional. Só informe a média de um pedido quando ela for conhecida; preço por unidade, pacote ou fardo não é ticket.",
     parCom: "businesses.avg_ticket_max",
   },
   "businesses.avg_ticket_max": {
@@ -179,17 +176,14 @@ const APRESENTACAO: Record<ChaveDoCatalogo, Apresentacao> = {
   "businesses.avg_direct_cost": {
     bloco: "numeros",
     rotulo: "Quanto sai do seu bolso em cada venda",
-    ajuda:
-      "O que você gasta para entregar UMA venda: material, produto, comissão. Não é a conta de luz.",
-    dificil: true,
-    ondeResponder: { href: "/onboarding/contas", rotulo: "Responder pela conta (a 2 de 3)" },
+    ajuda: "Histórico econômico opcional, fora do onboarding inicial.",
+    oculto: true,
   },
   "businesses.target_profit_per_customer": {
     bloco: "numeros",
     rotulo: "Quanto você quer que sobre em cada cliente",
-    ajuda: "Depois de pagar o que gastou para entregar.",
-    dificil: true,
-    ondeResponder: { href: "/onboarding/contas", rotulo: "Responder pela conta (a 3 de 3)" },
+    ajuda: "Histórico econômico opcional, fora do onboarding inicial.",
+    oculto: true,
   },
   "businesses.monthly_budget": {
     bloco: "numeros",

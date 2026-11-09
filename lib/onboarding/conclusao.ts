@@ -1,48 +1,49 @@
-import { lerConta, ticketEscalar, type RespostaDeConta } from "../cadastro/montar.ts";
 import { faltamRespostasBasicas } from "./bloco-um.ts";
 import { documento, lerConclusao, lerMarca } from "./marca.ts";
 
 export interface DadosParaConclusao {
   onboarding?: unknown;
   site_url?: string | null;
-  avg_ticket_min: number | string | null;
-  avg_ticket_max: number | string | null;
-  avg_direct_cost: number | string | null;
-  target_profit_per_customer: number | string | null;
+  avg_ticket_min?: number | string | null;
+  avg_ticket_max?: number | string | null;
+  avg_direct_cost?: number | string | null;
+  target_profit_per_customer?: number | string | null;
 }
 
 export interface PendenciaDoOnboarding {
   titulo: string;
   corpo: string;
-  href: "/onboarding" | "/onboarding/contas" | "/onboarding/marca" | "/onboarding/concluido";
+  href: "/onboarding" | "/onboarding/marca" | "/onboarding/concluido";
   rotulo: string;
-}
-
-function numero(valor: number | string | null | undefined): number | null {
-  if (valor === null || valor === undefined || valor === "") return null;
-  const convertido = Number(valor);
-  return Number.isFinite(convertido) ? convertido : null;
 }
 
 /** Mesmo veredito para cliente, página inicial e carteira interna. Reserva é outro estado. */
 export function estadoDaConclusao(dados: DadosParaConclusao) {
   const doc = documento(dados.onboarding);
   const faltamBasicas = faltamRespostasBasicas(doc);
-  const contas = (doc.contas ?? {}) as Partial<Record<"ticket" | "custo" | "lucro", RespostaDeConta>>;
-  const contasProntas = [
-    lerConta(ticketEscalar(numero(dados.avg_ticket_min), numero(dados.avg_ticket_max)), contas.ticket),
-    lerConta(numero(dados.avg_direct_cost), contas.custo),
-    lerConta(numero(dados.target_profit_per_customer), contas.lucro),
-  ].every((leitura) => leitura.estado === "respondida" || leitura.estado === "nao_sei");
+  const respostas = doc.respostas && typeof doc.respostas === "object" && !Array.isArray(doc.respostas)
+    ? doc.respostas as Record<string, unknown> : {};
+  const operador = respostas.operador && typeof respostas.operador === "object" && !Array.isArray(respostas.operador)
+    ? (respostas.operador as { texto?: unknown }).texto : null;
+  const agenciaOperadora = operador === "Uma agência ou gestor opera para o anunciante";
+  const contatosBrutos = respostas._contatos_anunciante;
+  const contatos = contatosBrutos && typeof contatosBrutos === "object" && !Array.isArray(contatosBrutos)
+    ? contatosBrutos as Record<string, unknown> : {};
+  const siteDoAnunciante = typeof contatos.site_url === "string" && contatos.site_url.trim()
+    ? contatos.site_url : null;
   const marca = lerMarca(doc);
   const marcaPronta = marca !== null &&
     (marca.aparenciaNaoSei || marca.aparencia.trim().length > 0 || marca.coresConfirmadas.length > 0) &&
-    (marca.siteNaoTenho ? !dados.site_url : !!dados.site_url);
+    (agenciaOperadora
+      ? (marca.siteNaoTenho ? contatos.site_nao_tem === true : !!siteDoAnunciante)
+      : (marca.siteNaoTenho ? !dados.site_url : !!dados.site_url));
   return {
     faltamBasicas,
-    contasProntas,
+    // Compatibilidade de leitura para componentes antigos. Não é mais uma
+    // guarda da entrada; diagnóstico econômico é etapa futura e separada.
+    contasProntas: true,
     marca,
-    concluido: lerConclusao(doc) !== null && faltamBasicas.length === 0 && contasProntas && marcaPronta,
+    concluido: lerConclusao(doc) !== null && faltamBasicas.length === 0 && marcaPronta,
   };
 }
 
@@ -57,12 +58,6 @@ export function pendenciaDoOnboarding(
     corpo: "O que você já respondeu continua guardado. Termine as perguntas para a equipe preparar o próximo passo deste negócio.",
     href: "/onboarding",
     rotulo: "Continuar perguntas",
-  };
-  if (!estado.contasProntas) return {
-    titulo: "Ainda faltam as contas do negócio",
-    corpo: "Confira os valores que ajudam a planejar os anúncios. Você pode marcar o que ainda não sabe e revisar com o gestor.",
-    href: "/onboarding/contas",
-    rotulo: "Continuar contas",
   };
   if (!estado.concluido) return {
     titulo: "Ainda falta conferir o visual da marca",

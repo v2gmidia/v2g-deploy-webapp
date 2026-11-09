@@ -2,7 +2,8 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
-import { COLUNAS_DO_CADASTRO, montarCadastro, type NegocioParaCadastro, type Pendencia } from "./montar";
+import { COLUNAS_DO_CADASTRO_OPERACIONAL, montarCadastroOperacional,
+  type NegocioParaCadastro, type PendenciaOperacional } from "./montar";
 
 
 /**
@@ -17,7 +18,7 @@ import { COLUNAS_DO_CADASTRO, montarCadastro, type NegocioParaCadastro, type Pen
  * negócio — quem ainda não passou pelo onboarding não tem pendência de
  * cadastro, tem cadastro nenhum, e são coisas diferentes na tela.
  */
-export async function pendenciasDoCliente(): Promise<Pendencia[]> {
+export async function pendenciasDoCliente(): Promise<PendenciaOperacional[]> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -28,7 +29,7 @@ export async function pendenciasDoCliente(): Promise<Pendencia[]> {
 
   const { data, error } = await supabase
     .from("businesses")
-    .select(COLUNAS_DO_CADASTRO)
+    .select(COLUNAS_DO_CADASTRO_OPERACIONAL)
     .eq("id", ativo.negocio.id)
     .eq("profile_id", user.id)
     .maybeSingle();
@@ -39,6 +40,6 @@ export async function pendenciasDoCliente(): Promise<Pendencia[]> {
   }
   if (!data) return [];
 
-  const r = montarCadastro(data as unknown as NegocioParaCadastro);
+  const r = montarCadastroOperacional(data as unknown as NegocioParaCadastro);
   return r.completo ? [] : r.pendencias;
 }

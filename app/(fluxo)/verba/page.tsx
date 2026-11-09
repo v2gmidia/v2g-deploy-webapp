@@ -5,6 +5,10 @@ import { cidadeParaTela, estadoDoAlcance } from "@/lib/verba/alcance";
 import { FormVerba } from "./FormVerba";
 import { tituloDaAba } from "@/lib/titulos";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { Marca } from "@/components/ui/Marca";
+import { documento } from "@/lib/onboarding/marca";
+import "../onboarding/onboarding-editorial.css";
+import "./verba-editorial.css";
 
 export const metadata = tituloDaAba("/verba");
 
@@ -31,7 +35,7 @@ export default async function VerbaPage() {
 
   const { data: negocio } = ativo.status === "selecionado"
     ? await supabase.from("businesses")
-      .select("id, name, city, cep, radius_km, monthly_budget, geo_lat, geo_key, geo_label, geo_resolved_at")
+      .select("id, name, city, cep, radius_km, monthly_budget, geo_lat, geo_key, geo_label, geo_resolved_at, onboarding")
       .eq("id", ativo.negocio.id).maybeSingle()
     : { data: null };
 
@@ -47,11 +51,14 @@ export default async function VerbaPage() {
     : { data: null };
 
   const teto = negocio?.monthly_budget ? Number(negocio.monthly_budget) : null;
-  const diario = teto !== null ? teto / 30 : null;
 
   return (
-    <div className="auth-grid solo">
-      <main className="auth-card">
+    <div className="onb-v2 onb-v2-etapa verba-editorial">
+      <header className="onb-v2-topo">
+        <Marca editorial href="/inicio" />
+        <a href="https://wa.me/5521936182176" target="_blank" rel="noopener noreferrer">Falar com uma pessoa</a>
+      </header>
+      <div className="onb-v2-conteudo verba-conteudo">
       <div className="page-head">
         <h1>Sua verba e o cartão</h1>
         <p>
@@ -60,26 +67,22 @@ export default async function VerbaPage() {
         </p>
       </div>
 
-      <section className="hero-destaque">
-        <span className="eyebrow">Seu limite no mês</span>
+      <div className="verba-planejamento">
+      <section className="verba-limite" aria-labelledby="verba-limite-titulo">
+        <h2 id="verba-limite-titulo">Limite mensal registrado na V2G</h2>
         {teto !== null ? (
-          <>
-            <p className="hero-num">{dinheiro(teto, "BRL")}</p>
-            <p className="hero-legenda">é o teto que você definiu</p>
-            <p className="hero-sub">
-              dá mais ou menos {dinheiro(diario ?? 0, "BRL")} por dia de anúncio
-            </p>
-          </>
+          <p className="verba-valor">{dinheiro(teto, "BRL")}</p>
         ) : (
-          <p className="hero-frase">Você ainda não definiu quanto quer investir.</p>
+          <p>Você ainda não definiu quanto quer investir.</p>
         )}
-        <p className="hero-note">
-          O Facebook pode gastar um pouco mais num dia em que estiver aparecendo gente boa, e
-          menos nos dias seguintes para compensar. No fim do mês fecha no seu limite.
+        <p className="verba-explicacao">
+          O limite é usado para planejamento. Salvar aqui não altera os orçamentos na Meta.
+          A cobrança efetiva segue o gasto e as configurações da conta de anúncios.
         </p>
       </section>
 
       <FormVerba atual={teto} businessId={negocio?.id ?? ""} />
+      </div>
 
       <AlcanceReal negocio={negocio ?? null} temPagina={Boolean(conexao?.meta_page_id)} />
 
@@ -151,7 +154,7 @@ export default async function VerbaPage() {
           Falar sobre cobrança &rarr;
         </a>
       </section>
-    </main>
+      </div>
     </div>
   );
 }
@@ -209,10 +212,47 @@ function AlcanceReal({
     geo_key: string | null;
     geo_label: string | null;
     geo_resolved_at: string | null;
+    onboarding?: unknown;
   } | null;
   temPagina: boolean;
 }) {
   if (!negocio) return null;
+
+  const respostas = documento(documento(negocio.onboarding).respostas);
+  const agenciaOperadora = documento(respostas.operador).texto === "Uma agência ou gestor opera para o anunciante";
+  // Na operação de agência, as colunas geográficas podem ser da agência.
+  // Só a resposta explícita do anunciante descreve a região de preparação.
+  if (agenciaOperadora) {
+    const praca = documento(respostas.praca);
+    const texto = typeof praca.texto === "string" ? praca.texto.trim() : "";
+    const echo = typeof praca.echo === "string" ? praca.echo.trim() : "";
+    const cidadeInformada = typeof praca.cidade === "string" ? praca.cidade.trim() : "";
+    const regiao = texto ? echo || [cidadeInformada, texto].filter(Boolean).join(" · ") : "";
+    return (
+      <section className="trust">
+        <b className="title">Região informada para preparação</b>
+        {regiao ? <>
+          {regiao}. Esta informação não confirma onde a campanha está sendo exibida.
+        </> : <>
+          Ainda falta confirmar a região de atendimento do anunciante.
+          <br />
+          <a className="wa" href="/onboarding">Confirmar região do anunciante &rarr;</a>
+        </>}
+      </section>
+    );
+  }
+
+  // O padrão usado na preparação técnica não comprova uma escolha do cliente.
+  if (typeof negocio.radius_km !== "number" || !Number.isFinite(negocio.radius_km) || negocio.radius_km <= 0) {
+    return (
+      <section className="trust">
+        <b className="title">Região de atendimento a confirmar</b>
+        Ainda não temos um raio válido informado para este negócio. Confirme a região para preparar os anúncios.
+        <br />
+        <a className="wa" href="/onboarding">Confirmar região de atendimento &rarr;</a>
+      </section>
+    );
+  }
 
   const raio = raioValido(negocio.radius_km);
   const cidade = negocio.city ? cidadeParaTela(negocio.city) : null;

@@ -1,0 +1,59 @@
+/* Escopo local: acompanha a superfície clara do onboarding, inclusive
+   quando a preferência do aplicativo é escura. Não altera o tema salvo. */
+.verba-editorial {
+  --ink: #102A35;
+  --ink-soft: #49606A;
+  --ink-mute: #49606A;
+  --navy: #102A35;
+  --surface: #FFFFFF;
+  --line: #CCD9D6;
+  --ice: #CCD9D6;
+  --ice-soft: #ECF5F2;
+  --cobalt: #0B40DA;
+  --cobalt-ink: #0B40DA;
+  --cobalt-dark: #092EAA;
+  --warn: #916018;
+  --warn-soft: #FFF4DE;
+  --crit: #6B1717;
+  --crit-soft: #FFF0EF;
+  --raio-controle: 4px;
+  --raio-cartao: 4px;
+  --raio-selo: 4px;
+  color: var(--ink);
+}
+.verba-editorial .verba-conteudo { max-width: 960px; }
+.verba-editorial .onb-v2-topo > a { display: inline-flex; align-items: center; min-height: 44px; }
+.verba-editorial .onb-v2-topo .wordmark { text-decoration: none; }
+.verba-editorial .page-head { margin-bottom: 28px; }
+.verba-editorial .page-head h1 { margin: 0 0 12px; font-size: 30px; font-weight: 400; letter-spacing: -.02em; color: var(--ink); }
+.verba-editorial .page-head p { max-width: 65ch; font-size: 16px; }
+.verba-planejamento { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 32px; align-items: start; margin-bottom: 32px; }
+.verba-limite { min-width: 0; padding-block: 24px; }
+.verba-limite h2 { margin: 0 0 16px; font-size: 18px; font-weight: 500; line-height: 1.4; }
+.verba-limite .verba-valor { margin: 0 0 20px; font-size: clamp(28px, 3.2vw, 40px); line-height: 1.2; font-weight: 500; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.verba-explicacao { max-width: 42ch; margin: 0; color: var(--ink-soft); font-size: 16px; line-height: 1.6; }
+.verba-editorial .form-card { min-width: 0; padding: 24px; border-width: 1px; }
+.verba-editorial .field label { font-size: 16px; letter-spacing: normal; text-transform: none; font-weight: 500; }
+.verba-editorial .field input { min-height: 52px; font-size: 18px; caret-color: var(--cobalt); }
+.verba-editorial .field input::placeholder { color: var(--ink-mute); opacity: 1; }
+.verba-editorial .cta { letter-spacing: normal; font-weight: 500; }
+.verba-editorial .cta:hover:not(:disabled) { background: var(--cobalt-dark); }
+.verba-editorial .cta:disabled { background: #CCD9D6; color: #49606A; cursor: not-allowed; opacity: 1; }
+.verba-editorial :is(.passos-card, .peca-card) { margin-top: 32px; margin-bottom: 32px; }
+.verba-editorial .section-title { margin-bottom: 16px; }
+.verba-editorial .section-title h2 { font-size: 20px; font-weight: 500; letter-spacing: normal; }
+.verba-editorial .duas-cobrancas { gap: 20px; margin-bottom: 20px; }
+.verba-editorial .cobranca { padding: 20px; }
+.verba-editorial .cobranca .eyebrow { letter-spacing: normal; text-transform: none; font-size: 14px; font-weight: 500; }
+.verba-editorial .trust { border-width: 1px; padding: 20px; }
+.verba-editorial .peca-card .acoes { max-width: 320px; }
+.verba-editorial .empty-note { line-height: 1.6; }
+.verba-editorial ::selection { background: #B0E9FD; color: #102A35; }
+@media (max-width: 760px) {
+  .verba-planejamento { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .verba-limite { padding-block: 0; }
+  .verba-editorial .form-card { padding: 20px; }
+  .verba-editorial .onb-v2-topo { gap: 16px; }
+  .verba-editorial .onb-v2-topo > a:last-child { max-width: 145px; font-size: 14px; text-align: right; }
+  .verba-editorial .page-head h1 { font-size: 28px; }
+}

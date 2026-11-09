@@ -10,7 +10,7 @@ import {
   type NegocioParaCadastro,
 } from "@/lib/cadastro/montar";
 import { MINUTOS_ATE_DESTRAVAR_DISPARO } from "./relogios";
-import { fluxoAguardaReuniao } from "@/lib/onboarding/marca";
+import { fluxoAguardaReuniao, publicacaoAutorizada } from "@/lib/onboarding/marca";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
@@ -432,12 +432,10 @@ async function confirmarQueComecou(idExecucao: string): Promise<ConfirmacaoDeIni
 /**
  * Dispara o pipeline se — e só se — o cadastro acabou de ficar completo.
  *
- * CHAMADA NO FIM DE TODA AÇÃO QUE GRAVA CAMPO OBRIGATÓRIO. São três
- * superfícies (`/onboarding/contas`, `/verba`, `/meu-negocio`) porque o
- * último campo a ser preenchido muda por cliente — e é por isso que a
- * regra mora aqui e não em cada uma delas. Três cópias divergiriam na
- * primeira edição, e a divergência apareceria como cliente que completou
- * o cadastro e nunca disparou.
+ * Porta legada mantida para uma autorização explícita de publicação. O
+ * onboarding operacional não chama esta função: ele usa a conferência V2,
+ * que não cria execução. Mesmo um payload V1 completo sai daqui sem efeito
+ * enquanto `autorizacao_publicacao` não estiver persistida.
  *
  * NUNCA LANÇA. É a invariante 4, e ela não é preciosismo: quem chama
  * acabou de salvar um campo com sucesso, e uma exceção daqui faria a
@@ -541,6 +539,13 @@ async function disparar(): Promise<ResultadoDisparo> {
   // ---------- 4. camada 1: já foi ----------
   if (negocio.cadastro_estado === "enviado") {
     return { fez: "nada", porque: "ja_enviado" };
+  }
+
+  // Cadastro operacional, revisão e autorização são estados distintos.
+  // Sem autorização explícita, o endpoint legado `/cadastro` — que cria
+  // execução — nunca é chamado, mesmo que todos os campos antigos existam.
+  if (!publicacaoAutorizada(negocio.onboarding)) {
+    return { fez: "nada", porque: "autorizacao_publicacao_pendente" };
   }
 
   // A jornada atual termina em uma reunião ainda sem horário escolhido.

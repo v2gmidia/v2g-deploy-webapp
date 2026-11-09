@@ -24,6 +24,7 @@ const mocks = {
   '@/lib/cadastro/procedencia': 'export const gravarCamposDoCliente = async a => globalThis.__onboardingOffline.fields(a);',
   '@/lib/backend': 'export const listarNichos = async () => ({ok:false});',
   '@/lib/pipeline/disparar': 'export const dispararSeCompleto = async () => globalThis.__onboardingOffline.dispatch();',
+  '@/lib/pipeline/conferir-cadastro-operacional': 'export const conferirCadastroOperacionalSeCompleto = async () => globalThis.__onboardingOffline.dispatch();',
   '@/lib/multiconta/ativo': 'export const negocioAtivoDaSessao = async () => globalThis.__onboardingOffline.activeBusiness();',
 };
 const fetchBefore = globalThis.fetch;
@@ -188,6 +189,59 @@ test('uma aba antiga não grava a escolha do primeiro anúncio pelo cliente', as
   assert.equal(result.ok, false);
   assert.deepEqual(row, before);
   assert.deepEqual(events, []);
+});
+
+test('B2B2B guarda dados do anunciante no JSON sem alterar perfil da agência', async () => {
+  Object.assign(row, { name:'Piligrin', description:'Perfil da agência', niche:'Agência',
+    city:'Rio de Janeiro', cep:'20000000', radius_km:25,
+    site_url:'https://piligrin.example', instagram_handle:'@piligrin' });
+  const canonico = structuredClone({ name:row.name, description:row.description, niche:row.niche,
+    city:row.city, cep:row.cep, radius_km:row.radius_km,
+    site_url:row.site_url, instagram_handle:row.instagram_handle });
+  assert.equal((await actions.salvarRespostaAction({businessId:row.id,qid:'operador',
+    texto:'Uma agência ou gestor opera para o anunciante',origem:'chip'})).ok,true);
+  assert.equal((await save('nome','Dúú Gomes')).ok,true);
+  assert.equal((await save('ramo','Indústria de bebidas')).ok,true);
+  assert.equal((await save('descricao','Chope de vinho para bares e pontos de venda')).ok,true);
+  assert.equal((await actions.salvarRespostaAction({businessId:row.id,qid:'praca',
+    texto:'Brasil inteiro',origem:'chip'})).ok,true);
+  assert.equal((await save('site','duu.example')).ok,true);
+  assert.equal((await save('instagram','@duu')).ok,true);
+  assert.deepEqual({ name:row.name, description:row.description, niche:row.niche,
+    city:row.city, cep:row.cep, radius_km:row.radius_km,
+    site_url:row.site_url, instagram_handle:row.instagram_handle }, canonico);
+  assert.equal(row.onboarding.respostas.nome.texto,'Dúú Gomes');
+  assert.equal(row.onboarding.respostas._contrato_operacional,'cadastro_operacional.v2');
+  assert.equal(events.includes('campos'),false);
+  assert.equal(events.includes('esvaziar'),false);
+});
+
+test('B2B2B limpa contatos do anunciante sem apagar site e Instagram da agência', async () => {
+  Object.assign(row, { name:'Piligrin', description:'Perfil da agência',
+    site_url:'https://piligrin.example', instagram_handle:'@piligrin' });
+  Object.assign(row.onboarding.respostas, {
+    _contrato_operacional:'cadastro_operacional.v2',
+    operador:resposta('Uma agência ou gestor opera para o anunciante'),
+    nome:resposta('Dúú Gomes'), contratante:resposta('Piligrin'),
+    publico:resposta('Bares e pontos de venda'), destino:resposta('WhatsApp'),
+    campanha:resposta('Já existe uma campanha para acompanhar'),
+  });
+  const primeira = await marca.salvarMarcaAction({businessId:row.id,site:'duu.example',siteNaoTenho:false,
+    instagram:'@duu',aparencia:'Identidade aprovada',aparenciaNaoSei:false});
+  assert.equal(primeira.ok,true);
+  const limpeza = await marca.salvarMarcaAction({businessId:row.id,site:'',siteNaoTenho:true,
+    instagram:'',aparencia:'Identidade aprovada',aparenciaNaoSei:false});
+  assert.equal(limpeza.ok,true);
+  assert.equal(row.site_url,'https://piligrin.example');
+  assert.equal(row.instagram_handle,'@piligrin');
+  assert.equal(row.onboarding.respostas._contatos_anunciante.site_nao_tem,true);
+  assert.equal(row.onboarding.respostas._contatos_anunciante.site_url,null);
+  assert.equal(row.onboarding.respostas._contatos_anunciante.instagram_handle,null);
+  const retomada = await marca.carregarMarcaAction();
+  assert.equal(retomada.site,'');
+  assert.equal(retomada.instagram,'');
+  assert.equal(retomada.siteNaoTenhoDeclarado,true);
+  assert.equal(events.includes('esvaziar'),false);
 });
 
 test('declarar ausência limpa endereço anterior sem apagar outros blocos', async () => {
@@ -602,7 +656,7 @@ test('falha da leitura posterior não transforma resposta já gravada em falha d
   assert.equal(resultado.estado,undefined);
   assert.equal(row.avg_ticket_min,120);
   assert.equal(row.onboarding.contas.ticket.confirmado,true);
-  assert.deepEqual(events,['json','campos','json','revalidate:/onboarding/contas','disparo']);
+  assert.deepEqual(events,['json','campos','json','revalidate:/onboarding/contas']);
 });
 
 test('falha da leitura posterior preserva reabertura gravada para recarregar', async () => {
@@ -647,12 +701,10 @@ test('contas e marca de aba antiga não gravam no negócio atual', async () => {
   assert.deepEqual(events,[]);
 });
 
-test('marca exige contas fechadas e resposta visual explícita', async () => {
-  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,false);
-  assert.deepEqual(events,[]);
-  contasProntas();
+test('marca não exige contas e ainda exige resposta visual explícita', async () => {
   assert.equal((await marca.salvarMarcaAction({...entradaMarca(),aparencia:''})).ok,false);
   assert.deepEqual(events,[]);
+  assert.equal((await marca.salvarMarcaAction(entradaMarca())).ok,true);
 });
 
 test('cores confirmadas concluem marca sem exigir descrição livre', async () => {

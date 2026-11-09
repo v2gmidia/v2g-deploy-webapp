@@ -2,6 +2,8 @@
 
 ## 0. Entrega local concluída — publicação QA pendente
 
+> RESOLVIDO em 09/11/2026: Victor fez commit/push do WebApp QA; a Central publicou o backend somente no serviço QA por pacote fechado autorizado. Início real Dúú com números e gráfico; 7/7 gastos diários conferidos com a Meta. Ver [publicação e prova posterior](./n26-inicio-qa-publicacao-conferencia-09-11.md). Depois de nova autorização, backend registrado no Git em **646ab18**; Cauã confirmou Ver números, peça e teto mensal. Peça recebida na QA para revisão; decisão/retorno ainda pendentes. Ver [registro e rodada da peça](./n26-duu-piloto-registro-git-09-11.md). O restante da §0 preserva o plano anterior ao ato.
+
 **Números, gráfico e mensagens do Início implementados, revisados e testados localmente. Pacotes prontos para revisão e commit/push manuais destinados à QA. Nenhuma publicação foi realizada.**
 
 | Passo autorizado | Resultado desta rodada | Próxima prova |

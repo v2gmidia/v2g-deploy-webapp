@@ -37,7 +37,11 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   const [erroInstagram, setErroInstagram] = useState<string | null>(null);
   const [erroSite, setErroSite] = useState<string | null>(null);
   const tempoDaPersistencia = useTempoDaOperacao(enviando);
-  const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
+  const rotulos = {
+    nome: "Anunciante", contratante: "Contratante ou agência", ramo: "Ramo", operador: "Quem opera", descricao: "Produto ou serviço",
+    publico: "Comprador prioritário", praca: "Onde atende", destino: "Destino do atendimento",
+    campanha: "Caminho da campanha",
+  } as const;
 
   async function salvar() {
     if (enviando || aviso || uploadsAtivos > 0 || analisesAtivas > 0) return;
@@ -105,10 +109,9 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
       {Object.entries(estado.respostasBasicas).map(([chave, resposta]) =>
         <p key={chave}><strong>{rotulos[chave as keyof typeof rotulos]}:</strong> {resposta.echo}</p>
       )}
-      <p><a href="/onboarding">Rever as perguntas do negócio</a> · <a href="/onboarding/contas">Rever as contas</a></p>
+      <p><a href="/onboarding">Editar respostas por seção</a> · <a href="/onboarding/contas">Incluir referência de preço (opcional)</a></p>
     </details>
     {estado.faltamBasicas.length ? <p className="form-warning">Faltam respostas sobre seu negócio: {estado.faltamBasicas.map((chave) => rotulos[chave]).join(", ")}. <a href="/onboarding">Continuar perguntas</a></p> :
-    !estado.contasProntas ? <p className="form-warning">Termine suas contas antes desta etapa. <a href="/onboarding/contas">Voltar às contas</a></p> :
       <>
         {erro && <p className="form-error" role="alert">{erro}</p>}
         {aviso && <div className="form-warning" role="status">{aviso} <button className="chip-opt" type="button" onClick={() => window.location.reload()}>Recarregar</button></div>}

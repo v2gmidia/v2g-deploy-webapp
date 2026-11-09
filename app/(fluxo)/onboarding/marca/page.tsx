@@ -23,12 +23,12 @@ export default async function MarcaPage() {
     }
   }
   return <div className="onb-v2 onb-v2-etapa">
-    <header className="onb-v2-topo"><MarcaEditorial editorial href="/inicio" /><a href="/onboarding/contas">Rever minhas contas</a></header>
+    <header className="onb-v2-topo"><MarcaEditorial editorial href="/inicio" /><a href="/onboarding">Rever respostas</a></header>
     <section className="onb-v2-conteudo">
     {"erro" in estado ? <>
       <h1 className="auth-h">Não consegui abrir o visual da sua marca.</h1>
       <p className="auth-sub">{estado.erro}</p>
-      <a className="cta" href="/onboarding/contas">Voltar às contas</a>
+      <a className="cta" href="/onboarding">Voltar às perguntas</a>
     </> : materiaisIndisponiveis || !materiais ? <>
       <h1 className="auth-h">Não conseguimos carregar seus arquivos de marca.</h1>
       <p className="auth-sub">Suas respostas continuam guardadas. Atualize esta página antes de enviar outro arquivo.</p>

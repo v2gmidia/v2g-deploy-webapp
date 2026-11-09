@@ -67,7 +67,7 @@ async function contexto(businessIdEsperado: string): Promise<{
       paymentStatus: item.status, emailVerificado: email, cnpj: item.cnpj });
   }
   const { data: negocio, error: erroNegocio } = await supabase.from("businesses")
-    .select("onboarding, site_url, avg_ticket_min, avg_ticket_max, avg_direct_cost, target_profit_per_customer")
+    .select("onboarding, site_url")
     .eq("id", ativo.negocio.id).eq("profile_id", user.id).maybeSingle();
   if (erroNegocio || !negocio) return null;
   return { businessId: ativo.negocio.id, orderId: pedido.id, cnpj: pedido.cnpj,

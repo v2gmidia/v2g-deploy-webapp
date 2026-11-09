@@ -16,7 +16,6 @@ import {
   type NegocioParaCadastro,
 } from "@/lib/cadastro/montar";
 import { resumirPendencias, type ResumoDePendencias } from "@/lib/cadastro/pendencias";
-import { dispararSeCompleto } from "@/lib/pipeline/disparar";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import {
   ORDEM_DAS_CONTAS,
@@ -477,7 +476,6 @@ export async function salvarContaAction(entrada: {
   // função decide sozinha se há o que fazer, e NUNCA lança — o campo do
   // cliente já está salvo, e uma falha do disparo não pode virar "não
   // conseguimos salvar" na tela dele.
-  await dispararSeCompleto();
 
   const depois = await obterNegocio();
   return {

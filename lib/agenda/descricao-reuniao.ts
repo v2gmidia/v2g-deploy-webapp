@@ -16,14 +16,20 @@ export function descricaoDaReuniao(onboarding: unknown, cnpj: string): string {
     "Respostas declaradas no onboarding quando a reserva foi feita; confira a ficha atual no WebApp.",
   ];
   for (const [chave, rotulo] of [
+    ["nome", "Anunciante"],
+    ["contratante", "Contratante ou agência"],
+    ["operador", "Relação de operação"],
     ["ramo", "Tipo de negócio"],
     ["descricao", "Produtos e serviços"],
+    ["publico", "Comprador prioritário"],
+    ["praca", "Região de atendimento"],
+    ["destino", "Destino do atendimento"],
+    ["campanha", "Caminho da campanha"],
   ] as const) {
     const texto = documento(respostas[chave]).texto;
     if (typeof texto === "string" && texto.trim()) linhas.push(`${rotulo}: ${resumir(texto)}`);
   }
   for (const [chave, rotulo] of [
-    ["publico", "Quem compra"],
     ["motivo", "O que procura"],
     ["resultado", "O que recebe"],
     ["diferencial", "Diferencial"],

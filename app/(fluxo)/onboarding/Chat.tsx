@@ -78,6 +78,9 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
   const vozHabilitada = estadoDaVoz === "disponivel";
   const vozIndisponivel = estadoDaVoz === "disponivel" ? null : estadoDaVoz;
   const tempoDoEnvio = useTempoDaOperacao(enviando);
+  const agenciaExplicita = respostas.operador?.texto === "Uma agência ou gestor opera para o anunciante";
+  const anuncianteExplicito = respostas.nome?.texto?.trim();
+  const contratanteExplicito = respostas.contratante?.texto?.trim();
 
   useEffect(() => {
     if (enviando) return;
@@ -124,7 +127,7 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
     }
     if (!valor.trim()) { setErro("Escreva uma resposta antes de continuar."); campo.current?.focus(); return; }
     if (pergunta.minimo && !(pergunta.admiteNaoSei && origem === "chip" && valor === NAO_SEI_BRIEFING)
-      && valor.trim().length < pergunta.minimo.tamanho) { setErro(pergunta.minimo.recado); campo.current?.focus(); return; }
+      && [...valor.trim()].length < pergunta.minimo.tamanho) { setErro(pergunta.minimo.recado); campo.current?.focus(); return; }
     // A trava antecede o próximo render: Enter e clique no mesmo instante
     // não podem iniciar duas gravações.
     envioTravado.current = true;
@@ -187,25 +190,38 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
     }
   }
 
-  return <main className={styles.jornada}>
-    <div className={styles.andamento}><span>Sobre seu negócio</span><strong>{salvas.length} de {QUESTOES.length} respostas</strong><small>Cerca de 15 min</small></div>
+  return <section className={styles.jornada} aria-labelledby="titulo-conversa-onboarding">
+    {!mostrarConvite && <h1 id="titulo-conversa-onboarding" className="sr-only">
+      {agenciaExplicita && anuncianteExplicito ? `Anúncios de ${anuncianteExplicito}` : "Sobre seu negócio"}
+    </h1>}
+    <div className={styles.andamento}>
+      <span>{agenciaExplicita && anuncianteExplicito ? `Anúncios de ${anuncianteExplicito}` : "Sobre seu negócio"}</span>
+      <strong>{salvas.length} de {QUESTOES.length} respostas</strong>
+      {agenciaExplicita && contratanteExplicito && contratanteExplicito !== "É o próprio anunciante"
+        ? <small>Contratante/responsável informado: {contratanteExplicito}</small> : null}
+    </div>
     <div className={styles.progresso} role="progressbar" aria-valuemin={0} aria-valuemax={QUESTOES.length} aria-valuenow={salvas.length} aria-label="Respostas sobre seu negócio"><span style={{ width: `${salvas.length / QUESTOES.length * 100}%` }} /></div>
     <section ref={mensagens} className={styles.mensagens} aria-label="Conversa sobre seu negócio">
       {mostrarConvite && <div className={styles.introducao}>
-        <h1>Vamos preparar seu negócio.</h1>
-        <p>São três etapas: seu negócio, suas contas e o visual da marca. Reserve cerca de 15 minutos. Cada resposta fica salva para você continuar depois.</p>
+        <h1 id="titulo-conversa-onboarding">{agenciaExplicita && anuncianteExplicito
+          ? `Vamos preparar os anúncios de ${anuncianteExplicito}.`
+          : "Vamos preparar seu negócio."}</h1>
+        {agenciaExplicita && contratanteExplicito && contratanteExplicito !== "É o próprio anunciante"
+          ? <p>Contratante/responsável informado: {contratanteExplicito}.</p> : null}
+        <p>Confira o que já sabemos sobre este negócio e complete apenas o que estiver faltando. Cada resposta fica salva para continuar depois.</p>
       </div>}
       {salvas.map((p) => <div className={styles.troca} key={p.id}>
         <div className={styles.balao}><span>V2G</span><p>{partes(p)[0]}</p></div>
         <div className={`${styles.balao} ${styles.cliente}`}><span>Você</span><p>{respostas[p.id]?.echo}</p>
           <button type="button" disabled={enviando || incerto || vozOcupada} onClick={() => corrigir(p)}>Corrigir</button></div>
       </div>)}
-      {mostrarConvite ? <div className={styles.balao}><span>V2G</span><p>Comece pelo nome do negócio. Depois vamos entender o que você oferece, quem compra e onde atende.</p></div> :
+      {mostrarConvite ? <div className={styles.balao}><span>V2G</span><p>Comece confirmando quem opera os anúncios. Depois separamos contratante e anunciante sem alterar o acesso atual.</p></div> :
       atual ? <div className={`${styles.balao} ${styles.perguntaAtual}`} key={atual.id}><span>V2G · pergunta {indice + 1} de {QUESTOES.length}</span><p ref={proximoPasso} tabIndex={-1}>{partes(atual)[0]}</p>
         {partes(atual)[1] && <small>{partes(atual)[1]}</small>}
         {atual.id === "descricao" && <small>Conte os principais produtos ou serviços. Você pode listar mais de um; a escolha do primeiro anúncio fica para a reunião.</small>}
-      </div> : <div className={`${styles.balao} ${styles.encerramento}`}><span>V2G</span><p ref={proximoPasso} tabIndex={-1}>Suas respostas estão guardadas. Agora vamos conferir as contas do negócio.</p>
-        <a className={styles.primario} href="/onboarding/contas">Continuar para as contas</a></div>}
+      </div> : <div className={`${styles.balao} ${styles.encerramento}`}><span>V2G</span><p ref={proximoPasso} tabIndex={-1}>Suas respostas estão guardadas. Agora vamos conferir materiais e identidade do negócio.</p>
+        <a className={styles.primario} href="/onboarding/marca">Continuar para materiais e marca</a>
+        <a href="/onboarding/contas">Incluir referência de preço (opcional)</a></div>}
       {respostaPendente && respostaPendente.perguntaId === atual?.id && <div className={styles.pendente}>
         <div className={`${styles.balao} ${styles.cliente}`}><span>Você</span><p>{respostaPendente.texto}</p>
           <small>Aguardando confirmação</small></div>
@@ -272,7 +288,7 @@ export function Chat({ businessId, inicial, estadoDaVoz, salvarResposta = salvar
         </form>}
         {erro && <div id="erro-envio-onboarding" ref={aviso} tabIndex={-1} className={incerto ? "form-warning" : "form-error"} role="alert">{erro}{incerto && <button type="button" onClick={() => window.location.reload()}>Recarregar</button>}</div>}
         {editando && <button className={styles.cancelar} type="button" disabled={enviando || incerto || vozOcupada} onClick={cancelarEdicao}>Cancelar correção</button>}
-      </> : <p>Você pode revisar suas respostas acima ou seguir para as contas.</p>}
+      </> : <p>Você pode revisar suas respostas acima ou seguir para materiais e marca.</p>}
     </div>
-  </main>;
+  </section>;
 }

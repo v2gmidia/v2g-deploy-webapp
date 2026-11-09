@@ -57,7 +57,7 @@ export const NOMES_DAS_ROTAS = {
 
   // Fluxo.
   "/onboarding": "Sobre o seu negócio",
-  "/onboarding/contas": "Suas contas",
+  "/onboarding/contas": "Referência de preço",
   "/expectativas": "Expectativas",
   "/conectar": "Conectar sua conta",
   "/conectar/escolher": "Escolher página",

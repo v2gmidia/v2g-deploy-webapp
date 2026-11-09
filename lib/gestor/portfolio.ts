@@ -1,4 +1,4 @@
-import { montarCadastro, type NegocioParaCadastro } from "../cadastro/montar.ts";
+import { montarCadastroOperacional, type NegocioParaCadastro } from "../cadastro/montar.ts";
 import { estadoDaConclusao } from "../onboarding/conclusao.ts";
 import { lerBriefingDeTrafego } from "../onboarding/briefing-trafego.ts";
 
@@ -48,6 +48,7 @@ export interface ExecucaoDoPortfolio {
 export interface LinhaDoPortfolio {
   id: string;
   nome: string;
+  operadoPor: string | null;
   nichoDeclarado: string | null;
   atualizadoEm: string;
   instagram: { rotulo: string; url: string } | null;
@@ -145,6 +146,19 @@ export function montarPortfolio(
   }
 
   return negocios.filter((n) => !n.dados_ficticios).map((negocio) => {
+    const doc = negocio.onboarding && typeof negocio.onboarding === "object" && !Array.isArray(negocio.onboarding)
+      ? negocio.onboarding as Record<string, unknown> : {};
+    const respostas = doc.respostas && typeof doc.respostas === "object" && !Array.isArray(doc.respostas)
+      ? doc.respostas as Record<string, unknown> : {};
+    const declarada = (chave: string) => {
+      const valor = respostas[chave];
+      if (!valor || typeof valor !== "object" || Array.isArray(valor)) return null;
+      const texto = (valor as { texto?: unknown }).texto;
+      return typeof texto === "string" && texto.trim() ? texto.trim() : null;
+    };
+    const agenciaOperadora = declarada("operador") === "Uma agência ou gestor opera para o anunciante";
+    const anuncianteDeclarado = agenciaOperadora ? declarada("nome") : null;
+    const contratanteDeclarado = agenciaOperadora ? declarada("contratante") : null;
     const lista = (pedidosPorNegocio.get(negocio.id) ?? [])
       .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
     const pedido = lista[0] ?? null;
@@ -155,7 +169,7 @@ export function montarPortfolio(
     const assinaturaPendente = lista.find((item) => item.status === "payment_approved" &&
       contratosPorPedido.get(item.id) !== "signed");
     const aguardando = lista.find((item) => item.status === "awaiting_payment");
-    const cadastro = montarCadastro(negocio);
+    const cadastro = montarCadastroOperacional(negocio);
     const pendenciasCadastro = cadastro.completo ? 0 : cadastro.pendencias.length;
     const onboardingConcluido = estadoDaConclusao(negocio).concluido;
     const contasDoNegocio = contasPorNegocio.get(negocio.id) ?? [];
@@ -202,12 +216,13 @@ export function montarPortfolio(
     }
     return {
       id: negocio.id,
-      nome: negocio.name?.trim() || "Negócio sem nome",
-      nichoDeclarado: negocio.niche?.trim() || null,
+      nome: anuncianteDeclarado || negocio.name?.trim() || "Negócio sem nome",
+      operadoPor: contratanteDeclarado,
+      nichoDeclarado: agenciaOperadora ? declarada("ramo") : negocio.niche?.trim() || null,
       atualizadoEm: negocio.updated_at,
       instagram,
       instagramInformadoSemLink: !!negocio.instagram_handle?.trim() && !instagram,
-      descricaoParaReuniao: negocio.description?.trim() || null,
+      descricaoParaReuniao: agenciaOperadora ? declarada("descricao") : negocio.description?.trim() || null,
       briefingParaReuniao: lerBriefingDeTrafego(negocio.onboarding),
       diferenciaisParaReuniao: Array.isArray(negocio.differentiators)
         ? negocio.differentiators.filter((valor): valor is string => typeof valor === "string" && !!valor.trim()) : [],
@@ -241,7 +256,7 @@ export type FiltroDoPortfolio = "todos" | "minhas" | "pedidos" | "onboarding" | 
 export function filtrarPortfolio(linhas: LinhaDoPortfolio[], busca: string, filtro: FiltroDoPortfolio, minhasContas?: ReadonlySet<string>) {
   const termo = busca.trim().toLocaleLowerCase("pt-BR");
   return linhas.filter((linha) => {
-    if (termo && !`${linha.nome} ${linha.id}`.toLocaleLowerCase("pt-BR").includes(termo)) return false;
+    if (termo && !`${linha.nome} ${linha.operadoPor ?? ""} ${linha.id}`.toLocaleLowerCase("pt-BR").includes(termo)) return false;
     if (filtro === "minhas") return minhasContas?.has(linha.id) ?? false;
     if (filtro === "pedidos") return linha.origem === "pedido";
     if (filtro === "onboarding") return !linha.onboardingConcluido;

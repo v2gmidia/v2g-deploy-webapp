@@ -7,10 +7,9 @@ import { NAO_SEI_BRIEFING } from "../../../lib/onboarding/briefing-trafego.ts";
  * dentro do componente) porque o servidor também precisa delas — é ele quem
  * valida a resposta recebida contra as opções existentes antes de gravar.
  *
- * O BLOCO 2 (as contas) NÃO ESTÁ AQUI. Ticket, custo direto e lucro
- * desejado vivem em `/onboarding/contas`, porque não são pergunta de
- * preferência: são conta, com resultado em reais e confirmação. Ver
- * `docs/onboarding-expandido.md` §3.
+ * Custo direto e lucro desejado NÃO fazem parte da entrada inicial.
+ * Ticket e referência de preço também não são requisito: um preço por
+ * unidade, pacote ou fardo não é ticket médio de pedido.
  */
 
 export interface Opcao {
@@ -58,7 +57,7 @@ export const PERGUNTAS: Pergunta[] = [
   },
   {
     id: "nome",
-    texto: "Como seus clientes conhecem sua empresa? Informe o nome do negócio, que pode ser diferente da razão social da compra.",
+    texto: "Qual é o nome do negócio que será anunciado? Não precisa ser o mesmo nome da agência ou de quem contratou a V2G.",
     opcoes: [],
     soTexto: true,
     fallbackLabel: "O nome do seu negócio",
@@ -74,6 +73,22 @@ export const PERGUNTAS: Pergunta[] = [
     fallbackLabel: "Tipo de negócio",
     fallbackPlaceholder: "Ex.: software de gestão, padaria, salão de beleza",
     minimo: { tamanho: 4, recado: "Descreva o tipo do seu negócio com pelo menos quatro caracteres." },
+  },
+  {
+    id: "operador",
+    texto: "Quem opera os anúncios deste negócio? Isso não cria outro usuário nem muda o dono da conta.",
+    opcoes: [
+      { echo: "O próprio anunciante opera os anúncios", rotulo: "O próprio anunciante" },
+      { echo: "Uma agência ou gestor opera para o anunciante", rotulo: "Agência ou gestor" },
+    ],
+  },
+  {
+    id: "contratante",
+    texto: "Quem contratou ou coordena esta operação com a V2G?",
+    opcoes: [{ echo: "É o próprio anunciante", rotulo: "O próprio anunciante" }],
+    soTexto: true,
+    fallbackLabel: "Contratante ou agência operadora",
+    fallbackPlaceholder: "Ex.: agência responsável pela conta",
   },
   {
     id: "descricao",
@@ -165,6 +180,29 @@ export const PERGUNTAS: Pergunta[] = [
     fallbackPlaceholder: "Ex.: atendo online em todo o estado",
   },
   {
+    id: "destino",
+    texto: "Quando alguém se interessar pelo anúncio, para onde a conversa deve ir?",
+    opcoes: [
+      { echo: "WhatsApp", rotulo: "WhatsApp" },
+      { echo: "Instagram", rotulo: "Instagram" },
+      { echo: "Site", rotulo: "Site" },
+      { echo: "Telefone", rotulo: "Telefone" },
+      { echo: "Formulário", rotulo: "Formulário" },
+    ],
+    fallbackLabel: "Destino do atendimento",
+    fallbackPlaceholder: "Ex.: WhatsApp comercial da equipe",
+    chipAbreTexto: "Outro destino",
+  },
+  {
+    id: "campanha",
+    texto: "Este negócio já tem campanha para acompanhar ou vamos preparar uma nova?",
+    opcoes: [
+      { echo: "Já existe uma campanha para acompanhar", rotulo: "Campanha existente" },
+      { echo: "Vamos preparar uma nova campanha", rotulo: "Nova campanha" },
+      { echo: "Quero decidir com o gestor", rotulo: "Decidir com o gestor" },
+    ],
+  },
+  {
     id: "instagram",
     contador: "Pergunta 7 de 8",
     texto: "Qual é o @ do Instagram do seu negócio? Se tiver, pode colar o link do perfil.",
@@ -189,7 +227,7 @@ export const PERGUNTAS: Pergunta[] = [
 // Instagram e site são conferidos na etapa visual, sem fazer a pessoa responder duas vezes.
 // O foco da primeira campanha é decisão do gestor na reunião. A antiga
 // resposta "oferta" permanece no histórico, mas não é pedida a novos clientes.
-export const ORDEM = ["nome", "ramo", "praca", "descricao", "publico", "motivo", "resultado", "diferencial", "prova"];
+export const ORDEM = ["operador", "nome", "contratante", "ramo", "descricao", "publico", "praca", "destino", "campanha"];
 export const ULTIMA = ORDEM[ORDEM.length - 1]!;
 
 /**
