@@ -65,7 +65,7 @@ test("fila e action conferem o vínculo antes de assinar ou baixar", () => {
 
 test("galeria do cliente não assina ou mostra peça de outro negócio", () => {
   const pagina = readFileSync("app/(protected)/criativos/page.tsx", "utf8");
-  assert.match(pagina, /select\("id, business_id, original_name, file_path, status, review_note, created_at, upload_intent"\)/);
+  assert.match(pagina, /select\("id, business_id, original_name, file_path, sha256, status, review_note, created_at, upload_intent"\)/);
   assert.match(pagina, /revisoesRecebidas\.filter\(\(pedido\) => pedido\.business_id === negocioId\)/);
   const filtro = pagina.indexOf("&& caminhoConfereComRevisao(pedido))");
   const assinatura = pagina.indexOf(".createSignedUrls(caminhosDasRevisoes");
@@ -82,7 +82,8 @@ test("falha pode ser repetida; envio recente nao compete com si mesmo", () => {
 });
 
 test("aprovacao interna nao vira estado de publicacao", () => {
-  assert.match(rotuloDaRevisao("approved_for_manual_publish"), /publicação manual pendente/);
+  assert.equal(rotuloDaRevisao("approved_for_manual_publish"), "Peça aprovada pelo gestor");
+  assert.doesNotMatch(rotuloDaRevisao("approved_for_manual_publish"), /publicada|confirmada|no ar/);
   assert.match(rotuloDaRevisao("awaiting_review"), /revisão do gestor/);
 });
 

@@ -16,6 +16,7 @@ import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
 import { UUID_GERACAO } from "@/lib/criativos/geracao/contrato-fila";
 import { catalogoBarbeariaDisponivel } from "@/lib/jev/catalogo-da-sessao";
 import { carregarContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio-da-sessao";
+import { COLUNAS_PUBLICACAO, lerPublicacao, textoDaPublicacao } from "@/lib/criativos/publicacao";
 
 export const metadata = tituloDaAba("/criativos");
 
@@ -41,6 +42,7 @@ type PedidoDeRevisao = {
   business_id: string;
   original_name: string;
   file_path: string;
+  sha256: string;
   status: StatusRevisao;
   review_note: string | null;
   upload_intent: unknown;
@@ -110,7 +112,7 @@ export default async function CriativosPage() {
       .order("created_at", { ascending: false }).limit(120),
     revisaoHabilitada
       ? supabase.from("creative_review_requests")
-        .select("id, business_id, original_name, file_path, status, review_note, created_at, upload_intent")
+        .select("id, business_id, original_name, file_path, sha256, status, review_note, created_at, upload_intent")
         .eq("business_id", negocioId).order("created_at", { ascending: false }).limit(120)
       : Promise.resolve({ data: [] as PedidoDeRevisao[], error: null }),
   ]) : [
@@ -121,6 +123,9 @@ export default async function CriativosPage() {
   const pecas = ((pecasResposta.data ?? []) as PecaDaCampanha[]).filter((peca) => peca.business_id === negocioId);
   const revisoesRecebidas = (revisoesResposta.data ?? []) as PedidoDeRevisao[];
   const revisoes = revisoesRecebidas.filter((pedido) => pedido.business_id === negocioId);
+  const publicacoes = revisoes.length ? await supabase.from("creative_publication_confirmations").select(COLUNAS_PUBLICACAO)
+    .eq("business_id", negocioId).in("review_request_id", revisoes.map(p => p.id)) : { data: [], error: null };
+  const publicacaoPorRevisao = new Map((publicacoes.data ?? []).map(p => [p.review_request_id, p]));
   const revisaoInconsistente = revisoes.length !== revisoesRecebidas.length
     || revisoes.some((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed"
       && !caminhoConfereComRevisao(pedido));
@@ -161,13 +166,17 @@ export default async function CriativosPage() {
         ? [{ nome: "Vínculo registrado com anúncio", href: "/anuncios" }]
         : [],
     })),
-    ...revisoes.map((pedido) => ({
+    ...revisoes.map((pedido) => {
+      const registro = publicacaoPorRevisao.get(pedido.id);
+      const publicacao = lerPublicacao(registro, pedido);
+      return {
       id: `revisao-${pedido.id}`,
       nome: pedido.original_name,
       imagemUrl: caminhoConfereComRevisao(pedido)
         ? (urlPorRevisao.get(pedido.file_path) ?? null) : null,
       grupo: grupoDaRevisao(pedido.status),
       estado: rotuloDaRevisao(pedido.status),
+      publicacao: textoDaPublicacao(publicacao, Boolean(publicacoes.error || (registro && !publicacao))),
       tom: tomDaRevisao(pedido.status),
       criadoEm: `Enviado em ${dataCurta.format(new Date(pedido.created_at))}`,
       detalhe: [resumoDaIntencao(pedido.upload_intent, hoje),
@@ -175,8 +184,9 @@ export default async function CriativosPage() {
       acao: pedido.status === "approved_for_manual_publish"
         ? { rotulo: "Ver anúncios", href: "/anuncios" }
         : null,
-      associacoes: [],
-    })),
+      associacoes: publicacao ? [{ nome: `Anúncio ${publicacao.ad_id} · vínculo informado pelo gestor`,
+        href: `/anuncios?conta=${publicacao.ad_account_id}` }] : [],
+    }; }),
   ];
 
   const amostra = process.env.NODE_ENV !== "production" ? (process.env.V2G_FIXTURE_ANALISE ?? null) : null;

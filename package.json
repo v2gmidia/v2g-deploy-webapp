@@ -17,6 +17,7 @@
     "conferir:verba": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-verba.ts",
     "conferir:criativos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-criativos.ts",
     "conferir:revisao-criativos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-revisao-criativos.mjs",
+    "conferir:publicacao-criativo": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-publicacao-criativo.mjs",
     "conferir:intencao-envio": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-intencao-envio.mjs",
     "conferir:tarefas-gestor": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-tarefas-gestor.mjs",
     "conferir:cascata": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-cascata.ts",

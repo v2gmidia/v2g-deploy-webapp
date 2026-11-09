@@ -13,7 +13,7 @@ export function DecidirPeca({ id }: { id: string }) {
       <textarea name="nota" maxLength={2000} rows={2} placeholder="Explique ajustes ou motivo da recusa" />
     </label>
     <div className="form-actions">
-      <button type="submit" name="decisao" value="approved_for_manual_publish" disabled={pendente}>Aprovar para publicação manual</button>
+      <button type="submit" name="decisao" value="approved_for_manual_publish" disabled={pendente}>Aprovar peça</button>
       <button type="submit" name="decisao" value="changes_requested" disabled={pendente}>Pedir ajustes</button>
       <button type="submit" name="decisao" value="rejected" disabled={pendente}>Recusar</button>
     </div>

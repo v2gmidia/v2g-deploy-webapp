@@ -15,6 +15,7 @@ export type ItemDaGaleria = {
   tom: "neutro" | "positivo" | "atencao" | "critico";
   criadoEm: string;
   detalhe?: string | null;
+  publicacao?: string;
   acao?: { rotulo: string; href: string } | null;
   associacoes?: Array<{ nome: string; href: string; ilustrativa?: boolean }>;
   expiraEmDias?: number | null;
@@ -76,6 +77,7 @@ function CardDoCriativo({ item }: { item: ItemDaGaleria }) {
         <h3>{item.nome}</h3>
         <span className={`criativo-status criativo-status-${item.tom}`}>{item.estado}</span>
       </div>
+      {item.publicacao && <p className="criativo-detalhe"><strong>Publicação:</strong> {item.publicacao}</p>}
       <div className="criativo-associacoes">
         <span className="criativo-associacoes-rotulo">Associação ao anúncio</span>
         {(item.associacoes?.length ?? 0) > 0 ? item.associacoes!.map((associacao) =>
