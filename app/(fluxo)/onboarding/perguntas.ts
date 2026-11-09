@@ -178,6 +178,7 @@ export const PERGUNTAS: Pergunta[] = [
     ],
     fallbackLabel: "Área atendida",
     fallbackPlaceholder: "Ex.: atendo online em todo o estado",
+    chipAbreTexto: "Outra área atendida",
   },
   {
     id: "destino",
