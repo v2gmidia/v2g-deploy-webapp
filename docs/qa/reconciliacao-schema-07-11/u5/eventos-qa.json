@@ -1,0 +1,252 @@
+{
+  "relations": [
+    {
+      "rls": true,
+      "owner": "postgres",
+      "forced": false,
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notnull": true
+        },
+        {
+          "name": "order_id",
+          "type": "uuid",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "source",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "external_event_id",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "event_type",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "actor_profile_id",
+          "type": "uuid",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        }
+      ],
+      "indexes": [
+        {
+          "def": "CREATE INDEX commercial_events_order_idx ON public.commercial_events USING btree (order_id, occurred_at)",
+          "name": "commercial_events_order_idx"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_events_pkey ON public.commercial_events USING btree (id)",
+          "name": "commercial_events_pkey"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_events_source_external_event_id_key ON public.commercial_events USING btree (source, external_event_id)",
+          "name": "commercial_events_source_external_event_id_key"
+        }
+      ],
+      "nspname": "public",
+      "relkind": "r",
+      "relname": "commercial_events",
+      "policies": null,
+      "triggers": null,
+      "table_acl": [
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        }
+      ],
+      "column_acl": null,
+      "constraints": [
+        {
+          "def": "FOREIGN KEY (actor_profile_id) REFERENCES profiles(id) ON DELETE SET NULL",
+          "name": "commercial_events_actor_profile_id_fkey"
+        },
+        {
+          "def": "FOREIGN KEY (order_id) REFERENCES commercial_orders(id) ON DELETE RESTRICT",
+          "name": "commercial_events_order_id_fkey"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "name": "commercial_events_pkey"
+        },
+        {
+          "def": "CHECK ((source = ANY (ARRAY['operator'::text, 'asaas'::text, 'signature_provider'::text])))",
+          "name": "commercial_events_source_check"
+        },
+        {
+          "def": "UNIQUE (source, external_event_id)",
+          "name": "commercial_events_source_external_event_id_key"
+        }
+      ]
+    }
+  ],
+  "definitions": null,
+  "column_details": [
+    {
+      "table": "commercial_events",
+      "column": "id",
+      "schema": "public",
+      "comment": null,
+      "identity": "",
+      "generated": ""
+    },
+    {
+      "table": "commercial_events",
+      "column": "order_id",
+      "schema": "public",
+      "comment": null,
+      "identity": "",
+      "generated": ""
+    },
+    {
+      "table": "commercial_events",
+      "column": "source",
+      "schema": "public",
+      "comment": null,
+      "identity": "",
+      "generated": ""
+    },
+    {
+      "table": "commercial_events",
+      "column": "external_event_id",
+      "schema": "public",
+      "comment": null,
+      "identity": "",
+      "generated": ""
+    },
+    {
+      "table": "commercial_events",
+      "column": "event_type",
+      "schema": "public",
+      "comment": null,
+      "identity": "",
+      "generated": ""
+    },
+    {
+      "table": "commercial_events",
+      "column": "actor_profile_id",
+      "schema": "public",
+      "comment": null,
+      "identity": "",
+      "generated": ""
+    },
+    {
+      "table": "commercial_events",
+      "column": "occurred_at",
+      "schema": "public",
+      "comment": null,
+      "identity": "",
+      "generated": ""
+    }
+  ]
+}

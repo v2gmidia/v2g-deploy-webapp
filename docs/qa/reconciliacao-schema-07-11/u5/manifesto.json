@@ -1,0 +1,52 @@
+{
+  "status": "PREPARACAO_LOCAL_TESTADA_SEM_APLICACAO",
+  "localTestGroupsPassed": 30,
+  "project_id": "zskpijnqgkqwxksqmzmf",
+  "groups": [
+    13,
+    16,
+    17,
+    18
+  ],
+  "absentObjects": 14,
+  "newTables": [
+    "fiscal_obligations",
+    "commercial_manual_evidence",
+    "historical_contract_access",
+    "historical_contract_access_events"
+  ],
+  "changedRelations": [
+    "commercial_orders",
+    "onboarding_meetings",
+    "fiscal_documents",
+    "users"
+  ],
+  "newFunctions": [
+    "documento_contratante_valido",
+    "conferir_documento_contratante_gravado",
+    "registrar_evidencia_manual",
+    "revisar_evidencia_manual",
+    "emitir_acesso_contratado",
+    "aceitar_acesso_contratado",
+    "revogar_acesso_contratado"
+  ],
+  "changedFunctions": [
+    "handle_new_user",
+    "registrar_pedido_pix_assistido",
+    "registrar_pedido_self_service",
+    "registrar_pedido_pix_assistido_com_lead",
+    "registrar_pedido_asaas_assistido"
+  ],
+  "applyName": "qa_reconciliacao_u5_documentos_acesso_historico_20261108",
+  "returnName": "qa_reconciliacao_u5_documentos_acesso_historico_retorno_20261108",
+  "ledger": {
+    "before": 48,
+    "after": 49,
+    "afterReturn": 50
+  },
+  "baselineU4": {
+    "version": "20261109000622",
+    "receiptSha256": "4e4f3cdf596b417ea637a85478a91f30922009d06b5ddfd294411e77bfd03dab"
+  },
+  "metadataGap": []
+}

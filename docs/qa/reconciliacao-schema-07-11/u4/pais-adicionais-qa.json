@@ -1,0 +1,1258 @@
+{
+  "relations": [
+    {
+      "rls": true,
+      "owner": "postgres",
+      "forced": false,
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "notnull": true
+        },
+        {
+          "name": "external_ref",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "buyer_profile_id",
+          "type": "uuid",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "buyer_email",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "business_id",
+          "type": "uuid",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "legal_name",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "cnpj",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "declares_cnpj",
+          "type": "boolean",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "sells_by_whatsapp",
+          "type": "boolean",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "origin",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "payment_method",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "billing_period",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "unit_price_cents",
+          "type": "integer",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "discount_percent",
+          "type": "integer",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "unit_count",
+          "type": "integer",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "total_cents",
+          "type": "integer",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "status",
+          "type": "text",
+          "default": "'awaiting_payment'::text",
+          "notnull": true
+        },
+        {
+          "name": "payment_approved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "payment_approved_by",
+          "type": "uuid",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_customer_id",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_charge_id",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        },
+        {
+          "name": "proof_reference",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "proof_received_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "proof_received_by",
+          "type": "uuid",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_checkout_id",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_checkout_url",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "checkout_creation_started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "buyer_name",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "buyer_whatsapp",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_subscription_id",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "payment_creation_started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_first_due_date",
+          "type": "date",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "payment_attempt_count",
+          "type": "integer",
+          "default": "0",
+          "notnull": true
+        },
+        {
+          "name": "source_system",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_id",
+          "type": "bigint",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_origin",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_utm_source",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_utm_medium",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_utm_campaign",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_utm_content",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_consent_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_consent_text",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "source_lead_linked_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_card_flow",
+          "type": "text",
+          "default": "'direct'::text",
+          "notnull": true
+        },
+        {
+          "name": "subscription_creation_started_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "provider_subscription_first_due_date",
+          "type": "date",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "assisted_operator_id",
+          "type": "uuid",
+          "default": null,
+          "notnull": false
+        }
+      ],
+      "indexes": [
+        {
+          "def": "CREATE INDEX commercial_orders_business_idx ON public.commercial_orders USING btree (business_id)",
+          "name": "commercial_orders_business_idx"
+        },
+        {
+          "def": "CREATE INDEX commercial_orders_buyer_idx ON public.commercial_orders USING btree (buyer_profile_id)",
+          "name": "commercial_orders_buyer_idx"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_external_ref_key ON public.commercial_orders USING btree (external_ref)",
+          "name": "commercial_orders_external_ref_key"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_one_open_assisted_asaas ON public.commercial_orders USING btree (lower(buyer_email), cnpj) WHERE ((origin = 'assisted'::text) AND (payment_method = ANY (ARRAY['asaas_pix'::text, 'asaas_card'::text])) AND (status = 'awaiting_payment'::text))",
+          "name": "commercial_orders_one_open_assisted_asaas"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_one_open_direct_pix ON public.commercial_orders USING btree (lower(buyer_email), cnpj) WHERE ((payment_method = 'direct_pix'::text) AND (status = ANY (ARRAY['awaiting_payment'::text, 'proof_received'::text])))",
+          "name": "commercial_orders_one_open_direct_pix"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_one_open_self_service ON public.commercial_orders USING btree (lower(buyer_email), cnpj) WHERE ((origin = 'self_service'::text) AND (status = 'awaiting_payment'::text))",
+          "name": "commercial_orders_one_open_self_service"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_one_order_per_source_lead ON public.commercial_orders USING btree (source_system, source_lead_id) WHERE ((source_system IS NOT NULL) AND (source_lead_id IS NOT NULL))",
+          "name": "commercial_orders_one_order_per_source_lead"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_pkey ON public.commercial_orders USING btree (id)",
+          "name": "commercial_orders_pkey"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_provider_charge_id_key ON public.commercial_orders USING btree (provider_charge_id)",
+          "name": "commercial_orders_provider_charge_id_key"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_provider_checkout_id_key ON public.commercial_orders USING btree (provider_checkout_id)",
+          "name": "commercial_orders_provider_checkout_id_key"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX commercial_orders_provider_subscription_id_key ON public.commercial_orders USING btree (provider_subscription_id)",
+          "name": "commercial_orders_provider_subscription_id_key"
+        }
+      ],
+      "nspname": "public",
+      "relkind": "r",
+      "relname": "commercial_orders",
+      "policies": [
+        {
+          "cmd": "r",
+          "name": "orders_read_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(buyer_profile_id = ( SELECT auth.uid() AS uid))",
+          "permissive": true
+        }
+      ],
+      "triggers": null,
+      "table_acl": [
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        }
+      ],
+      "column_acl": null,
+      "constraints": [
+        {
+          "def": "CHECK (((provider_card_flow = 'direct'::text) OR ((billing_period = 'monthly'::text) AND (payment_method = 'asaas_card'::text) AND ((origin = 'self_service'::text) OR ((origin = 'assisted'::text) AND (assisted_operator_id IS NOT NULL))))))",
+          "name": "commercial_orders_3ds_matches"
+        },
+        {
+          "def": "CHECK ((((status = 'payment_approved'::text) AND (payment_approved_at IS NOT NULL)) OR ((status <> 'payment_approved'::text) AND (payment_approved_at IS NULL))))",
+          "name": "commercial_orders_approval_matches"
+        },
+        {
+          "def": "CHECK (((NOT ((origin = 'assisted'::text) AND (payment_method = ANY (ARRAY['asaas_pix'::text, 'asaas_card'::text])))) OR (assisted_operator_id IS NOT NULL)))",
+          "name": "commercial_orders_assisted_asaas_actor"
+        },
+        {
+          "def": "FOREIGN KEY (assisted_operator_id) REFERENCES profiles(id) ON DELETE RESTRICT",
+          "name": "commercial_orders_assisted_operator_id_fkey"
+        },
+        {
+          "def": "CHECK ((billing_period = ANY (ARRAY['monthly'::text, 'semiannual_upfront'::text, 'annual_upfront'::text])))",
+          "name": "commercial_orders_billing_period_check"
+        },
+        {
+          "def": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL",
+          "name": "commercial_orders_business_id_fkey"
+        },
+        {
+          "def": "FOREIGN KEY (buyer_profile_id) REFERENCES profiles(id) ON DELETE SET NULL",
+          "name": "commercial_orders_buyer_profile_id_fkey"
+        },
+        {
+          "def": "CHECK ((cnpj ~ '^[0-9]{14}$'::text))",
+          "name": "commercial_orders_cnpj_check"
+        },
+        {
+          "def": "CHECK (declares_cnpj)",
+          "name": "commercial_orders_declares_cnpj_check"
+        },
+        {
+          "def": "CHECK (((payment_method <> 'direct_pix'::text) OR (status <> 'payment_approved'::text) OR (payment_approved_by IS NOT NULL)))",
+          "name": "commercial_orders_direct_pix_approval_actor_check"
+        },
+        {
+          "def": "CHECK (((payment_method <> 'direct_pix'::text) OR (status = ANY (ARRAY['awaiting_payment'::text, 'cancelled'::text])) OR ((proof_reference IS NOT NULL) AND (length(btrim(proof_reference)) > 0) AND (proof_received_at IS NOT NULL) AND (proof_received_by IS NOT NULL))))",
+          "name": "commercial_orders_direct_pix_proof_check"
+        },
+        {
+          "def": "CHECK ((((billing_period = 'monthly'::text) AND (discount_percent = 0)) OR ((billing_period = 'semiannual_upfront'::text) AND (discount_percent = 5)) OR ((billing_period = 'annual_upfront'::text) AND (discount_percent = 12))))",
+          "name": "commercial_orders_discount_matches"
+        },
+        {
+          "def": "UNIQUE (external_ref)",
+          "name": "commercial_orders_external_ref_key"
+        },
+        {
+          "def": "CHECK ((origin = ANY (ARRAY['assisted'::text, 'self_service'::text])))",
+          "name": "commercial_orders_origin_check"
+        },
+        {
+          "def": "CHECK (((status <> 'payment_approved'::text) OR (business_id IS NOT NULL)))",
+          "name": "commercial_orders_paid_business_check"
+        },
+        {
+          "def": "FOREIGN KEY (payment_approved_by) REFERENCES profiles(id) ON DELETE SET NULL",
+          "name": "commercial_orders_payment_approved_by_fkey"
+        },
+        {
+          "def": "CHECK (((payment_attempt_count >= 0) AND (payment_attempt_count <= 3)))",
+          "name": "commercial_orders_payment_attempt_count_check"
+        },
+        {
+          "def": "CHECK ((payment_method = ANY (ARRAY['direct_pix'::text, 'asaas_pix'::text, 'asaas_card'::text])))",
+          "name": "commercial_orders_payment_method_check"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "name": "commercial_orders_pkey"
+        },
+        {
+          "def": "FOREIGN KEY (proof_received_by) REFERENCES profiles(id) ON DELETE SET NULL",
+          "name": "commercial_orders_proof_received_by_fkey"
+        },
+        {
+          "def": "CHECK ((provider_card_flow = ANY (ARRAY['direct'::text, 'initial_3ds'::text])))",
+          "name": "commercial_orders_provider_card_flow_check"
+        },
+        {
+          "def": "UNIQUE (provider_charge_id)",
+          "name": "commercial_orders_provider_charge_id_key"
+        },
+        {
+          "def": "UNIQUE (provider_checkout_id)",
+          "name": "commercial_orders_provider_checkout_id_key"
+        },
+        {
+          "def": "UNIQUE (provider_subscription_id)",
+          "name": "commercial_orders_provider_subscription_id_key"
+        },
+        {
+          "def": "CHECK (sells_by_whatsapp)",
+          "name": "commercial_orders_sells_by_whatsapp_check"
+        },
+        {
+          "def": "CHECK ((((source_system IS NULL) AND (source_lead_id IS NULL)) OR ((source_system = 'v2g_site'::text) AND (source_lead_id IS NOT NULL) AND (source_lead_id > 0))))",
+          "name": "commercial_orders_source_pair_check"
+        },
+        {
+          "def": "CHECK (((source_lead_id IS NULL) OR ((source_lead_consent_at IS NOT NULL) AND (source_lead_consent_text IS NOT NULL) AND (length(btrim(source_lead_consent_text)) >= 10) AND (source_lead_linked_at IS NOT NULL))))",
+          "name": "commercial_orders_source_snapshot_check"
+        },
+        {
+          "def": "CHECK ((status = ANY (ARRAY['awaiting_payment'::text, 'proof_received'::text, 'payment_approved'::text, 'cancelled'::text])))",
+          "name": "commercial_orders_status_check"
+        },
+        {
+          "def": "CHECK ((total_cents > 0))",
+          "name": "commercial_orders_total_cents_check"
+        },
+        {
+          "def": "CHECK ((total_cents = (unit_count *\nCASE billing_period\n    WHEN 'monthly'::text THEN 50000\n    WHEN 'semiannual_upfront'::text THEN 285000\n    ELSE 528000\nEND)))",
+          "name": "commercial_orders_total_matches"
+        },
+        {
+          "def": "CHECK ((unit_count > 0))",
+          "name": "commercial_orders_unit_count_check"
+        },
+        {
+          "def": "CHECK ((unit_price_cents = 50000))",
+          "name": "commercial_orders_unit_price_cents_check"
+        }
+      ]
+    },
+    {
+      "rls": true,
+      "owner": "postgres",
+      "forced": false,
+      "columns": [
+        {
+          "name": "id",
+          "type": "bigint",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "criado_em",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        },
+        {
+          "name": "nome",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "whatsapp",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "email",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "negocio",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "nicho",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "nicho_outro",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "instagram",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "perfil",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "vende_whatsapp",
+          "type": "boolean",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "investe_anuncios",
+          "type": "boolean",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "faixa_investimento",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "site",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "consentimento_em",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        },
+        {
+          "name": "consentimento_texto",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "utm_source",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "utm_medium",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "utm_campaign",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "utm_content",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "pagina_origem",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "ip_hash",
+          "type": "text",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "contatado_em",
+          "type": "timestamp with time zone",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "cnpj",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        }
+      ],
+      "indexes": [
+        {
+          "def": "CREATE INDEX leads_lp_criado_em_idx ON public.leads_lp USING btree (criado_em DESC)",
+          "name": "leads_lp_criado_em_idx"
+        },
+        {
+          "def": "CREATE INDEX leads_lp_ip_hash_criado_em_idx ON public.leads_lp USING btree (ip_hash, criado_em DESC)",
+          "name": "leads_lp_ip_hash_criado_em_idx"
+        },
+        {
+          "def": "CREATE UNIQUE INDEX leads_lp_pkey ON public.leads_lp USING btree (id)",
+          "name": "leads_lp_pkey"
+        }
+      ],
+      "nspname": "public",
+      "relkind": "r",
+      "relname": "leads_lp",
+      "policies": null,
+      "triggers": null,
+      "table_acl": [
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        }
+      ],
+      "column_acl": null,
+      "constraints": [
+        {
+          "def": "CHECK (((cnpj IS NULL) OR (cnpj ~ '^[0-9]{14}$'::text)))",
+          "name": "leads_lp_cnpj_formato"
+        },
+        {
+          "def": "CHECK ((char_length(consentimento_texto) <= 500))",
+          "name": "leads_lp_consentimento_texto_check"
+        },
+        {
+          "def": "CHECK (((char_length(email) <= 160) AND (email ~ '^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$'::text)))",
+          "name": "leads_lp_email_check"
+        },
+        {
+          "def": "CHECK (((investe_anuncios AND (faixa_investimento IS NOT NULL)) OR ((NOT investe_anuncios) AND (faixa_investimento IS NULL))))",
+          "name": "leads_lp_faixa_coerente"
+        },
+        {
+          "def": "CHECK ((faixa_investimento = ANY (ARRAY['ate_500'::text, '500_2000'::text, '2000_5000'::text, 'acima_5000'::text])))",
+          "name": "leads_lp_faixa_investimento_check"
+        },
+        {
+          "def": "CHECK ((instagram ~ '^[a-z0-9._]{1,30}$'::text))",
+          "name": "leads_lp_instagram_check"
+        },
+        {
+          "def": "CHECK ((ip_hash ~ '^[0-9a-f]{64}$'::text))",
+          "name": "leads_lp_ip_hash_check"
+        },
+        {
+          "def": "CHECK (((char_length(negocio) >= 2) AND (char_length(negocio) <= 120)))",
+          "name": "leads_lp_negocio_check"
+        },
+        {
+          "def": "CHECK ((nicho = ANY (ARRAY['restaurante_delivery'::text, 'salao_estetica'::text, 'clinica_saude'::text, 'loja_varejo'::text, 'servicos_profissionais'::text, 'servicos_locais'::text, 'outro'::text])))",
+          "name": "leads_lp_nicho_check"
+        },
+        {
+          "def": "CHECK (((nicho_outro IS NULL) OR ((char_length(nicho_outro) >= 2) AND (char_length(nicho_outro) <= 80))))",
+          "name": "leads_lp_nicho_outro_check"
+        },
+        {
+          "def": "CHECK (((nicho = 'outro'::text) = (nicho_outro IS NOT NULL)))",
+          "name": "leads_lp_nicho_outro_coerente"
+        },
+        {
+          "def": "CHECK (((char_length(nome) >= 2) AND (char_length(nome) <= 120)))",
+          "name": "leads_lp_nome_check"
+        },
+        {
+          "def": "CHECK (((pagina_origem IS NULL) OR (char_length(pagina_origem) <= 300)))",
+          "name": "leads_lp_pagina_origem_check"
+        },
+        {
+          "def": "CHECK ((perfil = ANY (ARRAY['dono'::text, 'agencia'::text])))",
+          "name": "leads_lp_perfil_check"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "name": "leads_lp_pkey"
+        },
+        {
+          "def": "CHECK (((site IS NULL) OR (char_length(site) <= 200)))",
+          "name": "leads_lp_site_check"
+        },
+        {
+          "def": "CHECK (((utm_campaign IS NULL) OR (char_length(utm_campaign) <= 200)))",
+          "name": "leads_lp_utm_campaign_check"
+        },
+        {
+          "def": "CHECK (((utm_content IS NULL) OR (char_length(utm_content) <= 200)))",
+          "name": "leads_lp_utm_content_check"
+        },
+        {
+          "def": "CHECK (((utm_medium IS NULL) OR (char_length(utm_medium) <= 200)))",
+          "name": "leads_lp_utm_medium_check"
+        },
+        {
+          "def": "CHECK (((utm_source IS NULL) OR (char_length(utm_source) <= 200)))",
+          "name": "leads_lp_utm_source_check"
+        },
+        {
+          "def": "CHECK ((whatsapp ~ '^[1-9][0-9]{9,10}$'::text))",
+          "name": "leads_lp_whatsapp_check"
+        }
+      ]
+    },
+    {
+      "rls": true,
+      "owner": "postgres",
+      "forced": false,
+      "columns": [
+        {
+          "name": "id",
+          "type": "uuid",
+          "default": null,
+          "notnull": true
+        },
+        {
+          "name": "full_name",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "whatsapp",
+          "type": "text",
+          "default": null,
+          "notnull": false
+        },
+        {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        },
+        {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "notnull": true
+        }
+      ],
+      "indexes": [
+        {
+          "def": "CREATE UNIQUE INDEX profiles_pkey ON public.profiles USING btree (id)",
+          "name": "profiles_pkey"
+        }
+      ],
+      "nspname": "public",
+      "relkind": "r",
+      "relname": "profiles",
+      "policies": [
+        {
+          "cmd": "d",
+          "name": "profiles_delete_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(( SELECT auth.uid() AS uid) = id)",
+          "permissive": true
+        },
+        {
+          "cmd": "a",
+          "name": "profiles_insert_own",
+          "check": "(( SELECT auth.uid() AS uid) = id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "permissive": true
+        },
+        {
+          "cmd": "r",
+          "name": "profiles_select_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(( SELECT auth.uid() AS uid) = id)",
+          "permissive": true
+        },
+        {
+          "cmd": "w",
+          "name": "profiles_update_own",
+          "check": "(( SELECT auth.uid() AS uid) = id)",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(( SELECT auth.uid() AS uid) = id)",
+          "permissive": true
+        }
+      ],
+      "triggers": [
+        {
+          "def": "CREATE TRIGGER profiles_set_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+          "name": "profiles_set_updated_at",
+          "function": "set_updated_at()",
+          "handler_md5": "63f977f8e2e3db6a119fcbe248bf3314"
+        }
+      ],
+      "table_acl": [
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "anon",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "authenticated",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "postgres",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "MAINTAIN"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "REFERENCES"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRIGGER"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "TRUNCATE"
+        },
+        {
+          "role": "service_role",
+          "grantor": "postgres",
+          "grantable": false,
+          "privilege": "UPDATE"
+        }
+      ],
+      "column_acl": null,
+      "constraints": [
+        {
+          "def": "FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE",
+          "name": "profiles_id_fkey"
+        },
+        {
+          "def": "PRIMARY KEY (id)",
+          "name": "profiles_pkey"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "status": "PREPARACAO_LOCAL_TESTADA_SEM_APLICACAO",
+  "localTestGroupsPassed": 28,
+  "repositorySQLTestsPassed": 8,
+  "project_id": "zskpijnqgkqwxksqmzmf",
+  "groups": [
+    15,
+    19
+  ],
+  "absentNames": 2,
+  "newFunctions": [
+    "evento_asaas_impede_confirmacao",
+    "checkout_producao_schema_v1"
+  ],
+  "changedFunctions": [
+    "registrar_evento_financeiro_asaas",
+    "registrar_evento_financeiro_comercial",
+    "registrar_evento_inicial_3ds",
+    "registrar_evento_inicial_3ds_comercial",
+    "reservar_assinatura_apos_3ds",
+    "aprovar_pagamento_api_comercial",
+    "aprovar_pagamento_api_self_service"
+  ],
+  "changedRelations": [
+    "businesses",
+    "commercial_orders",
+    "commercial_order_units",
+    "commercial_events",
+    "commercial_payment_events",
+    "commercial_payment_email_outbox",
+    "checkout_3ds_context",
+    "checkout_security_attempts"
+  ],
+  "applyName": "qa_reconciliacao_u6_eventos_readiness_20261108",
+  "returnName": "qa_reconciliacao_u6_eventos_readiness_retorno_20261108",
+  "ledger": {
+    "before": 49,
+    "after": 50,
+    "afterReturn": 51
+  },
+  "baselineU5": {
+    "version": "20261109012806",
+    "receiptSha256": "bb77c660bdb8ede4ae13852a2d50a00be0939247412376597818aa3e26196a6e"
+  }
+}

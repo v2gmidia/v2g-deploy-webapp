@@ -1,0 +1,18 @@
+# Ato futuro U5 — não executado por este preparador
+
+Preparação autorizada **somente local**. Alvo futuro único QA zskpijnqgkqwxksqmzmf, canal apply_migration. Nomes: qa_reconciliacao_u5_documentos_acesso_historico_20261108 e qa_reconciliacao_u5_documentos_acesso_historico_retorno_20261108. Não usar db push, replay de migrations, delta.sql/delta-retorno.sql isolados ou banco de produção.
+
+1. Obter autorização humana nominal separada para aplicação e backup; confirmar projeto conectado e revisão independente dos arquivos finais, com hashes desta unidade e os 97 selos anteriores. A preparação atual não concede essa autorização. Não regenerar durante ato/revisão selados.
+2. Usar u5-conferir-pre.sql em BEGIN READ ONLY: deve reconhecer corpos, grants, trigger Auth, índices, generated/defaults e todos os 48 pares aprovados, sem U5. Capturar u5-preflight.sql: um SELECT/uma linha receipt, delta.before exato e baseline integral. Qualquer divergência interrompe; não aplicar reparo para conseguir verde.
+3. Somente após autorização de ato, criar diretório privado novo fora do repo C:/Users/victo/.codex/private-backups/v2g/qa-schema/U5-<UTC>, retirar herança e permitir somente Victor/SYSTEM; conferir SIDs e ACL da pasta/arquivos. Salvar PRE real, autorização/alvo/horário, SQLs/definições completas dos corpos antigos, metadados, selos e fontes aceitas. Reler e conferir hashes antes de escrever. É backup de metadados, não de dados/usuários/segredos. Não usar captura de preparação ou fixture como backup do instante anterior à escrita.
+4. Registrar tentativa única antes do canal. Enviar somente u5-aplicar.sql no nome nominal; um DO, sem BEGIN/COMMIT externos. Nenhuma chamada a CPF/pedidos/evidência/aceite/Auth/provedores ou outra função de negócio. Se houver erro/timeout ambíguo, parar e medir apenas catálogo/histórico antes de decidir qualquer novo ato; não retry cego, reparo de ledger ou aplicação de U6.
+5. Confirmado sucesso, executar u5-verificar.sql e u5-pos.sql somente leitura; salvar PÓS privado, reler e conferir hash. Executar conferirRecibos(pre,pos,'apply') com os recibos reais: 48→49, exatamente uma entrada nominal, 48 pares anteriores intactos, delta.after exato, metadados fora do delta iguais. Campos bigint da sequência precisam permanecer texto; nunca converter Number para normalizar diferenças.
+6. Preservar auditoria privada com tentativa/resultado, projeto/horário, versão, fontes e hashes, comparação e limites. Reler arquivos e conferir selos/backup anteriores ao final. Reportar e parar antes de U6, ativação ou homologação. Nenhuma publicação, configuração, env, serviço, dado de negócio ou produção.
+
+## Retorno separado e condicionado
+
+Exige autorização própria, novo backup privado do estado atual e comparação com PÓS original. Avaliar uso real: conceder/aceitar/revogar altera dados; restaurar DDL não restaura essas alterações. Não apagar evidência, obrigação, convite ou auditoria, não desfazer vínculos manualmente e não soltar dependências para satisfazer a guarda.
+
+O retorno exige tabelas novas vazias, obligation_id vazio, ausência de CPF aceito e de duplicatas agora permitidas; rejeita drift de índice/CHECK/trigger/default/generated/ACL e dependências posteriores. DROP é RESTRICT, sem CASCADE. O corpo medido anterior de private.handle_new_user e das quatro RPCs é a única fonte de restauração; não copiar versão aproximada de migration histórica.
+
+Se autorizado e válido, enviar apenas u5-retornar.sql com nome nominal. Após sucesso, novo recibo e conferirRecibos(preRetorno,posRetorno,'return') devem provar 49→50, delta.before e preservação fora do delta. Não se certifica restauração de dados/efeitos externos. Qualquer correção de dados ou regra nova é outro bloco.

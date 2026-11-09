@@ -1,0 +1,42 @@
+{
+  "local": true,
+  "remoteDDL": false,
+  "providers": false,
+  "concurrency": "sequencial, sem prova multissessao",
+  "cases": [
+    "127 selos anteriores intactos antes",
+    "DOs completos, PRE/POS/read-only, baseline49 e retorno51 com sete corpos/ACL e dados restaurados",
+    "canal aceita entrada nominal propria antes/depois, preservando49pares",
+    "readiness sob servico exige todos os23privilegios separadamente; revogar qualquer um fecha",
+    "readiness recusa grants por coluna efetivos anon/auth/PUBLIC, inclusive grant option",
+    "readiness fecha sem RLS/coluna/unicidade/ACL restrita, sem credencial ou pagamento",
+    "novos helpers/readiness e sete RPCs somente owner/servico; clientes nao executam",
+    "grants declarados sao no-op no legado medido: MAINTAIN/grant options antigos nao ampliados nem limpos",
+    "helper fail-closed para NULL/desconhecido/adversos; risco aprovado/AUTHORIZED nao sao pagamento",
+    "quatro vias self/assistido direto/3DS: intermediarios nao aprovam; CONFIRMED/RECEIVED aprovam com replay unico",
+    "3DS reserva uma vez com mes correto, sem criar assinatura; renovacao em outra charge nao duplica pedido",
+    "todos os adversos do mesmo charge impedem aprovacao/reserva nas quatro vias",
+    "estorno A nao revoga por DDL/status bruto nem afeta B; contrato real de direito bloqueia so A",
+    "IDs/cliente/valor/vencimento/tipo invalidos nao registram ou aprovam nem deixam parcial",
+    "RLS de pedidos isola comprador A/B e tabelas financeiras/RPCs nao abrem para cliente",
+    "contexto3DS privado tem FK/unicidade, IP sintetico e limpeza por expiracao; nenhum IP real lido",
+    "outbox unica por pedido/charge, reserva uma vez, accepted exige ID e nao prova entrega ou permite DELETE",
+    "rate limit real separa scope/IP/contato, bloqueia limites e rejeita NULL/formato atomicamente",
+    "drift de CHECK/indices/ACL/backend/defaults recusa atomica antes ou ao final do DO",
+    "corpo adulterado com marcador preservado nao e aceito por guarda de nomes",
+    "default antigo alterado sem corpo/identity/ACL tambem recusa",
+    "49 pares de historico protegidos contra adulteracao com mesma contagem",
+    "SQL real ordena historico embaralhado e preserva bigint textual de U5",
+    "backend com extras legitimos preservado sem congelar fixture minima",
+    "retorno recusa historico financeiro usado, sem apagar novos tipos ou efeitos",
+    "retorno recusa dependencia/view/CHECK posterior, sem CASCADE",
+    "ACL equivalente reordenada aceita; hash/corpo adulterado no recibo recusado",
+    "127 selos anteriores e duas fontes autorizadas permanecem estaveis"
+  ],
+  "ok": true,
+  "passed": 28,
+  "sourceHashes": {
+    "supabase/migrations/20261105194728_public_checkout_production_readiness.sql": "9086d8a1570b345ca508aef0a2c59fea33ea8385da8deb714e6038689228ff09",
+    "scripts/conferir-checkout-producao-sql.mjs": "478a415225ee50d59d199e9bb71cd7a8482a05c1de2ca9a46b1dedac0e85d92d"
+  }
+}

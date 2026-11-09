@@ -23,6 +23,37 @@ test('SQL produção revisável: precondições, ACL, RPCs reais e isolamento A/
       assert.equal(await scalar('select checkout_producao_schema_v1()'),1);
       await db.exec('reset role');
     });
+    await t.test('cada DML necessario e exigido individualmente; SELECT sozinho nao basta',async()=>{
+      const required={businesses:['SELECT','INSERT','UPDATE'],commercial_orders:['SELECT','INSERT','UPDATE'],
+        commercial_order_units:['SELECT','INSERT','UPDATE'],commercial_events:['SELECT','INSERT'],
+        commercial_payment_events:['SELECT','INSERT'],commercial_payment_email_outbox:['SELECT','INSERT','UPDATE'],
+        checkout_3ds_context:['SELECT','INSERT','UPDATE','DELETE'],checkout_security_attempts:['SELECT','INSERT','DELETE']};
+      for(const [table,permissions] of Object.entries(required)) for(const permission of permissions){
+        await db.exec('begin');
+        try{
+          await db.exec(`revoke ${permission} on public.${table} from service_role`);
+          assert.equal(await scalar('select has_table_privilege($1,$2,$3)',['service_role','public.'+table,permission]),false);
+          await db.exec('set local role service_role');
+          assert.equal(await scalar('select checkout_producao_schema_v1()'),0,table+':'+permission);
+        } finally {await db.exec('rollback');}
+      }
+      await db.exec('set role service_role');
+      try{assert.equal(await scalar('select checkout_producao_schema_v1()'),1);}
+      finally{await db.exec('reset role');}
+    });
+    await t.test('grants efetivos por coluna para anon/authenticated/PUBLIC fecham o gate',async()=>{
+      for(const table of ['commercial_payment_events','commercial_payment_email_outbox','checkout_3ds_context','checkout_security_attempts']){
+        const column=table==='commercial_payment_events'?'provider_event_id':table==='checkout_3ds_context'?'order_id':'id';
+        for(const role of ['anon','authenticated','public'])for(const permission of ['SELECT','INSERT','UPDATE']){
+          await db.exec('begin');
+          try{
+            await db.exec(`grant ${permission}(${column}) on public.${table} to ${role}`);
+            assert.equal(await scalar('select has_any_column_privilege($1,$2,$3)',[role==='public'?'anon':role,'public.'+table,permission]),true);
+            assert.equal(await scalar('select checkout_producao_schema_v1()'),0,table+':'+role+':'+permission);
+          }finally{await db.exec('rollback');}
+        }
+      }
+    });
     await t.test('coluna, RLS, ACL ou unicidade ausentes fecham gate; migration parcial reverte',async()=>{
       for(const change of [
         'alter table checkout_3ds_context disable row level security',

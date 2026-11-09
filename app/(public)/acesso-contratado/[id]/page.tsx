@@ -12,17 +12,20 @@ export default async function AcessoContratadoPage({params}:{params:Promise<{id:
   const {id} = await params;
   if (!acessoContratadoAtivo() || !ID_ACESSO_CONTRATADO.test(id)) notFound();
   const s = await createClient();
-  const {data:{user}} = await s.auth.getUser();
+  const {data:{user},error} = await s.auth.getUser();
+  // Uma resposta de Auth com erro não é prova de sessão, mesmo quando traz
+  // um usuário residual. Trate-a como desconectada antes de criar o admin.
+  const usuario = error ? null : user;
   const next = encodeURIComponent(`/acesso-contratado/${id}`);
   let resumo = null;
-  if (user?.email_confirmed_at) {
-    try { resumo = await resumoAcessoContratado(createAdminClient(),id,user); } catch { /* fail closed */ }
+  if (usuario?.email_confirmed_at) {
+    try { resumo = await resumoAcessoContratado(createAdminClient(),id,usuario); } catch { /* fail closed */ }
   }
   return <EntradaEditorial>
     <h1>Acesso ao seu negócio.</h1>
     <p>Recebeu uma liberação da equipe? Use o e-mail indicado por ela para conferir seu acesso.</p>
-    {user?.email_confirmed_at ? <>
-      <p>Você está conectado como {user.email}.</p>
+    {usuario?.email_confirmed_at ? <>
+      <p>Você está conectado como {usuario.email}.</p>
       {resumo ? <>
         <h2>{resumo.nome}</h2>
         <p>{identificarDocumentoContratante(resumo.documento)} · Código do negócio: {resumo.businessId.slice(0,8)}</p>
@@ -30,7 +33,7 @@ export default async function AcessoContratadoPage({params}:{params:Promise<{id:
         <FormularioAcessoContratado id={id}/>
       </> : <p className="form-warning" role="status">Não conseguimos confirmar a liberação para esta conta. Confira o e-mail usado ou fale com a equipe.</p>}
     </> : <>
-      {user && <p className="form-warning">Confirme seu e-mail pelo link recebido antes de aceitar o acesso.</p>}
+      {usuario && <p className="form-warning">Confirme seu e-mail pelo link recebido antes de aceitar o acesso.</p>}
       <a className="cta" href={`/entrar?modo=cadastro&adicionar=1&next=${next}`}>Criar meu primeiro acesso</a>
       <a href={`/entrar?modo=login&adicionar=1&next=${next}`}>Já tenho conta</a>
       <p>Após confirmar seu e-mail, volte a este link para aceitar o acesso.</p>

@@ -22,6 +22,9 @@ declare
   t text;
   sig text;
   f oid;
+  v_access record;
+  v_role text;
+  v_privilege text;
 begin
   foreach t in array array['businesses','commercial_orders','commercial_order_units',
     'commercial_events','commercial_payment_events','commercial_payment_email_outbox',
@@ -31,11 +34,34 @@ begin
       and c.relkind='r' and c.relrowsecurity) then return 0; end if;
     if not pg_catalog.has_table_privilege('service_role','public.'||t,'SELECT') then return 0; end if;
   end loop;
+  -- has_table_privilege com lista de privilegios usa ANY. Cada permissao
+  -- exigida pelos grants acima precisa passar individualmente (ALL).
+  for v_access in select * from (values
+    ('businesses','SELECT'),('businesses','INSERT'),('businesses','UPDATE'),
+    ('commercial_orders','SELECT'),('commercial_orders','INSERT'),('commercial_orders','UPDATE'),
+    ('commercial_order_units','SELECT'),('commercial_order_units','INSERT'),('commercial_order_units','UPDATE'),
+    ('commercial_events','SELECT'),('commercial_events','INSERT'),
+    ('commercial_payment_events','SELECT'),('commercial_payment_events','INSERT'),
+    ('commercial_payment_email_outbox','SELECT'),('commercial_payment_email_outbox','INSERT'),('commercial_payment_email_outbox','UPDATE'),
+    ('checkout_3ds_context','SELECT'),('checkout_3ds_context','INSERT'),('checkout_3ds_context','UPDATE'),('checkout_3ds_context','DELETE'),
+    ('checkout_security_attempts','SELECT'),('checkout_security_attempts','INSERT'),('checkout_security_attempts','DELETE')
+  ) as required_access(table_name,privilege) loop
+    if not pg_catalog.has_table_privilege('service_role','public.'||v_access.table_name,v_access.privilege)
+      then return 0; end if;
+  end loop;
   foreach t in array array['commercial_payment_events','commercial_payment_email_outbox',
     'checkout_3ds_context','checkout_security_attempts'] loop
     if pg_catalog.has_table_privilege('anon','public.'||t,'SELECT,INSERT,UPDATE,DELETE')
       or pg_catalog.has_table_privilege('authenticated','public.'||t,'SELECT,INSERT,UPDATE,DELETE')
       then return 0; end if;
+    -- Grants de coluna tambem podem abrir leitura/escrita sem grant da tabela.
+    -- PUBLIC e herdado nas consultas efetivas destes dois papeis.
+    foreach v_role in array array['anon','authenticated'] loop
+      foreach v_privilege in array array['SELECT','INSERT','UPDATE'] loop
+        if pg_catalog.has_any_column_privilege(v_role,'public.'||t,v_privilege)
+          then return 0; end if;
+      end loop;
+    end loop;
   end loop;
   -- Todas as colunas lidas/escritas pelas portas de compra/efeitos.
   if exists (

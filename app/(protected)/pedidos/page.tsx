@@ -33,8 +33,8 @@ export default async function PedidosPage({ searchParams }: {
   searchParams: Promise<{ registro?: string; negocio?: string }>;
 }) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (user?.app_metadata?.papel !== "operador") notFound();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  if (error || !user?.email_confirmed_at || user.app_metadata?.papel !== "operador") notFound();
 
   let data: PedidoAssistido[] | null = null;
   let falhaConsulta = false;

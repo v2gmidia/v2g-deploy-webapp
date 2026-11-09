@@ -1,0 +1,80 @@
+{
+  "result": "prepared_reviewed_locally_tested_sealed_not_applied",
+  "date_local": "2026-11-08",
+  "target_qa": "zskpijnqgkqwxksqmzmf",
+  "full_package_suite": {
+    "ok": true,
+    "groups": 30,
+    "remoteDDL": false,
+    "command": "node docs/qa/reconciliacao-schema-07-11/u5/executar-local.mjs"
+  },
+  "independent_sql": {
+    "ok": true,
+    "local": true,
+    "remote": false,
+    "ledger": "48 -> 49 -> 50",
+    "priorPairsPreserved": 48,
+    "newTables": 4,
+    "defaultOnlyDriftRefusedBeforeDDL": true,
+    "bigintExactAndNegative": true,
+    "effectivePrivileges": true,
+    "laterViewRefusesReturnWithoutLoss": true,
+    "metadataRestored": true
+  },
+  "baseline_sql_tests": {
+    "command": "node --test --test-concurrency=1 scripts/conferir-documento-contratante-sql.mjs scripts/conferir-acesso-contratado-sql.mjs scripts/conferir-evidencia-manual-sql.mjs",
+    "passed": 22,
+    "fail": 0,
+    "remote": false,
+    "module": "C:/Users/victo/v2g-finance/node_modules/@electric-sql/pglite/dist/index.js"
+  },
+  "consumer_tests": {
+    "reported_by": "05/06",
+    "local": 37,
+    "separate_from_package_count": true
+  },
+  "seals": {
+    "prior": 97,
+    "u5": 30,
+    "total": 127,
+    "all_matched": true,
+    "manifest_sha256": "0a6ec90565b695c1e9cf9b080da23ff5950f898939111244138db291e940267b"
+  },
+  "selected_files": [
+    {
+      "name": "u5-aplicar.sql",
+      "sha256": "9871d53564356e1f3a0613e1f204ae0539a439810af69fc00ebc91352ca0ac83"
+    },
+    {
+      "name": "u5-retornar.sql",
+      "sha256": "8ade1e953ad3f58822b615e30cf95b1087fad058d46e81b11c1a29fea01c893d"
+    },
+    {
+      "name": "u5-conferir-pre.sql",
+      "sha256": "fc63cfaf2b48723f23a416621d59eab316a35a995033f64eda26e1ec07bea380"
+    },
+    {
+      "name": "baseline-u4.json",
+      "sha256": "31fc471b88cf9d012b12a94932deb946a234bcda76986af9d851d2b75f892f9b"
+    },
+    {
+      "name": "resultado-ensaio.json",
+      "sha256": "c9756f6d650b9b1cfcc1ce1850ada5ecf8fe1200e79631fc0bc8ad846a92bf3e"
+    }
+  ],
+  "baseline_snapshot_equal_to_private_u4": true,
+  "qa_pre_readonly": {
+    "ok": true,
+    "at_utc": "2026-11-09 01:12:18 UTC",
+    "sha256": "fc63cfaf2b48723f23a416621d59eab316a35a995033f64eda26e1ec07bea380",
+    "ledger": 48,
+    "u5_absent": true
+  },
+  "u5_ddl": false,
+  "backup_of_application": false,
+  "remote_business_rpc": false,
+  "production_sql": false,
+  "u6_started": false,
+  "runtime_or_flags_changed": false,
+  "commit_push_deploy": false
+}

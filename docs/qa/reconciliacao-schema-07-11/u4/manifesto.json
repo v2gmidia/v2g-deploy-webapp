@@ -1,0 +1,45 @@
+{
+  "status": "PREPARACAO_LOCAL_TESTADA_SEM_APLICACAO",
+  "localTestGroupsPassed": 38,
+  "project_id": "zskpijnqgkqwxksqmzmf",
+  "groups": [
+    12,
+    14
+  ],
+  "absentObjects": 10,
+  "newTables": [
+    "revops_people",
+    "revops_prospect_organizations",
+    "revops_opportunities",
+    "revops_opportunity_people",
+    "revops_source_references",
+    "revops_interactions",
+    "revops_interaction_opportunities",
+    "creative_generation_requests"
+  ],
+  "functions": [
+    "revops_register_interest",
+    "revops_register_interaction"
+  ],
+  "columns": [],
+  "checks": [],
+  "constraints": [],
+  "indexes": [],
+  "helpers": [],
+  "applyName": "qa_reconciliacao_u4_revops_pedido_criativo_20261108",
+  "returnName": "qa_reconciliacao_u4_revops_pedido_criativo_retorno_20261108",
+  "ledger": {
+    "before": 47,
+    "after": 48,
+    "afterReturn": 49
+  },
+  "baselineU3": {
+    "version": "20261108113154",
+    "receiptSha256": "ef17e97e2f7ec7b6c96b2de78ee47bacb570ee9515648c7c3fef4c8a3be8a574"
+  },
+  "sources": [
+    "20261007160925_revops_v0.sql",
+    "20261021001651_creative_generation_requests.sql",
+    "20261026193000_referencia_publica_pedido_criativo.sql:CHECK creative_generation_requests apenas"
+  ]
+}
