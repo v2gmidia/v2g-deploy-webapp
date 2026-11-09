@@ -23,7 +23,7 @@ try{
  insert into profiles values('${u}'),('${v}');insert into businesses values('${a}','${u}'),('${b}','${v}');
  insert into creative_review_requests values('${r}','${a}','${sha}','approved_for_manual_publish');
  insert into manager_accounts values('${a}','${u}');insert into ad_accounts values('${a}','act_123',true,'ok'),('${b}','act_999',true,'ok');`);
- await db.exec(readFileSync('supabase/migrations/20261109210135_creative_publication_confirmation.sql','utf8'));
+ await db.exec(readFileSync('supabase/migrations/20261109223232_creative_publication_confirmation.sql','utf8'));
  eq((await db.query("select relrowsecurity from pg_class where relname='creative_publication_confirmations'")).rows[0].relrowsecurity,true);
  for(const role of ['anon','authenticated']){
    eq((await db.query(`select has_function_privilege('${role}','public.confirmar_publicacao_criativo(uuid,uuid,text,uuid,text,text,date,text)','EXECUTE') as p`)).rows[0].p,false);

@@ -103,7 +103,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
     const data = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
     const totalPendentes = pendentes.count;
     const ultimaPagina = totalPendentes === null ? null : ultimaPaginaCriativos(totalPendentes);
-    return <div className="canvas"><div className="page-head"><p>OPERAÇÃO · USO INTERNO</p><h1>Revisão de criativos</h1>
+    return <div className="canvas"><div className="page-head"><h1>Revisão de criativos</h1>
       <p>Peças enviadas pelos clientes, por negócio. Aprovação interna não publica uma campanha.</p></div>
       <p><a href="/gestor">Voltar à carteira</a>{negocioId && <> · <a href="/gestor/criativos">{tituloFila}</a></>}</p>
       {negocioId && <p>Conta selecionada: {nomes.get(negocioId) ?? negocioId}</p>}
@@ -133,7 +133,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
         const publicacao = lerPublicacao(registro, pedido);
         const indisponivel = Boolean(publicacoes.error || (registro && !publicacao));
         const contasDoNegocio = contasValidas ? [...new Set((contas.data ?? []).filter(c => c.business_id === pedido.business_id).map(c => c.external_id as string))] : [];
-        return <section className="auth-card" key={pedido.id}>
+        return <section className={styles.pedido} key={pedido.id}>
         <h2>{nomes.get(pedido.business_id) ?? "Negócio sem nome disponível"}</h2>
         <p>{pedido.original_name} · {rotuloDaRevisao(pedido.status as StatusRevisao)} · {data.format(new Date(pedido.created_at))}</p>
         <p>{resumoDaIntencao(pedido.upload_intent, hojeEmSaoPaulo())}</p>
