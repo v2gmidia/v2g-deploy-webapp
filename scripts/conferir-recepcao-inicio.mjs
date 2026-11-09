@@ -12,6 +12,7 @@ const novo = () => ({ ...exemploDoInicio(new Date('2026-10-27T15:00:00Z'), 'cheg
 const recepcao = { reserva: null, falhaReuniao: false };
 const reserva = { starts_at: '2026-10-30T17:00:00Z', ends_at: '2026-10-30T17:30:00Z' };
 const portsTela = {
+  './ResumoMetaDoInicio': { ResumoMetaDoInicio: () => null },
   './PerguntaDoDia': { PerguntaDoDia: () => null },
   './ConclusaoDaJornada': { ConclusaoDaJornada: () => null },
   './SeletorDePeriodo': { SeletorDePeriodo: () => React.createElement('button', null, 'Período') },
@@ -212,7 +213,7 @@ test('multiconta: outro negócio e falta de sessão não herdam conclusão nem r
   assert.equal(semSessao.chamadas.length, 0);
 });
 
-test('página consulta métricas só quando esperadas, com período e negócio da sessão', async () => {
+test('página consulta inventário Meta mesmo sem execução, sem usar negócio fornecido na URL', async () => {
   for (const desconhecido of [false, true]) {
     const chamadas = [];
     const agendas = [];
@@ -228,18 +229,20 @@ test('página consulta métricas só quando esperadas, com período e negócio d
         aplicarAgendaConferida: (leitura) => leitura,
       },
       '@/app/(fluxo)/onboarding/concluido/agenda-actions': { carregarAgendaAction: async id => { agendas.push(id); return { status: 'legado' }; } },
-      '@/lib/backend/dia-seguinte': { consolidadoDoNegocio: async args => { chamadas.push(args); return { ok: false, categoria: 'servidor' }; } },
+      '@/lib/backend/anuncios-do-negocio': { anunciosDoNegocioSelecionado: async args => { chamadas.push(args); return { ok: false, motivo: 'indisponivel', mensagem: 'Falha fictícia', contas: [], contaSelecionada: null }; } },
       '@/lib/dia-seguinte/dias-em-aberto': { diasAtrasados: async () => [] },
       './TelaDoInicio': { TelaDoInicio: () => null },
     } });
     const page = env.load('app/(protected)/inicio/page.tsx').default;
-    const tela = await page({ searchParams: Promise.resolve({ desde: '2026-01-01', ate: '2026-03-31', businessId: 'invasor' }) });
+    const tela = await page({ searchParams: Promise.resolve({ desde: '2026-01-01', ate: '2026-01-03', conta: 'act_123', businessId: 'invasor' }) });
     assert.equal(tela.props.recepcaoOnboarding.falhaReuniao, false);
     assert.deepEqual(agendas, ['negocio-A']);
-    assert.equal(tela.props.acumuladoDoPeriodo, desconhecido ? null : undefined);
-    assert.equal(chamadas.length, desconhecido ? 2 : 0);
-    for (const c of chamadas) { assert.equal(c.businessId, 'negocio-A'); assert.equal(c.profileId, 'dono-A'); }
-    if (desconhecido) assert.ok(chamadas.some(c => c.desde === '2026-01-01' && c.ate === '2026-03-31'));
+    assert.equal(tela.props.leituraMeta.ok, false);
+    assert.equal(chamadas.length, 1);
+    assert.equal(tela.props.escopoMeta.businessId, 'negocio-A'); assert.equal(tela.props.escopoMeta.perfilId, 'dono-A');
+    assert.equal(chamadas[0].businessId, undefined);
+    assert.equal(chamadas[0].contaId, 'act_123');
+    assert.equal(chamadas[0].desde, '2026-01-01'); assert.equal(chamadas[0].ate, '2026-01-03');
   }
 });
 

@@ -10,8 +10,7 @@ import { TelaDoInicio } from "./TelaDoInicio";
 import { aplicarAgendaConferida, lerPendenciaDoNegocio } from "@/lib/onboarding/pendencia-do-negocio";
 import { carregarAgendaAction } from "@/app/(fluxo)/onboarding/concluido/agenda-actions";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
-import { consolidadoDoNegocio } from "@/lib/backend/dia-seguinte";
-import { resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
+import { anunciosDoNegocioSelecionado } from "@/lib/backend/anuncios-do-negocio";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -66,9 +65,10 @@ export default async function InicioPage({
   const supabase = await createClient();
   const {
     data: { user },
+    error: erroSessao,
   } = await supabase.auth.getUser();
   // Sem fixture, sem sessão, sem tela — como sempre foi.
-  if (!user && !fixture) return null;
+  if ((erroSessao || !user) && !fixture) return null;
 
   // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
   const agora = new Date();
@@ -135,22 +135,14 @@ export default async function InicioPage({
   // ============================================================
   if (!estado.temNegocio) redirect("/onboarding");
 
-  // A consulta histórica não altera a jornada nem as perguntas sobre ontem.
-  // O limite mensal sempre considera o mês atual, independentemente do calendário.
-  const esperaResultados = resultadosSaoEsperados(estado);
-  let investidoNoMesCentavos: number | null = null;
-  let acumuladoDoPeriodo: EstadoDoCliente["diaSeguinte"]["acumulado"] | undefined = fixture || !esperaResultados ? undefined : null;
-  if (!fixture && esperaResultados && estado.negocioId && user) {
-    const args = { businessId: estado.negocioId, profileId: user.id };
-    const desdeMes = `${hoje.slice(0, 8)}01`;
-    const mensal = consolidadoDoNegocio({ ...args, desde: desdeMes, ate: hoje });
-    const consultaPeriodo = intervalo.desde === desdeMes && intervalo.ate === hoje
-      ? mensal
-      : consolidadoDoNegocio({ ...args, desde: intervalo.desde, ate: intervalo.ate });
-    const [acumuladoDoMes, selecionado] = await Promise.all([mensal, consultaPeriodo]);
-    investidoNoMesCentavos = acumuladoDoMes.ok ? acumuladoDoMes.dados.investiuCentavos : null;
-    acumuladoDoPeriodo = selecionado.ok ? selecionado.dados : null;
-  }
+  // Mesmo leitor autorizado de Anúncios: não depende de execução ou cadastro concluído.
+  // Os parâmetros podem escolher somente uma conta que a sessão já alcança.
+  const contaSolicitada = typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined;
+  const leituraMeta = !fixture ? intervalo.erro ? {
+    ok: false as const, motivo: "periodo" as const, mensagem: intervalo.erro, contas: [], contaSelecionada: null,
+  } : await anunciosDoNegocioSelecionado({
+    desde: intervalo.desde, ate: intervalo.ate, contaId: contaSolicitada,
+  }) : undefined;
 
   // A escolha do negócio sempre permanece no Início. Esta leitura resolve
   // qual pendência do onboarding deve aparecer aqui, sem transformar uma
@@ -212,8 +204,8 @@ export default async function InicioPage({
       recepcaoOnboarding={leituraDaPendencia.cadastroConcluido && estado.negocioId ? { businessId: estado.negocioId, reserva, falhaReuniao: leituraDaPendencia.falha } : null}
       falhaPendencia={leituraDaPendencia.falha}
       intervalo={intervalo}
-      acumuladoDoPeriodo={acumuladoDoPeriodo}
-      investidoNoMesCentavos={investidoNoMesCentavos}
+      leituraMeta={leituraMeta}
+      escopoMeta={estado.negocioId && user ? { businessId: estado.negocioId, perfilId: user.id, desde: intervalo.desde, ate: intervalo.ate, conta: contaSolicitada } : undefined}
       faixa={<FaixaReconectar />}
     />
   );
