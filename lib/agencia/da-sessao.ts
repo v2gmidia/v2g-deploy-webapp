@@ -4,11 +4,13 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
-import { contextoAgenciaDoCadastro, UUID_AGENCIA, type ContextoAgencia } from "./contexto";
+import { contextoAgenciaDoCadastro, contextoDoAnuncianteVinculado, UUID_AGENCIA, type ContextoAgencia } from "./contexto";
+import { lerVinculosDaSessao } from "./vinculos-da-sessao";
+import { raizDaAgencia } from "./vinculos";
 
 export type ContextoAgenciaDaSessao =
   | { status: "desligado" | "direto" | "indisponivel" }
-  | { status: "agencia"; contexto: ContextoAgencia };
+  | { status: "agencia"; contexto: ContextoAgencia; clientes: ContextoAgencia[]; agencyBusinessId: string; origem: "vinculo" | "legado" };
 
 /** Somente QA já habilitada; nenhuma identidade, permissão ou dado é gravado. */
 export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDaSessao> => {
@@ -24,7 +26,30 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
       .select("id, profile_id, name, onboarding, monthly_budget")
       .eq("profile_id", user.id).eq("id", ativo.negocio.id).maybeSingle();
     if (error || !data || data.id !== ativo.negocio.id || data.profile_id !== user.id) return { status: "indisponivel" };
-    const contexto = contextoAgenciaDoCadastro(data, user.id);
+    const leitura = await lerVinculosDaSessao(supabase, user.id);
+    if (leitura.estado === "indisponivel") return { status: "indisponivel" };
+    const raiz = leitura.estado === "pronto" ? raizDaAgencia(leitura.vinculos, data.id) : null;
+    let contexto = contextoAgenciaDoCadastro(data, user.id);
+    let clientes: ContextoAgencia[] = contexto ? [contexto] : [];
+    if (raiz && leitura.estado === "pronto") {
+      // Pai e filhos continuam pertencendo ao mesmo titular e precisam estar liberados.
+      const permitidos = new Set(ativo.negocios.map(n => n.id));
+      if (!permitidos.has(raiz)) return { status: "indisponivel" };
+      const vinculos = leitura.vinculos.filter(v => v.agency_business_id === raiz && permitidos.has(v.advertiser_business_id));
+      const ids = [...new Set([raiz, ...vinculos.map(v => v.advertiser_business_id)])];
+      const negocios = await supabase.from("businesses").select("id, profile_id, name, onboarding, monthly_budget")
+        .eq("profile_id", user.id).in("id", ids).limit(501);
+      if (negocios.error || !Array.isArray(negocios.data) || negocios.data.length !== ids.length
+        || negocios.data.some(b => !ids.includes(b.id) || b.profile_id !== user.id)
+        || new Set(negocios.data.map(b => b.id)).size !== ids.length) return { status: "indisponivel" };
+      const pai = negocios.data.find(b => b.id === raiz);
+      if (!pai || typeof pai.name !== "string" || !pai.name.trim() || pai.name.length > 200) return { status: "indisponivel" };
+      const montados = vinculos.map(v => contextoDoAnuncianteVinculado(negocios.data.find(b => b.id === v.advertiser_business_id)!, user.id, v, pai.name));
+      if (montados.some(c => !c)) return { status: "indisponivel" };
+      clientes = (montados as ContextoAgencia[]).sort((a, b) => a.anunciante.localeCompare(b.anunciante, "pt-BR"));
+      contexto = clientes.find(c => c.businessId === data.id) ?? null;
+      if (!contexto) return { status: "indisponivel" };
+    }
     if (!contexto) {
       const onboarding = data.onboarding as { respostas?: { operador?: { texto?: unknown } } } | null;
       return onboarding?.respostas?.operador?.texto === "Uma agência ou gestor opera para o anunciante"
@@ -32,7 +57,7 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
     }
     // Leitura administrativa mínima só depois de provar titular, seleção e cadastro.
     // Não amplia atribuição nem transforma o nome do gestor em autorização.
-    try {
+    await Promise.all(clientes.map(async contexto => { try {
       const admin = createAdminClient();
       const atribuicao = await admin.from("manager_accounts").select("business_id, operator_profile_id")
         .eq("business_id", contexto.businessId).maybeSingle();
@@ -45,7 +70,7 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
           && typeof p.full_name === "string" && p.full_name.trim().length <= 200)
           contexto.gestor = p.full_name.trim() || null;
       }
-    } catch { /* A indisponibilidade do nome não desautoriza o titular já validado. */ }
-    return { status: "agencia", contexto };
+    } catch { /* A indisponibilidade do nome não desautoriza o titular já validado. */ } }));
+    return { status: "agencia", contexto, clientes, agencyBusinessId: raiz ?? contexto.businessId, origem: raiz ? "vinculo" : "legado" };
   } catch { return { status: "indisponivel" }; }
 });

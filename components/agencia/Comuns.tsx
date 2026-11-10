@@ -1,8 +1,9 @@
 import type { ReactNode } from "react";
 import type { ContextoAgencia, RetornoCarteira } from "@/lib/agencia/contexto";
-import { hrefDaCarteira, hrefDoCliente } from "@/lib/agencia/contexto";
+import { hrefDaCarteira } from "@/lib/agencia/contexto";
 import type { ResumoDaCarteira } from "@/lib/agencia/resumo";
 import styles from "./agencia.module.css";
+import { AbrirCliente, type AcaoAbrirCliente } from "./AbrirCliente";
 
 export function Seta({ voltar = false }: { voltar?: boolean }) {
   return <svg className={styles.icone} viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
@@ -18,11 +19,11 @@ export function CaminhoDoCliente({ contexto, retorno, area = "/inicio" }: {
   return <nav className={styles.caminho} aria-label="Localização"><a href={hrefDaCarteira("/inicio", retorno)}>{contexto.agencia}</a><span>/</span>
     <a href={hrefDaCarteira(area, retorno)}>{area === "/criativos" ? "Criativos da agência" : "Clientes"}</a><span>/</span><span aria-current="page">{contexto.anunciante}</span></nav>;
 }
-export function ProximoPassoAgencia({ contexto, resumo, retorno }: {
-  contexto: ContextoAgencia; resumo: ResumoDaCarteira; retorno: RetornoCarteira;
+export function ProximoPassoAgencia({ contexto, resumo, retorno, ativoId, abrirCliente }: {
+  contexto: ContextoAgencia; resumo: ResumoDaCarteira; retorno: RetornoCarteira; ativoId?: string; abrirCliente?: AcaoAbrirCliente;
 }) {
   return <aside className={styles.proximo}><h2>Seu próximo passo</h2><h3>{resumo.titulo}</h3><p><strong>{contexto.anunciante}</strong><br />{resumo.corpo}</p>
-    <a className="cta" href={hrefDoCliente("/criativos", contexto.businessId, retorno)}>{resumo.rotulo}<Seta /></a>
+    <AbrirCliente contexto={contexto} ativoId={ativoId} area="/criativos" retorno={retorno} acao={abrirCliente} className="cta">{resumo.rotulo}<Seta /></AbrirCliente>
     <p className={styles.nota}>Responsável: {contexto.gestor ?? "a conferir com a equipe"}</p></aside>;
 }
 export function ClienteIndisponivel() {

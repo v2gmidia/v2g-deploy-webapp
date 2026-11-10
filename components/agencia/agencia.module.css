@@ -47,6 +47,9 @@
 .carteira th:nth-child(2){width:21%}.carteira th:nth-child(3){width:28%}.carteira th:nth-child(4){width:14%}.carteira th:last-child{width:14%}
 .carteira td:first-child a{color:var(--ink);text-decoration:none}
 .carteira td:first-child a:hover{color:var(--cobalt-ink);text-decoration:underline}
+.nomeCliente{border:0;padding:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.nomeCliente:hover{color:var(--cobalt-ink);text-decoration:underline}
+.proximo form :global(.cta){width:auto}
 .carteira b{font-size:var(--fs-titulo);font-weight:500;display:block;margin-bottom:4px}
 .carteira small{display:block;font-size:var(--fs-legenda);color:var(--ink-soft);line-height:1.6;margin-top:4px}
 .carteira tbody tr:hover{background:var(--surface)}

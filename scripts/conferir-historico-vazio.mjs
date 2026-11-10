@@ -41,21 +41,24 @@ test('resposta de outro negocio ou contrato ilegivel nao esconde erro como ausen
     assert.equal((await leitor({json}).run()).estado,'indisponivel');
 });
 
-async function pagina(resultado){
+async function pagina(resultado,{agencia=null,busca=intervalo,negocioId=businessId,chamadas=[]}={}){
   const nada=()=>null;
   const q={select(){return this;},eq(){return this;},order:async()=>({data:[]})};
   const {default:AnunciosPage}=ambienteTs({ports:{
     '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:profileId}}})},from:()=>q})},
-    '@/lib/estado/cliente':{estadoDoCliente:async()=>({negocioId:businessId,proximo:null,veiculacao:'nao_sabemos'})},
-    '@/lib/resultado/do-negocio':{resultadoDoNegocio:async()=>resultado},
-    '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>({ok:true,contas:[]})},
+    '@/lib/estado/cliente':{estadoDoCliente:async()=>{chamadas.push('estado');return {negocioId,proximo:null,veiculacao:'nao_sabemos'};}},
+    '@/lib/resultado/do-negocio':{resultadoDoNegocio:async()=>{chamadas.push('resultado');return resultado;}},
+    '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>{chamadas.push('meta');return {ok:true,contas:[]};}},
+    '@/lib/piloto-qa/acesso':{pilotoQaHabilitado:()=>agencia!==null},
+    '@/lib/agencia/da-sessao':{carregarAgenciaDaSessao:async()=>agencia},
+    '@/components/agencia/Comuns':{ClienteIndisponivel:()=>React.createElement('p',null,'Contexto indisponível')},
     '@/components/ui/FaixaReconectar':{FaixaReconectar:nada},'@/components/ui/Pill':{Pill:nada},
     '@/components/ui/HeroDaEtapa':{HeroDaEtapa:nada},
     './PainelDeAnuncios':{PainelDeAnuncios:nada},'./AtualizacaoDaConsulta':{AtualizacaoDaConsulta:({children})=>children},
     '../inicio/SeletorDePeriodo':{SeletorDePeriodo:nada},
     './AnunciosMeta':{InventarioDeAnunciosMeta:()=>React.createElement('p',null,'Consulta Meta preservada')},
   }}).load('app/(protected)/anuncios/page.tsx');
-  return renderToStaticMarkup(await AnunciosPage({searchParams:Promise.resolve(intervalo)}));
+  return renderToStaticMarkup(await AnunciosPage({searchParams:Promise.resolve(busca)}));
 }
 
 test('pagina real apresenta ausencia de rodadas junto da consulta Meta sem afirmar ausencia de campanhas',async()=>{
@@ -67,5 +70,49 @@ test('pagina real apresenta ausencia de rodadas junto da consulta Meta sem afirm
 test('pagina real preserva aviso de falha e nao mostra vazio quando o consolidado falha',async()=>{
   const html=await pagina(await leitor({status:500}).run());
   assert.match(html,/Consulta Meta preservada/);assert.match(html,/Não conseguimos atualizar seus resultados agora/);
+  assert.doesNotMatch(html,/Ainda não há rodadas/);
+});
+
+const agencia={status:'agencia',contexto:{businessId,agencia:'Agência fictícia',anunciante:'Anunciante fictício'}};
+const link=(html,rotulo)=>new URL(html.match(new RegExp(`href="([^"]+)"[^>]*>${rotulo}</a>`))[1].replaceAll('&amp;','&'),'https://qa.invalid');
+
+test('Anúncios real volta ao detalhe do anunciante com período, conta e filtros, sem cair na carteira',async()=>{
+  const html=await pagina(await leitor().run(),{agencia,busca:{...intervalo,cliente:businessId,conta:'act_123',busca_carteira:'Dúú & outro',pendentes_carteira:'1',pagina_carteira:'2'}});
+  const resumo=link(html,'Ver resumo deste período'),criativos=link(html,'Abrir criativos');
+  assert.equal(resumo.pathname,'/inicio');assert.equal(resumo.searchParams.get('cliente'),businessId);
+  for(const[k,v]of Object.entries(intervalo))assert.equal(resumo.searchParams.get(k),v);
+  assert.equal(resumo.searchParams.get('conta'),'act_123');assert.equal(resumo.searchParams.get('busca_carteira'),'Dúú & outro');
+  assert.equal(resumo.searchParams.get('pagina_carteira'),'2');assert.equal(resumo.searchParams.get('pendentes_carteira'),'1');
+  assert.equal(criativos.pathname,'/criativos');assert.equal(criativos.searchParams.get('cliente'),businessId);
+  assert.match(html,/Consulta Meta preservada/);assert.match(html,/Ainda não há rodadas/);
+});
+
+test('QA recusa cliente alheio, repetido e vazio antes de consultar estado ou métricas',async()=>{
+  for(const cliente of [profileId,[businessId,businessId],'']){
+    const chamadas=[];const html=await pagina(null,{agencia,busca:{...intervalo,cliente},chamadas});
+    assert.deepEqual(chamadas,[]);assert.match(html,/Contexto indisponível/);assert.doesNotMatch(html,/Consulta Meta/);
+  }
+});
+
+test('divergência entre contexto e estado não consulta Meta nem consolidado',async()=>{
+  const chamadas=[];const html=await pagina(null,{agencia,negocioId:profileId,chamadas});
+  assert.deepEqual(chamadas,['estado']);assert.match(html,/Contexto indisponível/);
+});
+
+test('falha ao conferir contexto QA não mostra resultados ou volta de outro cliente',async()=>{
+  const chamadas=[];const html=await pagina(null,{agencia:{status:'indisponivel'},chamadas});
+  assert.deepEqual(chamadas,[]);assert.match(html,/Contexto indisponível/);
+});
+
+test('fora do portão QA, os links diretos e o comportamento anterior são preservados',async()=>{
+  const html=await pagina(await leitor().run());
+  const resumo=link(html,'Ver resumo deste período');assert.equal(resumo.searchParams.has('cliente'),false);
+  assert.equal(resumo.pathname,'/inicio');assert.equal(link(html,'Abrir criativos').pathname,'/criativos');
+});
+
+test('ramo de falha do histórico também preserva retorno do cliente sem inventar vazio',async()=>{
+  const html=await pagina(await leitor({status:500}).run(),{agencia,busca:{...intervalo,cliente:businessId}});
+  assert.equal(link(html,'Ver resumo deste período').searchParams.get('cliente'),businessId);
+  assert.equal(link(html,'Abrir criativos').searchParams.get('cliente'),businessId);
   assert.doesNotMatch(html,/Ainda não há rodadas/);
 });

@@ -6,7 +6,7 @@ import { COLUNAS_PUBLICACAO } from "@/lib/criativos/publicacao";
 
 export async function carregarResumoDaCarteira(businessId: string) {
   const c = await carregarAgenciaDaSessao();
-  if (c.status !== "agencia" || c.contexto.businessId !== businessId) return resumirCarteira(businessId, [], [], true);
+  if (c.status !== "agencia" || !(c.clientes ?? [c.contexto]).some(cliente => cliente.businessId === businessId)) return resumirCarteira(businessId, [], [], true);
   try {
     const supabase = await createClient();
     const [revisoes, publicacoes] = await Promise.all([

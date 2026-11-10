@@ -17,6 +17,6 @@ export function NavegacaoAgencia({ businessId, inicio, criativos }: { businessId
 export function NomeDoContextoAgencia({ businessId, agencia, anunciante }: { businessId: string; agencia: string; anunciante: string }) {
   const busca = useSearchParams(), pathname = usePathname();
   const valores = busca.getAll("cliente");
-  const detalhe = ["/inicio", "/criativos"].includes(pathname) && valores.length === 1 && valores[0] === businessId;
+  const detalhe = ["/inicio", "/criativos", "/anuncios"].includes(pathname) && valores.length === 1 && valores[0] === businessId;
   return <b>{detalhe ? `${agencia} / ${anunciante}` : `${agencia} · Agência`}</b>;
 }

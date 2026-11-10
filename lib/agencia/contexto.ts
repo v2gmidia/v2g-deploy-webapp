@@ -3,6 +3,7 @@ import { respostasBasicas } from "../onboarding/bloco-um.ts";
 export const UUID_AGENCIA = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
 export type ContextoAgencia = {
   businessId: string;
+  agencyBusinessId?: string;
   agencia: string;
   anunciante: string;
   ramo: string | null;
@@ -10,6 +11,21 @@ export type ContextoAgencia = {
   verbaMensal: number | null;
   gestor: string | null;
 };
+
+/** O parentesco vem da relação; os dados operacionais vêm só do anunciante. */
+export function contextoDoAnuncianteVinculado(linha: {
+  id: unknown; profile_id: unknown; onboarding: unknown; monthly_budget: unknown;
+}, perfilId: string, vinculo: { advertiser_business_id: string; advertiser_name: string; agency_business_id: string }, agencia: string): ContextoAgencia | null {
+  if (linha.profile_id !== perfilId || !UUID_AGENCIA.test(perfilId) || linha.id !== vinculo.advertiser_business_id
+    || !UUID_AGENCIA.test(vinculo.advertiser_business_id) || !UUID_AGENCIA.test(vinculo.agency_business_id)
+    || !agencia.trim() || agencia.length > 200 || !vinculo.advertiser_name.trim() || vinculo.advertiser_name.length > 200) return null;
+  const r = respostasBasicas(linha.onboarding);
+  const verba = typeof linha.monthly_budget === "number" || typeof linha.monthly_budget === "string" && linha.monthly_budget.trim()
+    ? Number(linha.monthly_budget) : NaN;
+  return { businessId: vinculo.advertiser_business_id, agencyBusinessId: vinculo.agency_business_id,
+    agencia: agencia.trim(), anunciante: vinculo.advertiser_name.trim(), ramo: r.ramo?.texto ?? null,
+    praca: r.praca?.texto ?? null, verbaMensal: Number.isFinite(verba) && verba > 0 ? verba : null, gestor: null };
+}
 export type BuscaAgencia = Record<string, string | string[] | undefined>;
 export type RetornoCarteira = { busca: string; pendentes: boolean; pagina: number; etapa?: string; filtroCliente?: string };
 
@@ -50,8 +66,9 @@ export function retornoDaCarteira(busca: BuscaAgencia, noCliente = false): Retor
     ...(typeof etapa === "string" && ["revisao", "aprovado", "ajustes", "arquivados"].includes(etapa) ? { etapa } : {}),
     ...(typeof filtroCliente === "string" && UUID_AGENCIA.test(filtroCliente) ? { filtroCliente } : {}) };
 }
-export function hrefDoCliente(area: "/inicio" | "/criativos", businessId: string,
-  retorno: RetornoCarteira = { busca: "", pendentes: false, pagina: 1 }) {
+export function hrefDoCliente(area: "/inicio" | "/criativos" | "/anuncios", businessId: string,
+  retorno: RetornoCarteira = { busca: "", pendentes: false, pagina: 1 },
+  recorte?: { desde: string; ate: string; conta?: string }) {
   if (!UUID_AGENCIA.test(businessId)) return area;
   const p = new URLSearchParams({ cliente: businessId });
   if (retorno.busca) p.set("busca_carteira", retorno.busca.slice(0, 120));
@@ -59,6 +76,11 @@ export function hrefDoCliente(area: "/inicio" | "/criativos", businessId: string
   if (retorno.pagina > 1 && retorno.pagina <= 9999) p.set("pagina_carteira", String(retorno.pagina));
   if (retorno.etapa && ["revisao", "aprovado", "ajustes", "arquivados"].includes(retorno.etapa)) p.set("etapa_carteira", retorno.etapa);
   if (retorno.filtroCliente && UUID_AGENCIA.test(retorno.filtroCliente)) p.set("filtro_cliente_carteira", retorno.filtroCliente);
+  if (recorte) {
+    p.set("desde", recorte.desde);
+    p.set("ate", recorte.ate);
+    if (recorte.conta && /^act_[0-9]+$/.test(recorte.conta)) p.set("conta", recorte.conta);
+  }
   return `${area}?${p}`;
 }
 export function hrefDaCarteira(area: "/inicio" | "/criativos", retorno: RetornoCarteira) {

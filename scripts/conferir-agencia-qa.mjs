@@ -71,7 +71,12 @@ test('ajustes, espera de revisão, recusa e primeiro envio têm próximas açõe
 function sessao({habilitado=true,usuario={id:U},erroAuth=null,ativo={status:'selecionado',negocio:{id:A}},row=linha(),erroBanco=null,atribuicao={business_id:A,operator_profile_id:G}}={}){
   const consultas=[],filtros=[];let adminChamado=0;
   const consulta=(nome,dados)=>({select(c){consultas.push({nome,colunas:c});return this;},eq(k,v){filtros.push([nome,k,v]);return this;},maybeSingle:async()=>({data:dados,error:erroBanco})});
-  const supabase={auth:{getUser:async()=>({data:{user:usuario},error:erroAuth})},from:nome=>consulta(nome,row)};
+  const supabase={auth:{getUser:async()=>({data:{user:usuario},error:erroAuth})},from:nome=>{
+    if(nome==='agency_advertisers'){
+      const q={select(){return q;},eq(){return q;},is(){return q;},order(){return q;},limit:async()=>({data:null,error:{code:'PGRST205'}})};return q;
+    }
+    return consulta(nome,row);
+  }};
   const admin={from:nome=>consulta(nome,nome==='manager_accounts'?atribuicao:{id:G,full_name:'Gestor de teste'})};
   const mod=ambienteTs({ports:{react:{cache:fn=>fn},'@/lib/piloto-qa/acesso':{pilotoQaHabilitado:()=>habilitado},
     '@/lib/supabase/server':{createClient:async()=>supabase},'@/lib/multiconta/ativo':{negocioAtivoDaSessao:async()=>ativo},
@@ -127,6 +132,29 @@ test('gráfico mantém zero real e quebra nas lacunas, com tabela acessível dos
   const html=renderToStaticMarkup(React.createElement(GraficoInvestimento,{dias,moeda:'BRL',inconsistente:false}));assert.match(html,/Ver valores por dia/);assert.match(html,/Não medido/);assert.match(html,/0,00/);
 });
 
+test('Início real abre Anúncios com cliente, conta, período e retorno da carteira',()=>{
+  const nada=()=>null;
+  const {InicioDoCliente}=ambienteTs({ports:{'./agencia.module.css':css,'./inicio-cliente.module.css':css,
+    './Comuns':{CabecalhoAgencia:nada,CaminhoDoCliente:nada,ProximoPassoAgencia:nada,Seta:nada},
+    './GraficoInvestimento':{GraficoInvestimento:nada},
+    '@/app/(protected)/inicio/SeletorDePeriodo':{SeletorDePeriodo:nada},
+    '@/app/(protected)/inicio/AtualizarInicio':{AtualizarInicio:nada},
+  }}).load('components/agencia/InicioDoCliente.tsx');
+  const c=contexto.contextoAgenciaDoCadastro(linha(),U),periodo={desde:'2026-11-01',ate:'2026-11-07'};
+  const html=renderToStaticMarkup(React.createElement(InicioDoCliente,{
+    detalhe:{contexto:c,resumo:resumirCarteira(A,[revisao()],[]),retorno:{busca:'foto & cliente',pendentes:true,pagina:2}},
+    dados:{contaId:'act_123',moeda:'BRL',periodo,fuso:'America/Sao_Paulo',coletadoEm:'2026-11-09T12:00:00Z'},
+    resumo:{campanhas:1,entregaHistorica:true,campanhasObservadas:1,parcial:true,gasto:100,cliques:1,impressoes:2,dias:[],serieInconsistente:false},
+    resultado:{ok:true,contas:[{id:'act_123'}]},intervalo:periodo,anuncios:'/anuncios?next=https://fora.invalid',
+    anterior:false,pendencia:null,falhaPendencia:false,faixa:null,complemento:null,
+  }));
+  const href=html.match(/href="([^"]+)">Ver anúncios/)[1].replaceAll('&amp;','&'),u=new URL(href,'https://qa.invalid');
+  assert.equal(u.pathname,'/anuncios');assert.equal(u.searchParams.get('cliente'),A);
+  assert.equal(u.searchParams.get('conta'),'act_123');assert.equal(u.searchParams.get('desde'),periodo.desde);assert.equal(u.searchParams.get('ate'),periodo.ate);
+  assert.equal(u.searchParams.get('busca_carteira'),'foto & cliente');assert.equal(u.searchParams.get('pagina_carteira'),'2');
+  assert.equal(u.searchParams.get('pendentes_carteira'),'1');assert.equal(u.searchParams.has('next'),false);
+});
+
 test('assinatura legada recusa namespace alheio, travessia, URL e caminho codificado',()=>{
   const {caminhoDaPecaPertenceAoCliente:confere}=load('lib/agencia/caminho-da-peca.ts');
   assert.equal(confere(A,`${A}/imagem.jpg`),true);
@@ -170,6 +198,7 @@ async function paginaDeInicio(busca,{alvo=A,qa=true}={}){
     '@/lib/piloto-qa/acesso':{pilotoQaHabilitado:()=>qa},
     '@/lib/agencia/da-sessao':{carregarAgenciaDaSessao:async()=>({status:'agencia',contexto:c})},
     '@/lib/agencia/resumo-da-sessao':{carregarResumoDaCarteira:async()=>resumirCarteira(A,[revisao()],[])},
+    '../agencia/actions':{abrirClienteAction:async()=>({erro:'Ensaio sem troca de sessão'})},
     '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:U}},error:null})},from:()=>q})},
     '@/components/ui/FaixaReconectar':{FaixaReconectar:()=>null},
     '@/lib/estado/cliente':{estadoDoCliente:async()=>{estadoLido++;return {temNegocio:true,negocioId:alvo,diaSeguinte:{execucao:null,acumulado:null}};}},

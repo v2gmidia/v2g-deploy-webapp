@@ -10,6 +10,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as contrato from '../lib/anuncios/contrato-meta.ts';
 import * as periodo from '../lib/inicio/periodo.ts';
 import * as retorno from '../lib/anuncios/retorno-login.ts';
+import { ambienteTs } from './test-utils/ts-isolado.mjs';
 
 const A='11111111-1111-4111-8111-111111111111', B='22222222-2222-4222-8222-222222222222';
 const janela={desde:'2026-10-28',ate:'2026-10-28'};
@@ -302,6 +303,9 @@ async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]},busca={}
   const data={id:'dono'};
   const q={select(){return q;},eq(){return q;},order:async()=>({data:[]})};
   const imports={'react/jsx-runtime':jsxRuntime,'@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:data}})},from:()=>q})},
+    '@/lib/piloto-qa/acesso':{pilotoQaHabilitado:()=>false},
+    '@/lib/agencia/contexto':ambienteTs().load('lib/agencia/contexto.ts'),
+    './HistoricoSemRodadas':carregar('app/(protected)/anuncios/HistoricoSemRodadas.tsx',{'react/jsx-runtime':jsxRuntime}),
     '@/components/ui/FaixaReconectar':{FaixaReconectar:leve},'@/components/ui/Pill':{Pill:leve},
     '@/lib/estado/cliente':{estadoDoCliente:async()=>({negocioId:A,proximo:null,melhoras:{fotos:0},veiculacao:'nao_sabemos'})},
     '@/lib/criativos/peca':{COLUNAS_DO_JULGAMENTO:'uso,status,arquivado_em',foiReprovada:()=>false},

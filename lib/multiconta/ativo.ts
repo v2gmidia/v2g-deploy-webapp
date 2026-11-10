@@ -69,10 +69,11 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
       return { status: "falha_consulta" };
     }
   }
-  const liberados = negociosLiberados({
+  const grantsQa = user.email_confirmed_at && pilotoQaHabilitado()
+    ? await acessosPilotoQa(createAdminClient(), user.id, data.map(negocio => negocio.id)) : [];
+  let liberados = negociosLiberados({
     acessosContratados: await acessosContratadosDoPerfil(supabase, user),
-    acessosPilotoQa: user.email_confirmed_at && pilotoQaHabilitado()
-      ? await acessosPilotoQa(createAdminClient(), user.id, data.map(negocio => negocio.id)) : [],
+    acessosPilotoQa: grantsQa,
     negocios: data,
     pedidos,
     perfilId: user.id,
@@ -80,6 +81,25 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
     legadoEm,
     operador,
   });
-  const preferencia = (await cookies()).get(COOKIE_NEGOCIO_ATIVO)?.value ?? null;
+  const baseLiberados = liberados;
+  // A estrutura preparada não muda a elegibilidade comercial em produção.
+  // Filho só entra no trabalho QA se o pai continua no piloto e não há pedido próprio.
+  if (pilotoQaHabilitado() && user.email_confirmed_at && user.email?.trim() && grantsQa.length) {
+    const { lerVinculosDaSessao } = await import("../agencia/vinculos-da-sessao");
+    const leitura = await lerVinculosDaSessao(supabase, user.id);
+    if (leitura.estado === "indisponivel") return { status: "falha_consulta" };
+    if (leitura.estado === "pronto") {
+      const { ampliarCarteiraQa } = await import("../agencia/vinculos");
+      const agora = Date.now();
+      liberados = ampliarCarteiraQa({ negocios: data, liberados, vinculos: leitura.vinculos,
+        paisPiloto: grantsQa.filter(g => g.profile_id === user.id && !g.revoked_at && Date.parse(g.expires_at) > agora).map(g => g.business_id),
+        negociosComPedido: pedidos.flatMap(p => p.business_id ? [p.business_id] : []),
+      });
+    }
+  }
+  // Abrir o app continua entrando na única agência antes liberada. Seus filhos
+  // novos não obrigam escolher conta por conta nem selecionam um anunciante ao acaso.
+  const preferencia = (await cookies()).get(COOKIE_NEGOCIO_ATIVO)?.value
+    ?? (baseLiberados.length === 1 && liberados.length > 1 ? baseLiberados[0]!.id : null);
   return escolherNegocio(liberados, preferencia);
 }

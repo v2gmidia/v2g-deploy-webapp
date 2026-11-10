@@ -22,12 +22,14 @@ function IconeMetrica({ tipo }: { tipo: "investido" | "cliques" | "impressoes" |
     conversas: <path d="M17 9a7 7 0 0 1-9 7l-5 2 1-5a7 7 0 1 1 13-4Z" /> };
   return <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">{paths[tipo]}</svg>;
 }
-export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo, anuncios, anterior, pendencia, falhaPendencia, faixa, complemento }: {
+export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo, anterior, pendencia, falhaPendencia, faixa, complemento }: {
   detalhe: DetalheAgenciaDoInicio; dados: InventarioMeta | null; resumo: ReturnType<typeof resumirMeta> | null;
   resultado: ResultadoInventarioMeta; intervalo: IntervaloDoInicio; anuncios: string; anterior: boolean;
   pendencia: PendenciaDoOnboarding | null; falhaPendencia: boolean; faixa: ReactNode; complemento: ReactNode;
 }) {
   const { contexto: c, retorno, resumo: tarefa } = detalhe;
+  const anunciosDoCliente = hrefDoCliente("/anuncios", c.businessId, retorno,
+    { desde: intervalo.desde, ate: intervalo.ate, conta: dados?.contaId });
   const valor = (n: number | null) => n === null || !dados?.moeda ? "Não medido" : dinheiro(n / 100, dados.moeda);
   return <div className={`${comuns.raiz} ${styles.raiz}`}>
     {faixa}<CaminhoDoCliente contexto={c} retorno={retorno} />
@@ -42,7 +44,7 @@ export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo, 
       <input type="hidden" name="busca_carteira" value={retorno.busca} /><input type="hidden" name="pendentes_carteira" value={retorno.pendentes ? "1" : ""} /><input type="hidden" name="pagina_carteira" value={retorno.pagina} />
       <button className="cta">Consultar conta</button></form>}
     {dados && resumo && <>
-      <section className={comuns.estado} aria-label="Estado dos resultados"><div><b>Resultados</b><span>{resumo.campanhas ? resumo.entregaHistorica ? "Houve entrega neste período" : "Campanhas encontradas na Meta" : "Nenhuma campanha retornou nesta consulta"}</span></div><a className={comuns.link} href={anuncios}>Ver anúncios<Seta /></a></section>
+      <section className={comuns.estado} aria-label="Estado dos resultados"><div><b>Resultados</b><span>{resumo.campanhas ? resumo.entregaHistorica ? "Houve entrega neste período" : "Campanhas encontradas na Meta" : "Nenhuma campanha retornou nesta consulta"}</span></div><a className={comuns.link} href={anunciosDoCliente}>Ver anúncios<Seta /></a></section>
       <p className={styles.nota}>{diaCurto(dados.periodo.desde)} a {diaCurto(dados.periodo.ate)} · {resumo.campanhasObservadas} de {resumo.campanhas} campanhas com observação.{resumo.parcial ? " Resultados parciais." : ""}</p>
       <section aria-labelledby="inicio-resumo-titulo"><h2 id="inicio-resumo-titulo">Resumo do período</h2><dl className={styles.metricas}>
         {([{ tipo: "investido", nome: "Investido", valor: valor(resumo.gasto) }, { tipo: "cliques", nome: "Cliques totais", valor: contar(resumo.cliques) },
