@@ -19,6 +19,7 @@ import { SeletorDePeriodo } from "../inicio/SeletorDePeriodo";
 import { anunciosDoNegocioSelecionado } from "@/lib/backend";
 import { InventarioDeAnunciosMeta } from "./AnunciosMeta";
 import { AtualizacaoDaConsulta } from "./AtualizacaoDaConsulta";
+import { HistoricoSemRodadas } from "./HistoricoSemRodadas";
 
 export const metadata = tituloDaAba("/anuncios");
 
@@ -126,6 +127,7 @@ export default async function AnunciosPage({ searchParams }: {
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
       <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} />
+      {resultado?.estado === "sem-execucao" && <HistoricoSemRodadas />}
     </div></AtualizacaoDaConsulta>;
   }
 
