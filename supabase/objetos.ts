@@ -741,4 +741,19 @@ export const MIGRATIONS: MigrationDeclarada[] = [
     cria: [{ tipo: "rpc", nome: "checkout_producao_schema_v1" }],
     foraDoAlcance: ["LOCAL NAO aplicada; transacao falha se a cadeia comercial faltar", "confere RLS, colunas, ACL de RPCs, unicidades e checksum documental; nao certifica corpos completos das RPCs", "grants service_role explicitos, nenhuma abertura publica; homologacao Asaas, email e deploy sao portoes externos"],
   },
+  {
+    arquivo: "20261109223232_creative_publication_confirmation.sql",
+    cria: [
+      { tipo: "tabela", nome: "creative_publication_confirmations" },
+      ...["review_request_id", "business_id", "content_sha256", "ad_account_id", "ad_id", "published_on", "evidence", "confirmed_by", "confirmed_at", "source"]
+        .map(nome => ({ tipo: "coluna" as const, tabela: "creative_publication_confirmations", nome })),
+      { tipo: "rpc", nome: "confirmar_publicacao_criativo" },
+    ],
+    foraDoAlcance: [
+      "este manifesto so descreve o arquivo existente; nao aplica nem reaplica migration",
+      "indice unico da versao, chaves compostas e checks exigem prova SQL",
+      "RLS por titular, grants SELECT/INSERT e ACL da RPC exigem conferencia separada",
+      "corpo SECURITY INVOKER, ator atribuido, replay, conflitos e ausencia de escrita Meta nao sao medidos pelo OpenAPI",
+    ],
+  },
 ];

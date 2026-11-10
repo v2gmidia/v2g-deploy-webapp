@@ -5,6 +5,14 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'node:fs';
 import { ambienteTs } from './test-utils/ts-isolado.mjs';
 const load = ambienteTs().load;
+// Fronteiras adicionais da apresentação de agência; a leitura/resumo real
+// continua sendo o objeto destes testes. O calendário original mantém sua porta.
+const PORTAS_AGENCIA = {
+  '@/app/(protected)/inicio/SeletorDePeriodo': {SeletorDePeriodo:()=>null},
+  '@/app/(protected)/inicio/AtualizarInicio': {AtualizarInicio:()=>null},
+  './agencia.module.css': {default:new Proxy({},{get:(_,k)=>k})},
+  './inicio-cliente.module.css': {default:new Proxy({},{get:(_,k)=>k})},
+};
 const {lerSerieMeta} = load('lib/inicio/serie-meta.ts');
 const {resumirMeta,leituraAnteriorPermitida,chaveDoEscopo} = load('lib/inicio/resumo-meta.ts');
 const {erroDoIntervalo,intervaloDoInicio} = load('lib/inicio/periodo.ts');
@@ -114,6 +122,7 @@ test('31 dias aceitos, 32 recusados; atalhos antigos e repetição não consulta
 
 function html(resultado={ok:true,dados:dados(),contas:[{id:'act_123'}],contaSelecionada:'act_123'}) {
   const {ResumoMetaDoInicio}=ambienteTs({ports:{
+    ...PORTAS_AGENCIA,
     './SeletorDePeriodo':{SeletorDePeriodo:()=>React.createElement('button',null,'Calendário')},
     './AtualizarInicio':{AtualizarInicio:()=>React.createElement('button',null,'Tentar novamente')},
     './ResumoMetaDoInicio.module.css':{default:new Proxy({},{get:(_,k)=>k})},
@@ -139,6 +148,7 @@ test('HTML de falha não inventa preparação nem sucesso e oferece tentativa',(
 test('componente real conserva consulta confirmada no refresh, mas limpa após negação de acesso',()=>{
   let memoria=null,efeito;
   const componente=ambienteTs({ports:{
+    ...PORTAS_AGENCIA,
     react:{...React,useState:()=>[memoria,v=>{memoria=v;}],useEffect:f=>{efeito=f;}},
     './SeletorDePeriodo':{SeletorDePeriodo:()=>null},'./AtualizarInicio':{AtualizarInicio:()=>null},
     './ResumoMetaDoInicio.module.css':{default:new Proxy({},{get:(_,k)=>k})},
@@ -156,6 +166,7 @@ test('componente real conserva consulta confirmada no refresh, mas limpa após n
 test('componente real não apresenta número, link ou hidden da conta A após troca implícita para B',()=>{
   let memoria=null,efeito;
   const componente=ambienteTs({ports:{
+    ...PORTAS_AGENCIA,
     react:{...React,useState:()=>[memoria,v=>{memoria=v;}],useEffect:f=>{efeito=f;}},
     './SeletorDePeriodo':{SeletorDePeriodo:()=>null},'./AtualizarInicio':{AtualizarInicio:()=>null},
     './ResumoMetaDoInicio.module.css':{default:new Proxy({},{get:(_,k)=>k})},
@@ -169,6 +180,7 @@ test('componente real não apresenta número, link ou hidden da conta A após tr
 test('calendário recebe novo período e chave própria na navegação, sem remontar o resumo por datas',()=>{
   const Calendario=()=>null;
   const componente=ambienteTs({ports:{
+    ...PORTAS_AGENCIA,
     react:{...React,useState:()=>[null,()=>{}],useEffect:()=>{}},
     './SeletorDePeriodo':{SeletorDePeriodo:Calendario},'./AtualizarInicio':{AtualizarInicio:()=>null},
     './ResumoMetaDoInicio.module.css':{default:new Proxy({},{get:(_,k)=>k})},

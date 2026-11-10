@@ -65,7 +65,7 @@ test("fila e action conferem o vínculo antes de assinar ou baixar", () => {
 
 test("galeria do cliente não assina ou mostra peça de outro negócio", () => {
   const pagina = readFileSync("app/(protected)/criativos/page.tsx", "utf8");
-  assert.match(pagina, /select\("id, business_id, original_name, file_path, sha256, status, review_note, created_at, upload_intent"\)/);
+  assert.match(pagina, /select\("id, business_id, original_name, file_path, sha256, status, review_note, created_at, upload_intent, reviewed_at"\)/);
   assert.match(pagina, /revisoesRecebidas\.filter\(\(pedido\) => pedido\.business_id === negocioId\)/);
   const filtro = pagina.indexOf("&& caminhoConfereComRevisao(pedido))");
   const assinatura = pagina.indexOf(".createSignedUrls(caminhosDasRevisoes");

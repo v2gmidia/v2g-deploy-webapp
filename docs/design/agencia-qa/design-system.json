@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09",
+  "title": "Design: agência e cliente em QA",
+  "scope": "Suplemento local; não substitui o catálogo global nem comprova publicação.",
+  "extensions": {
+    "breakpoints": [
+      { "name": "local-1150", "value": "1150px" },
+      { "name": "local-900", "value": "900px" },
+      { "name": "local-640", "value": "640px" }
+    ],
+    "provenance": "components/agencia/agencia.module.css; amostras estáticas com textos ilustrativos. Variáveis dependem do Casco editorial. Sem rampas, animações ou tokens sintetizados."
+  },
+  "components": [
+    {
+      "name": "Botão secundário", "kind": "button", "description": "Limpeza de filtros e recuperação explícita.",
+      "html": "<button class=\"ds-secundario\" type=\"button\">Limpar filtros</button>",
+      "css": ".ds-secundario{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;border:1px solid var(--control-line);border-radius:4px;background:transparent;color:var(--cobalt-ink);padding:10px 16px;font:inherit;text-decoration:none;cursor:pointer}.ds-secundario:hover:not(:disabled){background:var(--surface)}.ds-secundario:focus-visible{outline:2px solid var(--cobalt-ink);outline-offset:4px}.ds-secundario:disabled{opacity:.6;cursor:not-allowed}"
+    },
+    {
+      "name": "Busca da carteira", "kind": "input", "description": "Rótulo visível; lógica de filtro pertence ao componente React.",
+      "html": "<label class=\"ds-busca\">Buscar cliente<input type=\"search\" placeholder=\"Nome do cliente\" maxlength=\"120\"></label>",
+      "css": ".ds-busca{display:grid;gap:8px;font-size:var(--fs-corpo);color:var(--ink)}.ds-busca input{min-height:44px;max-width:100%;width:100%;background:var(--canvas);color:var(--ink);border:1px solid var(--control-line);border-radius:4px;padding:10px 12px;font:inherit}.ds-busca input:focus-visible{outline:2px solid var(--cobalt-ink);outline-offset:4px}"
+    },
+    {
+      "name": "Localização do cliente", "kind": "nav", "description": "Na aplicação, os links preservam filtros e IDs autorizados.",
+      "html": "<nav class=\"ds-caminho\" aria-label=\"Localização\"><a href=\"/inicio\">Agência</a><span>/</span><a href=\"/inicio\">Clientes</a><span>/</span><span aria-current=\"page\">Anunciante</span></nav>",
+      "css": ".ds-caminho{display:flex;gap:9px;align-items:center;flex-wrap:wrap;font-size:var(--fs-legenda);color:var(--ink-soft);margin-bottom:18px}.ds-caminho a{display:inline-flex;align-items:center;min-height:30px;text-decoration:none}.ds-caminho a:hover{text-decoration:underline}.ds-caminho a:focus-visible{outline:2px solid var(--cobalt-ink);outline-offset:4px}"
+    },
+    {
+      "name": "Selo de atenção", "kind": "chip", "description": "Estado textual; não é controle nem prova de publicação.",
+      "html": "<span class=\"ds-status\">Em revisão</span>",
+      "css": ".ds-status{display:inline-flex;gap:6px;align-items:center;max-width:100%;font-size:var(--fs-legenda);font-weight:500;line-height:1.4;padding:5px 8px;border-radius:4px;color:var(--warn);background:var(--warn-soft)}"
+    },
+    {
+      "name": "Próxima tarefa", "kind": "card", "description": "Contenção tonal observada; texto ilustrativo.",
+      "html": "<aside class=\"ds-proximo\"><h2>Seu próximo passo</h2><h3>Acompanhar as peças</h3><p>Continue pelo contexto do cliente.</p></aside>",
+      "css": ".ds-proximo{background:var(--task-surface);border-radius:4px;padding:28px;min-width:0;align-self:start;color:var(--ink)}.ds-proximo h2{font:500 var(--fs-corpo)/1.4 var(--body);color:var(--ink-soft);margin:0 0 16px;letter-spacing:0}.ds-proximo h3{font:400 var(--fs-tela)/1.3 var(--display);letter-spacing:-.025em;max-width:31ch;margin:0;text-wrap:balance}.ds-proximo p{color:var(--ink-soft);font-size:var(--fs-corpo);line-height:1.65;margin:16px 0 0;max-width:52ch}@media(max-width:640px){.ds-proximo{padding:24px}.ds-proximo h3{font-size:24px}}"
+    }
+  ],
+  "narrative": {
+    "overview": "Registro de 09/11/2026, em modo Operate, das quatro telas implementadas após a prévia aprovada. Herda a identidade editorial V2G: Archivo, cobalto, tinta navy, linhas e superfícies semânticas. É suplemento local; não redefine PRODUCT.md, DESIGN.md ou o catálogo global.",
+    "keyCharacteristics": ["Hierarquia por texto, espaço e separadores.", "Agência e cliente com composições distintas.", "Identidade e autorização por IDs explícitos.", "Aprovação, publicação e medição como estados separados."],
+    "dos": ["Preservar tokens semânticos, Archivo, temas e estrutura do Casco.", "Distinguir carteira da agência e detalhe do cliente, preservando filtros na volta.", "Manter origem, parcialidade, zero e ausência visíveis."],
+    "donts": ["Não transformar aprovação em publicação, vínculo em entrega ou fixture em dado real.", "Não promover este suplemento a redesign global ou modelo multicliente entregue."]
+  }
+}

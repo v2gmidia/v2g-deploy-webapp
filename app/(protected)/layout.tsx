@@ -6,6 +6,7 @@ import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { logosDosNegociosLiberados } from "@/lib/multiconta/logos";
 import { cnpjsDosNegociosLiberados } from "@/lib/multiconta/cnpjs";
+import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
 
 
 /**
@@ -77,6 +78,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   // olhando por cima do ombro dela.
   const nome = profile?.full_name?.trim() ?? "";
   const nomeNegocio = ativo.status === "selecionado" ? ativo.negocio.name.trim() : undefined;
+  const agencia = pilotoQaHabilitado()
+    ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : null;
   const inicial = (nomeNegocio || nome || user.email || "?").charAt(0).toUpperCase();
   const negocios = "negocios" in ativo ? ativo.negocios : [];
   const idsLiberados = negocios.map((negocio) => negocio.id);
@@ -93,6 +96,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     <Casco
       nome={nome}
       nomeNegocio={nomeNegocio}
+      contextoAgencia={agencia?.status === "agencia" ? agencia.contexto : undefined}
       negocioAtivoId={ativo.status === "selecionado" ? ativo.negocio.id : undefined}
       rotuloDaConta={nomeNegocio || user.email || ""}
       inicial={inicial}

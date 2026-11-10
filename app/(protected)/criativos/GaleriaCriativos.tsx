@@ -16,6 +16,7 @@ export type ItemDaGaleria = {
   criadoEm: string;
   detalhe?: string | null;
   publicacao?: string;
+  revisao?: { status: string; revisadoEm: string | null; publicacaoConfirmada: boolean; falhaPublicacao: boolean };
   acao?: { rotulo: string; href: string } | null;
   associacoes?: Array<{ nome: string; href: string; ilustrativa?: boolean }>;
   expiraEmDias?: number | null;

@@ -10,6 +10,9 @@ import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
 import { SeletorDePeriodo } from "./SeletorDePeriodo";
 import { AtualizarInicio } from "./AtualizarInicio";
 import styles from "./ResumoMetaDoInicio.module.css";
+import { InicioDoCliente, type DetalheAgenciaDoInicio } from "@/components/agencia/InicioDoCliente";
+import { ClienteIndisponivel } from "@/components/agencia/Comuns";
+export type { DetalheAgenciaDoInicio } from "@/components/agencia/InicioDoCliente";
 
 const contar = (n: number | null) => n === null ? "Não medido" : n.toLocaleString("pt-BR");
 const valor = (n: number | null, moeda: string | null) => n === null || !moeda ? "Não medido" : dinheiro(n / 100, moeda);
@@ -51,9 +54,10 @@ function GraficoDiario({ dias, moeda, inconsistente }: { dias: DiaMeta[]; moeda:
   </section>;
 }
 
-export function ResumoMetaDoInicio({ resultado, escopo, intervalo, pendencia, falhaPendencia, faixa, complemento }: {
+export function ResumoMetaDoInicio({ resultado, escopo, intervalo, pendencia, falhaPendencia, faixa, complemento, detalheAgencia }: {
   resultado: ResultadoInventarioMeta; escopo: EscopoInicioMeta; intervalo: IntervaloDoInicio;
   pendencia: PendenciaDoOnboarding | null; falhaPendencia: boolean; faixa: ReactNode; complemento: ReactNode;
+  detalheAgencia?: DetalheAgenciaDoInicio;
 }) {
   const chave = chaveDoEscopo(escopo);
   const [memoria, guardar] = useState<MemoriaInicioMeta>(null);
@@ -70,6 +74,12 @@ export function ResumoMetaDoInicio({ resultado, escopo, intervalo, pendencia, fa
   const busca = new URLSearchParams({ desde: escopo.desde, ate: escopo.ate });
   if (dados?.contaId ?? escopo.conta) busca.set("conta", dados?.contaId ?? escopo.conta!);
   const anuncios = `/anuncios?${busca}`;
+
+  if (detalheAgencia) {
+    if (detalheAgencia.contexto.businessId !== escopo.businessId) return <ClienteIndisponivel />;
+    return <InicioDoCliente detalhe={detalheAgencia} dados={dados} resumo={resumo} resultado={resultado} intervalo={intervalo}
+      anuncios={anuncios} anterior={Boolean(anterior)} pendencia={pendencia} falhaPendencia={falhaPendencia} faixa={faixa} complemento={complemento} />;
+  }
 
   return <div className={`inicio-editorial ${styles.raiz}`}>
     {faixa}

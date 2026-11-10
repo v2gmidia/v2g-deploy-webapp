@@ -11,6 +11,8 @@ import { aplicarAgendaConferida, lerPendenciaDoNegocio } from "@/lib/onboarding/
 import { carregarAgendaAction } from "@/app/(fluxo)/onboarding/concluido/agenda-actions";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
 import { anunciosDoNegocioSelecionado } from "@/lib/backend/anuncios-do-negocio";
+import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
+import { retornoDaCarteira, selecionarVisaoAgencia } from "@/lib/agencia/contexto";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -73,6 +75,21 @@ export default async function InicioPage({
   // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
   const agora = new Date();
   const busca = await searchParams;
+  const agencia = !fixture && pilotoQaHabilitado()
+    ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : { status: "desligado" as const };
+  const contextoAgencia = agencia.status === "agencia" ? agencia.contexto : null;
+  const visao = agencia.status === "desligado" ? "direto" : selecionarVisaoAgencia(contextoAgencia, busca);
+  if (agencia.status === "indisponivel" || visao === "invalido") {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
+  }
+  const resumoAgencia = contextoAgencia
+    ? await (await import("@/lib/agencia/resumo-da-sessao")).carregarResumoDaCarteira(contextoAgencia.businessId) : null;
+  if (visao === "carteira" && contextoAgencia && resumoAgencia) {
+    const { CarteiraAgencia } = await import("@/components/agencia/CarteiraAgencia");
+    return <CarteiraAgencia key={contextoAgencia.businessId} agencia={contextoAgencia.agencia} clientes={[{ contexto: contextoAgencia, resumo: resumoAgencia }]}
+      retorno={retornoDaCarteira(busca)} />;
+  }
   const hoje = diaEmSaoPaulo(agora);
   const intervalo = intervaloDoInicio(busca, hoje);
   let estado: EstadoDoCliente | null = fixture
@@ -134,6 +151,10 @@ export default async function InicioPage({
   // escopo deste lote.
   // ============================================================
   if (!estado.temNegocio) redirect("/onboarding");
+  if (contextoAgencia && estado.negocioId !== contextoAgencia.businessId) {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
+  }
 
   // Mesmo leitor autorizado de Anúncios: não depende de execução ou cadastro concluído.
   // Os parâmetros podem escolher somente uma conta que a sessão já alcança.
@@ -150,7 +171,7 @@ export default async function InicioPage({
   let leituraDaPendencia = !fixture && estado.negocioId
     ? await lerPendenciaDoNegocio(estado.negocioId)
     : { pendencia: null, falha: false, reserva: null };
-  if (!fixture && estado.negocioId && leituraDaPendencia.cadastroConcluido) {
+  if (!fixture && !contextoAgencia && estado.negocioId && leituraDaPendencia.cadastroConcluido) {
     const agendaConferida = await carregarAgendaAction(estado.negocioId);
     leituraDaPendencia = aplicarAgendaConferida(leituraDaPendencia, agendaConferida);
   }
@@ -205,6 +226,7 @@ export default async function InicioPage({
       falhaPendencia={leituraDaPendencia.falha}
       intervalo={intervalo}
       leituraMeta={leituraMeta}
+      detalheAgencia={contextoAgencia && resumoAgencia ? { contexto: contextoAgencia, resumo: resumoAgencia, retorno: retornoDaCarteira(busca, true) } : undefined}
       escopoMeta={estado.negocioId && user ? { businessId: estado.negocioId, perfilId: user.id, desde: intervalo.desde, ate: intervalo.ate, conta: contaSolicitada } : undefined}
       faixa={<FaixaReconectar />}
     />

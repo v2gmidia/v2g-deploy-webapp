@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { NavegacaoAgencia, NomeDoContextoAgencia } from "@/components/agencia/ContextoNoCasco";
+import type { ContextoAgencia } from "@/lib/agencia/contexto";
 import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
@@ -123,6 +125,7 @@ export function Casco({
   negocios = [],
   ehOperador,
   rotaAtiva,
+  contextoAgencia,
   children,
 }: {
   nome: string;
@@ -136,6 +139,7 @@ export function Casco({
   negocios?: NegocioDoMenu[];
   ehOperador?: boolean;
   rotaAtiva?: "/inicio" | "/criativos" | "/anuncios" | "/alertas" | "/conta";
+  contextoAgencia?: ContextoAgencia;
   children: ReactNode;
 }) {
   const adicionarHref = "/entrar?adicionar=1";
@@ -185,12 +189,16 @@ export function Casco({
               que é o que aquela tela já faz. Item de menu para passo
               único vira um lugar que, depois de cumprido, só serve para
               o cliente se perguntar por que ainda está ali. */}
+          {contextoAgencia ? <Suspense fallback={<>
+            <NavItem href="/inicio" icone={<IcoInicio />}>Início</NavItem><NavItem href="/criativos" icone={<IcoCriativos />}>Criativos</NavItem>
+          </>}><NavegacaoAgencia businessId={contextoAgencia.businessId} inicio={<IcoInicio />} criativos={<IcoCriativos />} /></Suspense> : <>
           <NavItem href="/inicio" icone={<IcoInicio />} ativo={rotaAtiva ? rotaAtiva === "/inicio" : undefined}>
             Início
           </NavItem>
           <NavItem href="/criativos" icone={<IcoCriativos />} ativo={rotaAtiva ? rotaAtiva === "/criativos" : undefined}>
             Criativos
           </NavItem>
+          </>}
           <NavItem href="/anuncios" icone={<IcoAnuncios />} ativo={rotaAtiva ? rotaAtiva === "/anuncios" : undefined}>
             Anúncios
           </NavItem>
@@ -236,7 +244,8 @@ export function Casco({
             <div className="sub">
               {nomeNegocio && (
                 <>
-                  <b>{nomeNegocio}</b>
+                  {contextoAgencia ? <Suspense fallback={<b>{nomeNegocio}</b>}><NomeDoContextoAgencia businessId={contextoAgencia.businessId}
+                    agencia={contextoAgencia.agencia} anunciante={contextoAgencia.anunciante} /></Suspense> : <b>{nomeNegocio}</b>}
                   {" · "}
                 </>
               )}

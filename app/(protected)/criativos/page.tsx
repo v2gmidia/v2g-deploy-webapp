@@ -17,6 +17,9 @@ import { UUID_GERACAO } from "@/lib/criativos/geracao/contrato-fila";
 import { catalogoBarbeariaDisponivel } from "@/lib/jev/catalogo-da-sessao";
 import { carregarContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio-da-sessao";
 import { COLUNAS_PUBLICACAO, lerPublicacao, textoDaPublicacao } from "@/lib/criativos/publicacao";
+import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
+import { retornoDaCarteira, selecionarVisaoAgencia, type BuscaAgencia } from "@/lib/agencia/contexto";
+import { caminhoDaPecaPertenceAoCliente } from "@/lib/agencia/caminho-da-peca";
 
 export const metadata = tituloDaAba("/criativos");
 
@@ -47,6 +50,7 @@ type PedidoDeRevisao = {
   review_note: string | null;
   upload_intent: unknown;
   created_at: string;
+  reviewed_at?: string | null;
 };
 
 const dataCurta = new Intl.DateTimeFormat("pt-BR", {
@@ -85,12 +89,27 @@ function tomDaRevisao(status: StatusRevisao): ItemDaGaleria["tom"] {
   return "neutro";
 }
 
-export default async function CriativosPage() {
+export default async function CriativosPage({ searchParams }: { searchParams: Promise<BuscaAgencia> }) {
+  const busca = await searchParams;
+  const agencia = pilotoQaHabilitado()
+    ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : { status: "desligado" as const };
+  const contextoAgencia = agencia.status === "agencia" ? agencia.contexto : null;
+  const visao = agencia.status === "desligado" ? "direto" : selecionarVisaoAgencia(contextoAgencia, busca);
+  if (agencia.status === "indisponivel" || visao === "invalido"
+    || contextoAgencia && visao === "cliente" && busca.peca !== undefined && typeof busca.peca !== "string") {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
+  }
   const estado = await estadoDoCliente(new Date());
   const revisaoHabilitada = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true";
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: erroSessao } = await supabase.auth.getUser();
+  if (erroSessao || !user) return null;
   const negocioId = estado.negocioId;
+  if (contextoAgencia && contextoAgencia.businessId !== negocioId) {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
+  }
   const referenciasDisponiveis = negocioId ? await catalogoBarbeariaDisponivel(negocioId) : false;
   const pedidosHabilitados = process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && Boolean(negocioId);
   const geracaoHabilitada = pedidosHabilitados && process.env.V2G_CREATIVE_BACKEND_ENABLED === "true";
@@ -109,18 +128,19 @@ export default async function CriativosPage() {
     supabase.from("creatives")
       .select("id, business_id, copy, file_name, storage_path, status, external_ad_id, created_at, updated_at, arquivado_em")
       .eq("business_id", negocioId).eq("uso", "campanha")
-      .order("created_at", { ascending: false }).limit(120),
+      .order("created_at", { ascending: false }).limit(contextoAgencia ? 121 : 120),
     revisaoHabilitada
       ? supabase.from("creative_review_requests")
-        .select("id, business_id, original_name, file_path, sha256, status, review_note, created_at, upload_intent")
-        .eq("business_id", negocioId).order("created_at", { ascending: false }).limit(120)
+        .select("id, business_id, original_name, file_path, sha256, status, review_note, created_at, upload_intent, reviewed_at")
+        .eq("business_id", negocioId).order("created_at", { ascending: false }).limit(contextoAgencia ? 121 : 120)
       : Promise.resolve({ data: [] as PedidoDeRevisao[], error: null }),
   ]) : [
     { data: [] as PecaDaCampanha[], error: null },
     { data: [] as PedidoDeRevisao[], error: null },
   ];
 
-  const pecas = ((pecasResposta.data ?? []) as PecaDaCampanha[]).filter((peca) => peca.business_id === negocioId);
+  const filaTruncada = Boolean(contextoAgencia && ((pecasResposta.data?.length ?? 0) > 120 || (revisoesResposta.data?.length ?? 0) > 120));
+  const pecas = ((pecasResposta.data ?? []) as PecaDaCampanha[]).filter((peca) => peca.business_id === negocioId).slice(0, 120);
   const revisoesRecebidas = (revisoesResposta.data ?? []) as PedidoDeRevisao[];
   const revisoes = revisoesRecebidas.filter((pedido) => pedido.business_id === negocioId);
   const publicacoes = revisoes.length ? await supabase.from("creative_publication_confirmations").select(COLUNAS_PUBLICACAO)
@@ -132,7 +152,10 @@ export default async function CriativosPage() {
   const admin = user && negocioId ? createAdminClient() : null;
   // Arquivos gerados não entram no assinador genérico. A leitura autenticada
   // revalida pedido, backend, caminho canônico e hash a cada abertura.
-  const caminhosDasPecas = pecas.filter((peca) => !pecaGerada(peca)).map((peca) => peca.storage_path).filter((c): c is string => Boolean(c));
+  const caminhoLegadoInconsistente = Boolean(contextoAgencia && pecas.some(p => !pecaGerada(p) && p.storage_path
+    && !caminhoDaPecaPertenceAoCliente(negocioId!, p.storage_path)));
+  const caminhosDasPecas = pecas.filter((peca) => !pecaGerada(peca)
+    && (!contextoAgencia || caminhoDaPecaPertenceAoCliente(negocioId!, peca.storage_path))).map((peca) => peca.storage_path).filter((c): c is string => Boolean(c));
   const caminhosDasRevisoes = revisoes
     .filter((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed"
       && caminhoConfereComRevisao(pedido))
@@ -177,6 +200,8 @@ export default async function CriativosPage() {
       grupo: grupoDaRevisao(pedido.status),
       estado: rotuloDaRevisao(pedido.status),
       publicacao: textoDaPublicacao(publicacao, Boolean(publicacoes.error || (registro && !publicacao))),
+      revisao: { status: pedido.status, revisadoEm: pedido.reviewed_at ?? null, publicacaoConfirmada: Boolean(publicacao),
+        falhaPublicacao: Boolean(publicacoes.error || (registro && !publicacao)) },
       tom: tomDaRevisao(pedido.status),
       criadoEm: `Enviado em ${dataCurta.format(new Date(pedido.created_at))}`,
       detalhe: [resumoDaIntencao(pedido.upload_intent, hoje),
@@ -192,6 +217,25 @@ export default async function CriativosPage() {
   const amostra = process.env.NODE_ENV !== "production" ? (process.env.V2G_FIXTURE_ANALISE ?? null) : null;
   const podeAnalisar = estado.diaSeguinte.execucao !== null;
   const falhaDaGaleria = pecasResposta.error || revisoesResposta.error;
+
+  if (contextoAgencia) {
+    if (visao === "carteira") {
+      const { CriativosAgencia } = await import("@/components/agencia/CriativosAgencia");
+      return <CriativosAgencia key={contextoAgencia.businessId} agencia={contextoAgencia.agencia} clientes={[contextoAgencia]} itens={itens.map(peca => ({ cliente: contextoAgencia, peca }))}
+        falhou={Boolean(falhaDaGaleria || revisaoInconsistente || publicacoes.error || filaTruncada || caminhoLegadoInconsistente)} retorno={retornoDaCarteira(busca)} envioDisponivel={revisaoHabilitada} />;
+    }
+    const { CriativosDoCliente } = await import("@/components/agencia/CriativosDoCliente");
+    const contextoDoAnunciante = contextoCriativo ? { ...contextoCriativo, nome: { valor: contextoAgencia.anunciante,
+      origem: "onboarding.respostas.nome", em: null, estado: "declarado_cliente" as const } } : undefined;
+    return <CriativosDoCliente key={`${contextoAgencia.businessId}:${typeof busca.peca === "string" ? busca.peca : ""}`} contexto={contextoAgencia} retorno={retornoDaCarteira(busca, true)} itens={itens}
+      falhou={Boolean(falhaDaGaleria || revisaoInconsistente || filaTruncada || caminhoLegadoInconsistente)} pecaSolicitada={typeof busca.peca === "string" ? busca.peca : undefined}
+      envio={revisaoHabilitada && negocioId ? <PedirRevisao key={negocioId} businessId={negocioId} hoje={hoje}
+        referenciasDisponiveis={referenciasDisponiveis} contexto={contextoDoAnunciante} /> : null}
+      criacao={pedidosHabilitados ? <PedidoDeImagem key={negocioId} businessId={negocioId!} requestId={randomUUID()} hoje={hoje}
+        pedidos={pedidosCriacao.pedidos} falhou={pedidosCriacao.falhou} geracaoHabilitada={geracaoHabilitada}
+        referenciasDisponiveis={referenciasDisponiveis} contexto={contextoDoAnunciante} /> : null}
+      analise={amostra ? <AmostraDeVereditos qual={amostra} /> : <Analisar key={negocioId ?? "sem-negocio"} podeEnviar={podeAnalisar} businessId={negocioId ?? ""} />} />;
+  }
 
   return <>
     {negocioId && (revisaoHabilitada || pedidosHabilitados) && !contextoCriativo
