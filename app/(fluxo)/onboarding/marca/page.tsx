@@ -3,6 +3,7 @@ import { Marca } from "./Marca";
 import { Marca as MarcaEditorial } from "@/components/ui/Marca";
 import { listarIdentidade } from "@/lib/identidade/armazenar";
 import { carregarVariacoesVisuais } from "./variacoes-actions";
+import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
 import "../onboarding-editorial.css";
 
 export default async function MarcaPage() {
@@ -33,7 +34,7 @@ export default async function MarcaPage() {
       <h1 className="auth-h">Não conseguimos carregar seus arquivos de marca.</h1>
       <p className="auth-sub">Suas respostas continuam guardadas. Atualize esta página antes de enviar outro arquivo.</p>
       <a className="cta" href="/onboarding/marca">Tentar novamente</a>
-    </> : <Marca inicial={estado} logo={materiais[0].logo} variacoes={materiais[1]} />}
+    </> : <Marca inicial={estado} logo={materiais[0].logo} variacoes={materiais[1]} recuperarCoresSalvas={pilotoQaHabilitado()} />}
     </section>
   </div>;
 }

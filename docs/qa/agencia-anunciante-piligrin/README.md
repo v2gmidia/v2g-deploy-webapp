@@ -1,5 +1,7 @@
 # Agência → anunciantes — pacote pendente para QA
 
+> RESOLVIDO em 10/11/2026: pacote aplicado somente na QA após autorização nominal de Victor e backup privado. Migration remota `20261110202356`; Piligrin → Dúú/FamFire e isolamento validados. Os arquivos SQL e o relato de preparo abaixo permanecem íntegros como evidência do pacote aprovado. Estado atual e limites: [`n26-agencia-anunciante-piligrin-aplicada-qa-10-11.md`](../../estado/n26-agencia-anunciante-piligrin-aplicada-qa-10-11.md).
+
 **Preparado e ensaiado localmente em 10/11/2026. Não aplicado.**
 
 Este diretório está fora de `supabase/migrations` principal para que commit/push do WebApp não aplique o pacote por consequência. A migration foi criada pelo CLI local (`supabase migration new` com `--workdir` deste diretório); nenhum comando de aplicação, link ou deploy foi executado.

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ImagemDeIdentidade } from "@/lib/identidade/armazenar";
 import { TEXTO_DA_DECLARACAO, TEXTO_DO_LIMITE_DE_IA } from "@/app/(protected)/conta/declaracao";
 import { coresDaLogo, PAPEIS_DA_COR } from "@/lib/identidade/cores-da-logo";
 import { juntarPaleta } from "@/lib/identidade/paleta";
+import { coresDoLogoSalvo } from "@/lib/identidade/cores-do-logo-salvo";
 import { validarInstagram, validarSite } from "@/lib/onboarding/enderecos";
 import { salvarMarcaAction, type EstadoMarca } from "./actions";
 import { LogoDaMarca } from "./LogoDaMarca";
@@ -14,7 +15,7 @@ import type { VariacaoVisual } from "./variacoes-actions";
 import { useTempoDaOperacao } from "../tempo-da-operacao";
 import styles from "./Marca.module.css";
 
-export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo: ImagemDeIdentidade | null; variacoes: VariacaoVisual[] }) {
+export function Marca({ inicial, logo, variacoes, recuperarCoresSalvas = false }: { inicial: EstadoMarca; logo: ImagemDeIdentidade | null; variacoes: VariacaoVisual[]; recuperarCoresSalvas?: boolean }) {
   const router = useRouter();
   const [estado, setEstado] = useState(inicial);
   const [site, setSite] = useState(inicial.site);
@@ -36,6 +37,9 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   const [enviando, setEnviando] = useState(false);
   const [erroInstagram, setErroInstagram] = useState<string | null>(null);
   const [erroSite, setErroSite] = useState<string | null>(null);
+  const leituraLogo = useRef<AbortController | null>(null);
+  const versaoCores = useRef(0);
+  useEffect(() => () => { versaoCores.current += 1; leituraLogo.current?.abort(); }, [inicial.businessId, logo?.id]);
   const tempoDaPersistencia = useTempoDaOperacao(enviando);
   const rotulos = {
     nome: "Anunciante", contratante: "Contratante ou agência", ramo: "Ramo", operador: "Quem opera", descricao: "Produto ou serviço",
@@ -45,6 +49,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
 
   async function salvar() {
     if (enviando || aviso || uploadsAtivos > 0 || analisesAtivas > 0) return;
+    if (leituraLogo.current) return;
     const instagramNormalizado = instagram.trim() ? validarInstagram(instagram) : "";
     const siteNormalizado = semSite ? "" : validarSite(site);
     const novoErroInstagram = instagram.trim() && !instagramNormalizado ? "Use apenas um @usuário válido ou cole a URL do perfil no Instagram." : null;
@@ -74,6 +79,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   }
 
   async function proporCores(arquivos: File[], origem: "logo-principal" | "imagem-de-apoio") {
+    cancelarLeituraDoLogo();
     setAnalisesAtivas((atual) => atual + 1);
     setRecadoLogo(null);
     try {
@@ -97,7 +103,42 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   }
 
   function aoMudarUpload(ativo: boolean) {
+    if (ativo) cancelarLeituraDoLogo();
     setUploadsAtivos((atual) => Math.max(0, atual + (ativo ? 1 : -1)));
+  }
+
+  function cancelarLeituraDoLogo() {
+    versaoCores.current += 1;
+    leituraLogo.current?.abort();
+  }
+
+  async function recuperarCores() {
+    if (!recuperarCoresSalvas || !logo?.url || leituraLogo.current || enviando || uploadsAtivos > 0 || analisesAtivas > 0) return;
+    const controle = new AbortController();
+    leituraLogo.current = controle;
+    const versao = versaoCores.current;
+    const limite = setTimeout(() => controle.abort(), 10_000);
+    setAnalisesAtivas(atual => atual + 1);
+    setRecadoLogo("Lendo as cores do logo salvo…");
+    try {
+      const resultado = await coresDoLogoSalvo(logo, estado.businessId, controle.signal);
+      if (versao !== versaoCores.current) return;
+      if (!resultado.ok) {
+        setRecadoLogo("Não conseguimos ler o logo salvo. Recarregue a página e tente novamente, ou adicione as cores manualmente.");
+        return;
+      }
+      if (resultado.cores.length) {
+        setCores(anteriores => juntarPaleta(anteriores, resultado.cores));
+        setCoresConferidas(false);
+      }
+      setRecadoLogo(resultado.cores.length
+        ? "Cores sugeridas a partir do logo salvo. Confira antes de confirmar."
+        : "Não encontramos cores confiáveis nesse logo. Você pode adicioná-las manualmente ou definir com o gestor.");
+    } finally {
+      clearTimeout(limite);
+      if (leituraLogo.current === controle) leituraLogo.current = null;
+      setAnalisesAtivas(atual => Math.max(0, atual - 1));
+    }
   }
 
   return <>
@@ -128,6 +169,8 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
         <section className={styles.coresBloco}>
           <h2>Essas são as cores da sua marca?</h2>
           <p>A logo principal vem primeiro; as outras imagens ajudam a completar uma paleta coerente. Você escolhe quais tons manter e pode ajustar cada cor antes de confirmar.</p>
+          {recuperarCoresSalvas && logo?.url && cores.length === 0 && !naoSei && <button type="button" className={styles.adicionarCor}
+            disabled={enviando || uploadsAtivos > 0 || analisesAtivas > 0} onClick={() => void recuperarCores()}>Sugerir cores do logo salvo</button>}
           {analisesAtivas > 0 && <p className={styles.statusAcao} role="status" aria-live="polite">Imagem salva. Analisando as cores agora…</p>}
           {recadoLogo && <p role="status">{recadoLogo}</p>}
           {cores.length > 0 && <>
@@ -135,25 +178,28 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
               {cores.map((cor, i) => <label key={i}>
                 <span>{PAPEIS_DA_COR[i] ?? "Cor"}</span>
                 <input type="color" value={cor} aria-label={`Ajustar cor ${i + 1}`} onChange={(e) => {
+                  cancelarLeituraDoLogo();
                   setCores(cores.map((c, j) => j === i ? e.target.value.toUpperCase() : c));
                   setCoresConferidas(false);
                 }} />
                 <code>{cor}</code>
                 <button type="button" className={styles.removerCor} onClick={() => {
+                  cancelarLeituraDoLogo();
                   setCores(cores.filter((_, j) => j !== i));
                   setCoresConferidas(false);
                 }}>Remover</button>
               </label>)}
             </div>
             {cores.length < 6 && <button type="button" className={styles.adicionarCor} onClick={() => {
+              cancelarLeituraDoLogo();
               setCores([...cores, "#1250DC"]);
               setCoresConferidas(false);
             }}>Adicionar outra cor</button>}
-            <button className={styles.confirmarCores} type="button" disabled={uploadsAtivos > 0 || analisesAtivas > 0} onClick={() => { setCoresConferidas(true); setNaoSei(false); }}>
+            <button className={styles.confirmarCores} type="button" disabled={uploadsAtivos > 0 || analisesAtivas > 0} onClick={() => { cancelarLeituraDoLogo(); setCoresConferidas(true); setNaoSei(false); }}>
               {coresConferidas ? "Cores confirmadas ✓" : "Confirmar estas cores"}
             </button>
           </>}
-          {cores.length === 0 && <button type="button" className={styles.adicionarCor} onClick={() => setCores(["#1250DC"])}>Adicionar cor manualmente</button>}
+          {cores.length === 0 && <button type="button" className={styles.adicionarCor} onClick={() => { cancelarLeituraDoLogo(); setCores(["#1250DC"]); }}>Adicionar cor manualmente</button>}
         </section>
         <div className={styles.campo}>
           <label htmlFor="instagram">Instagram da marca (se tiver)</label>
@@ -189,6 +235,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
           <textarea id="aparencia" value={aparencia} disabled={naoSei} maxLength={500} onChange={(e) => setAparencia(e.target.value)} placeholder="Ex.: não usar vermelho; o logo principal é o de fundo claro" />
         </div>
         <label className={styles.opcao}><input type="checkbox" checked={naoSei} onChange={(e) => {
+          cancelarLeituraDoLogo();
           if (e.target.checked) setConfirmandoNaoSei(true);
           else setNaoSei(false);
         }} /> Ainda não sei quais cores usar; quero definir com o gestor</label>
