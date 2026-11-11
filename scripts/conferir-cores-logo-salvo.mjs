@@ -10,6 +10,17 @@ const propostas=[{hex:'#442288',peso:.8},{hex:'#CCAA88',peso:.2}];
 const {coresDoLogoSalvo}=ambienteTs({globals:{File}}).load('lib/identidade/cores-do-logo-salvo.ts');
 const copiar=x=>JSON.parse(JSON.stringify(x));
 
+test('fetch nativo conserva o receptor global do navegador',async()=>{
+  const {coresDoLogoSalvo:ler}=ambienteTs({globals:{File,__janelaDoNavegador:true},
+    fetch:async function(){
+      assert.equal(this?.__janelaDoNavegador,true,'fetch nativo exige a janela como receptor');
+      return new Response(new Blob(['imagem'],{type:'image/png'}));
+    },ports:{'./cores-da-logo':{coresDaLogo:async()=>propostas}},
+  }).load('lib/identidade/cores-do-logo-salvo.ts');
+  const r=await ler(logo,A,new AbortController().signal);
+  assert.equal(r.ok,true);assert.deepEqual(r.cores,propostas);
+});
+
 test('logo salvo é lido sem cookies e só gera proposta, sem reenvio ou gravação',async()=>{
   const chamadas=[];
   const r=await coresDoLogoSalvo(logo,A,new AbortController().signal,{

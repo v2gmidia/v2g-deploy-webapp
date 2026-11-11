@@ -35,6 +35,8 @@ Este bloco não conclui a marca, não informa site por suposição e não fecha 
 
 ### Complementos que não devem travar a rodada de acompanhamento
 
+> RESOLVIDO em 10/11/2026, por informação posterior de Victor: Dúú não tem site e a data da arte não está disponível. Os dois pedidos abaixo ficam apenas como histórico e não devem ser reenviados. Ver `n26-cores-logo-qa-publicada-correcao-fetch-10-11.md`.
+
 - **Data desta versão no AD 01 `52570262604075`, se souber:** informar data e fonte; se não souber, dizer isso e manter em conferência. O histórico da Meta já mostra a mesma imagem antes/depois da alteração de 16/jul; não usar essa alteração como primeira publicação.
 - **Contato/site vigente e eventual manual de marca:** o Instagram e o logo já foram definidos por Victor. O site indicado na Página não resolveu na tentativa feita; confirmar um endereço atual se houver. Não pedir novamente escolha de logo, teto, conta, região ou aprovação da peça.
 

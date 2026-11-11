@@ -9,7 +9,11 @@ export async function coresDoLogoSalvo(
   logo: LogoSalvo,
   businessId: string,
   signal: AbortSignal,
-  portas = { buscar: fetch, extrair: coresDaLogo },
+  portas = {
+    // O fetch do navegador exige o receptor global, não o objeto de portas.
+    buscar: (url: RequestInfo | URL, init?: RequestInit) => globalThis.fetch(url, init),
+    extrair: coresDaLogo,
+  },
 ): Promise<Resultado> {
   try {
     if (!/^[0-9a-f-]{36}$/i.test(businessId) || !logo.url
