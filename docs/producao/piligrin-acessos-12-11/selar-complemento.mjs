@@ -13,7 +13,7 @@ const normalized=current.replaceAll('\r\n','\n');
 const block=normalized.match(/  \/\/ Contratação histórica já conferida[\s\S]*?(?=  \/\/ O piloto QA)/)?.[0];
 assert(block,'exact new action block');
 assert.equal(normalized.replace(imports,'').replace(block,''),old.replaceAll('\r\n','\n'),'preserve all prior action content');
-for(const file of files){const target=new URL('webapp/'+file,dir);mkdirSync(dirname(target.pathname.replace(/^\/C:/,'C:')),{recursive:true});copyFileSync(candidate+file,target);}
+for(const file of files){const target=new URL('webapp/'+file+(/\.tsx?$/.test(file)?'.txt':''),dir);mkdirSync(dirname(target.pathname.replace(/^\/C:/,'C:')),{recursive:true});copyFileSync(candidate+file,target);}
 const remove=old.replaceAll('\r\n','\n').trimEnd().split('\n').map(l=>'-'+l).join('\n');
 const add=current.replaceAll('\r\n','\n').trimEnd().split('\n').map(l=>'+'+l).join('\n');
 let patch='*** Begin Patch\n*** Update File: '+action+'\n@@\n'+remove+'\n'+add+'\n';

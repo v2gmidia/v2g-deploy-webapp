@@ -2,6 +2,8 @@
 
 > Aplicação posterior autorizada: em 12/11 às 16:33 de Brasília, somente o complemento SQL foi aplicado e conferido em produção. Registro em `docs/estado/n26-conexao-historica-aplicada-producao-12-11.md`. Este texto e o manifesto preservam a revisão preparada; código, concessão/aceite e OAuth reais permanecem pendentes.
 
+> Correção dos anexos após o push QA: as cópias documentais TypeScript em `webapp/` usam `.ts.txt` para não entrar na compilação do aplicativo; os hashes/conteúdos originais e os caminhos reais no patch permanecem preservados. O selador foi corrigido. A combinação atual do WebApp passou build isolado completo; ver `pacote-combinado-conferido.json` e `docs/estado/n26-push-qa-anexos-corrigidos-producao-pendente-12-11.md`.
+
 ## Resultado para Victor
 
 Um login da Piligrin administra a carteira dos anunciantes explicitamente vinculados e liberados. Dúú tem cadastro e dados separados; não precisa de usuário/senha próprio enquanto o anunciante não for entrar no aplicativo. O acesso de gestor V2G é separado e exige sessão/papel/atribuição legítimos. Login independente futuro do anunciante demanda autorização/membros próprios: o modelo atual mantém agência e anunciante sob o mesmo titular, e não oferece esse compartilhamento multiusuário por simples troca de `profile_id`.

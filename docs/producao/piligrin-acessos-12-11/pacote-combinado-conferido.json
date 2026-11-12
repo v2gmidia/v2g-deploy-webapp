@@ -1,0 +1,357 @@
+{
+  "estado": "Código conferido nas candidatas; ainda sem commit/publicação",
+  "geradoEm": "2026-11-12T20:05:16.174Z",
+  "webapp": {
+    "candidata": "C:/Users/victo/v2g-deploy/webapp-piligrin-producao/",
+    "branch": "codex/piligrin-agencia-producao",
+    "base": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+    "arquivos": [
+      {
+        "arquivo": "app/(fluxo)/onboarding/layout.tsx",
+        "sha256": "bbcf344845747654af58fae4b5a00be9b16937ac874058e000ac8138d0b5165c"
+      },
+      {
+        "arquivo": "app/(fluxo)/onboarding/marca/Marca.tsx",
+        "sha256": "9d51026829a78760e3010b74a035db6871edaca39dce7020bf47e76b6ff866d2"
+      },
+      {
+        "arquivo": "app/(fluxo)/onboarding/page.tsx",
+        "sha256": "1071c744c926646c6fd70ae8e340b6483ca31525b6da45cfcc53290a6d4f92f9"
+      },
+      {
+        "arquivo": "app/(protected)/agencia/actions.ts",
+        "sha256": "485862a9b6c6d4885abfbcc12c65a675533babd6dc8b8da65e70f7d2533291cb"
+      },
+      {
+        "arquivo": "app/(protected)/anuncios/HistoricoSemRodadas.tsx",
+        "sha256": "836c804817ab09c20beba0e20bda7bd4676c9b38d2196efcc7bea327aa22902a"
+      },
+      {
+        "arquivo": "app/(protected)/anuncios/page.tsx",
+        "sha256": "dfb795781d0e088c7380378a9e83b34bc3dac80996646abd552e9ca4e9201812"
+      },
+      {
+        "arquivo": "app/(protected)/criativos/GaleriaCriativos.tsx",
+        "sha256": "b4513b1876b69bce6d0294913fc3fb9e71b4c83e5eccefb92ca1a570a4a25aa7"
+      },
+      {
+        "arquivo": "app/(protected)/criativos/page.tsx",
+        "sha256": "52bde7ef09ac99b791ea187af6a12c04a003a68e01f7bfd809811692b950c265"
+      },
+      {
+        "arquivo": "app/(protected)/gestor/criativos/ConfirmarPublicacao.tsx",
+        "sha256": "2d2c8ec6ffbe2a1e66da1026d1a7ada8fd70725d9197324f2a26058a1001e472"
+      },
+      {
+        "arquivo": "app/(protected)/gestor/criativos/DecidirPeca.tsx",
+        "sha256": "c47873672a4a33205e6643abe54386049ff8f2de757b3b77739d3901c831a85c"
+      },
+      {
+        "arquivo": "app/(protected)/gestor/criativos/PreviaDaPeca.tsx",
+        "sha256": "09f796333a98ccc294facc0ab3b7c719a034f6145e4982977534c10175f4db67"
+      },
+      {
+        "arquivo": "app/(protected)/gestor/criativos/page.tsx",
+        "sha256": "26ff1cca9b70dc08623da149a28ad4197b54310a780d64121a9a6a9b39dbb3af"
+      },
+      {
+        "arquivo": "app/(protected)/gestor/criativos/publicacao-actions.ts",
+        "sha256": "9a7762fa02eca5fbea0ba2654976200ed042816607507c0e7eb14c2327dde3ce"
+      },
+      {
+        "arquivo": "app/(protected)/gestor/criativos/revisao.module.css",
+        "sha256": "1675b6bb6c1599a86189f9ab8dd184ad759751ea3fa29ea3dc2f9bb4d1535261"
+      },
+      {
+        "arquivo": "app/(protected)/inicio/ResumoMetaDoInicio.module.css",
+        "sha256": "ef29bd97b9405090441f580c769d4e99d2905a1b9096c56ff5ce272c6723ff41"
+      },
+      {
+        "arquivo": "app/(protected)/inicio/ResumoMetaDoInicio.tsx",
+        "sha256": "5398c523d5d52d5c26ecceb3ae6c33227db8143467a5ef1290d240a0ef57f152"
+      },
+      {
+        "arquivo": "app/(protected)/inicio/TelaDoInicio.tsx",
+        "sha256": "cfd7434d06f569692c949f169f9a01cb92852d5a11c2d92e2cf33bc94bf30de0"
+      },
+      {
+        "arquivo": "app/(protected)/inicio/page.tsx",
+        "sha256": "c38cbabc2bf2f39f0fdf7e3aa83612fc64c9365165a15e33273f93307bc3f880"
+      },
+      {
+        "arquivo": "app/(protected)/layout.tsx",
+        "sha256": "7118afaf2101a4cd7c2cb0fbb10531a54e5b8653e209a701dd7107823ecaa89b"
+      },
+      {
+        "arquivo": "app/exemplo/_inicio_meta/Previa.tsx",
+        "sha256": "c1ab1b07e311ede1a150b234a3b88d463d0596be75e435884f57510cbb9cdc47"
+      },
+      {
+        "arquivo": "app/exemplo/inicio-meta/page.tsx",
+        "sha256": "028b2adf3203f12c8331ff820ae8d8717d39d7f710854bf9a1c5951642a1c869"
+      },
+      {
+        "arquivo": "components/agencia/AbrirCliente.tsx",
+        "sha256": "1aa87b4373fbac41952b3c4253e8c2cbeb9fd2dc31a2ca6bfd90fc6def0af2c1"
+      },
+      {
+        "arquivo": "components/agencia/CarteiraAgencia.tsx",
+        "sha256": "96afb4428034a858f07394f2dc7bc652c7d180f2adfed813c92eb3bfbde6db21"
+      },
+      {
+        "arquivo": "components/agencia/Comuns.tsx",
+        "sha256": "f21b19aaf6ff8511947abe08df73a16d7b345d19bb3b688e2e87c96616a44b2a"
+      },
+      {
+        "arquivo": "components/agencia/ContextoNoCasco.tsx",
+        "sha256": "50b5024f225630627597856bae102588946326e3c70ecdc962b8b3f92810187f"
+      },
+      {
+        "arquivo": "components/agencia/CriativosAgencia.tsx",
+        "sha256": "ce4d7dc424c150c219ab7fe4e239dc6a10670b6bc98dc007fb27eff3d4aab59f"
+      },
+      {
+        "arquivo": "components/agencia/CriativosDoCliente.tsx",
+        "sha256": "8a00f8532ae701696522b13e062549b1c9e82743d989217e915b09017b2bb786"
+      },
+      {
+        "arquivo": "components/agencia/GraficoInvestimento.tsx",
+        "sha256": "720154a429f09f8e77fec4a01d2e935cd60e2a133103ad7f6e8f7a7c91b84db9"
+      },
+      {
+        "arquivo": "components/agencia/InicioDoCliente.tsx",
+        "sha256": "d308e24276e625f275a72e80e002de0ce00871276a7b2a4f6fd197d752c42f53"
+      },
+      {
+        "arquivo": "components/agencia/MiniaturaDaPeca.tsx",
+        "sha256": "80d396947fe2ca510f5ffd7c52b7a90936220c10ff46b13b34435c82f1caec7d"
+      },
+      {
+        "arquivo": "components/agencia/agencia.module.css",
+        "sha256": "3aefacc6cb99a317e25bcabdc1c37949acd62ea6fa160324c2336fdb8107ef55"
+      },
+      {
+        "arquivo": "components/agencia/inicio-cliente.module.css",
+        "sha256": "ae206c30a71ece687d286b98a57c494d1c93d9624ee88d4e364a7c4d1ce8464e"
+      },
+      {
+        "arquivo": "components/ui/Casco.tsx",
+        "sha256": "7f776732f6f0bed0871892854ddb70699e593d503234f010a551fdb6e594cb62"
+      },
+      {
+        "arquivo": "lib/agencia/caminho-da-peca.ts",
+        "sha256": "29bca44a863fd75773fff8934851f254106172fa2a9c102396832655e4ac1349"
+      },
+      {
+        "arquivo": "lib/agencia/contexto.ts",
+        "sha256": "619e2505c9a6f8f570f1f786437014f208af57237ba611a7bb44c95ffaf5fac7"
+      },
+      {
+        "arquivo": "lib/agencia/da-sessao.ts",
+        "sha256": "847847455bdb741060871861a283ef7be830d669bd7c4e8c0b2c4d39e6d5b0aa"
+      },
+      {
+        "arquivo": "lib/agencia/entrada.ts",
+        "sha256": "bafe7ba3836f9c109f2652594e998fe34a42057f50b86d621c452b8ad0c8455e"
+      },
+      {
+        "arquivo": "lib/agencia/habilitacao.ts",
+        "sha256": "62e1ea7da47364b71e071b972d45564688b1db50299d920d876ee0602e906626"
+      },
+      {
+        "arquivo": "lib/agencia/identidade-do-menu.ts",
+        "sha256": "9a4b5661ac8f1f218b29ee56e6da521eb3ad7914563ed6d86b8c9effd104de8b"
+      },
+      {
+        "arquivo": "lib/agencia/resumo-da-sessao.ts",
+        "sha256": "970045c891a156c8fdef2024a39a838db75c91e488c8a44e09d8934655523e4e"
+      },
+      {
+        "arquivo": "lib/agencia/resumo.ts",
+        "sha256": "e05acbfd7ad3af9e2ebd4d905b3357c9f1b27d5af7127cb32eec959d3eebc10e"
+      },
+      {
+        "arquivo": "lib/agencia/vinculos-da-sessao.ts",
+        "sha256": "2aae10d0e14a531dfd13ee2814cef9ab9ad59c319fed526f6769842da28c2780"
+      },
+      {
+        "arquivo": "lib/agencia/vinculos.ts",
+        "sha256": "174411cff5d51632812cd8a5147bc857acaffe0e153f5fba541c27ce738573f2"
+      },
+      {
+        "arquivo": "lib/anuncios/contrato-meta.ts",
+        "sha256": "1ef95dff974a7050bf43863b5be83156706df1a070afb5d8188f36697b91b1a0"
+      },
+      {
+        "arquivo": "lib/backend/dia-seguinte.ts",
+        "sha256": "5ba89fdc16cc389be764accbbc72048c1735534cf5ae24b7322e4f4e37e18c15"
+      },
+      {
+        "arquivo": "lib/cadastro/montar.ts",
+        "sha256": "78ec5694a3c4506b6d9f23ccd5493092985fc439aefb9371d5b529c055b22b6b"
+      },
+      {
+        "arquivo": "lib/cadastro/pendencias.ts",
+        "sha256": "92217ca8efc82f73baaef954cb5470536600e7a537c0401d4a248b46802685b1"
+      },
+      {
+        "arquivo": "lib/criativos/galeria-da-sessao.ts",
+        "sha256": "4cc67d747d0680be63d3436a8ac6cb51929e0d498a06854e744c09fbec68f689"
+      },
+      {
+        "arquivo": "lib/criativos/publicacao.ts",
+        "sha256": "a422b8bcbaf8c4431c77ac698cb6702a22ac13a2dd9d537fef836bbb43836da7"
+      },
+      {
+        "arquivo": "lib/criativos/revisao.ts",
+        "sha256": "20c60f5996c700473856d9f521a6828db7f99b4f7529215d4459a568a05ff8a9"
+      },
+      {
+        "arquivo": "lib/estado/cliente.ts",
+        "sha256": "3eb08c4e208d1b89e79266afb48fca40239773471bd7a9fe3c092bd4ab7f9094"
+      },
+      {
+        "arquivo": "lib/inicio/periodo.ts",
+        "sha256": "52434e265d4eb75a98ca33d7ff10c445f1fcdc06da0bb4912490d7e7379dc43a"
+      },
+      {
+        "arquivo": "lib/inicio/resumo-meta.ts",
+        "sha256": "a398156e1ed7814067854ae938d13a4b746ee124b09f64406379f976988b731c"
+      },
+      {
+        "arquivo": "lib/inicio/serie-meta.ts",
+        "sha256": "0f7b4a9521706f91357da4132938b260f7b58e5936e9aa54f2c4471eab204102"
+      },
+      {
+        "arquivo": "lib/multiconta/ativo.ts",
+        "sha256": "8ffaccd3148ce1379e1d3413391d16ebf99e55e650c29b37cdeee50f7299b96e"
+      },
+      {
+        "arquivo": "lib/onboarding/bloco-um.ts",
+        "sha256": "8ec296344c5fffe54e17766b4efc2d7a764be4c4de00e9e57340ca02b18fbe27"
+      },
+      {
+        "arquivo": "lib/onboarding/conclusao-legada.ts",
+        "sha256": "21b5148b1e186259a4fdc5f2b3e369aaeb19eaf292f2176e5c3f0205093f5cb2"
+      },
+      {
+        "arquivo": "lib/onboarding/conclusao.ts",
+        "sha256": "7bdd8c2a7d8cd9fec834b2048649f36e2fba957692e5da79a0ec3929ce18df0d"
+      },
+      {
+        "arquivo": "lib/onboarding/pendencia-do-negocio.ts",
+        "sha256": "0e301095b78800c784651dde9ce792232a925a42edbbea7e713f1476ce23b248"
+      },
+      {
+        "arquivo": "scripts/conferir-agencia-marca-periodo.mjs",
+        "sha256": "807e2764f8b2903b806ade130f804eb96b035c82a6d2547cad58bbaf71cfa2e3"
+      },
+      {
+        "arquivo": "scripts/conferir-agencia-qa.mjs",
+        "sha256": "8acaa30e82e20dbbb9d774e2b8cb8559c6ff7f0f2d5e109887ddfcda31ffe349"
+      },
+      {
+        "arquivo": "scripts/conferir-historico-vazio.mjs",
+        "sha256": "829a857d0f821a9bdb033541b810ee3d61f4b21601c9a1775f73afa23e7dd501"
+      },
+      {
+        "arquivo": "scripts/conferir-inicio-meta.mjs",
+        "sha256": "8ac4036b394394d24174983d8d2c9e3e1dbe2dbd207ad3c1af6b106e7f2e97a3"
+      },
+      {
+        "arquivo": "scripts/conferir-promocao-agencia.mjs",
+        "sha256": "11a49a9d735cdf0440f16df1258e6faf29b98d49e0c1a36e0486a4cddb139472"
+      },
+      {
+        "arquivo": "scripts/conferir-publicacao-criativo.mjs",
+        "sha256": "3a6d1b7c70ae1c9e3e16bea69ef67d14060a7de2f42ce9a2498e618bf21d3db5"
+      },
+      {
+        "arquivo": "scripts/fixtures/consolidado-sem-rodadas.json",
+        "sha256": "828acf3812060f8f8dbc09d5b26c4b0d0b738e42e6c755cfbf84f20a6315d708"
+      },
+      {
+        "arquivo": "app/(fluxo)/conectar/escolher/actions.ts",
+        "sha256": "9a69a1cb87eeb02278d552810dad3af2fa838fa4305e0c073b4619ad1b95f7c9"
+      },
+      {
+        "arquivo": "lib/contratacao/conta-acesso-contratado.ts",
+        "sha256": "232232301b1b1a5382a18d3e1d35d95c51de547b8ed040c0c3197b76f0e2ca7f"
+      },
+      {
+        "arquivo": "scripts/conferir-conta-acesso-contratado.mjs",
+        "sha256": "4daa051f6e1668fddd174ff6755b4d1dc567fa00fac0026d4a3d421961a776f9"
+      }
+    ],
+    "buildIsolado": "passou; Next 16.2.12 Turbopack",
+    "buildPath": "C:/Users/victo/AppData/Local/Temp/v2g-post-push-producao-candidata-m7gnQx"
+  },
+  "backend": {
+    "candidata": "C:/Users/victo/OneDrive/Documentos/GitHub/backend_v2g-piligrin-producao",
+    "branch": "codex/piligrin-leitura-producao",
+    "base": "1bfe3b5c03c1a2a3c25b09ca41cb77613fb20543",
+    "arquivos": [
+      {
+        "arquivo": "docs/estado/2026-11-12-piligrin-leitura-producao-preparo.md",
+        "sha256": "cddb3840273cbadbb63d16f9d142d5e52650d8968e3ebd854dde2e79131ef268"
+      },
+      {
+        "arquivo": "src/api/anuncios_leitura.py",
+        "sha256": "078d096928c3b785cb5c700725cfe341b4cf7d35f9434b18d9374da008c97659"
+      },
+      {
+        "arquivo": "src/api/anuncios_leitura_policy.py",
+        "sha256": "3fbb35aeaa91d170137cc89afddce0f227270769c603c162361c39450cfb1925"
+      },
+      {
+        "arquivo": "src/api/auth.py",
+        "sha256": "cba2595476592493b48d7017010817c76520a49a641d4b6171e2c477640fd20f"
+      },
+      {
+        "arquivo": "src/api/main.py",
+        "sha256": "c224a313ed8d834d38cc5761e6b69834dcb27ccf55881a87a53ef65ec1198a96"
+      },
+      {
+        "arquivo": "src/api/rotas.py",
+        "sha256": "03d16ebdf67e13febd61cfa504893c627d935d5a19d6a620ef0d512b7dc1a33a"
+      },
+      {
+        "arquivo": "src/config.py",
+        "sha256": "f8e004931f03949313f627fc27bce079846305a7acf622eb12f421a3b45ee86c"
+      },
+      {
+        "arquivo": "src/db/acesso_anuncios.py",
+        "sha256": "e1e48441525c3f8247d14dc2d99726ae8d882d3e1b78f2e3b76c240b6c74acf3"
+      },
+      {
+        "arquivo": "src/meta/leitura_anuncios.py",
+        "sha256": "0d6bed29a9c423ae47034d82dbece5479d3a490a381d8a46b29a7fa7f051c157"
+      },
+      {
+        "arquivo": "src/meta/leitura_valores.py",
+        "sha256": "b4ad31594b919eeb693943798d3bed82b9d97920701100827987fada387c5550"
+      },
+      {
+        "arquivo": "tests/unit/test_anuncios_meta_sem_execucao.py",
+        "sha256": "2bdafc2b9fdc7bb2bb079256e1b97fc7c174e37fc75aac508ebeff5b5f8bab8b"
+      },
+      {
+        "arquivo": "tests/unit/test_historico_sem_rodadas.py",
+        "sha256": "9444faec974576d542567fa5cc38177f51a140976fd5decfe016fd02b8b3d703"
+      }
+    ],
+    "validacaoAnteriorPreservada": true
+  },
+  "qa": {
+    "push": "1a11974536d935dc059c04db7ad9b3e07877939c",
+    "pushContinhaCodigoAtivo": false,
+    "correcaoAnexosLocal": true,
+    "buildIsolado": "passou; Next 16.2.12 Turbopack",
+    "buildPath": "C:/Users/victo/AppData/Local/Temp/v2g-post-push-qa-MOdjIE"
+  },
+  "limites": [
+    "Nenhum commit/push/merge/deploy realizado pelo agente",
+    "Builds sem arquivos .env e sem credenciais herdadas; raiz de resolução ajustada somente nas cópias temporárias",
+    "Aprovação publicada, OAuth e aceite do cliente permanecem pendentes"
+  ]
+}
