@@ -1,0 +1,149 @@
+{
+  "data": "2026-11-12",
+  "ambiente": "QA",
+  "commit": "60b4114404495147d80c2df679b9cac02da7338d",
+  "deploymentId": "dpl_3ATyTy9fVYRUUTfunu9rPCqyE6qF",
+  "projeto": "v2g-webapp-qa",
+  "status": "READY",
+  "identidade": "Sessão legítima autenticada por Victor; Piligrin selecionada no seletor oficial",
+  "agencia": "Piligrin",
+  "anunciante": "Dúú Gomes",
+  "businessId": "9cb85308-02cc-4ce7-bacf-15be77f9ba5e",
+  "adAccountId": "act_1165478988908157",
+  "periodo": {
+    "desde": "2026-11-01",
+    "ate": "2026-11-07"
+  },
+  "fonte": "Telas autenticadas da QA; Meta Marketing API via backend; não é auditoria independente da BM",
+  "inicio": {
+    "gastoCentavos": 28180,
+    "impressoes": 26129,
+    "cliques": 466,
+    "conversas": null,
+    "campanhasObservadas": 1,
+    "campanhasRetornadas": 10,
+    "parcial": true
+  },
+  "anuncios": {
+    "campaignId": "52570261860675",
+    "gastoCentavos": 28180,
+    "impressoes": 26129,
+    "cliques": 466,
+    "ad01": {
+      "id": "52570262604075",
+      "gastoCentavos": 26596,
+      "impressoes": 25025,
+      "cliques": 444
+    },
+    "ad02": {
+      "id": "52598499207075",
+      "gastoCentavos": 1584,
+      "impressoes": 1104,
+      "cliques": 22
+    }
+  },
+  "grafico": {
+    "dias": [
+      {
+        "dia": "2026-11-01",
+        "gastoCentavos": 4514,
+        "impressoes": 4454,
+        "cliques": 88
+      },
+      {
+        "dia": "2026-11-02",
+        "gastoCentavos": 2937,
+        "impressoes": 4161,
+        "cliques": 54
+      },
+      {
+        "dia": "2026-11-03",
+        "gastoCentavos": 5656,
+        "impressoes": 3538,
+        "cliques": 49
+      },
+      {
+        "dia": "2026-11-04",
+        "gastoCentavos": 6687,
+        "impressoes": 5696,
+        "cliques": 112
+      },
+      {
+        "dia": "2026-11-05",
+        "gastoCentavos": 2876,
+        "impressoes": 2654,
+        "cliques": 61
+      },
+      {
+        "dia": "2026-11-06",
+        "gastoCentavos": 2918,
+        "impressoes": 3188,
+        "cliques": 47
+      },
+      {
+        "dia": "2026-11-07",
+        "gastoCentavos": 2592,
+        "impressoes": 2438,
+        "cliques": 55
+      }
+    ],
+    "somaConfere": true
+  },
+  "criativos": {
+    "arquivo": "WhatsApp Image 2026-11-09 at 10.23.29.jpeg",
+    "imagemCarregada": true,
+    "dimensoes": [
+      1254,
+      1254
+    ],
+    "ampliacaoConferida": true,
+    "reviewRequestId": "0b22f424-f70b-457f-845e-c37bb50ddb5f",
+    "gestor": "Cauã Carlos",
+    "status": "Peça aprovada pelo gestor; publicação em conferência"
+  },
+  "navegacao": {
+    "onboardingDaAgenciaRedirecionaCarteira": true,
+    "carteiraClienteCriativosAnuncios": true,
+    "pecaDaCarteiraAbreVersaoExata": true,
+    "retornoConservaBusca": "Dúú",
+    "retornoConservaPendentes": true,
+    "recarregarCarteiraConservaContexto": true
+  },
+  "preservacao": {
+    "antes": {
+      "negocios": [
+        {
+          "id": "9cb85308-02cc-4ce7-bacf-15be77f9ba5e",
+          "fingerprint": "4e5fb90398369f55986084531e206b9c"
+        },
+        {
+          "id": "b93ce126-2ea8-4ab3-9051-4d7f3a44caf6",
+          "fingerprint": "f7de3addedfa3df0016bd161ef433552"
+        }
+      ],
+      "revisoes": 1,
+      "publicacoes": 0
+    },
+    "depois": {
+      "negocios": [
+        {
+          "id": "9cb85308-02cc-4ce7-bacf-15be77f9ba5e",
+          "fingerprint": "4e5fb90398369f55986084531e206b9c"
+        },
+        {
+          "id": "b93ce126-2ea8-4ab3-9051-4d7f3a44caf6",
+          "fingerprint": "f7de3addedfa3df0016bd161ef433552"
+        }
+      ],
+      "revisoes": 1,
+      "publicacoes": 0
+    },
+    "intactos": true
+  },
+  "artefatoVisual": "C:/Users/victo/.codex/private-backups/v2g/agencia-entrada-qa-20261111/piligrin-duu-inicio-autenticado-12-11.jpg",
+  "producaoAlterada": false,
+  "dadosAlterados": false,
+  "anuncioPublicado": false,
+  "migracao": false,
+  "codigoAlterado": false
+}

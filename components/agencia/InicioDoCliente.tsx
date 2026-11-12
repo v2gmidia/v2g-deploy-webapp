@@ -4,9 +4,9 @@ import { hrefDaCarteira, hrefDoCliente } from "@/lib/agencia/contexto";
 import type { ResumoDaCarteira } from "@/lib/agencia/resumo";
 import { resumirMeta } from "@/lib/inicio/resumo-meta";
 import type { InventarioMeta, ResultadoInventarioMeta } from "@/lib/anuncios/contrato-meta";
-import type { IntervaloDoInicio } from "@/lib/inicio/periodo";
+import { rotuloDoIntervalo, type IntervaloDoInicio } from "@/lib/inicio/periodo";
 import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
-import { dinheiro, diaCurto } from "@/lib/formato";
+import { dinheiro } from "@/lib/formato";
 import { SeletorDePeriodo } from "@/app/(protected)/inicio/SeletorDePeriodo";
 import { AtualizarInicio } from "@/app/(protected)/inicio/AtualizarInicio";
 import { CabecalhoAgencia, CaminhoDoCliente, ProximoPassoAgencia, Seta } from "./Comuns";
@@ -45,9 +45,10 @@ export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo, 
       <button className="cta">Consultar conta</button></form>}
     {dados && resumo && <>
       <section className={comuns.estado} aria-label="Estado dos resultados"><div><b>Resultados</b><span>{resumo.campanhas ? resumo.entregaHistorica ? "Houve entrega neste período" : "Campanhas encontradas na Meta" : "Nenhuma campanha retornou nesta consulta"}</span></div><a className={comuns.link} href={anunciosDoCliente}>Ver anúncios<Seta /></a></section>
-      <p className={styles.nota}>{diaCurto(dados.periodo.desde)} a {diaCurto(dados.periodo.ate)} · {resumo.campanhasObservadas} de {resumo.campanhas} campanhas com observação.{resumo.parcial ? " Resultados parciais." : ""}</p>
-      <section aria-labelledby="inicio-resumo-titulo"><h2 id="inicio-resumo-titulo">Resumo do período</h2><dl className={styles.metricas}>
-        {([{ tipo: "investido", nome: "Investido", valor: valor(resumo.gasto) }, { tipo: "cliques", nome: "Cliques totais", valor: contar(resumo.cliques) },
+      <section className={styles.resumoPeriodo} aria-labelledby="inicio-resumo-titulo" aria-describedby="inicio-resumo-periodo"><h2 id="inicio-resumo-titulo">Resumo do período</h2>
+        <p id="inicio-resumo-periodo" className={styles.nota}><strong>{rotuloDoIntervalo(dados.periodo)}</strong> · {resumo.campanhasObservadas} de {resumo.campanhas} campanhas com observação.{resumo.parcial ? " Resultados parciais." : ""}</p>
+        <dl className={styles.metricas}>
+        {([{ tipo: "investido", nome: "Investido no período", valor: valor(resumo.gasto) }, { tipo: "cliques", nome: "Cliques totais", valor: contar(resumo.cliques) },
           { tipo: "impressoes", nome: "Impressões", valor: contar(resumo.impressoes) }, { tipo: "conversas", nome: "Conversas", valor: "Não medido" }] as const).map(m => <div key={m.tipo}>
             <dt><IconeMetrica tipo={m.tipo} />{m.nome}</dt><dd className={m.valor === "Não medido" ? styles.ausente : undefined}>{m.valor}</dd></div>)}
       </dl></section>

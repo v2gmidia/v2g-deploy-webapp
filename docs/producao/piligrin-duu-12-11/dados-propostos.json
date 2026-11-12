@@ -1,0 +1,102 @@
+{
+  "status": "PROPOSTA LOCAL — NÃO APLICADA",
+  "origem": {
+    "ambiente": "QA",
+    "businessId": "9cb85308-02cc-4ce7-bacf-15be77f9ba5e",
+    "observacao": "Respostas e marca preservadas com suas datas/atores de origem; nenhum ator QA é convertido em identidade de produção."
+  },
+  "titularProducao": "6ef1a6d0-ae43-4dd7-8b10-769aa0467777",
+  "agenciaProducao": "54df1a9b-f1ca-444a-8282-67cf7301a257",
+  "anuncianteProposto": "8b916e82-11dc-47ce-a5ac-988b44d83344",
+  "name": "Dúú Gomes",
+  "description": "Indústria de chope de vinho. Vende principalmente para bares e pontos de venda; também realiza algumas vendas para consumidores finais.",
+  "monthly_budget": 3000,
+  "site_url": null,
+  "instagram_handle": "duugomesoficial",
+  "onboarding": {
+    "versao": 2,
+    "respostas": {
+      "nome": {
+        "em": "2026-11-09T20:29:29.889Z",
+        "echo": "Dúú Gomes",
+        "texto": "Dúú Gomes",
+        "origem": "texto"
+      },
+      "ramo": {
+        "em": "2026-11-09T20:30:20.001Z",
+        "echo": "Indústria de bebidas",
+        "texto": "Indústria de bebidas",
+        "origem": "texto"
+      },
+      "praca": {
+        "em": "2026-11-09T20:55:09.179Z",
+        "echo": "Todo o estado do Rio de Janeiro",
+        "texto": "Todo o estado do Rio de Janeiro",
+        "origem": "texto"
+      },
+      "_oferta": {
+        "informado_por": "09e25ab4-b55b-48d1-bfde-181e41192bb6",
+        "preco_referencia": {
+          "fonte": "Informado pela pessoa autenticada nesta operação",
+          "moeda": "BRL",
+          "certeza": "aproximado",
+          "unidade": "fardo",
+          "valor_max": 70,
+          "valor_min": 69,
+          "observado_em": "2026-11-09T20:33:01.815Z"
+        }
+      },
+      "destino": {
+        "em": "2026-11-09T20:55:20.180Z",
+        "echo": "WhatsApp",
+        "texto": "WhatsApp",
+        "origem": "chip"
+      },
+      "publico": {
+        "em": "2026-11-09T20:32:09.178Z",
+        "echo": "Principalmente empresas, bares e pontos de venda que compram para revender. Também há algumas vendas para consumidores finais.",
+        "texto": "Principalmente empresas, bares e pontos de venda que compram para revender. Também há algumas vendas para consumidores finais.",
+        "origem": "texto"
+      },
+      "campanha": {
+        "em": "2026-11-09T20:55:40.311Z",
+        "echo": "Já existe uma campanha para acompanhar",
+        "texto": "Já existe uma campanha para acompanhar",
+        "origem": "chip"
+      },
+      "operador": {
+        "em": "2026-11-09T20:29:03.200Z",
+        "echo": "Uma agência ou gestor opera para o anunciante",
+        "texto": "Uma agência ou gestor opera para o anunciante",
+        "origem": "chip"
+      },
+      "descricao": {
+        "em": "2026-11-09T20:31:22.210Z",
+        "echo": "Indústria de chope de vinho. Vende principalmente para bares e pontos de venda; também realiza algumas vendas para consumidores finais.",
+        "texto": "Indústria de chope de vinho. Vende principalmente para bares e pontos de venda; também realiza algumas vendas para consumidores finais.",
+        "origem": "texto"
+      },
+      "contratante": {
+        "em": "2026-11-09T20:29:48.224Z",
+        "echo": "Piligrin",
+        "texto": "Piligrin",
+        "origem": "texto"
+      },
+      "_contatos_anunciante": {
+        "site_url": null,
+        "site_nao_tem": true
+      }
+    },
+    "marca": {
+      "em": "2026-11-11T01:27:07.732Z",
+      "aparencia": "",
+      "siteNaoTenho": true,
+      "aparenciaNaoSei": false,
+      "coresConfirmadas": [
+        "#2B1B3F",
+        "#E9B7F9",
+        "#BACC9E"
+      ]
+    }
+  }
+}

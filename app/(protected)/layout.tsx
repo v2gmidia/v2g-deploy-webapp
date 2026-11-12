@@ -5,6 +5,7 @@ import { signOutAction } from "./actions";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { logosDosNegociosLiberados } from "@/lib/multiconta/logos";
+import { identidadeDoMenuDaAgencia } from "@/lib/agencia/identidade-do-menu";
 import { cnpjsDosNegociosLiberados } from "@/lib/multiconta/cnpjs";
 import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
 
@@ -102,12 +103,12 @@ export default async function ProtectedLayout({ children }: { children: React.Re
       rotuloDaConta={nomeNegocio || user.email || ""}
       inicial={inicial}
       acaoSair={signOutAction}
-      negocios={negocios.map((negocio) => ({
+      negocios={identidadeDoMenuDaAgencia(negocios.map((negocio) => ({
         id: negocio.id,
         name: negocio.name,
         logoUrl: logos.get(negocio.id) ?? null,
         cnpj: cnpjPorNegocio.get(negocio.id) ?? null,
-      }))}
+      })), agencia)}
       ehOperador={user.app_metadata?.papel === "operador"}
     >
       {children}

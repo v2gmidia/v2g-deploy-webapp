@@ -11,7 +11,8 @@ import { raizDaAgencia } from "./vinculos";
 export type ContextoAgenciaDaSessao =
   | { status: "desligado" | "direto" | "indisponivel" }
   | { status: "agencia"; agencia: string; businessIdAtivo: string; contexto: ContextoAgencia | null;
-    clientes: ContextoAgencia[]; agencyBusinessId: string; origem: "vinculo" | "legado" };
+    clientes: ContextoAgencia[]; agencyBusinessId: string; origem: "vinculo" | "legado";
+    marcaAgenciaCompartilhada: boolean };
 
 /** Somente QA já habilitada; nenhuma identidade, permissão ou dado é gravado. */
 export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDaSessao> => {
@@ -77,7 +78,13 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
       }
     } catch { /* A indisponibilidade do nome não desautoriza o titular já validado. */ } }));
     if (!nomeAgencia) return { status: "indisponivel" };
+    // No registro histórico, a raiz guarda a identidade do anunciante. Ela
+    // continua disponível ao Dúú, mas não pode representar a marca da agência.
+    const marcaAgenciaCompartilhada = raiz && leitura.estado === "pronto"
+      ? leitura.vinculos.some(v => v.agency_business_id === raiz
+        && v.advertiser_business_id === raiz && v.legacy_shared_business)
+      : Boolean(contexto);
     return { status: "agencia", agencia: nomeAgencia, businessIdAtivo: data.id, contexto, clientes,
-      agencyBusinessId: raiz ?? data.id, origem: raiz ? "vinculo" : "legado" };
+      agencyBusinessId: raiz ?? data.id, origem: raiz ? "vinculo" : "legado", marcaAgenciaCompartilhada };
   } catch { return { status: "indisponivel" }; }
 });

@@ -1,0 +1,75 @@
+{
+  "status": "Revisão local; nada aplicado",
+  "dependencias": [
+    {
+      "origem": "docs/qa/agencia-anunciante-piligrin/supabase/migrations/20261110193942_agency_advertisers_qa.sql",
+      "proposta": "banco/01-agencia.sql",
+      "sha256": "fbf1fe200b6acdf2ad8640a5a466fb37649bf99381ea5e9cdd1619ef8b426e7f",
+      "aplicado": false
+    },
+    {
+      "origem": "supabase/migrations/20261009042000_gestor_responsaveis_tarefas.sql",
+      "proposta": "banco/02-mesa-responsaveis.sql",
+      "sha256": "a41ac529c103f6b9dd493bd993e92866af7cc4199bbdba95b8df4108b7ce5ab4",
+      "aplicado": false
+    },
+    {
+      "origem": "supabase/migrations/20261022200400_manual_contract_evidence.sql",
+      "proposta": "banco/03-evidencia-contratual.sql",
+      "sha256": "1e10bd01b88f16d867521b8831ba7dfe5285117e586b08acf7862dde05fee86a",
+      "aplicado": false
+    },
+    {
+      "origem": "supabase/migrations/20261104040711_historical_contract_access.sql",
+      "proposta": "banco/04-acesso-contratado.sql",
+      "sha256": "c8da9f65c78beaea59ee41694177378aab709d5c53f6a5b88998fb3d3170073b",
+      "aplicado": false
+    },
+    {
+      "origem": "supabase/migrations/20261009034500_fila_revisao_criativos.sql",
+      "proposta": "banco/05-revisao-criativos.sql",
+      "sha256": "4ca3fcaf106fa4bc3185f525517308b294bf6272f9660ad5c3a8ca1e8bedb452",
+      "aplicado": false
+    },
+    {
+      "origem": "supabase/migrations/20261021032617_creative_review_upload_intent.sql",
+      "proposta": "banco/06-intencao-envio.sql",
+      "sha256": "af3b426462a5ba35fa8a28f2417d114bd41371f6882f91b92cdd61a11bd56019",
+      "aplicado": false
+    },
+    {
+      "origem": "supabase/migrations/20261109223232_creative_publication_confirmation.sql",
+      "proposta": "banco/07-publicacao-confirmada.sql",
+      "sha256": "612f47455cc6b7b82a60325d4bf45b7287bc53f79b0dbca2d27d49a23bb430e3",
+      "aplicado": false
+    }
+  ],
+  "assets": [
+    {
+      "arquivo": "assets/logo-duu.jpg",
+      "sha256": "08cedcfb312278a3f65a72eb908ea722cee8b2774139f27f4e1c1db2fe5a4dae",
+      "bytes": 60023,
+      "origem": "Arquivo fornecido por Victor; cópia local intacta",
+      "enviadoProducao": false
+    },
+    {
+      "arquivo": "assets/arte-duu.jpeg",
+      "sha256": "0c0d48fdc3e3515f730226b6988d8b363ac854423bbb4c6bbb1c53a3ef24901c",
+      "bytes": 484499,
+      "origem": "Arquivo fornecido por Victor; cópia local intacta",
+      "enviadoProducao": false
+    }
+  ],
+  "observacoes": [
+    "04 exige documento e evidência reais; não contém concessão/aceite pré-preenchidos.",
+    "03 é a versão CNPJ de 14 dígitos; não ampliar para CPF silenciosamente.",
+    "A revisão do Cauã fica como evidência de origem até existir mapeamento legítimo do ator produtivo.",
+    "07 instala somente o mecanismo; não contém confirmação da publicação da arte.",
+    "Ordem e hashes não são autorização para executar o lote."
+  ],
+  "complementoLocal": {
+    "proposta": "banco/08-privilegios-explicitos.sql",
+    "sha256": "7d2fcdbd0f9ffa9d1833d435afd01f6b3a6faadd280f3de2a81ec1bea9bebd65",
+    "aplicado": false
+  }
+}

@@ -1,0 +1,1499 @@
+diff --git a/src/api/auth.py b/src/api/auth.py
+index 8cb9182..264e14d 100644
+--- a/src/api/auth.py
++++ b/src/api/auth.py
+@@ -42,13 +42,20 @@ class TokenDeProducaoAusenteError(RuntimeError):
+ class AutenticacaoMiddleware(BaseHTTPMiddleware):
+     """Exige `X-V2G-Token` em tudo que nao for rota publica."""
+ 
+-    def __init__(self, app: object, token: str) -> None:
++    def __init__(self, app: object, token: str, leitura_anuncios: bool = False) -> None:
+         super().__init__(app)  # type: ignore[arg-type]
+         self._token = token
++        self._leitura_anuncios = leitura_anuncios
+ 
+     async def dispatch(
+         self, request: Request, call_next: RequestResponseEndpoint
+     ) -> Response:
++        # Exceção limitada a GET das métricas; a rota valida o Bearer no Auth.
++        if self._leitura_anuncios and request.method == "GET":
++            from src.api.anuncios_leitura_policy import CAMINHO_ANUNCIOS
++
++            if CAMINHO_ANUNCIOS.fullmatch(request.url.path):
++                return await call_next(request)
+         if not self._token or request.url.path in ROTAS_PUBLICAS:
+             return await call_next(request)
+ 
+diff --git a/src/api/main.py b/src/api/main.py
+index 83a33b7..f7cce17 100644
+--- a/src/api/main.py
++++ b/src/api/main.py
+@@ -12,6 +12,8 @@ from contextlib import asynccontextmanager
+ 
+ from fastapi import FastAPI
+ 
++from src.api.anuncios_leitura import router_anuncios
++from src.api.anuncios_leitura_policy import validar_leitura_anuncios
+ from src.api.auth import AutenticacaoMiddleware, validar_configuracao
+ from src.api.rotas import router, router_agentes
+ from src.api.tratadores import registrar_tratadores
+@@ -79,6 +81,7 @@ def criar_app() -> FastAPI:
+     # perde o registro quando o processo morre — ver o docstring em config.py,
+     # que cita a campanha orfa que originou a trava.
+     validar_combinacoes(config)
++    validar_leitura_anuncios(config)
+     validar_configuracao(config)
+     # A mesma ideia da linha acima, para o banco: recusa subir com
+     # USE_MOCK_DB=false sem credencial (que so daria 500 na primeira
+@@ -112,13 +115,15 @@ def criar_app() -> FastAPI:
+             "isolado; a orquestracao e do n8n."
+         ),
+     )
+-    app.add_middleware(AutenticacaoMiddleware, token=config.api_token)
++    app.add_middleware(AutenticacaoMiddleware, token=config.api_token,
++                       leitura_anuncios=config.v2g_meta_ads_production_read_enabled)
+     # Sem isto, qualquer falha do Supabase — inclusive credencial recusada —
+     # sai como `500 Internal Server Error` em texto puro, e as falhas ficam
+     # indistinguiveis entre si. Ver `src/db/erros.py`.
+     registrar_tratadores(app)
+     app.include_router(router)
+     app.include_router(router_agentes)
++    app.include_router(router_anuncios)
+     return app
+ 
+ 
+diff --git a/src/api/rotas.py b/src/api/rotas.py
+index 1a5d429..25fc01c 100644
+--- a/src/api/rotas.py
++++ b/src/api/rotas.py
+@@ -1954,6 +1954,7 @@ async def consolidado_do_negocio(
+     `profile_id` funciona como na outra rota do app, e **nao e autenticacao** —
+     ver `GET /negocios/{business_id}/execucao`.
+     """
++    dono: UUID | None = None
+     if profile_id is not None:
+         dono = await dono_do_negocio(business_id)
+         if dono is not None and dono != profile_id:
+@@ -1969,14 +1970,6 @@ async def consolidado_do_negocio(
+                 status.HTTP_404_NOT_FOUND, f"negocio {business_id} nao encontrado."
+             )
+ 
+-    execucoes = await obter_repositorio().listar_por_business(business_id)
+-    if not execucoes:
+-        raise HTTPException(
+-            status.HTTP_404_NOT_FOUND,
+-            f"negocio {business_id} nao tem execucao. Se o cadastro acabou de "
+-            "ser feito, o pipeline ainda nao abriu a execucao dele.",
+-        )
+-
+     ate_ = ate or hoje()
+     desde_ = desde or (ate_ - timedelta(days=JANELA_PADRAO_DIAS - 1))
+     if desde_ > ate_:
+@@ -1985,6 +1978,24 @@ async def consolidado_do_negocio(
+             f"periodo invertido: desde={desde_} e depois de ate={ate_}.",
+         )
+ 
++    execucoes = await obter_repositorio().listar_por_business(business_id)
++    if not execucoes:
++        # Ausencia de rodada e diferente de falha de consulta. So declarar
++        # vazio quando o par negocio/titular foi comprovado no cadastro.
++        # Sem essa prova, preservar o 404 que nao revela existencia.
++        if profile_id is not None and dono == profile_id:
++            return RespostaConsolidadoDoNegocio(
++                business_id=business_id,
++                desde=desde_,
++                ate=ate_,
++                dia_da_pergunta=dia_da_pergunta,
++            )
++        raise HTTPException(
++            status.HTTP_404_NOT_FOUND,
++            f"negocio {business_id} nao tem execucao. Se o cadastro acabou de "
++            "ser feito, o pipeline ainda nao abriu a execucao dele.",
++        )
++
+     repositorio_resposta = obter_repositorio_resposta()
+     repositorio_metricas = obter_repositorio_metricas()
+ 
+diff --git a/src/config.py b/src/config.py
+index 5f9ec9e..6a25655 100644
+--- a/src/config.py
++++ b/src/config.py
+@@ -40,6 +40,8 @@ class Config(BaseSettings):
+     log_level: str = "info"
+ 
+     api_token: str = ""
++    # Leitura autenticada de métricas; não altera fábricas, jobs ou escrita Meta.
++    v2g_meta_ads_production_read_enabled: bool = False
+     """Segredo compartilhado com o n8n, exigido no header `X-V2G-Token`.
+ 
+     Vazio desliga a checagem — padrao em desenvolvimento. Com
+diff --git a/docs/estado/2026-11-12-piligrin-leitura-producao-preparo.md b/docs/estado/2026-11-12-piligrin-leitura-producao-preparo.md
+new file mode 100644
+index 0000000..d6f4a2b
+--- /dev/null
++++ b/docs/estado/2026-11-12-piligrin-leitura-producao-preparo.md
+@@ -0,0 +1,15 @@
++# Piligrin/Dúú — candidata local para revisão de produção
++
++Nada publicado ou aplicado. Base `1bfe3b5c03c1a2a3c25b09ca41cb77613fb20543`; fingerprint dessa árvore conferiu com `/saude` produtivo: `dbf2611f3b1e`. A `main` local mais recente tem outro fingerprint e não foi usada como substituição implícita da imagem produtiva.
++
++A candidata adiciona duas consultas GET de campanhas/conta com série diária, sessão real validada no Auth, titular ou atribuição exata de operador, conta vinculada e cache `no-store`. O opt-in `V2G_META_ADS_PRODUCTION_READ_ENABLED` nasce `False`, exige `APP_ENV=production`, banco produtivo exato e `USE_MOCK_DB=False`. As rotas novas não aceitam apenas token de máquina. A exceção ao middleware de máquina alcança somente seus GETs; os demais caminhos e métodos preservam a autenticação anterior.
++
++O histórico sem rodadas só retorna vazio quando o titular foi comprovado no cadastro. Sem titular, dono divergente ou falha de consulta, não inventa histórico válido nem métricas zeradas. Nenhuma alteração em jobs, fábricas Meta/Google, n8n, cobrança ou mutação de anúncio.
++
++Arquivos da entrega: `src/api/auth.py`, `src/api/main.py`, `src/api/rotas.py`, `src/config.py`, `src/api/anuncios_leitura.py`, `src/api/anuncios_leitura_policy.py`, `src/db/acesso_anuncios.py`, `src/meta/leitura_anuncios.py`, `src/meta/leitura_valores.py` e dois testes. A extração de conversões numéricas usa apenas as funções puras validadas, sem importar IDs/contratos fixos do piloto.
++
++Provas locais: 2.864 testes passaram, 9 ignorados, 9 avisos de depreciação; Ruff `src tests` e mypy limpos em 160 arquivos-fonte. OpenAPI: nenhuma rota antiga alterada/removida; somente as duas novas rotas GET, com `serie_diaria`. Fingerprint candidato `677db34772e8`.
++
++Limites: não houve build de contêiner, configuração produtiva, Meta real, concessão, migração ou validação autenticada do novo cadastro em produção. Necessário preservar/revisar banco, preparar o acesso contratado real e conferir a conexão produtiva do Dúú antes de ativar o opt-in.
++
++Pacote integrado, diffs, hashes e ordem proposta em `C:/Users/victo/v2g-deploy/webapp/docs/producao/piligrin-duu-12-11/REVISAO.md`. Preservadas as outras worktrees e as alterações QA do histórico. Sem commit, push ou deploy pelo agente.
+diff --git a/src/api/anuncios_leitura.py b/src/api/anuncios_leitura.py
+new file mode 100644
+index 0000000..bdd1010
+--- /dev/null
++++ b/src/api/anuncios_leitura.py
+@@ -0,0 +1,138 @@
++"""GET de campanha manual: sessão verificada, conta vinculada, nenhum gerador."""
++
++from __future__ import annotations
++
++from collections.abc import AsyncIterator
++from contextlib import asynccontextmanager
++from datetime import UTC, date, datetime
++from typing import Annotated, Any
++from uuid import UUID
++
++from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response
++from pydantic import ValidationError
++
++from src.api.anuncios_leitura_policy import validar_leitura_anuncios
++from src.config import obter_config
++from src.db.acesso_anuncios import (
++    AcessoContaAnuncios,
++    AcessoContaSupabase,
++    SessaoAnuncios,
++    verificar_sessao_anuncios,
++)
++from src.meta.leitura_anuncios import (
++    FalhaLeituraAnuncios,
++    LeituraAnunciosMeta,
++    LeituraContaAnunciosMeta,
++    PeriodoAnuncios,
++    ler_anuncios_da_conta,
++)
++from src.meta.leitura_valores import ConsultaGet
++
++MENSAGENS = {
++    401: "Entre novamente para consultar os anúncios.",
++    404: "Não há um recorte autorizado disponível para esta consulta.",
++    409: "Os vínculos ou a origem dos dados precisam de conferência.",
++    422: "Confira a campanha e o período informado.",
++    424: "O acesso de leitura da V2G à fonte precisa de conferência.",
++    502: "A resposta recebida não pôde ser conferida.",
++    503: "A leitura dos anúncios está indisponível agora.",
++}
++
++
++def erro_http(erro: FalhaLeituraAnuncios) -> HTTPException:
++    return HTTPException(erro.status, {"codigo": erro.codigo, "mensagem": MENSAGENS[erro.status]},
++                         headers={"Cache-Control": "no-store", "Vary": "Authorization"})
++
++
++def exigir_habilitado() -> None:
++    config = obter_config()
++    if not config.v2g_meta_ads_production_read_enabled:
++        raise erro_http(FalhaLeituraAnuncios("leitura_real_desabilitada", 503))
++    validar_leitura_anuncios(config)
++
++
++async def sessao_da_leitura(request: Request) -> SessaoAnuncios:
++    cabecalho = request.headers.get("Authorization", "")
++    partes = cabecalho.split(" ", 1)
++    if len(partes) != 2 or partes[0] != "Bearer" or not partes[1] or len(partes[1]) > 16000 or any(c.isspace() for c in partes[1]):
++        raise erro_http(FalhaLeituraAnuncios("sessao_invalida", 401))
++    try:
++        return await verificar_sessao_anuncios(partes[1])
++    except FalhaLeituraAnuncios as erro:
++        raise erro_http(erro) from None
++
++
++def obter_acesso_conta() -> AcessoContaAnuncios:
++    return AcessoContaSupabase()
++
++
++@asynccontextmanager
++async def fonte_meta_get() -> AsyncIterator[ConsultaGet]:
++    # Só é instanciada DEPOIS de conferir sessão, negócio e conta. O opt-in
++    # não passa pela fábrica de mutações e não muda USE_MOCK_META.
++    exigir_habilitado()
++    from src.meta.graph import ClientMetaGraph
++
++    try:
++        client = ClientMetaGraph()
++    except Exception:
++        raise FalhaLeituraAnuncios("fonte_indisponivel", 503) from None
++
++    async def get(caminho: str, params: dict[str, Any]) -> dict[str, Any]:
++        return await client._get(caminho, params, tolerar_erro=True)  # noqa: SLF001
++
++    try:
++        yield get
++    finally:
++        await client.fechar()
++
++
++router_anuncios = APIRouter(dependencies=[Depends(exigir_habilitado)])
++
++
++async def _ler_conta_http(
++    business_id: UUID, conta_id: str | None,
++    desde: date, ate: date, response: Response,
++    sessao: SessaoAnuncios, acesso: AcessoContaAnuncios,
++) -> LeituraContaAnunciosMeta:
++    response.headers["Cache-Control"] = "no-store"
++    response.headers["Vary"] = "Authorization"
++    try:
++        periodo = PeriodoAnuncios(desde=desde, ate=ate)
++        conta = await acesso.conta_autorizada(business_id, sessao, conta_id)
++        async with fonte_meta_get() as consultar:
++            leitura = await ler_anuncios_da_conta(
++                business_id=business_id, conta_id=conta,
++                periodo=periodo, consultar=consultar, agora=datetime.now(UTC),
++            )
++            leitura.coletado_em = datetime.now(UTC)
++            return leitura
++    except ValidationError:
++        raise erro_http(FalhaLeituraAnuncios("periodo_invalido", 422)) from None
++    except FalhaLeituraAnuncios as erro:
++        raise erro_http(erro) from None
++
++
++@router_anuncios.get("/negocios/{business_id}/meta/campanhas", response_model=LeituraContaAnunciosMeta, tags=["leitura"])
++async def anuncios_da_conta(
++    business_id: UUID, desde: date, ate: date, response: Response,
++    sessao: Annotated[SessaoAnuncios, Depends(sessao_da_leitura)],
++    acesso: Annotated[AcessoContaAnuncios, Depends(obter_acesso_conta)],
++    conta_id: Annotated[str | None, Query(pattern=r"^act_[0-9]{1,40}$")] = None,
++) -> LeituraContaAnunciosMeta:
++    return await _ler_conta_http(business_id, conta_id, desde, ate, response, sessao, acesso)
++
++
++@router_anuncios.get("/negocios/{business_id}/meta/campanhas/{campanha_id}", response_model=LeituraAnunciosMeta, tags=["leitura"])
++async def anuncios_da_campanha(
++    business_id: UUID, campanha_id: Annotated[str, Path(pattern=r"^[0-9]{1,40}$")],
++    desde: date, ate: date, response: Response,
++    sessao: Annotated[SessaoAnuncios, Depends(sessao_da_leitura)],
++    acesso: Annotated[AcessoContaAnuncios, Depends(obter_acesso_conta)],
++    conta_id: Annotated[str | None, Query(pattern=r"^act_[0-9]{1,40}$")] = None,
++) -> LeituraAnunciosMeta:
++    leitura = await _ler_conta_http(business_id, conta_id, desde, ate, response, sessao, acesso)
++    campanha = next((c for c in leitura.campanhas if c.id == campanha_id), None)
++    if campanha is None:
++        raise erro_http(FalhaLeituraAnuncios("campanha_nao_encontrada_na_conta", 404))
++    return LeituraAnunciosMeta(**leitura.model_dump(exclude={"campanhas"}), campanha=campanha)
+diff --git a/src/api/anuncios_leitura_policy.py b/src/api/anuncios_leitura_policy.py
+new file mode 100644
+index 0000000..6e460d7
+--- /dev/null
++++ b/src/api/anuncios_leitura_policy.py
+@@ -0,0 +1,11 @@
++"""Opt-in produtivo de GETs; sessão, titular e conta continuam obrigatórios."""
++import re
++
++from src.config import Config
++
++CAMINHO_ANUNCIOS = re.compile(r"/negocios/[0-9a-fA-F-]{36}/meta/campanhas(?:/[0-9]{1,40})?")
++def validar_leitura_anuncios(config: Config) -> None:
++    if not config.v2g_meta_ads_production_read_enabled:
++        return
++    if config.app_env != "production" or config.supabase_url != "https://ushccxpoxjikzqnwhgfd.supabase.co" or config.use_mock_db:
++        raise ValueError("Leitura produtiva exige ambiente production e banco produtivo real, sem ampliar o piloto QA")
+diff --git a/src/db/acesso_anuncios.py b/src/db/acesso_anuncios.py
+new file mode 100644
+index 0000000..f79da55
+--- /dev/null
++++ b/src/db/acesso_anuncios.py
+@@ -0,0 +1,85 @@
++"""Acesso de pessoa ao negócio/conta: apenas SELECTs de colunas não secretas."""
++
++from __future__ import annotations
++
++import asyncio
++import re
++from typing import Any, Protocol
++from uuid import UUID
++
++from pydantic import BaseModel
++
++from src.db.negocio import _cliente
++from src.meta.leitura_anuncios import FalhaLeituraAnuncios
++
++
++class SessaoAnuncios(BaseModel):
++    profile_id: UUID
++    operador: bool = False
++
++
++class AcessoContaAnuncios(Protocol):
++    async def conta_autorizada(self, business_id: UUID, sessao: SessaoAnuncios, conta_id: str | None = None) -> str: ...
++
++
++class AcessoContaSupabase:
++    def __init__(self, client: Any = None) -> None:
++        self.client = client
++
++    async def conta_autorizada(self, business_id: UUID, sessao: SessaoAnuncios, conta_id: str | None = None) -> str:
++        return await asyncio.to_thread(self._consultar, business_id, sessao, conta_id)
++
++    def _consultar(self, business_id: UUID, sessao: SessaoAnuncios, conta_id: str | None) -> str:
++        try:
++            client = self.client if self.client is not None else _cliente()
++            negocios = client.table("businesses").select("id,profile_id").eq("id", str(business_id)).limit(2).execute().data
++            if len(negocios) != 1 or negocios[0].get("id") != str(business_id) or not negocios[0].get("profile_id"):
++                raise FalhaLeituraAnuncios("recorte_nao_autorizado", 404)
++            dono = negocios[0]["profile_id"] == str(sessao.profile_id)
++            if not dono:
++                if not sessao.operador:
++                    raise FalhaLeituraAnuncios("recorte_nao_autorizado", 404)
++                atribuicoes = client.table("manager_accounts").select("business_id,operator_profile_id").eq(
++                    "business_id", str(business_id)).eq("operator_profile_id", str(sessao.profile_id)).limit(2).execute().data
++                if (len(atribuicoes) != 1 or atribuicoes[0].get("business_id") != str(business_id)
++                        or atribuicoes[0].get("operator_profile_id") != str(sessao.profile_id)):
++                    raise FalhaLeituraAnuncios("recorte_nao_autorizado", 404)
++            consulta = client.table("ad_accounts").select("business_id,external_id,is_active,status").eq(
++                "business_id", str(business_id)).eq("is_active", True).eq("status", "ok")
++            if conta_id is not None:
++                consulta = consulta.eq("external_id", conta_id)
++            contas = consulta.limit(2).execute().data
++            if not contas:
++                raise FalhaLeituraAnuncios("conta_nao_vinculada", 404)
++            if len(contas) != 1:
++                raise FalhaLeituraAnuncios("conta_ambigua", 409)
++            conta = contas[0]
++            if (conta.get("business_id") != str(business_id) or conta.get("is_active") is not True
++                    or conta.get("status") != "ok" or not isinstance(conta.get("external_id"), str)
++                    or not re.fullmatch(r"act_[0-9]{1,40}", conta["external_id"])):
++                raise FalhaLeituraAnuncios("conta_nao_vinculada", 404)
++            return str(conta["external_id"])
++        except FalhaLeituraAnuncios:
++            raise
++        except Exception:
++            raise FalhaLeituraAnuncios("autorizacao_indisponivel", 503) from None
++
++
++async def verificar_sessao_anuncios(token: str, client: Any = None) -> SessaoAnuncios:
++    def consultar() -> SessaoAnuncios:
++        try:
++            sdk = client if client is not None else _cliente()
++            resposta = sdk.auth.get_user(token)
++            user = resposta.user
++            if user is None or user.role != "authenticated":
++                raise FalhaLeituraAnuncios("sessao_invalida", 401)
++            return SessaoAnuncios(profile_id=UUID(user.id), operador=user.app_metadata.get("papel") == "operador")
++        except FalhaLeituraAnuncios:
++            raise
++        except Exception as erro:
++            if getattr(erro, "status", None) in (400, 401, 403):
++                raise FalhaLeituraAnuncios("sessao_invalida", 401) from None
++            raise FalhaLeituraAnuncios("autenticacao_indisponivel", 503) from None
++
++    return await asyncio.to_thread(consultar)
++
+diff --git a/src/meta/leitura_anuncios.py b/src/meta/leitura_anuncios.py
+new file mode 100644
+index 0000000..9010d93
+--- /dev/null
++++ b/src/meta/leitura_anuncios.py
+@@ -0,0 +1,343 @@
++"""Inventário e medições Meta por IDs externos, sem execução do gerador."""
++
++from __future__ import annotations
++
++import json
++import re
++from collections import defaultdict
++from datetime import UTC, date, datetime
++from typing import Any, Literal
++from uuid import UUID
++from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
++
++from pydantic import BaseModel, Field, model_validator
++
++from src.meta.leitura_valores import ConsultaGet, _centavos, _inteiro
++
++LIMITE_INTEIRO_SEGURO = 9_007_199_254_740_991
++
++
++class FalhaLeituraAnuncios(ValueError):
++    def __init__(self, codigo: str, status: int = 502) -> None:
++        super().__init__(codigo)
++        self.codigo = codigo
++        self.status = status
++
++
++class PeriodoAnuncios(BaseModel):
++    desde: date
++    ate: date
++
++    @model_validator(mode="after")
++    def validar_janela(self) -> PeriodoAnuncios:
++        if self.desde > self.ate or (self.ate - self.desde).days >= 31:
++            raise ValueError("periodo deve ter entre 1 e 31 dias")
++        return self
++
++
++class MetricaDiariaAnuncio(BaseModel):
++    dia: date
++    gasto_centavos: int | None = Field(default=None, ge=0, le=LIMITE_INTEIRO_SEGURO)
++    impressoes: int | None = Field(default=None, ge=0, le=LIMITE_INTEIRO_SEGURO)
++    cliques_totais: int | None = Field(default=None, ge=0, le=LIMITE_INTEIRO_SEGURO)
++
++
++class MetricasAnuncio(BaseModel):
++    estado: Literal["observado", "sem_dados", "zero_medido", "parcial"]
++    gasto_centavos: int | None = None
++    impressoes: int | None = None
++    cliques_totais: int | None = None
++    cliques_no_link: int | None = None
++    conversas_whatsapp: str | None = None
++    dias_com_observacao: list[date]
++    serie_diaria: list[MetricaDiariaAnuncio] = Field(default_factory=list)
++    entrega_observada_no_periodo: bool | None = None
++    motivos: list[str] = Field(default_factory=list)
++
++
++class ObjetoMetaLido(BaseModel):
++    id: str
++    nome: str | None = None
++    status_configurado: str | None = None
++    status_efetivo: str | None = None
++    metricas: MetricasAnuncio
++
++
++class AnuncioMetaLido(ObjetoMetaLido):
++    campanha_id: str
++    conjunto_id: str
++
++
++class ConjuntoMetaLido(ObjetoMetaLido):
++    campanha_id: str
++    destino: str | None = None
++    atribuicao: list[dict[str, Any]] | None = None
++    anuncios: list[AnuncioMetaLido]
++
++
++class CampanhaMetaLida(ObjetoMetaLido):
++    objetivo: str | None = None
++    conjuntos: list[ConjuntoMetaLido]
++
++
++class EscopoLeituraMeta(BaseModel):
++    versao: Literal["e28-meta-ads-read-v1"] = "e28-meta-ads-read-v1"
++    business_id: UUID
++    conta_id: str
++    id_execucao: None = None
++    origem_vinculo: Literal["ad_accounts"] = "ad_accounts"
++    fonte: Literal["meta_marketing_api"] = "meta_marketing_api"
++    periodo: PeriodoAnuncios
++    moeda: str | None
++    fuso: str | None
++    coletado_em: datetime
++    avisos: list[str]
++
++
++class LeituraAnunciosMeta(EscopoLeituraMeta):
++    campanha: CampanhaMetaLida
++
++
++class LeituraContaAnunciosMeta(EscopoLeituraMeta):
++    campanhas: list[CampanhaMetaLida]
++
++
++def _texto(valor: object) -> str | None:
++    return valor if isinstance(valor, str) and valor.strip() else None
++
++
++def _id(valor: object) -> str:
++    if not isinstance(valor, str) or not re.fullmatch(r"[0-9]{1,40}", valor):
++        raise FalhaLeituraAnuncios("identidade_meta_invalida", 409)
++    return valor
++
++
++async def ler_anuncios_da_conta(
++    *, business_id: UUID, conta_id: str,
++    periodo: PeriodoAnuncios, consultar: ConsultaGet, agora: datetime,
++) -> LeituraContaAnunciosMeta:
++    """Até 31 GETs por conta, sem URL de paginação, cache ou persistência.
++
++    Metas agregadas vêm do próprio nível da Meta; não soma anúncio como
++    substituição de campanha. Qualquer identidade divergente invalida o lote.
++    """
++    if not re.fullmatch(r"act_[0-9]{1,40}", conta_id) or agora.tzinfo is None:
++        raise FalhaLeituraAnuncios("escopo_invalido", 422)
++    conta_numerica = conta_id.removeprefix("act_")
++
++    async def get(caminho: str, params: dict[str, Any]) -> dict[str, Any]:
++        try:
++            corpo = await consultar(caminho, params)
++        except Exception:
++            raise FalhaLeituraAnuncios("fonte_indisponivel", 503) from None
++        if not isinstance(corpo, dict):
++            raise FalhaLeituraAnuncios("resposta_meta_invalida")
++        if "error" in corpo:
++            erro = corpo["error"]
++            codigo = erro.get("code") if isinstance(erro, dict) else None
++            if codigo in (10, 190, 200, 294):
++                raise FalhaLeituraAnuncios("meta_acesso_indisponivel", 424)
++            if codigo in (4, 17, 32, 613):
++                raise FalhaLeituraAnuncios("meta_limite_de_leitura", 503)
++            raise FalhaLeituraAnuncios("resposta_meta_recusada")
++        return corpo
++
++    async def listar(caminho: str, params: dict[str, Any]) -> list[dict[str, Any]]:
++        linhas: list[dict[str, Any]] = []
++        cursores: set[str] = set()
++        for _ in range(5):
++            corpo = await get(caminho, params.copy())
++            dados = corpo.get("data")
++            if not isinstance(dados, list) or any(not isinstance(d, dict) for d in dados):
++                raise FalhaLeituraAnuncios("resposta_meta_invalida")
++            linhas.extend(dados)
++            paging = corpo.get("paging", {})
++            if not isinstance(paging, dict):
++                raise FalhaLeituraAnuncios("paginacao_invalida")
++            if not paging.get("next"):
++                return linhas
++            cursors = paging.get("cursors", {})
++            after = cursors.get("after") if isinstance(cursors, dict) else None
++            if not isinstance(after, str) or not after or after in cursores:
++                raise FalhaLeituraAnuncios("paginacao_incompleta", 503)
++            cursores.add(after)
++            params["after"] = after
++        raise FalhaLeituraAnuncios("limite_de_paginas", 503)
++
++    conta = await get(conta_id, {"fields": "id,currency,timezone_name"})
++    if conta.get("id") != conta_id:
++        raise FalhaLeituraAnuncios("conta_meta_divergente", 409)
++    moeda = _texto(conta.get("currency"))
++    if moeda is not None and re.fullmatch(r"[A-Z]{3}", moeda) is None:
++        moeda = None
++    fuso = _texto(conta.get("timezone_name"))
++    try:
++        zona = ZoneInfo(fuso) if fuso else None
++    except (ZoneInfoNotFoundError, ValueError):
++        zona = None
++        fuso = None
++    campanhas = await listar(f"{conta_id}/campaigns", {
++        "fields": "id,account_id,name,status,effective_status,objective", "limit": 100,
++    })
++    campanhas_por_id: dict[str, dict[str, Any]] = {}
++    for campanha in campanhas:
++        identificador = _id(campanha.get("id"))
++        if campanha.get("account_id") != conta_numerica or identificador in campanhas_por_id:
++            raise FalhaLeituraAnuncios("campanha_fora_da_conta", 409)
++        campanhas_por_id[identificador] = campanha
++    conjuntos = await listar(f"{conta_id}/adsets", {
++        "fields": "id,account_id,campaign_id,name,status,effective_status,destination_type,attribution_spec", "limit": 100,
++    })
++    anuncios = await listar(f"{conta_id}/ads", {
++        "fields": "id,account_id,campaign_id,adset_id,name,status,effective_status", "limit": 100,
++    })
++    conjuntos_por_id: dict[str, dict[str, Any]] = {}
++    anuncios_por_id: dict[str, dict[str, Any]] = {}
++    for conjunto in conjuntos:
++        identificador = _id(conjunto.get("id"))
++        campanha_do_conjunto = _id(conjunto.get("campaign_id"))
++        if conjunto.get("account_id") != conta_numerica or campanha_do_conjunto not in campanhas_por_id or identificador in conjuntos_por_id:
++            raise FalhaLeituraAnuncios("conjunto_fora_do_escopo", 409)
++        conjuntos_por_id[identificador] = conjunto
++    for anuncio in anuncios:
++        identificador = _id(anuncio.get("id"))
++        campanha_do_anuncio, conjunto_do_anuncio = _id(anuncio.get("campaign_id")), _id(anuncio.get("adset_id"))
++        if (anuncio.get("account_id") != conta_numerica or campanha_do_anuncio not in campanhas_por_id
++                or conjunto_do_anuncio not in conjuntos_por_id or identificador in anuncios_por_id
++                or conjuntos_por_id[conjunto_do_anuncio]["campaign_id"] != campanha_do_anuncio):
++            raise FalhaLeituraAnuncios("anuncio_fora_do_escopo", 409)
++        anuncios_por_id[identificador] = anuncio
++
++    medicoes: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
++    for nivel in ("campaign", "adset", "ad"):
++        campos = "account_id,campaign_id,date_start,date_stop,spend,impressions,clicks,account_currency,actions"
++        if nivel in ("adset", "ad"):
++            campos += ",adset_id"
++        if nivel == "ad":
++            campos += ",ad_id"
++        linhas = await listar(f"{conta_id}/insights", {
++            "fields": campos,
++            "level": nivel, "time_increment": 1, "limit": 100,
++            "time_range": json.dumps({"since": periodo.desde.isoformat(), "until": periodo.ate.isoformat()}),
++        })
++        vistos: set[tuple[str, str]] = set()
++        for linha in linhas:
++            campanha_da_metrica = _id(linha.get("campaign_id"))
++            if linha.get("account_id") != conta_numerica or campanha_da_metrica not in campanhas_por_id:
++                raise FalhaLeituraAnuncios("origem_metrica_divergente", 409)
++            identificador = _id(linha.get({"campaign": "campaign_id", "adset": "adset_id", "ad": "ad_id"}[nivel]))
++            if nivel == "adset" and (identificador not in conjuntos_por_id or linha["campaign_id"] != conjuntos_por_id[identificador]["campaign_id"]):
++                raise FalhaLeituraAnuncios("origem_metrica_divergente", 409)
++            if nivel == "ad" and (identificador not in anuncios_por_id or linha.get("adset_id") != anuncios_por_id[identificador]["adset_id"]
++                                  or linha["campaign_id"] != anuncios_por_id[identificador]["campaign_id"]):
++                raise FalhaLeituraAnuncios("origem_metrica_divergente", 409)
++            try:
++                dia = date.fromisoformat(linha.get("date_start", ""))
++            except (TypeError, ValueError):
++                raise FalhaLeituraAnuncios("dia_da_metrica_invalido") from None
++            chave = (identificador, dia.isoformat())
++            if (not periodo.desde <= dia <= periodo.ate or linha.get("date_stop") != dia.isoformat()
++                    or chave in vistos or (moeda is not None and linha.get("account_currency") != moeda)):
++                raise FalhaLeituraAnuncios("periodo_ou_moeda_divergente", 409)
++            vistos.add(chave)
++            medicoes[nivel, identificador].append(linha)
++
++    def metricas(nivel: str, identificador: str) -> MetricasAnuncio:
++        linhas = medicoes[nivel, identificador]
++
++        def observado(linha: dict[str, Any], campo: str) -> int | None:
++            valor = _centavos(linha.get(campo)) if campo == "spend" else _inteiro(linha.get(campo))
++            if valor is None or valor > LIMITE_INTEIRO_SEGURO or (campo == "spend" and moeda is None):
++                return None
++            return valor
++
++        # A série e os totais usam a mesma observação do próprio nível/objeto.
++        # Dias ausentes não criam pontos e um campo inválido não vira zero.
++        serie = [MetricaDiariaAnuncio(
++            dia=date.fromisoformat(linha["date_start"]),
++            gasto_centavos=observado(linha, "spend"),
++            impressoes=observado(linha, "impressions"),
++            cliques_totais=observado(linha, "clicks"),
++        ) for linha in sorted(linhas, key=lambda linha: linha["date_start"])]
++
++        def somar(valores: list[int | None]) -> int | None:
++            if not valores or None in valores:
++                return None
++            soma = sum(v for v in valores if v is not None)
++            return soma if soma <= LIMITE_INTEIRO_SEGURO else None
++
++        gasto = somar([ponto.gasto_centavos for ponto in serie])
++        impressoes = somar([ponto.impressoes for ponto in serie])
++        cliques = somar([ponto.cliques_totais for ponto in serie])
++        dias = [ponto.dia for ponto in serie]
++        motivos = ["conversas_whatsapp_sem_taxonomia_homologada", "cliques_no_link_nao_medidos"]
++        parcial = False
++        if fuso is None:
++            motivos.append("fuso_desconhecido")
++            parcial = True
++        if moeda is None:
++            motivos.append("moeda_desconhecida")
++            parcial = True
++        if linhas and (len(dias) < (periodo.ate - periodo.desde).days + 1 or None in (gasto, impressoes, cliques)):
++            motivos.append("cobertura_ou_campos_incompletos")
++            parcial = True
++        if zona and periodo.ate >= agora.astimezone(zona).date():
++            motivos.append("periodo_ainda_aberto")
++            parcial = True
++        zero = gasto == impressoes == cliques == 0
++        estado: Literal["observado", "sem_dados", "zero_medido", "parcial"] = (
++            "sem_dados" if not linhas else "parcial" if parcial else "zero_medido" if zero else "observado"
++        )
++        entrega = (
++            True if (impressoes is not None and impressoes > 0) or (gasto is not None and gasto > 0)
++            else False if impressoes == gasto == 0 else None
++        )
++        return MetricasAnuncio(
++            estado=estado, gasto_centavos=gasto, impressoes=impressoes, cliques_totais=cliques,
++            dias_com_observacao=dias, serie_diaria=serie,
++            entrega_observada_no_periodo=entrega, motivos=motivos,
++        )
++
++    def comum(objeto: dict[str, Any], nivel: str) -> dict[str, Any]:
++        return {
++            "id": objeto["id"], "nome": _texto(objeto.get("name")),
++            "status_configurado": _texto(objeto.get("status")),
++            "status_efetivo": _texto(objeto.get("effective_status")),
++            "metricas": metricas(nivel, objeto["id"]),
++        }
++
++    campanhas_lidas = []
++    for campanha in campanhas:
++        grupos = []
++        for conjunto in conjuntos:
++            if conjunto["campaign_id"] != campanha["id"]:
++                continue
++            atribuicao = conjunto.get("attribution_spec")
++            grupos.append(ConjuntoMetaLido(
++                **comum(conjunto, "adset"), campanha_id=campanha["id"],
++                destino=_texto(conjunto.get("destination_type")),
++                atribuicao=atribuicao if isinstance(atribuicao, list) and all(isinstance(a, dict) for a in atribuicao) else None,
++                anuncios=[AnuncioMetaLido(**comum(a, "ad"), campanha_id=campanha["id"], conjunto_id=conjunto["id"])
++                          for a in anuncios if a["adset_id"] == conjunto["id"]],
++            ))
++        campanhas_lidas.append(CampanhaMetaLida(**comum(campanha, "campaign"), objetivo=_texto(campanha.get("objective")), conjuntos=grupos))
++    return LeituraContaAnunciosMeta(
++        business_id=business_id, conta_id=conta_id, periodo=periodo, moeda=moeda, fuso=fuso,
++        coletado_em=agora.astimezone(UTC),
++        campanhas=campanhas_lidas,
++        avisos=["status_efetivo_nao_comprova_entrega_atual", "conversas_whatsapp_nao_medidas"],
++    )
++
++
++async def ler_anuncios_da_campanha(
++    *, business_id: UUID, conta_id: str, campanha_id: str,
++    periodo: PeriodoAnuncios, consultar: ConsultaGet, agora: datetime,
++) -> LeituraAnunciosMeta:
++    campanha_id = _id(campanha_id)
++    leitura = await ler_anuncios_da_conta(
++        business_id=business_id, conta_id=conta_id, periodo=periodo, consultar=consultar, agora=agora,
++    )
++    campanha = next((c for c in leitura.campanhas if c.id == campanha_id), None)
++    if campanha is None:
++        raise FalhaLeituraAnuncios("campanha_nao_encontrada_na_conta", 404)
++    return LeituraAnunciosMeta(**leitura.model_dump(exclude={"campanhas"}), campanha=campanha)
+diff --git a/src/meta/leitura_valores.py b/src/meta/leitura_valores.py
+new file mode 100644
+index 0000000..d281fc1
+--- /dev/null
++++ b/src/meta/leitura_valores.py
+@@ -0,0 +1,29 @@
++"""Conversões puras da fonte validada, sem dados/IDs fixos do piloto."""
++from __future__ import annotations
++
++import re
++from collections.abc import Awaitable, Callable
++from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
++from typing import Any
++
++ConsultaGet = Callable[[str, dict[str, Any]], Awaitable[dict[str, Any]]]
++
++def _inteiro(valor: object) -> int | None:
++    if not isinstance(valor, (str, int)) or isinstance(valor, bool):
++        return None
++    texto = str(valor)
++    return int(texto) if re.fullmatch(r"[0-9]+", texto) else None
++
++
++def _centavos(valor: object) -> int | None:
++    if not isinstance(valor, (str, int, Decimal)) or isinstance(valor, bool):
++        return None
++    try:
++        numero = Decimal(str(valor))
++        if not numero.is_finite() or numero < 0:
++            return None
++        return int((numero * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
++    except (InvalidOperation, ValueError):
++        return None
++
++
+diff --git a/tests/unit/test_anuncios_meta_sem_execucao.py b/tests/unit/test_anuncios_meta_sem_execucao.py
+new file mode 100644
+index 0000000..31cce33
+--- /dev/null
++++ b/tests/unit/test_anuncios_meta_sem_execucao.py
+@@ -0,0 +1,614 @@
++"""Rota e SDKs em memória: nenhum JWT, dado Meta ou vínculo remoto é usado."""
++
++from __future__ import annotations
++
++from contextlib import asynccontextmanager
++from datetime import UTC, datetime
++from types import SimpleNamespace
++from typing import Any
++from uuid import uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++
++from src.api.anuncios_leitura_policy import validar_leitura_anuncios
++from src.config import Config
++from src.db.acesso_anuncios import AcessoContaSupabase, verificar_sessao_anuncios
++from src.meta.leitura_anuncios import (
++    FalhaLeituraAnuncios,
++    PeriodoAnuncios,
++    ler_anuncios_da_campanha,
++)
++
++BUSINESS_PILOTO = uuid4()
++CONTA_PILOTO = "act_50101"
++CAMPANHA = "50102"
++CONJUNTO = "50103"
++ANUNCIO = "50104"
++OPERADOR = str(uuid4())
++DONO = str(uuid4())
++OUTRO = str(uuid4())
++BASE = f"/negocios/{BUSINESS_PILOTO}/meta/campanhas/{CAMPANHA}"
++LISTA = f"/negocios/{BUSINESS_PILOTO}/meta/campanhas"
++PARAMS = {"desde": "2026-10-28", "ate": "2026-10-28"}
++
++
++def config_qa(**mudancas: Any) -> Config:
++    campos = {
++        "app_env": "production", "api_token": "MAQUINA_FICTICIA",
++        "v2g_meta_ads_production_read_enabled": True,
++        "use_mock_db": False, "supabase_url": "https://ushccxpoxjikzqnwhgfd.supabase.co",
++        "supabase_service_role_key": "CHAVE_FICTICIA", "observador_ativo": False,
++        "rotinas_ativas": False, "n8n_webhook_url": "", "n8n_api_key": "",
++        **{f"use_mock_{nome}": True for nome in ("meta", "google", "llm", "imagem", "aviso", "pagamento")},
++    } | mudancas
++    return Config(_env_file=None, **campos)
++
++
++class FonteMeta:
++    def __init__(self) -> None:
++        self.calls: list[tuple[str, dict[str, Any]]] = []
++        self.conta = {"id": CONTA_PILOTO, "currency": "BRL", "timezone_name": "America/Sao_Paulo"}
++        self.campanha = {"id": CAMPANHA, "account_id": CONTA_PILOTO[4:], "name": "FIXTURE campanha", "status": "ACTIVE", "effective_status": "IN_PROCESS"}
++        self.conjuntos = [{"id": CONJUNTO, "account_id": CONTA_PILOTO[4:], "campaign_id": CAMPANHA, "name": "FIXTURE conjunto", "destination_type": "WHATSAPP"}]
++        self.anuncios = [{"id": ANUNCIO, "account_id": CONTA_PILOTO[4:], "campaign_id": CAMPANHA, "adset_id": CONJUNTO, "name": "FIXTURE anúncio"}]
++        self.linhas: dict[str, list[dict[str, Any]]] = {}
++        for nivel, gasto in (("campaign", "15.00"), ("adset", "12.00"), ("ad", "10.00")):
++            self.linhas[nivel] = [{
++                "account_id": CONTA_PILOTO[4:], "campaign_id": CAMPANHA, "adset_id": CONJUNTO, "ad_id": ANUNCIO,
++                "date_start": "2026-10-28", "date_stop": "2026-10-28", "account_currency": "BRL",
++                "spend": gasto, "impressions": "10", "clicks": "1",
++            }]
++        self.erro: dict[str, Any] | None = None
++        self.paging: dict[str, Any] | None = None
++        self.campanhas_extra: list[dict[str, Any]] = []
++        self.paginas_campanhas: list[dict[str, Any]] = []
++        self.paginas_insights: dict[str, list[dict[str, Any]]] = {}
++
++    async def get(self, caminho: str, params: dict[str, Any]) -> dict[str, Any]:
++        self.calls.append((caminho, params.copy()))
++        if self.erro:
++            return self.erro
++        conta = self.conta["id"]
++        if caminho == conta:
++            return self.conta
++        if caminho == f"{conta}/campaigns":
++            if self.paginas_campanhas:
++                return self.paginas_campanhas.pop(0)
++            return {"data": ([self.campanha] if self.campanha else []) + self.campanhas_extra}
++        if caminho == f"{conta}/adsets":
++            return {"data": self.conjuntos, **({"paging": self.paging} if self.paging else {})}
++        if caminho == f"{conta}/ads":
++            return {"data": self.anuncios}
++        assert caminho == f"{conta}/insights"
++        if paginas := self.paginas_insights.get(params["level"]):
++            return paginas.pop(0)
++        return {"data": self.linhas[params["level"]]}
++
++
++class Query:
++    def __init__(self, db: Banco, tabela: str) -> None:
++        self.db, self.tabela = db, tabela
++        self.filtros: dict[str, Any] = {}
++        self.colunas = ""
++        self.limite = 2
++
++    def select(self, colunas: str) -> Query:
++        self.colunas = colunas
++        return self
++
++    def eq(self, campo: str, valor: Any) -> Query:
++        self.filtros[campo] = valor
++        return self
++
++    def limit(self, limite: int) -> Query:
++        self.limite = limite
++        return self
++
++    def execute(self) -> SimpleNamespace:
++        self.db.consultas.append((self.tabela, self.colunas, self.filtros))
++        dados = [r for r in self.db.tabelas[self.tabela] if all(r.get(k) == v for k, v in self.filtros.items())]
++        return SimpleNamespace(data=[{k: r.get(k) for k in self.colunas.split(",")} for r in dados[:self.limite]])
++
++
++class Banco:
++    def __init__(self) -> None:
++        self.consultas: list[tuple[str, str, dict[str, Any]]] = []
++        self.tabelas = {
++            "businesses": [{"id": str(BUSINESS_PILOTO), "profile_id": DONO}],
++            "manager_accounts": [{"business_id": str(BUSINESS_PILOTO), "operator_profile_id": OPERADOR}],
++            "ad_accounts": [{"business_id": str(BUSINESS_PILOTO), "external_id": CONTA_PILOTO, "is_active": True, "status": "ok"}],
++        }
++        self.auth = self
++
++    def table(self, nome: str) -> Query:
++        assert nome in self.tabelas  # Não existe tabela execucoes nesta bancada.
++        return Query(self, nome)
++
++    def get_user(self, token: str) -> SimpleNamespace:
++        papeis = {"JWT_DONO_FICTICIO": (DONO, {}), "JWT_OPERADOR_FICTICIO": (OPERADOR, {"papel": "operador"}),
++                  "JWT_OUTRO_FICTICIO": (OUTRO, {}), "JWT_PAPEL_FORJADO": (OPERADOR, {})}
++        if token not in papeis:
++            return SimpleNamespace(user=None)
++        profile, app_metadata = papeis[token]
++        return SimpleNamespace(user=SimpleNamespace(id=profile, role="authenticated", app_metadata=app_metadata,
++                                                   user_metadata={"papel": "operador"}))
++
++
++@pytest.fixture
++def bancada(monkeypatch: pytest.MonkeyPatch) -> tuple[TestClient, Banco, FonteMeta]:
++    from src.api import anuncios_leitura as rota
++    from src.api import main
++
++    db, fonte = Banco(), FonteMeta()
++    config = config_qa()
++    monkeypatch.setattr(main, "obter_config", lambda: config)
++    monkeypatch.setattr(main, "validar_esquema", lambda c: None)  # Esquema fictício em memória.
++    monkeypatch.setattr(rota, "obter_config", lambda: config)
++
++    async def verificar(token: str) -> Any:
++        return await verificar_sessao_anuncios(token, client=db)
++
++    @asynccontextmanager
++    async def apenas_get() -> Any:
++        yield fonte.get
++
++    monkeypatch.setattr(rota, "verificar_sessao_anuncios", verificar)
++    monkeypatch.setattr(rota, "fonte_meta_get", apenas_get)
++    app = main.criar_app()
++    app.dependency_overrides[rota.obter_acesso_conta] = lambda: AcessoContaSupabase(db)
++    return TestClient(app), db, fonte
++
++
++def test_cliente_comum_le_manual_sem_execucao_e_sem_papel_meta(bancada: Any) -> None:
++    client, db, fonte = bancada
++    r = client.get(BASE, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 200, r.text
++    corpo = r.json()
++    assert corpo["id_execucao"] is None
++    assert corpo["campanha"]["id"] == CAMPANHA
++    conjunto = corpo["campanha"]["conjuntos"][0]
++    assert conjunto["id"] == CONJUNTO and conjunto["anuncios"][0]["id"] == ANUNCIO
++    assert corpo["campanha"]["metricas"]["gasto_centavos"] == 1500
++    assert corpo["campanha"]["metricas"]["serie_diaria"] == [
++        {"dia": "2026-10-28", "gasto_centavos": 1500, "impressoes": 10, "cliques_totais": 1},
++    ]
++    assert conjunto["anuncios"][0]["metricas"]["gasto_centavos"] == 1000
++    assert corpo["campanha"]["status_efetivo"] == "IN_PROCESS"
++    assert "no_ar" not in corpo
++    assert corpo["fuso"] == "America/Sao_Paulo" and corpo["coletado_em"]
++    assert corpo["campanha"]["metricas"]["conversas_whatsapp"] is None
++    assert r.headers["Cache-Control"] == "no-store"
++    assert len(fonte.calls) == 7
++    assert {t for t, _, _ in db.consultas} == {"businesses", "ad_accounts"}
++
++
++def test_operador_precisa_de_atribuicao_real(bancada: Any) -> None:
++    client, db, fonte = bancada
++    assert client.get(BASE, params=PARAMS, headers={"Authorization": "Bearer JWT_OPERADOR_FICTICIO"}).status_code == 200
++    fonte.calls.clear()
++    db.tabelas["manager_accounts"] = []
++    assert client.get(BASE, params=PARAMS, headers={"Authorization": "Bearer JWT_OPERADOR_FICTICIO"}).status_code == 404
++    assert fonte.calls == []
++
++
++@pytest.mark.parametrize("token", ["JWT_OUTRO_FICTICIO", "JWT_PAPEL_FORJADO"])
++def test_outro_usuario_e_papel_em_user_metadata_nao_autorizam(bancada: Any, token: str) -> None:
++    client, _, fonte = bancada
++    r = client.get(BASE, params=PARAMS | {"profile_id": DONO}, headers={"Authorization": f"Bearer {token}"})
++    assert r.status_code == 404 and fonte.calls == []
++
++
++def test_outro_negocio_recusa_antes_da_fonte(bancada: Any) -> None:
++    client, db, fonte = bancada
++    r = client.get(BASE.replace(str(BUSINESS_PILOTO), str(uuid4())), params=PARAMS,
++                   headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 404 and fonte.calls == []
++    assert {t for t, _, _ in db.consultas} == {"businesses"}
++
++
++@pytest.mark.parametrize("headers", [{}, {"X-V2G-Token": "MAQUINA_FICTICIA"}, {"Authorization": "Bearer JWT_INVALIDO_FICTICIO"}])
++def test_sessao_e_obrigatoria_token_maquina_nao_a_substitui(bancada: Any, headers: dict[str, str]) -> None:
++    client, db, fonte = bancada
++    r = client.get(BASE, params=PARAMS, headers=headers)
++    assert r.status_code == 401 and fonte.calls == [] and db.consultas == []
++
++
++@pytest.mark.parametrize("alteracao", ["sem_conta", "inativa", "ambigua", "outra_conta"])
++def test_conta_vem_do_banco_sem_fallback(bancada: Any, alteracao: str) -> None:
++    client, db, fonte = bancada
++    if alteracao == "sem_conta":
++        db.tabelas["ad_accounts"] = []
++    elif alteracao == "inativa":
++        db.tabelas["ad_accounts"][0]["is_active"] = False
++    elif alteracao == "ambigua":
++        db.tabelas["ad_accounts"] *= 2
++    params = PARAMS | ({"conta_id": "act_999"} if alteracao == "outra_conta" else {})
++    r = client.get(BASE, params=params, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code in (404, 409) and fonte.calls == []
++
++
++def test_campanha_fora_da_conta_invalida_lote(bancada: Any) -> None:
++    client, _, fonte = bancada
++    fonte.campanha["account_id"] = "999"
++    r = client.get(BASE, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 409 and len(fonte.calls) == 2 and "campanha" not in r.json()
++
++
++@pytest.mark.parametrize("codigo,status", [(10, 424), (190, 424), (200, 424), (4, 503), (1, 502)])
++def test_erro_meta_e_permissao_normalizados_sem_corpo_cru(bancada: Any, codigo: int, status: int) -> None:
++    client, _, fonte = bancada
++    fonte.erro = {"error": {"code": codigo, "message": "ERRO PRIVADO FICTICIO"}}
++    r = client.get(BASE, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == status and "ERRO PRIVADO" not in r.text
++    assert r.json()["detail"]["codigo"]
++
++
++def test_posts_e_rotas_legadas_exigem_token_de_maquina(bancada: Any) -> None:
++    client, _, fonte = bancada
++    headers = {"Authorization": "Bearer JWT_DONO_FICTICIO"}
++    assert client.post(BASE, headers=headers).status_code == 401
++    assert client.get(f"/negocios/{BUSINESS_PILOTO}/execucao", headers=headers).status_code == 401
++    assert client.post("/cadastro", headers=headers).status_code == 401
++    assert fonte.calls == []
++
++
++def test_default_fechado_nao_aceita_jwt_nem_remove_cerca(bancada: Any, monkeypatch: pytest.MonkeyPatch) -> None:
++    from src.api import anuncios_leitura as rota
++    from src.api import main
++
++    _, _, fonte = bancada
++    config = config_qa(v2g_meta_ads_production_read_enabled=False)
++    monkeypatch.setattr(main, "obter_config", lambda: config)
++    monkeypatch.setattr(rota, "obter_config", lambda: config)
++    client = TestClient(main.criar_app())
++    assert client.get(BASE, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"}).status_code == 401
++    assert client.get(BASE, params=PARAMS, headers={"X-V2G-Token": "MAQUINA_FICTICIA"}).status_code == 503
++    assert fonte.calls == []
++
++
++def test_periodo_e_obrigatorio_e_limitado_antes_da_fonte(bancada: Any) -> None:
++    client, _, fonte = bancada
++    headers = {"Authorization": "Bearer JWT_DONO_FICTICIO"}
++    assert client.get(BASE, headers=headers).status_code == 422
++    assert client.get(BASE, params={"desde": "2026-09-01", "ate": "2026-10-29"}, headers=headers).status_code == 422
++    assert fonte.calls == []
++
++
++async def test_erro_de_rede_nao_entrega_zero_ou_texto_cru() -> None:
++    async def falhar(caminho: str, params: dict[str, Any]) -> dict[str, Any]:
++        raise RuntimeError("TEXTO PRIVADO FICTICIO")
++
++    with pytest.raises(FalhaLeituraAnuncios, match="^fonte_indisponivel$") as e:
++        await ler_anuncios_da_campanha(
++            business_id=BUSINESS_PILOTO, conta_id=CONTA_PILOTO, campanha_id=CAMPANHA,
++            periodo=PeriodoAnuncios.model_validate(PARAMS), consultar=falhar, agora=datetime.now(UTC),
++        )
++    assert e.value.status == 503
++
++
++async def test_dia_corrente_e_fuso_ausente_preservam_parcial() -> None:
++    fonte = FonteMeta()
++    fonte.conta.pop("timezone_name")
++    r = await ler(fonte)
++    assert r.fuso is None and r.campanha.metricas.estado == "parcial"
++    assert r.campanha.metricas.serie_diaria[0].gasto_centavos == 1500
++    fonte = FonteMeta()
++    for linhas in fonte.linhas.values():
++        linhas[0].update(date_start="2026-10-29", date_stop="2026-10-29")
++    r = await ler_anuncios_da_campanha(
++        business_id=BUSINESS_PILOTO, conta_id=CONTA_PILOTO, campanha_id=CAMPANHA,
++        periodo=PeriodoAnuncios(desde=datetime(2026, 10, 29).date(), ate=datetime(2026, 10, 29).date()),
++        consultar=fonte.get, agora=datetime(2026, 10, 29, 12, tzinfo=UTC),
++    )
++    assert r.campanha.metricas.estado == "parcial"
++    assert "periodo_ainda_aberto" in r.campanha.metricas.motivos
++    assert r.campanha.metricas.serie_diaria[0].dia.isoformat() == "2026-10-29"
++    assert r.campanha.metricas.serie_diaria[0].gasto_centavos == 1500
++
++
++@pytest.mark.parametrize("mudanca", [
++    {"app_env": "staging"}, {"supabase_url": "https://outro.invalid"},
++    {"supabase_url": "https://zskpijnqgkqwxksqmzmf.supabase.co"}, {"use_mock_db": True},
++])
++def test_opt_in_produtivo_recusa_outro_ambiente(mudanca: dict[str, Any]) -> None:
++    assert Config.model_fields["v2g_meta_ads_production_read_enabled"].default is False
++    with pytest.raises(ValueError):
++        validar_leitura_anuncios(config_qa(**mudanca))
++
++
++async def ler(fonte: FonteMeta) -> Any:
++    return await ler_anuncios_da_campanha(
++        business_id=BUSINESS_PILOTO, conta_id=CONTA_PILOTO, campanha_id=CAMPANHA,
++        periodo=PeriodoAnuncios.model_validate(PARAMS), consultar=fonte.get,
++        agora=datetime(2026, 10, 29, 12, tzinfo=UTC),
++    )
++
++
++async def test_ausencia_nao_vira_zero_e_nem_herda_metrica_de_outro_nivel() -> None:
++    fonte = FonteMeta()
++    fonte.linhas["ad"] = []
++    r = await ler(fonte)
++    ad = r.campanha.conjuntos[0].anuncios[0].metricas
++    assert ad.estado == "sem_dados" and ad.gasto_centavos is None
++    assert r.campanha.metricas.gasto_centavos == 1500
++    fonte.linhas["campaign"][0].update(spend="0", impressions="0", clicks="0")
++    r = await ler(fonte)
++    assert r.campanha.metricas.estado == "zero_medido"
++    assert r.campanha.metricas.gasto_centavos == 0
++    assert r.campanha.metricas.entrega_observada_no_periodo is False
++
++
++@pytest.mark.parametrize("campo,valor", [("clicks", None), ("spend", "NaN"), ("impressions", "")])
++async def test_campo_ausente_e_parcial_sem_preencher_zero(campo: str, valor: object) -> None:
++    fonte = FonteMeta()
++    fonte.linhas["campaign"][0][campo] = valor
++    r = await ler(fonte)
++    assert r.campanha.metricas.estado == "parcial"
++    assert getattr(r.campanha.metricas, {"clicks": "cliques_totais", "spend": "gasto_centavos", "impressions": "impressoes"}[campo]) is None
++
++
++@pytest.mark.parametrize("mudar", ["anuncio", "conjunto", "dia", "moeda", "duplicada"])
++async def test_identidade_de_metrica_inconsistente_recusa_todos_os_totais(mudar: str) -> None:
++    fonte = FonteMeta()
++    if mudar == "anuncio":
++        fonte.linhas["ad"][0]["ad_id"] = "999"
++    elif mudar == "conjunto":
++        fonte.anuncios[0]["adset_id"] = "999"
++    elif mudar == "dia":
++        fonte.linhas["campaign"][0]["date_stop"] = "2026-10-29"
++    elif mudar == "moeda":
++        fonte.linhas["campaign"][0]["account_currency"] = "USD"
++    else:
++        fonte.linhas["campaign"] *= 2
++    with pytest.raises(FalhaLeituraAnuncios) as e:
++        await ler(fonte)
++    assert e.value.status == 409
++
++
++async def test_next_sem_cursor_nao_vira_inventario_completo() -> None:
++    fonte = FonteMeta()
++    fonte.paging = {"next": "https://nao-seguir.invalid/?access_token=FICTICIO"}
++    with pytest.raises(FalhaLeituraAnuncios, match="paginacao_incompleta"):
++        await ler(fonte)
++    assert len(fonte.calls) == 3
++
++
++def test_descoberta_nao_exige_campanha_nem_execucao(bancada: Any) -> None:
++    client, _, fonte = bancada
++    r = client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 200
++    assert r.json()["campanhas"][0]["id"] == CAMPANHA
++    assert r.json()["campanhas"][0]["conjuntos"][0]["anuncios"][0]["id"] == ANUNCIO
++    assert all(c.startswith(CONTA_PILOTO) for c, _ in fonte.calls)
++
++
++def test_conta_vazia_e_diferente_de_campanha_sem_metricas(bancada: Any) -> None:
++    client, _, fonte = bancada
++    fonte.linhas = {"campaign": [], "adset": [], "ad": []}
++    r = client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.json()["campanhas"][0]["metricas"]["estado"] == "sem_dados"
++    assert r.json()["campanhas"][0]["metricas"]["gasto_centavos"] is None
++    fonte.campanha, fonte.conjuntos, fonte.anuncios = {}, [], []
++    r = client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 200 and r.json()["campanhas"] == []
++
++
++def test_conta_selecionada_precisa_estar_vinculada_ao_mesmo_negocio(bancada: Any) -> None:
++    client, db, fonte = bancada
++    db.tabelas["ad_accounts"].append({"business_id": str(BUSINESS_PILOTO), "external_id": "act_999", "is_active": True, "status": "ok"})
++    headers = {"Authorization": "Bearer JWT_DONO_FICTICIO"}
++    assert client.get(LISTA, params=PARAMS, headers=headers).status_code == 409
++    assert fonte.calls == []
++    r = client.get(LISTA, params=PARAMS | {"conta_id": CONTA_PILOTO}, headers=headers)
++    assert r.status_code == 200 and r.json()["conta_id"] == CONTA_PILOTO
++
++
++def test_id_de_campanha_fora_da_lista_da_conta_nao_busca_objeto_global(bancada: Any) -> None:
++    client, _, fonte = bancada
++    r = client.get(BASE.replace(CAMPANHA, "99999"), params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 404
++    assert all(c.startswith(CONTA_PILOTO) for c, _ in fonte.calls)
++    assert "campanha" not in r.json()
++
++
++def test_listagem_tem_os_mesmos_bloqueios_de_sessao_e_usuario(bancada: Any) -> None:
++    client, _, fonte = bancada
++    assert client.get(LISTA, params=PARAMS).status_code == 401
++    assert client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_OUTRO_FICTICIO"}).status_code == 404
++    assert client.post(LISTA, headers={"X-V2G-Token": "MAQUINA_FICTICIA"}).status_code == 405
++    assert fonte.calls == []
++
++
++def test_descoberta_inclui_varias_campanhas_sem_misturar_pais_ou_totais(bancada: Any) -> None:
++    client, _, fonte = bancada
++    fonte.campanhas_extra = [fonte.campanha | {"id": "7771"}]
++    fonte.conjuntos.append(fonte.conjuntos[0] | {"id": "7772", "campaign_id": "7771"})
++    fonte.anuncios.append(fonte.anuncios[0] | {"id": "7773", "campaign_id": "7771", "adset_id": "7772"})
++    for linhas in fonte.linhas.values():
++        linhas.append(linhas[0] | {"campaign_id": "7771", "adset_id": "7772", "ad_id": "7773", "spend": "3.00"})
++    r = client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 200
++    campanhas = {c["id"]: c for c in r.json()["campanhas"]}
++    assert set(campanhas) == {CAMPANHA, "7771"}
++    assert campanhas["7771"]["conjuntos"][0]["anuncios"][0]["id"] == "7773"
++    assert campanhas["7771"]["metricas"]["gasto_centavos"] == 300
++    assert campanhas[CAMPANHA]["metricas"]["gasto_centavos"] == 1500
++    assert campanhas["7771"]["metricas"]["serie_diaria"][0]["gasto_centavos"] == 300
++    assert campanhas[CAMPANHA]["metricas"]["serie_diaria"][0]["gasto_centavos"] == 1500
++    assert len(fonte.calls) == 7
++
++
++def test_paginacao_de_descoberta_nao_segue_url_remota(bancada: Any) -> None:
++    client, _, fonte = bancada
++    fonte.paginas_campanhas = [
++        {"data": [fonte.campanha], "paging": {"next": "https://nao-seguir.invalid/token=FICTICIO", "cursors": {"after": "pagina2"}}},
++        {"data": [fonte.campanha | {"id": "7771"}]},
++    ]
++    r = client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 200 and len(r.json()["campanhas"]) == 2
++    assert all(c.startswith(CONTA_PILOTO) for c, _ in fonte.calls)
++    assert fonte.calls[2][1]["after"] == "pagina2"
++
++
++def test_outro_negocio_legitimo_usa_sua_propria_conta_sem_ids_fixos(bancada: Any) -> None:
++    client, db, fonte = bancada
++    outro_negocio = str(uuid4())
++    db.tabelas["businesses"].append({"id": outro_negocio, "profile_id": OUTRO})
++    db.tabelas["ad_accounts"].append({"business_id": outro_negocio, "external_id": "act_8888", "is_active": True, "status": "ok"})
++    fonte.conta["id"] = "act_8888"
++    fonte.campanha, fonte.conjuntos, fonte.anuncios = {}, [], []
++    fonte.linhas = {"campaign": [], "adset": [], "ad": []}
++    r = client.get(LISTA.replace(str(BUSINESS_PILOTO), outro_negocio), params=PARAMS,
++                   headers={"Authorization": "Bearer JWT_OUTRO_FICTICIO"})
++    assert r.status_code == 200 and r.json()["conta_id"] == "act_8888"
++    assert r.json()["business_id"] == outro_negocio and r.json()["campanhas"] == []
++    assert all(c.startswith("act_8888") for c, _ in fonte.calls)
++
++
++def preparar_dias(fonte: FonteMeta, nivel: str, dias: list[tuple[str, dict[str, Any]]]) -> None:
++    base = fonte.linhas[nivel][0]
++    fonte.linhas[nivel] = [base | {"date_start": dia, "date_stop": dia} | campos for dia, campos in dias]
++
++
++async def ler_serie(fonte: FonteMeta, ate: str = "2026-10-30") -> Any:
++    return await ler_anuncios_da_campanha(
++        business_id=BUSINESS_PILOTO, conta_id=CONTA_PILOTO, campanha_id=CAMPANHA,
++        periodo=PeriodoAnuncios.model_validate(PARAMS | {"ate": ate}), consultar=fonte.get,
++        agora=datetime(2026, 11, 1, tzinfo=UTC),
++    )
++
++
++async def test_serie_ordena_dias_e_soma_somente_o_proprio_nivel() -> None:
++    fonte = FonteMeta()
++    for nivel, gasto in (("campaign", "15.01"), ("adset", "12.02"), ("ad", "10.03")):
++        preparar_dias(fonte, nivel, [
++            ("2026-10-30", {"spend": gasto, "impressions": "30", "clicks": "3"}),
++            ("2026-10-28", {"spend": "0.00", "impressions": "0", "clicks": "0"}),
++            ("2026-10-29", {"spend": "0.99", "impressions": "20", "clicks": "2"}),
++        ])
++    r = await ler_serie(fonte)
++    campanha = r.campanha
++    conjunto = campanha.conjuntos[0]
++    for objeto, gasto_final in ((campanha, 1501), (conjunto, 1202), (conjunto.anuncios[0], 1003)):
++        m = objeto.metricas
++        assert [p.dia.isoformat() for p in m.serie_diaria] == ["2026-10-28", "2026-10-29", "2026-10-30"]
++        assert [p.dia for p in m.serie_diaria] == m.dias_com_observacao
++        assert [p.gasto_centavos for p in m.serie_diaria] == [0, 99, gasto_final]
++        for campo, total in (("gasto_centavos", gasto_final + 99), ("impressoes", 50), ("cliques_totais", 5)):
++            assert sum(getattr(p, campo) for p in m.serie_diaria) == getattr(m, campo) == total
++        assert m.estado == "observado"
++    assert len(fonte.calls) == 7  # A série reaproveita o mesmo lote; não faz GET adicional.
++    assert all(params["time_increment"] == 1 for caminho, params in fonte.calls if caminho.endswith("/insights"))
++
++
++async def test_serie_com_gap_nao_cria_dia_zerado_nem_imputa_o_total() -> None:
++    fonte = FonteMeta()
++    preparar_dias(fonte, "campaign", [
++        ("2026-10-30", {"spend": "2.00", "impressions": "2", "clicks": "0"}),
++        ("2026-10-28", {"spend": "1.00", "impressions": "1", "clicks": "1"}),
++    ])
++    m = (await ler_serie(fonte)).campanha.metricas
++    assert [p.dia.isoformat() for p in m.serie_diaria] == ["2026-10-28", "2026-10-30"]
++    assert len(m.dias_com_observacao) == 2 and m.estado == "parcial"
++    assert (m.gasto_centavos, m.impressoes, m.cliques_totais) == (300, 3, 1)
++    assert "cobertura_ou_campos_incompletos" in m.motivos
++
++
++async def test_serie_sem_linhas_e_diferente_de_zero_medido() -> None:
++    fonte = FonteMeta()
++    preparar_dias(fonte, "campaign", [("2026-10-28", {"spend": "0", "impressions": "0", "clicks": "0"})])
++    m = (await ler(fonte)).campanha.metricas
++    assert m.estado == "zero_medido"
++    assert m.serie_diaria[0].model_dump(mode="json") == {
++        "dia": "2026-10-28", "gasto_centavos": 0, "impressoes": 0, "cliques_totais": 0,
++    }
++    fonte.linhas["campaign"] = []
++    m = (await ler(fonte)).campanha.metricas
++    assert m.estado == "sem_dados" and m.serie_diaria == [] and m.dias_com_observacao == []
++    assert (m.gasto_centavos, m.impressoes, m.cliques_totais) == (None, None, None)
++
++
++@pytest.mark.parametrize("campo,valor,normalizado", [
++    ("spend", "NaN", "gasto_centavos"), ("spend", "90071992547409.92", "gasto_centavos"),
++    ("impressions", "9007199254740992", "impressoes"), ("impressions", None, "impressoes"),
++    ("clicks", True, "cliques_totais"), ("clicks", "-1", "cliques_totais"),
++])
++async def test_serie_preserva_null_em_campo_invalido_sem_apagar_os_dias_validos(
++    campo: str, valor: object, normalizado: str,
++) -> None:
++    fonte = FonteMeta()
++    preparar_dias(fonte, "campaign", [("2026-10-28", {}), ("2026-10-29", {campo: valor})])
++    m = (await ler_serie(fonte, ate="2026-10-29")).campanha.metricas
++    assert m.estado == "parcial" and len(m.serie_diaria) == 2
++    assert getattr(m.serie_diaria[0], normalizado) is not None
++    assert getattr(m.serie_diaria[1], normalizado) is None and getattr(m, normalizado) is None
++    assert [p.dia for p in m.serie_diaria] == m.dias_com_observacao
++
++
++async def test_serie_sem_moeda_nao_apresenta_gasto_mas_preserva_contagens() -> None:
++    fonte = FonteMeta()
++    fonte.conta.pop("currency")
++    m = (await ler(fonte)).campanha.metricas
++    assert m.serie_diaria[0].gasto_centavos is None and m.gasto_centavos is None
++    assert m.serie_diaria[0].impressoes == m.impressoes == 10
++    assert m.serie_diaria[0].cliques_totais == m.cliques_totais == 1
++    assert m.estado == "parcial" and "moeda_desconhecida" in m.motivos
++
++
++async def test_serie_arredonda_centavos_por_dia_e_nao_oculta_overflow_do_total() -> None:
++    fonte = FonteMeta()
++    preparar_dias(fonte, "campaign", [
++        ("2026-10-28", {"spend": "0.005", "impressions": "9007199254740991"}),
++        ("2026-10-29", {"spend": "0.005", "impressions": "1"}),
++    ])
++    m = (await ler_serie(fonte, ate="2026-10-29")).campanha.metricas
++    assert [p.gasto_centavos for p in m.serie_diaria] == [1, 1] and m.gasto_centavos == 2
++    assert [p.impressoes for p in m.serie_diaria] == [9_007_199_254_740_991, 1]
++    assert m.impressoes is None and m.estado == "parcial"
++
++
++@pytest.mark.parametrize("nivel", ["campaign", "adset", "ad"])
++def test_serie_duplicada_recusa_o_lote_http_sem_totais_ou_pontos(bancada: Any, nivel: str) -> None:
++    client, _, fonte = bancada
++    fonte.linhas[nivel] *= 2
++    r = client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
++    assert r.status_code == 409
++    assert "campanhas" not in r.json() and "serie_diaria" not in r.json()
++
++
++async def test_serie_recusa_dia_repetido_entre_paginas_de_insights() -> None:
++    fonte = FonteMeta()
++    linha = fonte.linhas["campaign"][0]
++    fonte.paginas_insights["campaign"] = [
++        {"data": [linha], "paging": {"next": "https://nao-seguir.invalid/", "cursors": {"after": "p2"}}},
++        {"data": [linha.copy()]},
++    ]
++    with pytest.raises(FalhaLeituraAnuncios) as erro:
++        await ler(fonte)
++    assert erro.value.status == 409 and erro.value.codigo == "periodo_ou_moeda_divergente"
++    assert fonte.calls[-1][1]["after"] == "p2"
++    assert all(c.startswith(CONTA_PILOTO) for c, _ in fonte.calls)
++
++
++def test_serie_de_outro_negocio_e_conta_nao_reaproveita_pontos_do_primeiro(bancada: Any) -> None:
++    client, db, fonte = bancada
++    primeiro = client.get(LISTA, params=PARAMS, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"}).json()
++    negocio_b = str(uuid4())
++    db.tabelas["businesses"].append({"id": negocio_b, "profile_id": OUTRO})
++    db.tabelas["ad_accounts"].append({"business_id": negocio_b, "external_id": "act_8888", "is_active": True, "status": "ok"})
++    fonte.conta["id"] = "act_8888"
++    fonte.campanha["account_id"] = "8888"
++    for objeto in fonte.conjuntos + fonte.anuncios:
++        objeto["account_id"] = "8888"
++    for linhas in fonte.linhas.values():
++        linhas[0].update(account_id="8888", spend="2.00", impressions="8", clicks="2")
++    fonte.calls.clear()
++    r = client.get(LISTA.replace(str(BUSINESS_PILOTO), negocio_b), params=PARAMS | {"conta_id": "act_8888"},
++                   headers={"Authorization": "Bearer JWT_OUTRO_FICTICIO"})
++    assert r.status_code == 200 and r.json()["business_id"] == negocio_b
++    assert r.json()["conta_id"] == "act_8888" and all(c.startswith("act_8888") for c, _ in fonte.calls)
++    assert r.json()["campanhas"][0]["metricas"]["serie_diaria"] == [
++        {"dia": "2026-10-28", "gasto_centavos": 200, "impressoes": 8, "cliques_totais": 2},
++    ]
++    assert primeiro["campanhas"][0]["metricas"]["serie_diaria"][0]["gasto_centavos"] == 1500
+diff --git a/tests/unit/test_historico_sem_rodadas.py b/tests/unit/test_historico_sem_rodadas.py
+new file mode 100644
+index 0000000..f0d1035
+--- /dev/null
++++ b/tests/unit/test_historico_sem_rodadas.py
+@@ -0,0 +1,87 @@
++"""Vazio comprovado nao vira erro nem autoriza outro negocio."""
++
++from __future__ import annotations
++
++from uuid import UUID, uuid4
++
++import pytest
++from fastapi.testclient import TestClient
++
++from src.api import rotas
++from src.api.main import criar_app
++
++
++@pytest.fixture
++def cliente_http() -> TestClient:
++    return TestClient(criar_app())
++
++
++def dono_conferido(monkeypatch: pytest.MonkeyPatch, perfil: UUID | None) -> None:
++    async def dono(business_id: UUID) -> UUID | None:
++        return perfil
++
++    monkeypatch.setattr(rotas, "dono_do_negocio", dono)
++
++
++def test_titular_comprovado_recebe_historico_vazio_sem_inventar_metricas(
++    cliente_http: TestClient, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    perfil, negocio = uuid4(), uuid4()
++    dono_conferido(monkeypatch, perfil)
++    resposta = cliente_http.get(
++        f"/negocios/{negocio}/consolidado",
++        params={"profile_id": str(perfil), "desde": "2026-11-01", "ate": "2026-11-07"},
++    )
++    assert resposta.status_code == 200
++    corpo = resposta.json()
++    assert corpo["business_id"] == str(negocio)
++    assert corpo["desde"] == "2026-11-01"
++    assert corpo["ate"] == "2026-11-07"
++    assert corpo["por_execucao"] == []
++    assert corpo["execucoes_somadas"] == 0
++    assert corpo["dias"] == []
++    assert corpo["tem_dado_da_plataforma"] is False
++    for campo in ("investiu_centavos", "cliques", "impressoes", "voltou_centavos", "vendas"):
++        assert corpo[campo] is None
++
++
++@pytest.mark.parametrize("titular", ["outro", "ausente"])
++def test_404_sem_prova_de_titularidade(
++    cliente_http: TestClient, monkeypatch: pytest.MonkeyPatch, titular: str
++) -> None:
++    perfil = uuid4()
++    dono_conferido(monkeypatch, uuid4() if titular == "outro" else None)
++    resposta = cliente_http.get(
++        f"/negocios/{uuid4()}/consolidado", params={"profile_id": str(perfil)}
++    )
++    assert resposta.status_code == 404
++    assert "por_execucao" not in resposta.json()
++
++
++def test_sem_profile_id_nao_ganha_historico_vazio(cliente_http: TestClient) -> None:
++    assert cliente_http.get(f"/negocios/{uuid4()}/consolidado").status_code == 404
++
++
++def test_periodo_invertido_continua_invalido_mesmo_sem_rodadas(
++    cliente_http: TestClient, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    perfil = uuid4()
++    dono_conferido(monkeypatch, perfil)
++    resposta = cliente_http.get(
++        f"/negocios/{uuid4()}/consolidado",
++        params={"profile_id": str(perfil), "desde": "2026-11-07", "ate": "2026-11-01"},
++    )
++    assert resposta.status_code == 422
++
++
++def test_falha_no_cadastro_nao_vira_vazio(
++    cliente_http: TestClient, monkeypatch: pytest.MonkeyPatch
++) -> None:
++    async def falha(business_id: UUID) -> UUID | None:
++        raise RuntimeError("Falha de leitura simulada")
++
++    monkeypatch.setattr(rotas, "dono_do_negocio", falha)
++    with pytest.raises(RuntimeError, match="Falha de leitura simulada"):
++        cliente_http.get(
++            f"/negocios/{uuid4()}/consolidado", params={"profile_id": str(uuid4())}
++        )

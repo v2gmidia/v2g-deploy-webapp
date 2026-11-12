@@ -1,0 +1,240 @@
+diff --git a/app/(protected)/layout.tsx b/app/(protected)/layout.tsx
+index 994eeeb..d51603c 100644
+--- a/app/(protected)/layout.tsx
++++ b/app/(protected)/layout.tsx
+@@ -5,6 +5,7 @@ import { signOutAction } from "./actions";
+ import { temAcessoWebApp } from "@/lib/contratacao/acesso";
+ import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+ import { logosDosNegociosLiberados } from "@/lib/multiconta/logos";
++import { identidadeDoMenuDaAgencia } from "@/lib/agencia/identidade-do-menu";
+ import { cnpjsDosNegociosLiberados } from "@/lib/multiconta/cnpjs";
+ import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
+ 
+@@ -102,12 +103,12 @@ export default async function ProtectedLayout({ children }: { children: React.Re
+       rotuloDaConta={nomeNegocio || user.email || ""}
+       inicial={inicial}
+       acaoSair={signOutAction}
+-      negocios={negocios.map((negocio) => ({
++      negocios={identidadeDoMenuDaAgencia(negocios.map((negocio) => ({
+         id: negocio.id,
+         name: negocio.name,
+         logoUrl: logos.get(negocio.id) ?? null,
+         cnpj: cnpjPorNegocio.get(negocio.id) ?? null,
+-      }))}
++      })), agencia)}
+       ehOperador={user.app_metadata?.papel === "operador"}
+     >
+       {children}
+diff --git a/components/agencia/InicioDoCliente.tsx b/components/agencia/InicioDoCliente.tsx
+index d484558..93ccc1f 100644
+--- a/components/agencia/InicioDoCliente.tsx
++++ b/components/agencia/InicioDoCliente.tsx
+@@ -4,9 +4,9 @@ import { hrefDaCarteira, hrefDoCliente } from "@/lib/agencia/contexto";
+ import type { ResumoDaCarteira } from "@/lib/agencia/resumo";
+ import { resumirMeta } from "@/lib/inicio/resumo-meta";
+ import type { InventarioMeta, ResultadoInventarioMeta } from "@/lib/anuncios/contrato-meta";
+-import type { IntervaloDoInicio } from "@/lib/inicio/periodo";
++import { rotuloDoIntervalo, type IntervaloDoInicio } from "@/lib/inicio/periodo";
+ import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
+-import { dinheiro, diaCurto } from "@/lib/formato";
++import { dinheiro } from "@/lib/formato";
+ import { SeletorDePeriodo } from "@/app/(protected)/inicio/SeletorDePeriodo";
+ import { AtualizarInicio } from "@/app/(protected)/inicio/AtualizarInicio";
+ import { CabecalhoAgencia, CaminhoDoCliente, ProximoPassoAgencia, Seta } from "./Comuns";
+@@ -45,9 +45,10 @@ export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo,
+       <button className="cta">Consultar conta</button></form>}
+     {dados && resumo && <>
+       <section className={comuns.estado} aria-label="Estado dos resultados"><div><b>Resultados</b><span>{resumo.campanhas ? resumo.entregaHistorica ? "Houve entrega neste período" : "Campanhas encontradas na Meta" : "Nenhuma campanha retornou nesta consulta"}</span></div><a className={comuns.link} href={anunciosDoCliente}>Ver anúncios<Seta /></a></section>
+-      <p className={styles.nota}>{diaCurto(dados.periodo.desde)} a {diaCurto(dados.periodo.ate)} · {resumo.campanhasObservadas} de {resumo.campanhas} campanhas com observação.{resumo.parcial ? " Resultados parciais." : ""}</p>
+-      <section aria-labelledby="inicio-resumo-titulo"><h2 id="inicio-resumo-titulo">Resumo do período</h2><dl className={styles.metricas}>
+-        {([{ tipo: "investido", nome: "Investido", valor: valor(resumo.gasto) }, { tipo: "cliques", nome: "Cliques totais", valor: contar(resumo.cliques) },
++      <section className={styles.resumoPeriodo} aria-labelledby="inicio-resumo-titulo" aria-describedby="inicio-resumo-periodo"><h2 id="inicio-resumo-titulo">Resumo do período</h2>
++        <p id="inicio-resumo-periodo" className={styles.nota}><strong>{rotuloDoIntervalo(dados.periodo)}</strong> · {resumo.campanhasObservadas} de {resumo.campanhas} campanhas com observação.{resumo.parcial ? " Resultados parciais." : ""}</p>
++        <dl className={styles.metricas}>
++        {([{ tipo: "investido", nome: "Investido no período", valor: valor(resumo.gasto) }, { tipo: "cliques", nome: "Cliques totais", valor: contar(resumo.cliques) },
+           { tipo: "impressoes", nome: "Impressões", valor: contar(resumo.impressoes) }, { tipo: "conversas", nome: "Conversas", valor: "Não medido" }] as const).map(m => <div key={m.tipo}>
+             <dt><IconeMetrica tipo={m.tipo} />{m.nome}</dt><dd className={m.valor === "Não medido" ? styles.ausente : undefined}>{m.valor}</dd></div>)}
+       </dl></section>
+diff --git a/components/agencia/inicio-cliente.module.css b/components/agencia/inicio-cliente.module.css
+index b8af592..4365f03 100644
+--- a/components/agencia/inicio-cliente.module.css
++++ b/components/agencia/inicio-cliente.module.css
+@@ -1,7 +1,8 @@
+ .raiz{min-width:0}.nota{font-size:var(--fs-legenda);line-height:1.6;color:var(--ink-soft);margin:12px 0 24px;overflow-wrap:anywhere}
++.resumoPeriodo{margin-top:24px}
+ .metricas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:20px 0 28px}
+ .metricas>div{border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:20px;min-width:0}
+-.metricas dt{display:flex;align-items:center;gap:10px;font-size:var(--fs-legenda);color:var(--ink-soft)}
++.metricas dt{display:flex;align-items:center;gap:10px;min-height:3em;line-height:1.5;font-size:var(--fs-legenda);color:var(--ink-soft)}
+ .metricas dt svg{width:18px;height:18px;flex:none}.metricas dd{font:400 var(--fs-destaque)/1.25 var(--display);letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin:18px 0 0;overflow-wrap:anywhere}
+ .metricas dd.ausente{font-size:var(--fs-bloco);line-height:1.9;letter-spacing:-.025em;color:var(--ink-soft)}
+ .gradePrincipal{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(285px,1fr);align-items:start;gap:28px}
+diff --git a/lib/agencia/da-sessao.ts b/lib/agencia/da-sessao.ts
+index 87a4613..a2f1c6a 100644
+--- a/lib/agencia/da-sessao.ts
++++ b/lib/agencia/da-sessao.ts
+@@ -11,7 +11,8 @@ import { raizDaAgencia } from "./vinculos";
+ export type ContextoAgenciaDaSessao =
+   | { status: "desligado" | "direto" | "indisponivel" }
+   | { status: "agencia"; agencia: string; businessIdAtivo: string; contexto: ContextoAgencia | null;
+-    clientes: ContextoAgencia[]; agencyBusinessId: string; origem: "vinculo" | "legado" };
++    clientes: ContextoAgencia[]; agencyBusinessId: string; origem: "vinculo" | "legado";
++    marcaAgenciaCompartilhada: boolean };
+ 
+ /** Somente QA já habilitada; nenhuma identidade, permissão ou dado é gravado. */
+ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDaSessao> => {
+@@ -77,7 +78,13 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
+       }
+     } catch { /* A indisponibilidade do nome não desautoriza o titular já validado. */ } }));
+     if (!nomeAgencia) return { status: "indisponivel" };
++    // No registro histórico, a raiz guarda a identidade do anunciante. Ela
++    // continua disponível ao Dúú, mas não pode representar a marca da agência.
++    const marcaAgenciaCompartilhada = raiz && leitura.estado === "pronto"
++      ? leitura.vinculos.some(v => v.agency_business_id === raiz
++        && v.advertiser_business_id === raiz && v.legacy_shared_business)
++      : Boolean(contexto);
+     return { status: "agencia", agencia: nomeAgencia, businessIdAtivo: data.id, contexto, clientes,
+-      agencyBusinessId: raiz ?? data.id, origem: raiz ? "vinculo" : "legado" };
++      agencyBusinessId: raiz ?? data.id, origem: raiz ? "vinculo" : "legado", marcaAgenciaCompartilhada };
+   } catch { return { status: "indisponivel" }; }
+ });
+diff --git a/scripts/conferir-agencia-estrutura.mjs b/scripts/conferir-agencia-estrutura.mjs
+index cbbe460..cbf3ee7 100644
+--- a/scripts/conferir-agencia-estrutura.mjs
++++ b/scripts/conferir-agencia-estrutura.mjs
+@@ -80,6 +80,7 @@ test('carteira autenticada carrega dois anunciantes e gestor é conferido por ne
+   for(const ativo of [A,F]){
+     const db=banco({ativo});const r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
+     assert.equal(r.status,'agencia');assert.equal(r.agencyBusinessId,A);assert.equal(r.contexto.businessId,ativo);
++    assert.equal(r.marcaAgenciaCompartilhada,true);
+     assert.equal(r.clientes.length,2);assert.equal(r.clientes.find(c=>c.businessId===A).gestor,'Gestor somente Dúú');
+     assert.equal(r.clientes.find(c=>c.businessId===F).gestor,null);
+     for(const q of db.calls.filter(q=>q.table==='businesses'))assert.ok(q.filters.some(([k,v])=>k==='profile_id'&&v===U));
+@@ -90,11 +91,20 @@ test('tabela ainda não instalada conserva Dúú; erro real não vira carteira l
+   for(const code of ['PGRST205','42P01']){
+     const db=banco({linkError:{code}});const r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
+     assert.equal(r.status,'agencia');assert.equal(r.origem,'legado');assert.equal(r.clientes.length,1);
++    assert.equal(r.marcaAgenciaCompartilhada,true);
+   }
+   const db=banco({linkError:{code:'42501'}});assert.equal((await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao()).status,'indisponivel');
+   assert.equal(db.calls.some(c=>c.table==='manager_accounts'),false);
+ });
+ 
++test('agência com cadastro administrativo separado não herda a marca do anunciante',async()=>{
++  const rows=businesses();rows[0].onboarding={};
++  const db=banco({rows,vinculos:[links()[1]]});
++  const r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
++  assert.equal(r.status,'agencia');assert.equal(r.contexto,null);
++  assert.equal(r.marcaAgenciaCompartilhada,false);
++});
++
+ test('negócio não liberado fica fora da carteira e titular divergente fecha a leitura',async()=>{
+   const extra=banco({vinculos:[...links(),{...links()[1],advertiser_business_id:S}]});
+   const r=await extra.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
+diff --git a/lib/agencia/identidade-do-menu.ts b/lib/agencia/identidade-do-menu.ts
+new file mode 100644
+index 0000000..4424fc2
+--- /dev/null
++++ b/lib/agencia/identidade-do-menu.ts
+@@ -0,0 +1,14 @@
++type MarcaDaAgencia = {
++  status: string;
++  agencyBusinessId?: string;
++  marcaAgenciaCompartilhada?: boolean;
++};
++
++/** Só apresentação de uma relação já conferida pelo servidor. Não move arquivo. */
++export function identidadeDoMenuDaAgencia<T extends { id: string; logoUrl: string | null }>(
++  negocios: T[], agencia: MarcaDaAgencia | null | undefined,
++): T[] {
++  if (agencia?.status !== "agencia" || agencia.marcaAgenciaCompartilhada !== true) return negocios;
++  return negocios.map(negocio => negocio.id === agencia.agencyBusinessId
++    ? { ...negocio, logoUrl: null } : negocio);
++}
+diff --git a/scripts/conferir-agencia-marca-periodo.mjs b/scripts/conferir-agencia-marca-periodo.mjs
+new file mode 100644
+index 0000000..e51a66e
+--- /dev/null
++++ b/scripts/conferir-agencia-marca-periodo.mjs
+@@ -0,0 +1,81 @@
++import assert from 'node:assert/strict';
++import {test} from 'node:test';
++import React from 'react';
++import {renderToStaticMarkup} from 'react-dom/server';
++import {ambienteTs} from './test-utils/ts-isolado.mjs';
++const A='11111111-1111-4111-8111-111111111111',D='22222222-2222-4222-8222-222222222222';
++const load=ambienteTs().load;
++const {identidadeDoMenuDaAgencia:identidade}=load('lib/agencia/identidade-do-menu.ts');
++const menu=()=>[{id:A,name:'Piligrin',logoUrl:'https://fixture.invalid/logo-duu.jpg'},
++ {id:D,name:'Dúú Gomes',logoUrl:'https://fixture.invalid/logo-duu.jpg'}];
++
++test('marca compartilhada sai só da agência; arquivo e marca do anunciante são preservados',()=>{
++ const antes=menu(),original=JSON.stringify(antes);
++ const novo=identidade(antes,{status:'agencia',agencyBusinessId:A,marcaAgenciaCompartilhada:true});
++ assert.equal(novo[0].logoUrl,null);assert.equal(novo[0].name,'Piligrin');
++ assert.equal(novo[1],antes[1]);assert.equal(JSON.stringify(antes),original);
++});
++test('marca própria de agência separada e conta direta continuam disponíveis',()=>{
++ const dados=menu();dados[0].logoUrl='https://fixture.invalid/logo-piligrin.jpg';
++ for(const contexto of [null,{status:'direto'},{status:'agencia',agencyBusinessId:A,marcaAgenciaCompartilhada:false}])
++  assert.equal(identidade(dados,contexto),dados);
++});
++test('nome parecido e contexto de outra agência não substituem a marca de um cliente',()=>{
++ const dados=menu();
++ assert.deepEqual(JSON.parse(JSON.stringify(identidade(dados,{status:'agencia',agencyBusinessId:D+'x',marcaAgenciaCompartilhada:true}))),dados);
++});
++function casco(negocios,ativo=A){
++ const {Casco}=ambienteTs({ports:{
++  'next/image':{default:({src,alt,width,height})=>React.createElement('img',{src,alt,width,height})},
++  'next/navigation':{usePathname:()=>'/inicio',useSearchParams:()=>new URLSearchParams('cliente='+D)},
++  '@/components/ui/NavItem':{NavItem:({href,children})=>React.createElement('a',{href},children)},
++  '@/components/ui/PreferenciaDeTema':{PreferenciaDeTema:()=>null},
++  '@/components/ui/Saudacao':{Saudacao:()=>React.createElement('b',null,'Olá'),DataDeHoje:()=>React.createElement('span',null,'Dia atual')},
++  '@/components/ui/ListaNegociosMenu':{ListaNegociosMenu:({children})=>React.createElement('form',null,children)},
++ }}).load('components/ui/Casco.tsx');
++ return renderToStaticMarkup(React.createElement(Casco,{nome:'Victor',nomeNegocio:negocios.find(n=>n.id===ativo).name,
++  negocioAtivoId:ativo,rotuloDaConta:negocios.find(n=>n.id===ativo).name,inicial:'P',negocios,children:null}));
++}
++test('cabeçalho e menu reais mostram P na Piligrin e mantêm a imagem do Dúú',()=>{
++ const html=casco(identidade(menu(),{status:'agencia',agencyBusinessId:A,marcaAgenciaCompartilhada:true}));
++ const summaries=[...html.matchAll(/<summary[^>]*>([\s\S]*?)<\/summary>/g)].map(x=>x[1]);
++ assert.ok(summaries.length>=2);
++ for(const texto of summaries){assert.match(texto,/class="avatar"[^>]*>P<\/span>/);assert.doesNotMatch(texto,/<img/);assert.match(texto,/Piligrin/);}
++ assert.match(html,/value="22222222-2222-4222-8222-222222222222"[\s\S]*?<img src="https:\/\/fixture.invalid\/logo-duu.jpg"/);
++});
++test('cabeçalho do anunciante mantém sua própria imagem ao selecionar o Dúú',()=>{
++ const html=casco(identidade(menu(),{status:'agencia',agencyBusinessId:A,marcaAgenciaCompartilhada:true}),D);
++ assert.match(html,/<summary[^>]*>[\s\S]*?<img src="https:\/\/fixture.invalid\/logo-duu.jpg"[\s\S]*?<b>Dúú Gomes<\/b>/);
++});
++
++const css={default:new Proxy({},{get:(_,k)=>k})};
++const {InicioDoCliente}=ambienteTs({ports:{'./agencia.module.css':css,'./inicio-cliente.module.css':css,
++ '@/app/(protected)/inicio/SeletorDePeriodo':{SeletorDePeriodo:({intervalo})=>React.createElement('output',{'aria-label':'Calendário'},intervalo.desde+' / '+intervalo.ate)},
++ '@/app/(protected)/inicio/AtualizarInicio':{AtualizarInicio:()=>null},
++}}).load('components/agencia/InicioDoCliente.tsx');
++function inicio(periodo,gasto){
++ const dados={businessId:D,contaId:'act_123',moeda:'BRL',periodo,fuso:'America/Sao_Paulo',coletadoEm:'2026-11-12T12:00:00Z',
++ campanhas:[{id:'1',metricas:{estado:'observado',gasto,cliques:2,impressoes:20,entregaObservada:true,
++  serieDiaria:{estado:'disponivel',dias:[{dia:periodo.desde,gasto,cliques:2,impressoes:20}]}}}]};
++ const {resumirMeta}=load('lib/inicio/resumo-meta.ts');
++ return renderToStaticMarkup(React.createElement(InicioDoCliente,{
++  detalhe:{contexto:{businessId:D,agencyBusinessId:A,agencia:'Piligrin',anunciante:'Dúú Gomes',praca:'Ensaio local',verbaMensal:3000},
++    retorno:{busca:'Dúú',pendentes:false,pagina:1},resumo:{temPendencia:false}},
++  dados,resumo:resumirMeta(dados),resultado:{ok:true,dados,contas:[{id:'act_123'}]},intervalo:periodo,
++  anterior:false,pendencia:null,falhaPendencia:false,faixa:null,complemento:null,
++ }));
++}
++test('datas completas identificam o resumo e o gasto no mesmo recorte do calendário',()=>{
++ const html=inicio({desde:'2026-11-01',ate:'2026-11-07'},28180);
++ assert.match(html,/aria-describedby="inicio-resumo-periodo"/);
++ assert.match(html,/<p id="inicio-resumo-periodo"[^>]*><strong>01\/11\/2026 – 07\/11\/2026<\/strong>/);
++ assert.match(html,/Investido no período/);assert.match(html,/281,80/);
++ assert.match(html,/Calendário[^>]*>2026-11-01 \/ 2026-11-07/);
++});
++test('troca de período/ano atualiza datas, total, gráfico e link para Anúncios juntos',()=>{
++ const html=inicio({desde:'2027-01-02',ate:'2027-01-03'},1200);
++ assert.match(html,/02\/01\/2027 – 03\/01\/2027/);assert.doesNotMatch(html,/01\/11\/2026|281,80/);
++ assert.match(html,/Investido no período/);assert.match(html,/12,00/);
++ assert.match(html,/desde=2027-01-02(?:&amp;|&)ate=2027-01-03/);
++ assert.match(html,/2027-01-02/);
++});

@@ -1,7 +1,8 @@
 .raiz{min-width:0}.nota{font-size:var(--fs-legenda);line-height:1.6;color:var(--ink-soft);margin:12px 0 24px;overflow-wrap:anywhere}
+.resumoPeriodo{margin-top:24px}
 .metricas{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin:20px 0 28px}
 .metricas>div{border:1px solid var(--line);border-radius:4px;background:var(--surface);padding:20px;min-width:0}
-.metricas dt{display:flex;align-items:center;gap:10px;font-size:var(--fs-legenda);color:var(--ink-soft)}
+.metricas dt{display:flex;align-items:center;gap:10px;min-height:3em;line-height:1.5;font-size:var(--fs-legenda);color:var(--ink-soft)}
 .metricas dt svg{width:18px;height:18px;flex:none}.metricas dd{font:400 var(--fs-destaque)/1.25 var(--display);letter-spacing:-.04em;font-variant-numeric:tabular-nums;margin:18px 0 0;overflow-wrap:anywhere}
 .metricas dd.ausente{font-size:var(--fs-bloco);line-height:1.9;letter-spacing:-.025em;color:var(--ink-soft)}
 .gradePrincipal{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(285px,1fr);align-items:start;gap:28px}

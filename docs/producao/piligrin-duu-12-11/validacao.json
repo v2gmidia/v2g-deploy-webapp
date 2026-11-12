@@ -1,0 +1,57 @@
+{
+  "data": "2026-11-12T17:41:06.724Z",
+  "revisao": 2,
+  "qa": {
+    "testes": 107,
+    "resultado": "passou",
+    "typecheck": "passou",
+    "build": "passou",
+    "buildPath": "C:/Users/victo/AppData/Local/Temp/v2g-agency-build-WrO7Ay",
+    "visual": "1536px e 390px, sem overflow; marca, período e troca conferidos em prévia isolada com dados fictícios",
+    "publicado": false
+  },
+  "webapp": {
+    "testes": 125,
+    "resultado": "passou",
+    "typecheck": "passou",
+    "build": "passou",
+    "buildPath": "C:/Users/victo/AppData/Local/Temp/v2g-agency-build-3qBOlM",
+    "envFilesCopied": false,
+    "credentialsInherited": false
+  },
+  "banco": {
+    "provas": 111,
+    "resultado": "passou",
+    "reutilizadoDaRevisao": 1,
+    "sqlInalterado": true,
+    "ambiente": "PostgreSQL descartável local",
+    "limite": "fixtures focadas; sem aplicação remota"
+  },
+  "backend": {
+    "testesPassaram": 2864,
+    "ignorados": 9,
+    "avisos": 9,
+    "ruffSrcTests": "passou",
+    "mypy": "passou; 160 arquivos",
+    "contrato": {
+      "base_fingerprint": "dbf2611f3b1e",
+      "candidate_fingerprint": "677db34772e8",
+      "paths_removed": [],
+      "paths_changed": [],
+      "paths_added": [
+        "/negocios/{business_id}/meta/campanhas",
+        "/negocios/{business_id}/meta/campanhas/{campanha_id}"
+      ],
+      "diary_series": true,
+      "live_runtime_tested": false
+    },
+    "reutilizadoDaRevisao": 1,
+    "patchInalterado": true
+  },
+  "producao": {
+    "aplicado": false,
+    "cobrancasCriadas": 0,
+    "anunciosPublicados": 0,
+    "validacaoAutenticadaDoNovoCadastro": false
+  }
+}

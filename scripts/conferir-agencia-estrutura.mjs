@@ -80,6 +80,7 @@ test('carteira autenticada carrega dois anunciantes e gestor é conferido por ne
   for(const ativo of [A,F]){
     const db=banco({ativo});const r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
     assert.equal(r.status,'agencia');assert.equal(r.agencyBusinessId,A);assert.equal(r.contexto.businessId,ativo);
+    assert.equal(r.marcaAgenciaCompartilhada,true);
     assert.equal(r.clientes.length,2);assert.equal(r.clientes.find(c=>c.businessId===A).gestor,'Gestor somente Dúú');
     assert.equal(r.clientes.find(c=>c.businessId===F).gestor,null);
     for(const q of db.calls.filter(q=>q.table==='businesses'))assert.ok(q.filters.some(([k,v])=>k==='profile_id'&&v===U));
@@ -90,9 +91,18 @@ test('tabela ainda não instalada conserva Dúú; erro real não vira carteira l
   for(const code of ['PGRST205','42P01']){
     const db=banco({linkError:{code}});const r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
     assert.equal(r.status,'agencia');assert.equal(r.origem,'legado');assert.equal(r.clientes.length,1);
+    assert.equal(r.marcaAgenciaCompartilhada,true);
   }
   const db=banco({linkError:{code:'42501'}});assert.equal((await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao()).status,'indisponivel');
   assert.equal(db.calls.some(c=>c.table==='manager_accounts'),false);
+});
+
+test('agência com cadastro administrativo separado não herda a marca do anunciante',async()=>{
+  const rows=businesses();rows[0].onboarding={};
+  const db=banco({rows,vinculos:[links()[1]]});
+  const r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
+  assert.equal(r.status,'agencia');assert.equal(r.contexto,null);
+  assert.equal(r.marcaAgenciaCompartilhada,false);
 });
 
 test('negócio não liberado fica fora da carteira e titular divergente fecha a leitura',async()=>{
