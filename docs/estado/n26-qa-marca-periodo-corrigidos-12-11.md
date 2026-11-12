@@ -1,5 +1,7 @@
 # Piligrin — marca e período corrigidos localmente na QA
 
+> PUBLICADO E CONFERIDO em 12/11/2026: push de Victor `916d8df`, deployment QA READY, inicial P e datas/números/gráfico confirmados na sessão legítima da Piligrin. Detalhes em `n26-qa-marca-periodo-publicados-12-11.md`. Não repetir o pedido de push destes ajustes.
+
 ## 0. Resultado e próximo passo
 
 12/11/2026. Victor autorizou corrigir a marca da Piligrin e a clareza do período, testar somente na QA e atualizar a proposta produtiva antes de aplicar. **Correções concluídas no código da branch QA e na candidata local do pacote.** Próximo passo de Victor: commit e push somente da QA; depois conferir a publicação autenticada. O alias QA ainda não recebeu estas alterações por ação do agente.

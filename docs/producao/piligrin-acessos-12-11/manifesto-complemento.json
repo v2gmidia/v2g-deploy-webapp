@@ -1,0 +1,39 @@
+{
+  "estado": "Complemento local testado; sem aplicação/publicação",
+  "geradoEm": "2026-11-12T19:19:35.423Z",
+  "basePacote": "../piligrin-duu-12-11/manifesto.json",
+  "baseWebApp": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+  "candidata": "C:/Users/victo/v2g-deploy/webapp-piligrin-producao/",
+  "antesActionSha256": "c6d73cb6808d68e61bd787477737486e781b34905b12ada184b3272f0ccafe9a",
+  "arquivos": [
+    {
+      "arquivo": "app/(fluxo)/conectar/escolher/actions.ts",
+      "sha256": "9a69a1cb87eeb02278d552810dad3af2fa838fa4305e0c073b4619ad1b95f7c9"
+    },
+    {
+      "arquivo": "lib/contratacao/conta-acesso-contratado.ts",
+      "sha256": "232232301b1b1a5382a18d3e1d35d95c51de547b8ed040c0c3197b76f0e2ca7f"
+    },
+    {
+      "arquivo": "scripts/conferir-conta-acesso-contratado.mjs",
+      "sha256": "4daa051f6e1668fddd174ff6755b4d1dc567fa00fac0026d4a3d421961a776f9"
+    }
+  ],
+  "sqlSha256": "d821436c3759aea58cac27c2f0cbd83b1db0136d499ac507956d55345d7a6e3c",
+  "funcaoOriginalProducaoSha256": "46139bfafd9660c2677c6fe780e1a1e911b7e287a3bd27b4fa60df0a05edb200",
+  "patchSha256": "bc5ca20f0c62496b69efc10c443d6f4f1033929eb1765ead8b62bd9814777da0",
+  "validacao": {
+    "sqlESeletor": 57,
+    "acaoReal": 6,
+    "regressaoAcessoAgencia": 33,
+    "typecheck": true
+  },
+  "limites": [
+    "SQL não aplicado",
+    "concessão e aceite reais não emitidos",
+    "OAuth e seleção produtivos não concluídos",
+    "sem permissão Meta nova",
+    "sem commit/push/deploy",
+    "não substituir o pacote anterior por QA inteira"
+  ]
+}

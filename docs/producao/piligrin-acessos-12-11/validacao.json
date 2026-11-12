@@ -1,0 +1,8 @@
+{
+  "proofs": 57,
+  "installedBlockerReproduced": true,
+  "proposedSqlAndSelectorPassed": true,
+  "productionApplied": false,
+  "metaCalls": false,
+  "limits": "PostgreSQL local com dependências focadas e fixtures declaradas; não comprova OAuth, UI publicada ou concessão real."
+}
