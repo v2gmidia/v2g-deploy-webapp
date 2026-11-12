@@ -178,7 +178,7 @@ test('resolvedor real autoriza FamFire só na preparação QA e perde a preferê
 test('páginas reais agregam os dois vínculos sem consultar Meta, criar execução ou alterar seleção',async()=>{
   const db=banco(),c=contextos();let meta=0,estado=0;const nada=()=>null;
   const ports={...db.ports,
-    '@/lib/agencia/da-sessao':{carregarAgenciaDaSessao:async()=>({status:'agencia',contexto:c[0],clientes:c,agencyBusinessId:A,origem:'vinculo'})},
+    '@/lib/agencia/da-sessao':{carregarAgenciaDaSessao:async()=>({status:'agencia',agencia:c[0].agencia,businessIdAtivo:A,contexto:c[0],clientes:c,agencyBusinessId:A,origem:'vinculo'})},
     '@/lib/agencia/resumo-da-sessao':{carregarResumoDaCarteira:async id=>({situacao:id===A?'Peça aprovada':'Sem peça recebida nesta fila',temPendencia:true})},
     '@/lib/estado/cliente':{estadoDoCliente:async()=>{estado++;throw Error('estado não deve ser lido na carteira');}},
     '@/lib/backend/anuncios-do-negocio':{anunciosDoNegocioSelecionado:async()=>{meta++;throw Error('Meta não deve ser chamada na carteira');}},
@@ -198,5 +198,98 @@ test('páginas reais agregam os dois vínculos sem consultar Meta, criar execuç
   const criativos=await mod.load('app/(protected)/criativos/page.tsx').default({searchParams:Promise.resolve({})});
   assert.equal(criativos.props.clientes.length,2);assert.equal(criativos.props.itens.length,2);
   assert.deepEqual(Array.from(criativos.props.itens,p=>p.cliente.businessId).sort(),[A,F]);
+  assert.equal(meta,0);assert.equal(estado,0);assert.equal(db.cookie.length,0);
+});
+
+const P='77777777-7777-4777-8777-777777777777';
+function carteiraSemCampanha(override={}){
+  const rows=[{id:P,profile_id:U,name:'Agência sem campanha própria',monthly_budget:null,onboarding:null},...businesses()];
+  const vinculos=links().map(v=>({...v,agency_business_id:P,legacy_shared_business:false}));
+  return {...banco({ativo:P,rows,vinculos,...override}),documentos:rows,antes:JSON.stringify(rows)};
+}
+test('raiz administrativa abre carteira sem onboarding, verba ou campanha própria e preserva os documentos',async()=>{
+  const db=carteiraSemCampanha(),r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
+  assert.equal(r.status,'agencia');assert.equal(r.contexto,null);assert.equal(r.agencyBusinessId,P);
+  assert.equal(r.businessIdAtivo,P);assert.equal(r.agencia,'Agência sem campanha própria');
+  assert.deepEqual(Array.from(r.clientes,c=>c.businessId).sort(),[A,F]);
+  const {selecionarVisaoAgencia}=load('lib/agencia/contexto.ts');
+  assert.equal(selecionarVisaoAgencia(r.contexto,{},true),'carteira');
+  assert.equal(selecionarVisaoAgencia(r.contexto,{cliente:A},true),'invalido');
+  assert.equal(db.cookie.length,0);
+  assert.equal(JSON.stringify(db.documentos),db.antes);
+  assert.ok(db.calls.filter(c=>c.table==='businesses').every(c=>c.filters.some(([k,v])=>k==='profile_id'&&v===U)));
+});
+test('da agência sem campanha, abrir Dúú exige POST próprio e nunca altera briefing ou vínculo',async()=>{
+  const db=carteiraSemCampanha();
+  await assert.rejects(db.mod.load('app/(protected)/agencia/actions.ts').abrirClienteAction({},form({cliente:A,agencia:P,area:'/inicio'})),/REDIRECT/);
+  assert.equal(db.cookie.length,1);assert.equal(db.cookie[0][1],A);
+  assert.equal(new URL(db.redirects[0],'https://qa.invalid').searchParams.get('cliente'),A);
+  const selecionado=carteiraSemCampanha({ativo:A}),r=await selecionado.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
+  assert.equal(r.contexto.businessId,A);assert.equal(r.contexto.praca,'Praça exclusiva Dúú');
+  assert.equal(r.agencyBusinessId,P);
+});
+test('raiz, cliente e retorno são conferidos contra o titular; outro anunciante não ganha seleção',async()=>{
+  for(const alteracao of [
+    {user:{id:V}},
+    {rows:[{id:P,profile_id:V,name:'Raiz alheia'},...businesses()]},
+    {vinculos:links().map(v=>({...v,agency_business_id:P,owner_profile_id:V,legacy_shared_business:false}))},
+    {linkError:{code:'42501'}},
+  ]){
+    const db=carteiraSemCampanha(alteracao),r=await db.mod.load('lib/agencia/da-sessao.ts').carregarAgenciaDaSessao();
+    assert.notEqual(r.status,'agencia');assert.equal(db.cookie.length,0);
+    assert.equal(db.calls.some(c=>c.table==='manager_accounts'),false);
+  }
+  for(const formulario of [form({cliente:S,agencia:P}),form({cliente:A,agencia:A}),form({cliente:P,agencia:P})]){
+    const db=carteiraSemCampanha(),r=await db.mod.load('app/(protected)/agencia/actions.ts').abrirClienteAction({},formulario);
+    assert.ok(r.erro);assert.equal(db.cookie.length,0);
+  }
+});
+test('onboarding real redireciona agência antes de carregar ou criar respostas e permite cadastro do anunciante explícito',async()=>{
+  for(const [db,busca,esperado]of [
+    [carteiraSemCampanha(),{},'carteira'],[banco(),{},'carteira'],
+    [banco(),{cliente:A},'anunciante'],[banco(),{cliente:[A,A]},'carteira'],
+    [carteiraSemCampanha({ativo:A}),{},'anunciante'],
+    [carteiraSemCampanha({linkError:{code:'57014'}}),{},'indisponivel'],
+  ]){
+    assert.equal(await db.mod.load('lib/agencia/entrada.ts').entradaDoOnboardingDaAgencia(busca),esperado);
+  }
+  let leituras=0;
+  const db=carteiraSemCampanha();
+  const mod=ambienteTs({ports:{...db.ports,
+    './actions':{carregarEstadoAction:async()=>{leituras++;throw Error('Onboarding da agência não pode ser criado');}},
+    './Chat':{Chat:()=>null},'./onboarding-editorial.css':{},
+    '@/components/ui/Marca':{Marca:()=>null},
+  }});
+  await assert.rejects(mod.load('app/(fluxo)/onboarding/page.tsx').default({}),/REDIRECT/);
+  await assert.rejects(mod.load('app/(fluxo)/onboarding/layout.tsx').default({children:null}),/REDIRECT/);
+  assert.equal(leituras,0);
+  const actions=ambienteTs({ports:{...db.ports,
+    '@/lib/cadastro/procedencia':{gravarCamposDoCliente:async()=>{throw Error('Não pode gravar na raiz');}},
+    '@/lib/pipeline/conferir-cadastro-operacional':{conferirCadastroOperacionalSeCompleto:async()=>{throw Error('Não pode disparar cadastro');}},
+  }}).load('app/(fluxo)/onboarding/actions.ts');
+  const r=await actions.carregarEstadoAction();assert.match(r.erro,/Abra um cliente/);
+  const gravacao=await actions.salvarRespostaAction({businessId:P,qid:'descricao',texto:'Resposta que não pode ser gravada na agência',origem:'texto'});
+  assert.equal(gravacao.ok,false);assert.match(gravacao.erro,/Abra um cliente/);
+  assert.equal(JSON.stringify(db.documentos),db.antes);
+});
+test('carteira sem anunciante próprio rende Início e Criativos sem buscar métricas ou sugerir questionário da agência',async()=>{
+  const db=carteiraSemCampanha(),nada=()=>null;let estado=0,meta=0;
+  const mod=ambienteTs({ports:{...db.ports,
+    '@/lib/estado/cliente':{estadoDoCliente:async()=>{estado++;throw Error('Não consultar operação da raiz');}},
+    '@/lib/backend/anuncios-do-negocio':{anunciosDoNegocioSelecionado:async()=>{meta++;throw Error('Não consultar Meta da raiz');}},
+    '@/lib/onboarding/pendencia-do-negocio':{lerPendenciaDoNegocio:nada,aplicarAgendaConferida:nada},
+    '@/app/(fluxo)/onboarding/concluido/agenda-actions':{carregarAgendaAction:nada},
+    '@/lib/criativos/pedidos-da-sessao':{carregarPedidosDaSessao:nada},
+    '@/lib/jev/catalogo-da-sessao':{catalogoBarbeariaDisponivel:nada},
+    '@/lib/criativos/contexto-do-negocio-da-sessao':{carregarContextoDoCriativo:nada},
+    '@/components/ui/FaixaReconectar':{FaixaReconectar:nada},'./TelaDoInicio':{TelaDoInicio:nada},
+    './Analisar':{Analisar:nada},'./Amostra':{AmostraDeVereditos:nada},'./PedirRevisao':{PedirRevisao:nada},'./TelaDeCriativos':{TelaDeCriativos:nada},'./PedidoDeImagem':{PedidoDeImagem:nada},
+    './agencia.module.css':css,
+  },env:{V2G_CREATIVE_REVIEW_ENABLED:'true'}});
+  const inicio=await mod.load('app/(protected)/inicio/page.tsx').default({searchParams:Promise.resolve({})});
+  assert.equal(inicio.props.agencia,'Agência sem campanha própria');assert.equal(inicio.props.ativoId,P);
+  const html=renderToStaticMarkup(inicio);assert.match(html,/Abrir aplicativo/);assert.doesNotMatch(html,/Terminar meu cadastro|Sobre seu negócio/);
+  const criativos=await mod.load('app/(protected)/criativos/page.tsx').default({searchParams:Promise.resolve({})});
+  assert.equal(criativos.props.agencia,'Agência sem campanha própria');assert.equal(criativos.props.clientes.length,2);
   assert.equal(meta,0);assert.equal(estado,0);assert.equal(db.cookie.length,0);
 });

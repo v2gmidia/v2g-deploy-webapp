@@ -14,6 +14,46 @@ Decisão sem data não vale; decisão sem motivo é ordem, não decisão.
 
 ---
 
+### 2026-11-11 — Agência administra carteira; onboarding e operação pertencem ao anunciante
+
+**Direção direta de Victor ao entrar na produção.** A Piligrin é agência: precisa de um espaço para gerir seus clientes, sem preencher onboarding de anunciante para a própria agência. Caso queira delegar à V2G uma campanha para si mesma, isso é uma operação opcional própria; pode continuar usando seu gestor para esse trabalho. Não criar uma contratação de campanha da agência como requisito para administrar a carteira.
+
+**Separação exigida:** nome/acesso da agência no cadastro administrativo; briefing, marca, região, conta Meta, verba e cobrança da operação associados a cada anunciante/contratação. Dúú não é a Piligrin. Não importar suas respostas como onboarding da agência nem usar preparação de carteira para afirmar pagamento ou autorizar publicação. Condições contratuais e direitos financeiros permanecem próprios.
+
+**Estado observado:** login produtivo de `victorcabralns@piligrin.com.br` funcionou. O aplicativo criou automaticamente um primeiro negócio vazio, “Meu negócio”, e abriu onboarding de nove perguntas. O preparo local de cadastro compartilhado NÃO foi aplicado e foi bloqueado como superado após esta decisão. A apresentação produtiva precisa ser ajustada para a entrada de agência.
+
+### 2026-11-11 — Nota 360 primeiro na entrada de clientes atuais
+
+**Direção direta de Victor na Central.** Priorizar a Nota 360, de Matheus, para receber os pagamentos a partir de 15/11 e dar acesso à sua carteira no aplicativo. Isso continua o fluxo comercial em andamento, sem reabrir o piloto Piligrin/Dúú como pré-requisito.
+
+**Fato informado e limite:** Victor disse que a Nota “já pagou um”. Natureza e período coberto ainda precisam ser esclarecidos antes de usar esse pagamento para definir acesso/crédito/cobrança. Os seis nomes estão confirmados; implantação individual e identidade dos registros não estão comprovadas por essa lista. Não forçar compra nova que crie um negócio duplicado nem alterar as condições atuais por suposição.
+
+**Recomendação da Central, ainda sem execução externa:** preparar a conta/carteira e os vínculos corretos da Nota, depois usar pagamento válido e o ciclo de 15/11 na mesma cadeia de confirmação/comunicação/acesso. Não liberar acesso aos seis por inferir que um pagamento cobre todos. Cadastro remoto, cobrança, convite e publicação não foram executados.
+
+**Registro:** `estado/n26-recebimento-dia15-caua-analise-11-11.md`, §0.
+
+### 2026-11-11 — Dispensada compra controlada para aceitar o pacote comercial
+
+**Decisão direta de Victor na Central.** Após receber o resultado dos testes/build e a pergunta sobre modalidade da compra controlada, Victor dispensou essa compra: aceita o pacote pelas provas locais existentes. Não insistir em método/valor/finalidade nem criar cobrança de ensaio para encerrar essa etapa.
+
+**Evidência e limite:** candidata comercial mínima com 184 testes, build completo e sete verificações HTTP locais aprovados. Isso é aceite humano para avançar, não registro de pagamento, e-mail recebido ou acesso de comprador em produção. O percurso real será conferido na primeira compra efetiva. Não marcar uma compra produtiva fictícia como concluída.
+
+**Próximo passo:** entrega mínima pronta na branch `codex/comercial-webhook-off`, sem promover toda a QA. Commit/push/publicação e liberação comercial ainda não executados; os controles remotos não foram alterados por esta decisão. Banco/conexões já encerrados não devem ser refeitos.
+
+**Registro:** `estado/n26-comercial-compra-ensaio-dispensada-11-11.md`.
+
+### 2026-11-10 — Comercial antes da expansão e das melhorias do produto
+
+**Direção direta de Victor na Central Novembro.** Prioridade absoluta: concluir venda → pagamento Asaas confirmado → confirmação ao comprador → acesso ao negócio correto, com prova QA e abertura pública tratadas por seus atos próprios. Pagamento Sandbox e código preparado não equivalem à operação de produção concluída.
+
+**Ordem de execução:** (1) comercial; (2) preparar entrada dos clientes já atendidos e App Review em paralelo; (3) criativos em paralelo com rotina e experiência do aplicativo. Não retomar a rodada Piligrin/Dúú enquanto aguarda Cauã. FamFire fica fora desta rodada, pois ainda precisa iniciar a gestão de tráfego. Na preparação posterior ficam Nota 360 (seis anunciantes), Casi e SS Shop, com dados/ativos/acessos individuais.
+
+**Motivo:** impedir desvio para o piloto operacional antes de fechar o caminho de venda e permitir que Victor concentre o trabalho no Comercial. Preservar provas já encerradas; não recomeçar pagamento se uma compra existente válida puder concluir a prova de acesso.
+
+**Limites:** essa prioridade autoriza diagnóstico e preparação comercial; não autoriza por si nova cobrança, mudança de produção, domínio/DNS, credencial, migration, contrato enviado, emissão fiscal ou publicação. Atos externos devem ser apresentados concretamente antes do portão aplicável.
+
+**Registro:** `estado/n26-comercial-prioridade-reconciliada-10-11.md`.
+
 ### 2026-11-06 — Domínio da compra e do aplicativo V2G
 
 **Decisão direta de Victor no Central.** A landing page permanece em `v2gmidia.com.br`; compra e aplicativo usarão `app.v2gmidia.com.br`, com contratação em `https://app.v2gmidia.com.br/contratar`. O endereço `v2g-deploy-webapp.vercel.app/contratar` não é o endereço produtivo aprovado. O futuro `/contratar` da LP encaminhará para o aplicativo somente depois do ensaio completo aprovado.

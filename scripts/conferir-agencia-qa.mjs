@@ -185,6 +185,7 @@ test('menu real mantém cliente e retorno apenas no vínculo exato; query repeti
     return renderToStaticMarkup(React.createElement(NavegacaoAgencia,{businessId:c.businessId,inicio:null,criativos:null}));
   }
   assert.match(menu(`cliente=${A}&busca_carteira=teste`),/criativos\?cliente=.*busca_carteira=teste/);
+  assert.match(menu(`cliente=${A}&busca_carteira=teste`),/anuncios\?cliente=.*busca_carteira=teste/);
   assert.doesNotMatch(menu(`cliente=${B}`),/\?cliente/);
   assert.doesNotMatch(menu(`cliente=${A}&cliente=${A}`),/\?cliente/);
 });
@@ -196,7 +197,7 @@ async function paginaDeInicio(busca,{alvo=A,qa=true}={}){
   const mod=ambienteTs({env:{NODE_ENV:'production'},ports:{
     'next/navigation':{redirect:()=>{throw Error('redirect inesperado');}},
     '@/lib/piloto-qa/acesso':{pilotoQaHabilitado:()=>qa},
-    '@/lib/agencia/da-sessao':{carregarAgenciaDaSessao:async()=>({status:'agencia',contexto:c})},
+    '@/lib/agencia/da-sessao':{carregarAgenciaDaSessao:async()=>({status:'agencia',agencia:c.agencia,businessIdAtivo:A,contexto:c,clientes:[c],agencyBusinessId:A,origem:'legado'})},
     '@/lib/agencia/resumo-da-sessao':{carregarResumoDaCarteira:async()=>resumirCarteira(A,[revisao()],[])},
     '../agencia/actions':{abrirClienteAction:async()=>({erro:'Ensaio sem troca de sessão'})},
     '@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:{id:U}},error:null})},from:()=>q})},

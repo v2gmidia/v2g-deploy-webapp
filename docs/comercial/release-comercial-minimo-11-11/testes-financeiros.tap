@@ -1,0 +1,1115 @@
+TAP version 13
+# Subtest: recebimento exige cobrança, cliente, valor e status vinculados
+ok 1 - recebimento exige cobrança, cliente, valor e status vinculados
+  ---
+  duration_ms: 1.5938
+  type: 'test'
+  ...
+# Subtest: confirmação exige status confirmado e payload íntegro
+ok 2 - confirmação exige status confirmado e payload íntegro
+  ---
+  duration_ms: 0.2389
+  type: 'test'
+  ...
+# Subtest: nota exige autorização e vínculo com cobrança e cliente
+ok 3 - nota exige autorização e vínculo com cobrança e cliente
+  ---
+  duration_ms: 0.2077
+  type: 'test'
+  ...
+# Subtest: dispositivo valida fuso em horas e usa IP e agente fornecidos pelo servidor
+ok 4 - dispositivo valida fuso em horas e usa IP e agente fornecidos pelo servidor
+  ---
+  duration_ms: 1.0159
+  type: 'test'
+  ...
+# Subtest: desafio exige HTTPS do provedor sem destino local, IP, credencial ou URL fornecida pelo pagador
+ok 5 - desafio exige HTTPS do provedor sem destino local, IP, credencial ou URL fornecida pelo pagador
+  ---
+  duration_ms: 0.9708
+  type: 'test'
+  ...
+# Subtest: cria assinatura so apos confirmacao e com inicio no mes seguinte, sem cartao completo
+ok 6 - cria assinatura so apos confirmacao e com inicio no mes seguinte, sem cartao completo
+  ---
+  duration_ms: 3.3637
+  type: 'test'
+  ...
+# Subtest: callback ou pedido pendente nao cria assinatura
+ok 7 - callback ou pedido pendente nao cria assinatura
+  ---
+  duration_ms: 0.3575
+  type: 'test'
+  ...
+# Subtest: pagamento, cliente, valor, data, origem e status precisam coincidir com a consulta canonica
+ok 8 - pagamento, cliente, valor, data, origem e status precisam coincidir com a consulta canonica
+  ---
+  duration_ms: 0.7218
+  type: 'test'
+  ...
+# Subtest: RECEIVED canonico tambem permite recorrencia do proximo mes, nao uma nova primeira cobranca
+ok 9 - RECEIVED canonico tambem permite recorrencia do proximo mes, nao uma nova primeira cobranca
+  ---
+  duration_ms: 0.4885
+  type: 'test'
+  ...
+# Subtest: token ausente, estorno/contestacao e vencimento passado bloqueiam nova recorrencia
+ok 10 - token ausente, estorno/contestacao e vencimento passado bloqueiam nova recorrencia
+  ---
+  duration_ms: 0.5029
+  type: 'test'
+  ...
+# Subtest: duas entregas concorrentes fazem apenas um POST ao provedor
+ok 11 - duas entregas concorrentes fazem apenas um POST ao provedor
+  ---
+  duration_ms: 0.4916
+  type: 'test'
+  ...
+# Subtest: timeout e reserva anterior nao repetem POST; reconciliacao recupera uma assinatura compativel
+ok 12 - timeout e reserva anterior nao repetem POST; reconciliacao recupera uma assinatura compativel
+  ---
+  duration_ms: 0.5024
+  type: 'test'
+  ...
+# Subtest: assinatura divergente ou duplicada exige conciliacao e nao e vinculada
+ok 13 - assinatura divergente ou duplicada exige conciliacao e nao e vinculada
+  ---
+  duration_ms: 0.4419
+  type: 'test'
+  ...
+# Subtest: data avancada so vincula com primeira parcela gerada exatamente compativel
+ok 14 - data avancada so vincula com primeira parcela gerada exatamente compativel
+  ---
+  duration_ms: 0.3004
+  type: 'test'
+  ...
+# Subtest: parcela divergente, cancelada, duplicada, ausente ou consulta incompleta nao autoriza vinculo
+ok 15 - parcela divergente, cancelada, duplicada, ausente ou consulta incompleta nao autoriza vinculo
+  ---
+  duration_ms: 0.4207
+  type: 'test'
+  ...
+# Subtest: assinatura ja vinculada com data correta nao gera nova chamada externa
+ok 16 - assinatura ja vinculada com data correta nao gera nova chamada externa
+  ---
+  duration_ms: 0.1053
+  type: 'test'
+  ...
+# Subtest: operador ve recorrencia pendente mesmo com perfil ja vinculado
+ok 17 - operador ve recorrencia pendente mesmo com perfil ja vinculado
+  ---
+  duration_ms: 0.3464
+  type: 'test'
+  ...
+# Subtest: todos os arquivos de migration tem manifesto, sem fingir aplicacao no banco
+ok 18 - todos os arquivos de migration tem manifesto, sem fingir aplicacao no banco
+  ---
+  duration_ms: 0.6047
+  type: 'test'
+  ...
+# Subtest: integracao liga formulario, cobranca avulsa, persistencia e webhook com modo QA explícito
+ok 19 - integracao liga formulario, cobranca avulsa, persistencia e webhook com modo QA explícito
+  ---
+  duration_ms: 4.1696
+  type: 'test'
+  ...
+# Subtest: SQL produção revisável: precondições, ACL, RPCs reais e isolamento A/B
+    # Subtest: readiness retorna 1, somente service_role; sem leitura pública financeira
+    ok 1 - readiness retorna 1, somente service_role; sem leitura pública financeira
+      ---
+      duration_ms: 16.3205
+      type: 'test'
+      ...
+    # Subtest: coluna, RLS, ACL ou unicidade ausentes fecham gate; migration parcial reverte
+    ok 2 - coluna, RLS, ACL ou unicidade ausentes fecham gate; migration parcial reverte
+      ---
+      duration_ms: 45.9566
+      type: 'test'
+      ...
+    # Subtest: SQL mensal 3DS: autorização não aprova; RECEIVED permite uma reserva; negativa prévia impede liberação
+    ok 3 - SQL mensal 3DS: autorização não aprova; RECEIVED permite uma reserva; negativa prévia impede liberação
+      ---
+      duration_ms: 47.9823
+      type: 'test'
+      ...
+    # Subtest: mesmo email/CPF não funde negócios; mesma referência preserva o pedido
+    ok 4 - mesmo email/CPF não funde negócios; mesma referência preserva o pedido
+      ---
+      duration_ms: 4.6811
+      type: 'test'
+      ...
+    # Subtest: estorno/replay A bloqueiam apenas A; B preserva direito; evento divergente recusa
+    ok 5 - estorno/replay A bloqueiam apenas A; B preserva direito; evento divergente recusa
+      ---
+      duration_ms: 18.9129
+      type: 'test'
+      ...
+    1..5
+ok 20 - SQL produção revisável: precondições, ACL, RPCs reais e isolamento A/B
+  ---
+  duration_ms: 2763.2741
+  type: 'test'
+  ...
+# Subtest: produção default OFF; nenhuma configuração parcial, preview ou QA abre compras
+ok 21 - produção default OFF; nenhuma configuração parcial, preview ou QA abre compras
+  ---
+  duration_ms: 12.2557
+  type: 'test'
+  ...
+# Subtest: fechar novas compras preserva processamento de pagamentos em voo
+ok 22 - fechar novas compras preserva processamento de pagamentos em voo
+  ---
+  duration_ms: 0.2805
+  type: 'test'
+  ...
+# Subtest: origem produtiva é exclusivamente app V2G; domínio de projeto não autoriza preview nem alias antigo
+ok 23 - origem produtiva é exclusivamente app V2G; domínio de projeto não autoriza preview nem alias antigo
+  ---
+  duration_ms: 1.4902
+  type: 'test'
+  ...
+# Subtest: requisição produtiva exige HTTPS, host exato e origem do app para mutações
+ok 24 - requisição produtiva exige HTTPS, host exato e origem do app para mutações
+  ---
+  duration_ms: 0.6618
+  type: 'test'
+  ...
+# Subtest: transporte produtivo: host/chave próprios, sem redirect/retry; caminhos inválidos não chamam rede
+ok 25 - transporte produtivo: host/chave próprios, sem redirect/retry; caminhos inválidos não chamam rede
+  ---
+  duration_ms: 46.3073
+  type: 'test'
+  ...
+# Subtest: bridge escolhe produção, callback próprio e fecha se readiness faltar
+ok 26 - bridge escolhe produção, callback próprio e fecha se readiness faltar
+  ---
+  duration_ms: 66.5973
+  type: 'test'
+  ...
+# Subtest: QA real continua no host/chave de teste e callback QA, sem depender do modo produção
+ok 27 - QA real continua no host/chave de teste e callback QA, sem depender do modo produção
+  ---
+  duration_ms: 62.3746
+  type: 'test'
+  ...
+# Subtest: status de produção continua disponível com compras/API novas fechadas; resposta não expõe dados
+ok 28 - status de produção continua disponível com compras/API novas fechadas; resposta não expõe dados
+  ---
+  duration_ms: 94.4674
+  type: 'test'
+  ...
+# Subtest: páginas reais de compra/pagamento negam alias antigo antes de consultar Auth ou banco
+ok 29 - páginas reais de compra/pagamento negam alias antigo antes de consultar Auth ou banco
+  ---
+  duration_ms: 412.5469
+  type: 'test'
+  ...
+# Subtest: endpoint de produção exige modo/token/schema; endpoint QA não aceita configuração produção
+ok 30 - endpoint de produção exige modo/token/schema; endpoint QA não aceita configuração produção
+  ---
+  duration_ms: 411.4796
+  type: 'test'
+  ...
+# Subtest: webhook produtivo no alias Vercel antigo ou host indevido não lê banco nem chama provedor
+ok 31 - webhook produtivo no alias Vercel antigo ou host indevido não lê banco nem chama provedor
+  ---
+  duration_ms: 256.7096
+  type: 'test'
+  ...
+# Subtest: produção Pix confirmado consulta o provedor; persistência antecede email, replay não reaprovado
+ok 32 - produção Pix confirmado consulta o provedor; persistência antecede email, replay não reaprovado
+  ---
+  duration_ms: 84.6497
+  type: 'test'
+  ...
+# Subtest: produção não aceita confirmação pendente, divergente ou indisponível nem pedido órfão
+ok 33 - produção não aceita confirmação pendente, divergente ou indisponível nem pedido órfão
+  ---
+  duration_ms: 565.9045
+  type: 'test'
+  ...
+# Subtest: pendência/autorização/risco persistem sem aprovação, assinatura ou email
+ok 34 - pendência/autorização/risco persistem sem aprovação, assinatura ou email
+  ---
+  duration_ms: 292.9451
+  type: 'test'
+  ...
+# Subtest: estorno/replay não envia email nem cria assinatura; confirmação antiga estornada exige registro exato
+ok 35 - estorno/replay não envia email nem cria assinatura; confirmação antiga estornada exige registro exato
+  ---
+  duration_ms: 268.9179
+  type: 'test'
+  ...
+# Subtest: mensal 3DS produtivo usa RPC inicial e efeitos no modo produção; novas compras fechadas não perdem confirmação
+ok 36 - mensal 3DS produtivo usa RPC inicial e efeitos no modo produção; novas compras fechadas não perdem confirmação
+  ---
+  duration_ms: 70.5814
+  type: 'test'
+  ...
+# Subtest: origem assistida ou valor de outro pedido recusa sem efeitos
+ok 37 - origem assistida ou valor de outro pedido recusa sem efeitos
+  ---
+  duration_ms: 218.0685
+  type: 'test'
+  ...
+# Subtest: email produtivo confirma comprador, usa chave própria e outbox impede reenvio
+ok 38 - email produtivo confirma comprador, usa chave própria e outbox impede reenvio
+  ---
+  duration_ms: 115.8736
+  type: 'test'
+  ...
+# Subtest: email pendente/estornado/ocorrência ou modo/schema desabilitados não envia
+ok 39 - email pendente/estornado/ocorrência ou modo/schema desabilitados não envia
+  ---
+  duration_ms: 307.6684
+  type: 'test'
+  ...
+# Subtest: entrada de compra default OFF não acessa Auth/DB/rede; schema ausente não registra pedido
+ok 40 - entrada de compra default OFF não acessa Auth/DB/rede; schema ausente não registra pedido
+  ---
+  duration_ms: 257.6446
+  type: 'test'
+  ...
+# Subtest: actions reais recusam host/origem antigos antes de pedido, cartão ou HTTP; Turnstile de outro host não cria pedido
+ok 41 - actions reais recusam host/origem antigos antes de pedido, cartão ou HTTP; Turnstile de outro host não cria pedido
+  ---
+  duration_ms: 1020.2614
+  type: 'test'
+  ...
+# Subtest: Pix produtivo: action -> RPC -> reserva -> cliente/cobrança, mantendo referência e descontos à vista
+ok 42 - Pix produtivo: action -> RPC -> reserva -> cliente/cobrança, mantendo referência e descontos à vista
+  ---
+  duration_ms: 209.3594
+  type: 'test'
+  ...
+# Subtest: mensal e anual no cartão produtivo pedem 3DS; só mensal guarda IP e prepara recorrência
+ok 43 - mensal e anual no cartão produtivo pedem 3DS; só mensal guarda IP e prepara recorrência
+  ---
+  duration_ms: 206.1091
+  type: 'test'
+  ...
+# Subtest: timeout da cobrança preserva reserva: reenvio não faz outro POST
+ok 44 - timeout da cobrança preserva reserva: reenvio não faz outro POST
+  ---
+  duration_ms: 67.5939
+  type: 'test'
+  ...
+# Subtest: adaptador mensal real continua com checkout fechado, cria mês seguinte uma vez e não persiste token
+ok 45 - adaptador mensal real continua com checkout fechado, cria mês seguinte uma vez e não persiste token
+  ---
+  duration_ms: 61.1952
+  type: 'test'
+  ...
+# Subtest: assinatura ambígua só consulta no replay, não cria outra; processamento OFF não chama provedor
+ok 46 - assinatura ambígua só consulta no replay, não cria outra; processamento OFF não chama provedor
+  ---
+  duration_ms: 120.8492
+  type: 'test'
+  ...
+# Subtest: cobra avulso antes de qualquer assinatura
+ok 47 - cobra avulso antes de qualquer assinatura
+  ---
+  duration_ms: 1.607
+  type: 'test'
+  ...
+# Subtest: não cria assinatura antes do PAYMENT_CONFIRMED conciliado
+ok 48 - não cria assinatura antes do PAYMENT_CONFIRMED conciliado
+  ---
+  duration_ms: 0.2437
+  type: 'test'
+  ...
+# Subtest: pagamento confirmado sem token não pede cartão nem inventa assinatura
+ok 49 - pagamento confirmado sem token não pede cartão nem inventa assinatura
+  ---
+  duration_ms: 0.1493
+  type: 'test'
+  ...
+# Subtest: assinatura começa no mês seguinte com chave estável
+ok 50 - assinatura começa no mês seguinte com chave estável
+  ---
+  duration_ms: 1.8522
+  type: 'test'
+  ...
+# Subtest: assinatura existente com vencimento divergente exige revisão
+ok 51 - assinatura existente com vencimento divergente exige revisão
+  ---
+  duration_ms: 0.2666
+  type: 'test'
+  ...
+# Subtest: datas inválidas não viram vencimento
+ok 52 - datas inválidas não viram vencimento
+  ---
+  duration_ms: 0.5381
+  type: 'test'
+  ...
+# Subtest: orfao excluido com identidade integral e evidencia persistida recebe aceite historico
+ok 53 - orfao excluido com identidade integral e evidencia persistida recebe aceite historico
+  ---
+  duration_ms: 279.6769
+  type: 'test'
+  ...
+# Subtest: replay e concorrencia repetem apenas leituras sem fabricar idempotencia no ledger
+ok 54 - replay e concorrencia repetem apenas leituras sem fabricar idempotencia no ledger
+  ---
+  duration_ms: 143.8906
+  type: 'test'
+  ...
+# Subtest: novo ativo sem vinculo permanece pendente sem efeitos
+ok 55 - novo ativo sem vinculo permanece pendente sem efeitos
+  ---
+  duration_ms: 140.0407
+  type: 'test'
+  ...
+# Subtest: pedido desconhecido permanece pendente sem efeitos
+ok 56 - pedido desconhecido permanece pendente sem efeitos
+  ---
+  duration_ms: 128.4697
+  type: 'test'
+  ...
+# Subtest: cliente divergente permanece pendente sem efeitos
+ok 57 - cliente divergente permanece pendente sem efeitos
+  ---
+  duration_ms: 147.1515
+  type: 'test'
+  ...
+# Subtest: cobranca divergente permanece pendente sem efeitos
+ok 58 - cobranca divergente permanece pendente sem efeitos
+  ---
+  duration_ms: 180.1115
+  type: 'test'
+  ...
+# Subtest: assinatura divergente permanece pendente sem efeitos
+ok 59 - assinatura divergente permanece pendente sem efeitos
+  ---
+  duration_ms: 135.5766
+  type: 'test'
+  ...
+# Subtest: valor divergente permanece pendente sem efeitos
+ok 60 - valor divergente permanece pendente sem efeitos
+  ---
+  duration_ms: 106.0879
+  type: 'test'
+  ...
+# Subtest: forma divergente permanece pendente sem efeitos
+ok 61 - forma divergente permanece pendente sem efeitos
+  ---
+  duration_ms: 96.6532
+  type: 'test'
+  ...
+# Subtest: vencimento divergente permanece pendente sem efeitos
+ok 62 - vencimento divergente permanece pendente sem efeitos
+  ---
+  duration_ms: 84.6203
+  type: 'test'
+  ...
+# Subtest: referencia divergente permanece pendente sem efeitos
+ok 63 - referencia divergente permanece pendente sem efeitos
+  ---
+  duration_ms: 99.6585
+  type: 'test'
+  ...
+# Subtest: assinatura ainda ativa permanece pendente sem efeitos
+ok 64 - assinatura ainda ativa permanece pendente sem efeitos
+  ---
+  duration_ms: 107.416
+  type: 'test'
+  ...
+# Subtest: assinatura nao excluida permanece pendente sem efeitos
+ok 65 - assinatura nao excluida permanece pendente sem efeitos
+  ---
+  duration_ms: 98.0737
+  type: 'test'
+  ...
+# Subtest: assinatura de outro cliente permanece pendente sem efeitos
+ok 66 - assinatura de outro cliente permanece pendente sem efeitos
+  ---
+  duration_ms: 84.4253
+  type: 'test'
+  ...
+# Subtest: assinatura de outra referencia permanece pendente sem efeitos
+ok 67 - assinatura de outra referencia permanece pendente sem efeitos
+  ---
+  duration_ms: 105.8039
+  type: 'test'
+  ...
+# Subtest: proxima parcela nao corresponde permanece pendente sem efeitos
+ok 68 - proxima parcela nao corresponde permanece pendente sem efeitos
+  ---
+  duration_ms: 88.727
+  type: 'test'
+  ...
+# Subtest: primeira cobranca ainda paga permanece pendente sem efeitos
+ok 69 - primeira cobranca ainda paga permanece pendente sem efeitos
+  ---
+  duration_ms: 98.5865
+  type: 'test'
+  ...
+# Subtest: estorno parcial permanece pendente sem efeitos
+ok 70 - estorno parcial permanece pendente sem efeitos
+  ---
+  duration_ms: 88.6283
+  type: 'test'
+  ...
+# Subtest: estorno sem valor valido permanece pendente sem efeitos
+ok 71 - estorno sem valor valido permanece pendente sem efeitos
+  ---
+  duration_ms: 135.5222
+  type: 'test'
+  ...
+# Subtest: estorno com compensacao negativa permanece pendente sem efeitos
+ok 72 - estorno com compensacao negativa permanece pendente sem efeitos
+  ---
+  duration_ms: 86.1554
+  type: 'test'
+  ...
+# Subtest: estorno em andamento permanece pendente sem efeitos
+ok 73 - estorno em andamento permanece pendente sem efeitos
+  ---
+  duration_ms: 83.8465
+  type: 'test'
+  ...
+# Subtest: primeira cobranca de outro pedido permanece pendente sem efeitos
+ok 74 - primeira cobranca de outro pedido permanece pendente sem efeitos
+  ---
+  duration_ms: 116.6837
+  type: 'test'
+  ...
+# Subtest: negocio nao marcado ficticio permanece pendente sem efeitos
+ok 75 - negocio nao marcado ficticio permanece pendente sem efeitos
+  ---
+  duration_ms: 84.9713
+  type: 'test'
+  ...
+# Subtest: sem confirmacao persistida permanece pendente sem efeitos
+ok 76 - sem confirmacao persistida permanece pendente sem efeitos
+  ---
+  duration_ms: 78.0978
+  type: 'test'
+  ...
+# Subtest: falha no ledger permanece pendente sem efeitos
+ok 77 - falha no ledger permanece pendente sem efeitos
+  ---
+  duration_ms: 79.5636
+  type: 'test'
+  ...
+# Subtest: falha na consulta inicial permanece pendente sem efeitos
+ok 78 - falha na consulta inicial permanece pendente sem efeitos
+  ---
+  duration_ms: 74.8898
+  type: 'test'
+  ...
+# Subtest: falha na consulta do pedido permanece pendente sem efeitos
+ok 79 - falha na consulta do pedido permanece pendente sem efeitos
+  ---
+  duration_ms: 85.4616
+  type: 'test'
+  ...
+# Subtest: falha na consulta do negocio permanece pendente sem efeitos
+ok 80 - falha na consulta do negocio permanece pendente sem efeitos
+  ---
+  duration_ms: 79.2574
+  type: 'test'
+  ...
+# Subtest: provedor indisponivel permanece pendente sem efeitos
+ok 81 - provedor indisponivel permanece pendente sem efeitos
+  ---
+  duration_ms: 74.6449
+  type: 'test'
+  ...
+# Subtest: schema desligado permanece pendente sem efeitos
+ok 82 - schema desligado permanece pendente sem efeitos
+  ---
+  duration_ms: 89.9823
+  type: 'test'
+  ...
+# Subtest: sem reserva persistida permanece pendente sem efeitos
+ok 83 - sem reserva persistida permanece pendente sem efeitos
+  ---
+  duration_ms: 70.6778
+  type: 'test'
+  ...
+# Subtest: reserva de outro vencimento permanece pendente sem efeitos
+ok 84 - reserva de outro vencimento permanece pendente sem efeitos
+  ---
+  duration_ms: 65.213
+  type: 'test'
+  ...
+# Subtest: pedido ainda pendente permanece pendente sem efeitos
+ok 85 - pedido ainda pendente permanece pendente sem efeitos
+  ---
+  duration_ms: 68.1761
+  type: 'test'
+  ...
+# Subtest: fluxo direto permanece pendente sem efeitos
+ok 86 - fluxo direto permanece pendente sem efeitos
+  ---
+  duration_ms: 85.6143
+  type: 'test'
+  ...
+# Subtest: periodo anual permanece pendente sem efeitos
+ok 87 - periodo anual permanece pendente sem efeitos
+  ---
+  duration_ms: 93.4065
+  type: 'test'
+  ...
+# Subtest: novo vinculo presente permanece pendente sem efeitos
+ok 88 - novo vinculo presente permanece pendente sem efeitos
+  ---
+  duration_ms: 80.6299
+  type: 'test'
+  ...
+# Subtest: evento de pagamento nao recebe excecao permanece pendente sem efeitos
+ok 89 - evento de pagamento nao recebe excecao permanece pendente sem efeitos
+  ---
+  duration_ms: 85.1349
+  type: 'test'
+  ...
+# Subtest: autenticacao invalida nao consulta pedido, provedor ou ledger
+ok 90 - autenticacao invalida nao consulta pedido, provedor ou ledger
+  ---
+  duration_ms: 74.0924
+  type: 'test'
+  ...
+# Subtest: replay do evento registrado apos estorno recebe 200 sem recorrencia ou email
+ok 91 - replay do evento registrado apos estorno recebe 200 sem recorrencia ou email
+  ---
+  duration_ms: 281.2914
+  type: 'test'
+  ...
+# Subtest: repeticoes concorrentes estornadas nao reaprovam nem liberam um pedido pendente
+ok 92 - repeticoes concorrentes estornadas nao reaprovam nem liberam um pedido pendente
+  ---
+  duration_ms: 183.488
+  type: 'test'
+  ...
+# Subtest: evento nao persistido ou ledger indisponivel nunca recebe aceite historico
+ok 93 - evento nao persistido ou ledger indisponivel nunca recebe aceite historico
+  ---
+  duration_ms: 262.3975
+  type: 'test'
+  ...
+# Subtest: estorno original e seu replay chegam a RPC idempotente sem nova aprovacao
+ok 94 - estorno original e seu replay chegam a RPC idempotente sem nova aprovacao
+  ---
+  duration_ms: 105.645
+  type: 'test'
+  ...
+# Subtest: confirmacao ainda paga persiste antes da conciliacao pendente e nao finge conclusao
+ok 95 - confirmacao ainda paga persiste antes da conciliacao pendente e nao finge conclusao
+  ---
+  duration_ms: 173.3648
+  type: 'test'
+  ...
+# Subtest: token invalido bloqueia antes de banco ou provedor
+ok 96 - token invalido bloqueia antes de banco ou provedor
+  ---
+  duration_ms: 126.6432
+  type: 'test'
+  ...
+# Subtest: risco pendente/aprovado/reprovado e autorizacao sao persistidos sem email ou assinatura
+ok 97 - risco pendente/aprovado/reprovado e autorizacao sao persistidos sem email ou assinatura
+  ---
+  duration_ms: 483.3658
+  type: 'test'
+  ...
+# Subtest: RPC sem suporte ao novo evento nao recebe aceite silencioso
+ok 98 - RPC sem suporte ao novo evento nao recebe aceite silencioso
+  ---
+  duration_ms: 88.841
+  type: 'test'
+  ...
+# Subtest: webhook pago com consulta canonica ainda autorizada nao libera acesso ou assinatura
+ok 99 - webhook pago com consulta canonica ainda autorizada nao libera acesso ou assinatura
+  ---
+  duration_ms: 87.5498
+  type: 'test'
+  ...
+# Subtest: RECEIVED inicial tambem tenta conciliacao, sem fingir sucesso se assinatura falhar
+ok 100 - RECEIVED inicial tambem tenta conciliacao, sem fingir sucesso se assinatura falhar
+  ---
+  duration_ms: 101.7383
+  type: 'test'
+  ...
+# Subtest: renovacao paga e intermediarios usam ledger financeiro sem recriar assinatura inicial
+ok 101 - renovacao paga e intermediarios usam ledger financeiro sem recriar assinatura inicial
+  ---
+  duration_ms: 503.4304
+  type: 'test'
+  ...
+# Subtest: externo confirmado: aceite sem efeitos em production
+ok 102 - externo confirmado: aceite sem efeitos em production
+  ---
+  duration_ms: 130.9623
+  type: 'test'
+  ...
+# Subtest: externo confirmado: aceite sem efeitos em sandbox
+ok 103 - externo confirmado: aceite sem efeitos em sandbox
+  ---
+  duration_ms: 108.7716
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CREATED
+ok 104 - externo confirmado reconhecido em PAYMENT_CREATED
+  ---
+  duration_ms: 85.0843
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_UPDATED
+ok 105 - externo confirmado reconhecido em PAYMENT_UPDATED
+  ---
+  duration_ms: 78.1249
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_OVERDUE
+ok 106 - externo confirmado reconhecido em PAYMENT_OVERDUE
+  ---
+  duration_ms: 85.1751
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_AWAITING_RISK_ANALYSIS
+ok 107 - externo confirmado reconhecido em PAYMENT_AWAITING_RISK_ANALYSIS
+  ---
+  duration_ms: 53.8906
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_APPROVED_BY_RISK_ANALYSIS
+ok 108 - externo confirmado reconhecido em PAYMENT_APPROVED_BY_RISK_ANALYSIS
+  ---
+  duration_ms: 71.2519
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_REPROVED_BY_RISK_ANALYSIS
+ok 109 - externo confirmado reconhecido em PAYMENT_REPROVED_BY_RISK_ANALYSIS
+  ---
+  duration_ms: 65.6817
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_AUTHORIZED
+ok 110 - externo confirmado reconhecido em PAYMENT_AUTHORIZED
+  ---
+  duration_ms: 67.8929
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CONFIRMED
+ok 111 - externo confirmado reconhecido em PAYMENT_CONFIRMED
+  ---
+  duration_ms: 108.7633
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_RECEIVED
+ok 112 - externo confirmado reconhecido em PAYMENT_RECEIVED
+  ---
+  duration_ms: 78.3576
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED
+ok 113 - externo confirmado reconhecido em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED
+  ---
+  duration_ms: 78.6734
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED
+ok 114 - externo confirmado reconhecido em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED
+  ---
+  duration_ms: 55.0903
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_REFUND_IN_PROGRESS
+ok 115 - externo confirmado reconhecido em PAYMENT_REFUND_IN_PROGRESS
+  ---
+  duration_ms: 52.3179
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_PARTIALLY_REFUNDED
+ok 116 - externo confirmado reconhecido em PAYMENT_PARTIALLY_REFUNDED
+  ---
+  duration_ms: 49.7391
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_REFUNDED
+ok 117 - externo confirmado reconhecido em PAYMENT_REFUNDED
+  ---
+  duration_ms: 54.9355
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CHARGEBACK_REQUESTED
+ok 118 - externo confirmado reconhecido em PAYMENT_CHARGEBACK_REQUESTED
+  ---
+  duration_ms: 46.6845
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CHARGEBACK_DISPUTE
+ok 119 - externo confirmado reconhecido em PAYMENT_CHARGEBACK_DISPUTE
+  ---
+  duration_ms: 54.9252
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_AWAITING_CHARGEBACK_REVERSAL
+ok 120 - externo confirmado reconhecido em PAYMENT_AWAITING_CHARGEBACK_REVERSAL
+  ---
+  duration_ms: 62.3074
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CREATED nao e descartado
+ok 121 - possivel pedido antecipado em PAYMENT_CREATED nao e descartado
+  ---
+  duration_ms: 46.411
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_UPDATED nao e descartado
+ok 122 - possivel pedido antecipado em PAYMENT_UPDATED nao e descartado
+  ---
+  duration_ms: 49.839
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_OVERDUE nao e descartado
+ok 123 - possivel pedido antecipado em PAYMENT_OVERDUE nao e descartado
+  ---
+  duration_ms: 58.6439
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_AWAITING_RISK_ANALYSIS nao e descartado
+ok 124 - possivel pedido antecipado em PAYMENT_AWAITING_RISK_ANALYSIS nao e descartado
+  ---
+  duration_ms: 45.6799
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_APPROVED_BY_RISK_ANALYSIS nao e descartado
+ok 125 - possivel pedido antecipado em PAYMENT_APPROVED_BY_RISK_ANALYSIS nao e descartado
+  ---
+  duration_ms: 45.9312
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_REPROVED_BY_RISK_ANALYSIS nao e descartado
+ok 126 - possivel pedido antecipado em PAYMENT_REPROVED_BY_RISK_ANALYSIS nao e descartado
+  ---
+  duration_ms: 56.3069
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_AUTHORIZED nao e descartado
+ok 127 - possivel pedido antecipado em PAYMENT_AUTHORIZED nao e descartado
+  ---
+  duration_ms: 48.3315
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CONFIRMED nao e descartado
+ok 128 - possivel pedido antecipado em PAYMENT_CONFIRMED nao e descartado
+  ---
+  duration_ms: 52.7189
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_RECEIVED nao e descartado
+ok 129 - possivel pedido antecipado em PAYMENT_RECEIVED nao e descartado
+  ---
+  duration_ms: 49.347
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED nao e descartado
+ok 130 - possivel pedido antecipado em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED nao e descartado
+  ---
+  duration_ms: 42.788
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED nao e descartado
+ok 131 - possivel pedido antecipado em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED nao e descartado
+  ---
+  duration_ms: 50.5661
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_REFUND_IN_PROGRESS nao e descartado
+ok 132 - possivel pedido antecipado em PAYMENT_REFUND_IN_PROGRESS nao e descartado
+  ---
+  duration_ms: 57.7483
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_PARTIALLY_REFUNDED nao e descartado
+ok 133 - possivel pedido antecipado em PAYMENT_PARTIALLY_REFUNDED nao e descartado
+  ---
+  duration_ms: 46.5951
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_REFUNDED nao e descartado
+ok 134 - possivel pedido antecipado em PAYMENT_REFUNDED nao e descartado
+  ---
+  duration_ms: 40.4313
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CHARGEBACK_REQUESTED nao e descartado
+ok 135 - possivel pedido antecipado em PAYMENT_CHARGEBACK_REQUESTED nao e descartado
+  ---
+  duration_ms: 45.5454
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CHARGEBACK_DISPUTE nao e descartado
+ok 136 - possivel pedido antecipado em PAYMENT_CHARGEBACK_DISPUTE nao e descartado
+  ---
+  duration_ms: 46.3631
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_AWAITING_CHARGEBACK_REVERSAL nao e descartado
+ok 137 - possivel pedido antecipado em PAYMENT_AWAITING_CHARGEBACK_REVERSAL nao e descartado
+  ---
+  duration_ms: 45.6494
+  type: 'test'
+  ...
+# Subtest: assinatura externa e cartao sao conferidos no mesmo ambiente
+ok 138 - assinatura externa e cartao sao conferidos no mesmo ambiente
+  ---
+  duration_ms: 65.2756
+  type: 'test'
+  ...
+# Subtest: Sandbox desligado impede consultas
+ok 139 - Sandbox desligado impede consultas
+  ---
+  duration_ms: 49.9018
+  type: 'test'
+  ...
+# Subtest: referencia externa undefined conferida no provedor
+ok 140 - referencia externa undefined conferida no provedor
+  ---
+  duration_ms: 45.787
+  type: 'test'
+  ...
+# Subtest: referencia externa  conferida no provedor
+ok 141 - referencia externa  conferida no provedor
+  ---
+  duration_ms: 48.6191
+  type: 'test'
+  ...
+# Subtest: referencia externa manual-31 conferida no provedor
+ok 142 - referencia externa manual-31 conferida no provedor
+  ---
+  duration_ms: 60.625
+  type: 'test'
+  ...
+# Subtest: indicio de pedido abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+ok 143 - indicio de pedido abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+  ---
+  duration_ms: 52.7724
+  type: 'test'
+  ...
+# Subtest: indicio de pedido ABCDEFAB-CDEF-4ABC-8DEF-ABCDEFABCDEF preserva retentativa
+ok 144 - indicio de pedido ABCDEFAB-CDEF-4ABC-8DEF-ABCDEFABCDEF preserva retentativa
+  ---
+  duration_ms: 42.8223
+  type: 'test'
+  ...
+# Subtest: indicio de pedido pedido:abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+ok 145 - indicio de pedido pedido:abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+  ---
+  duration_ms: 32.8045
+  type: 'test'
+  ...
+# Subtest: indicio de pedido  abcdefab-cdef-4abc-8def-abcdefabcdef  preserva retentativa
+ok 146 - indicio de pedido  abcdefab-cdef-4abc-8def-abcdefabcdef  preserva retentativa
+  ---
+  duration_ms: 44.2606
+  type: 'test'
+  ...
+# Subtest: referencia UUID apenas canonica nao descarta evento
+ok 147 - referencia UUID apenas canonica nao descarta evento
+  ---
+  duration_ms: 48.9314
+  type: 'test'
+  ...
+# Subtest: referencias diferentes nao descarta evento
+ok 148 - referencias diferentes nao descarta evento
+  ---
+  duration_ms: 43.9624
+  type: 'test'
+  ...
+# Subtest: referencia recebida objeto nao descarta evento
+ok 149 - referencia recebida objeto nao descarta evento
+  ---
+  duration_ms: 43.5956
+  type: 'test'
+  ...
+# Subtest: referencia canonica numerica nao descarta evento
+ok 150 - referencia canonica numerica nao descarta evento
+  ---
+  duration_ms: 37.3961
+  type: 'test'
+  ...
+# Subtest: provedor indisponivel nao descarta evento
+ok 151 - provedor indisponivel nao descarta evento
+  ---
+  duration_ms: 40.799
+  type: 'test'
+  ...
+# Subtest: provedor excecao nao descarta evento
+ok 152 - provedor excecao nao descarta evento
+  ---
+  duration_ms: 53.1054
+  type: 'test'
+  ...
+# Subtest: corpo canonico nulo nao descarta evento
+ok 153 - corpo canonico nulo nao descarta evento
+  ---
+  duration_ms: 43.4627
+  type: 'test'
+  ...
+# Subtest: corpo canonico lista nao descarta evento
+ok 154 - corpo canonico lista nao descarta evento
+  ---
+  duration_ms: 37.0464
+  type: 'test'
+  ...
+# Subtest: cobranca divergente nao descarta evento
+ok 155 - cobranca divergente nao descarta evento
+  ---
+  duration_ms: 43.9212
+  type: 'test'
+  ...
+# Subtest: cliente divergente nao descarta evento
+ok 156 - cliente divergente nao descarta evento
+  ---
+  duration_ms: 44.7956
+  type: 'test'
+  ...
+# Subtest: assinatura divergente nao descarta evento
+ok 157 - assinatura divergente nao descarta evento
+  ---
+  duration_ms: 43.7517
+  type: 'test'
+  ...
+# Subtest: forma divergente nao descarta evento
+ok 158 - forma divergente nao descarta evento
+  ---
+  duration_ms: 41.6242
+  type: 'test'
+  ...
+# Subtest: valor divergente nao descarta evento
+ok 159 - valor divergente nao descarta evento
+  ---
+  duration_ms: 45.0433
+  type: 'test'
+  ...
+# Subtest: valor nao finito nao descarta evento
+ok 160 - valor nao finito nao descarta evento
+  ---
+  duration_ms: 34.3172
+  type: 'test'
+  ...
+# Subtest: valor com fracao de centavo nao descarta evento
+ok 161 - valor com fracao de centavo nao descarta evento
+  ---
+  duration_ms: 39.4555
+  type: 'test'
+  ...
+# Subtest: vencimento divergente nao descarta evento
+ok 162 - vencimento divergente nao descarta evento
+  ---
+  duration_ms: 39.8314
+  type: 'test'
+  ...
+# Subtest: cobranca excluida nao descarta evento
+ok 163 - cobranca excluida nao descarta evento
+  ---
+  duration_ms: 39.1948
+  type: 'test'
+  ...
+# Subtest: erro na contagem nao descarta evento
+ok 164 - erro na contagem nao descarta evento
+  ---
+  duration_ms: 36.2667
+  type: 'test'
+  ...
+# Subtest: contagem ausente nao descarta evento
+ok 165 - contagem ausente nao descarta evento
+  ---
+  duration_ms: 81.3789
+  type: 'test'
+  ...
+# Subtest: excecao na contagem nao descarta evento
+ok 166 - excecao na contagem nao descarta evento
+  ---
+  duration_ms: 47.5262
+  type: 'test'
+  ...
+# Subtest: erro no vinculo inicial nao descarta evento
+ok 167 - erro no vinculo inicial nao descarta evento
+  ---
+  duration_ms: 42.5976
+  type: 'test'
+  ...
+# Subtest: cliente local awaiting_payment preserva evento mesmo sem referencia
+ok 168 - cliente local awaiting_payment preserva evento mesmo sem referencia
+  ---
+  duration_ms: 46.2284
+  type: 'test'
+  ...
+# Subtest: cliente local payment_approved preserva evento mesmo sem referencia
+ok 169 - cliente local payment_approved preserva evento mesmo sem referencia
+  ---
+  duration_ms: 45.7171
+  type: 'test'
+  ...
+# Subtest: cliente local cancelled preserva evento mesmo sem referencia
+ok 170 - cliente local cancelled preserva evento mesmo sem referencia
+  ---
+  duration_ms: 38.3431
+  type: 'test'
+  ...
+# Subtest: outro cliente nao e contado nem recebe efeitos do evento externo
+ok 171 - outro cliente nao e contado nem recebe efeitos do evento externo
+  ---
+  duration_ms: 56.5871
+  type: 'test'
+  ...
+# Subtest: multiplos pedidos do mesmo cliente continuam pendentes
+ok 172 - multiplos pedidos do mesmo cliente continuam pendentes
+  ---
+  duration_ms: 42.5003
+  type: 'test'
+  ...
+# Subtest: processamento desligado bloqueia classificacao e efeitos
+ok 173 - processamento desligado bloqueia classificacao e efeitos
+  ---
+  duration_ms: 34.9916
+  type: 'test'
+  ...
+# Subtest: token invalido bloqueia classificacao e efeitos
+ok 174 - token invalido bloqueia classificacao e efeitos
+  ---
+  duration_ms: 38.3471
+  type: 'test'
+  ...
+# Subtest: dominio invalido bloqueia classificacao e efeitos
+ok 175 - dominio invalido bloqueia classificacao e efeitos
+  ---
+  duration_ms: 37.6275
+  type: 'test'
+  ...
+# Subtest: HTTPS ausente bloqueia classificacao e efeitos
+ok 176 - HTTPS ausente bloqueia classificacao e efeitos
+  ---
+  duration_ms: 33.6459
+  type: 'test'
+  ...
+# Subtest: schema pendente bloqueia classificacao e efeitos
+ok 177 - schema pendente bloqueia classificacao e efeitos
+  ---
+  duration_ms: 47.6432
+  type: 'test'
+  ...
+# Subtest: evento antecipado espera vinculo; entrega posterior e replay usam registro existente
+ok 178 - evento antecipado espera vinculo; entrega posterior e replay usam registro existente
+  ---
+  duration_ms: 34.2682
+  type: 'test'
+  ...
+# Subtest: reentrega externa concorrente continua apenas leitura
+ok 179 - reentrega externa concorrente continua apenas leitura
+  ---
+  duration_ms: 37.4217
+  type: 'test'
+  ...
+1..179
+# tests 184
+# suites 0
+# pass 184
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 5759.0511

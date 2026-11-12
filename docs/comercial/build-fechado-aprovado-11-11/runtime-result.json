@@ -1,0 +1,61 @@
+{
+  "work": "C:/Users/victo/AppData/Local/Temp/v2g-commercial-build-nATr00",
+  "host": "127.0.0.1",
+  "port": 63750,
+  "credentialsInherited": false,
+  "envFilesCopied": false,
+  "checks": [
+    {
+      "path": "/entrar",
+      "method": "GET",
+      "status": 200,
+      "forms": 1
+    },
+    {
+      "path": "/contratar",
+      "method": "GET",
+      "status": 200,
+      "forms": 0
+    },
+    {
+      "path": "/api/webhooks/asaas-production-payment",
+      "method": "POST",
+      "status": 503,
+      "body": {
+        "erro": "indisponivel"
+      }
+    },
+    {
+      "path": "/api/webhooks/asaas-payment",
+      "method": "POST",
+      "status": 503,
+      "body": {
+        "erro": "indisponivel"
+      }
+    },
+    {
+      "path": "/api/webhooks/asaas-checkout",
+      "method": "POST",
+      "status": 503,
+      "body": {
+        "erro": "indisponivel"
+      }
+    },
+    {
+      "path": "/auth/meta/iniciar",
+      "method": "GET",
+      "status": 307,
+      "destination": "/entrar?next=/conectar",
+      "stateCookieCleared": false
+    },
+    {
+      "path": "/auth/meta/callback",
+      "method": "GET",
+      "status": 307,
+      "destination": "/conectar?erro=state",
+      "stateCookieCleared": true
+    }
+  ],
+  "serverStopped": true,
+  "ok": true
+}

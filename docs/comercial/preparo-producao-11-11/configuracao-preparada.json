@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "status": "prepared-not-applied",
+  "applyNow": false,
+  "observedAt": "2026-11-11T13:49:56.742946+00:00",
+  "projectId": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+  "productionDatabase": "ushccxpoxjikzqnwhgfd",
+  "target": "production-only",
+  "origin": "https://app.v2gmidia.com.br",
+  "checkoutUrl": "https://app.v2gmidia.com.br/contratar",
+  "webhook": {
+    "endpoint": "https://app.v2gmidia.com.br/api/webhooks/asaas-production-payment",
+    "method": "POST",
+    "header": "asaas-access-token",
+    "delivery": "SEQUENTIALLY",
+    "enabled": false,
+    "eventsSource": "lib/contratacao/evento-financeiro.ts"
+  },
+  "auth": {
+    "siteUrl": "https://app.v2gmidia.com.br",
+    "redirectUrls": [
+      "https://app.v2gmidia.com.br/auth/confirmar"
+    ],
+    "observed": false,
+    "preserveExisting": true
+  },
+  "config": [
+    {
+      "name": "NODE_ENV",
+      "kind": "platform",
+      "expected": "production",
+      "preparedValue": null,
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "VERCEL",
+      "kind": "platform",
+      "expected": "1",
+      "preparedValue": null,
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "VERCEL_ENV",
+      "kind": "platform",
+      "expected": "production",
+      "preparedValue": null,
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "VERCEL_PROJECT_ID",
+      "kind": "platform",
+      "expected": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+      "preparedValue": null,
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "VERCEL_PROJECT_PRODUCTION_URL",
+      "kind": "platform",
+      "expected": "app.v2gmidia.com.br",
+      "preparedValue": null,
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "NEXT_PUBLIC_SUPABASE_URL",
+      "kind": "config",
+      "preparedValue": "https://ushccxpoxjikzqnwhgfd.supabase.co",
+      "observedPresence": "name-present-value-unread"
+    },
+    {
+      "name": "NEXT_PUBLIC_SITE_URL",
+      "kind": "config",
+      "preparedValue": "https://app.v2gmidia.com.br",
+      "observedPresence": "name-present-value-unread"
+    },
+    {
+      "name": "ASAAS_ENVIRONMENT",
+      "kind": "config",
+      "preparedValue": "production",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_CHECKOUT_URL",
+      "kind": "config",
+      "preparedValue": "https://app.v2gmidia.com.br/contratar",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_TURNSTILE_ALLOWED_HOSTNAMES",
+      "kind": "config",
+      "preparedValue": "app.v2gmidia.com.br",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_URL_CONFIRMED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_3DS_CONFIRMED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_CHECKOUT_API_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_CHECKOUT_SECURITY_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_CHECKOUT_3DS_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_CHECKOUT_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_ASSISTED_ASAAS_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PAYMENT_EMAIL_ENABLED",
+      "kind": "flag",
+      "preparedValue": "false",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "ASAAS_PRODUCTION_API_KEY",
+      "kind": "secret",
+      "preparedValue": null,
+      "acquisition": "Preenchimento privado no provedor e Vercel, apos autorizacao; nao solicitar no chat.",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "ASAAS_PRODUCTION_WEBHOOK_TOKEN",
+      "kind": "secret",
+      "preparedValue": null,
+      "minimumLength": 32,
+      "acquisition": "Preenchimento privado no provedor e Vercel, apos autorizacao; nao solicitar no chat.",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+      "kind": "secret",
+      "preparedValue": null,
+      "acquisition": "Preenchimento privado no provedor e Vercel, apos autorizacao; nao solicitar no chat.",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "TURNSTILE_SECRET_KEY",
+      "kind": "secret",
+      "preparedValue": null,
+      "acquisition": "Preenchimento privado no provedor e Vercel, apos autorizacao; nao solicitar no chat.",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_CHECKOUT_SECURITY_HASH_SECRET",
+      "kind": "secret",
+      "preparedValue": null,
+      "minimumLength": 32,
+      "acquisition": "Preenchimento privado no provedor e Vercel, apos autorizacao; nao solicitar no chat.",
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "TURNSTILE_SITE_KEY",
+      "kind": "public-provider-config",
+      "preparedValue": null,
+      "observedPresence": "name-absent-or-platform-managed"
+    },
+    {
+      "name": "V2G_PRODUCTION_PAYMENT_EMAIL_FROM",
+      "kind": "verified-sender",
+      "preparedValue": null,
+      "observedPresence": "name-absent-or-platform-managed"
+    }
+  ],
+  "excluded": [
+    "LP",
+    "legais",
+    "Meta",
+    "n8n",
+    "dados de clientes",
+    "credenciais existentes",
+    "QA"
+  ],
+  "providerEvidence": {
+    "asaasProductionAccountVerified": false,
+    "threeDSProductionEnabled": false,
+    "recurrenceConfirmed": false,
+    "senderVerified": false,
+    "turnstileHostConfigured": false
+  },
+  "financialTrial": {
+    "authorized": false,
+    "account": null,
+    "buyer": null,
+    "method": null,
+    "amountCents": null,
+    "recurrence": null
+  }
+}

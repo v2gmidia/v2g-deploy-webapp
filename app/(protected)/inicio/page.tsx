@@ -78,20 +78,20 @@ export default async function InicioPage({
   const agencia = !fixture && pilotoQaHabilitado()
     ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : { status: "desligado" as const };
   const contextoAgencia = agencia.status === "agencia" ? agencia.contexto : null;
-  const visao = agencia.status === "desligado" ? "direto" : selecionarVisaoAgencia(contextoAgencia, busca);
+  const visao = agencia.status === "desligado" ? "direto" : selecionarVisaoAgencia(contextoAgencia, busca, agencia.status === "agencia");
   if (agencia.status === "indisponivel" || visao === "invalido") {
     const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
     return <ClienteIndisponivel />;
   }
   const resumoAgencia = contextoAgencia && visao !== "carteira"
     ? await (await import("@/lib/agencia/resumo-da-sessao")).carregarResumoDaCarteira(contextoAgencia.businessId) : null;
-  if (visao === "carteira" && contextoAgencia && agencia.status === "agencia") {
+  if (visao === "carteira" && agencia.status === "agencia") {
     const { CarteiraAgencia } = await import("@/components/agencia/CarteiraAgencia");
     const { carregarResumoDaCarteira } = await import("@/lib/agencia/resumo-da-sessao");
     const { abrirClienteAction } = await import("../agencia/actions");
-    const clientes = await Promise.all((agencia.clientes ?? [contextoAgencia]).map(async contexto => ({ contexto, resumo: await carregarResumoDaCarteira(contexto.businessId) })));
-    return <CarteiraAgencia key={agencia.agencyBusinessId ?? contextoAgencia.businessId} agencia={contextoAgencia.agencia} clientes={clientes}
-      ativoId={contextoAgencia.businessId} abrirCliente={abrirClienteAction}
+    const clientes = await Promise.all(agencia.clientes.map(async contexto => ({ contexto, resumo: await carregarResumoDaCarteira(contexto.businessId) })));
+    return <CarteiraAgencia key={agencia.agencyBusinessId} agencia={agencia.agencia} clientes={clientes}
+      ativoId={agencia.businessIdAtivo} abrirCliente={abrirClienteAction}
       retorno={retornoDaCarteira(busca)} />;
   }
   const hoje = diaEmSaoPaulo(agora);

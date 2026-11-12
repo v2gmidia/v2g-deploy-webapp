@@ -1,0 +1,15 @@
+{
+  "projectId": "ushccxpoxjikzqnwhgfd",
+  "observedAt": "2026-11-11T14:56:57.774Z",
+  "readOnly": true,
+  "remoteWrites": 0,
+  "result": [
+    {
+      "verificacao": {
+        "read_only": "on",
+        "base_corresponde": true,
+        "pacote_ja_presente": false
+      }
+    }
+  ]
+}

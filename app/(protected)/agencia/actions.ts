@@ -22,8 +22,8 @@ export async function abrirClienteAction(_anterior: AbrirClienteState, dados: Fo
     || !/^(peca|revisao)-/.test(peca) || !UUID_AGENCIA.test(peca.replace(/^(peca|revisao)-/, ""))))
     return { erro: "A peça solicitada não pôde ser conferida. Abra a biblioteca do cliente e escolha a peça novamente." };
   const agencia = await carregarAgenciaDaSessao();
-  if (agencia.status !== "agencia" || (agencia.agencyBusinessId ?? agencia.contexto.businessId) !== pai
-    || !(agencia.clientes ?? [agencia.contexto]).some(c => c.businessId === id)) return erro;
+  if (agencia.status !== "agencia" || agencia.agencyBusinessId !== pai
+    || !agencia.clientes.some(c => c.businessId === id)) return erro;
   const ativo = await negocioAtivoDaSessao();
   if (!("negocios" in ativo) || !ativo.negocios.some(n => n.id === id)) return erro;
   const supabase = await createClient();

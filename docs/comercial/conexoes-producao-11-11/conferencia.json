@@ -1,0 +1,102 @@
+{
+  "date": "2026-11-11",
+  "stage": "connections-review",
+  "bank": {
+    "status": "applied-verified",
+    "migration": "20261111150656",
+    "repeat": false
+  },
+  "asaas": {
+    "threeDS": {
+      "status": "provider-approval-recovered",
+      "messageId": "1a16418e150b9a2e",
+      "approvedAt": "2026-10-22T14:51:52Z"
+    },
+    "tokenization": {
+      "status": "provider-approval-recovered",
+      "messageId": "1a168f5bf8f55195",
+      "approvedAt": "2026-10-23T13:31:36Z",
+      "ticket": "1895741"
+    },
+    "currentAccountState": "awaiting-private-login",
+    "webhookState": "not-inspected-no-change",
+    "supportMessageSent": false
+  },
+  "email": {
+    "candidateFrom": "pagamentos@send.v2gmidia.com.br",
+    "evidenceMessages": [
+      {
+        "id": "1a1be555013c8673",
+        "date": "Mon, 9 Nov 2026 03:23:41 +0000",
+        "from": "V2G <pagamentos@send.v2gmidia.com.br>",
+        "to": "victor.cabral@v2gmidia.com.br",
+        "subject": "[TESTE QA] V2G | Pagamento confirmado"
+      },
+      {
+        "id": "1a1be555597eef48",
+        "date": "Mon, 9 Nov 2026 03:23:42 +0000",
+        "from": "V2G <pagamentos@send.v2gmidia.com.br>",
+        "to": "victor.cabral@v2gmidia.com.br",
+        "subject": "[TESTE QA] V2G | Pagamento confirmado"
+      },
+      {
+        "id": "1a17f793457bd085",
+        "date": "Tue, 27 Oct 2026 22:26:50 +0000",
+        "from": "V2G <pagamentos@send.v2gmidia.com.br>",
+        "to": "victor.cabral@v2gmidia.com.br",
+        "subject": "[TESTE QA] V2G | Pagamento confirmado"
+      }
+    ],
+    "dns": "TXT/MX/DKIM-present-provider-status-not-certified",
+    "currentResendState": "awaiting-private-login",
+    "productionConfigApplied": false
+  },
+  "turnstile": {
+    "hostnameRequired": "app.v2gmidia.com.br",
+    "currentWidgetState": "awaiting-private-login",
+    "keysRead": false,
+    "changes": false
+  },
+  "auth": {
+    "project": "ushccxpoxjikzqnwhgfd",
+    "siteUrlBefore": "https://v2g-deploy-webapp.vercel.app",
+    "redirectUrlsBefore": [
+      "https://v2g-deploy-webapp.vercel.app/**",
+      "http://localhost:3000/**"
+    ],
+    "signupTemplate": "ConfirmationURL",
+    "recoveryTemplate": "ConfirmationURL",
+    "customSmtpEnabled": true,
+    "smtpHost": "smtp.resend.com",
+    "smtpPort": "465",
+    "smtpCredentialRead": false,
+    "changes": false
+  },
+  "proposedPublicUrlChanges": {
+    "status": "prepared-not-applied",
+    "supabase": {
+      "siteUrl": "https://app.v2gmidia.com.br",
+      "addRedirect": "https://app.v2gmidia.com.br/auth/confirmar",
+      "preserveCurrentRedirects": true,
+      "templatesUnchanged": true,
+      "smtpUnchanged": true
+    },
+    "vercel": {
+      "project": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+      "target": "production",
+      "name": "NEXT_PUBLIC_SITE_URL",
+      "proposedValue": "https://app.v2gmidia.com.br",
+      "currentValueRead": false,
+      "newDeploymentAuthorized": false
+    },
+    "financialFlags": "remain-off",
+    "credentials": "no-read-or-change",
+    "databaseChanges": false
+  },
+  "nextFinancialTrial": {
+    "status": "not-authorized-or-run",
+    "requires": "bounded buyer/method/value/recurrence and legitimate user payment action"
+  },
+  "salesOpen": false,
+  "paymentProcessingEnabled": false
+}

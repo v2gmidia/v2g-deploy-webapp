@@ -1,6 +1,6 @@
 import { Suspense, type ReactNode } from "react";
 import { NavegacaoAgencia, NomeDoContextoAgencia } from "@/components/agencia/ContextoNoCasco";
-import type { ContextoAgencia } from "@/lib/agencia/contexto";
+import type { ContextoDoCascoAgencia } from "@/components/agencia/ContextoNoCasco";
 import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
@@ -139,7 +139,7 @@ export function Casco({
   negocios?: NegocioDoMenu[];
   ehOperador?: boolean;
   rotaAtiva?: "/inicio" | "/criativos" | "/anuncios" | "/alertas" | "/conta";
-  contextoAgencia?: ContextoAgencia;
+  contextoAgencia?: ContextoDoCascoAgencia;
   children: ReactNode;
 }) {
   const adicionarHref = "/entrar?adicionar=1";
@@ -190,18 +190,18 @@ export function Casco({
               único vira um lugar que, depois de cumprido, só serve para
               o cliente se perguntar por que ainda está ali. */}
           {contextoAgencia ? <Suspense fallback={<>
-            <NavItem href="/inicio" icone={<IcoInicio />}>Início</NavItem><NavItem href="/criativos" icone={<IcoCriativos />}>Criativos</NavItem>
-          </>}><NavegacaoAgencia businessId={contextoAgencia.businessId} inicio={<IcoInicio />} criativos={<IcoCriativos />} /></Suspense> : <>
+            <NavItem href="/inicio" icone={<IcoInicio />}>Início</NavItem><NavItem href="/criativos" icone={<IcoCriativos />}>Criativos</NavItem><NavItem href="/anuncios" icone={<IcoAnuncios />}>Anúncios</NavItem>
+          </>}><NavegacaoAgencia businessId={contextoAgencia.businessId} inicio={<IcoInicio />} criativos={<IcoCriativos />} anuncios={<IcoAnuncios />} /></Suspense> : <>
           <NavItem href="/inicio" icone={<IcoInicio />} ativo={rotaAtiva ? rotaAtiva === "/inicio" : undefined}>
             Início
           </NavItem>
           <NavItem href="/criativos" icone={<IcoCriativos />} ativo={rotaAtiva ? rotaAtiva === "/criativos" : undefined}>
             Criativos
           </NavItem>
-          </>}
           <NavItem href="/anuncios" icone={<IcoAnuncios />} ativo={rotaAtiva ? rotaAtiva === "/anuncios" : undefined}>
             Anúncios
           </NavItem>
+          </>}
           <NavItem href="/alertas" icone={<IcoAlertas />} ativo={rotaAtiva ? rotaAtiva === "/alertas" : undefined}>
             Avisos
           </NavItem>

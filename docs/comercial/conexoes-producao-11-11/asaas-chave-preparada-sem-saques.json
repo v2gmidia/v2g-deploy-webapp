@@ -1,0 +1,16 @@
+{
+  "date": "2026-11-11",
+  "account": "Asaas production V2G",
+  "stage": "private-user-generation-pending",
+  "name": "V2G WebApp Produção",
+  "nameVerifiedInForm": true,
+  "withdrawalPermissionChecked": false,
+  "expirationEditedByAgent": false,
+  "createdByAgent": false,
+  "destination": "ASAAS_PRODUCTION_API_KEY",
+  "destinationType": "Secret",
+  "destinationEnvironment": "production",
+  "secretValueRead": false,
+  "paymentsEnabled": false,
+  "note": "Victor abriu o formulário na aba antes usada para o rascunho do webhook. Aba de chaves duplicada encerrada; webhook não tinha sido salvo e precisará ser reaberto com os parâmetros OFF registrados. Não reaplicar configuração remota por causa da navegação."
+}

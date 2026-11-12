@@ -1,0 +1,44 @@
+{
+  "patch": "C:\\Users\\victo\\.codex\\private-backups\\v2g\\release-comercial-20261111-gVYLAQ\\release-minimo.patch",
+  "sha256": "2272eaadea80612b53d7c48f3bd72ba407e607845b7d8f14a4f0f21ca75b2d07",
+  "checked": true,
+  "appliedOnlyToDisposablePrivateCopy": true,
+  "reproducesTestedSourceAfterCrLfNormalization": true,
+  "comparisons": [
+    {
+      "path": "lib/contratacao/evento-sem-pedido.ts",
+      "bytesEqual": false,
+      "sourceEqualAfterCrLfNormalization": true
+    },
+    {
+      "path": "lib/contratacao/webhook-pagamento.ts",
+      "bytesEqual": true,
+      "sourceEqualAfterCrLfNormalization": true
+    },
+    {
+      "path": "lib/meta/oauth-state.ts",
+      "bytesEqual": false,
+      "sourceEqualAfterCrLfNormalization": true
+    },
+    {
+      "path": "app/auth/meta/iniciar/route.ts",
+      "bytesEqual": false,
+      "sourceEqualAfterCrLfNormalization": true
+    },
+    {
+      "path": "app/auth/meta/callback/route.ts",
+      "bytesEqual": false,
+      "sourceEqualAfterCrLfNormalization": true
+    },
+    {
+      "path": "scripts/conferir-webhook-sem-pedido.mjs",
+      "bytesEqual": false,
+      "sourceEqualAfterCrLfNormalization": true
+    },
+    {
+      "path": "package.json",
+      "bytesEqual": false,
+      "sourceEqualAfterCrLfNormalization": true
+    }
+  ]
+}

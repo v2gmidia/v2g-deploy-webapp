@@ -1,0 +1,41 @@
+{
+  "data": "2026-11-11",
+  "estado": "pronto_para_revisao_local",
+  "testes": {
+    "novos": 78,
+    "regressoes": 108,
+    "casos_distintos": 186,
+    "falhas": 0,
+    "skips": 0,
+    "typecheck": "aprovado",
+    "build": "nao_executado",
+    "rede": "nao_utilizada"
+  },
+  "evidencia": {
+    "novos_tap": "testes-novos.tap",
+    "regressoes": "saida da execucao conjunta: 167 testes incluindo 59 novos iniciais",
+    "baseline": "antes-fingerprints.json"
+  },
+  "controles": {
+    "publicacao_executada": false,
+    "cobranca_executada": false,
+    "migracao_executada": false,
+    "consulta_remota_executada": false,
+    "segredos_lidos": false,
+    "estado_remoto": "nao_alterado_nem_remedido; ultimo checkpoint OFF"
+  },
+  "fontes_alteradas": [
+    "lib/contratacao/webhook-pagamento.ts",
+    "package.json"
+  ],
+  "fontes_adicionadas": [
+    "lib/contratacao/evento-sem-pedido.ts",
+    "scripts/conferir-webhook-sem-pedido.mjs"
+  ],
+  "limite": "Eventos ambiguos mantem 503. Nenhum evento possivelmente V2G e aceito apenas pela ausencia de vinculo.",
+  "proxima_acao": {
+    "responsavel": "Victor/revisor",
+    "acao": "Revisar pacote local; publicacao e prova financeira dependem de bloco proprio",
+    "prova": "revisao dos arquivos, TAP e checkpoint"
+  }
+}

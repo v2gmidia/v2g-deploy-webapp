@@ -10,7 +10,8 @@ import { raizDaAgencia } from "./vinculos";
 
 export type ContextoAgenciaDaSessao =
   | { status: "desligado" | "direto" | "indisponivel" }
-  | { status: "agencia"; contexto: ContextoAgencia; clientes: ContextoAgencia[]; agencyBusinessId: string; origem: "vinculo" | "legado" };
+  | { status: "agencia"; agencia: string; businessIdAtivo: string; contexto: ContextoAgencia | null;
+    clientes: ContextoAgencia[]; agencyBusinessId: string; origem: "vinculo" | "legado" };
 
 /** Somente QA já habilitada; nenhuma identidade, permissão ou dado é gravado. */
 export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDaSessao> => {
@@ -31,6 +32,7 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
     const raiz = leitura.estado === "pronto" ? raizDaAgencia(leitura.vinculos, data.id) : null;
     let contexto = contextoAgenciaDoCadastro(data, user.id);
     let clientes: ContextoAgencia[] = contexto ? [contexto] : [];
+    let nomeAgencia = contexto?.agencia ?? null;
     if (raiz && leitura.estado === "pronto") {
       // Pai e filhos continuam pertencendo ao mesmo titular e precisam estar liberados.
       const permitidos = new Set(ativo.negocios.map(n => n.id));
@@ -44,13 +46,16 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
         || new Set(negocios.data.map(b => b.id)).size !== ids.length) return { status: "indisponivel" };
       const pai = negocios.data.find(b => b.id === raiz);
       if (!pai || typeof pai.name !== "string" || !pai.name.trim() || pai.name.length > 200) return { status: "indisponivel" };
+      nomeAgencia = pai.name.trim();
       const montados = vinculos.map(v => contextoDoAnuncianteVinculado(negocios.data.find(b => b.id === v.advertiser_business_id)!, user.id, v, pai.name));
       if (montados.some(c => !c)) return { status: "indisponivel" };
       clientes = (montados as ContextoAgencia[]).sort((a, b) => a.anunciante.localeCompare(b.anunciante, "pt-BR"));
       contexto = clientes.find(c => c.businessId === data.id) ?? null;
-      if (!contexto) return { status: "indisponivel" };
+      // A raiz administrativa pode não ser anunciante. Nenhuma resposta de
+      // onboarding, verba ou marca dos filhos é copiada para preencher essa lacuna.
+      if (!contexto && data.id !== raiz) return { status: "indisponivel" };
     }
-    if (!contexto) {
+    if (!raiz && !contexto) {
       const onboarding = data.onboarding as { respostas?: { operador?: { texto?: unknown } } } | null;
       return onboarding?.respostas?.operador?.texto === "Uma agência ou gestor opera para o anunciante"
         ? { status: "indisponivel" } : { status: "direto" };
@@ -71,6 +76,8 @@ export const carregarAgenciaDaSessao = cache(async (): Promise<ContextoAgenciaDa
           contexto.gestor = p.full_name.trim() || null;
       }
     } catch { /* A indisponibilidade do nome não desautoriza o titular já validado. */ } }));
-    return { status: "agencia", contexto, clientes, agencyBusinessId: raiz ?? contexto.businessId, origem: raiz ? "vinculo" : "legado" };
+    if (!nomeAgencia) return { status: "indisponivel" };
+    return { status: "agencia", agencia: nomeAgencia, businessIdAtivo: data.id, contexto, clientes,
+      agencyBusinessId: raiz ?? data.id, origem: raiz ? "vinculo" : "legado" };
   } catch { return { status: "indisponivel" }; }
 });

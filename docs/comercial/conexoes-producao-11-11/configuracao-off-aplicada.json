@@ -1,0 +1,588 @@
+{
+  "date": "2026-11-11",
+  "authorization": "Autorizar conexões com tudo desligado",
+  "projectId": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+  "target": "production",
+  "additions": [
+    {
+      "key": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_PRODUCTION_URL_CONFIRMED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_PRODUCTION_3DS_CONFIRMED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_CHECKOUT_API_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_CHECKOUT_SECURITY_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_CHECKOUT_3DS_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_CHECKOUT_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_ASSISTED_ASAAS_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_PAYMENT_EMAIL_ENABLED",
+      "value": "false",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "ASAAS_ENVIRONMENT",
+      "value": "production",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_PRODUCTION_CHECKOUT_URL",
+      "value": "https://app.v2gmidia.com.br/contratar",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_TURNSTILE_ALLOWED_HOSTNAMES",
+      "value": "app.v2gmidia.com.br",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_FROM",
+      "value": "pagamentos@send.v2gmidia.com.br",
+      "target": [
+        "production"
+      ],
+      "type": "plain",
+      "comment": "Conexões autorizadas 11/11/2026. Vendas e processamento OFF; sem novo deployment."
+    }
+  ],
+  "verification": {
+    "verifiedAt": "2026-11-11T17:43:06.467Z",
+    "count": 29,
+    "hiddenProductionEnvCount": 0,
+    "previousMetadataPreserved": true,
+    "checks": [
+      {
+        "key": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_PRODUCTION_URL_CONFIRMED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_PRODUCTION_3DS_CONFIRMED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_CHECKOUT_API_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_CHECKOUT_SECURITY_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_CHECKOUT_3DS_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_CHECKOUT_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_ASSISTED_ASAAS_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_PAYMENT_EMAIL_ENABLED",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "ASAAS_ENVIRONMENT",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_PRODUCTION_CHECKOUT_URL",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_TURNSTILE_ALLOWED_HOSTNAMES",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      },
+      {
+        "key": "V2G_PRODUCTION_PAYMENT_EMAIL_FROM",
+        "present": true,
+        "exactPublicValue": true,
+        "productionOnly": true,
+        "type": "plain"
+      }
+    ],
+    "allExpected": true,
+    "failedCreation": 0,
+    "metadata": [
+      {
+        "id": "Xyn50zxtFH8XWIHG",
+        "key": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "EiIFcan4j3dJBFav",
+        "key": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "igsKYG7IdlVCqRcx",
+        "key": "V2G_PRODUCTION_URL_CONFIRMED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "jb4KnmwQboqxuNbz",
+        "key": "V2G_PRODUCTION_3DS_CONFIRMED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "6kQCEht77DiY4oqT",
+        "key": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "pSHa5G1lbGihhaPq",
+        "key": "V2G_CHECKOUT_API_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "hWxayZKaCjYKblcN",
+        "key": "V2G_CHECKOUT_SECURITY_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "Y8E6lc9KDX3LCHae",
+        "key": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "TWf2qUXtHgUFNKS9",
+        "key": "V2G_CHECKOUT_3DS_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "FqrCtxDaQyFi8RjI",
+        "key": "V2G_CHECKOUT_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "WPTh0j5O0TgnZkF4",
+        "key": "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "loEDevY2WwY7TKHV",
+        "key": "V2G_ASSISTED_ASAAS_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "KwDP0qcj40Qg1Iw5",
+        "key": "V2G_PAYMENT_EMAIL_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "C4dIq807tWAoZGFc",
+        "key": "ASAAS_ENVIRONMENT",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "qyuICs4ZjMfFm45V",
+        "key": "V2G_PRODUCTION_CHECKOUT_URL",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "tnHiEevmy771Rv9R",
+        "key": "V2G_TURNSTILE_ALLOWED_HOSTNAMES",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "HRUgJjUyMbhxeojT",
+        "key": "V2G_PRODUCTION_PAYMENT_EMAIL_FROM",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "Y2BExsM7HZ92hNJl",
+        "key": "OPENAI_API_KEY",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "HgyIw3vtDeXrUPOc",
+        "key": "V2G_N8N_WEBHOOK_TOKEN",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "IrXHRd6LpCPpnj9o",
+        "key": "V2G_API_TOKEN",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "USqG8q8HzjPoQvVF",
+        "key": "V2G_N8N_WEBHOOK_URL",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "D0u3N4VuIMsfNoqH",
+        "key": "V2G_BACKEND_TOKEN",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "KQ7ZM86vALyVPuQ1",
+        "key": "V2G_BACKEND_URL",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "JkmPyX8VpBYv21nr",
+        "key": "META_APP_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "7vLHLzDJ6ISGQH0w",
+        "key": "META_APP_ID",
+        "type": "encrypted",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "n46cppKOEKCnUfCR",
+        "key": "NEXT_PUBLIC_SITE_URL",
+        "type": "encrypted",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "IcC5NByLUPV8JdO3",
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "type": "encrypted",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "RcEQnfV6RtbNNh7j",
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "type": "encrypted",
+        "target": [
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      },
+      {
+        "id": "QPkuxqETDAkl7WNe",
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "type": "encrypted",
+        "target": [
+          "preview",
+          "production"
+        ],
+        "gitBranch": null,
+        "customEnvironmentIds": []
+      }
+    ]
+  },
+  "credentials": "Awaiting private user creation and entry; no secrets included",
+  "deployment": "Not authorized; unchanged"
+}

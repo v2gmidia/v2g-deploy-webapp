@@ -1,0 +1,3222 @@
+[
+  {
+    "path": "app/robots.ts",
+    "sha256": "1534d91a11f8717589704de77a40b2beb02c5b8156eb57b2de2737beed80a5ac"
+  },
+  {
+    "path": "app/revops-editorial.css",
+    "sha256": "e21f17ab6fcd0eb45f4556c8d77ccc34482d2e350144e27e06bfa85c3f1373a7"
+  },
+  {
+    "path": "app/produto-editorial.css",
+    "sha256": "c08543976efac111446df04500a22cf80382b52ecc5a2d9cd4617c58188bba3b"
+  },
+  {
+    "path": "app/page.tsx",
+    "sha256": "75857deedbd4871d14d8f9d6b84efb2ab8d38dd9beb915a0e5d718a9c7ef62ab"
+  },
+  {
+    "path": "app/layout.tsx",
+    "sha256": "fbd85e5c7e22d82a6f736115471db98cd33b2cd024baa4bd1ab801122bcd75ac"
+  },
+  {
+    "path": "app/inicio-editorial.css",
+    "sha256": "aacbeffbabfa771699219d6f49881873d6df4e65ff024afa0b6e9d22eddcefd9"
+  },
+  {
+    "path": "app/globals.css",
+    "sha256": "7debcf9747a8329ba80b96445765d1e55ad4e965171b767504ad900a0546be28"
+  },
+  {
+    "path": "app/anuncios-editorial.css",
+    "sha256": "03f90d8746bf85324f9b1c25faa3cc6190decd2ab786c434c07e9342f9d8994e"
+  },
+  {
+    "path": "app/editorial-conta-avisos.css",
+    "sha256": "b9217dfb9c979c1b5dc072c9c246c1d44f7192dcde8141c04427516ebf47b865"
+  },
+  {
+    "path": "app/criativos-editorial.css",
+    "sha256": "a207d7f921d06dd0b9f123c1107aaedc87f4d9fa0b2db34b620eb29683f6d564"
+  },
+  {
+    "path": "app/entrada-editorial.css",
+    "sha256": "177e219e80091ee29ea82d6c2ad25be32ff31fb49d2cc3ec977fd505826b0980"
+  },
+  {
+    "path": "lib/agentes/verificar.ts",
+    "sha256": "1ece59acd6fadb1c04ae11b9bb2f589907a36c91ee467497480243b0bf3b7277"
+  },
+  {
+    "path": "lib/agentes/revisao.ts",
+    "sha256": "968d52a149ec38b85950fc7fd45326442623268af9d9af185f3b75e08997db55"
+  },
+  {
+    "path": "lib/agentes/proposta.ts",
+    "sha256": "422e929c229b5be02a2642967737bb3cdfeaf2f7672d49c882b7769a4cacc646"
+  },
+  {
+    "path": "lib/agentes/numeros.ts",
+    "sha256": "e35ef6eb95210ebe69e1cb516b3dc064e42e0d10c03275c481ed6bb58340e00e"
+  },
+  {
+    "path": "lib/agentes/extrair-perfil.ts",
+    "sha256": "8303c5951a04a4d00004f9f87145506d840eb9912d1c42358516e5b2977f1fc1"
+  },
+  {
+    "path": "lib/agentes/esquema.ts",
+    "sha256": "cb3b346b882340da56843a06a7b7c0a932848578d98a194803be2e8fd6c5bd9a"
+  },
+  {
+    "path": "lib/agentes/erros.ts",
+    "sha256": "8390280bf46af1016bc011ede5b4b3575dfa0bda54023725245239c389ada4d2"
+  },
+  {
+    "path": "lib/agentes/campos.ts",
+    "sha256": "21b30f644761986d1edb50ce4940c305a9f18a447cbc1fc6aba4e05173b24f6c"
+  },
+  {
+    "path": "lib/verba/limites.ts",
+    "sha256": "b13684c6968e8807da307fa8ab38495257052696d396c290a7c7765302027f8f"
+  },
+  {
+    "path": "lib/verba/alcance.ts",
+    "sha256": "70217123e09c73c80bb66992934bad52b7c9431a6bfb372e0985203e99cf8000"
+  },
+  {
+    "path": "lib/agencia/vinculos.ts",
+    "sha256": "40eda55426bf453fd508ccfd7cc3c00ff3ab6d5ef34ba7c0a882a3a23c62e908"
+  },
+  {
+    "path": "lib/agencia/vinculos-da-sessao.ts",
+    "sha256": "2aae10d0e14a531dfd13ee2814cef9ab9ad59c319fed526f6769842da28c2780"
+  },
+  {
+    "path": "lib/agencia/resumo.ts",
+    "sha256": "e05acbfd7ad3af9e2ebd4d905b3357c9f1b27d5af7127cb32eec959d3eebc10e"
+  },
+  {
+    "path": "lib/agencia/resumo-da-sessao.ts",
+    "sha256": "b202af4abacbb5346a3ba2aba11ebd4b12bd502297e6a2d23a24a6043fde5d03"
+  },
+  {
+    "path": "lib/agencia/da-sessao.ts",
+    "sha256": "a76f56be1e6ddb0b6e21a498e512a019220dc95f0295a3c91e8105fe1e7a7f5f"
+  },
+  {
+    "path": "lib/agencia/contexto.ts",
+    "sha256": "62862691b7c70f6affb02a754d7dec3fdb5158a04de58f86df67a5663d701d07"
+  },
+  {
+    "path": "lib/agencia/caminho-da-peca.ts",
+    "sha256": "29bca44a863fd75773fff8934851f254106172fa2a9c102396832655e4ac1349"
+  },
+  {
+    "path": "app/api/webhooks/asaas-production-payment/route.ts",
+    "sha256": "e8c800de11ab530ad5b021f14a2a3c169ca222b9da913989bcd3a3cb8f4d697d"
+  },
+  {
+    "path": "lib/agenda/regras.ts",
+    "sha256": "5d0cca13cc756fc72135b18bddee0cb5159c1d06c74165721540e18f551922c7"
+  },
+  {
+    "path": "lib/agenda/lembretes.ts",
+    "sha256": "57ac21f58af3ff4f47b46233fb689715d0f93ddb25b55c7e02188311aafc5c39"
+  },
+  {
+    "path": "lib/agenda/horarios.ts",
+    "sha256": "b3aa845935f2ba9c23f83f9a819789e0067a9d488056467d1159a6bafd30f854"
+  },
+  {
+    "path": "lib/agenda/google.ts",
+    "sha256": "3093a4fedc300c1a7c56ff513005d86e3be0b51262707320fc9e8a423b99d6a8"
+  },
+  {
+    "path": "lib/agenda/falhas-criacao.ts",
+    "sha256": "95a8959d92b9d1c801f8d44d62e825b47b6bcbb70eecdd321e7d41fdc21cf8d9"
+  },
+  {
+    "path": "lib/agenda/descricao-reuniao.ts",
+    "sha256": "c046a9abf405e5b240aa6937959536bcb9b91b05e95da824b24664146a1738aa"
+  },
+  {
+    "path": "lib/agenda/conciliacao.ts",
+    "sha256": "8bb60130b8d6fdcddbdc412fb059a9d35b44617cd83ba7b7c2b1d6ab15afeb13"
+  },
+  {
+    "path": "app/api/webhooks/asaas-payment/route.ts",
+    "sha256": "1b6fb5ad78148dc0cab32844ba7c556e9bbc642dd41edb2cb9707f55ac062ff7"
+  },
+  {
+    "path": "lib/veiculacao/estado.ts",
+    "sha256": "613fd8443758af956a7710746fb510daf51224ef6e5895d8aa0798afe1adfb58"
+  },
+  {
+    "path": "lib/titulos.ts",
+    "sha256": "e44c9d783a7c47d7e8b380aab650de9e46109f0c1dfc7ccf815e54beca70c04e"
+  },
+  {
+    "path": "lib/tema.ts",
+    "sha256": "1a608028c25cfa2cc6e8e368bdd3ce33465e5bdc71c487c903eca8d319779202"
+  },
+  {
+    "path": "app/api/webhooks/asaas-checkout/route.ts",
+    "sha256": "8be729257038073aa0d19084d56579178b631b6f44a6688a9fae2b16d9732d7e"
+  },
+  {
+    "path": "lib/piloto-qa/acesso.ts",
+    "sha256": "51f8c9b8aeeab23d7539ffe2161b930a195773360d3988e782d4eed20671a8eb"
+  },
+  {
+    "path": "app/contratar/retorno/page.tsx",
+    "sha256": "24d5e1d25e80afe50f351b0988f6c109a5d7d632196f17ec528694109e34ecf5"
+  },
+  {
+    "path": "app/(supergestor)/supergestor/page.tsx",
+    "sha256": "c0f44c69e58932f808cda757c6b10b567a7e1b7d279b8f2dffc4d0d070bea9fe"
+  },
+  {
+    "path": "app/contratar/page.tsx",
+    "sha256": "6c051f661370cfb9ab862b30254aa2d590686149c67f1b5f25144560ac2ceea9"
+  },
+  {
+    "path": "lib/supabase/server.ts",
+    "sha256": "b1ba6243d57481d7050da6e1bec818e920ee6bf36b789dabf04acaa13a60767c"
+  },
+  {
+    "path": "lib/supabase/client.ts",
+    "sha256": "cc2d02f0295b1a56a600da51fb871c2ff0d65cb42df09de21a1bf5f733868809"
+  },
+  {
+    "path": "lib/supabase/admin.ts",
+    "sha256": "e9407104450dca8e9122fb5892627cb6550327f793f5acf45263c6fa034750b6"
+  },
+  {
+    "path": "lib/site-publico.ts",
+    "sha256": "1c719ec193813aec5285336bcf29788ecbc7b09d16c6e249377d104b15d1c5a2"
+  },
+  {
+    "path": "scripts/test-utils/ts-isolado.mjs",
+    "sha256": "6531785f0c358a7b2e3a27b4a2a25aec57e33e13d6fa1a11f0cf1bbf259f5971"
+  },
+  {
+    "path": "scripts/test-utils/fila-geracao-local.mjs",
+    "sha256": "20a3046036562602c63d94897e54c2197d512bdad3e77a4b14d5c906eba3595b"
+  },
+  {
+    "path": "scripts/test-utils/contexto-referencia-v2.mjs",
+    "sha256": "f624ccf72dd64284d7d09e8ff1964765dbd22f2f8804d2072984fd37a88bc31d"
+  },
+  {
+    "path": "scripts/test-utils/config-producao.mjs",
+    "sha256": "6a92e4f79d70538fb5051d0dee12f889de3373761afaa7639409a6cc7f23df9c"
+  },
+  {
+    "path": "scripts/test-utils/checkout-schema.mjs",
+    "sha256": "55536e06c5d71e11a9f98969c5372843b411dc7bf5496df4d2fa8eeaeef67b81"
+  },
+  {
+    "path": "scripts/test-utils/admin-memoria.mjs",
+    "sha256": "f7f8dcdbf702ec1a8f9df5aa5550a342fa1096a33df1349af83c63a0811dcf6d"
+  },
+  {
+    "path": "lib/perfil/valores.ts",
+    "sha256": "397290b205eb9b1ff6488e376b51b69847df8e1eee5d8ef29cd6177a2a7a0f5f"
+  },
+  {
+    "path": "lib/perfil/revisao-cliente.ts",
+    "sha256": "6b4b8eb8de4bfc25cafc98f72d76c042f47a082b89a8fcaeee3a6e4d7ab9a3ec"
+  },
+  {
+    "path": "lib/perfil/ficha-operador.ts",
+    "sha256": "e4b72c2ce7dfb790b75297248f59df3580e208ad41097fd66cd108d9f4ee5fd9"
+  },
+  {
+    "path": "lib/perfil/catalogo-cliente.ts",
+    "sha256": "83af96df69a76dc54bc67397e258d135a200b9184165dfe130bea000a3263c1c"
+  },
+  {
+    "path": "app/(internal)/revops/TelaRevOps.tsx",
+    "sha256": "f09aec08bc3bb881586627efda77be9de933e7f19af9c5e992a652faa01b2015"
+  },
+  {
+    "path": "app/(internal)/revops/page.tsx",
+    "sha256": "bb38abf847d8c215d7aeb9fd51539fba35d50483b159a588f525500cb44147ba"
+  },
+  {
+    "path": "app/(internal)/revops/layout.tsx",
+    "sha256": "5fa4dbed20a3fc4be697a25b84d4181c8cf3a225f2f05b073fbcb9ea4c7440f5"
+  },
+  {
+    "path": "app/(internal)/revops/Formularios.tsx",
+    "sha256": "b5358be7bb2ac0bc337f9348c636c15a7e068db2de0f6bf9d1287509a3ec42a9"
+  },
+  {
+    "path": "app/(internal)/revops/actions.ts",
+    "sha256": "42edb6d0b1ea7fa5e787db87ddda90a9bc51beae3d5f367079dcfdeadda8ef6f"
+  },
+  {
+    "path": "scripts/conferir-caminhos-marca-gestor.mjs",
+    "sha256": "afdd045e1427dfdee80a97cc2bda0c52839f2f0a6e43fe548a034cb6d1ad2d2c"
+  },
+  {
+    "path": "scripts/conferir-cadastro.ts",
+    "sha256": "dae0ff691977c4c09f7d349b8c5faea4053ac35b6e2d007e8192237c6213bfb8"
+  },
+  {
+    "path": "scripts/conferir-cadastro-interface.mjs",
+    "sha256": "ef71293396a963fa9b31e9a87329277ed20d3f8497ba77ea04e028ede468fbc9"
+  },
+  {
+    "path": "scripts/conferir-briefing-geracao.mjs",
+    "sha256": "2b5ad8711bf4a6ac3e78704bf0fe07111a9bcd02dbe06d0ffd5731bc8fa196f4"
+  },
+  {
+    "path": "scripts/conferir-biblioteca-geracao-off.mjs",
+    "sha256": "c9a8739f27c86c8394254f0b6a766d7ecfb2b8e2bd8ad814adeeb1563b7fe098"
+  },
+  {
+    "path": "scripts/conferir-avaliar-cortes-jev.ts",
+    "sha256": "f052195485e9c5f5649522530c0046207a205ba7fb3f02962e424f961ce91cdd"
+  },
+  {
+    "path": "scripts/conferir-auth-email.mjs",
+    "sha256": "84a62bb403ec309df58659e696c4a9308972acbfb2bbd3ea43f2a8d7c5d92422"
+  },
+  {
+    "path": "scripts/conferir-assistido-asaas.mjs",
+    "sha256": "1bf105f2fb24b735d50edee277f319d73025540cfec88e148325d33d69d77154"
+  },
+  {
+    "path": "scripts/conferir-assistido-asaas-sql.mjs",
+    "sha256": "bf4a6d2d04f12723eb72c96da6a61b009b9ec5b2a5aea57bcf9d76d8c67aa573"
+  },
+  {
+    "path": "scripts/conferir-asaas-processamento-sql.mjs",
+    "sha256": "45f597229d8fe7e0baf05f3d24eb285e8bbdde34ab3930ba06bc45a89ec2fdd8"
+  },
+  {
+    "path": "scripts/conferir-asaas-eventos.mjs",
+    "sha256": "27c547254da043a0783e4fc561b4ca082c66d78d09a22d400a6dae171db889a1"
+  },
+  {
+    "path": "scripts/conferir-apresentada.ts",
+    "sha256": "bbbd9270605249b6a192f37bb963330c7371aebad26def5b0774ded4ede2e30f"
+  },
+  {
+    "path": "scripts/conferir-anuncios-meta.mjs",
+    "sha256": "7736dd230432c984977fbeb23cfc301ba774a04322f8974afba9619bbb0dc29d"
+  },
+  {
+    "path": "scripts/conferir-anuncios-meta-integracao.mjs",
+    "sha256": "f9e42406059acc59e06fd7991fa72ac5d723249564aab6454ed183799cef095c"
+  },
+  {
+    "path": "scripts/conferir-andamento-real-ui.mjs",
+    "sha256": "92ef2c4c5071297325f4f693671595f23297313aa13127ecc9947d2a58dc9362"
+  },
+  {
+    "path": "scripts/conferir-analise.ts",
+    "sha256": "1bc7d9608ff1c556a9f47d021317b7b02a08c6b45fda32f00211fe60790cc0c4"
+  },
+  {
+    "path": "scripts/conferir-alertas.mjs",
+    "sha256": "24878493a7cf12c8ce0238f87a842ad885d912d44401e4e826cf6ebb137e6770"
+  },
+  {
+    "path": "scripts/conferir-agenda.mjs",
+    "sha256": "86acbde8a1be0d2f933245366c7b615fef88489ccac90fa89d736a9cadda020a"
+  },
+  {
+    "path": "scripts/conferir-agenda-externa-ui.mjs",
+    "sha256": "8b249fb55b1630278018a8cb896911eaeba5c61c508d489bebf241ebef2b149e"
+  },
+  {
+    "path": "scripts/conferir-agencia-qa.mjs",
+    "sha256": "5252d42aa76bad3514049e0573089de9ab73796c73a62a228d514df21c5f631b"
+  },
+  {
+    "path": "scripts/conferir-agencia-estrutura.mjs",
+    "sha256": "11b0d3052c0c3d97713768fc74dab263dac0f64dd6368faff4292cf9caa126a0"
+  },
+  {
+    "path": "scripts/conferir-agencia-estrutura-sql.mjs",
+    "sha256": "9d355d48842f02889a5742d0d76b67d8a47089eb93d6e97176c22d4d22779635"
+  },
+  {
+    "path": "scripts/conferir-admin.ts",
+    "sha256": "7ebb2c6a4007193b398ac79c0185bb18fa9556eb79f71ec60dc62d789293e166"
+  },
+  {
+    "path": "scripts/conferir-adapters-geracao-local.mjs",
+    "sha256": "d7c402a0ee7f16cca312ee51ea192fc417f71cebe5c3bf14104ea23189795134"
+  },
+  {
+    "path": "scripts/conferir-acesso.mjs",
+    "sha256": "13cc76e0cd81e4098bf1cecee108a5e7cf66fb3dc0ae8399c40a0a9f8c583134"
+  },
+  {
+    "path": "scripts/conferir-acesso-pos-estorno.mjs",
+    "sha256": "706351e17125ba1d37a4ebe273fc0e18862a7b64613f9d8f3de0481da555d74e"
+  },
+  {
+    "path": "scripts/conferir-acesso-contratado.mjs",
+    "sha256": "fa81b0d8793d9d44501071466850e5515a8a5fb88547eb34495ab3233e3652f8"
+  },
+  {
+    "path": "scripts/conferir-acesso-contratado-sql.mjs",
+    "sha256": "61a092b0652c96379b9a43f10df29b3ab6dedd0388eddfb8d671a82d2d06634a"
+  },
+  {
+    "path": "scripts/conferir-422-versao-publicada.mjs",
+    "sha256": "fd2b1c431460c06baa1bb2af4752823e680ed36d4a9a272b66e24bcc339adcf3"
+  },
+  {
+    "path": "scripts/classificar-biblioteca-jev.mjs",
+    "sha256": "bbb5d43761f4acb230c20ad59bad108808aeff97da43e329433e47ba9a086916"
+  },
+  {
+    "path": "scripts/alvos-de-peca.mjs",
+    "sha256": "a7ba9b71105a56dece70faa91a99d2696b35e5c71d2b312f51a5b50b9abab0ad"
+  },
+  {
+    "path": "scripts/acompanhar-execucao.ts",
+    "sha256": "53e6312470fcb97d3e6d55040fc0623c6803b0545c6edae06339a1305fec9b92"
+  },
+  {
+    "path": "scripts/conferir-estado-pagamento-publico.mjs",
+    "sha256": "56f6323619e92a393d87413090fb8b9d812240973d83a7d16535d234269bbb18"
+  },
+  {
+    "path": "scripts/conferir-escopo-mesa.mjs",
+    "sha256": "38437f6c0f6897a15342a72532573993da642fb17bf1dc78a2f32a4813fc340a"
+  },
+  {
+    "path": "scripts/conferir-escolha-de-campo.ts",
+    "sha256": "021b614a01f67a3e8ae5f0d4fa0c8d5c8d7e7d7eeea41adf2f9ebc7f0b65ce71"
+  },
+  {
+    "path": "scripts/conferir-envio.ts",
+    "sha256": "6df65b639034cf7e2580b6861326298b547ae63e023ff2f57455bb04097ecb26"
+  },
+  {
+    "path": "scripts/conferir-email-pagamento.mjs",
+    "sha256": "fe6ebbdf5a4848f8be1bdb429087755afb121690c556abfbb5be40b68ab9c127"
+  },
+  {
+    "path": "scripts/conferir-email-pagamento-sql.mjs",
+    "sha256": "8216de470f9e6743c36135e26e4432501fbb5f23f6812fa64ed9f3497e78a709"
+  },
+  {
+    "path": "scripts/conferir-documento-contratante.mjs",
+    "sha256": "a9157a79b0b71c6281d7941f492e4be406a5ad38f0b6b1c4380aaa08b695b524"
+  },
+  {
+    "path": "scripts/conferir-documento-contratante-sql.mjs",
+    "sha256": "d5b973b86f6dc90e0834c52131079a723e447fd6342a3228c9ede56a5e5f2dd9"
+  },
+  {
+    "path": "scripts/conferir-dispatch-real-webapp-local.mjs",
+    "sha256": "ef2edb61997b21fff45037858acf147fdcef5c8d52f848b959395ed6d7bb9f58"
+  },
+  {
+    "path": "scripts/conferir-disparo-offline.mjs",
+    "sha256": "15acd19f3c2bc2923223174bda468ca224d2c48a7b45e8c7115e980f506f7e25"
+  },
+  {
+    "path": "scripts/conferir-dia-seguinte.ts",
+    "sha256": "68698e0d9012788390d59f4e13799eed09954d9fffb5fe431b96a68b6da6ff7d"
+  },
+  {
+    "path": "scripts/conferir-criativos.ts",
+    "sha256": "06684115ef4ed907de27a13000d72b47b2c0f6fafc28bb40e52a871fc91665a9"
+  },
+  {
+    "path": "scripts/conferir-cores-logo-salvo.mjs",
+    "sha256": "1c72cb265831305f98fe9f24bc9659bf8a058f97c4e8a2e4b7f2852a9ea23b76"
+  },
+  {
+    "path": "scripts/conferir-contrato-fila-geracao.mjs",
+    "sha256": "1f1550d63a0de4344049422575f5e1ba3b467ea4822fd820c55dd7f3e51e0be0"
+  },
+  {
+    "path": "scripts/conferir-contratacao.mjs",
+    "sha256": "6723010a8dcb93f09958e5e60a84110651166eec5490c1e70ef769a3b0a8f3a0"
+  },
+  {
+    "path": "scripts/conferir-contexto-referencia-publica.mjs",
+    "sha256": "35bff870d98888ee7c8b1700f5ba15eb114ed792a4bf1d9c52e3b2c89f3b0b35"
+  },
+  {
+    "path": "lib/gestor/tarefas.ts",
+    "sha256": "3328f14bd4984a14c54b410b30682984818ce4666c808bba9a9b4917055bc0ae"
+  },
+  {
+    "path": "scripts/conferir-contexto-criativo.mjs",
+    "sha256": "ffe2409d62c29c8ecb6530c0abfb9638cc934e96b7a6ecf50de4570a1aadb399"
+  },
+  {
+    "path": "scripts/conferir-consumidor-metricas.mjs",
+    "sha256": "0759227b3303d181ca1f119c993e768b34660a06a1546dd33ee310038e0214d8"
+  },
+  {
+    "path": "scripts/conferir-consumidor-geracao-v2-local.mjs",
+    "sha256": "f9b090796dc91ef4b5a95e97a53903bc80d81b4e9b55f46b22dabe0c2fdc8bd8"
+  },
+  {
+    "path": "scripts/conferir-conciliacao-agenda.mjs",
+    "sha256": "ff90746b3b62fc7c4eaa20a6f9ba89efe25dca9ee662208a2a86fc2d9fa2c0c2"
+  },
+  {
+    "path": "scripts/conferir-competencias-fiscais.mjs",
+    "sha256": "891da3858b7d2e09fbc093e64118e1606df1aa06dd5049b16a1712890281ceff"
+  },
+  {
+    "path": "scripts/conferir-checkout-self-service.mjs",
+    "sha256": "5a282f270001579b981899390f3a5ae88838dc50248c89e295b07d668fd9cb48"
+  },
+  {
+    "path": "scripts/conferir-checkout-producao.mjs",
+    "sha256": "a9182a515924c186ea69ff4f0eb4d1fcc2be4d1c10acfdddc48adaf3aec3b319"
+  },
+  {
+    "path": "lib/gestor/sincronizar-revisao.ts",
+    "sha256": "aaa8bff45947d3324c5785c4a2ab320504d2fc2d54204f408781e98a5a509cdc"
+  },
+  {
+    "path": "scripts/conferir-checkout-producao-sql.mjs",
+    "sha256": "478a415225ee50d59d199e9bb71cd7a8482a05c1de2ca9a46b1dedac0e85d92d"
+  },
+  {
+    "path": "lib/gestor/revisao-pendente.ts",
+    "sha256": "746ed70f026856d95a79d69ebaaf9bf120adc644409fa5e0a7aafd7dcc84ca9c"
+  },
+  {
+    "path": "lib/gestor/proximas-acoes.ts",
+    "sha256": "e6e595411083b9a807b91e60a93851514be8c6d9e40c0f762d28b3a7a75ac3d9"
+  },
+  {
+    "path": "lib/gestor/preparacao.ts",
+    "sha256": "7e2472add4df2aae7fecfa3b1be1f864a37c6b9e651874168cdbdb10d0653e90"
+  },
+  {
+    "path": "lib/gestor/portfolio.ts",
+    "sha256": "8b05228db042a0a0a5b59a7c129f142fa0df907429a27f3e8c59e7c825a6dd42"
+  },
+  {
+    "path": "lib/gestor/painel.ts",
+    "sha256": "64c509f9913a01f2ff6673726759c6ce1fb872668a85d72f6ccbe736a92158f8"
+  },
+  {
+    "path": "lib/gestor/limites-carteira.ts",
+    "sha256": "a779c4bc028eac890d536ca970f32f555f5534715eea1907653215da1f1f5922"
+  },
+  {
+    "path": "lib/gestor/homologacao-qa.ts",
+    "sha256": "c3740648848f74d09f361de6fa7afda19c9cc74f849cd48b7b6016e2f4039725"
+  },
+  {
+    "path": "lib/gestor/escopo-da-mesa.ts",
+    "sha256": "128ed6b760f3dadeabd3246469b0b9cb77a44a8a34d7496acb305fb4f2395cc7"
+  },
+  {
+    "path": "lib/gestor/contrato-metricas.ts",
+    "sha256": "93c90ae19e8505b09bb1ccc5d3206e1f5bd110494b07a919486a4cfa43b7ae08"
+  },
+  {
+    "path": "scripts/conferir-checkout-api.mjs",
+    "sha256": "a9ebfb4c8a4de9ff3c0912ac0ded76f5c9451bc37479d5d625a09ba88042612a"
+  },
+  {
+    "path": "lib/gestor/compras.ts",
+    "sha256": "670155a28dfd0ee232389bf48dbd77c6b868ad251bca673edefa2d546a02d303"
+  },
+  {
+    "path": "lib/gestor/carregar-homologacao.ts",
+    "sha256": "a778f82f01ee16d1371405f0a1cbf717f6fd5677515fa0272a88b8336bd0495d"
+  },
+  {
+    "path": "lib/gestor/caminhos-marca.ts",
+    "sha256": "23a5bca851817748b22ad70a773ceca35499b2617cf003da291a7e4245198d5b"
+  },
+  {
+    "path": "scripts/conferir-catalogo-referencias-persistido.mjs",
+    "sha256": "058de56a6e22dbb5c6e9e54576903006f80106bdf327ce97150ca8a53e77d957"
+  },
+  {
+    "path": "scripts/conferir-cascata.ts",
+    "sha256": "76458ea9f3e30690bad1721a5212610d0a855c7818d8df7272dfe3bd9a02ccf1"
+  },
+  {
+    "path": "scripts/conferir-cartao-3ds-sql.mjs",
+    "sha256": "9d3213172483082ded3bfdab32e6db1f53c777c17166cd6a1a97eebca4a64b9a"
+  },
+  {
+    "path": "scripts/conferir-cartao-3ds-integrado.mjs",
+    "sha256": "9a0251a25ed107eb34d6d59874afd85102d8e04c003c539a6bf1829cf1225df3"
+  },
+  {
+    "path": "scripts/conferir-carregar-marca-da-sessao.mjs",
+    "sha256": "6a667b00c678ab6c488d73fea21d9e3cc029a0eacbf02ad36c21b20f71f3fb1d"
+  },
+  {
+    "path": "scripts/conferir-carregamento-inicio.mjs",
+    "sha256": "cd04cd78da6255589783d91941020a142973b7ebfb9fc778f2bc453932153532"
+  },
+  {
+    "path": "lib/formato.ts",
+    "sha256": "d5471b214002fd7b2c25deb8577bd4deaee35ee184a3a7db70b51b65fb89fe29"
+  },
+  {
+    "path": "scripts/conferir-campanha-da-sessao.ts",
+    "sha256": "823bd394bb10e32129715421d8e80db691806c11b1aef6bbaebf22ed20a571e3"
+  },
+  {
+    "path": "lib/exemplo.ts",
+    "sha256": "1d14782a2550e7edbd3aae07dc407411eb05af4be10a5bc0397eb6bbfaa66dc0"
+  },
+  {
+    "path": "scripts/conferir-nichos.ts",
+    "sha256": "d26735de5cfcdc19e66e8cc31d077d8e1192e492c684cf494164c5428aff572f"
+  },
+  {
+    "path": "scripts/conferir-multiconta.mjs",
+    "sha256": "9ee7e479657267a66a57abcd097f1106d30395b1bcce9f38f568525fe8dc5a87"
+  },
+  {
+    "path": "scripts/conferir-multiconta-sessao.mjs",
+    "sha256": "4edffd8f3d2c8b22f15febb1351daaf4b350280a56661cfab311051cc8c9d290"
+  },
+  {
+    "path": "scripts/conferir-migrations.ts",
+    "sha256": "61a1084ef03785941f8afac8801ae14ab50915bd15284c5f57cb0d590d2dba09"
+  },
+  {
+    "path": "scripts/conferir-metricas-carteira.mjs",
+    "sha256": "95d2c7388837fbfdbdb0b426f4862f75f0168590f04b3759d410b7440fd5a2d0"
+  },
+  {
+    "path": "scripts/conferir-lp-alerta-contato.mjs",
+    "sha256": "76111cf4f8a82b4167b627c4b21324b5165f363833a8487dad1c615a9ba0ac4d"
+  },
+  {
+    "path": "scripts/conferir-lote-jev-referencias.ts",
+    "sha256": "389aff7fbb203282ae9c90d2747835a12840ef8055fb31bdb63b078676e344b9"
+  },
+  {
+    "path": "scripts/conferir-loading-01-02.mjs",
+    "sha256": "7dd6d5788eb09a5a3c1dc7f23804bbe20112d207034e00bf405bc2ad87f809eb"
+  },
+  {
+    "path": "scripts/conferir-lista-branca.ts",
+    "sha256": "8f3df13a2c6a404f65b9e5d8cee9404dcd8aa72b1f668a3cb2a47e24c5a34053"
+  },
+  {
+    "path": "scripts/conferir-lembretes.mjs",
+    "sha256": "a0ad21b255dd88073e56cb83f120dc6155a661877161141a48a168acdc72d011"
+  },
+  {
+    "path": "scripts/conferir-jornada-comercial-portas.mjs",
+    "sha256": "51be4e2d2b12ab686f8e56496ac3d2a6c2fb4c2eda332becc0f919b9f0786544"
+  },
+  {
+    "path": "app/(fluxo)/whatsapp-business/page.tsx",
+    "sha256": "266a6303e4be86e536f69959e3eeac619529afaf1e127aba5216d639daf0ee85"
+  },
+  {
+    "path": "scripts/conferir-jev.ts",
+    "sha256": "ab884be72553afa6037a062382067d59cdbff57f53001d1acbd8a71df1eeb1f9"
+  },
+  {
+    "path": "scripts/conferir-jev-criativos.ts",
+    "sha256": "1acc4095901b16cbfe2f57e061f6065dc0f48433bf0af8aa2fd90500d1a590af"
+  },
+  {
+    "path": "scripts/conferir-intencao-envio.mjs",
+    "sha256": "390aa89a55d4eed542e861997e91e629a477ce61838b09a41a5bbb3593b4ff6a"
+  },
+  {
+    "path": "scripts/conferir-intencao-envio-sql.mjs",
+    "sha256": "612d0b246eb98657cb41d997d7e165137a52686ecbde015d254e0d3cbc88667e"
+  },
+  {
+    "path": "scripts/conferir-inicio.ts",
+    "sha256": "4c310ae99de39657cd85deca81460b1acc155487c02872a26592bf5c0043185c"
+  },
+  {
+    "path": "scripts/conferir-inicio-meta.mjs",
+    "sha256": "90a8bf9e1b361b948f991fb011e75da7206b22e14a69f0b0bf6e9ef863fb5242"
+  },
+  {
+    "path": "scripts/conferir-inicio-meta-client-boundary.mjs",
+    "sha256": "5a8a935cda7b65004bccdcd7a558bf6d98f7e34ff25c2e10b0a3abf600cc63dc"
+  },
+  {
+    "path": "scripts/conferir-identidade.ts",
+    "sha256": "83421dc47ed5cd93fc34eb25c0520cfde62795ca489ac39e6de2dc2abf81d04b"
+  },
+  {
+    "path": "scripts/conferir-horarios-agenda.mjs",
+    "sha256": "eb4dcbf3095d68ed4e7c54ab62e358a398e209936e2ae7c985126dd65480c6e8"
+  },
+  {
+    "path": "scripts/conferir-homologacao-gestor.mjs",
+    "sha256": "040189868cf9098632bd6665154a086f1785aed3173490bb288b0e1f2f6cfa4b"
+  },
+  {
+    "path": "scripts/conferir-historico-vazio.mjs",
+    "sha256": "875c831f648f87962895b3d352f6eb03bd8d11680f7d281eb60e9beb349c45d0"
+  },
+  {
+    "path": "scripts/conferir-gestor.mjs",
+    "sha256": "a147bbca6f3e8c76deeb540399ff973a13f83785d5caaaee610f6d4e01fd7b14"
+  },
+  {
+    "path": "scripts/conferir-geracao-real-leitura-local.mjs",
+    "sha256": "56fef2e9d98304fe1d577db56d9fa44ac4c860089ebf143b8fb3c1581b8b3a0f"
+  },
+  {
+    "path": "scripts/conferir-geracao-local.mjs",
+    "sha256": "97c3b0ca1037d72ee9c02dffddc5c6af1785fa34968e7dd43eacca74a3a578e0"
+  },
+  {
+    "path": "scripts/conferir-geracao-backend-local.mjs",
+    "sha256": "61c92a487e80f5fa44cdc98ba5e4d7851ddcf38db4c783ef9a8b3f792f7bef66"
+  },
+  {
+    "path": "scripts/conferir-foto-fachada.mjs",
+    "sha256": "1ae575cafa5663d1b08fb33479c2011966b8a6ef61c7eea31e93b3d01147e535"
+  },
+  {
+    "path": "scripts/conferir-fluxo-cartao-mensal.mjs",
+    "sha256": "d49248c7d6afcf828fc8671189adb25fdd96526d6e4717cceca31408ef17ad2c"
+  },
+  {
+    "path": "scripts/conferir-ficha-operador.ts",
+    "sha256": "3c12c7cec82f20405cf1927fb793bb407d06cfa4a3218d6cb2d6c499d4c429a9"
+  },
+  {
+    "path": "scripts/conferir-evidencia-manual.mjs",
+    "sha256": "5c7144413fe24a8df0331baad795da9e8caba1153e2c1db618601ee5cf1132f8"
+  },
+  {
+    "path": "scripts/conferir-evidencia-manual-sql.mjs",
+    "sha256": "2c180c824f0de8deac3e771c6a2d3e62cfee5b4a9393053ae9c606e249669732"
+  },
+  {
+    "path": "scripts/conferir-estado.ts",
+    "sha256": "1f2bcced3722315396ea767bb496f51ebb9d76d69c2d96ae380ff6f6a0650986"
+  },
+  {
+    "path": "scripts/conferir-redefinicao-turnstile.mjs",
+    "sha256": "f29d8ca73fea8917618e1181c272b52c3c2581c55b86201066cee502d8de4164"
+  },
+  {
+    "path": "scripts/conferir-recuperacao-completa.mjs",
+    "sha256": "d38beefd3fd53982e466832ee85ad067744f73ddc00b4a9bf630cb7cf1d63729"
+  },
+  {
+    "path": "scripts/conferir-recepcao-inicio.mjs",
+    "sha256": "8d05bc6e322f3065c7661671cb19760927bc9c77a1cc0d606ce5ddead31c70c8"
+  },
+  {
+    "path": "scripts/conferir-qa-interface.mjs",
+    "sha256": "714b19ee7eb5ab6a4130f9461f0b4062cdba970412374aa7157b17475d5f569a"
+  },
+  {
+    "path": "scripts/conferir-publicacao-criativo.mjs",
+    "sha256": "3a6d1b7c70ae1c9e3e16bea69ef67d14060a7de2f42ce9a2498e618bf21d3db5"
+  },
+  {
+    "path": "scripts/conferir-publicacao-criativo-sql.mjs",
+    "sha256": "a4fb7af4a3d27b3557873932a4368ac404f3e8c85e03be3c97603ed230bf2154"
+  },
+  {
+    "path": "scripts/conferir-proveniencia-marca.mjs",
+    "sha256": "dda0f04f83c85edaaaa0c636aac7be31f99f0423c4b1f03d459bd8e7309f1137"
+  },
+  {
+    "path": "scripts/conferir-procedencia.mjs",
+    "sha256": "19c437ec75bda399fb2bbc80ee5703942d3843da1fb16486c1f11b781a978ac9"
+  },
+  {
+    "path": "scripts/conferir-primeiro-acesso-compra.mjs",
+    "sha256": "1d8d90fba2915a4532148170fffe73d6f93545c04038fe24f7d53caacda79641"
+  },
+  {
+    "path": "scripts/conferir-prevoo-geracao.mjs",
+    "sha256": "a1818425d1c943a01a746891efb947ca8a0d460af8467247221441b16d9e1c68"
+  },
+  {
+    "path": "scripts/conferir-preparo-assinatura.mjs",
+    "sha256": "8c41f1ac969e5b9f112effe65f2babdf70be3179beac4b7947a955cb552dc2c1"
+  },
+  {
+    "path": "scripts/conferir-preco-contratacao.mjs",
+    "sha256": "a0f8e1954d300c0329498b8cadc38132d83fe1f9b2b9d5c5e98f4ab3bc5049b0"
+  },
+  {
+    "path": "scripts/conferir-portas-gestor-interno.mjs",
+    "sha256": "871c47f682a573765eea15167ebb21debb131571f656a07c057c1cfbec9ba100"
+  },
+  {
+    "path": "scripts/conferir-portao-de-fixture.ts",
+    "sha256": "eefa6c2aac2df251b58f62ddf003bbc08ff715a58f6df02bcdffa981dc2b6509"
+  },
+  {
+    "path": "scripts/conferir-porta-geracao.mjs",
+    "sha256": "abc993482f77dfe45ac3c3f6587037826fe860f580cf3622fb98362f272d8294"
+  },
+  {
+    "path": "scripts/conferir-politica-pos-estorno.mjs",
+    "sha256": "5388244b77d9696ca1e8cb7eb141fd8fa5bb81dcfcf887df9d581b80471f9910"
+  },
+  {
+    "path": "scripts/conferir-piloto-qa-sql.mjs",
+    "sha256": "ccf89790c7fe62e6e56f0a5f77fa1e81cb422536b8490cbda353f85a39f41270"
+  },
+  {
+    "path": "scripts/conferir-percurso-criativo-pronto.mjs",
+    "sha256": "61099d418f4b11bcb79d6ba5674531e3707249e67c1567dbf710349e73810eda"
+  },
+  {
+    "path": "scripts/conferir-pendencia-onboarding.mjs",
+    "sha256": "8155049851af1ba01b1646346e3e191fa7dd99bbfe58553b615ed3a118e7e8c3"
+  },
+  {
+    "path": "scripts/conferir-pedidos-da-sessao.mjs",
+    "sha256": "0c628fd8dedbcdfdc5ef192050fda5576501a6ab2b42e37c9785421374b71881"
+  },
+  {
+    "path": "scripts/conferir-pedido-imagem.mjs",
+    "sha256": "5c17d1a7610d55cfa77973fdd6c3bf7f24111f3401ff905af6813412e25523e9"
+  },
+  {
+    "path": "scripts/conferir-pedido-assistido.mjs",
+    "sha256": "ac745a3d02f5d5c9c8fbae886c2e587b45228090e93eb95509e47196d0bf7431"
+  },
+  {
+    "path": "scripts/conferir-paleta-marca.mjs",
+    "sha256": "33ad45955e29582433024cb103c5106b274bab5f2266e65883c4133ff844de5c"
+  },
+  {
+    "path": "scripts/conferir-painel-gestor.mjs",
+    "sha256": "1fc895c61a8cdd1b932c35e9bc5c408ddf6efec7ccb0bd801297baf84e190b89"
+  },
+  {
+    "path": "scripts/conferir-orientacao-externa.mjs",
+    "sha256": "bb94e48f19ab5c4fba06fcdeacb3b84c8baae8737a227507883879815b14380f"
+  },
+  {
+    "path": "scripts/conferir-onboarding-voz.mjs",
+    "sha256": "8e73a59acbba43c5b3f0bfd9aedc597b3ad6ab734dfcabd0a3ea02605a300130"
+  },
+  {
+    "path": "scripts/conferir-onboarding-preservacao.mjs",
+    "sha256": "d2c9cd028ff969a5ce8e3274ad882005fd9501f2d617d95453fc3e2f699cafd7"
+  },
+  {
+    "path": "scripts/conferir-onboarding-operacional.ts",
+    "sha256": "c23b3d57b7d5f85664dc92c0281df5cb893efd650f331178542502cb6a962b24"
+  },
+  {
+    "path": "scripts/conferir-onboarding-loading.mjs",
+    "sha256": "904c44db0c13e1e1afd446d0a68296f13e44e4c6973c025cafd3e28e25b42c1f"
+  },
+  {
+    "path": "scripts/conferir-onboarding-envio.mjs",
+    "sha256": "cf73e8d1cf8e587da9420734253243381661d66085692a9cecaa80c5da9677b1"
+  },
+  {
+    "path": "scripts/conferir-onboarding-contrato-cruzado.mjs",
+    "sha256": "fa585214fd1cbee59c9bb29e8c193be1f939d7860d61134997d32b0699e16133"
+  },
+  {
+    "path": "scripts/conferir-oferta-outubro.mjs",
+    "sha256": "9183f7adcef82f250da1378404b9d99c984bddfad9a9c981736fad24e4619322"
+  },
+  {
+    "path": "scripts/marcar-operador.mjs",
+    "sha256": "928fc7f658086798d5d1b0062d4070be925e06442fb724d90c4a05ee916894ad"
+  },
+  {
+    "path": "scripts/manifesto-qa-01-02.mjs",
+    "sha256": "2657bb1d94153a261980d0803f671c4587ec07bef4c45d7e1ed6f24458504f21"
+  },
+  {
+    "path": "scripts/gerar-design-md.mjs",
+    "sha256": "4d1c44881445331a64468d3ef651d1cee7e370ef0a4fd2575727d83441c5e394"
+  },
+  {
+    "path": "supabase/objetos.ts",
+    "sha256": "692fdda0b9d5d26c8ed86fde23e5083fe254f51800a1476ed463b63b6b89e02c"
+  },
+  {
+    "path": "app/auth/meta/iniciar/route.ts",
+    "sha256": "230b7ce56fcd974b8ad74e3dc8700ddd1f832715d8cb59785852d19d43826385"
+  },
+  {
+    "path": "lib/seguranca/excecoes.ts",
+    "sha256": "8dcd4a72e16e258af8bd8a9685ade5cca18f00ebd15596718e126aba4d7aefce"
+  },
+  {
+    "path": "lib/seguranca/checkout.ts",
+    "sha256": "3aaf5e6488febfe5011b285867cc6c9277a3f4f5a6776dec75b9d8ab1589ee32"
+  },
+  {
+    "path": "lib/onboarding/voz.ts",
+    "sha256": "7315a7dbcf593232f6218689248b1c4a290d2faaad3914d825159a7207e6e0ad"
+  },
+  {
+    "path": "lib/onboarding/referencia-preco.ts",
+    "sha256": "210b2fcca0b18844eb94cfee992b1476c6e475b65aa53072d60088736d4cb275"
+  },
+  {
+    "path": "lib/onboarding/pendencia-do-negocio.ts",
+    "sha256": "160338d797da70cb611f8fd6672de83288c1293d11de627a2e7d6f203991cea3"
+  },
+  {
+    "path": "lib/onboarding/marca.ts",
+    "sha256": "be5e63f9f5c41f152eb116cca66f24e44d09a2f149df0ebe8b04327d99f2000f"
+  },
+  {
+    "path": "lib/onboarding/localizacao.ts",
+    "sha256": "b7e8d6be46ec9c804c7e495de8ee20da0b16afa616885406856a4524543004a5"
+  },
+  {
+    "path": "lib/onboarding/fala-ao-vivo.ts",
+    "sha256": "5e117efd5036b2056db018bb0175641b344a190eba1de6559f43abfb48f0d934"
+  },
+  {
+    "path": "lib/onboarding/entrada.ts",
+    "sha256": "aaff918ba206520c697109a5499442c19b2e51483425cd21723856f13b67cb89"
+  },
+  {
+    "path": "lib/onboarding/enderecos.ts",
+    "sha256": "09e747ced5181fe07244e18907ac247f9da58c99809903a3a05c993808f6f4fc"
+  },
+  {
+    "path": "lib/onboarding/documento.ts",
+    "sha256": "8e3152f7f1f0b293d20d4119c8a33b214a96c581894bb03751d62672a60dda15"
+  },
+  {
+    "path": "lib/onboarding/conclusao.ts",
+    "sha256": "16dee65979f21e9a3cc0a4f1e681078faef11688c70fd086ef0c4414016c52b8"
+  },
+  {
+    "path": "lib/onboarding/briefing-trafego.ts",
+    "sha256": "d1d8f4fa2ed5193f9ea966b0dc5f845af5d267f618fe588d0e5de012080ad3c6"
+  },
+  {
+    "path": "lib/onboarding/bloco-um.ts",
+    "sha256": "8ec296344c5fffe54e17766b4efc2d7a764be4c4de00e9e57340ca02b18fbe27"
+  },
+  {
+    "path": "lib/onboarding/atividades.ts",
+    "sha256": "240b831d0bd683bd4e9aa2781354ea67f1fc6a60192dff96ac1c8afbeeec9fdc"
+  },
+  {
+    "path": "app/api/onboarding/transcrever/route.ts",
+    "sha256": "9621ebd2d659a81f6f09eb7226863bd5b932a81dd587310493593a37634c7348"
+  },
+  {
+    "path": "app/auth/meta/exclusao-de-dados/route.ts",
+    "sha256": "1444d8edf7e909a6c4ca5173f889a65c09fa8d6fceae68ee2fc2c9015a2dd52f"
+  },
+  {
+    "path": "lib/estado/frases.ts",
+    "sha256": "21a224d5341898540ce2c5678aa1dbefe6f3944a9b20ee37bad4bdb3f36ea247"
+  },
+  {
+    "path": "lib/estado/cliente.ts",
+    "sha256": "31420cf04fb5ed2e828b262dfa39a72132f979d48849012c430ab0615d760ccf"
+  },
+  {
+    "path": "app/(supergestor)/supergestor/homologacao/page.tsx",
+    "sha256": "0f4bad2d34c1784818a6ba446cc9b5be51fe2fd572972c635b0f862b548f0cf2"
+  },
+  {
+    "path": "app/(supergestor)/supergestor/error.tsx",
+    "sha256": "56f04a12c46049a619549546e8134f0ff3885bcae96a66659406f67d39d341c8"
+  },
+  {
+    "path": "app/(supergestor)/supergestor/CarteiraLoading.tsx",
+    "sha256": "0603f25d4c3585aef3ee29b8b51fa66aada336cc64bbb0539d8e93d9245841dd"
+  },
+  {
+    "path": "app/(supergestor)/MesaShell.tsx",
+    "sha256": "16a708afbed45b9297cf35534fd20572ddae78fb26790577e1ddc69227a09d28"
+  },
+  {
+    "path": "app/(supergestor)/Mesa.module.css",
+    "sha256": "1dfc75eaf750c9826f7df77535e622298a4c01769a10c1ce16af39f2cf3a4486"
+  },
+  {
+    "path": "app/(supergestor)/layout.tsx",
+    "sha256": "03b21f2b50ce017e81729f9a91dd396e4c9b0f1d53b196f9e5c83ff7247d9438"
+  },
+  {
+    "path": "app/(supergestor)/FeedbackDeNavegacao.tsx",
+    "sha256": "d69f16010084b69cc9f820779d5989ea2d247f2b67c1861cba28bed1094e2b03"
+  },
+  {
+    "path": "lib/revops/sessao.ts",
+    "sha256": "a52048d24108ef99bdd14a55bd535d5adaee4dcacfe061e2c5f8aed34e8ebfaf"
+  },
+  {
+    "path": "lib/revops/dados.ts",
+    "sha256": "e4af3340d98b2c0362d38e25643916d0419c91609272a9d59264c340d8b75334"
+  },
+  {
+    "path": "lib/revops/contrato.ts",
+    "sha256": "424b3b6e5a20481dfb2273cc2addc649a7a1b952277d8af7b37c3893b8cbf7b2"
+  },
+  {
+    "path": "lib/revops/autorizacao.ts",
+    "sha256": "a09bc7c41dedd77585366a6dbea59763ab0e82fb663e095dbd74364bfaff508d"
+  },
+  {
+    "path": "app/api/onboarding/transcrever/ao-vivo/route.ts",
+    "sha256": "8a7945ef8da212484970cdee6ec97a534441672538703780c90d7bb7c19cfb48"
+  },
+  {
+    "path": "app/contratar/pagamento/page.tsx",
+    "sha256": "66ba4b0cfeacdb2b20cfc218e13e49e8e2b2d403bd748112bc708ec866d9b769"
+  },
+  {
+    "path": "app/contratar/pagamento/PagamentoFormulario.tsx",
+    "sha256": "c1a05801d55c4c2efcc704150b6d3e0b2b20e369591e64a282f4be089eb98b6f"
+  },
+  {
+    "path": "app/contratar/pagamento/loading.tsx",
+    "sha256": "51cd24bf981a77cb7e8880d06428c047158b0768f1995ec16dbe21c9f055484f"
+  },
+  {
+    "path": "app/contratar/pagamento/EstadoPagamento.tsx",
+    "sha256": "3383fc1bf381748ab7bd2946a482cb4790370b9b1378eb784cdeb0b2ce04b705"
+  },
+  {
+    "path": "app/contratar/pagamento/CopiarPix.tsx",
+    "sha256": "1089d206f555b08de2db660979a379901c33df0a7d58619a539d422434a6500b"
+  },
+  {
+    "path": "app/contratar/pagamento/actions.ts",
+    "sha256": "40308080db8b99696d4c1137bfc7c0cd95234709889d1d610628cef0b8169c31"
+  },
+  {
+    "path": "app/contratar/loading.tsx",
+    "sha256": "74a41ad086ffb0ae023ce7127c32029cae5f57e688f87ee58735f1650875241c"
+  },
+  {
+    "path": "app/contratar/FormularioContratar.tsx",
+    "sha256": "5bad78682db40ad61b33cbdce57ff18fe4a8723216258272a1c61d78690e1e76"
+  },
+  {
+    "path": "app/contratar/contratar.css",
+    "sha256": "4faae9647018397bdead1faf79584cda75e2de3a74bae45429fc8f1b6600b5b3"
+  },
+  {
+    "path": "app/contratar/checkout-hospedado.ts",
+    "sha256": "65011e01d94748a9a71b7b34a1978f824faddc833530677e76972e2887a6d287"
+  },
+  {
+    "path": "app/contratar/actions.ts",
+    "sha256": "43de3719fd08b0d62daa16030e9c16d8fb0d4561cf055ec51638c9e9ddef38ff"
+  },
+  {
+    "path": "scripts/conferir-signed-request.ts",
+    "sha256": "ee3287bda94c304305318f07c535aed81f73b2084ca7f187e02cad1a625a11c1"
+  },
+  {
+    "path": "scripts/conferir-sessao-paginas-contratacao.mjs",
+    "sha256": "6cf20ebfa290d50359f9f8dc829d7a0692be9a40e9ca06a9aff3ddc86f5aef8c"
+  },
+  {
+    "path": "scripts/conferir-senha.mjs",
+    "sha256": "7af1abad6d3ba972eb5e5593ecac64f7585b753e9df45ca10cc1c96f2c9b8d7f"
+  },
+  {
+    "path": "scripts/conferir-selecao-marca.mjs",
+    "sha256": "e6b76547cdb7fce3517376dd1193cb7c41d78c635d450a462911decfd93ce905"
+  },
+  {
+    "path": "scripts/conferir-seguranca-checkout.mjs",
+    "sha256": "776d242757c4834feab52f9c73c6ed1f1f666c22f83771c30827bf4fc2505a4d"
+  },
+  {
+    "path": "scripts/conferir-rota-apresentada.ts",
+    "sha256": "264acb90f53f5dc9c89cc112a8361a84a34f80d53a17b9c672162436588210a4"
+  },
+  {
+    "path": "scripts/conferir-revops.mjs",
+    "sha256": "d35f03fec9da27b0201d264a6befaf827dc2a0afd8571158e14985bbdbdf4585"
+  },
+  {
+    "path": "scripts/conferir-revisao-criativos.mjs",
+    "sha256": "4ba0bd3bdda00c147818ae315927917fe88869b2c02aaea4dd04f29d1f418369"
+  },
+  {
+    "path": "scripts/conferir-retorno-leitura-meta.mjs",
+    "sha256": "6155ac4c85cba76b4842a2fddc0d46c1a1c715fe9e8e4f7aa4fab5db37a55c2d"
+  },
+  {
+    "path": "scripts/conferir-resultado.ts",
+    "sha256": "8f681bd5f2efaf302d103e9fa3463f87916decf051c5924f05682e9a46633bbd"
+  },
+  {
+    "path": "scripts/conferir-replay-estornado.mjs",
+    "sha256": "c7cb86c7ebd441830d263ee2fc12fb552d04167df0f956c58dcf41f7a3d0b870"
+  },
+  {
+    "path": "scripts/conferir-referencia-publica-sql.mjs",
+    "sha256": "314d8e954ea40af7342f0a8a9304a8248436edb65173290422efd53415dc3131"
+  },
+  {
+    "path": "scripts/conferir-referencia-preco.mjs",
+    "sha256": "398fec6b2b38444c4a1fc878b5ee7dab4db1273d47f4d437df07928a7dd4368f"
+  },
+  {
+    "path": "scripts/conferir-verba-contexto.mjs",
+    "sha256": "35b90fe30f1b1104419c708765e5eaa830276b39117d55db9468267a3cc64a1b"
+  },
+  {
+    "path": "scripts/conferir-veiculacao.ts",
+    "sha256": "4cab528097e386bd27a1a6edc26951be7c8202ba3689c7a3bee1e1288e495b70"
+  },
+  {
+    "path": "scripts/conferir-ui-fila-geracao-local.mjs",
+    "sha256": "1d32c5f1dcdd1cbefdb2ab3cc5a245a86c7a120db2f11998a0d44707c31fc12d"
+  },
+  {
+    "path": "scripts/conferir-triangulo-contexto-real.mjs",
+    "sha256": "715dd2cd32386a73e631dbfeca29a03a3c4cc4e83fd0fddbda77b95808aba7e3"
+  },
+  {
+    "path": "scripts/conferir-triagem-referencias.ts",
+    "sha256": "31a82a34f230be0713aee714c23c7920a1159fa0cef52ff7b2a552be0a9d6a7b"
+  },
+  {
+    "path": "scripts/conferir-trava-campanha.mjs",
+    "sha256": "6971525e9ccf7eee433b15eea2fbfc2044bbca6773770c6b4a6d5d765473ad94"
+  },
+  {
+    "path": "scripts/conferir-tarefas-gestor.mjs",
+    "sha256": "a5fde31f6092bfe3954fadd48e53cc2825925be037a3880222932d82a7f70298"
+  },
+  {
+    "path": "scripts/conferir-webhook-ensaio-encerrado.mjs",
+    "sha256": "da85386bea6959b3b8c97fea8e48483590884165fb46b14cfcd78138c0d0cc5c"
+  },
+  {
+    "path": "scripts/conferir-vinculo-lead-pedido.mjs",
+    "sha256": "9b6d53e634e42e0e308c40a2b464a349a30d0ba7673e3e3449eedc7abb0990d2"
+  },
+  {
+    "path": "scripts/conferir-verba.ts",
+    "sha256": "df6b4d5facbcef0095e57d531022fbcfd6255a9bea9c1dd28d7a711d2a8d34d4"
+  },
+  {
+    "path": "scripts/custo-piso-execucao.ts",
+    "sha256": "425ef844163b5a1f99d108135d79f78fa65d16bf0fe039e42deaee06fda2896f"
+  },
+  {
+    "path": "scripts/conferir-webhook-estorno-handler.mjs",
+    "sha256": "1b42f2e24da9d2fc6d562bd6bc49a608f23677168c3859654d2ce31eaf675934"
+  },
+  {
+    "path": "scripts/diagnostico-card-da-pergunta.ts",
+    "sha256": "ace0c1fb5e3464768be3e834f654ca1422a54ab105a9d0c74102ee79465b2479"
+  },
+  {
+    "path": "app/(fluxo)/verba/verba-editorial.css",
+    "sha256": "23e137089cbb39fb6cca7c51edb003f7bfb92a83c2c5a5e2d7a62e7d724a176a"
+  },
+  {
+    "path": "scripts/qa-etapa01-http.mjs",
+    "sha256": "1335df09c0bc823572ff6ce7f39a48f7b62315f430ad2fc3955604580a15c969"
+  },
+  {
+    "path": "app/(fluxo)/verba/page.tsx",
+    "sha256": "300d37da805a80f49bafd217ebd3c252c5caf2974186be76552240c855eac7b2"
+  },
+  {
+    "path": "scripts/qa-etapa01-estado-publico.mjs",
+    "sha256": "0b4de056e0558f9c806f69505669ea4a395fb1787d188c838bc89996f2c01fc2"
+  },
+  {
+    "path": "app/(fluxo)/verba/FormVerba.tsx",
+    "sha256": "dcd3ab17f87ee7eafd86ce64fb11c2b0d60d13c306e7ee40d3db6618267f252e"
+  },
+  {
+    "path": "app/(fluxo)/verba/actions.ts",
+    "sha256": "fe0ae16233c429f9968f553989c00d675bfcbae758b8b4b23c420689d1793daf"
+  },
+  {
+    "path": "scripts/qa-etapa01-banco.sql",
+    "sha256": "ba5905e0b2f68086e3ead523fc7a154caaca85d1bf7318c6a4ed8f8bec9d8242"
+  },
+  {
+    "path": "scripts/qa-etapa01-assinatura-sandbox.mjs",
+    "sha256": "56d572cb6bf08623bbd2f9a88d3ee25904ed98ead8cc22f35e7ed379dbdbb609"
+  },
+  {
+    "path": "scripts/qa-compra-unica-limpeza-20261021.mjs",
+    "sha256": "7f0092bae20538346d09fca5fa7db4fe6d9c7822f502cb5c335a233753e39847"
+  },
+  {
+    "path": "scripts/qa-compat-telas-criativos.sql",
+    "sha256": "55297b0d9c11fd7ce340596cd00fbf104017008903cd6c163635b932767f2ae3"
+  },
+  {
+    "path": "scripts/qa-3ds-final-20261021.mjs",
+    "sha256": "5b709355444192c6e1c83bf786ffd16b19f65ebd3105f8bba4b9447407f7e371"
+  },
+  {
+    "path": "app/auth/meta/desautorizar/route.ts",
+    "sha256": "8427135a984a6363cfe6177495a75572950382a7b13d7c3c47cfc3f3e2e08a85"
+  },
+  {
+    "path": "lib/nichos/validar.ts",
+    "sha256": "7dd8cb2ff2db387a0ae31b39ae239315df9e2c2ebd9c5a2e51facd515514aec4"
+  },
+  {
+    "path": "lib/nichos/tipos.ts",
+    "sha256": "e4c25920b97ad30a003d9289a3c43259f826246eb5d7403e1d7abd6262f0a495"
+  },
+  {
+    "path": "lib/nichos/escolha.ts",
+    "sha256": "5af95a5f92dd773cfd835fc345aaffab9e38aef5d667c3873e4258d1d15da038"
+  },
+  {
+    "path": "lib/nichos/busca.ts",
+    "sha256": "97a654315002a8aaadd19cf94077408c3d1e84d7bdbd4da35628aa9936528646"
+  },
+  {
+    "path": "app/(fluxo)/sem-instagram/page.tsx",
+    "sha256": "2408428b41259aa4877786935365ed95c6033a9f9a05412e08c14903a883f14a"
+  },
+  {
+    "path": "lib/multiconta/paginacao.ts",
+    "sha256": "c98214676f68b24b84188ae52b41aa188234618596aa44d7ae804b56fef5d880"
+  },
+  {
+    "path": "lib/multiconta/logos.ts",
+    "sha256": "f2c3f3bb83895aa476a5d8f553b0a7a530a824146e275ab938befbf950bac5e0"
+  },
+  {
+    "path": "lib/multiconta/identificacao.ts",
+    "sha256": "28e4c3a32419806570d9e70a7298a82bb66d66c000cef4886937bda2c342a6b0"
+  },
+  {
+    "path": "lib/multiconta/escolha.ts",
+    "sha256": "63dbced742691979cf423a2f6f483798bf9e0ac75cac3219196272ce67aa53b9"
+  },
+  {
+    "path": "lib/multiconta/elegibilidade.ts",
+    "sha256": "de8535df12994325db2ccc9ed5577fc1a39af2b105ca124cbfcfd6af42340bdf"
+  },
+  {
+    "path": "lib/multiconta/cnpjs.ts",
+    "sha256": "5aeb260f4f6ce04fff0f4e347c24ac1980a06899aa647bf98433d53406c15c3b"
+  },
+  {
+    "path": "lib/multiconta/ativo.ts",
+    "sha256": "998a9beb542e164982dc8812b33ef92ab4bec58c2fc13f38d0087a6968826f2c"
+  },
+  {
+    "path": "app/exemplo/_redefinir/Previa.tsx",
+    "sha256": "aa03bee2bafb46e5ff8f71676c8922aff1065a4fe4a4ab37d664f55ae1d9ebf6"
+  },
+  {
+    "path": "app/auth/meta/callback/route.ts",
+    "sha256": "8d5445f0f199f0ee7e150896b8b24aecc2b14fc7fd572d6b6dcd7974224dde0c"
+  },
+  {
+    "path": "scripts/fixtures/cascata-casos-conhecidos.css",
+    "sha256": "0e8cd0ca1222f2ce6631f17ded0caf7efe533750d07e2ff9140479fe40a26f07"
+  },
+  {
+    "path": "scripts/qa-prioridade-criativos.mjs",
+    "sha256": "0070855c68a73b688193b3d641747a3a51d911235d2f97463b429ea042cd25aa"
+  },
+  {
+    "path": "scripts/qa-jornada-autenticada.mjs",
+    "sha256": "fed9fea6cb9c968ffdb3e6a86f929bd10a15dcd88109defa4dffb803a9e8a36f"
+  },
+  {
+    "path": "scripts/qa-inspecao-3ds.mjs",
+    "sha256": "0e502b690b17fbc463e24aafd0c9e245215e619edfb8992876f6e34d6048b0ca"
+  },
+  {
+    "path": "scripts/qa-gestor-ui-fixture.mjs",
+    "sha256": "9146c021632e33c109e6c0eb107eabc9b536939b841c717c9354d235971a470a"
+  },
+  {
+    "path": "scripts/qa-gestor-ui-cleanup.mjs",
+    "sha256": "09a8493e4980949548568a6910fadde25a4081747aaab8917fe920d437380356"
+  },
+  {
+    "path": "scripts/qa-etapa01-webhook-sandbox.mjs",
+    "sha256": "efc0775271ab5ea0bf17597c48eab428c2573db5f905ba1821440e760e655c6b"
+  },
+  {
+    "path": "scripts/qa-etapa01-seguranca-http.mjs",
+    "sha256": "a2e338b5ce3f9ac88318a21e339019142d69342fa32967d94b3091ccd8d78879"
+  },
+  {
+    "path": "scripts/qa-etapa01-renovacao-sandbox.mjs",
+    "sha256": "61f4e64242f1dbe5c7740046fddaa8b5237b4d621a55f43e7968184dcb4e8aff"
+  },
+  {
+    "path": "scripts/relatorio-biblioteca-jev.mjs",
+    "sha256": "6eedb2810890abea38e8d48cb7ebfdf30ada9d1acd8e0c2c25f9bd4d12a490a2"
+  },
+  {
+    "path": "scripts/qa-webhook-estado-20261021.mjs",
+    "sha256": "b5aead6d8b0666b93448830b1df44496e39249cc6f43fbd65191bec19daa9697"
+  },
+  {
+    "path": "scripts/qa-tarefas-gestor.mjs",
+    "sha256": "a5a7c8678d7f81c225cc463d900da04c220fda93eaf67ad3e7550bbf27af317f"
+  },
+  {
+    "path": "scripts/qa-revisao-criativos.mjs",
+    "sha256": "6c3593a74e11b369da602a544a3158c22399800eecdd62a57101d78451206d4e"
+  },
+  {
+    "path": "scripts/resolvedor-hook.mjs",
+    "sha256": "edfbcd754a2930061911b270222f59e2c81cb7dd0e5a7164fa94f2b1bb1abb4d"
+  },
+  {
+    "path": "scripts/resolvedor-de-imports.mjs",
+    "sha256": "a31508891d25eba68a9bda7082ce073003081bbeb8b834e4ad1f24782393cd12"
+  },
+  {
+    "path": "scripts/servir-fila-geracao-local.mjs",
+    "sha256": "d4884c579c16353834efd7707f644b85f743352b70a0e8e40a457e055ecc54cd"
+  },
+  {
+    "path": "app/api/contratar/status/route.ts",
+    "sha256": "e0450181853504e1ca1f8acc5be9e81e0f1a851fdfc6b2c2569db4bc826959e6"
+  },
+  {
+    "path": "scripts/qa/retomada-fila-browser.mjs",
+    "sha256": "99ae3ee9796f20198b56d08cb3dd9da176fe93c783c4d25d4c85d81607c951f8"
+  },
+  {
+    "path": "scripts/qa/restaurar-snapshot-fila-21-10.mjs",
+    "sha256": "abf8788a270500458ed3a51a80ea771bd2adcea4353d4c3fa570887fd4dc6452"
+  },
+  {
+    "path": "scripts/qa/e28-leitura-backend-21-10.mjs",
+    "sha256": "0787698b7f6ba3f12af0eb4f59c037e2728e9d8e2efd6b47c8ab1db3b18fa3ff"
+  },
+  {
+    "path": "scripts/qa/e28-envio-https-21-10.mjs",
+    "sha256": "70eeede46ffe06164fb61738b33294838d3b9f60f401cb7c1644f5065db2e8d2"
+  },
+  {
+    "path": "scripts/qa/conferir-desenho-envio-22-10.mjs",
+    "sha256": "db9df58ed66358da100122e80c3121f58e24273d856cd3ff0a89fd82004fbc0d"
+  },
+  {
+    "path": "scripts/qa/biblioteca-geracao-off-browser.mjs",
+    "sha256": "bb517d84b7e71d3082110a6c001c9d1b0db4f513fa8c1ba27b43eb0c24de0bbd"
+  },
+  {
+    "path": "scripts/previa-venda-assistida.mjs",
+    "sha256": "298e65146d2f6b9736e904d28d0a737d1602ce1094db1a18f1c499c6a3e9ab44"
+  },
+  {
+    "path": "scripts/previa-loading-01-02.mjs",
+    "sha256": "cfafbcd3c52058cf200057cc939129cbc48c3be091c61bd92b6361d4b6a44f66"
+  },
+  {
+    "path": "scripts/previa-anuncios-meta.mjs",
+    "sha256": "ce9dc7d1a083097f56a37036e48db337dfd4706ff749b13e9595a5f214292c51"
+  },
+  {
+    "path": "scripts/migrar-execucoes.mjs",
+    "sha256": "1b447866b47a62b947f92ab32531f3bb80d82ae6a828a567f0c8210a1870c341"
+  },
+  {
+    "path": "scripts/sql/qa-01-02-preflight.sql",
+    "sha256": "9f2440cfc862ceadd7237ea89d3771048b761a02811be7c662ade429d8eb26e5"
+  },
+  {
+    "path": "lib/resultado/tipos.ts",
+    "sha256": "3cc8b6d09b3d7164bebcdcf14206628ea4c2ded60227ed18d7d0957cfd41d166"
+  },
+  {
+    "path": "app/(fluxo)/reprovado/page.tsx",
+    "sha256": "52b532451e7c9dca95e7ba8ba177a0ffe6f812dce140ee1abd6cc18d441ed883"
+  },
+  {
+    "path": "lib/resultado/nivel.ts",
+    "sha256": "9cd90c2592bb4f29184107f82ff9f4b2a20ff56c3d353ec07ee8f75757d051e0"
+  },
+  {
+    "path": "lib/resultado/ler.ts",
+    "sha256": "c8fda0163296b4fce05071a2358699b64cde3f3d7343ea76c877caf29b01a782"
+  },
+  {
+    "path": "lib/resultado/do-negocio.ts",
+    "sha256": "f630c3414a7d47bb37e3e3b136db86c750225fa1bb866cf02140f2973d23040d"
+  },
+  {
+    "path": "scripts/sql/proposta-geracao-local-22-10.sql",
+    "sha256": "8ef2df06f5d50a6041bda42bc186cf0869a73dcac31ded613b1429e352f5c83b"
+  },
+  {
+    "path": "scripts/sql/proposta-geracao-backend-22-10.sql",
+    "sha256": "9539e340cdacd34f7985271ee79b1004d5e841a22e36e98ebae0d82ef25dc8f5"
+  },
+  {
+    "path": "scripts/sql/prechecar-qa-envio-criativo.sql",
+    "sha256": "3cdc34c664630ee3409f4c64609fea738526c44fb22d26850456e9d5f321b008"
+  },
+  {
+    "path": "scripts/sql/prechecar-qa-comercial.sql",
+    "sha256": "d4b11b061d54f3525c0c9a6a5da9adb4198698ef89ff3b38089b974b7b97bd98"
+  },
+  {
+    "path": "scripts/sql/limpeza-qa-envio-criativo-modelo.sql",
+    "sha256": "abb8d363df90ba3955c18875dbd6afdd7ada16358d4c5da7b52ecb4f2b0f720d"
+  },
+  {
+    "path": "scripts/sql/diagnosticar-email-pagamento.sql",
+    "sha256": "900425adf3f3dd1d563728c334aea7d1cd36e092178d6c3dec68fc23c1870bdc"
+  },
+  {
+    "path": "scripts/sql/conciliar-email-aceito-modelo.sql",
+    "sha256": "78a3a38d0610c5d7a858faa0acd391f34049ef021f366bc863a8569f6f24ab95"
+  },
+  {
+    "path": "lib/dia-seguinte/validar.ts",
+    "sha256": "96220c8aaa8374ed50624db342aaab81093e7d951c53baf1b610dcdcfa289287"
+  },
+  {
+    "path": "lib/dia-seguinte/tipos.ts",
+    "sha256": "089dda5a819378034d9502cd30e9aa37a3b188260706240c79ac8e5189398d56"
+  },
+  {
+    "path": "lib/dia-seguinte/resposta.ts",
+    "sha256": "54d93da6d70e27ba83d607e0d09beeb1e83ce489721d8222bcb1a2353038467d"
+  },
+  {
+    "path": "lib/dia-seguinte/pergunta.ts",
+    "sha256": "66e1da88d8dc75f21d589b9e170df7fb31540e7ec079a79eaac5c2ef411c1310"
+  },
+  {
+    "path": "lib/dia-seguinte/pendentes.ts",
+    "sha256": "d31874828a47dee114517d3c16dadaa582edb7d24ec655ace95c5a59167b07ef"
+  },
+  {
+    "path": "lib/dia-seguinte/exibir.ts",
+    "sha256": "44233a5eaf2c9ea654e0f34edd9a5655887d29b32c47cc50b4179c449d70a6a2"
+  },
+  {
+    "path": "lib/dia-seguinte/dias-em-aberto.ts",
+    "sha256": "61dd08b02b546f14ce4e88d6aa568677ee0ebb219fded6bd8eeec0a33daf0f38"
+  },
+  {
+    "path": "lib/dia-seguinte/dia.ts",
+    "sha256": "ed76828ac1bbf555f34582f606fbcbedf44f14b43afd29127b415eb8124f2476"
+  },
+  {
+    "path": "app/exemplo/_anuncios/PreviaDeAnuncios.tsx",
+    "sha256": "7d461622314f8741bd73f0f0581c763e0e461ff30332a43aba0d530c310c14f7"
+  },
+  {
+    "path": "app/exemplo/_recepcao-inicio/Previa.tsx",
+    "sha256": "6dd8bd7d62e425f444aeb36cbbd11bca70ae89be8bbcb3ff13c37a5442007a9c"
+  },
+  {
+    "path": "app/auth/confirmar/route.ts",
+    "sha256": "7fe5774726199090d3725b994d78a386b65d2869e075e43fdf604584a82623fe"
+  },
+  {
+    "path": "app/(fluxo)/layout.tsx",
+    "sha256": "64fbfbaabe4e86a32b17894f0675e19a8bcd97593fae4798fb7b9896184d79c2"
+  },
+  {
+    "path": "app/(fluxo)/loading.tsx",
+    "sha256": "6660f4ab61cf844a7298838255db70fc0ff9655390e0c028e52da12551a82f53"
+  },
+  {
+    "path": "scripts/medir-jev.ts",
+    "sha256": "327859fa7b23c8607d1a1339054246bf6b798baa47b5897bcbbff25cbdbb1e6c"
+  },
+  {
+    "path": "scripts/medir-peca.mjs",
+    "sha256": "05babbf35ee536534f416b1002faea60b42e5734729d5e743eb95d2c81b64267"
+  },
+  {
+    "path": "lib/pipeline/vigilancia.ts",
+    "sha256": "01305ed8b84802698248f309190cdc938a362ab66333a4f61574ede51d29ca24"
+  },
+  {
+    "path": "lib/pipeline/relogios.ts",
+    "sha256": "5d7cba8fccc346ff1cff134aa70e22be7e4ed83247698c3dbca9627615f51281"
+  },
+  {
+    "path": "lib/pipeline/execucao-do-cliente.ts",
+    "sha256": "2cf84dd172a13803dc40bd75cad1af42740a01f3dba72f25b9fb3593dfd842b9"
+  },
+  {
+    "path": "lib/pipeline/disparar.ts",
+    "sha256": "0bf85aaac26eada9951f65715b4eae45701204f403f0d9887b61bcbd512ca3ae"
+  },
+  {
+    "path": "lib/pipeline/conferir-cadastro-operacional.ts",
+    "sha256": "9003aa2c92fbb52ea120fbe84f855fe556e71dce7a7a02496510ea1372dbdb4f"
+  },
+  {
+    "path": "lib/dev/fixtures-revops.ts",
+    "sha256": "148297faa1d91b5552ea6d71b41945612629a698adec776ddf5295d2399345fe"
+  },
+  {
+    "path": "lib/dev/fixtures-inicio.ts",
+    "sha256": "2413c13f6aaaf1bed88886e4ef92523b5a0f987cf952a6fc6d58fa1e8eb8a3ad"
+  },
+  {
+    "path": "lib/meta/signed-request.ts",
+    "sha256": "4ebbd138d4767a02a29d102398f840a21ad8e86e00adf57ead54b7757b5b0111"
+  },
+  {
+    "path": "lib/meta/publicar.ts",
+    "sha256": "3517e9cdcc8fd4201b863f222c493bd42b93a87f9f5037921bebab2ae3ea7330"
+  },
+  {
+    "path": "lib/meta/orcamento.ts",
+    "sha256": "2b7698c688e3cb14e6ebad90f09f521def8893d18f06989dbe77b092d55ae00c"
+  },
+  {
+    "path": "lib/meta/oauth.ts",
+    "sha256": "2171aedd5a9b8c6932024a45e621e082c1cfdc07fdad63abfa9d62f930ab583e"
+  },
+  {
+    "path": "lib/meta/marketing.ts",
+    "sha256": "15758cb0189446ccd8863640867453d91cb7262886e32e769bf56db68a028d48"
+  },
+  {
+    "path": "lib/meta/graph.ts",
+    "sha256": "1ecabfa7f5e40e131726ff881b00d0696fcb4d02abb119f372f1ae0b13cbef06"
+  },
+  {
+    "path": "lib/meta/geo.ts",
+    "sha256": "4e0d03e10a3bf7f2e0bb8a042c13d1b7e111451466a97b5313ecd122ff7d51ab"
+  },
+  {
+    "path": "lib/meta/erros.ts",
+    "sha256": "944141d4f265bf3468b10430b9eae7b3b5a90e6c90de733fa801b55ec661cecd"
+  },
+  {
+    "path": "app/exemplo/_agencia/Bancada.tsx",
+    "sha256": "684b37a67097d46df9ca6dc077f0def09482ff7c6ead5929aafaad085eae5f96"
+  },
+  {
+    "path": "app/exemplo/envio-onboarding/page.tsx",
+    "sha256": "3891b7774f735a29559562bbe4451055d788bcdf618f0af1338e778dd3caff83"
+  },
+  {
+    "path": "lib/decisoes/visibilidade.ts",
+    "sha256": "a6be4e497fb0d20f500b6c5a9d86a60ea7ad40585b9e60bc029b3943794b2acd"
+  },
+  {
+    "path": "app/exemplo/_onboarding_conversa/Conversa.tsx",
+    "sha256": "16ef221295a2cbfc4b7ac5b492772a64a7fbf3e63c42b3a2687a0a188fcfef2d"
+  },
+  {
+    "path": "app/exemplo/_onboarding_conversa/Conversa.module.css",
+    "sha256": "c208c7ad68fc0fc82a1c07ed2d209fe56f63c07a4f45c385093e158179b2fae6"
+  },
+  {
+    "path": "app/(fluxo)/aprovar/page.tsx",
+    "sha256": "c3916c9dc2d34d866208ed88c4a2e641ea362d3da39ee9a9ccf21eccda2e9fa6"
+  },
+  {
+    "path": "app/(public)/redefinir/page.tsx",
+    "sha256": "b9c8ca3a30a52bc655761a4252de264bd40afa7585968ea5de826f5fc4b686a0"
+  },
+  {
+    "path": "app/(public)/redefinir/loading.tsx",
+    "sha256": "adae92d735269fb75e3a267717b2e5243f9c8759414c29987fcdbe6fd9a27a63"
+  },
+  {
+    "path": "app/(public)/redefinir/Form.tsx",
+    "sha256": "b77d4ef1a39ed60535d81a98c00b1be8fb95e488e0e3ea859f78496e40ca690c"
+  },
+  {
+    "path": "app/exemplo/[tela]/page.tsx",
+    "sha256": "cb6cfbfa836a266bdca9f39496b714fd29c49fe6b6594b064573a161810e6100"
+  },
+  {
+    "path": "app/exemplo/_contexto-criativo/Previa.tsx",
+    "sha256": "2650aaab65e28dd0bf7fa15d4dfbd71cb5cb6c36e1a847b8561eec7836c848b4"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/Trilha.tsx",
+    "sha256": "ea5ddf293696f22c626b25b7de99dd1d46a67d1fe551e54e82672799819cea30"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/tempo-da-operacao.ts",
+    "sha256": "f6d0391a111a1d669013c2165b2b3b4a65a64ea10c8f24bd7c4254cba5d09dee"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/RespostaPorVoz.tsx",
+    "sha256": "65d71523b89d81c1d7d73d9d9740e191841aeb050de528f81b0e53295ed411a6"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/perguntas.ts",
+    "sha256": "65a34c96db3a9c123ae551f7102f196180746a343339c7ebe306d6a241ac5def"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/page.tsx",
+    "sha256": "07ec5cf65ee33b164a1fd3732527ca8389f93d8d3d35996fdd053e95aae28c64"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/OnboardingNovo.module.css",
+    "sha256": "95ae2d940e1c973bd1f7a72599bc73ad75ff103ce3929b6c495dd2fd17279924"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/onboarding-editorial.css",
+    "sha256": "5f81c14d6e3f5f3e731b41d0fff6c93f3ab49d8a1a30cfd88324d5def66890b1"
+  },
+  {
+    "path": "app/(fluxo)/expectativas/passos.tsx",
+    "sha256": "4e3c8f577166c7428899716fed18ef6a104c8d6b2b7ee5ca7aa8fedbd96f0b64"
+  },
+  {
+    "path": "app/(fluxo)/expectativas/page.tsx",
+    "sha256": "aa109032d913b2e8a0c119047510a976738ad67d8d725d5659d1c539c3c9e8b8"
+  },
+  {
+    "path": "app/(fluxo)/expectativas/Combinados.tsx",
+    "sha256": "2df069acc921c8083103aadfaa3f095833b0d410077b5798d5f3b417601820db"
+  },
+  {
+    "path": "app/exemplo/contexto-criativo/page.tsx",
+    "sha256": "82288c45c97d79e51f19f5d7199403b7e840d8df35ff60d73663aec4a9c54296"
+  },
+  {
+    "path": "app/exemplo/mesa-gestor/PreviaLeitura.tsx",
+    "sha256": "e5c8c9677254650afed6c57f8bb68ec00b229688a15090ef60adc292da5cc512"
+  },
+  {
+    "path": "app/exemplo/mesa-gestor/previa-leitura.module.css",
+    "sha256": "6abed8522b29af6d35db04fde12c263c488d65a0dc5555cf2fda64e15ec816c6"
+  },
+  {
+    "path": "app/exemplo/mesa-gestor/page.tsx",
+    "sha256": "d78cea7068771b7ebf2758462ae04600dfb4523bde539bb619007da969c00e5b"
+  },
+  {
+    "path": "app/exemplo/mesa-gestor/dados-demonstracao.ts",
+    "sha256": "7c4ddd164ee3a92e5421fc831a1eafa8ad27c573a5fc072f197528745e286fb5"
+  },
+  {
+    "path": "app/exemplo/revisao-publicacao/Previa.tsx",
+    "sha256": "271a450f38fdd1d85d4b05d763884e488acac6f387f2f475c288582dc7ea4c6e"
+  },
+  {
+    "path": "app/exemplo/revisao-publicacao/page.tsx",
+    "sha256": "f248b51023254e3736bfa89d0f12297eeedf41648bd545ec956f7500ca86c653"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/VariacoesDaMarca.tsx",
+    "sha256": "d6e8eef5425cf640153af0bb2eabec3580d79952210725e8977987b4a98be78d"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/variacoes-actions.ts",
+    "sha256": "a4478318858b3b754bdd2b8a3c96a84781e7fa9369129327e4c55a4821d33191"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/page.tsx",
+    "sha256": "84e3c4485f7150396210bdc058ade82754d0d2f399c03894f62f3e595a1e22de"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/Marca.tsx",
+    "sha256": "b9a8fbc5af7479ef2609a0795a4cb8386ece32b8ab4b8ed48f0a2f475e9b9f3b"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/Marca.module.css",
+    "sha256": "5cd64b478a0b4eacf9c6744aa3b2aef60cac9c82f3da3e84872a4e2749ea5963"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/LogoDaMarca.tsx",
+    "sha256": "6d5c23e3761f720081bebad1b8ff644aa452391b00c6c08ae77f55b846388c86"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/GuiaDaMarca.tsx",
+    "sha256": "eb58bc825f231b697a7d3f308edcb949353d8c5ae710c3c51a099ab1c3e9d2f2"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/guia-actions.ts",
+    "sha256": "bdf06ab3765a6773c21fe644d6652aef2ac4dd9108ddd02b320ac3739f15f8df"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/marca/actions.ts",
+    "sha256": "6e17507477e16660e5e105463abb92ff1867c6919bbeef20c29a44e16882e8f6"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/loading.tsx",
+    "sha256": "a665b3a596bb7d54fff4a919a34f00add9d37ad7c99f97a05acf4d62ece9376b"
+  },
+  {
+    "path": "app/(fluxo)/conectar/page.tsx",
+    "sha256": "cf3eb996d02d4c46ae320fb0a8bacc70972dec0f2bdc024e0b6d99744216b58d"
+  },
+  {
+    "path": "lib/jev/typesafe.ts",
+    "sha256": "6f9caed7e484f892d6f5fb5c0bd9f55d050a6c517c66bf9e7790d592454c9efd"
+  },
+  {
+    "path": "lib/jev/triagem.ts",
+    "sha256": "b6bbf479196086bbd9a9e50f0da6d578eb1d4cb883306faaa09e37a27095d86b"
+  },
+  {
+    "path": "lib/jev/triagem-referencias.ts",
+    "sha256": "c8fcb69d3a806a8a8721660d639c1145356d3c4808490674435a4801de6a7f5c"
+  },
+  {
+    "path": "lib/jev/referencias-aprovadas-da-sessao.ts",
+    "sha256": "c5a9ed12345d48927cf165377e6163f97df7a126e3cfb1c22d9eb899c0d712ef"
+  },
+  {
+    "path": "lib/jev/lote-referencias.ts",
+    "sha256": "83e0156d8fae553d8cbbc97a1838b57c89e203015e0760fdfadf7a54442561f6"
+  },
+  {
+    "path": "lib/jev/fila-do-gestor.ts",
+    "sha256": "461e01f7fe04c93d2cb10a3cd454e8846990a016e934ffb9b0e49952c1ccdbfc"
+  },
+  {
+    "path": "lib/jev/criativos-piloto.ts",
+    "sha256": "e47ffe7bb910332789be0770f756eb492c267bc03e9ff19cbb8921957f4da698"
+  },
+  {
+    "path": "lib/jev/catalogo-da-sessao.ts",
+    "sha256": "b3c8de19411ee5aa2a7cc68970414feb84d2f689fff388f2ddc903ea5427d06a"
+  },
+  {
+    "path": "lib/jev/catalogo-barbearia.ts",
+    "sha256": "7da60d7e022f31c6e3c99ac64db9c46cbd2bd51899d0307eb8d2ac5e89dddfda"
+  },
+  {
+    "path": "lib/jev/avaliar-cortes.ts",
+    "sha256": "8ac177f78b9a5e15756bf18de76bd1362d318d4bef62c8c810d1a9dbe40e35d9"
+  },
+  {
+    "path": "app/exemplo/_conta/PreviaDeConta.tsx",
+    "sha256": "4354992ab4f894cc950d58ce5435ea45b88b48cd79d7b404308c0fe8663a5553"
+  },
+  {
+    "path": "supabase/migrations/20261109223232_creative_publication_confirmation.sql",
+    "sha256": "612f47455cc6b7b82a60325d4bf45b7287bc53f79b0dbca2d27d49a23bb430e3"
+  },
+  {
+    "path": "supabase/migrations/20261105233528_qa_pilot_access.sql",
+    "sha256": "14a8205c5e06b8245ff0a33886eaeadcc273409afbcd352eb550483c3318f8e7"
+  },
+  {
+    "path": "supabase/migrations/20261105194728_public_checkout_production_readiness.sql",
+    "sha256": "9086d8a1570b345ca508aef0a2c59fea33ea8385da8deb714e6038689228ff09"
+  },
+  {
+    "path": "supabase/migrations/20261104040711_historical_contract_access.sql",
+    "sha256": "c8da9f65c78beaea59ee41694177378aab709d5c53f6a5b88998fb3d3170073b"
+  },
+  {
+    "path": "supabase/migrations/20261026193000_referencia_publica_pedido_criativo.sql",
+    "sha256": "bd8cac56dd099563ee23682002c50563a70e8a30ea15baffacd0b631bb898d42"
+  },
+  {
+    "path": "supabase/migrations/20261025215302_cpf_cnpj_contratante_v0.sql",
+    "sha256": "53a4573b24413efbcd41e62292de135cd8d70a03f9b5e3138652882dedcd1b4b"
+  },
+  {
+    "path": "supabase/migrations/20261022200400_manual_contract_evidence.sql",
+    "sha256": "1e10bd01b88f16d867521b8831ba7dfe5285117e586b08acf7862dde05fee86a"
+  },
+  {
+    "path": "supabase/migrations/20261022152629_asaas_estados_processamento.sql",
+    "sha256": "dc63eedcb41e478cd84ccd437c6ebb59230f26bd4e3892752317b9d702b57b90"
+  },
+  {
+    "path": "supabase/migrations/20261021042254_assisted_asaas_orders.sql",
+    "sha256": "c1b2a6590740337a2373405ac73fc3c9c16ae13670a20e5e6a20e4b8bec60c93"
+  },
+  {
+    "path": "supabase/migrations/20261021033313_commercial_payment_email_outbox.sql",
+    "sha256": "c1c58b6ab36696149355e8226b74201dcb3511424e8d5a5e373949a263b3dce5"
+  },
+  {
+    "path": "supabase/migrations/20261021032617_creative_review_upload_intent.sql",
+    "sha256": "af3b426462a5ba35fa8a28f2417d114bd41371f6882f91b92cdd61a11bd56019"
+  },
+  {
+    "path": "supabase/migrations/20261021001651_creative_generation_requests.sql",
+    "sha256": "eb5031147a132d85f00b2eb964696b5ab4cf6d004cd675bcfcdbc44f3bdc5276"
+  },
+  {
+    "path": "supabase/migrations/20261020021942_qa_cartao_mensal_3ds.sql",
+    "sha256": "19ebcea8df9b831edd83aef2de18f15f88398abb835400cf0d7e89b8c9260fd7"
+  },
+  {
+    "path": "supabase/migrations/20261018133000_checkout_security_controls.sql",
+    "sha256": "eb99a286c508ee63346010f26480644c72931dd69bc9cd194085844773ed10c0"
+  },
+  {
+    "path": "supabase/migrations/20261018130000_ligar_lead_lp_pedido.sql",
+    "sha256": "f1796896af002543521f21d9fefd11a875f73c47e74adf1e0dd7dfab1e729666"
+  },
+  {
+    "path": "supabase/migrations/20261015011547_proteger_pagina_compartilhada_multiconta.sql",
+    "sha256": "1c0da2ee1c7fda6350efd30bf677cb5127cc33bcf2bc098d34b631ea4413e848"
+  },
+  {
+    "path": "supabase/migrations/20261014030000_onboarding_reserva_unica.sql",
+    "sha256": "fc70bc851efc202a00c050d67a867452f4f7fe86164586eeb9587c00cb8562d5"
+  },
+  {
+    "path": "supabase/migrations/20261014010000_bucket_identidade_qa.sql",
+    "sha256": "2ad00ebca0f82e39774ba70c166b737dc5689419f8ac59502b94c1f133cc419a"
+  },
+  {
+    "path": "supabase/migrations/20261013070000_corrigir_mescla_contas_onboarding.sql",
+    "sha256": "d2e26e73965941c8c856a428aaf7b961a69854ba564f2ec03a4d96a7034e9787"
+  },
+  {
+    "path": "supabase/migrations/20261013060000_competencia_documento_fiscal.sql",
+    "sha256": "a55f5e80baed0acdc2f818f7638a54dda43b37c1417fc84f142ecfdf97dc69f8"
+  },
+  {
+    "path": "supabase/migrations/20261013031434_qa_registrar_falha_desafio_3ds.sql",
+    "sha256": "c48ea098d7e141bf8a5e6ecfbadcb0a56e3d31265f03ed4f7a519b227980381c"
+  },
+  {
+    "path": "app/exemplo/api-classificar-nicho/route.ts",
+    "sha256": "0112f35d4562b66b7315042a7c6f32b89a2b5d76cd43d32e8f80384f3e495783"
+  },
+  {
+    "path": "supabase/migrations/20261011140000_eventos_financeiros_sandbox.sql",
+    "sha256": "908db65cfe553c2812176a45dced0629f2f3fc66f324a6c5d272263007916c36"
+  },
+  {
+    "path": "supabase/migrations/20261009042000_gestor_responsaveis_tarefas.sql",
+    "sha256": "a41ac529c103f6b9dd493bd993e92866af7cc4199bbdba95b8df4108b7ce5ab4"
+  },
+  {
+    "path": "supabase/migrations/20261009034500_fila_revisao_criativos.sql",
+    "sha256": "4ca3fcaf106fa4bc3185f525517308b294bf6272f9660ad5c3a8ca1e8bedb452"
+  },
+  {
+    "path": "supabase/migrations/20261009015000_checkout_cartao_retentativa_qa.sql",
+    "sha256": "17e5b4fc8753f6db8dcedf21ac741c291c2637b87b1f3893ebe92f124749e62f"
+  },
+  {
+    "path": "supabase/migrations/20261008223000_checkout_transparente_sandbox.sql",
+    "sha256": "9fa46a4cda54c6232974f8c87dfaa7dbaeab74d091faf346f6d1160a3cb1a9cd"
+  },
+  {
+    "path": "supabase/migrations/20261007160925_revops_v0.sql",
+    "sha256": "fbb0287fc79cbbb8e679422c49e15dbcb355d1d3dcbd30ebe59d2a6fc3b94873"
+  },
+  {
+    "path": "supabase/migrations/0034_checkout_self_service.sql",
+    "sha256": "5f7bd38dc886a48aa912520f8f87bf45ba6c5d7e31d2a47df67e99dacdd0926b"
+  },
+  {
+    "path": "supabase/migrations/0033_unidade_aprovada_com_pedido_pendente.sql",
+    "sha256": "b12aca1f5e356d0018037f0aef16be8d5da08cc08deed5956d5570cb761c2a6e"
+  },
+  {
+    "path": "supabase/migrations/0032_mesclar_respostas_por_chave.sql",
+    "sha256": "224bbbef7be7560dd8f231b6a4f5df5833fd441cc143a5fdeeb81e1f57f35f8d"
+  },
+  {
+    "path": "supabase/migrations/0031_mesclar_blocos_onboarding.sql",
+    "sha256": "1d0460eb2bb3697328c634fcb5e9a5cc7b5803217acca6380f4e4e835f0fada6"
+  },
+  {
+    "path": "supabase/migrations/0030_vincular_conta_comprada.sql",
+    "sha256": "2a1f5b315df6f83ddf9f929533f26fbac13d8dc90cc7db40d4493d58ad4497b4"
+  },
+  {
+    "path": "supabase/migrations/0029_pix_assistido.sql",
+    "sha256": "f8e03e67b27c10bd84d59fba0272947dffa940e51f574d8f747feb667a81166f"
+  },
+  {
+    "path": "supabase/migrations/0028_pedido_pago_exige_negocio.sql",
+    "sha256": "c73ec3f3ee59190dd1ba0d7056ca29b5bbdb728d9d9dbfa20b61471740d9bce3"
+  },
+  {
+    "path": "supabase/migrations/0027_acesso_legado.sql",
+    "sha256": "3a092a910619965cc0bdb7f07c6cc068cf779e1ee0c1d3f74369ba62663b7a14"
+  },
+  {
+    "path": "supabase/migrations/0026_contratacao_multiconta.sql",
+    "sha256": "b878d517958e564c653023fe5aee805d1bc317ac1b3257d442c805681eabd707"
+  },
+  {
+    "path": "supabase/migrations/0025_entrevista_sem_transcricao.sql",
+    "sha256": "9c390dd0d74ca2599ecca64d285e84f70830cda56e15d8d6fee3b9823479524a"
+  },
+  {
+    "path": "supabase/migrations/0024_ativacao_de_campanha.sql",
+    "sha256": "c680d6b4da41f88b357cd7a28994e99a6a73deddbf0aafb6356e9fede53281db"
+  },
+  {
+    "path": "supabase/migrations/0023_cores_da_marca_na_lista_branca.sql",
+    "sha256": "72bdcef063a5610a16a6d2cebc1e75637774a4794aaf6906402adf5aad000143"
+  },
+  {
+    "path": "app/(public)/redefinir/concluido/page.tsx",
+    "sha256": "636ef6dc2143c3ecdfe04eea5cbfc7ac2791667fb7ff24aa55740d29357981be"
+  },
+  {
+    "path": "supabase/migrations/0022_whatsapp_do_anuncio.sql",
+    "sha256": "ec56084ee3151c21b08b7d4e30bb824dd4975ec38546654fedaa0076ae5860bb"
+  },
+  {
+    "path": "supabase/migrations/0021_exclusao_de_dados_da_meta.sql",
+    "sha256": "3c8c668aa0bf86f4d8addae1958cd2982605d46f35255aec00cb11ba0bde7137"
+  },
+  {
+    "path": "supabase/migrations/0020_execucoes_colunas_do_onboarding_por_call.sql",
+    "sha256": "28e33c2779c0f60d183a771b29d01fc9caa6f6308efac65a3e89af0da62c7e2f"
+  },
+  {
+    "path": "supabase/migrations/0019_escrever_apenas_se_livre.sql",
+    "sha256": "7f74eb571db2fbaa877f7b6372096ba67056705ffa07f998b3255a79e656400b"
+  },
+  {
+    "path": "supabase/migrations/0018_disparo_do_pipeline.sql",
+    "sha256": "2f8d41ae7b7fb50f34d18e7dd57fc23a374e036a6f6fa5f0f4919cd16a6e946f"
+  },
+  {
+    "path": "supabase/migrations/0017_esvaziar_campo_do_cliente.sql",
+    "sha256": "2c33d6f3e06082b7ee30fe1b3639a3a6f18a397ad67e19a529c1ee5142dd0891"
+  },
+  {
+    "path": "app/(public)/redefinir/actions.ts",
+    "sha256": "834377d2d2c187650d31c61f4b1a3153e0603a70d4a5dcf194dfcc229fd6e891"
+  },
+  {
+    "path": "supabase/migrations/0016_lucro_desejado_na_lista_branca.sql",
+    "sha256": "51ae13ea26713bf5ba045e2e2db68db72477c056a09d4344d3a2c18f9f17bb22"
+  },
+  {
+    "path": "supabase/migrations/0015_confirmacao_do_cliente.sql",
+    "sha256": "9acde97f8a4d3576531e45fea6ea0160f5c4801db7c37de5a041fec8568b3675"
+  },
+  {
+    "path": "supabase/migrations/0014_identidade_do_negocio.sql",
+    "sha256": "13ab6d8941b2ae234a69cfab508ab6b15c5bac19a00d720447146c185a489af4"
+  },
+  {
+    "path": "supabase/migrations/0013_aplicar_proposta.sql",
+    "sha256": "8fae26b3223e0a1886da566745ca010a4c7ac9c3b05d233a23501326f3996ae3"
+  },
+  {
+    "path": "supabase/migrations/0012_propostas_de_perfil.sql",
+    "sha256": "6cff14f7ef41e784559d189e05d54cab928e0a148645ba764673ddfc24878d09"
+  },
+  {
+    "path": "supabase/migrations/0011_procedencia_generalizada.sql",
+    "sha256": "6f797bd8feef90995de517250abc33cabaebfd182179ddea477a3c0a22d6a391"
+  },
+  {
+    "path": "supabase/migrations/0010_perfil_empresa.sql",
+    "sha256": "6d403239d817e103bafc5f88ff847ef7d5866e4cab0a888da3ee57a672811830"
+  },
+  {
+    "path": "supabase/migrations/0009_backend_execucoes_criativos.sql",
+    "sha256": "4a05e28fe1b8b78fd1e6a60b3309e4956933160c7a81e08ef17abbeb18e846e6"
+  },
+  {
+    "path": "supabase/migrations/0008_publicar_campanha.sql",
+    "sha256": "b0e01772b988da12d231f7d9d042fe3a23db843797eaebb0f00e0850b4cbef8e"
+  },
+  {
+    "path": "supabase/migrations/0007_obter_token_meta.sql",
+    "sha256": "dd45ea0689d3fbe483a52b6212e585b60823c110d5399caac4c76270c7529b5f"
+  },
+  {
+    "path": "supabase/migrations/0006_conectar_meta.sql",
+    "sha256": "344fbf3b55d4f8bdfc03d8764c88a68f09286d025686a0c599a8f73328ee3738"
+  },
+  {
+    "path": "supabase/migrations/0005_oauth_meta_conexao.sql",
+    "sha256": "4c9a40434d1999342908fbdc7fafe77a6347e9ae1496a4414df6391cbae9a5d1"
+  },
+  {
+    "path": "supabase/migrations/0004_avg_ticket_como_faixa.sql",
+    "sha256": "c2a97775a3596addbf62da71533dad935e20341f0feddbb0968130f9fa939a35"
+  },
+  {
+    "path": "supabase/migrations/0003_restrict_meta_connections_token_column.sql",
+    "sha256": "577de8e5f8c3d0ca982e6d34064f23cbbdbc3da922aabd32074ef776a5c2840f"
+  },
+  {
+    "path": "supabase/migrations/0002_harden_security_definer_functions.sql",
+    "sha256": "809eb4a2e18dfa0cb2198615ebb72edf762130cd3ea684042b4bdb2f5c7635c4"
+  },
+  {
+    "path": "supabase/migrations/0001_init.sql",
+    "sha256": "2aa2d6ec0a1647a4bd872b800e9b64460a8bfd5161c038fe553597b971a86c48"
+  },
+  {
+    "path": "app/exemplo/interacoes/page.tsx",
+    "sha256": "ee87b7358b59a116f0d0721f813359dab02550f2b525350e244e917b77e95392"
+  },
+  {
+    "path": "app/exemplo/carregamento-inicio/page.tsx",
+    "sha256": "c3687736219f2ccca6f50c4c3c7f2d501d7208078171da3cae829a62e4844306"
+  },
+  {
+    "path": "app/exemplo/recepcao-inicio/page.tsx",
+    "sha256": "3e6116075841e671a87f56e9aef527f4d6a507392296e8616d7991346e9f142e"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/contas/regras.ts",
+    "sha256": "f49bcd3dbcc69447986c16f1a6d6fda98739f280526f9d933417de1efa194629"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/contas/ReferenciaDePreco.tsx",
+    "sha256": "4825b21421128dcda56d8ff67261b79ff0b611183e910d44c7f197467a6b2881"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/contas/referencia-preco.css",
+    "sha256": "101dfc1b319dcd6387b21e9932228bae97eb1027537b20ee810cb6d47f0c74d1"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/contas/referencia-actions.ts",
+    "sha256": "2dd2e4a73a7ea4c897d41d2b0138550bebdb6e725f8f405edf0c299802b3d1aa"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/contas/page.tsx",
+    "sha256": "e98e3986f0ef5a41a560dd4f51f13406faac4fa0eb733ab4abd102ff1b4eb172"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/contas/Contas.tsx",
+    "sha256": "c81feddff52cc268e7aa4f0804f2f1531b1892b4d83cf7b7c29cfca97b37318f"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/contas/actions.ts",
+    "sha256": "ef9f312f02bf7f9e8882b5dcb92e4003b287de5b48bc692bfb9c2593416586ac"
+  },
+  {
+    "path": "lib/inicio/serie-meta.ts",
+    "sha256": "0f7b4a9521706f91357da4132938b260f7b58e5936e9aa54f2c4471eab204102"
+  },
+  {
+    "path": "lib/inicio/resumo-meta.ts",
+    "sha256": "a398156e1ed7814067854ae938d13a4b746ee124b09f64406379f976988b731c"
+  },
+  {
+    "path": "lib/inicio/periodo.ts",
+    "sha256": "52434e265d4eb75a98ca33d7ff10c445f1fcdc06da0bb4912490d7e7379dc43a"
+  },
+  {
+    "path": "lib/inicio/expectativa-de-resultados.ts",
+    "sha256": "82a2974fa00a9c415080e53e9009e089d6e2c132716bd0f70ec29df4a3a3efb8"
+  },
+  {
+    "path": "app/exemplo/agencia/page.tsx",
+    "sha256": "b5226c5b6b2d3d8a9f232bf1dafdc08dc1d1b5569e5b840d3011c7ebaac31f73"
+  },
+  {
+    "path": "app/exemplo/inicio-meta/page.tsx",
+    "sha256": "028b2adf3203f12c8331ff820ae8d8717d39d7f710854bf9a1c5951642a1c869"
+  },
+  {
+    "path": "app/exemplo/_onboarding/validacoes.ts",
+    "sha256": "de2ce0231617daebbae88cb95c9a79e60e3f2e31864a4d7d9adc734459ffa9b6"
+  },
+  {
+    "path": "app/exemplo/_onboarding/recados.ts",
+    "sha256": "cff76713500ff5500727a7821eaa27b7c3d15a258d32909c205f30bbe51454b3"
+  },
+  {
+    "path": "app/exemplo/_onboarding/perguntas.ts",
+    "sha256": "f9340450e245398d9f1263c915737ce64ea66cb9ce3f49eaac8ed8f99666d33e"
+  },
+  {
+    "path": "app/exemplo/_onboarding/Onboarding.tsx",
+    "sha256": "12282f1d8808bcf9d36c6ab0a0567f31cbade8625c4e6fb163b7df89193f4662"
+  },
+  {
+    "path": "app/exemplo/_onboarding/Onboarding.module.css",
+    "sha256": "7700d6fc8c9fd2c6ab9991240ebb7efbed067c7f4bc382c9743b74d39a673606"
+  },
+  {
+    "path": "app/exemplo/_onboarding/destino.ts",
+    "sha256": "f328103eceaba15ce560f39345d2364ddd3e7d0f89e2469106f5d482a49b5fbe"
+  },
+  {
+    "path": "app/exemplo/_onboarding/custo-por-contato.ts",
+    "sha256": "aaff20a137f4d50e4d99abb7389cb868ed3e70c53ae83c2e5820e3b502b1363c"
+  },
+  {
+    "path": "app/exemplo/_onboarding/cores-da-logo.ts",
+    "sha256": "bcff864d7a256b4f329e056f0e65a431911febf8e709f8ea5310c23d05f987e8"
+  },
+  {
+    "path": "app/exemplo/_onboarding/classificar.ts",
+    "sha256": "76083212e4a6bf7ada6102ae59498c6f9c80bf2e623753982fecb5398dffebdc"
+  },
+  {
+    "path": "app/exemplo/_cadastro/Previa.tsx",
+    "sha256": "e87c0c8d1ad944ba586dbe5806dd405c02449b9803be11b595cec6684efd5215"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/concluido/page.tsx",
+    "sha256": "ede6e57e6aa802efd47041a033fb4a5d57f0fedf2240b494923764b69c4e7b29"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/concluido/Conclusao.tsx",
+    "sha256": "a3d5e29367474fcd132608928fb3983b15aa79c424b9d0aaa28ea47f0bd8f3f8"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/concluido/Conclusao.module.css",
+    "sha256": "d15c5cb7be17c55303ae12a435a688b3c07d94330e925ff0b7296b69f316c985"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/concluido/AgendaPropria.tsx",
+    "sha256": "e05b50c72da959351e5d87c25f753e58e30b954967c463a730644ac76c0d0ef3"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/concluido/AgendaPropria.module.css",
+    "sha256": "0d1778fb552ffe67135b0df34adfa99c13c4e6ef8d29bb023ee355e856cce310"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/concluido/AgendaExterna.tsx",
+    "sha256": "13e050d6ced76e8e1ca4e48ba588cb69b6bc3bede9a585bc85d3a3eee2621ad0"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/concluido/agenda-actions.ts",
+    "sha256": "8417d2d5a1f07bf9fa966ae5e4f167698fa02401e0a4546340607b0cfeac7a08"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/ChatConversa.module.css",
+    "sha256": "462b6be593c0eeb73bfa35575ea5cf383427e55f8c382909dad742a0e214bf29"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/Chat.tsx",
+    "sha256": "bc19e7174fc5ee44a14545d92f41b9b5d1ac9b7817119f94032fff7bc10eb0e9"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/AnexosDaConversa.tsx",
+    "sha256": "141e79eec8723a918e3eb9e85f49b57357441e3cb8720af7647e538ba2574164"
+  },
+  {
+    "path": "app/(fluxo)/onboarding/actions.ts",
+    "sha256": "99eba5acd08ce9851bc29c26c2e4bfd5f00a658cb6d556df2e1d9daf697bdc07"
+  },
+  {
+    "path": "app/exemplo/cadastro/page.tsx",
+    "sha256": "24f08a42c31a35730a16ef38e82f338f8d55a2dd1ff3a4ac7fb2abcce382a8a4"
+  },
+  {
+    "path": "app/exemplo/acesso/page.tsx",
+    "sha256": "80ab9e3bd73f838c49512d3fa9cf7116695c0fabf4a5194ffc62cdb7fb3ba0b6"
+  },
+  {
+    "path": "app/(public)/recuperar/page.tsx",
+    "sha256": "9a737d137ac29e34370efb08a78d0062913e7b44a36ae065aafc4aa24fc035c7"
+  },
+  {
+    "path": "app/(public)/recuperar/layout.tsx",
+    "sha256": "7cd9e33ddcb7d21e5d4779f4b14107d8723c2e5230c0bba8aff475f352aceb1b"
+  },
+  {
+    "path": "app/(public)/recuperar/actions.ts",
+    "sha256": "1fec3111786c9c716c3639e348fcb3046a3ac448588e231f05c167b6a9717827"
+  },
+  {
+    "path": "app/(public)/layout.tsx",
+    "sha256": "5acf05936d5baf0632d93c5f1f53bd7b8113619931acfcf18ed1d8a2335dde75"
+  },
+  {
+    "path": "app/exemplo/geracao-fila/page.tsx",
+    "sha256": "4221bc32e3bd73b0c2aa0a2c05bcf6b29a0da9d84e3cf1077c112d1fdf192273"
+  },
+  {
+    "path": "lib/criativos/veredito.ts",
+    "sha256": "810a9922c9275d9af632a63185aebf4352512d356dff7e7f6757bb8afe2c801b"
+  },
+  {
+    "path": "lib/criativos/selecionar-marca.ts",
+    "sha256": "df92c44033e4efc71a5fb912bf2941934070a1cc54023616d52ccafa480fa280"
+  },
+  {
+    "path": "lib/criativos/revisao.ts",
+    "sha256": "20c60f5996c700473856d9f521a6828db7f99b4f7529215d4459a568a05ff8a9"
+  },
+  {
+    "path": "lib/criativos/publicacao.ts",
+    "sha256": "a422b8bcbaf8c4431c77ac698cb6702a22ac13a2dd9d537fef836bbb43836da7"
+  },
+  {
+    "path": "lib/criativos/prevoo-geracao.ts",
+    "sha256": "6ec58050f448b2733c89e9f82e22ef2e074153dfe8f82a6d68daf1060ab889a7"
+  },
+  {
+    "path": "lib/criativos/porta-geracao.ts",
+    "sha256": "65857c64b43f80d801558b7ccca9b20f154cd19209d27be1567e7157711dbc82"
+  },
+  {
+    "path": "lib/criativos/pedidos-da-sessao.ts",
+    "sha256": "3ddaf8c624ba0c25715c055a142413b8f43c2d5200b9df5bc6890b29e210aa12"
+  },
+  {
+    "path": "lib/criativos/pedido-imagem.ts",
+    "sha256": "aa95acfd1d959f69ef5c96dda42a986813bb23591683ef14f26e71ca6c2ac26c"
+  },
+  {
+    "path": "lib/criativos/peca.ts",
+    "sha256": "8edb5051b722f60419e6f30bc0b97362f7092bfec651f87bb199f842d14d9fed"
+  },
+  {
+    "path": "lib/criativos/paginacao.ts",
+    "sha256": "2dc31c3550165fb203e94d88b1d40078af1c21dcb4078829daa3e81d825c66b9"
+  },
+  {
+    "path": "lib/criativos/orientacao-externa.ts",
+    "sha256": "8d7db339b8f19956145c112a855ded155f11a329448b12552363d8162056c349"
+  },
+  {
+    "path": "lib/criativos/limites.mjs",
+    "sha256": "3e35ab8153b90f3185fb60d6284ddd283789999e2f146e8161c1c5ff32585438"
+  },
+  {
+    "path": "lib/criativos/intencao-envio.ts",
+    "sha256": "6c400583289a118f564203e800341f44e334296332e785ae55bffbf7bebbfb85"
+  },
+  {
+    "path": "lib/identidade/tipo-foto.ts",
+    "sha256": "7a0225d3e4cb149b5ec7862fd16970461b2c5a706381d8906440e2764e0520a9"
+  },
+  {
+    "path": "app/exemplo/_material/CobrancaDoMaterial.tsx",
+    "sha256": "cca8b9e6c38ac117faecb13c3e198d432d36774dc10cb8813852d137d20c01f7"
+  },
+  {
+    "path": "lib/identidade/regras.ts",
+    "sha256": "dad9f04381568f7e77a723b441652a8097d2d4033ab08d84f01ef45f2f75ec3e"
+  },
+  {
+    "path": "app/exemplo/_material/CobrancaDoMaterial.module.css",
+    "sha256": "9aa453ecec8225faceb3ad42a9699d16d4ae574ed8cf3cabe244d51c5332af09"
+  },
+  {
+    "path": "lib/identidade/proveniencia-upload.ts",
+    "sha256": "95ef89b1221708bbf149c8eb8dc8fe1510b655b74ce37cca0fb78e773f6a8c0f"
+  },
+  {
+    "path": "lib/identidade/preparar-arquivo-cliente.ts",
+    "sha256": "d25ef1aa5bad371dd9f3d6bcf4cc6f1f1d7f0e58cecb2d3283f8e3e7cad91229"
+  },
+  {
+    "path": "lib/identidade/paleta.ts",
+    "sha256": "7d6c6e4425fd998d146374e13bcc11b3eb9cc6e25fe4ab2d6243bd9766b4ba99"
+  },
+  {
+    "path": "lib/identidade/dimensoes.ts",
+    "sha256": "74e7a0f5b7eed1564c793f5ea94762a6cbcedfbfb2dbc442c44265918a0c208d"
+  },
+  {
+    "path": "lib/identidade/cores-do-pdf.ts",
+    "sha256": "1e0c9717ed96db0c6fe56fd49cd8401515dcb9f71d4695d6c12b2351bdb0c66b"
+  },
+  {
+    "path": "lib/identidade/cores-do-logo-salvo.ts",
+    "sha256": "a1ab6305cfa263763c639e15001b4bb4e4194e1116eb935ea64b1965af2d3697"
+  },
+  {
+    "path": "lib/identidade/cores-da-logo.ts",
+    "sha256": "00f51949b8100b6725561819ffd928283fb9f1638c69a5378034a658af8b22fe"
+  },
+  {
+    "path": "lib/identidade/armazenar.ts",
+    "sha256": "c2d3f146dd0c0df1ed1ccd6a8c9bed6c32739b72c5153da9447978e140b93340"
+  },
+  {
+    "path": "app/exemplo/_bordas/Amostra.tsx",
+    "sha256": "c6c2e43573840679dc0e27a6e7e3ccfdd58608e5fbc093be9ec1da4f5afb25a0"
+  },
+  {
+    "path": "app/exemplo/_bordas/Amostra.module.css",
+    "sha256": "c896747088a9b74a77651a53d2aa4589608eaef6681670be4130e1b7c537c1cc"
+  },
+  {
+    "path": "app/exemplo/agencia/arte/route.ts",
+    "sha256": "4c419a88ae336f9c7b2399909bf81fc1bfb88f9893aa22589e0bbd7a36289e75"
+  },
+  {
+    "path": "app/exemplo/_avisos/PreviaDeAvisos.tsx",
+    "sha256": "04194427275e5b8745902dbc8bc2ed020e50f5387373da466f375a3de47ff03b"
+  },
+  {
+    "path": "app/(fluxo)/conectar/escolher/page.tsx",
+    "sha256": "e83ed2d0278e4d4937bcee13688b1d2903e79431032d6758fbca58cdcfcac55f"
+  },
+  {
+    "path": "app/(fluxo)/conectar/escolher/Formulario.tsx",
+    "sha256": "8226f2c25bc32a4c059c8f477261731fac2ff168273ab048814e7d427c03c6b8"
+  },
+  {
+    "path": "app/(fluxo)/conectar/escolher/actions.ts",
+    "sha256": "c6d73cb6808d68e61bd787477737486e781b34905b12ada184b3272f0ccafe9a"
+  },
+  {
+    "path": "app/exemplo/api-transcrever/route.ts",
+    "sha256": "0501da50be46884b113568a182e4c2afe3167618d5c4ec670933710569baf68c"
+  },
+  {
+    "path": "app/exemplo/_carregamento-inicio/Previa.tsx",
+    "sha256": "8c09882cb8aa594507892c3d19bf4f0f591fb04ab8870fb097c285d748ead31a"
+  },
+  {
+    "path": "app/exemplo/_inicio_meta/Previa.tsx",
+    "sha256": "c1ab1b07e311ede1a150b234a3b88d463d0596be75e435884f57510cbb9cdc47"
+  },
+  {
+    "path": "app/(public)/acesso-pendente/page.tsx",
+    "sha256": "61e781578f2e9e315e570656996666bada5a6346b42a4c0eb045738bb1fdca5e"
+  },
+  {
+    "path": "app/exemplo/_envio-onboarding/Previa.tsx",
+    "sha256": "f72bde0cd0006820015bb4ae1177078a9601be9f4b084391b80823796f6abcd7"
+  },
+  {
+    "path": "app/exemplo/_envio-onboarding/Previa.module.css",
+    "sha256": "f0b23987960ce15c6e250e8932683fd3f40e80d62a24c11f4bdce2d17f259f69"
+  },
+  {
+    "path": "app/exemplo/_geracao_fila/Previa.tsx",
+    "sha256": "c4e620fb011f82a9fafeb488b34b2053e4f0bee1bc7434051004c0b015b88bed"
+  },
+  {
+    "path": "app/exemplo/_geracao_fila/Previa.module.css",
+    "sha256": "1d4ef237112c8ea4da31a4ac3beadfa6ba6bef5021f92816daaaf2c4fcca86bb"
+  },
+  {
+    "path": "app/exemplo/_interacoes/Previa.tsx",
+    "sha256": "e2b6c138d2de703903f8428cd5b86f50bd508e97cbc8aaee304d377ca5cb44d7"
+  },
+  {
+    "path": "app/exemplo/_interacoes/Previa.module.css",
+    "sha256": "56de7dc8cc17a6774ed7cd1cb65b96a892e89f2f8fcf6fd13abf4a9c5f5dc0c3"
+  },
+  {
+    "path": "app/exemplo/_interacoes/Acesso.tsx",
+    "sha256": "bc35c0074872336f5846467a1624a21bc778548cf66c64aa10f7d3cced38d748"
+  },
+  {
+    "path": "lib/criativos/contexto-do-negocio.ts",
+    "sha256": "557e2c1e81387229d062a4894d768e31a1e5bd0057ba42d193b3a0bd8c0fb9cf"
+  },
+  {
+    "path": "lib/criativos/contexto-do-negocio-da-sessao.ts",
+    "sha256": "fae9d6e5eab37d2b8b98b996a9c502b2fa87e601610a2baf218d64adbef195c3"
+  },
+  {
+    "path": "lib/criativos/carregar-marca-da-sessao.ts",
+    "sha256": "2ced3adbcb3f82c9058ec7b4c8784ae4d58c9190695e29f88fdbeb917b5ccc42"
+  },
+  {
+    "path": "lib/criativos/briefing-geracao.ts",
+    "sha256": "085b2b9bc71df791e1bce984d023f39469048d2deb5a4aa0d5612700405fe358"
+  },
+  {
+    "path": "app/exemplo/_chegada/TelaDeChegada.tsx",
+    "sha256": "462da9f88efc4a66b21dcc429523a1f3de6c3ac46f81de392e31686666028b2e"
+  },
+  {
+    "path": "app/exemplo/_chegada/TelaDeChegada.module.css",
+    "sha256": "54bd7be8ab1a3323ef14af3ed997c75046ccef50429bf87674c8682f59523f17"
+  },
+  {
+    "path": "app/exemplo/_chegada/estado-de-chegada.ts",
+    "sha256": "012366f6678ef7940f2afbc0a3cdb3f0a6853eb5e91e295ae7520fe195dce066"
+  },
+  {
+    "path": "lib/criativos/envio.ts",
+    "sha256": "3d04b1403636899f68c10225efd493052182264f6c9b9bf79500ef95cca4cf02"
+  },
+  {
+    "path": "lib/criativos/documentos-geracao.ts",
+    "sha256": "084cbdaa66e70f7b3425952b604d3d954a06dc1015d9a574bb7f18b7d2cec361"
+  },
+  {
+    "path": "lib/criativos/espera.ts",
+    "sha256": "512ce191feed5eb36aeff30fd9d5afb6af74ab490bd8a9143bca3e6ceaef71c4"
+  },
+  {
+    "path": "lib/criativos/galeria-da-sessao.ts",
+    "sha256": "4cc67d747d0680be63d3436a8ac6cb51929e0d498a06854e744c09fbec68f689"
+  },
+  {
+    "path": "app/(public)/adicionar-negocio/page.tsx",
+    "sha256": "3078a669b2dc32badb4759dfd4787081f400f52418b0231ed384d390a1db1679"
+  },
+  {
+    "path": "lib/auth-errors.ts",
+    "sha256": "423a035c19bfa983fb195ea80c691468c5ae726609920a308a900dcad1efd19c"
+  },
+  {
+    "path": "lib/auth-destino.ts",
+    "sha256": "2d83624c31313fab3fb62a3202976a38ebd7335e5ca57e5d401e0f70ed493ef2"
+  },
+  {
+    "path": "app/(public)/exclusao-de-dados/[codigo]/page.tsx",
+    "sha256": "c7ed9f43bb905a273d9d57556cede8f84dade180aacb07b1d11e3f0cf3398831"
+  },
+  {
+    "path": "app/exemplo/_canonico/TelaCanonica.tsx",
+    "sha256": "8b71bd347a0fdb095298053356921929e0b2a7f92296e8d7e6a051148151ad1d"
+  },
+  {
+    "path": "app/exemplo/_canonico/TelaCanonica.module.css",
+    "sha256": "25c913cbb45d8dd6ce6f163c7fe48e062b2f7857432f6e25f44ed3d59c3786e6"
+  },
+  {
+    "path": "lib/criativos/geracao/triangulo-contexto.ts",
+    "sha256": "63767e40500f1e9ed2bf3fc7352337d8d7484220d7fd31bdb97aaffa3904abae"
+  },
+  {
+    "path": "app/(public)/escolher-negocio/page.tsx",
+    "sha256": "0b12c54b27aec1269e92901f94c1046002356bab538a85947cfa487dcf390260"
+  },
+  {
+    "path": "lib/criativos/geracao/servico-local.ts",
+    "sha256": "bfe83f087a5c45bbcc4f19648aa210a3970070f3f3fa2c72b6a5d743765ffb54"
+  },
+  {
+    "path": "app/(public)/escolher-negocio/Formulario.tsx",
+    "sha256": "8eaf2f20818dc22e3c6268889dde3c7a61202143a46fda59eec45c00fbdc0809"
+  },
+  {
+    "path": "lib/criativos/geracao/repositorio-local.ts",
+    "sha256": "012bdb7e6c0538af36098dcde3baf61b79e7a73ce1d9c6528a70404694d348e6"
+  },
+  {
+    "path": "app/(public)/escolher-negocio/actions.ts",
+    "sha256": "e52f6850a93e900dc69fb837b426833be30f7e2162869f580cee547405092c40"
+  },
+  {
+    "path": "lib/criativos/geracao/provedor.ts",
+    "sha256": "fcf5a508c26cd1061866476131e9322e5e807d1f021e8ee8b68041e1a5bc6976"
+  },
+  {
+    "path": "lib/criativos/geracao/prova-v2-da-sessao.ts",
+    "sha256": "76085f1f6b9c044eb21476fd3bf003be8b3cfc6a337d908df0e889dcac64b85f"
+  },
+  {
+    "path": "lib/criativos/geracao/png-local.ts",
+    "sha256": "14b1d5a7885a7dc39b4ebfefcecb0d69b797a929be59a826d0af63b295f5fb78"
+  },
+  {
+    "path": "lib/criativos/geracao/imagem-privada.ts",
+    "sha256": "662f4fd4e4b618ca67b02de6bc43b2d75418e08661816b60660c2f65d56d3195"
+  },
+  {
+    "path": "lib/criativos/geracao/contrato-fila.ts",
+    "sha256": "5b8798c6b8ec8ac24d67e2f2fa7882a8f9e89efac9ee02ebd96622ab26aedd37"
+  },
+  {
+    "path": "lib/criativos/geracao/contexto.ts",
+    "sha256": "03843adc7c47a38c8daf6ba4003b60cd7ed66ba0dbaa926438a890413dee9411"
+  },
+  {
+    "path": "lib/criativos/geracao/contexto-referencia-publica.ts",
+    "sha256": "17fa737f64b46b847b0b7e3d935b15db832d0dac719b60c9e3db0c254d3a7856"
+  },
+  {
+    "path": "lib/criativos/geracao/configuracao-app.ts",
+    "sha256": "a924a7fa5d0b1e850bbe62a4b351902ac16d03b5c939fb80ecb14905d2ddde79"
+  },
+  {
+    "path": "lib/criativos/geracao/backend-da-sessao.ts",
+    "sha256": "efea725c353e181962ed2cb2847a07f9b5284206de233dec63563dd3f2521c23"
+  },
+  {
+    "path": "lib/contratacao/webhook-pagamento.ts",
+    "sha256": "c30a8e8cd5f41513033a34d12b702ecfb276a82436515f37da94b31ba37c5c5c"
+  },
+  {
+    "path": "lib/contratacao/vincular.ts",
+    "sha256": "233b4c8405717467a69c595d56d6298f975633f50a5d92a8088da5a4788b25c8"
+  },
+  {
+    "path": "lib/contratacao/vincular-core.ts",
+    "sha256": "a5605e093f8748d9304df47f0fe70212c9c5dc4d3e1e12cc5f3a87abe71bd3b4"
+  },
+  {
+    "path": "lib/contratacao/url-checkout.ts",
+    "sha256": "46f375370d52e90c0b3ee3a68752c8b83f2229912e36f0addf804f2b60adfdda"
+  },
+  {
+    "path": "lib/contratacao/trava-campanha.ts",
+    "sha256": "d506ae5f5a648a5e4e82370b83d46c2d552873cfffc4325fb8ef411c610d9ce8"
+  },
+  {
+    "path": "lib/contratacao/retentativa-cartao.ts",
+    "sha256": "f60a604a69abac7aea8a7630abd568d2d5496498430f96d1e2010440c7c34424"
+  },
+  {
+    "path": "lib/contratacao/qualificacao.ts",
+    "sha256": "2399b2ca193776b316466b1b37d0dfdf711df5e678c57e87e71741940d9f6f55"
+  },
+  {
+    "path": "lib/contratacao/provedor-compra.ts",
+    "sha256": "571903c65cde16a611475f3a785bd4cdf9b5a27dfa81311ae55d1bb5280feeaf"
+  },
+  {
+    "path": "lib/contratacao/processar-email-pagamento.ts",
+    "sha256": "fecc241cb62bf1e77a2d015586a82d2d877f55dcde1d46c27475ccebb4dce605"
+  },
+  {
+    "path": "lib/contratacao/processar-assinatura-3ds.ts",
+    "sha256": "d234608acf4d35bd4a44a6ce468354a6103f9430991abd1166d5d5117ca587d0"
+  },
+  {
+    "path": "lib/contratacao/preparo-assinatura.ts",
+    "sha256": "0d309a4a83cb62ff742d261903340699765ab0b19c34561ba9be973f7271520f"
+  },
+  {
+    "path": "lib/contratacao/preco.ts",
+    "sha256": "a42f68e6da126fd6e89e1aa6f941d78e2cf8b477dc4daaa30d910877da01f205"
+  },
+  {
+    "path": "lib/contratacao/pedido-assistido.ts",
+    "sha256": "3881260a6e429eaa88776a6ea3584ade12f47ebc8d6d8f226fc76be54c3ab66d"
+  },
+  {
+    "path": "lib/contratacao/pagamento-evento.ts",
+    "sha256": "82fc8e2923ab6ca60407eba04a75b5e3b7b3016a11d05d19b0f7a45283f85d4e"
+  },
+  {
+    "path": "lib/contratacao/origem-asaas.ts",
+    "sha256": "25c96950664c1b91cb81369c682932e7ec386bb7dd06022e353b19f2654d305a"
+  },
+  {
+    "path": "lib/contratacao/origem-asaas-servidor.ts",
+    "sha256": "d523993626658f959c3fe14b729cece61e77b144b1e68a34ba0c731383c656f5"
+  },
+  {
+    "path": "lib/contratacao/iniciar-pagamento.ts",
+    "sha256": "5cc0fe5ab6c49a3964be1cfdd95df4ad61b86f2f8a06896ec6f8afbaa45a4fd1"
+  },
+  {
+    "path": "lib/contratacao/fluxo-cartao-mensal.ts",
+    "sha256": "d710716873b5960555b19ea127aec3c06097a7f5a5adad4eecf98db66c489ca2"
+  },
+  {
+    "path": "lib/contratacao/evidencia-manual.ts",
+    "sha256": "2e2fafae6ef168d595cb1acd3a1bdb3249a0f562aad8043d1c17eba5ac941414"
+  },
+  {
+    "path": "lib/contratacao/evidencia-manual-servidor.ts",
+    "sha256": "5b249371f24003584def8461273579b285aa492987a0ccd19c2f9afebd69070c"
+  },
+  {
+    "path": "lib/contratacao/evento-financeiro.ts",
+    "sha256": "3894c35cae755412fdac29ba6d4dc52bec0a9084b5d329936bb075535d6a2d51"
+  },
+  {
+    "path": "lib/contratacao/estado.ts",
+    "sha256": "c82c963845e1e4b6676a680afa14c257737655536099d749016e5fb6b753bb45"
+  },
+  {
+    "path": "lib/contratacao/estado-pagamento-publico.ts",
+    "sha256": "8c632a914e12dbe37c4ef43888ba9dbaa4647ead89b33a7d3f52264ffb6c005c"
+  },
+  {
+    "path": "lib/contratacao/ensaio-encerrado.ts",
+    "sha256": "1e27d5ebffc92e0d50710a7ee2743d94104395fada8d99a8db64794bc46a12d9"
+  },
+  {
+    "path": "lib/contratacao/email-pagamento.ts",
+    "sha256": "685b96bfc0e4fcecb7c0e52a686e8a033128ab96a4ca66c4ebe91486b9059566"
+  },
+  {
+    "path": "lib/contratacao/documentos.ts",
+    "sha256": "480c29dfa4ac84849506e81aacfdb7bc14179feefbad29ea779342d55c3caf7a"
+  },
+  {
+    "path": "lib/contratacao/documento-contratante.ts",
+    "sha256": "d2ce1996768f3c32e4200c38ab507e564f7bb4a0865e6b2035c56e1cb3c88b27"
+  },
+  {
+    "path": "lib/contratacao/direito-por-pedido.ts",
+    "sha256": "adf909f68919b897515c080ada87aed2c38a547c01dafb6cdfd28a7833307fe0"
+  },
+  {
+    "path": "lib/contratacao/dados-cartao.ts",
+    "sha256": "1b62c849c8ab14c48281f07c02c56f83e4a2a5bc3eb64262ba79ee72f5808c5e"
+  },
+  {
+    "path": "lib/contratacao/consultar-estado-pagamento.ts",
+    "sha256": "b1ae4fe771cc48380615193199271af4319d21a174680aeeb56fa96631f91020"
+  },
+  {
+    "path": "lib/contratacao/confirmacao-canonica.ts",
+    "sha256": "d4c88d8da77a272ea77e1794620b6681782101e1fe833e4a4a154fc451a97215"
+  },
+  {
+    "path": "lib/contratacao/competencias-fiscais.ts",
+    "sha256": "c796b1e033850f1b9eeae96ab4d63459a3056599046de25da43680ea1ebd0677"
+  },
+  {
+    "path": "lib/contratacao/checkout-evento.ts",
+    "sha256": "e6a3d635c14b137379fdf34c203191f1c53984bed8564b178c1ab98460a4d382"
+  },
+  {
+    "path": "lib/contratacao/cartao-3ds.ts",
+    "sha256": "b56598b726619fa6ed426cb441596e49f7e18de1408cdca2e6e1bdfb4221f0fd"
+  },
+  {
+    "path": "lib/contratacao/cadastro-por-compra.ts",
+    "sha256": "e897a787f22d0cb9850acfdccdbd652a2dc0bd6882e8dbdade42460ae166f679"
+  },
+  {
+    "path": "lib/contratacao/cadastro-contratado.ts",
+    "sha256": "636a6b985e53422cd6cd89a29d23cc88e63e18ddccfe29db74230f98b9a87ffd"
+  },
+  {
+    "path": "lib/contratacao/assinatura-apos-3ds.ts",
+    "sha256": "323b34d039d9fe52e3011a84eccd608aedf410940d3fb73b658fafb62371d7ae"
+  },
+  {
+    "path": "lib/contratacao/asaas-sandbox.ts",
+    "sha256": "227993b4105bee4e59679c82681c07d574922dbeaf34396c15f8e41bcfd11e24"
+  },
+  {
+    "path": "lib/contratacao/asaas-producao.ts",
+    "sha256": "d50b923e1204729c43b3ea1ad8b898698fdf3601c071dd42363a96c6c5d65a5c"
+  },
+  {
+    "path": "lib/contratacao/asaas-eventos.ts",
+    "sha256": "bfa627b062de53f6b6c3d805920c170f55affbe9e987e750637c28a7d0368312"
+  },
+  {
+    "path": "lib/contratacao/ambiente-producao.ts",
+    "sha256": "82e23eee5f42d9d46da1a15ae659dc1d699222a1595c7ee82ba41bd53635e8ab"
+  },
+  {
+    "path": "lib/contratacao/ambiente-checkout.ts",
+    "sha256": "e87950ade3ce79c743a87be383c3423654957293c3fefd03aac0961e51dc2437"
+  },
+  {
+    "path": "lib/contratacao/acesso.ts",
+    "sha256": "c9721ebac1d4e4fb2a237622c1722871900c7bfbb2a084f135d42a683ed20cb9"
+  },
+  {
+    "path": "lib/contratacao/acesso-contratado.ts",
+    "sha256": "636d695c289f0e98d71c89d941562b960be253acd64f95b22d4281ba0278cf8d"
+  },
+  {
+    "path": "app/exemplo/_criativos/PreviaDoPedido.tsx",
+    "sha256": "9e409db933bca17fd147ade6ed528640827bc4c877cadeb52b6db03aef109a5c"
+  },
+  {
+    "path": "app/exemplo/_criativos/previa-do-pedido.module.css",
+    "sha256": "766c66f0b57fce721e95badf4129fd30df9b36bda2770006de11b0940a17b1dd"
+  },
+  {
+    "path": "app/exemplo/_criativos/dados.ts",
+    "sha256": "b73e04332302389e00bc7d1a6d3f27c53bf8ad0ed4db3e203ba5edc3d318862d"
+  },
+  {
+    "path": "app/(protected)/layout.tsx",
+    "sha256": "e24443a5f56bcf83efca5249ee5554cdd2290cb001d3bbd2d7736a9dcedf5c54"
+  },
+  {
+    "path": "lib/anuncios/retorno-login.ts",
+    "sha256": "5808840d44b862bc9a753176fdd3c0ff2591f63031d57814ad483ea2913c2a27"
+  },
+  {
+    "path": "lib/comercial/oferta.ts",
+    "sha256": "a7bd8e49d6910bfd79ed3a4d3d039cbe57c5328882b97a2de6e1259d3b35454b"
+  },
+  {
+    "path": "lib/anuncios/contrato-meta.ts",
+    "sha256": "1ef95dff974a7050bf43863b5be83156706df1a070afb5d8188f36697b91b1a0"
+  },
+  {
+    "path": "lib/auth-senha.ts",
+    "sha256": "58019ca71814b5eb9a22e67f1f41038413b899c86ad0c369c5cdeae0b9624789"
+  },
+  {
+    "path": "lib/alertas/pendencias.ts",
+    "sha256": "59d2c8336e1717642ad914ba0d003505ca259f2fc5d876cca854349729c065db"
+  },
+  {
+    "path": "app/(protected)/anuncios/anuncios-meta.module.css",
+    "sha256": "c690092ecacc934a8bd84ef7c1e8a3e796648ef846b81182c5e7d1329fc6ae35"
+  },
+  {
+    "path": "app/(protected)/anuncios/AnunciosMeta.tsx",
+    "sha256": "21f9e5cde32794d5f8701eebe15e04d597e2da3e9ace77df07ad94dc562c848a"
+  },
+  {
+    "path": "app/(protected)/vendas/page.tsx",
+    "sha256": "5c0231a9ce57bf5b2f7eb4fb51fe230b5c02b7089916ca91810a46d62ef91063"
+  },
+  {
+    "path": "app/(protected)/anuncios/PainelDeAnuncios.tsx",
+    "sha256": "929cb32c454304f112df5b8ab0970ddd5da7ec930ab14a7fdaff179eeb26be5a"
+  },
+  {
+    "path": "app/(protected)/anuncios/page.tsx",
+    "sha256": "26114b00c9dcc691170fa6171ef662b3369e3dc8404a2cffb509326824e5659a"
+  },
+  {
+    "path": "app/(protected)/anuncios/loading.tsx",
+    "sha256": "583d6f7921e9b6f3a8a5fa745ffe93c4fc448cb44faabe426add96ce20835745"
+  },
+  {
+    "path": "app/(protected)/anuncios/HistoricoSemRodadas.tsx",
+    "sha256": "836c804817ab09c20beba0e20bda7bd4676c9b38d2196efcc7bea327aa22902a"
+  },
+  {
+    "path": "app/(protected)/anuncios/AtualizacaoDaConsulta.tsx",
+    "sha256": "07c1fb8be320597a3c118e5cac283cbc91b3cdad9e7f780fea5423b3cd208b85"
+  },
+  {
+    "path": "app/(protected)/alertas/page.tsx",
+    "sha256": "ce7b5a5382012167733b3cfd2b2ae77e4913902eb4c64a23ad3f335739e02fa1"
+  },
+  {
+    "path": "app/(protected)/alertas/AbasDeAvisos.tsx",
+    "sha256": "4decb6a78d413ef92207bd9c0d485b673cab034efe0a608f92b0ce2bf7518bb9"
+  },
+  {
+    "path": "app/(public)/entrar/TelaEntrada.tsx",
+    "sha256": "ee5e79f60f6629bf9c3f5a9350e20398a4ef00d429878c614a41d2babe5e3fc0"
+  },
+  {
+    "path": "app/(public)/entrar/page.tsx",
+    "sha256": "3a515ff56cff9dc8286076a1f3342b5bbf76e20d401a2b0af0147ae665d8635d"
+  },
+  {
+    "path": "app/(public)/entrar/loading.tsx",
+    "sha256": "a0cbc1329d0b05d27d1a6206019497f4c06568efabfc77adce9adba9c03e1181"
+  },
+  {
+    "path": "app/(public)/entrar/layout.tsx",
+    "sha256": "21d76d04913e492a149f20947bbaa1f9735a1f65f21a81491a03694eb6319df7"
+  },
+  {
+    "path": "app/(public)/entrar/EsperaFormulario.tsx",
+    "sha256": "d389b00f57ed0dd1088eee72b39f836e7331639c883ff747e8875ed02da2c837"
+  },
+  {
+    "path": "app/(public)/entrar/espera-local.css",
+    "sha256": "2881638f0b9a2e99ba4c1b53cef4eba43fba6b0615e1e08bfce4aeef16a40135"
+  },
+  {
+    "path": "app/(public)/entrar/CarregandoAcesso.tsx",
+    "sha256": "e244affa13bee7ed1d4ce87f71eae0658e05f70872fb0333b9a6b692c580045b"
+  },
+  {
+    "path": "app/(public)/entrar/actions.ts",
+    "sha256": "711edaaef6ac3e9db94cc7d6a6172ab03fbc7fa733a8dff628ceacb33792ab69"
+  },
+  {
+    "path": "app/(public)/entrar/acao-local.ts",
+    "sha256": "3e123369193dadab0bcfb747885960397f27e8d145de934007fd66c470fb02b2"
+  },
+  {
+    "path": "app/(protected)/actions.ts",
+    "sha256": "ee5bdb3d8d634bc99a614f994aca65b0ff6156e7e3cd63b845dcdf41dd93f0e7"
+  },
+  {
+    "path": "lib/backend/pre-requisitos.ts",
+    "sha256": "b2b371343d98be3fa842fc376d37c3c8056ea01137f7855053ceaf7f5ad68e6d"
+  },
+  {
+    "path": "lib/backend/nichos.ts",
+    "sha256": "4576d15e44fb7270f9fc5f0d79d209d63fe3c58e8e073f88b7bb07662372a428"
+  },
+  {
+    "path": "lib/backend/metricas-da-carteira.ts",
+    "sha256": "1fc29c77606d5d7b8c4750353adf5a9036907ba243f4bf7dd32d82b3e1a4d3da"
+  },
+  {
+    "path": "lib/backend/index.ts",
+    "sha256": "ef5654638e326235e8a7ca7c7fcef7d6867aaffb069e523ca730a85372831f84"
+  },
+  {
+    "path": "lib/backend/execucoes.ts",
+    "sha256": "154681558a116379d466a46c407b06e403391f55d402cd1ca3f91d907afd5e53"
+  },
+  {
+    "path": "lib/backend/erros.ts",
+    "sha256": "e277e61753a922014c65bb9558266b6fc868265fdb7d4c2f29f361683a629138"
+  },
+  {
+    "path": "lib/backend/dia-seguinte.ts",
+    "sha256": "5ba89fdc16cc389be764accbbc72048c1735534cf5ae24b7322e4f4e37e18c15"
+  },
+  {
+    "path": "lib/backend/criativos-do-cliente.ts",
+    "sha256": "f9b4c2c218b8703b6b8a88ca4361b734a4c9ec2173cb89d2b8a77284bce11b3c"
+  },
+  {
+    "path": "lib/backend/cliente.ts",
+    "sha256": "f6cce990d48ef78b5cdf239c9692e98cbc10864532c3229ce089baf6e75ab5e8"
+  },
+  {
+    "path": "lib/backend/cadastro.ts",
+    "sha256": "c5ae83f6cfd224ce32d01ad3c5319ad073e6e951d90522bc988039c199f792a4"
+  },
+  {
+    "path": "lib/backend/cadastro-operacional.ts",
+    "sha256": "8723f7ffa778b5bf39b761cea9082dd9a824935a30fd4509b37a75668719024a"
+  },
+  {
+    "path": "lib/backend/ativacao.ts",
+    "sha256": "46b7d42c472a5c5167d862ecc7597754e35598018c37ce12343e8aa04cab149b"
+  },
+  {
+    "path": "lib/backend/anuncios-do-negocio.ts",
+    "sha256": "796a15bdfef1018cc460477fa8e51a5201d442d2803eb27efa7b58662200260d"
+  },
+  {
+    "path": "app/(public)/acesso-contratado/[id]/page.tsx",
+    "sha256": "85107029f1b630d9db46cb78963f73db519036f4a062cc67708e769c77ef014d"
+  },
+  {
+    "path": "app/(public)/acesso-contratado/[id]/Formulario.tsx",
+    "sha256": "039262f02342ae0d97d0a8913ba09b53f2f99b41e08536f1e3e8ec80914a7a73"
+  },
+  {
+    "path": "app/(public)/acesso-contratado/[id]/actions.ts",
+    "sha256": "67e0663fdf93fcb80a6aef220c12c5569a709d28243933e083aedb4c987666f8"
+  },
+  {
+    "path": "app/(protected)/loading.tsx",
+    "sha256": "f2013a663cfb5d487da24f0d81414e5c03d08f8ebe0958e5939eb1eb136198dc"
+  },
+  {
+    "path": "app/(protected)/campanhas/page.tsx",
+    "sha256": "a37553b347deb7ed7bf3865f82cd948e0256807d41019f868dbe3794bd400e8a"
+  },
+  {
+    "path": "lib/cadastro/procedencia.ts",
+    "sha256": "bb922f8c3713ccd93e999ba5d57c5cf855bc87054a6c0717e8d55ada01b112cc"
+  },
+  {
+    "path": "lib/cadastro/pendencias.ts",
+    "sha256": "92217ca8efc82f73baaef954cb5470536600e7a537c0401d4a248b46802685b1"
+  },
+  {
+    "path": "lib/cadastro/montar.ts",
+    "sha256": "6ff077b590347b200bc9106b4ed8c8f735bf5adc3a44063ef044aa9b40ca3fbc"
+  },
+  {
+    "path": "lib/cadastro/consultar.ts",
+    "sha256": "566f4e1d132a3854886c290bb8f7fc6a166171dc4445c8eac9440b6bac319ccb"
+  },
+  {
+    "path": "app/(protected)/inicio/TelaDoInicio.tsx",
+    "sha256": "cfd7434d06f569692c949f169f9a01cb92852d5a11c2d92e2cf33bc94bf30de0"
+  },
+  {
+    "path": "app/(protected)/inicio/SeletorDePeriodo.tsx",
+    "sha256": "8b73da5a488bfb21da944fb3f8f6f27b405d1530b4400bd7091a30d507809236"
+  },
+  {
+    "path": "app/(protected)/inicio/SeletorDePeriodo.module.css",
+    "sha256": "6eeefc19e13a55a5fb9c7e3ce03b42c57c5ec00e9f0194b94ee03ebfc3b14270"
+  },
+  {
+    "path": "app/(protected)/inicio/ResumoMetaDoInicio.tsx",
+    "sha256": "5398c523d5d52d5c26ecceb3ae6c33227db8143467a5ef1290d240a0ef57f152"
+  },
+  {
+    "path": "app/(protected)/inicio/ResumoMetaDoInicio.module.css",
+    "sha256": "ef29bd97b9405090441f580c769d4e99d2905a1b9096c56ff5ce272c6723ff41"
+  },
+  {
+    "path": "app/(protected)/inicio/RecepcaoDoCadastro.tsx",
+    "sha256": "5a7541c785425c1e4f23f97649a43e7ff46ed0c731b5bf9362caf65ff3c3e664"
+  },
+  {
+    "path": "app/(protected)/inicio/RecepcaoDoCadastro.module.css",
+    "sha256": "89e84d0ccc45c60de2c81b2894def29bc63498a149c3f15ff21baf00bb8afa68"
+  },
+  {
+    "path": "app/(protected)/inicio/PerguntaDoDia.tsx",
+    "sha256": "444a28134d170b406fa2ef9114bc284b96821bdbf119d8cdf90648336085d498"
+  },
+  {
+    "path": "app/(protected)/inicio/page.tsx",
+    "sha256": "2ff38072bd2c3b352beb6e336ab1e1d43304472d0b98d46eaaad8d1510762e19"
+  },
+  {
+    "path": "app/(protected)/inicio/loading.tsx",
+    "sha256": "6bed9ad8065c3b5c75316c3b9915391f7150267f28918c8a709a7f2ae470e0ce"
+  },
+  {
+    "path": "app/(protected)/inicio/InicioAposReserva.tsx",
+    "sha256": "805a4e87d4d6ee9f61d4e4ff4c682558ee2a8acf5e688e5af59177fd839431ca"
+  },
+  {
+    "path": "app/(protected)/inicio/InicioAposReserva.module.css",
+    "sha256": "acffa1a3b3b6a09f77deab1b094ffccf248c3d0e597e0b9648f1657fa7e6fb2f"
+  },
+  {
+    "path": "app/(protected)/inicio/error.tsx",
+    "sha256": "5834442ec1d276477062cff36ffc499530c9d90bfb113e06a7efd84ff75c0aea"
+  },
+  {
+    "path": "app/(protected)/inicio/ConclusaoDaJornada.tsx",
+    "sha256": "2c144d5b99e5c7cf90e512fee23aa70e2c0a1fa04a7c0ea50b9c4eaa6609e181"
+  },
+  {
+    "path": "app/(protected)/inicio/CarregandoInicio.tsx",
+    "sha256": "e043047319708a22efc71789cb65ce9da98a49687c68ff493bab8701ca2a00b1"
+  },
+  {
+    "path": "app/(protected)/inicio/CarregandoInicio.module.css",
+    "sha256": "9fe0d878865512f6f662bf1659351c7ae4a4d537befd31c5ef30a20f644bc836"
+  },
+  {
+    "path": "app/(protected)/inicio/AtualizarInicio.tsx",
+    "sha256": "90769e933e9aaab44a3c7d8d57d619e04efa5c43ae076f48f6c735b250194dcb"
+  },
+  {
+    "path": "app/(protected)/inicio/actions.ts",
+    "sha256": "55624c2999438ccc66e63c3127f497b629b8882bb5165da482990d862348d49a"
+  },
+  {
+    "path": "app/(protected)/saude-meta/page.tsx",
+    "sha256": "d0783e0e3e05f19bcf9b57610897205f21548a6a074d7a17b3e630a8a9502ff1"
+  },
+  {
+    "path": "lib/campanha/pre-voo.ts",
+    "sha256": "837fd65a505a811a5b978248e0e211ca39f84c972074fce0373830974d8dbe00"
+  },
+  {
+    "path": "lib/campanha/carimbos.ts",
+    "sha256": "b23f30dde60f7792d33403941e7a2ed85c750d328ea503652e61b5675eb5b3d6"
+  },
+  {
+    "path": "lib/campanha/ativacao.ts",
+    "sha256": "90f2c118fd12be376d1c4846c40f19051f9f6d11c487f528f66365035f7e4761"
+  },
+  {
+    "path": "app/(protected)/meu-negocio/page.tsx",
+    "sha256": "28c6f76a025a3814b8d808ae9653ec6eaac0641851c343c163752ece4a716cee"
+  },
+  {
+    "path": "app/(protected)/meu-negocio/Campo.tsx",
+    "sha256": "80a09b5d9c02a4af9b59b5d1b8e47ccd988166043108fcdb888b9b726ad5bb40"
+  },
+  {
+    "path": "app/(protected)/meu-negocio/actions.ts",
+    "sha256": "570010e5165ce3d58f8d2b1aa8e34cb7caa5020499ebd0ecd68526386a28956f"
+  },
+  {
+    "path": "app/(protected)/agencia/actions.ts",
+    "sha256": "b4234b101db04ec704a95e4ee29e8855d4b190a7b67685a5f1f85bc43633bd1b"
+  },
+  {
+    "path": "app/(protected)/ativar-campanha/actions.ts",
+    "sha256": "13a2104cc1d15df1a376da57c1ac53ac944b2f7123f890ad3da260db24039e57"
+  },
+  {
+    "path": "app/(protected)/ativar-campanha/AcoesDaCampanha.tsx",
+    "sha256": "76fe484c0e4bd6b5909045220a7007a017d62e23ba055cb5032121e2a77c1e93"
+  },
+  {
+    "path": "app/(protected)/ativar-campanha/page.tsx",
+    "sha256": "7c006b00a69ba157481bfd78f8e2aab482a163ac4a38f0543eb8c9e72a7d125d"
+  },
+  {
+    "path": "app/(protected)/gestor/page.tsx",
+    "sha256": "3aa311b02c892ce978993fb62d8235b0a34dd2f1682b2db7db0e4b41bf239566"
+  },
+  {
+    "path": "app/(protected)/conta/TrocarPagina.tsx",
+    "sha256": "909c71a6cb709e57d435305760c2d15b67e28aaa08a8542a93c62c2bf6a08ea8"
+  },
+  {
+    "path": "app/(protected)/conta/tema-actions.ts",
+    "sha256": "ce0339aa79736ea14b47cee3556ac9d1f805aade1e684aad56d6dbb27d6a1538"
+  },
+  {
+    "path": "app/(protected)/conta/SeletorDeTema.tsx",
+    "sha256": "5cb7e0ff15bf6f87c4c9822677a0577970bc37e0c50d6e1ff26d4b9a6a3862f8"
+  },
+  {
+    "path": "app/(protected)/conta/page.tsx",
+    "sha256": "2f0a3fdc6123fd0f6603c3ec0ba798e21fe2283c3caf07425897e02e7099647a"
+  },
+  {
+    "path": "app/(protected)/conta/Identidade.tsx",
+    "sha256": "951634ce7bd76c4de36255a81085db5e2e2eabce68093609bbebe5f9cf230783"
+  },
+  {
+    "path": "app/(protected)/conta/identidade-actions.ts",
+    "sha256": "cd93469029ae48811143b80768eb924f56b8750aee1a17f2292310fd2da8d4e3"
+  },
+  {
+    "path": "app/(protected)/conta/Formularios.tsx",
+    "sha256": "cb49759b4f85735256470de069cc43d8fe01c4bc0569607aec75561f4babe6ea"
+  },
+  {
+    "path": "app/(protected)/conta/declaracao.ts",
+    "sha256": "eac8f79fefdbd7b5172cc6bde5ee7bdf2b3f6575740eb3e9a77ddafb54b98935"
+  },
+  {
+    "path": "app/(protected)/conta/actions.ts",
+    "sha256": "1466276c70199912641352321fff80f923a4143d856345408d2556c1f2184078"
+  },
+  {
+    "path": "app/(protected)/gestor/Gestor.module.css",
+    "sha256": "b931a77030762d363771ce9f79b98623e630811ffe674355f7463b7bfcb5ec1b"
+  },
+  {
+    "path": "app/(protected)/gestor/compras/page.tsx",
+    "sha256": "ecf8d58884a18d6de4ccec5dc101ba57f5fb61232b3ed9ce9af926a3ac9aa0a6"
+  },
+  {
+    "path": "app/(protected)/gestor/compras/Compras.module.css",
+    "sha256": "569cc21663f7e8168d7b8774da60224e02828fa8db2cf8f94b601dccce1996d8"
+  },
+  {
+    "path": "app/(protected)/pedidos/page.tsx",
+    "sha256": "23be57f6ca54b15642cdc338d5abc249cdd97e18d204ae046b32f8fea186ffc2"
+  },
+  {
+    "path": "app/(protected)/pedidos/Formularios.tsx",
+    "sha256": "a0632d666e133f42b809d8dcd30f99838023ef3c7a09e3db92c3c4fb6e033dca"
+  },
+  {
+    "path": "app/(protected)/pedidos/evidencias-actions.ts",
+    "sha256": "c774b5df5a5b67b275f1f3e5b57166ef1dba400fb3c6350a0288c2a1e8e465ad"
+  },
+  {
+    "path": "app/(protected)/pedidos/EvidenciaForm.tsx",
+    "sha256": "af633684661bcbb409e62ccd822806d75cf0a67b996308975a65e75b17cc73bc"
+  },
+  {
+    "path": "app/(protected)/pedidos/evidencia.module.css",
+    "sha256": "2f85d866d48025c792e9ae2b5d8a865bc1061b900ee0a6e285fdc093670657e9"
+  },
+  {
+    "path": "app/(protected)/pedidos/ConferenciasManuais.tsx",
+    "sha256": "13e03436a76bec444138a14137f3ba1511eda87b5c92ac9679cb5159059ee5a5"
+  },
+  {
+    "path": "app/(protected)/pedidos/actions.ts",
+    "sha256": "8ab35b00d9ce78ecfb043291df6e95a5edc8b0967e3eba09a919c5e18996f65f"
+  },
+  {
+    "path": "app/(protected)/gestor/tarefas/page.tsx",
+    "sha256": "e2b1421b9e0fd9c7731f255bae6d9ef6710d6596d0f1627fc0ea1cecd7694559"
+  },
+  {
+    "path": "app/(protected)/gestor/tarefas/Formularios.tsx",
+    "sha256": "c77f299f7f9f6206f5074c10cef14d9f410cb3468e6d24469b861a3d87abc1ad"
+  },
+  {
+    "path": "app/(protected)/gestor/tarefas/actions.ts",
+    "sha256": "7da217818e9944b56dd5bc9d7fc1ddb9c9e32dbee53f84b2ca54950ef0fb1c6f"
+  },
+  {
+    "path": "app/(protected)/revisar-perfil/Fichas.tsx",
+    "sha256": "bd7d9b007057d7438856cf030e9c64d00c2bcf12dfbb04f9fdc470bd1245bbf5"
+  },
+  {
+    "path": "app/(protected)/revisar-perfil/Fichas.module.css",
+    "sha256": "96a914dfaa330b3989481c56bb8573be03ade08f3544d9c65b50715c0d62f2bc"
+  },
+  {
+    "path": "app/(protected)/revisar-perfil/page.tsx",
+    "sha256": "aa87b626c81963dd08232042de164b11d980ba9f1eb3ee36197615a901bedd8f"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/SincronizarTarefa.tsx",
+    "sha256": "cdd7ebce9d22f511992274c6bc5488e144246a00c8e76a3f594263ac58abfc1d"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/revisao.module.css",
+    "sha256": "1675b6bb6c1599a86189f9ab8dd184ad759751ea3fa29ea3dc2f9bb4d1535261"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/publicacao-actions.ts",
+    "sha256": "9a7762fa02eca5fbea0ba2654976200ed042816607507c0e7eb14c2327dde3ce"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/PreviaDaPeca.tsx",
+    "sha256": "09f796333a98ccc294facc0ab3b7c719a034f6145e4982977534c10175f4db67"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/page.tsx",
+    "sha256": "26ff1cca9b70dc08623da149a28ad4197b54310a780d64121a9a6a9b39dbb3af"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/DecidirPeca.tsx",
+    "sha256": "c47873672a4a33205e6643abe54386049ff8f2de757b3b77739d3901c831a85c"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/ConfirmarPublicacao.tsx",
+    "sha256": "2d2c8ec6ffbe2a1e66da1026d1a7ada8fd70725d9197324f2a26058a1001e472"
+  },
+  {
+    "path": "app/(protected)/gestor/criativos/actions.ts",
+    "sha256": "f87f4eb33297f8ccb09af36df61c4f231a0041f024bbacdb5cb083fcf0de5b35"
+  },
+  {
+    "path": "app/(protected)/ativar-campanha/[execucao]/page.tsx",
+    "sha256": "0689029aaf265e9429e9702ce53f397a0b847839419eb4593922c89a497a7525"
+  },
+  {
+    "path": "app/(protected)/criativos/AndamentoDaImagem.tsx",
+    "sha256": "5f3a415f71a6cc67408b6c1ad7fed124b81064c964c66e05d48e97a1bb8952af"
+  },
+  {
+    "path": "app/(protected)/criativos/Analisar.tsx",
+    "sha256": "755fadcbd53139ada0f6e87cfd81a46a41e0543351c4fa82aaeeb93ce51dac52"
+  },
+  {
+    "path": "app/(protected)/criativos/Amostra.tsx",
+    "sha256": "8301f398e66441ff8f4125aa53f7d3afb884c88ae7cb3a9e7d5666c04aa26ff8"
+  },
+  {
+    "path": "app/(protected)/criativos/actions.ts",
+    "sha256": "b9a3355dbb3fa2a3ac3210d5a34817fb2799ce97fbac70330dbf7e5347d1671b"
+  },
+  {
+    "path": "app/(protected)/criativos/galeria-carregamento.module.css",
+    "sha256": "cb2c0dbcaa2d0b367b7465657423097901fc9e8f18c37b061fc3a3cc2de0e8b4"
+  },
+  {
+    "path": "app/(protected)/criativos/CriarPeca.tsx",
+    "sha256": "72f2daf4d06a3fbcc1c7109493571441578c140f2392a674dde5c7b731517ce6"
+  },
+  {
+    "path": "app/(protected)/criativos/ContextoDoNegocio.tsx",
+    "sha256": "ba4d0e242c196f1ab789529858a64cbf428c3d5f36df5a169bfa1d088f5eef1f"
+  },
+  {
+    "path": "app/(protected)/criativos/GaleriaCriativos.tsx",
+    "sha256": "b4513b1876b69bce6d0294913fc3fb9e71b4c83e5eccefb92ca1a570a4a25aa7"
+  },
+  {
+    "path": "app/(protected)/criativos/geracao-actions.ts",
+    "sha256": "c6d30df10278b6c90c5947f94cffa43ba2e1c4813a6fad9ffbe5f4b426b88440"
+  },
+  {
+    "path": "app/(protected)/gestor/negocio/[id]/marca/page.tsx",
+    "sha256": "a4931f58dc33f2c368dae86dd3d676c2cf00cd781028d002fde63218ecb60b90"
+  },
+  {
+    "path": "app/(protected)/gestor/negocio/[id]/marca/MarcaDoNegocio.module.css",
+    "sha256": "abd8eb738f6808c34cbebab3d2920ed449d0b83045844eee0e6e81c34e4f23bc"
+  },
+  {
+    "path": "app/(protected)/criativos/pedido-de-imagem.module.css",
+    "sha256": "c1fba44df29def8be9222ef362bf4a4e12bc1a606302903384758af026742d97"
+  },
+  {
+    "path": "app/(protected)/criativos/page.tsx",
+    "sha256": "6a55390806698930c6d1ba47e783ce66b7c3cdb9b88d64200ff34cdb99d0c3e7"
+  },
+  {
+    "path": "app/(protected)/criativos/OrientacaoExterna.tsx",
+    "sha256": "5524517e69e7cd70c77c614379d9804d6ee4fa70439ddebedf0c60c5ff03f0fe"
+  },
+  {
+    "path": "app/(protected)/criativos/MinhasPecas.tsx",
+    "sha256": "6d4ce41f88e816363daf56f88e2898d44cceb0ffd16acd13e1dd8210486eda1f"
+  },
+  {
+    "path": "app/(protected)/criativos/loading.tsx",
+    "sha256": "13ee628df6a2d211b4da4b704aebb961627b49359a431b15e50bc1a357dc8e85"
+  },
+  {
+    "path": "app/(protected)/criativos/loading.module.css",
+    "sha256": "edd1f9713e7885a545418bb0839d55b0359f0225318d1c01c53d25f5a1cdcffb"
+  },
+  {
+    "path": "app/(protected)/criativos/useEsperaLocal.ts",
+    "sha256": "ae6dbf5b614fa9862f7a4521fde99d11076ad736e8d03525e35591e3ec840061"
+  },
+  {
+    "path": "app/(protected)/criativos/TelaDeCriativos.tsx",
+    "sha256": "3b7ec5909e96669a4c86e688d167bab85f6b60cd5186fbe57e0d0a7d4e2fe4b1"
+  },
+  {
+    "path": "app/(protected)/criativos/revisao-actions.ts",
+    "sha256": "6d2a52f89890d926ec23bf01305b683cfccbfdb49752ba137647d88ad74bf16e"
+  },
+  {
+    "path": "app/(protected)/criativos/ReferenciasDoNicho.tsx",
+    "sha256": "20ec5ae44a73e5c4d022e488300044c928fb4644ca5fc6c70b6ce2a1b1aacfe6"
+  },
+  {
+    "path": "app/(protected)/criativos/referencias-do-nicho.module.css",
+    "sha256": "27a0efd05443e9bae42a6907376c1cd2f9ccbf500550b0c0c57d2d307961a6b8"
+  },
+  {
+    "path": "app/(protected)/criativos/PedirRevisao.tsx",
+    "sha256": "d550222a22db63604cc3e490f076c82ed2e4e9bcaa1877e4ef02871da024b121"
+  },
+  {
+    "path": "app/(protected)/criativos/PedirRevisao.module.css",
+    "sha256": "0ee3357e4570cf386c9f7621311972ee8de5e1a4101d0dfb53b2e8a171aebcdb"
+  },
+  {
+    "path": "app/(protected)/criativos/PedidoDeImagem.tsx",
+    "sha256": "eae7b5137d5234127afec83fd7f2c4a69967410d58722fbfd986e0b02c2dd73f"
+  },
+  {
+    "path": "app/(protected)/revisar-perfil/[proposta]/page.tsx",
+    "sha256": "5e39e6746258e8a6dc2ca81daf125f06c23ecd1088f19a07c25338b1bd345edb"
+  },
+  {
+    "path": "app/(protected)/revisar-perfil/[proposta]/actions.ts",
+    "sha256": "45a8d1ba1c03e90e64dc19a090fc255ca0ed67f58d170519b185d6c7ecabb38f"
+  },
+  {
+    "path": "app/(protected)/criativos/imagem-gerada/[requestId]/route.ts",
+    "sha256": "9100e09b801bcea4836b8ff13fd2da7a71af9086c0c42a90199f7dfaa220a613"
+  },
+  {
+    "path": "app/(protected)/pedidos/acesso-contratado/page.tsx",
+    "sha256": "76b907e0ab7e1fa6ae8440411b84531ee26fc2d2bc2833de93364116f1832a15"
+  },
+  {
+    "path": "app/(protected)/pedidos/acesso-contratado/Formulario.tsx",
+    "sha256": "f6637b24ab25713d4ed1a33a43a5b3b50a5a2df6d8ef50d8d6a67f474088971c"
+  },
+  {
+    "path": "app/(protected)/pedidos/acesso-contratado/actions.ts",
+    "sha256": "1d23d7b75d36fb1c3550df058fa8583416fe6a74232ae57480e862d28673ec12"
+  },
+  {
+    "path": "app/(protected)/pedidos/acesso-contratado/acesso.module.css",
+    "sha256": "2d7fb167cb5956832fba13b2f65b12f380ce9523efa8757ae433fd59e71c5ec7"
+  },
+  {
+    "path": "package.json",
+    "sha256": "dfd86da41acecea5250fe1eaf511351a99adb944d9430f8b13ff3fd4bc85ba87"
+  },
+  {
+    "path": "pnpm-lock.yaml",
+    "sha256": "fdf8f95b722ddf3cb280b0a4ea610b8ce1c4d5dce3efaca6af6bc0d89ed8d836"
+  },
+  {
+    "path": "tsconfig.json",
+    "sha256": "f52837dbcfd550d53681b507f3f2a7dfe1e4ae7d43197242eecee86f86d66751"
+  }
+]

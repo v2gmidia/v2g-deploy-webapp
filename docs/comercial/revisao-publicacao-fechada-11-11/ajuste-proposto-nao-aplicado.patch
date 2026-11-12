@@ -1,0 +1,16 @@
+*** Begin Patch
+*** Add File: lib/meta/oauth-state.ts
++/** Nome compartilhado do cookie de state; não deve ser exportado por route.ts. */
++export const COOKIE_STATE = "meta_oauth_state";
+*** Update File: app/auth/meta/iniciar/route.ts
+@@
+ import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
++import { COOKIE_STATE } from "@/lib/meta/oauth-state";
+@@
+-export const COOKIE_STATE = "meta_oauth_state";
+ const VALIDADE_SEGUNDOS = 600;
+*** Update File: app/auth/meta/callback/route.ts
+@@
+-import { COOKIE_STATE } from "../iniciar/route";
++import { COOKIE_STATE } from "@/lib/meta/oauth-state";
+*** End Patch

@@ -1,0 +1,29 @@
+{
+  "source": "C:/Users/victo/v2g-deploy/webapp",
+  "work": "C:\\Users\\victo\\AppData\\Local\\Temp\\v2g-commercial-build-NxSZog",
+  "envFilesCopied": false,
+  "credentialsInherited": false,
+  "inheritedVariableNames": [
+    "PATH",
+    "SystemRoot",
+    "WINDIR",
+    "COMSPEC",
+    "TEMP",
+    "TMP",
+    "USERPROFILE",
+    "LOCALAPPDATA",
+    "APPDATA",
+    "PATHEXT",
+    "NODE_ENV",
+    "NEXT_TELEMETRY_DISABLED",
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SITE_URL"
+  ],
+  "commercialFlags": "absent/off",
+  "fingerprints": {
+    "lib/contratacao/evento-sem-pedido.ts": "2005bec72591a7de7184c2a68205bc71b350771d94afc77b63e49e70768e0979",
+    "lib/contratacao/webhook-pagamento.ts": "008f870c01c0345355b9f2be2e2c1da39a0ccbf5a3a9bd65a1fd416e01fb3fb0",
+    "package.json": "0787a485ed3048a3c1c9088b76e7581b3d265870dfea884ba4391e9c3889d2c7"
+  }
+}

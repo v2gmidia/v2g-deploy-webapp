@@ -1,0 +1,190 @@
+{
+  "validation": "pass",
+  "checks": 6,
+  "details": [
+    "manifesto completo e fechado; nenhum segredo ou ensaio autorizado",
+    "ativacao acidental invalida o preparo",
+    "preparo permanece OFF mesmo com segredos ficticios completos",
+    "fechar vendas preserva processamento separado quando futuramente autorizado",
+    "inventario e SQL limitados a catalogos em somente leitura",
+    "endpoint, cadastro e recuperacao apontam para portas reais"
+  ],
+  "productionReadiness": "blocked",
+  "notApplied": true,
+  "externalEffects": 0,
+  "observedAt": "2026-11-11T13:49:56.742946+00:00",
+  "missingTables": [
+    "checkout_3ds_context",
+    "checkout_security_attempts",
+    "commercial_payment_email_outbox",
+    "commercial_payment_events"
+  ],
+  "missingFunctions": [
+    "aprovar_pagamento_api_self_service(uuid,text,text,text,text,text,integer,date)",
+    "checkout_producao_schema_v1()",
+    "consumir_limite_checkout(text,text,text)",
+    "documento_contratante_valido(text)",
+    "evento_asaas_impede_confirmacao(text)",
+    "registrar_evento_financeiro_asaas(uuid,text,text,text,text,text,integer,date)",
+    "registrar_evento_inicial_3ds(uuid,text,text,text,text,integer,date)",
+    "registrar_pedido_self_service(text,text,text,text,text,text,integer,text,text)",
+    "reservar_assinatura_apos_3ds(uuid,date)"
+  ],
+  "missingColumns": [
+    {
+      "table": "commercial_orders",
+      "column": "buyer_name"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "buyer_whatsapp"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "contractor_document_type"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "provider_checkout_id"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "provider_checkout_url"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "checkout_creation_started_at"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "payment_attempt_count"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "payment_creation_started_at"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "provider_subscription_id"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "provider_first_due_date"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "provider_card_flow"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "subscription_creation_started_at"
+    },
+    {
+      "table": "commercial_orders",
+      "column": "provider_subscription_first_due_date"
+    },
+    {
+      "table": "commercial_payment_events",
+      "column": "provider_event_id"
+    },
+    {
+      "table": "commercial_payment_events",
+      "column": "order_id"
+    },
+    {
+      "table": "commercial_payment_events",
+      "column": "provider_charge_id"
+    },
+    {
+      "table": "commercial_payment_events",
+      "column": "provider_subscription_id"
+    },
+    {
+      "table": "commercial_payment_events",
+      "column": "event_type"
+    },
+    {
+      "table": "commercial_payment_events",
+      "column": "amount_cents"
+    },
+    {
+      "table": "commercial_payment_events",
+      "column": "due_date"
+    },
+    {
+      "table": "commercial_payment_email_outbox",
+      "column": "id"
+    },
+    {
+      "table": "commercial_payment_email_outbox",
+      "column": "order_id"
+    },
+    {
+      "table": "commercial_payment_email_outbox",
+      "column": "provider_charge_id"
+    },
+    {
+      "table": "commercial_payment_email_outbox",
+      "column": "payload"
+    },
+    {
+      "table": "commercial_payment_email_outbox",
+      "column": "status"
+    },
+    {
+      "table": "commercial_payment_email_outbox",
+      "column": "provider_message_id"
+    },
+    {
+      "table": "commercial_payment_email_outbox",
+      "column": "updated_at"
+    },
+    {
+      "table": "checkout_3ds_context",
+      "column": "order_id"
+    },
+    {
+      "table": "checkout_3ds_context",
+      "column": "payer_ip"
+    },
+    {
+      "table": "checkout_3ds_context",
+      "column": "expires_at"
+    }
+  ],
+  "absentConfigNames": [
+    "ASAAS_ENVIRONMENT",
+    "V2G_PRODUCTION_CHECKOUT_URL",
+    "V2G_TURNSTILE_ALLOWED_HOSTNAMES",
+    "V2G_PRODUCTION_CHECKOUT_ENABLED",
+    "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+    "V2G_PRODUCTION_URL_CONFIRMED",
+    "V2G_PRODUCTION_3DS_CONFIRMED",
+    "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+    "V2G_CHECKOUT_API_ENABLED",
+    "V2G_CHECKOUT_SECURITY_ENABLED",
+    "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+    "V2G_CHECKOUT_3DS_ENABLED",
+    "V2G_CHECKOUT_ENABLED",
+    "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+    "V2G_ASSISTED_ASAAS_ENABLED",
+    "V2G_PAYMENT_EMAIL_ENABLED",
+    "ASAAS_PRODUCTION_API_KEY",
+    "ASAAS_PRODUCTION_WEBHOOK_TOKEN",
+    "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+    "TURNSTILE_SECRET_KEY",
+    "V2G_CHECKOUT_SECURITY_HASH_SECRET",
+    "TURNSTILE_SITE_KEY",
+    "V2G_PRODUCTION_PAYMENT_EMAIL_FROM"
+  ],
+  "references": [
+    {
+      "name": "ambiente-producao.ts",
+      "sha256": "82e23eee5f42d9d46da1a15ae659dc1d699222a1595c7ee82ba41bd53635e8ab"
+    },
+    {
+      "name": "readiness.sql",
+      "sha256": "9086d8a1570b345ca508aef0a2c59fea33ea8385da8deb714e6038689228ff09"
+    }
+  ]
+}

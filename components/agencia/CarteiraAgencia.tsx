@@ -48,7 +48,7 @@ export function CarteiraAgencia({ agencia, clientes, retorno, ativoId, abrirClie
       </tr></thead><tbody>{visiveis.map(({ contexto: c, resumo: r }) => <tr key={c.businessId}>
         <td><AbrirCliente contexto={c} ativoId={ativoId} retorno={filtro} acao={abrirCliente} className={styles.nomeCliente}><b>{c.anunciante}</b></AbrirCliente><small>{c.ramo ?? "Atividade não informada"}</small></td>
         <td><span className={`${styles.status} ${r.temPendencia === false ? styles.positivo : ""}`}>{r.situacao}</span></td><td>{r.proximo}</td><td>{c.gestor ?? "A conferir"}</td>
-        <td><AbrirCliente contexto={c} ativoId={ativoId} retorno={filtro} acao={abrirCliente} className={styles.link}>Abrir cliente<Seta /></AbrirCliente></td>
+        <td><AbrirCliente contexto={c} ativoId={ativoId} retorno={filtro} acao={abrirCliente} className={styles.link}>Abrir aplicativo<Seta /></AbrirCliente></td>
       </tr>)}</tbody></table> : <div className={styles.vazio}><h3>Nenhum cliente neste filtro</h3><p>Tente outro nome ou veja todos os clientes da carteira.</p>
         <button className={styles.secundario} onClick={() => { setBusca(""); setPendentes(false); setPagina(1); campoBusca.current?.focus(); }}>Limpar filtros</button></div>}
       <div className={styles.paginacao}><p className={styles.nota} role="status">{filtrados.length ? `${(atual - 1) * 10 + 1}–${Math.min(atual * 10, filtrados.length)} de ${filtrados.length}` : "Nenhum cliente encontrado"}</p>

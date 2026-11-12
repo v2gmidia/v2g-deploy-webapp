@@ -1,0 +1,159 @@
+{
+  "date": "2026-11-11",
+  "status": "configuration-complete-off",
+  "project": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+  "scope": "approved production connections only; private credential entry by Victor",
+  "matrix": {
+    "verifiedAt": "2026-11-11T20:37:31.399Z",
+    "expectedCount": 35,
+    "actualCount": 35,
+    "initial12MetadataPreserved": true,
+    "noUnexpectedNames": true,
+    "all17PublicConfigs": true,
+    "all6CredentialsSecretProduction": true,
+    "hiddenProductionEnvCount": 0,
+    "secretValuesRead": false
+  },
+  "credentialMetadataOnly": [
+    {
+      "id": "waHfng1wWPOj7EV8",
+      "key": "V2G_CHECKOUT_SECURITY_HASH_SECRET",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "customEnvironmentIds": [],
+      "updatedAt": 1794429140672
+    },
+    {
+      "id": "IGoWujtEvNCADQV6",
+      "key": "ASAAS_PRODUCTION_WEBHOOK_TOKEN",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "customEnvironmentIds": [],
+      "updatedAt": 1794425903222
+    },
+    {
+      "id": "tbD7s5hM81JNjxRA",
+      "key": "ASAAS_PRODUCTION_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "customEnvironmentIds": [],
+      "updatedAt": 1794424019691
+    },
+    {
+      "id": "f0ymAzKBTfN5HMNs",
+      "key": "TURNSTILE_SITE_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "customEnvironmentIds": [],
+      "updatedAt": 1794421900390
+    },
+    {
+      "id": "2X546IFyd4S8mZMw",
+      "key": "TURNSTILE_SECRET_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "customEnvironmentIds": [],
+      "updatedAt": 1794422320074
+    },
+    {
+      "id": "aa53nH1ei2sXzMfX",
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "customEnvironmentIds": [],
+      "updatedAt": 1794420743846
+    }
+  ],
+  "activeDeployment": {
+    "id": "dpl_A2GgHjfNbRGGcNwNXwdS412xC7aW",
+    "readyState": "READY",
+    "target": "production",
+    "createdAt": 1794429161411,
+    "sha": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+    "ref": "main"
+  },
+  "http": [
+    {
+      "rota": "/entrar",
+      "http": 200,
+      "notFoundTransmitido": false,
+      "formularios": 1
+    },
+    {
+      "rota": "/contratar",
+      "http": 200,
+      "notFoundTransmitido": true,
+      "formularios": 0
+    }
+  ],
+  "asaasWebhook": {
+    "name": "V2G WebApp Produção - pagamentos",
+    "expectedUrl": true,
+    "enabled": false,
+    "queueActive": false,
+    "events": [
+      "PAYMENT_AUTHORIZED",
+      "PAYMENT_AWAITING_RISK_ANALYSIS",
+      "PAYMENT_APPROVED_BY_RISK_ANALYSIS",
+      "PAYMENT_REPROVED_BY_RISK_ANALYSIS",
+      "PAYMENT_CREATED",
+      "PAYMENT_UPDATED",
+      "PAYMENT_CONFIRMED",
+      "PAYMENT_RECEIVED",
+      "PAYMENT_OVERDUE",
+      "PAYMENT_REFUNDED",
+      "PAYMENT_REFUND_IN_PROGRESS",
+      "PAYMENT_CHARGEBACK_REQUESTED",
+      "PAYMENT_CHARGEBACK_DISPUTE",
+      "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
+      "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+      "PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED",
+      "PAYMENT_PARTIALLY_REFUNDED"
+    ],
+    "tokenRead": false
+  },
+  "localGenerator": {
+    "userClickedAndUiReportedCopied": true,
+    "valueNeverRendered": true,
+    "valueNeverSentToLocalServer": true,
+    "helperTabClosed": true,
+    "serverPidVerifiedBeforeStop": true,
+    "serverStopped": true,
+    "listeningPortsAfterStop": 0,
+    "serverSessionEnded": true
+  },
+  "financial": {
+    "salesOpen": false,
+    "paymentProcessingEnabled": false,
+    "realCharge": false,
+    "emailSent": false,
+    "realThreeDsTrial": false,
+    "authBuyerAccessTrial": false
+  },
+  "limitations": [
+    "Private values were not read or independently compared",
+    "Metadata is not provider handshake proof",
+    "Production origin/runtime automatic variables and payment flow still require the closed end-to-end trial",
+    "Code concern for events without local order remains before enabling webhook"
+  ],
+  "next": "Review and locally test events without an order, then separately authorize closed activation and a nominal controlled payment -> received email -> correct business access; public sales only after acceptance",
+  "agentGitOrDeployActions": false
+}

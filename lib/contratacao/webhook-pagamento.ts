@@ -10,6 +10,7 @@ import { origemAsaasNoServidor } from "@/lib/contratacao/origem-asaas-servidor";
 import { asaasSandbox } from "@/lib/contratacao/asaas-sandbox";
 import { confirmacaoCanonicaConfere, replayEstornadoJaRegistrado } from "@/lib/contratacao/confirmacao-canonica";
 import { reconhecerEnsaioEncerrado } from "@/lib/contratacao/ensaio-encerrado";
+import { eventoExternoSemPedidoConfirmado } from "./evento-sem-pedido";
 import { processamentoProducaoSeguro, requisicaoProducaoSegura } from "./ambiente-producao";
 import { asaasProducao } from "./asaas-producao";
 import { schemaCompraPronto } from "./provedor-compra";
@@ -58,6 +59,8 @@ export async function processarWebhookPagamento(req: NextRequest, ambiente: Ambi
   if (!pedido) {
     if (!producao && schema3ds && await reconhecerEnsaioEncerrado(admin, financeiro, payload))
       return NextResponse.json({ ok: true, historico: true, ignorado: true });
+    if (await eventoExternoSemPedidoConfirmado(admin, financeiro, payload, executarAsaas))
+      return NextResponse.json({ ok: true, ignorado: true, externo: true });
     return NextResponse.json({ erro: "vinculo_pendente" }, { status: 503 });
   }
   if (!await origemAsaasNoServidor(admin, pedido, assistidoAtivo))

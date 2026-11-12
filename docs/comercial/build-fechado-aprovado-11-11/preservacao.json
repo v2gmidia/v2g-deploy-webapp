@@ -1,0 +1,11 @@
+{
+  "arquivos_preexistentes_comparados": 805,
+  "alterados": [
+    "app/auth/meta/iniciar/route.ts",
+    "app/auth/meta/callback/route.ts",
+    "lib/contratacao/webhook-pagamento.ts",
+    "package.json"
+  ],
+  "novo_modulo_cookie": "lib/meta/oauth-state.ts",
+  "modulo_cookie_sha256": "b7cb02cba81cf0c1860b8fedf663470e10ecb5da19c3d6c61f9b3ee9504d2cdc"
+}

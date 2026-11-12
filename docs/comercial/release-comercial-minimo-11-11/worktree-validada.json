@@ -1,0 +1,39 @@
+{
+  "branch": "codex/comercial-webhook-off",
+  "worktree": "C:/Users/victo/v2g-deploy/webapp-comercial-off",
+  "base": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+  "mesma_fonte_testada": true,
+  "comparacoes": [
+    {
+      "path": "lib/contratacao/evento-sem-pedido.ts",
+      "identico_apos_normalizar_quebras_de_linha": true
+    },
+    {
+      "path": "lib/contratacao/webhook-pagamento.ts",
+      "identico_apos_normalizar_quebras_de_linha": true
+    },
+    {
+      "path": "lib/meta/oauth-state.ts",
+      "identico_apos_normalizar_quebras_de_linha": true
+    },
+    {
+      "path": "app/auth/meta/iniciar/route.ts",
+      "identico_apos_normalizar_quebras_de_linha": true
+    },
+    {
+      "path": "app/auth/meta/callback/route.ts",
+      "identico_apos_normalizar_quebras_de_linha": true
+    },
+    {
+      "path": "scripts/conferir-webhook-sem-pedido.mjs",
+      "identico_apos_normalizar_quebras_de_linha": true
+    },
+    {
+      "path": "package.json",
+      "identico_apos_normalizar_quebras_de_linha": true
+    }
+  ],
+  "commit_realizado": false,
+  "push_realizado": false,
+  "publicacao_realizada": false
+}

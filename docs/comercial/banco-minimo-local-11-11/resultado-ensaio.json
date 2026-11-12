@@ -1,0 +1,103 @@
+{
+  "localOnly": true,
+  "notApplied": true,
+  "remoteWrites": 0,
+  "realPayments": 0,
+  "engineModule": "C:/Users/victo/.codex/tmp/v2g-pg17-local-20261111/node_modules/@electric-sql/pglite/dist/index.js",
+  "engineVersion": "PostgreSQL 17.5 on aarch64-unknown-linux-gnu, compiled by emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 3.1.74 (1092ec30a3fb1d46b1782ff1b4db5094d3d06ae5), 32-bit",
+  "engineMajor": 17,
+  "productionEngineMajor": 17,
+  "nativePostgres17Tested": false,
+  "pass": 22,
+  "fail": 0,
+  "results": [
+    {
+      "name": "clone corresponde aos quatro objetos comerciais e quatro funcoes observados",
+      "pass": true
+    },
+    {
+      "name": "preflight de somente leitura reconhece o clone antes da aplicacao",
+      "pass": true
+    },
+    {
+      "name": "aplicacao real do SQL gerado preserva integralmente as colunas anteriores e sentinelas",
+      "pass": true
+    },
+    {
+      "name": "readiness estrutural passa sob service_role, sem abrir funcoes ao publico",
+      "pass": true
+    },
+    {
+      "name": "reaplicacao e no-op exato de schema e dados",
+      "pass": true
+    },
+    {
+      "name": "retorno antes de uso restaura base e dados; segunda repeticao e segura",
+      "pass": true
+    },
+    {
+      "name": "cada uma das 23 permissoes DML e exigida individualmente",
+      "pass": true
+    },
+    {
+      "name": "36 variantes de grant por coluna fecham readiness, inclusive herdadas de PUBLIC",
+      "pass": true
+    },
+    {
+      "name": "RLS separa pedidos e negocios A/B; tabelas financeiras negam leitura direta",
+      "pass": true
+    },
+    {
+      "name": "legado com CNPJ antigo permanece atualizavel; novos documentos invalidos sao rejeitados",
+      "pass": true
+    },
+    {
+      "name": "referencia repetida preserva pedido; referencia nova nunca funde por email ou CPF",
+      "pass": true
+    },
+    {
+      "name": "semestral e anual recalculam valor; mensal Pix e valor adulterado sao recusados",
+      "pass": true
+    },
+    {
+      "name": "aprovacao concilia IDs/valor; replay divergente nao altera historico",
+      "pass": true
+    },
+    {
+      "name": "3DS: autorizacao nao aprova; RECEIVED aprova e reserva recorrencia uma vez; risco bloqueia",
+      "pass": true
+    },
+    {
+      "name": "outbox e limites de seguranca mantem unicidade e bloqueio",
+      "pass": true
+    },
+    {
+      "name": "registro de conta exige pedido aprovado e nao reutiliza unidade de outro negocio",
+      "pass": true
+    },
+    {
+      "name": "retorno recusa schema em uso e preserva todos os registros",
+      "pass": true
+    },
+    {
+      "name": "drift anterior e objeto parcial impedem aplicacao inteira",
+      "pass": true
+    },
+    {
+      "name": "default ACL permissiva nao abre objetos novos",
+      "pass": true
+    },
+    {
+      "name": "falha na conferencia posterior reverte atomicamente toda a aplicacao",
+      "pass": true
+    },
+    {
+      "name": "retorno recusa drift posterior sem apagar schema ou dados",
+      "pass": true
+    },
+    {
+      "name": "verificacao posterior le catalogos sem aprovar falsamente objetos produtivos ausentes do clone",
+      "pass": true
+    }
+  ]
+}

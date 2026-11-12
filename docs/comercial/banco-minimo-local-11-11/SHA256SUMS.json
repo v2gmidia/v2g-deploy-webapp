@@ -1,0 +1,39 @@
+{
+  "package": {
+    "README.md": "016b79103b2372f114b972ba0e8ea1a3b3dec2029bd0db0b8fb3155333ff1351",
+    "aplicar-local-revisavel.sql": "80742a6945b478ec434ce656f3f366a05b558efb527cc3ca957a91b26bd70c15",
+    "base-catalogo.json": "0517f72c340953895b87ca150c126b338bce04f0e3f0db9ec562f28ec58e45b3",
+    "capturar-metadados.sql": "6c023e8a50899f771b9c52527097dc65d72b0f5199b75ba024640f47dbf92d1b",
+    "estado-pos-esperado.json": "8721582b524a559875cc8bdae76cb0f9b8691e956b6110c371dd4d51e1285225",
+    "fontes.json": "b5a9c83f95b102e7ee614d380769e9f7d262293b3324d1759d3e3c00d6c3fcc6",
+    "modelo.mjs": "3921ccf429868814517792f2b1f5c8b9ec7c23a5a56c32165a6c1c84af7bba56",
+    "montar-local.mjs": "7c2f14ec78b9fd6672167c2548b94b883c95bfd748e76d052281b0c610599806",
+    "resultado-ensaio.json": "fc799bbbd220822033e75f3fe74c1e718c93da979aff5f2b5a453ba02f50f5f9",
+    "resultado-preflight-producao.json": "b170da7310ecd80792c645518e17db4d245f048f74164a41bd7eaef3ea63c180",
+    "retornar-se-nao-usado.sql": "08c50d2c1120695ef661c2f2e3d8390e6327b692721d8a0f55f28180cd0997c2",
+    "selar.mjs": "3330c38679d7d063b1ef7ae1b98e8b276c7869d126cd34c964e63bfc078791f4",
+    "testar-local.mjs": "591b6a8196e6c9afe107bf63115f4cdb1721bfa74f53af3ff32ed677d6d76e74",
+    "verificar-pos.sql": "530d9adf649b654c728745289fa80db2f9876a8d7eb5fc3cf44f05590b0ba8e1",
+    "verificar-pre.sql": "bc812705cacafe1ef11e23d5701d4ea7d223aea044839a009a15ed62098aea5f"
+  },
+  "sources": {
+    "0026_contratacao_multiconta.sql": "b878d517958e564c653023fe5aee805d1bc317ac1b3257d442c805681eabd707",
+    "0029_pix_assistido.sql": "f8e03e67b27c10bd84d59fba0272947dffa940e51f574d8f747feb667a81166f",
+    "0034_checkout_self_service.sql": "5f7bd38dc886a48aa912520f8f87bf45ba6c5d7e31d2a47df67e99dacdd0926b",
+    "20261008223000_checkout_transparente_sandbox.sql": "9fa46a4cda54c6232974f8c87dfaa7dbaeab74d091faf346f6d1160a3cb1a9cd",
+    "20261009015000_checkout_cartao_retentativa_qa.sql": "17e5b4fc8753f6db8dcedf21ac741c291c2637b87b1f3893ebe92f124749e62f",
+    "20261009042000_gestor_responsaveis_tarefas.sql": "a41ac529c103f6b9dd493bd993e92866af7cc4199bbdba95b8df4108b7ce5ab4",
+    "20261011140000_eventos_financeiros_sandbox.sql": "908db65cfe553c2812176a45dced0629f2f3fc66f324a6c5d272263007916c36",
+    "20261013031434_qa_registrar_falha_desafio_3ds.sql": "c48ea098d7e141bf8a5e6ecfbadcb0a56e3d31265f03ed4f7a519b227980381c",
+    "20261014030000_onboarding_reserva_unica.sql": "fc70bc851efc202a00c050d67a867452f4f7fe86164586eeb9587c00cb8562d5",
+    "20261018130000_ligar_lead_lp_pedido.sql": "f1796896af002543521f21d9fefd11a875f73c47e74adf1e0dd7dfab1e729666",
+    "20261018133000_checkout_security_controls.sql": "eb99a286c508ee63346010f26480644c72931dd69bc9cd194085844773ed10c0",
+    "20261020021942_qa_cartao_mensal_3ds.sql": "19ebcea8df9b831edd83aef2de18f15f88398abb835400cf0d7e89b8c9260fd7",
+    "20261021033313_commercial_payment_email_outbox.sql": "c1c58b6ab36696149355e8226b74201dcb3511424e8d5a5e373949a263b3dce5",
+    "20261021042254_assisted_asaas_orders.sql": "c1b2a6590740337a2373405ac73fc3c9c16ae13670a20e5e6a20e4b8bec60c93",
+    "20261022152629_asaas_estados_processamento.sql": "dc63eedcb41e478cd84ccd437c6ebb59230f26bd4e3892752317b9d702b57b90",
+    "20261022200400_manual_contract_evidence.sql": "1e10bd01b88f16d867521b8831ba7dfe5285117e586b08acf7862dde05fee86a",
+    "20261025215302_cpf_cnpj_contratante_v0.sql": "53a4573b24413efbcd41e62292de135cd8d70a03f9b5e3138652882dedcd1b4b",
+    "20261105194728_public_checkout_production_readiness.sql": "9086d8a1570b345ca508aef0a2c59fea33ea8385da8deb714e6038689228ff09"
+  }
+}

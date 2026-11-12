@@ -1,0 +1,10 @@
+{
+  "fontes_preexistentes_alteradas": [
+    "lib/contratacao/webhook-pagamento.ts",
+    "package.json"
+  ],
+  "env_copiado": false,
+  "credenciais_no_build": false,
+  "build": "falhou em export de COOKIE_STATE",
+  "runtime": "nao executado por falha do build"
+}

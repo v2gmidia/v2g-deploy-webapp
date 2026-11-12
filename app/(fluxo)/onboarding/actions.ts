@@ -11,6 +11,7 @@ import { conferirCadastroOperacionalSeCompleto } from "@/lib/pipeline/conferir-c
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { validarInstagram, validarSite } from "@/lib/onboarding/enderecos";
 import { cidadeDeclaradaValida } from "@/lib/onboarding/localizacao";
+import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
 
 /**
  * Uma resposta como fica gravada em `businesses.onboarding`.
@@ -81,6 +82,14 @@ async function obterOuCriarBusiness(): Promise<
   } = await supabase.auth.getUser();
 
   if (!user) return { erro: "Sua sessão expirou. Entre de novo." };
+
+  if (pilotoQaHabilitado()) {
+    const { carregarAgenciaDaSessao } = await import("@/lib/agencia/da-sessao");
+    const agencia = await carregarAgenciaDaSessao();
+    if (agencia.status === "indisponivel") return { erro: "Não foi possível conferir sua carteira agora." };
+    if (agencia.status === "agencia" && !agencia.contexto)
+      return { erro: "Abra um cliente da carteira para editar o cadastro dele." };
+  }
 
   const ativo = await negocioAtivoDaSessao();
   if (ativo.status === "sem_sessao") return { erro: "Sua sessão expirou. Entre de novo." };

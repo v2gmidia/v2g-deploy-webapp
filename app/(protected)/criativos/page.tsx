@@ -21,23 +21,23 @@ export default async function CriativosPage({ searchParams }: { searchParams: Pr
   const agencia = pilotoQaHabilitado()
     ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : { status: "desligado" as const };
   const contextoAgencia = agencia.status === "agencia" ? agencia.contexto : null;
-  const visao = agencia.status === "desligado" ? "direto" : selecionarVisaoAgencia(contextoAgencia, busca);
+  const visao = agencia.status === "desligado" ? "direto" : selecionarVisaoAgencia(contextoAgencia, busca, agencia.status === "agencia");
   if (agencia.status === "indisponivel" || visao === "invalido"
     || contextoAgencia && visao === "cliente" && busca.peca !== undefined && typeof busca.peca !== "string") {
     const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
     return <ClienteIndisponivel />;
   }
-  if (visao === "carteira" && contextoAgencia && agencia.status === "agencia") {
+  if (visao === "carteira" && agencia.status === "agencia") {
     const { CriativosAgencia } = await import("@/components/agencia/CriativosAgencia");
     const { abrirClienteAction } = await import("../agencia/actions");
-    const clientes = agencia.clientes ?? [contextoAgencia];
+    const clientes = agencia.clientes;
     const habilitada = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true";
     const galerias = await Promise.all(clientes.map(async cliente => ({ cliente,
       galeria: await carregarGaleriaDoNegocio(cliente.businessId, { revisaoHabilitada: habilitada,
-        geracaoHabilitada: cliente.businessId === contextoAgencia.businessId && process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && process.env.V2G_CREATIVE_BACKEND_ENABLED === "true",
+        geracaoHabilitada: cliente.businessId === agencia.businessIdAtivo && process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && process.env.V2G_CREATIVE_BACKEND_ENABLED === "true",
         contextoAgencia: cliente, retorno: retornoDaCarteira(busca) }) })));
-    return <CriativosAgencia key={agencia.agencyBusinessId ?? contextoAgencia.businessId}
-      agencia={contextoAgencia.agencia} clientes={clientes} ativoId={contextoAgencia.businessId} abrirCliente={abrirClienteAction}
+    return <CriativosAgencia key={agencia.agencyBusinessId}
+      agencia={agencia.agencia} clientes={clientes} ativoId={agencia.businessIdAtivo} abrirCliente={abrirClienteAction}
       itens={galerias.flatMap(({ cliente, galeria }) => galeria.itens.map(peca => ({ cliente, peca })))}
       falhou={galerias.some(({ galeria: g }) => g.falhaDaGaleria || g.revisaoInconsistente || g.filaTruncada || g.caminhoLegadoInconsistente || g.falhaPublicacoes)}
       retorno={retornoDaCarteira(busca)} envioDisponivel={habilitada} />;

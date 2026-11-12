@@ -8,6 +8,9 @@ import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
 import { tituloDaAba } from "@/lib/titulos";
 import { Marca } from "@/components/ui/Marca";
 import { estadoDaVoz } from "@/lib/onboarding/voz";
+import { redirect } from "next/navigation";
+import { entradaDoOnboardingDaAgencia } from "@/lib/agencia/entrada";
+import type { BuscaAgencia } from "@/lib/agencia/contexto";
 import "./onboarding-editorial.css";
 
 export const metadata = tituloDaAba("/onboarding");
@@ -29,7 +32,16 @@ export const metadata = tituloDaAba("/onboarding");
  * Server Component: o estado inicial vem do banco na primeira
  * renderização, sem piscar a tela vazia antes de carregar.
  */
-export default async function OnboardingPage() {
+export default async function OnboardingPage({ searchParams = Promise.resolve({}) }: {
+  searchParams?: Promise<BuscaAgencia>;
+}) {
+  const entrada = await entradaDoOnboardingDaAgencia(await searchParams);
+  if (entrada === "carteira") redirect("/inicio");
+  if (entrada === "indisponivel") return <section className="auth-card">
+    <h1 className="auth-h">Não conseguimos conferir seu cadastro.</h1>
+    <p className="form-warning" role="alert">Volte ao Início e tente novamente. Seus dados foram preservados.</p>
+    <a className="cta" href="/inicio">Voltar ao Início</a>
+  </section>;
   const estado = await carregarEstadoAction();
 
   if ("erro" in estado) {

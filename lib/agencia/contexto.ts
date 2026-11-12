@@ -49,8 +49,8 @@ export function contextoAgenciaDoCadastro(linha: {
 }
 
 /** URL seleciona apresentação; só o vínculo autenticado pode autorizar. */
-export function selecionarVisaoAgencia(contexto: ContextoAgencia | null, busca: BuscaAgencia) {
-  if (busca.cliente === undefined) return contexto ? "carteira" as const : "direto" as const;
+export function selecionarVisaoAgencia(contexto: ContextoAgencia | null, busca: BuscaAgencia, agencia = false) {
+  if (busca.cliente === undefined) return contexto || agencia ? "carteira" as const : "direto" as const;
   return contexto && typeof busca.cliente === "string" && busca.cliente === contexto.businessId
     && UUID_AGENCIA.test(busca.cliente) ? "cliente" as const : "invalido" as const;
 }

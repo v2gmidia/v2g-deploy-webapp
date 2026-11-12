@@ -1,0 +1,212 @@
+{
+  "date": "2026-11-11",
+  "status": "applied-verified-sales-payments-off",
+  "projectId": "ushccxpoxjikzqnwhgfd",
+  "migration": {
+    "before": 42,
+    "after": 43,
+    "added": [
+      {
+        "version": "20261111150656",
+        "name": "commercial_minimum_production_20261111"
+      }
+    ],
+    "missing": []
+  },
+  "existingDataChecks": [
+    {
+      "table": "businesses",
+      "before": 6,
+      "after": 6,
+      "originalDataIdentical": true
+    },
+    {
+      "table": "commercial_events",
+      "before": 0,
+      "after": 0,
+      "originalDataIdentical": true
+    },
+    {
+      "table": "commercial_orders",
+      "before": 0,
+      "after": 0,
+      "originalDataIdentical": true
+    },
+    {
+      "table": "commercial_order_units",
+      "before": 0,
+      "after": 0,
+      "originalDataIdentical": true
+    }
+  ],
+  "dataFingerprints": {
+    "checked": 40,
+    "changed": [],
+    "secretColumnsExcluded": true
+  },
+  "newTableCounts": {
+    "checkout_3ds_context": "0",
+    "commercial_payment_events": "0",
+    "checkout_security_attempts": "0",
+    "commercial_payment_email_outbox": "0"
+  },
+  "schemaChecks": [
+    {
+      "verificacao": {
+        "read_only": "on",
+        "default_acl_preservada": true,
+        "estado_pos_corresponde": true,
+        "outros_objetos_preservados": true,
+        "funcoes_anteriores_preservadas": true
+      }
+    }
+  ],
+  "isolation": {
+    "mode": "native-role-privileges-and-policies-read-only-no-customer-impersonation",
+    "readiness": 1,
+    "privateTables": [
+      {
+        "rls": true,
+        "name": "checkout_3ds_context",
+        "public_roles_blocked": true,
+        "public_column_grants_blocked": true
+      },
+      {
+        "rls": true,
+        "name": "checkout_security_attempts",
+        "public_roles_blocked": true,
+        "public_column_grants_blocked": true
+      },
+      {
+        "rls": true,
+        "name": "commercial_payment_email_outbox",
+        "public_roles_blocked": true,
+        "public_column_grants_blocked": true
+      },
+      {
+        "rls": true,
+        "name": "commercial_payment_events",
+        "public_roles_blocked": true,
+        "public_column_grants_blocked": true
+      }
+    ],
+    "newFunctions": [
+      {
+        "name": "aprovar_pagamento_api_self_service",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "checkout_producao_schema_v1",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "conferir_documento_contratante_gravado",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "consumir_limite_checkout",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "documento_contratante_valido",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "evento_asaas_impede_confirmacao",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "registrar_evento_financeiro_asaas",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "registrar_evento_inicial_3ds",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "registrar_pedido_self_service",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      },
+      {
+        "name": "reservar_assinatura_apos_3ds",
+        "security_invoker": true,
+        "service_can_execute": true,
+        "public_roles_blocked": true
+      }
+    ],
+    "realCommercialOrders": "0",
+    "customerPairLiveTest": false
+  },
+  "configurationUnchanged": true,
+  "deployment": {
+    "id": "dpl_7wSVHtkzLzmDsdqp4foZ27Gj5zir",
+    "readyState": "READY",
+    "target": "production",
+    "commit": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+    "branch": "main"
+  },
+  "securityAdvisorDelta": [
+    {
+      "name": "rls_enabled_no_policy",
+      "level": "INFO",
+      "before": 20,
+      "after": 24,
+      "added": [
+        "checkout_3ds_context",
+        "checkout_security_attempts",
+        "commercial_payment_email_outbox",
+        "commercial_payment_events"
+      ],
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy"
+    },
+    {
+      "name": "anon_security_definer_function_executable",
+      "level": "WARN",
+      "before": 3,
+      "after": 3,
+      "added": [],
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable"
+    },
+    {
+      "name": "authenticated_security_definer_function_executable",
+      "level": "WARN",
+      "before": 2,
+      "after": 2,
+      "added": [],
+      "remediation": "https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable"
+    },
+    {
+      "name": "auth_leaked_password_protection",
+      "level": "WARN",
+      "before": 1,
+      "after": 1,
+      "added": [],
+      "remediation": "https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection"
+    }
+  ],
+  "limitations": [
+    "Nao houve compra ou pagamento real",
+    "Nao havia pedidos comerciais em producao; nenhum comprador ou evento ficticio foi criado",
+    "Colunas secretas foram excluidas dos fingerprints; nenhum valor de credencial lido",
+    "Backup do escopo afetado, nao copia integral do cluster"
+  ],
+  "privateEvidenceDirectory": "C:/Users/victo/.codex/private-backups/v2g/comercial-producao/20261111T150243Z"
+}

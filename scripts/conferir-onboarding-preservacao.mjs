@@ -26,6 +26,7 @@ const mocks = {
   '@/lib/pipeline/disparar': 'export const dispararSeCompleto = async () => globalThis.__onboardingOffline.dispatch();',
   '@/lib/pipeline/conferir-cadastro-operacional': 'export const conferirCadastroOperacionalSeCompleto = async () => globalThis.__onboardingOffline.dispatch();',
   '@/lib/multiconta/ativo': 'export const negocioAtivoDaSessao = async () => globalThis.__onboardingOffline.activeBusiness();',
+  '@/lib/piloto-qa/acesso': 'export const pilotoQaHabilitado = () => false;',
 };
 const fetchBefore = globalThis.fetch;
 globalThis.fetch = () => { throw Error('Rede proibida neste teste offline'); };

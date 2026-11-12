@@ -1,0 +1,63 @@
+{
+  "referenceOnly": true,
+  "sourceMigrations": [
+    "0026_contratacao_multiconta.sql",
+    "0029_pix_assistido.sql",
+    "0034_checkout_self_service.sql",
+    "20261008223000_checkout_transparente_sandbox.sql",
+    "20261009015000_checkout_cartao_retentativa_qa.sql",
+    "20261009042000_gestor_responsaveis_tarefas.sql",
+    "20261011140000_eventos_financeiros_sandbox.sql",
+    "20261013031434_qa_registrar_falha_desafio_3ds.sql",
+    "20261014030000_onboarding_reserva_unica.sql",
+    "20261018130000_ligar_lead_lp_pedido.sql",
+    "20261018133000_checkout_security_controls.sql",
+    "20261020021942_qa_cartao_mensal_3ds.sql",
+    "20261021033313_commercial_payment_email_outbox.sql",
+    "20261021042254_assisted_asaas_orders.sql",
+    "20261022152629_asaas_estados_processamento.sql",
+    "20261022200400_manual_contract_evidence.sql",
+    "20261025215302_cpf_cnpj_contratante_v0.sql",
+    "20261105194728_public_checkout_production_readiness.sql"
+  ],
+  "newTables": [
+    "commercial_payment_events",
+    "commercial_payment_email_outbox",
+    "checkout_3ds_context",
+    "checkout_security_attempts"
+  ],
+  "newColumns": [
+    "provider_checkout_id",
+    "provider_checkout_url",
+    "checkout_creation_started_at",
+    "buyer_name",
+    "buyer_whatsapp",
+    "provider_subscription_id",
+    "payment_creation_started_at",
+    "provider_first_due_date",
+    "payment_attempt_count",
+    "provider_card_flow",
+    "subscription_creation_started_at",
+    "provider_subscription_first_due_date",
+    "contractor_document_type"
+  ],
+  "newFunctions": [
+    "documento_contratante_valido",
+    "conferir_documento_contratante_gravado",
+    "evento_asaas_impede_confirmacao",
+    "registrar_pedido_self_service",
+    "aprovar_pagamento_api_self_service",
+    "registrar_evento_financeiro_asaas",
+    "registrar_evento_inicial_3ds",
+    "reservar_assinatura_apos_3ds",
+    "consumir_limite_checkout",
+    "checkout_producao_schema_v1"
+  ],
+  "preservedLegacyFunctions": [
+    "aprovar_pix_assistido(uuid,uuid)",
+    "registrar_conta_contratada(uuid,uuid,text,text,text,text)",
+    "registrar_pedido_pix_assistido(text,text,text,text,integer,text)",
+    "set_updated_at()"
+  ],
+  "notApplied": true
+}

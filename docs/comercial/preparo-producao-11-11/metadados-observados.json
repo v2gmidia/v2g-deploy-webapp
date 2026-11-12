@@ -1,0 +1,938 @@
+{
+  "projectId": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+  "productionDatabase": "ushccxpoxjikzqnwhgfd",
+  "observedAt": "2026-11-11T13:49:56.742946+00:00",
+  "readOnly": "on",
+  "tables": [
+    {
+      "rls": true,
+      "name": "businesses",
+      "grants": [
+        {
+          "role": "anon",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "anon",
+          "allowed": true,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": true,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "anon",
+          "allowed": true,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": true,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "anon",
+          "allowed": true,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": true,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "DELETE"
+        }
+      ],
+      "columns": [
+        "id",
+        "profile_id",
+        "claim_email",
+        "short_id",
+        "name",
+        "niche",
+        "city",
+        "radius_km",
+        "description",
+        "avg_direct_cost",
+        "target_profit_per_customer",
+        "monthly_budget",
+        "differentiators",
+        "guarantee",
+        "delivery_time",
+        "payment_policy",
+        "availability",
+        "business_hours",
+        "onboarding",
+        "is_active",
+        "created_at",
+        "updated_at",
+        "avg_ticket_min",
+        "avg_ticket_max",
+        "geo_lat",
+        "geo_lng",
+        "geo_key",
+        "geo_label",
+        "geo_resolved_at",
+        "cep",
+        "atende_somente_no_local",
+        "site_url",
+        "instagram_handle",
+        "procedencia",
+        "dados_ficticios",
+        "cadastro_estado",
+        "cadastro_iniciado_em",
+        "cadastro_erro",
+        "whatsapp_do_anuncio"
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX businesses_pkey ON public.businesses USING btree (id)",
+        "CREATE UNIQUE INDEX businesses_short_id_key ON public.businesses USING btree (short_id)",
+        "CREATE INDEX businesses_profile_id_idx ON public.businesses USING btree (profile_id)",
+        "CREATE INDEX businesses_unclaimed_idx ON public.businesses USING btree (lower(claim_email)) WHERE (profile_id IS NULL)",
+        "CREATE INDEX businesses_cadastro_estado_idx ON public.businesses USING btree (cadastro_estado, cadastro_iniciado_em) WHERE (cadastro_estado IS NOT NULL)"
+      ],
+      "present": true,
+      "constraints": [
+        {
+          "name": "businesses_cadastro_estado_check",
+          "definition": "CHECK ((cadastro_estado = ANY (ARRAY['enviando'::text, 'enviado'::text, 'falhou'::text])))"
+        },
+        {
+          "name": "businesses_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "businesses_profile_id_fkey",
+          "definition": "FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "businesses_short_id_key",
+          "definition": "UNIQUE (short_id)"
+        }
+      ]
+    },
+    {
+      "rls": null,
+      "name": "checkout_3ds_context",
+      "grants": null,
+      "columns": null,
+      "indexes": null,
+      "present": false,
+      "constraints": null
+    },
+    {
+      "rls": null,
+      "name": "checkout_security_attempts",
+      "grants": null,
+      "columns": null,
+      "indexes": null,
+      "present": false,
+      "constraints": null
+    },
+    {
+      "rls": true,
+      "name": "commercial_events",
+      "grants": [
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "DELETE"
+        }
+      ],
+      "columns": [
+        "id",
+        "order_id",
+        "source",
+        "external_event_id",
+        "event_type",
+        "actor_profile_id",
+        "occurred_at"
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX commercial_events_pkey ON public.commercial_events USING btree (id)",
+        "CREATE UNIQUE INDEX commercial_events_source_external_event_id_key ON public.commercial_events USING btree (source, external_event_id)",
+        "CREATE INDEX commercial_events_order_idx ON public.commercial_events USING btree (order_id, occurred_at)"
+      ],
+      "present": true,
+      "constraints": [
+        {
+          "name": "commercial_events_actor_profile_id_fkey",
+          "definition": "FOREIGN KEY (actor_profile_id) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_events_order_id_fkey",
+          "definition": "FOREIGN KEY (order_id) REFERENCES commercial_orders(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "commercial_events_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "commercial_events_source_check",
+          "definition": "CHECK ((source = ANY (ARRAY['operator'::text, 'asaas'::text, 'signature_provider'::text])))"
+        },
+        {
+          "name": "commercial_events_source_external_event_id_key",
+          "definition": "UNIQUE (source, external_event_id)"
+        }
+      ]
+    },
+    {
+      "rls": true,
+      "name": "commercial_order_units",
+      "grants": [
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "DELETE"
+        }
+      ],
+      "columns": [
+        "id",
+        "order_id",
+        "ordinal",
+        "ad_account_id",
+        "created_at"
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX commercial_order_units_pkey ON public.commercial_order_units USING btree (id)",
+        "CREATE UNIQUE INDEX commercial_order_units_order_id_ordinal_key ON public.commercial_order_units USING btree (order_id, ordinal)",
+        "CREATE UNIQUE INDEX commercial_order_units_order_id_ad_account_id_key ON public.commercial_order_units USING btree (order_id, ad_account_id)"
+      ],
+      "present": true,
+      "constraints": [
+        {
+          "name": "commercial_order_units_ad_account_id_fkey",
+          "definition": "FOREIGN KEY (ad_account_id) REFERENCES ad_accounts(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_order_units_order_id_ad_account_id_key",
+          "definition": "UNIQUE (order_id, ad_account_id)"
+        },
+        {
+          "name": "commercial_order_units_order_id_fkey",
+          "definition": "FOREIGN KEY (order_id) REFERENCES commercial_orders(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "commercial_order_units_order_id_ordinal_key",
+          "definition": "UNIQUE (order_id, ordinal)"
+        },
+        {
+          "name": "commercial_order_units_ordinal_check",
+          "definition": "CHECK ((ordinal > 0))"
+        },
+        {
+          "name": "commercial_order_units_pkey",
+          "definition": "PRIMARY KEY (id)"
+        }
+      ]
+    },
+    {
+      "rls": true,
+      "name": "commercial_orders",
+      "grants": [
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "SELECT"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "INSERT"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "UPDATE"
+        },
+        {
+          "role": "anon",
+          "allowed": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "authenticated",
+          "allowed": false,
+          "privilege": "DELETE"
+        },
+        {
+          "role": "service_role",
+          "allowed": true,
+          "privilege": "DELETE"
+        }
+      ],
+      "columns": [
+        "id",
+        "external_ref",
+        "buyer_profile_id",
+        "buyer_email",
+        "business_id",
+        "legal_name",
+        "cnpj",
+        "declares_cnpj",
+        "sells_by_whatsapp",
+        "origin",
+        "payment_method",
+        "billing_period",
+        "unit_price_cents",
+        "discount_percent",
+        "unit_count",
+        "total_cents",
+        "status",
+        "payment_approved_at",
+        "payment_approved_by",
+        "provider_customer_id",
+        "provider_charge_id",
+        "created_at",
+        "updated_at",
+        "proof_reference",
+        "proof_received_at",
+        "proof_received_by"
+      ],
+      "indexes": [
+        "CREATE UNIQUE INDEX commercial_orders_pkey ON public.commercial_orders USING btree (id)",
+        "CREATE UNIQUE INDEX commercial_orders_external_ref_key ON public.commercial_orders USING btree (external_ref)",
+        "CREATE UNIQUE INDEX commercial_orders_provider_charge_id_key ON public.commercial_orders USING btree (provider_charge_id)",
+        "CREATE INDEX commercial_orders_buyer_idx ON public.commercial_orders USING btree (buyer_profile_id)",
+        "CREATE INDEX commercial_orders_business_idx ON public.commercial_orders USING btree (business_id)",
+        "CREATE UNIQUE INDEX commercial_orders_one_open_direct_pix ON public.commercial_orders USING btree (lower(buyer_email), cnpj) WHERE ((payment_method = 'direct_pix'::text) AND (status = ANY (ARRAY['awaiting_payment'::text, 'proof_received'::text])))"
+      ],
+      "present": true,
+      "constraints": [
+        {
+          "name": "commercial_orders_approval_matches",
+          "definition": "CHECK ((((status = 'payment_approved'::text) AND (payment_approved_at IS NOT NULL)) OR ((status <> 'payment_approved'::text) AND (payment_approved_at IS NULL))))"
+        },
+        {
+          "name": "commercial_orders_billing_period_check",
+          "definition": "CHECK ((billing_period = ANY (ARRAY['monthly'::text, 'annual_upfront'::text])))"
+        },
+        {
+          "name": "commercial_orders_business_id_fkey",
+          "definition": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_buyer_profile_id_fkey",
+          "definition": "FOREIGN KEY (buyer_profile_id) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_check",
+          "definition": "CHECK ((((billing_period = 'monthly'::text) AND (discount_percent = 0)) OR ((billing_period = 'annual_upfront'::text) AND (discount_percent = 12))))"
+        },
+        {
+          "name": "commercial_orders_cnpj_check",
+          "definition": "CHECK ((cnpj ~ '^[0-9]{14}$'::text))"
+        },
+        {
+          "name": "commercial_orders_declares_cnpj_check",
+          "definition": "CHECK (declares_cnpj)"
+        },
+        {
+          "name": "commercial_orders_direct_pix_approval_actor_check",
+          "definition": "CHECK (((payment_method <> 'direct_pix'::text) OR (status <> 'payment_approved'::text) OR (payment_approved_by IS NOT NULL)))"
+        },
+        {
+          "name": "commercial_orders_direct_pix_proof_check",
+          "definition": "CHECK (((payment_method <> 'direct_pix'::text) OR (status = ANY (ARRAY['awaiting_payment'::text, 'cancelled'::text])) OR ((proof_reference IS NOT NULL) AND (length(btrim(proof_reference)) > 0) AND (proof_received_at IS NOT NULL) AND (proof_received_by IS NOT NULL))))"
+        },
+        {
+          "name": "commercial_orders_external_ref_key",
+          "definition": "UNIQUE (external_ref)"
+        },
+        {
+          "name": "commercial_orders_origin_check",
+          "definition": "CHECK ((origin = ANY (ARRAY['assisted'::text, 'self_service'::text])))"
+        },
+        {
+          "name": "commercial_orders_paid_business_check",
+          "definition": "CHECK (((status <> 'payment_approved'::text) OR (business_id IS NOT NULL)))"
+        },
+        {
+          "name": "commercial_orders_payment_approved_by_fkey",
+          "definition": "FOREIGN KEY (payment_approved_by) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_payment_method_check",
+          "definition": "CHECK ((payment_method = ANY (ARRAY['direct_pix'::text, 'asaas_pix'::text, 'asaas_card'::text])))"
+        },
+        {
+          "name": "commercial_orders_pkey",
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "commercial_orders_proof_received_by_fkey",
+          "definition": "FOREIGN KEY (proof_received_by) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_provider_charge_id_key",
+          "definition": "UNIQUE (provider_charge_id)"
+        },
+        {
+          "name": "commercial_orders_sells_by_whatsapp_check",
+          "definition": "CHECK (sells_by_whatsapp)"
+        },
+        {
+          "name": "commercial_orders_status_check",
+          "definition": "CHECK ((status = ANY (ARRAY['awaiting_payment'::text, 'proof_received'::text, 'payment_approved'::text, 'cancelled'::text])))"
+        },
+        {
+          "name": "commercial_orders_total_cents_check",
+          "definition": "CHECK ((total_cents > 0))"
+        },
+        {
+          "name": "commercial_orders_total_matches",
+          "definition": "CHECK ((total_cents = (unit_count *\nCASE billing_period\n    WHEN 'monthly'::text THEN 50000\n    ELSE 528000\nEND)))"
+        },
+        {
+          "name": "commercial_orders_unit_count_check",
+          "definition": "CHECK ((unit_count > 0))"
+        },
+        {
+          "name": "commercial_orders_unit_price_cents_check",
+          "definition": "CHECK ((unit_price_cents = 50000))"
+        }
+      ]
+    },
+    {
+      "rls": null,
+      "name": "commercial_payment_email_outbox",
+      "grants": null,
+      "columns": null,
+      "indexes": null,
+      "present": false,
+      "constraints": null
+    },
+    {
+      "rls": null,
+      "name": "commercial_payment_events",
+      "grants": null,
+      "columns": null,
+      "indexes": null,
+      "present": false,
+      "constraints": null
+    }
+  ],
+  "functions": [
+    {
+      "name": "aprovar_pagamento_api_self_service(uuid,text,text,text,text,text,integer,date)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "checkout_producao_schema_v1()",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "consumir_limite_checkout(text,text,text)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "documento_contratante_valido(text)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "evento_asaas_impede_confirmacao(text)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "registrar_evento_financeiro_asaas(uuid,text,text,text,text,text,integer,date)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "registrar_evento_inicial_3ds(uuid,text,text,text,text,integer,date)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "registrar_pedido_self_service(text,text,text,text,text,text,integer,text,text)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    },
+    {
+      "name": "reservar_assinatura_apos_3ds(uuid,date)",
+      "present": false,
+      "body_md5": null,
+      "volatility": null,
+      "anon_execute": null,
+      "security_definer": null,
+      "service_role_execute": null,
+      "authenticated_execute": null
+    }
+  ],
+  "migrations": [
+    {
+      "version": "20260801032703",
+      "name": "init_consolidated_schema"
+    },
+    {
+      "version": "20260801032832",
+      "name": "harden_security_definer_functions"
+    },
+    {
+      "version": "20260801033206",
+      "name": "restrict_meta_connections_token_column"
+    },
+    {
+      "version": "20260801040841",
+      "name": "avg_ticket_como_faixa"
+    },
+    {
+      "version": "20260801050757",
+      "name": "oauth_meta_conexao"
+    },
+    {
+      "version": "20260801050832",
+      "name": "conectar_meta_chamavel_por_service_role"
+    },
+    {
+      "version": "20260801051142",
+      "name": "obter_token_meta"
+    },
+    {
+      "version": "20260802030711",
+      "name": "publicar_campanha"
+    },
+    {
+      "version": "20260818000449",
+      "name": "backend_execucoes_criativos"
+    },
+    {
+      "version": "20260818004950",
+      "name": "perfil_empresa"
+    },
+    {
+      "version": "20260818005122",
+      "name": "perfil_empresa_rls_e_escrita"
+    },
+    {
+      "version": "20260818130048",
+      "name": "procedencia_generalizada"
+    },
+    {
+      "version": "20260818130135",
+      "name": "procedencia_fecha_execute"
+    },
+    {
+      "version": "20260818134837",
+      "name": "propostas_de_perfil"
+    },
+    {
+      "version": "20260818145052",
+      "name": "aplicar_proposta"
+    },
+    {
+      "version": "20260819135117",
+      "name": "identidade_do_negocio"
+    },
+    {
+      "version": "20260819160427",
+      "name": "confirmacao_do_cliente"
+    },
+    {
+      "version": "20260819200349",
+      "name": "lucro_desejado_na_lista_branca"
+    },
+    {
+      "version": "20260819200749",
+      "name": "esvaziar_campo_do_cliente"
+    },
+    {
+      "version": "20260819225859",
+      "name": "0018_disparo_do_pipeline"
+    },
+    {
+      "version": "20260821201801",
+      "name": "0019_escrever_apenas_se_livre"
+    },
+    {
+      "version": "20260821201828",
+      "name": "0020_execucoes_colunas_do_onboarding_por_call"
+    },
+    {
+      "version": "20260823060136",
+      "name": "0009_prazo_das_esperas"
+    },
+    {
+      "version": "20260825115604",
+      "name": "0010_agentes_do_canal_google"
+    },
+    {
+      "version": "20260826125034",
+      "name": "bkd_0011_cidade_do_negocio"
+    },
+    {
+      "version": "20260826125117",
+      "name": "bkd_0012_credenciais_de_tagueamento"
+    },
+    {
+      "version": "20260827231709",
+      "name": "0011_aviso_de_vencimento"
+    },
+    {
+      "version": "20260828234159",
+      "name": "0014_campanha_criada_em"
+    },
+    {
+      "version": "20260829174214",
+      "name": "campanha_no_google"
+    },
+    {
+      "version": "20260829181046",
+      "name": "metricas_diarias"
+    },
+    {
+      "version": "20260830003436",
+      "name": "conta_google_do_cliente"
+    },
+    {
+      "version": "20260920202005",
+      "name": "0028_execucoes_canal_escolhido"
+    },
+    {
+      "version": "20260920202015",
+      "name": "0029_execucoes_estado_desde"
+    },
+    {
+      "version": "20261007002600",
+      "name": "contratacao_multiconta_20261006"
+    },
+    {
+      "version": "20261007002707",
+      "name": "acesso_legado_20261006"
+    },
+    {
+      "version": "20261007003448",
+      "name": "pedido_pago_exige_negocio_20261006"
+    },
+    {
+      "version": "20261007005708",
+      "name": "pix_assistido_20261006"
+    },
+    {
+      "version": "20261007030152",
+      "name": "vincular_conta_comprada_20261007"
+    },
+    {
+      "version": "20261007031520",
+      "name": "mesclar_blocos_onboarding_20261007"
+    },
+    {
+      "version": "20261007031705",
+      "name": "mesclar_respostas_por_chave_20261007"
+    },
+    {
+      "version": "20261007040009",
+      "name": "unidade_aprovada_com_pedido_pendente_20261007"
+    },
+    {
+      "version": "20261013023519",
+      "name": "leads_lp_cnpj_20261012"
+    }
+  ],
+  "envMetadata": {
+    "envs": [
+      {
+        "key": "OPENAI_API_KEY",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_N8N_WEBHOOK_TOKEN",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_API_TOKEN",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_N8N_WEBHOOK_URL",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_BACKEND_TOKEN",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_BACKEND_URL",
+        "type": "sensitive",
+        "target": [
+          "preview",
+          "production"
+        ]
+      },
+      {
+        "key": "META_APP_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "META_APP_ID",
+        "type": "encrypted",
+        "target": [
+          "preview",
+          "production"
+        ]
+      },
+      {
+        "key": "NEXT_PUBLIC_SITE_URL",
+        "type": "encrypted",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "SUPABASE_SERVICE_ROLE_KEY",
+        "type": "encrypted",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "type": "encrypted",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "NEXT_PUBLIC_SUPABASE_URL",
+        "type": "encrypted",
+        "target": [
+          "preview",
+          "production"
+        ]
+      }
+    ],
+    "hiddenProductionEnvCount": 0
+  },
+  "scope": "Catalogos e metadados somente; sem linhas de clientes, Auth, pedidos, pagamentos ou segredos. Presenca nao prova funcionamento."
+}

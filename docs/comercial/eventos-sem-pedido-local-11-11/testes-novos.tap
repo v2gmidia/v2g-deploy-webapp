@@ -1,0 +1,478 @@
+TAP version 13
+# Subtest: externo confirmado: aceite sem efeitos em production
+ok 1 - externo confirmado: aceite sem efeitos em production
+  ---
+  duration_ms: 68.387
+  type: 'test'
+  ...
+# Subtest: externo confirmado: aceite sem efeitos em sandbox
+ok 2 - externo confirmado: aceite sem efeitos em sandbox
+  ---
+  duration_ms: 35.1933
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CREATED
+ok 3 - externo confirmado reconhecido em PAYMENT_CREATED
+  ---
+  duration_ms: 33.0067
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_UPDATED
+ok 4 - externo confirmado reconhecido em PAYMENT_UPDATED
+  ---
+  duration_ms: 30.9611
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_OVERDUE
+ok 5 - externo confirmado reconhecido em PAYMENT_OVERDUE
+  ---
+  duration_ms: 37.1248
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_AWAITING_RISK_ANALYSIS
+ok 6 - externo confirmado reconhecido em PAYMENT_AWAITING_RISK_ANALYSIS
+  ---
+  duration_ms: 24.816
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_APPROVED_BY_RISK_ANALYSIS
+ok 7 - externo confirmado reconhecido em PAYMENT_APPROVED_BY_RISK_ANALYSIS
+  ---
+  duration_ms: 24.3203
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_REPROVED_BY_RISK_ANALYSIS
+ok 8 - externo confirmado reconhecido em PAYMENT_REPROVED_BY_RISK_ANALYSIS
+  ---
+  duration_ms: 27.2009
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_AUTHORIZED
+ok 9 - externo confirmado reconhecido em PAYMENT_AUTHORIZED
+  ---
+  duration_ms: 27.6178
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CONFIRMED
+ok 10 - externo confirmado reconhecido em PAYMENT_CONFIRMED
+  ---
+  duration_ms: 22.5608
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_RECEIVED
+ok 11 - externo confirmado reconhecido em PAYMENT_RECEIVED
+  ---
+  duration_ms: 23.3844
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED
+ok 12 - externo confirmado reconhecido em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED
+  ---
+  duration_ms: 29.6151
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED
+ok 13 - externo confirmado reconhecido em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED
+  ---
+  duration_ms: 24.2018
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_REFUND_IN_PROGRESS
+ok 14 - externo confirmado reconhecido em PAYMENT_REFUND_IN_PROGRESS
+  ---
+  duration_ms: 22.1707
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_PARTIALLY_REFUNDED
+ok 15 - externo confirmado reconhecido em PAYMENT_PARTIALLY_REFUNDED
+  ---
+  duration_ms: 21.7188
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_REFUNDED
+ok 16 - externo confirmado reconhecido em PAYMENT_REFUNDED
+  ---
+  duration_ms: 25.2463
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CHARGEBACK_REQUESTED
+ok 17 - externo confirmado reconhecido em PAYMENT_CHARGEBACK_REQUESTED
+  ---
+  duration_ms: 24.1812
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_CHARGEBACK_DISPUTE
+ok 18 - externo confirmado reconhecido em PAYMENT_CHARGEBACK_DISPUTE
+  ---
+  duration_ms: 22.2188
+  type: 'test'
+  ...
+# Subtest: externo confirmado reconhecido em PAYMENT_AWAITING_CHARGEBACK_REVERSAL
+ok 19 - externo confirmado reconhecido em PAYMENT_AWAITING_CHARGEBACK_REVERSAL
+  ---
+  duration_ms: 26.7274
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CREATED nao e descartado
+ok 20 - possivel pedido antecipado em PAYMENT_CREATED nao e descartado
+  ---
+  duration_ms: 23.7664
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_UPDATED nao e descartado
+ok 21 - possivel pedido antecipado em PAYMENT_UPDATED nao e descartado
+  ---
+  duration_ms: 24.1535
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_OVERDUE nao e descartado
+ok 22 - possivel pedido antecipado em PAYMENT_OVERDUE nao e descartado
+  ---
+  duration_ms: 25.0546
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_AWAITING_RISK_ANALYSIS nao e descartado
+ok 23 - possivel pedido antecipado em PAYMENT_AWAITING_RISK_ANALYSIS nao e descartado
+  ---
+  duration_ms: 26.2667
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_APPROVED_BY_RISK_ANALYSIS nao e descartado
+ok 24 - possivel pedido antecipado em PAYMENT_APPROVED_BY_RISK_ANALYSIS nao e descartado
+  ---
+  duration_ms: 26.0486
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_REPROVED_BY_RISK_ANALYSIS nao e descartado
+ok 25 - possivel pedido antecipado em PAYMENT_REPROVED_BY_RISK_ANALYSIS nao e descartado
+  ---
+  duration_ms: 33.5281
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_AUTHORIZED nao e descartado
+ok 26 - possivel pedido antecipado em PAYMENT_AUTHORIZED nao e descartado
+  ---
+  duration_ms: 22.5888
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CONFIRMED nao e descartado
+ok 27 - possivel pedido antecipado em PAYMENT_CONFIRMED nao e descartado
+  ---
+  duration_ms: 19.7295
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_RECEIVED nao e descartado
+ok 28 - possivel pedido antecipado em PAYMENT_RECEIVED nao e descartado
+  ---
+  duration_ms: 22.0494
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED nao e descartado
+ok 29 - possivel pedido antecipado em PAYMENT_CREDIT_CARD_CAPTURE_REFUSED nao e descartado
+  ---
+  duration_ms: 23.7077
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED nao e descartado
+ok 30 - possivel pedido antecipado em PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED nao e descartado
+  ---
+  duration_ms: 24.64
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_REFUND_IN_PROGRESS nao e descartado
+ok 31 - possivel pedido antecipado em PAYMENT_REFUND_IN_PROGRESS nao e descartado
+  ---
+  duration_ms: 30.4622
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_PARTIALLY_REFUNDED nao e descartado
+ok 32 - possivel pedido antecipado em PAYMENT_PARTIALLY_REFUNDED nao e descartado
+  ---
+  duration_ms: 23.02
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_REFUNDED nao e descartado
+ok 33 - possivel pedido antecipado em PAYMENT_REFUNDED nao e descartado
+  ---
+  duration_ms: 20.8368
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CHARGEBACK_REQUESTED nao e descartado
+ok 34 - possivel pedido antecipado em PAYMENT_CHARGEBACK_REQUESTED nao e descartado
+  ---
+  duration_ms: 20.2507
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_CHARGEBACK_DISPUTE nao e descartado
+ok 35 - possivel pedido antecipado em PAYMENT_CHARGEBACK_DISPUTE nao e descartado
+  ---
+  duration_ms: 18.6664
+  type: 'test'
+  ...
+# Subtest: possivel pedido antecipado em PAYMENT_AWAITING_CHARGEBACK_REVERSAL nao e descartado
+ok 36 - possivel pedido antecipado em PAYMENT_AWAITING_CHARGEBACK_REVERSAL nao e descartado
+  ---
+  duration_ms: 20.5576
+  type: 'test'
+  ...
+# Subtest: assinatura externa e cartao sao conferidos no mesmo ambiente
+ok 37 - assinatura externa e cartao sao conferidos no mesmo ambiente
+  ---
+  duration_ms: 34.0473
+  type: 'test'
+  ...
+# Subtest: Sandbox desligado impede consultas
+ok 38 - Sandbox desligado impede consultas
+  ---
+  duration_ms: 21.7762
+  type: 'test'
+  ...
+# Subtest: referencia externa undefined conferida no provedor
+ok 39 - referencia externa undefined conferida no provedor
+  ---
+  duration_ms: 19.9608
+  type: 'test'
+  ...
+# Subtest: referencia externa  conferida no provedor
+ok 40 - referencia externa  conferida no provedor
+  ---
+  duration_ms: 20.4709
+  type: 'test'
+  ...
+# Subtest: referencia externa manual-31 conferida no provedor
+ok 41 - referencia externa manual-31 conferida no provedor
+  ---
+  duration_ms: 21.3653
+  type: 'test'
+  ...
+# Subtest: indicio de pedido abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+ok 42 - indicio de pedido abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+  ---
+  duration_ms: 19.2822
+  type: 'test'
+  ...
+# Subtest: indicio de pedido ABCDEFAB-CDEF-4ABC-8DEF-ABCDEFABCDEF preserva retentativa
+ok 43 - indicio de pedido ABCDEFAB-CDEF-4ABC-8DEF-ABCDEFABCDEF preserva retentativa
+  ---
+  duration_ms: 35.0588
+  type: 'test'
+  ...
+# Subtest: indicio de pedido pedido:abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+ok 44 - indicio de pedido pedido:abcdefab-cdef-4abc-8def-abcdefabcdef preserva retentativa
+  ---
+  duration_ms: 26.8121
+  type: 'test'
+  ...
+# Subtest: indicio de pedido  abcdefab-cdef-4abc-8def-abcdefabcdef  preserva retentativa
+ok 45 - indicio de pedido  abcdefab-cdef-4abc-8def-abcdefabcdef  preserva retentativa
+  ---
+  duration_ms: 21.6343
+  type: 'test'
+  ...
+# Subtest: referencia UUID apenas canonica nao descarta evento
+ok 46 - referencia UUID apenas canonica nao descarta evento
+  ---
+  duration_ms: 20.0965
+  type: 'test'
+  ...
+# Subtest: referencias diferentes nao descarta evento
+ok 47 - referencias diferentes nao descarta evento
+  ---
+  duration_ms: 20.1953
+  type: 'test'
+  ...
+# Subtest: referencia recebida objeto nao descarta evento
+ok 48 - referencia recebida objeto nao descarta evento
+  ---
+  duration_ms: 18.5372
+  type: 'test'
+  ...
+# Subtest: referencia canonica numerica nao descarta evento
+ok 49 - referencia canonica numerica nao descarta evento
+  ---
+  duration_ms: 19.589
+  type: 'test'
+  ...
+# Subtest: provedor indisponivel nao descarta evento
+ok 50 - provedor indisponivel nao descarta evento
+  ---
+  duration_ms: 20.1816
+  type: 'test'
+  ...
+# Subtest: provedor excecao nao descarta evento
+ok 51 - provedor excecao nao descarta evento
+  ---
+  duration_ms: 19.193
+  type: 'test'
+  ...
+# Subtest: corpo canonico nulo nao descarta evento
+ok 52 - corpo canonico nulo nao descarta evento
+  ---
+  duration_ms: 21.3916
+  type: 'test'
+  ...
+# Subtest: corpo canonico lista nao descarta evento
+ok 53 - corpo canonico lista nao descarta evento
+  ---
+  duration_ms: 25.606
+  type: 'test'
+  ...
+# Subtest: cobranca divergente nao descarta evento
+ok 54 - cobranca divergente nao descarta evento
+  ---
+  duration_ms: 17.6864
+  type: 'test'
+  ...
+# Subtest: cliente divergente nao descarta evento
+ok 55 - cliente divergente nao descarta evento
+  ---
+  duration_ms: 18.6052
+  type: 'test'
+  ...
+# Subtest: assinatura divergente nao descarta evento
+ok 56 - assinatura divergente nao descarta evento
+  ---
+  duration_ms: 19.0872
+  type: 'test'
+  ...
+# Subtest: forma divergente nao descarta evento
+ok 57 - forma divergente nao descarta evento
+  ---
+  duration_ms: 28.2776
+  type: 'test'
+  ...
+# Subtest: valor divergente nao descarta evento
+ok 58 - valor divergente nao descarta evento
+  ---
+  duration_ms: 19.0161
+  type: 'test'
+  ...
+# Subtest: valor nao finito nao descarta evento
+ok 59 - valor nao finito nao descarta evento
+  ---
+  duration_ms: 20.1497
+  type: 'test'
+  ...
+# Subtest: valor com fracao de centavo nao descarta evento
+ok 60 - valor com fracao de centavo nao descarta evento
+  ---
+  duration_ms: 17.4402
+  type: 'test'
+  ...
+# Subtest: vencimento divergente nao descarta evento
+ok 61 - vencimento divergente nao descarta evento
+  ---
+  duration_ms: 17.1267
+  type: 'test'
+  ...
+# Subtest: cobranca excluida nao descarta evento
+ok 62 - cobranca excluida nao descarta evento
+  ---
+  duration_ms: 20.5298
+  type: 'test'
+  ...
+# Subtest: erro na contagem nao descarta evento
+ok 63 - erro na contagem nao descarta evento
+  ---
+  duration_ms: 19.0638
+  type: 'test'
+  ...
+# Subtest: contagem ausente nao descarta evento
+ok 64 - contagem ausente nao descarta evento
+  ---
+  duration_ms: 40.4772
+  type: 'test'
+  ...
+# Subtest: excecao na contagem nao descarta evento
+ok 65 - excecao na contagem nao descarta evento
+  ---
+  duration_ms: 21.7088
+  type: 'test'
+  ...
+# Subtest: erro no vinculo inicial nao descarta evento
+ok 66 - erro no vinculo inicial nao descarta evento
+  ---
+  duration_ms: 17.9521
+  type: 'test'
+  ...
+# Subtest: cliente local awaiting_payment preserva evento mesmo sem referencia
+ok 67 - cliente local awaiting_payment preserva evento mesmo sem referencia
+  ---
+  duration_ms: 18.8877
+  type: 'test'
+  ...
+# Subtest: cliente local payment_approved preserva evento mesmo sem referencia
+ok 68 - cliente local payment_approved preserva evento mesmo sem referencia
+  ---
+  duration_ms: 18.6108
+  type: 'test'
+  ...
+# Subtest: cliente local cancelled preserva evento mesmo sem referencia
+ok 69 - cliente local cancelled preserva evento mesmo sem referencia
+  ---
+  duration_ms: 20.6085
+  type: 'test'
+  ...
+# Subtest: outro cliente nao e contado nem recebe efeitos do evento externo
+ok 70 - outro cliente nao e contado nem recebe efeitos do evento externo
+  ---
+  duration_ms: 26.8749
+  type: 'test'
+  ...
+# Subtest: multiplos pedidos do mesmo cliente continuam pendentes
+ok 71 - multiplos pedidos do mesmo cliente continuam pendentes
+  ---
+  duration_ms: 19.164
+  type: 'test'
+  ...
+# Subtest: processamento desligado bloqueia classificacao e efeitos
+ok 72 - processamento desligado bloqueia classificacao e efeitos
+  ---
+  duration_ms: 19.6846
+  type: 'test'
+  ...
+# Subtest: token invalido bloqueia classificacao e efeitos
+ok 73 - token invalido bloqueia classificacao e efeitos
+  ---
+  duration_ms: 18.6424
+  type: 'test'
+  ...
+# Subtest: dominio invalido bloqueia classificacao e efeitos
+ok 74 - dominio invalido bloqueia classificacao e efeitos
+  ---
+  duration_ms: 17.4863
+  type: 'test'
+  ...
+# Subtest: HTTPS ausente bloqueia classificacao e efeitos
+ok 75 - HTTPS ausente bloqueia classificacao e efeitos
+  ---
+  duration_ms: 19.7401
+  type: 'test'
+  ...
+# Subtest: schema pendente bloqueia classificacao e efeitos
+ok 76 - schema pendente bloqueia classificacao e efeitos
+  ---
+  duration_ms: 19.3469
+  type: 'test'
+  ...
+# Subtest: evento antecipado espera vinculo; entrega posterior e replay usam registro existente
+ok 77 - evento antecipado espera vinculo; entrega posterior e replay usam registro existente
+  ---
+  duration_ms: 23.8405
+  type: 'test'
+  ...
+# Subtest: reentrega externa concorrente continua apenas leitura
+ok 78 - reentrega externa concorrente continua apenas leitura
+  ---
+  duration_ms: 20.2498
+  type: 'test'
+  ...
+1..78
+# tests 78
+# suites 0
+# pass 78
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2186.0487

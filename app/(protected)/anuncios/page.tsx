@@ -22,6 +22,7 @@ import { AtualizacaoDaConsulta } from "./AtualizacaoDaConsulta";
 import { HistoricoSemRodadas } from "./HistoricoSemRodadas";
 import { pilotoQaHabilitado } from "@/lib/piloto-qa/acesso";
 import { hrefDoCliente, retornoDaCarteira, selecionarVisaoAgencia } from "@/lib/agencia/contexto";
+import { CabecalhoAgencia } from "@/components/agencia/Comuns";
 
 export const metadata = tituloDaAba("/anuncios");
 
@@ -90,9 +91,13 @@ export default async function AnunciosPage({ searchParams }: {
     ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : null;
   const contexto = agencia?.status === "agencia" ? agencia.contexto : null;
   if (agencia?.status === "indisponivel"
-    || agencia && agencia.status !== "desligado" && selecionarVisaoAgencia(contexto, busca) === "invalido") {
+    || agencia && agencia.status !== "desligado" && selecionarVisaoAgencia(contexto, busca, agencia.status === "agencia") === "invalido") {
     const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
     return <ClienteIndisponivel />;
+  }
+  if (agencia?.status === "agencia" && selecionarVisaoAgencia(contexto, busca, true) === "carteira") {
+    return <section><CabecalhoAgencia titulo="Anúncios" descricao="Abra um cliente da carteira para acompanhar seus anúncios e resultados." />
+      <a className="cta" href="/inicio">Escolher cliente na carteira</a></section>;
   }
 
   // A resposta para "o que falta" vem pronta e é a MESMA que o `/inicio` e

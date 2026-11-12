@@ -5,7 +5,7 @@ import { trocarCodePorToken,
   TokenSemDono,
 } from "@/lib/meta/oauth";
 import { registrarErroMeta } from "@/lib/meta/erros";
-import { COOKIE_STATE } from "../iniciar/route";
+import { COOKIE_STATE } from "@/lib/meta/oauth-state";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**

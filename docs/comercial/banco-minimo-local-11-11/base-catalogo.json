@@ -1,0 +1,1574 @@
+{
+  "tables": [
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "rls": true,
+      "name": "businesses",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "profile_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "claim_email",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "short_id",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "name",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "niche",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "city",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "radius_km",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "description",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "avg_direct_cost",
+          "type": "numeric",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "target_profit_per_customer",
+          "type": "numeric",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "monthly_budget",
+          "type": "numeric",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "differentiators",
+          "type": "text[]",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "guarantee",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "delivery_time",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "payment_policy",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "availability",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "business_hours",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "onboarding",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "is_active",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "avg_ticket_min",
+          "type": "numeric",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "avg_ticket_max",
+          "type": "numeric",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "geo_lat",
+          "type": "numeric",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "geo_lng",
+          "type": "numeric",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "geo_key",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "geo_label",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "geo_resolved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "cep",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "atende_somente_no_local",
+          "type": "boolean",
+          "default": "true",
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "site_url",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "instagram_handle",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "procedencia",
+          "type": "jsonb",
+          "default": "'{}'::jsonb",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "dados_ficticios",
+          "type": "boolean",
+          "default": "false",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "cadastro_estado",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "cadastro_iniciado_em",
+          "type": "timestamp with time zone",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "cadastro_erro",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "whatsapp_do_anuncio",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "businesses_cadastro_estado_idx",
+          "definition": "CREATE INDEX businesses_cadastro_estado_idx ON public.businesses USING btree (cadastro_estado, cadastro_iniciado_em) WHERE (cadastro_estado IS NOT NULL)",
+          "constraint_owned": false
+        },
+        {
+          "name": "businesses_pkey",
+          "definition": "CREATE UNIQUE INDEX businesses_pkey ON public.businesses USING btree (id)",
+          "constraint_owned": true
+        },
+        {
+          "name": "businesses_profile_id_idx",
+          "definition": "CREATE INDEX businesses_profile_id_idx ON public.businesses USING btree (profile_id)",
+          "constraint_owned": false
+        },
+        {
+          "name": "businesses_short_id_key",
+          "definition": "CREATE UNIQUE INDEX businesses_short_id_key ON public.businesses USING btree (short_id)",
+          "constraint_owned": true
+        },
+        {
+          "name": "businesses_unclaimed_idx",
+          "definition": "CREATE INDEX businesses_unclaimed_idx ON public.businesses USING btree (lower(claim_email)) WHERE (profile_id IS NULL)",
+          "constraint_owned": false
+        }
+      ],
+      "policies": [
+        {
+          "name": "businesses_delete_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+          "command": "d",
+          "permissive": true
+        },
+        {
+          "name": "businesses_insert_own",
+          "check": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": null,
+          "command": "a",
+          "permissive": true
+        },
+        {
+          "name": "businesses_select_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+          "command": "r",
+          "permissive": true
+        },
+        {
+          "name": "businesses_update_own",
+          "check": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+          "roles": [
+            "authenticated"
+          ],
+          "using": "((profile_id IS NOT NULL) AND (profile_id = ( SELECT auth.uid() AS uid)))",
+          "command": "w",
+          "permissive": true
+        }
+      ],
+      "triggers": [
+        {
+          "name": "businesses_set_updated_at",
+          "enabled": "O",
+          "definition": "CREATE TRIGGER businesses_set_updated_at BEFORE UPDATE ON public.businesses FOR EACH ROW EXECUTE FUNCTION set_updated_at()",
+          "function_signature": "set_updated_at()"
+        }
+      ],
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "businesses_cadastro_estado_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((cadastro_estado = ANY (ARRAY['enviando'::text, 'enviado'::text, 'falhou'::text])))"
+        },
+        {
+          "name": "businesses_pkey",
+          "type": "p",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "businesses_profile_id_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (profile_id) REFERENCES profiles(id) ON DELETE CASCADE"
+        },
+        {
+          "name": "businesses_short_id_key",
+          "type": "u",
+          "validated": true,
+          "definition": "UNIQUE (short_id)"
+        }
+      ]
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "rls": true,
+      "name": "commercial_events",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "order_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "source",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "external_event_id",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "event_type",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "actor_profile_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "occurred_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "commercial_events_order_idx",
+          "definition": "CREATE INDEX commercial_events_order_idx ON public.commercial_events USING btree (order_id, occurred_at)",
+          "constraint_owned": false
+        },
+        {
+          "name": "commercial_events_pkey",
+          "definition": "CREATE UNIQUE INDEX commercial_events_pkey ON public.commercial_events USING btree (id)",
+          "constraint_owned": true
+        },
+        {
+          "name": "commercial_events_source_external_event_id_key",
+          "definition": "CREATE UNIQUE INDEX commercial_events_source_external_event_id_key ON public.commercial_events USING btree (source, external_event_id)",
+          "constraint_owned": true
+        }
+      ],
+      "policies": null,
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "commercial_events_actor_profile_id_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (actor_profile_id) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_events_order_id_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (order_id) REFERENCES commercial_orders(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "commercial_events_pkey",
+          "type": "p",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "commercial_events_source_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((source = ANY (ARRAY['operator'::text, 'asaas'::text, 'signature_provider'::text])))"
+        },
+        {
+          "name": "commercial_events_source_external_event_id_key",
+          "type": "u",
+          "validated": true,
+          "definition": "UNIQUE (source, external_event_id)"
+        }
+      ]
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=r/postgres}",
+      "rls": true,
+      "name": "commercial_order_units",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "order_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "ordinal",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "ad_account_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "commercial_order_units_order_id_ad_account_id_key",
+          "definition": "CREATE UNIQUE INDEX commercial_order_units_order_id_ad_account_id_key ON public.commercial_order_units USING btree (order_id, ad_account_id)",
+          "constraint_owned": true
+        },
+        {
+          "name": "commercial_order_units_order_id_ordinal_key",
+          "definition": "CREATE UNIQUE INDEX commercial_order_units_order_id_ordinal_key ON public.commercial_order_units USING btree (order_id, ordinal)",
+          "constraint_owned": true
+        },
+        {
+          "name": "commercial_order_units_pkey",
+          "definition": "CREATE UNIQUE INDEX commercial_order_units_pkey ON public.commercial_order_units USING btree (id)",
+          "constraint_owned": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "units_read_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(EXISTS ( SELECT 1\n   FROM commercial_orders o\n  WHERE ((o.id = commercial_order_units.order_id) AND (o.buyer_profile_id = ( SELECT auth.uid() AS uid)))))",
+          "command": "r",
+          "permissive": true
+        }
+      ],
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "commercial_order_units_ad_account_id_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (ad_account_id) REFERENCES ad_accounts(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_order_units_order_id_ad_account_id_key",
+          "type": "u",
+          "validated": true,
+          "definition": "UNIQUE (order_id, ad_account_id)"
+        },
+        {
+          "name": "commercial_order_units_order_id_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (order_id) REFERENCES commercial_orders(id) ON DELETE RESTRICT"
+        },
+        {
+          "name": "commercial_order_units_order_id_ordinal_key",
+          "type": "u",
+          "validated": true,
+          "definition": "UNIQUE (order_id, ordinal)"
+        },
+        {
+          "name": "commercial_order_units_ordinal_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((ordinal > 0))"
+        },
+        {
+          "name": "commercial_order_units_pkey",
+          "type": "p",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        }
+      ]
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,service_role=arwdDxtm/postgres,authenticated=r/postgres}",
+      "rls": true,
+      "name": "commercial_orders",
+      "owner": "postgres",
+      "columns": [
+        {
+          "acl": null,
+          "name": "id",
+          "type": "uuid",
+          "default": "gen_random_uuid()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "external_ref",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "buyer_profile_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "buyer_email",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "business_id",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "legal_name",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "cnpj",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "declares_cnpj",
+          "type": "boolean",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "sells_by_whatsapp",
+          "type": "boolean",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "origin",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "payment_method",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "billing_period",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "unit_price_cents",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "discount_percent",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "unit_count",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "total_cents",
+          "type": "integer",
+          "default": null,
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "status",
+          "type": "text",
+          "default": "'awaiting_payment'::text",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "payment_approved_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "payment_approved_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "provider_customer_id",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "provider_charge_id",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "default": "now()",
+          "identity": "",
+          "not_null": true,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "proof_reference",
+          "type": "text",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "proof_received_at",
+          "type": "timestamp with time zone",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        },
+        {
+          "acl": null,
+          "name": "proof_received_by",
+          "type": "uuid",
+          "default": null,
+          "identity": "",
+          "not_null": false,
+          "generated": ""
+        }
+      ],
+      "indexes": [
+        {
+          "name": "commercial_orders_business_idx",
+          "definition": "CREATE INDEX commercial_orders_business_idx ON public.commercial_orders USING btree (business_id)",
+          "constraint_owned": false
+        },
+        {
+          "name": "commercial_orders_buyer_idx",
+          "definition": "CREATE INDEX commercial_orders_buyer_idx ON public.commercial_orders USING btree (buyer_profile_id)",
+          "constraint_owned": false
+        },
+        {
+          "name": "commercial_orders_external_ref_key",
+          "definition": "CREATE UNIQUE INDEX commercial_orders_external_ref_key ON public.commercial_orders USING btree (external_ref)",
+          "constraint_owned": true
+        },
+        {
+          "name": "commercial_orders_one_open_direct_pix",
+          "definition": "CREATE UNIQUE INDEX commercial_orders_one_open_direct_pix ON public.commercial_orders USING btree (lower(buyer_email), cnpj) WHERE ((payment_method = 'direct_pix'::text) AND (status = ANY (ARRAY['awaiting_payment'::text, 'proof_received'::text])))",
+          "constraint_owned": false
+        },
+        {
+          "name": "commercial_orders_pkey",
+          "definition": "CREATE UNIQUE INDEX commercial_orders_pkey ON public.commercial_orders USING btree (id)",
+          "constraint_owned": true
+        },
+        {
+          "name": "commercial_orders_provider_charge_id_key",
+          "definition": "CREATE UNIQUE INDEX commercial_orders_provider_charge_id_key ON public.commercial_orders USING btree (provider_charge_id)",
+          "constraint_owned": true
+        }
+      ],
+      "policies": [
+        {
+          "name": "orders_read_own",
+          "check": null,
+          "roles": [
+            "authenticated"
+          ],
+          "using": "(buyer_profile_id = ( SELECT auth.uid() AS uid))",
+          "command": "r",
+          "permissive": true
+        }
+      ],
+      "triggers": null,
+      "force_rls": false,
+      "constraints": [
+        {
+          "name": "commercial_orders_approval_matches",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((((status = 'payment_approved'::text) AND (payment_approved_at IS NOT NULL)) OR ((status <> 'payment_approved'::text) AND (payment_approved_at IS NULL))))"
+        },
+        {
+          "name": "commercial_orders_billing_period_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((billing_period = ANY (ARRAY['monthly'::text, 'annual_upfront'::text])))"
+        },
+        {
+          "name": "commercial_orders_business_id_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (business_id) REFERENCES businesses(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_buyer_profile_id_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (buyer_profile_id) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((((billing_period = 'monthly'::text) AND (discount_percent = 0)) OR ((billing_period = 'annual_upfront'::text) AND (discount_percent = 12))))"
+        },
+        {
+          "name": "commercial_orders_cnpj_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((cnpj ~ '^[0-9]{14}$'::text))"
+        },
+        {
+          "name": "commercial_orders_declares_cnpj_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK (declares_cnpj)"
+        },
+        {
+          "name": "commercial_orders_direct_pix_approval_actor_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK (((payment_method <> 'direct_pix'::text) OR (status <> 'payment_approved'::text) OR (payment_approved_by IS NOT NULL)))"
+        },
+        {
+          "name": "commercial_orders_direct_pix_proof_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK (((payment_method <> 'direct_pix'::text) OR (status = ANY (ARRAY['awaiting_payment'::text, 'cancelled'::text])) OR ((proof_reference IS NOT NULL) AND (length(btrim(proof_reference)) > 0) AND (proof_received_at IS NOT NULL) AND (proof_received_by IS NOT NULL))))"
+        },
+        {
+          "name": "commercial_orders_external_ref_key",
+          "type": "u",
+          "validated": true,
+          "definition": "UNIQUE (external_ref)"
+        },
+        {
+          "name": "commercial_orders_origin_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((origin = ANY (ARRAY['assisted'::text, 'self_service'::text])))"
+        },
+        {
+          "name": "commercial_orders_paid_business_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK (((status <> 'payment_approved'::text) OR (business_id IS NOT NULL)))"
+        },
+        {
+          "name": "commercial_orders_payment_approved_by_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (payment_approved_by) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_payment_method_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((payment_method = ANY (ARRAY['direct_pix'::text, 'asaas_pix'::text, 'asaas_card'::text])))"
+        },
+        {
+          "name": "commercial_orders_pkey",
+          "type": "p",
+          "validated": true,
+          "definition": "PRIMARY KEY (id)"
+        },
+        {
+          "name": "commercial_orders_proof_received_by_fkey",
+          "type": "f",
+          "validated": true,
+          "definition": "FOREIGN KEY (proof_received_by) REFERENCES profiles(id) ON DELETE SET NULL"
+        },
+        {
+          "name": "commercial_orders_provider_charge_id_key",
+          "type": "u",
+          "validated": true,
+          "definition": "UNIQUE (provider_charge_id)"
+        },
+        {
+          "name": "commercial_orders_sells_by_whatsapp_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK (sells_by_whatsapp)"
+        },
+        {
+          "name": "commercial_orders_status_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((status = ANY (ARRAY['awaiting_payment'::text, 'proof_received'::text, 'payment_approved'::text, 'cancelled'::text])))"
+        },
+        {
+          "name": "commercial_orders_total_cents_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((total_cents > 0))"
+        },
+        {
+          "name": "commercial_orders_total_matches",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((total_cents = (unit_count *\nCASE billing_period\n    WHEN 'monthly'::text THEN 50000\n    ELSE 528000\nEND)))"
+        },
+        {
+          "name": "commercial_orders_unit_count_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((unit_count > 0))"
+        },
+        {
+          "name": "commercial_orders_unit_price_cents_check",
+          "type": "c",
+          "validated": true,
+          "definition": "CHECK ((unit_price_cents = 50000))"
+        }
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "aprovar_pix_assistido",
+      "owner": "postgres",
+      "signature": "aprovar_pix_assistido(uuid,uuid)",
+      "definition": "CREATE OR REPLACE FUNCTION public.aprovar_pix_assistido(p_order_id uuid, p_operator_id uuid)\n RETURNS boolean\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\ndeclare v_order public.commercial_orders%rowtype;\nbegin\n  if p_operator_id is null then raise exception 'operador obrigatorio'; end if;\n  select * into v_order from public.commercial_orders\n    where id = p_order_id and payment_method = 'direct_pix' for update;\n  if not found then raise exception 'pedido nao encontrado'; end if;\n  if v_order.status = 'payment_approved' then return true; end if;\n  if v_order.status <> 'proof_received' or v_order.business_id is null\n      or v_order.proof_reference is null then\n    raise exception 'comprovante e negocio obrigatorios';\n  end if;\n  update public.commercial_orders set status = 'payment_approved',\n    payment_approved_at = now(), payment_approved_by = p_operator_id,\n    updated_at = now() where id = p_order_id;\n  insert into public.commercial_events(order_id, source, external_event_id,\n    event_type, actor_profile_id)\n    values (p_order_id, 'operator', 'approve:' || p_order_id::text,\n      'pix_aprovado_por_operador', p_operator_id);\n  return true;\nend;\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "registrar_conta_contratada",
+      "owner": "postgres",
+      "signature": "registrar_conta_contratada(uuid,uuid,text,text,text,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.registrar_conta_contratada(p_business_id uuid, p_connection_id uuid, p_external_id text, p_name text, p_currency text, p_page_id text)\n RETURNS uuid\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\ndeclare\n  v_account_id uuid;\n  v_unit_id uuid;\n  v_created_at timestamptz;\n  v_legacy_at timestamptz;\n  v_has_order boolean;\nbegin\n  if p_business_id is null or p_connection_id is null\n      or p_external_id is null or length(btrim(p_external_id)) < 3\n      or length(p_external_id) > 100\n      or p_page_id is null or length(btrim(p_page_id)) < 2\n      or length(p_page_id) > 100 then\n    raise exception 'conta ou pagina invalida';\n  end if;\n\n  select created_at into v_created_at from public.businesses\n    where id = p_business_id for update;\n  if not found then raise exception 'negocio nao encontrado'; end if;\n  if not exists (select 1 from public.meta_connections\n      where id = p_connection_id and business_id = p_business_id) then\n    raise exception 'conexao nao pertence ao negocio';\n  end if;\n\n  select exists (select 1 from public.commercial_orders\n    where business_id = p_business_id and status <> 'cancelled')\n    into v_has_order;\n\n  if v_has_order then\n    select id into v_account_id from public.ad_accounts\n      where business_id = p_business_id and external_id = btrim(p_external_id);\n\n    if not exists (select 1 from public.commercial_order_units u\n        join public.commercial_orders o on o.id = u.order_id\n        where o.business_id = p_business_id and o.status = 'payment_approved'\n          and u.ad_account_id = v_account_id) then\n      select u.id into v_unit_id from public.commercial_order_units u\n        join public.commercial_orders o on o.id = u.order_id\n        where o.business_id = p_business_id and o.status = 'payment_approved'\n          and u.ad_account_id is null\n        order by o.created_at, u.ordinal limit 1 for update of u;\n      if v_unit_id is null then\n        if exists (select 1 from public.commercial_orders\n            where business_id = p_business_id\n              and status in ('awaiting_payment', 'proof_received')) then\n          raise exception 'pedido ainda nao aprovado';\n        end if;\n        raise exception 'sem unidade contratada disponivel';\n      end if;\n    end if;\n  else\n    select min(granted_at) into v_legacy_at from public.webapp_legacy_access;\n    if v_legacy_at is null or v_created_at > v_legacy_at then\n      raise exception 'negocio novo sem pedido aprovado';\n    end if;\n  end if;\n\n  insert into public.ad_accounts(\n    business_id, meta_connection_id, external_id, name, currency,\n    ownership, status, is_active\n  ) values (\n    p_business_id, p_connection_id, btrim(p_external_id),\n    coalesce(nullif(btrim(p_name), ''), btrim(p_external_id)),\n    nullif(btrim(p_currency), ''), 'cliente', 'ok', true\n  ) on conflict (business_id, external_id) do update set\n    meta_connection_id = excluded.meta_connection_id,\n    name = excluded.name,\n    currency = excluded.currency,\n    ownership = 'cliente', status = 'ok', is_active = true\n  returning id into v_account_id;\n\n  if v_unit_id is not null then\n    update public.commercial_order_units set ad_account_id = v_account_id\n      where id = v_unit_id;\n  end if;\n  update public.meta_connections set meta_page_id = btrim(p_page_id)\n    where id = p_connection_id and business_id = p_business_id;\n  return v_account_id;\nend;\n$function$\n"
+    },
+    {
+      "acl": "{postgres=X/postgres,service_role=X/postgres}",
+      "name": "registrar_pedido_pix_assistido",
+      "owner": "postgres",
+      "signature": "registrar_pedido_pix_assistido(text,text,text,text,integer,text)",
+      "definition": "CREATE OR REPLACE FUNCTION public.registrar_pedido_pix_assistido(p_ref text, p_email text, p_legal_name text, p_cnpj text, p_unit_count integer, p_billing_period text)\n RETURNS uuid\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\ndeclare\n  v_email text := lower(btrim(p_email));\n  v_legal_name text := btrim(p_legal_name);\n  v_existing public.commercial_orders%rowtype;\n  v_business_id uuid;\n  v_order_id uuid;\n  v_total integer;\nbegin\n  if p_ref is null or p_ref !~ '^[0-9a-f-]{36}$' then\n    raise exception 'referencia invalida';\n  end if;\n  if v_email is null or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+[.][^[:space:]@]+$'\n      or length(v_email) > 254 then\n    raise exception 'email invalido';\n  end if;\n  if v_legal_name is null or length(v_legal_name) < 2 or length(v_legal_name) > 200\n      or p_cnpj is null or p_cnpj !~ '^[0-9]{14}$'\n      or p_unit_count is null or p_unit_count not between 1 and 100\n      or p_billing_period not in ('monthly', 'annual_upfront') then\n    raise exception 'dados do pedido invalidos';\n  end if;\n\n  select * into v_existing from public.commercial_orders where external_ref = p_ref;\n  if found then\n    if v_existing.buyer_email = v_email and v_existing.legal_name = v_legal_name\n        and v_existing.cnpj = p_cnpj and v_existing.unit_count = p_unit_count\n        and v_existing.billing_period = p_billing_period\n        and v_existing.payment_method = 'direct_pix' then\n      return v_existing.id;\n    end if;\n    raise exception 'referencia ja utilizada';\n  end if;\n\n  -- Uma compra adicional do mesmo comprador/CNPJ usa o negócio existente.\n  select business_id into v_business_id from public.commercial_orders\n    where buyer_email = v_email and cnpj = p_cnpj and business_id is not null\n      and status = 'payment_approved'\n    order by created_at desc limit 1;\n  if v_business_id is null then\n    insert into public.businesses(name, claim_email)\n      values (v_legal_name, v_email) returning id into v_business_id;\n  end if;\n\n  v_total := p_unit_count * case p_billing_period\n    when 'monthly' then 50000 else 528000 end;\n  insert into public.commercial_orders(\n    external_ref, buyer_email, business_id, legal_name, cnpj,\n    declares_cnpj, sells_by_whatsapp, origin, payment_method,\n    billing_period, unit_price_cents, discount_percent, unit_count,\n    total_cents, status\n  ) values (\n    p_ref, v_email, v_business_id, v_legal_name, p_cnpj,\n    true, true, 'assisted', 'direct_pix', p_billing_period,\n    50000, case p_billing_period when 'monthly' then 0 else 12 end,\n    p_unit_count, v_total, 'awaiting_payment'\n  ) returning id into v_order_id;\n\n  insert into public.commercial_order_units(order_id, ordinal)\n    select v_order_id, generate_series(1, p_unit_count);\n  return v_order_id;\nend;\n$function$\n"
+    },
+    {
+      "acl": "{=X/postgres,postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "name": "set_updated_at",
+      "owner": "postgres",
+      "signature": "set_updated_at()",
+      "definition": "CREATE OR REPLACE FUNCTION public.set_updated_at()\n RETURNS trigger\n LANGUAGE plpgsql\n SET search_path TO ''\nAS $function$\nbegin\n  new.updated_at = now();\n  return new;\nend;\n$function$\n"
+    }
+  ],
+  "read_only": "on",
+  "default_acl": [
+    {
+      "acl": "{postgres=r*w*U*/supabase_admin}",
+      "type": "S",
+      "owner": "supabase_admin",
+      "schema": "extensions"
+    },
+    {
+      "acl": "{postgres=X*/supabase_admin}",
+      "type": "f",
+      "owner": "supabase_admin",
+      "schema": "extensions"
+    },
+    {
+      "acl": "{postgres=a*r*w*d*D*x*t*m*/supabase_admin}",
+      "type": "r",
+      "owner": "supabase_admin",
+      "schema": "extensions"
+    },
+    {
+      "acl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}",
+      "type": "S",
+      "owner": "supabase_admin",
+      "schema": "graphql"
+    },
+    {
+      "acl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}",
+      "type": "f",
+      "owner": "supabase_admin",
+      "schema": "graphql"
+    },
+    {
+      "acl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}",
+      "type": "r",
+      "owner": "supabase_admin",
+      "schema": "graphql"
+    },
+    {
+      "acl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}",
+      "type": "S",
+      "owner": "supabase_admin",
+      "schema": "graphql_public"
+    },
+    {
+      "acl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}",
+      "type": "f",
+      "owner": "supabase_admin",
+      "schema": "graphql_public"
+    },
+    {
+      "acl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}",
+      "type": "r",
+      "owner": "supabase_admin",
+      "schema": "graphql_public"
+    },
+    {
+      "acl": "{postgres=rwU/supabase_admin,anon=rwU/supabase_admin,authenticated=rwU/supabase_admin,service_role=rwU/supabase_admin}",
+      "type": "S",
+      "owner": "supabase_admin",
+      "schema": "public"
+    },
+    {
+      "acl": "{postgres=X/supabase_admin,anon=X/supabase_admin,authenticated=X/supabase_admin,service_role=X/supabase_admin}",
+      "type": "f",
+      "owner": "supabase_admin",
+      "schema": "public"
+    },
+    {
+      "acl": "{postgres=arwdDxtm/supabase_admin,anon=arwdDxtm/supabase_admin,authenticated=arwdDxtm/supabase_admin,service_role=arwdDxtm/supabase_admin}",
+      "type": "r",
+      "owner": "supabase_admin",
+      "schema": "public"
+    },
+    {
+      "acl": "{postgres=rwU/supabase_admin,dashboard_user=rwU/supabase_admin}",
+      "type": "S",
+      "owner": "supabase_admin",
+      "schema": "realtime"
+    },
+    {
+      "acl": "{postgres=X/supabase_admin,dashboard_user=X/supabase_admin}",
+      "type": "f",
+      "owner": "supabase_admin",
+      "schema": "realtime"
+    },
+    {
+      "acl": "{postgres=a*r*wdDxtm/supabase_admin,dashboard_user=arwdDxtm/supabase_admin}",
+      "type": "r",
+      "owner": "supabase_admin",
+      "schema": "realtime"
+    },
+    {
+      "acl": "{postgres=rwU/postgres,anon=rwU/postgres,authenticated=rwU/postgres,service_role=rwU/postgres}",
+      "type": "S",
+      "owner": "postgres",
+      "schema": "public"
+    },
+    {
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "type": "f",
+      "owner": "postgres",
+      "schema": "public"
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "type": "r",
+      "owner": "postgres",
+      "schema": "public"
+    },
+    {
+      "acl": "{postgres=rwU/postgres,anon=rwU/postgres,authenticated=rwU/postgres,service_role=rwU/postgres}",
+      "type": "S",
+      "owner": "postgres",
+      "schema": "storage"
+    },
+    {
+      "acl": "{postgres=X/postgres,anon=X/postgres,authenticated=X/postgres,service_role=X/postgres}",
+      "type": "f",
+      "owner": "postgres",
+      "schema": "storage"
+    },
+    {
+      "acl": "{postgres=arwdDxtm/postgres,anon=arwdDxtm/postgres,authenticated=arwdDxtm/postgres,service_role=arwdDxtm/postgres}",
+      "type": "r",
+      "owner": "postgres",
+      "schema": "storage"
+    },
+    {
+      "acl": "{postgres=rwU/supabase_auth_admin,dashboard_user=rwU/supabase_auth_admin}",
+      "type": "S",
+      "owner": "supabase_auth_admin",
+      "schema": "auth"
+    },
+    {
+      "acl": "{postgres=X/supabase_auth_admin,dashboard_user=X/supabase_auth_admin}",
+      "type": "f",
+      "owner": "supabase_auth_admin",
+      "schema": "auth"
+    },
+    {
+      "acl": "{postgres=arwdDxtm/supabase_auth_admin,dashboard_user=arwdDxtm/supabase_auth_admin}",
+      "type": "r",
+      "owner": "supabase_auth_admin",
+      "schema": "auth"
+    }
+  ],
+  "observed_at": "2026-11-11T14:39:29.83562+00:00",
+  "public_table_fingerprints": [
+    {
+      "md5": "cf28bc245afc9c60ac155ef0c30573b5",
+      "name": "ad_accounts"
+    },
+    {
+      "md5": "07bf00a7874cdb4c2d1028a50776be50",
+      "name": "analysis_runs"
+    },
+    {
+      "md5": "12343a49df31ae98eb7c2ac7b8ff6926",
+      "name": "business_memberships"
+    },
+    {
+      "md5": "ff7f697ac598da8706562f9affb04066",
+      "name": "businesses"
+    },
+    {
+      "md5": "c1aaf3eaa9559d58b5ef5862b476b12f",
+      "name": "campaigns"
+    },
+    {
+      "md5": "3699515a57c890879d4567928694f449",
+      "name": "campanhas_criacao"
+    },
+    {
+      "md5": "aabf51596eeae0f1415d76b2ef462145",
+      "name": "campanhas_criacao_arquivadas_20260923"
+    },
+    {
+      "md5": "c442ff9e90380e06e9d6b4860009a2ff",
+      "name": "campanhas_meta"
+    },
+    {
+      "md5": "7ac91ecbac64ba4f83c66caa97eed7cf",
+      "name": "commercial_events"
+    },
+    {
+      "md5": "147b4992ee2272f8130932e9d9ce2de0",
+      "name": "commercial_order_units"
+    },
+    {
+      "md5": "557393f5af593171aa17056edb8804d9",
+      "name": "commercial_orders"
+    },
+    {
+      "md5": "1ed2513b8d4b08c3899deb12217eb061",
+      "name": "contract_documents"
+    },
+    {
+      "md5": "fa9620d39aaf65a6c0972ddb9561ff72",
+      "name": "creatives"
+    },
+    {
+      "md5": "e44b6df89ddc03800f847b64fa1d08ce",
+      "name": "criativos"
+    },
+    {
+      "md5": "0180fa9b8ec9164f96739739688b322b",
+      "name": "criativos_arquivados_20260923"
+    },
+    {
+      "md5": "9a5263f6fa959d187c4e121cc006a578",
+      "name": "decisions"
+    },
+    {
+      "md5": "99ce1477417c2a4fc7721397d8391ae6",
+      "name": "divergencias_de_cadastro"
+    },
+    {
+      "md5": "11aa4c1df22a4fa1bbb4cc10e4d68223",
+      "name": "entrevistas"
+    },
+    {
+      "md5": "65f089887d8cc5daeb73169447298898",
+      "name": "exclusoes_de_dados"
+    },
+    {
+      "md5": "ec61f9b82efa443a7c2753be960b857e",
+      "name": "execucoes"
+    },
+    {
+      "md5": "486e7ff4ed8183e581bf32d50fb4b82e",
+      "name": "execucoes_arquivadas_20260924"
+    },
+    {
+      "md5": "eb7d0b053882f9ffa989d759bce63ad8",
+      "name": "execucoes_de_rotina"
+    },
+    {
+      "md5": "5ffa01f045302f01bb41547b66df6a47",
+      "name": "execucoes_teste_arquivadas_20260914"
+    },
+    {
+      "md5": "486e7ff4ed8183e581bf32d50fb4b82e",
+      "name": "execucoes_teste_arquivadas_20260923"
+    },
+    {
+      "md5": "fb253d348e7a361413bbf89abf707632",
+      "name": "fiscal_documents"
+    },
+    {
+      "md5": "ba77a4cef6a948f0c6b81d69d7e3d9dc",
+      "name": "identidade_visual"
+    },
+    {
+      "md5": "ae5b82efa044847a808e559d037d6e72",
+      "name": "itens_da_proposta"
+    },
+    {
+      "md5": "0ad8a9c9f6746737d980f7b222779650",
+      "name": "leads_lp"
+    },
+    {
+      "md5": "609a2669dcf881ba3c3195ac315dbb13",
+      "name": "meta_connections"
+    },
+    {
+      "md5": "ba1d4b268ad55da2a9b0e1f36b628c8c",
+      "name": "metricas_diarias"
+    },
+    {
+      "md5": "f1ffc43f68278acb94f3f700c7c88038",
+      "name": "metricas_diarias_arquivadas_20260924"
+    },
+    {
+      "md5": "ba4512b10ad568575903fa283c2c88da",
+      "name": "metrics_daily"
+    },
+    {
+      "md5": "3067dc7750cb3cad6e1c5627a68d3998",
+      "name": "narrativa_negocio"
+    },
+    {
+      "md5": "0a9de8193aa55759f6beed7dcb4ee69c",
+      "name": "offers"
+    },
+    {
+      "md5": "0e75d2feba7d80939f81806932d45127",
+      "name": "perguntas_apresentadas"
+    },
+    {
+      "md5": "7eac7e3870ab7d9a2677226a5c4c380d",
+      "name": "pessoas_do_negocio"
+    },
+    {
+      "md5": "762f5a9a42fcb87c4d76b12f5a0f45f1",
+      "name": "profiles"
+    },
+    {
+      "md5": "b6afbc6e942209e9b7c38ce2cff20b6a",
+      "name": "propostas_de_perfil"
+    },
+    {
+      "md5": "4f158837131e3df7ba42cce9243b7f1e",
+      "name": "respostas_do_dono"
+    },
+    {
+      "md5": "16a77b48802c885d3dd4c4048791515e",
+      "name": "webapp_legacy_access"
+    }
+  ],
+  "public_function_fingerprints": [
+    {
+      "md5": "958adc7fb33a1e8e5dd03dc14d7b0d19",
+      "signature": "apagar_dados_da_meta(text)"
+    },
+    {
+      "md5": "7736e81d223f36e222f1d045dc1bd851",
+      "signature": "aplicar_proposta(uuid,text)"
+    },
+    {
+      "md5": "05dc9f9e3276de3a4d14a8367af98b19",
+      "signature": "aprovar_pix_assistido(uuid,uuid)"
+    },
+    {
+      "md5": "76451f311802933d4b348a2c53131b62",
+      "signature": "claim_businesses()"
+    },
+    {
+      "md5": "be2afc403bfc4eb651e098a9a098fd2a",
+      "signature": "conectar_meta(uuid,text,timestamp with time zone,text,text[])"
+    },
+    {
+      "md5": "1c44cf452bff7a88d3ba933393c573ed",
+      "signature": "confirmar_campo_do_cliente(uuid,uuid,text,text,jsonb)"
+    },
+    {
+      "md5": "e651e3301d05058e7b0d0df8406cc939",
+      "signature": "desautorizar_meta(text)"
+    },
+    {
+      "md5": "8092135a620c8935f141a39a241f14a5",
+      "signature": "escrever_apenas_se_livre(uuid,text,jsonb,text,text,uuid)"
+    },
+    {
+      "md5": "b1b8de26e3690068f9d7c2b5431ec064",
+      "signature": "esvaziar_campos_do_cliente(uuid,text[])"
+    },
+    {
+      "md5": "1dd3721b318a8d06d2df7666bb7ebe03",
+      "signature": "inserir_lead_lp(text,text,text,text,text,text,text,text,boolean,boolean,text,text,text,text,text,text,text,text,text,text)"
+    },
+    {
+      "md5": "787178f88c739f932309dafe6d1badee",
+      "signature": "inserir_lead_lp(text,text,text,text,text,text,text,text,boolean,boolean,text,text,text,text,text,text,text,text,text)"
+    },
+    {
+      "md5": "2492cc0df2d5b4439a6c771c32d7640f",
+      "signature": "list_orphan_businesses()"
+    },
+    {
+      "md5": "dca4165d54a87185efc932cdf217c3e1",
+      "signature": "marcar_conexao_meta_quebrada(uuid,text,text)"
+    },
+    {
+      "md5": "660283c97c1772c0635f2b649999ac28",
+      "signature": "mesclar_blocos_onboarding(uuid,jsonb)"
+    },
+    {
+      "md5": "53c0c66ffc15c704f992f32900b27ec4",
+      "signature": "obter_token_meta(uuid)"
+    },
+    {
+      "md5": "6727953a3a63d3a29bfc49e11fe1fbb6",
+      "signature": "procedencia_do_campo(text,uuid,text)"
+    },
+    {
+      "md5": "48f1d44c85d3f331bdc5e5ca58204aa8",
+      "signature": "registrar_comprovante_pix(uuid,text,uuid)"
+    },
+    {
+      "md5": "31a749e61f3f51716618c76a0c5f6184",
+      "signature": "registrar_conta_contratada(uuid,uuid,text,text,text,text)"
+    },
+    {
+      "md5": "8958e1bf6e3c77fd0f0f9c18c0cc32e0",
+      "signature": "registrar_pedido_pix_assistido(text,text,text,text,integer,text)"
+    },
+    {
+      "md5": "3089c1d230c1082023e1246253f59009",
+      "signature": "registrar_procedencia(text,uuid,text,text,text,jsonb)"
+    },
+    {
+      "md5": "db509813b96fb648350a41f36fa8090d",
+      "signature": "set_atualizado_em()"
+    },
+    {
+      "md5": "d0f9663fe8aab10bac245a2e7d28517b",
+      "signature": "set_updated_at()"
+    },
+    {
+      "md5": "7605a077c5b772fba2f8025b8b175004",
+      "signature": "status_da_exclusao(text)"
+    }
+  ]
+}

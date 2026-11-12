@@ -1,0 +1,175 @@
+{
+  "date": "2026-11-11",
+  "stage": "public-urls-applied-connections-verified",
+  "observedAt": "2026-11-11T17:04:07.031Z",
+  "authorization": "Victor approved only public access URLs, no credentials/deployment/financial activation",
+  "supabase": {
+    "project": "ushccxpoxjikzqnwhgfd",
+    "siteUrl": "https://app.v2gmidia.com.br",
+    "redirectUrls": [
+      "https://v2g-deploy-webapp.vercel.app/**",
+      "http://localhost:3000/**",
+      "https://app.v2gmidia.com.br/auth/confirmar"
+    ],
+    "savedAndVerifiedAfterReload": true,
+    "previousRedirectsPreserved": true,
+    "templatesChanged": false,
+    "smtpChanged": false
+  },
+  "vercel": {
+    "id": "n46cppKOEKCnUfCR",
+    "key": "NEXT_PUBLIC_SITE_URL",
+    "type": "encrypted",
+    "target": [
+      "production"
+    ],
+    "gitBranch": null,
+    "customEnvironmentIds": [],
+    "publicValueMatches": true,
+    "updatedAt": 1794416205545,
+    "isError": false
+  },
+  "envMetadataUnchanged": true,
+  "environmentNames": [
+    {
+      "key": "OPENAI_API_KEY",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "V2G_N8N_WEBHOOK_TOKEN",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "V2G_API_TOKEN",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "V2G_N8N_WEBHOOK_URL",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "V2G_BACKEND_TOKEN",
+      "target": [
+        "preview",
+        "production"
+      ]
+    },
+    {
+      "key": "V2G_BACKEND_URL",
+      "target": [
+        "preview",
+        "production"
+      ]
+    },
+    {
+      "key": "META_APP_SECRET",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "META_APP_ID",
+      "target": [
+        "preview",
+        "production"
+      ]
+    },
+    {
+      "key": "NEXT_PUBLIC_SITE_URL",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "target": [
+        "production"
+      ]
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "target": [
+        "preview",
+        "production"
+      ]
+    }
+  ],
+  "hiddenProductionEnvCount": 0,
+  "deployment": {
+    "id": "dpl_7wSVHtkzLzmDsdqp4foZ27Gj5zir",
+    "readyState": "READY",
+    "target": "production",
+    "url": "v2g-deploy-webapp-eb6d1x14z-v2-g.vercel.app",
+    "sha": "13f8943471b391bd22e9dd8362f5748653ad9c5b"
+  },
+  "asaas": {
+    "authenticated": true,
+    "account": "V2g Agencias De Publicidade Ltda",
+    "webhookCount": 0,
+    "paymentList": "Empty first-charge state, no payments listed",
+    "webhookLogs": "No results with current filters, provider retains 14 days",
+    "historicalThreeDsApproval": "2026-10-22",
+    "historicalTokenizationApproval": "2026-10-23",
+    "currentChargeTest": false,
+    "changed": false
+  },
+  "resend": {
+    "domain": "send.v2gmidia.com.br",
+    "status": "verified",
+    "productionCredentialConfigured": false,
+    "emailSent": false,
+    "changed": false
+  },
+  "turnstile": {
+    "widgetCount": 1,
+    "widgetName": "V2G Checkout QA",
+    "hostnames": [
+      "v2g-webapp-qa.vercel.app"
+    ],
+    "productionHostnameCovered": false,
+    "secretRead": false,
+    "changed": false
+  },
+  "http": [
+    {
+      "caminho": "/entrar",
+      "http": 200,
+      "notFoundTransmitido": false,
+      "formularios": 1
+    },
+    {
+      "caminho": "/contratar",
+      "http": 200,
+      "notFoundTransmitido": true,
+      "formularios": 0
+    }
+  ],
+  "financial": {
+    "salesOpen": false,
+    "processingConfigured": false,
+    "financialActionRun": false,
+    "noNewDeployment": true,
+    "noNewMigration": true
+  },
+  "limits": [
+    "Saved public Vercel variable requires future authorized deployment before runtime proof",
+    "No production payment/email/access end-to-end proof",
+    "No credentials created or configured",
+    "Existing SMTP secret and sender redaction respected",
+    "No claim that empty webhook logs cover more than visible filters/retention"
+  ]
+}

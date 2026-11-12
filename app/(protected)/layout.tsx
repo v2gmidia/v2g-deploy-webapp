@@ -96,7 +96,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     <Casco
       nome={nome}
       nomeNegocio={nomeNegocio}
-      contextoAgencia={agencia?.status === "agencia" ? agencia.contexto : undefined}
+      contextoAgencia={agencia?.status === "agencia" ? { agencia: agencia.agencia,
+        businessId: agencia.contexto?.businessId, anunciante: agencia.contexto?.anunciante } : undefined}
       negocioAtivoId={ativo.status === "selecionado" ? ativo.negocio.id : undefined}
       rotuloDaConta={nomeNegocio || user.email || ""}
       inicial={inicial}

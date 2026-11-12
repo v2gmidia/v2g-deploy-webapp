@@ -1,0 +1,25 @@
+{
+  "verifiedAt": "2026-11-11T18:15:44.974Z",
+  "providerKeyName": "V2G Produção Pagamentos",
+  "userConfirmedCreationAndPrivateTransfer": true,
+  "key": {
+    "id": "aa53nH1ei2sXzMfX",
+    "key": "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+    "type": "sensitive",
+    "target": [
+      "production"
+    ],
+    "gitBranch": null,
+    "customEnvironmentIds": []
+  },
+  "unique": true,
+  "secret": true,
+  "productionOnly": true,
+  "previous29MetadataPreserved": true,
+  "totalEnvCount": 30,
+  "secretValueRead": false,
+  "emailDeliveryTested": false,
+  "processingEnabled": false,
+  "newDeployment": false,
+  "nextPrivateStep": "Cloudflare V2G Checkout Produção -> TURNSTILE_SITE_KEY / TURNSTILE_SECRET_KEY, only Production; both Secret destinations prepared."
+}

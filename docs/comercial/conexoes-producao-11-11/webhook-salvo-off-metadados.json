@@ -1,0 +1,41 @@
+{
+  "verifiedAt": "2026-11-11T20:29:25.728Z",
+  "webhook": {
+    "observedAt": "2026-11-11T20:26:01.787Z",
+    "name": "V2G WebApp Produção - pagamentos",
+    "expectedUrl": true,
+    "enabled": false,
+    "queueActive": false,
+    "events": [
+      "PAYMENT_AUTHORIZED",
+      "PAYMENT_AWAITING_RISK_ANALYSIS",
+      "PAYMENT_APPROVED_BY_RISK_ANALYSIS",
+      "PAYMENT_REPROVED_BY_RISK_ANALYSIS",
+      "PAYMENT_CREATED",
+      "PAYMENT_UPDATED",
+      "PAYMENT_CONFIRMED",
+      "PAYMENT_RECEIVED",
+      "PAYMENT_OVERDUE",
+      "PAYMENT_REFUNDED",
+      "PAYMENT_REFUND_IN_PROGRESS",
+      "PAYMENT_CHARGEBACK_REQUESTED",
+      "PAYMENT_CHARGEBACK_DISPUTE",
+      "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
+      "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+      "PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED",
+      "PAYMENT_PARTIALLY_REFUNDED"
+    ],
+    "tokenRead": false
+  },
+  "vercelToken": "Secret, production only; prior metadata verified",
+  "financialControls": "13 false",
+  "remoteListBadge": "Desativado",
+  "savedAndPersisted": true,
+  "secretValueRead": false,
+  "hashMissing": true,
+  "hashFormPrepared": true,
+  "userGenerationRequired": true,
+  "localGenerator": "http://127.0.0.1:64602/",
+  "lastAgentAction": "Read-only editor verification; exited without save",
+  "financialTested": false
+}

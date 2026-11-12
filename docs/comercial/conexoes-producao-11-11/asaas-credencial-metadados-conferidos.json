@@ -1,0 +1,24 @@
+{
+  "observedAt": "2026-11-11T19:07:45.586Z",
+  "credential": [
+    {
+      "id": "tbD7s5hM81JNjxRA",
+      "key": "ASAAS_PRODUCTION_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "gitBranch": null,
+      "customEnvironmentIds": [],
+      "updatedAt": 1794424019691
+    }
+  ],
+  "environmentCount": 33,
+  "all13ControlsOff": true,
+  "providerNameObserved": "V2G WebApp Produção",
+  "providerNameObservedAfterReload": true,
+  "userConfirmedPrivateTransfer": true,
+  "secretValueRead": false,
+  "noFinancialCall": true,
+  "next": "Generate webhook token privately; save Vercel Secret/Production and Asaas webhook disabled with queue disabled."
+}

@@ -51,7 +51,8 @@ async function pagina(resultado,{agencia=null,busca=intervalo,negocioId=business
     '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>{chamadas.push('meta');return {ok:true,contas:[]};}},
     '@/lib/piloto-qa/acesso':{pilotoQaHabilitado:()=>agencia!==null},
     '@/lib/agencia/da-sessao':{carregarAgenciaDaSessao:async()=>agencia},
-    '@/components/agencia/Comuns':{ClienteIndisponivel:()=>React.createElement('p',null,'Contexto indisponível')},
+    '@/components/agencia/Comuns':{ClienteIndisponivel:()=>React.createElement('p',null,'Contexto indisponível'),
+      CabecalhoAgencia:({titulo,descricao})=>React.createElement('header',null,React.createElement('h1',null,titulo),React.createElement('p',null,descricao))},
     '@/components/ui/FaixaReconectar':{FaixaReconectar:nada},'@/components/ui/Pill':{Pill:nada},
     '@/components/ui/HeroDaEtapa':{HeroDaEtapa:nada},
     './PainelDeAnuncios':{PainelDeAnuncios:nada},'./AtualizacaoDaConsulta':{AtualizacaoDaConsulta:({children})=>children},
@@ -95,8 +96,16 @@ test('QA recusa cliente alheio, repetido e vazio antes de consultar estado ou m�
 });
 
 test('divergência entre contexto e estado não consulta Meta nem consolidado',async()=>{
-  const chamadas=[];const html=await pagina(null,{agencia,negocioId:profileId,chamadas});
+  const chamadas=[];const html=await pagina(null,{agencia,busca:{...intervalo,cliente:businessId},negocioId:profileId,chamadas});
   assert.deepEqual(chamadas,['estado']);assert.match(html,/Contexto indisponível/);
+});
+
+test('agência escolhe cliente antes de consultar anúncios; raiz sem campanha própria não consulta operação',async()=>{
+  for(const contexto of [null,agencia.contexto]){
+    const chamadas=[];const html=await pagina(null,{agencia:{...agencia,contexto},chamadas});
+    assert.deepEqual(chamadas,[]);assert.match(html,/Escolher cliente na carteira/);
+    assert.doesNotMatch(html,/Consulta Meta preservada|Ainda não há rodadas/);
+  }
 });
 
 test('falha ao conferir contexto QA não mostra resultados ou volta de outro cliente',async()=>{

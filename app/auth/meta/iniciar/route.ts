@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { urlDeConsentimento } from "@/lib/meta/oauth";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
+import { COOKIE_STATE } from "@/lib/meta/oauth-state";
 
 /**
  * Início do OAuth do Meta.
@@ -11,7 +12,6 @@ import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
  * externo — formato que Server Action não atende.
  */
 
-export const COOKIE_STATE = "meta_oauth_state";
 const VALIDADE_SEGUNDOS = 600;
 
 export async function GET(request: NextRequest) {

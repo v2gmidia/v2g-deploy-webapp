@@ -1,0 +1,51 @@
+{
+  "observedAt": "2026-11-11T19:47:02.324Z",
+  "vercelToken": [
+    {
+      "id": "IGoWujtEvNCADQV6",
+      "key": "ASAAS_PRODUCTION_WEBHOOK_TOKEN",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794425903222
+    }
+  ],
+  "totalVariables": 34,
+  "hashPresent": false,
+  "all13ControlsOff": true,
+  "activeDeployment": {
+    "id": "dpl_9kNvixeXgwD8ucf2Mx3L67r4zzsh",
+    "readyState": "READY",
+    "target": "production",
+    "sha": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+    "ref": "main"
+  },
+  "latestDeployment": {
+    "id": "dpl_9kNvixeXgwD8ucf2Mx3L67r4zzsh",
+    "readyState": "READY",
+    "target": "production",
+    "createdAt": 1794425928646,
+    "ready": 1794426013483,
+    "sha": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+    "ref": "main",
+    "errorCode": null
+  },
+  "asaasRemoteWebhookCount": 0,
+  "asaasVerifiedAfterReloadAndAccessibilityRefresh": true,
+  "draftRebuilt": true,
+  "draftSelectedEvents": 17,
+  "draftEnabled": false,
+  "draftQueueActive": false,
+  "tokenRead": false,
+  "nextAction": "Await user confirmation whether original copied token remains in clipboard; no clipboard read by agent. User pastes original into Asaas draft and saves disabled; if unavailable, pair replacement must be explicit.",
+  "privateHashUiPrepared": {
+    "root": "C:/Users/victo/.codex/private-backups/v2g/hash-local-ui-20261111",
+    "userClickRequired": true,
+    "localOnly": true,
+    "secretRendered": false,
+    "secretGenerated": false
+  },
+  "financialAction": false,
+  "agentDeployed": false
+}

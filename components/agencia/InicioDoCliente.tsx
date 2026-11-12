@@ -59,7 +59,7 @@ export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo, 
           <p>{resumo.parcial ? "Resumo parcial: somente as campanhas com observação entram na soma; um campo desconhecido continua não medido. " : "Valores das campanhas com observação. "}Não somamos campanhas aos seus conjuntos ou anúncios. Cliques não representam pessoas únicas ou vendas. A entrega histórica não confirma veiculação atual.</p></details></>}
     </div><ProximoPassoAgencia contexto={c} resumo={tarefa} retorno={retorno} /></div>
     {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do cadastro agora.</p>}
-    {pendencia && <section className={styles.pendencia}><div><h2>Pendência do cadastro</h2><h3>{pendencia.titulo}</h3><p>{pendencia.corpo}</p></div><a className={comuns.link} href={pendencia.href}>{pendencia.rotulo}<Seta /></a></section>}
+    {pendencia && <section className={styles.pendencia}><div><h2>Pendência do cadastro</h2><h3>{pendencia.titulo}</h3><p>{pendencia.corpo}</p></div><a className={comuns.link} href={pendencia.href === "/onboarding" ? `/onboarding?cliente=${c.businessId}` : pendencia.href}>{pendencia.rotulo}<Seta /></a></section>}
     <section className={styles.teto} aria-label="Teto de mídia"><div><h2>{resultado.contas.length === 1 ? "Teto mensal de mídia" : "Teto mensal informado no cadastro"}</h2>
       <p>{resultado.contas.length === 1 ? `Conta ${resultado.contas[0]!.id}` : "A vinculação do teto à conta ainda precisa de conferência."}</p></div>
       <strong>{c.verbaMensal === null ? "Não informado" : dinheiro(c.verbaMensal, "BRL")}</strong><a className={comuns.link} href="/verba">Conferir teto<Seta /></a></section>

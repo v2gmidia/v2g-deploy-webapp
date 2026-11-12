@@ -1,0 +1,89 @@
+{
+  "observedAt": "2026-11-11T18:42:26.631Z",
+  "source": "User confirmed replacing TURNSTILE_SECRET_KEY and redeploying",
+  "activeDeployment": {
+    "id": "dpl_2EWZLUih9tNiQQmYTqR6boUfBuyQ",
+    "readyState": "READY",
+    "target": "production",
+    "createdAt": 1794422324554,
+    "sha": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+    "ref": "main"
+  },
+  "latestDeployment": {
+    "id": "dpl_2EWZLUih9tNiQQmYTqR6boUfBuyQ",
+    "readyState": "READY",
+    "target": "production",
+    "createdAt": 1794422324554,
+    "ready": 1794422401614,
+    "sha": "13f8943471b391bd22e9dd8362f5748653ad9c5b",
+    "ref": "main",
+    "errorCode": null
+  },
+  "http": [
+    {
+      "caminho": "/entrar",
+      "http": 200,
+      "notFoundTransmitido": false,
+      "formularios": 1
+    },
+    {
+      "caminho": "/contratar",
+      "http": 200,
+      "notFoundTransmitido": true,
+      "formularios": 0
+    }
+  ],
+  "metadataOnly": [
+    {
+      "id": "f0ymAzKBTfN5HMNs",
+      "key": "TURNSTILE_SITE_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794421900390
+    },
+    {
+      "id": "2X546IFyd4S8mZMw",
+      "key": "TURNSTILE_SECRET_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794422320074
+    },
+    {
+      "id": "aa53nH1ei2sXzMfX",
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794420743846
+    }
+  ],
+  "envCount": 32,
+  "all13ControlsOff": true,
+  "secretValueRead": false,
+  "secretPairIndependentlyValidated": false,
+  "cloudflare": {
+    "name": "V2G Checkout Produção",
+    "hostnames": [
+      "app.v2gmidia.com.br"
+    ],
+    "hostnameReadFromWidgetEditor": true,
+    "editorCanceledWithoutChange": true,
+    "qaWidgetStillListed": true,
+    "mode": "Managed",
+    "preClearance": false
+  },
+  "next": {
+    "name": "ASAAS_PRODUCTION_API_KEY",
+    "type": "Secret",
+    "target": "production",
+    "formPrepared": true,
+    "userPrivateCreationRequired": true
+  },
+  "financialActionRun": false,
+  "agentDeployed": false
+}
