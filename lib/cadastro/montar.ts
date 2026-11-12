@@ -26,6 +26,12 @@ export const COLUNAS_DO_CADASTRO =
   "atende_somente_no_local, differentiators, guarantee, delivery_time, " +
   "payment_policy, business_hours, availability, onboarding";
 
+/** Somente o que a entrada operacional lê. Não carrega economia por tabela. */
+export const COLUNAS_DO_CADASTRO_OPERACIONAL =
+  "id, name, description, monthly_budget, cadastro_estado, cep, site_url, instagram_handle, " +
+  "atende_somente_no_local, differentiators, guarantee, delivery_time, payment_policy, " +
+  "business_hours, availability, onboarding";
+
 /**
  * O veredito único sobre "este negócio já pode ser cadastrado no backend?".
  *
@@ -235,6 +241,65 @@ export type Cadastro =
   | { completo: true; payload: CadastroCompleto }
   | { completo: false; pendencias: Pendencia[] };
 
+export type CampoOperacional =
+  | "nome_negocio"
+  | "descricao_livre"
+  | "relacao_de_acesso"
+  | "comprador_prioritario"
+  | "praca"
+  | "destino_atendimento"
+  | "caminho_campanha"
+  | "orcamento_mensal_disponivel";
+
+export interface PendenciaOperacional {
+  campo: CampoOperacional;
+  rotulo: string;
+  onde: "/onboarding" | "/verba";
+  motivo: "nao_perguntado" | "abaixo_do_piso";
+  detalhe?: string;
+  desde?: string;
+}
+
+export interface CadastroOperacionalV2 {
+  versao_contrato: "cadastro_operacional.v2";
+  business_id: string;
+  anunciante: {
+    nome: string;
+    descricao_livre: string;
+    comprador_prioritario?: string;
+  };
+  relacao_de_acesso: {
+    modelo: "direto" | "agencia_operadora";
+    contratante_nome?: string;
+    anunciante_nome: string;
+    identidade_com_acesso: "contratante" | "agencia" | "anunciante";
+  };
+  campanha: { caminho: "existente" | "nova" | "a_definir" };
+  atendimento: {
+    destino?: "whatsapp" | "instagram" | "site" | "telefone" | "formulario" | "outro";
+    destino_detalhe?: string;
+    praca?: string;
+  };
+  oferta?: {
+    descricao?: string;
+    preco_referencia?: {
+      moeda: "BRL";
+      valor_min?: number;
+      valor_max?: number;
+      unidade: string;
+      certeza: "confirmado" | "aproximado" | "nao_confirmado";
+      fonte?: string;
+      observado_em?: string;
+    };
+  };
+  orcamento_mensal_disponivel: number;
+}
+
+export type CadastroOperacional =
+  | { completo: false; pendencias: PendenciaOperacional[] }
+  | { completo: true; validavel: false; motivo: "legado_sem_contexto_operacional" }
+  | { completo: true; validavel: true; payload: CadastroOperacionalV2 };
+
 // ------------------------------------------------------------- auxiliares
 
 /** `numeric` do PostgREST pode chegar como string. Nulo é nulo. */
@@ -402,6 +467,154 @@ const ROTULOS: Record<CampoObrigatorio, string> = {
   lucro_desejado_por_cliente: "Quanto você quer que fique com você",
   orcamento_mensal_disponivel: "Quanto você pode investir por mês",
 };
+
+const ROTULOS_OPERACIONAIS: Record<CampoOperacional, string> = {
+  nome_negocio: "O nome do anunciante",
+  descricao_livre: "O produto ou serviço anunciado",
+  relacao_de_acesso: "Quem opera os anúncios",
+  comprador_prioritario: "O comprador prioritário",
+  praca: "A região de atendimento",
+  destino_atendimento: "O destino do atendimento",
+  caminho_campanha: "Se a campanha já existe ou será preparada",
+  orcamento_mensal_disponivel: "Quanto pode investir por mês",
+};
+
+type RespostaOperacional = { texto?: unknown; echo?: unknown };
+
+function respostasOperacionais(onboarding: unknown): Record<string, unknown> {
+  if (!onboarding || typeof onboarding !== "object" || Array.isArray(onboarding)) return {};
+  const respostas = (onboarding as { respostas?: unknown }).respostas;
+  return respostas && typeof respostas === "object" && !Array.isArray(respostas)
+    ? respostas as Record<string, unknown>
+    : {};
+}
+
+function textoDaResposta(respostas: Record<string, unknown>, chave: string): string | null {
+  const resposta = respostas[chave];
+  if (!resposta || typeof resposta !== "object" || Array.isArray(resposta)) return null;
+  const bruto = (resposta as RespostaOperacional).texto;
+  return typeof bruto === "string" ? texto(bruto) : null;
+}
+
+function destinoDoAtendimento(valor: string): CadastroOperacionalV2["atendimento"] {
+  const normalizado = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  if (normalizado === "whatsapp") return { destino: "whatsapp" };
+  if (normalizado === "instagram") return { destino: "instagram" };
+  if (normalizado === "site") return { destino: "site" };
+  if (normalizado === "telefone") return { destino: "telefone" };
+  if (normalizado === "formulario") return { destino: "formulario" };
+  return { destino: "outro", destino_detalhe: valor };
+}
+
+function precoDeReferencia(onboarding: unknown): NonNullable<CadastroOperacionalV2["oferta"]>["preco_referencia"] | undefined {
+  if (!onboarding || typeof onboarding !== "object" || Array.isArray(onboarding)) return undefined;
+  const respostas = (onboarding as { respostas?: unknown }).respostas;
+  if (!respostas || typeof respostas !== "object" || Array.isArray(respostas)) return undefined;
+  const oferta = (respostas as { _oferta?: unknown })._oferta;
+  if (!oferta || typeof oferta !== "object" || Array.isArray(oferta)) return undefined;
+  const preco = (oferta as { preco_referencia?: unknown }).preco_referencia;
+  if (!preco || typeof preco !== "object" || Array.isArray(preco)) return undefined;
+  const p = preco as Record<string, unknown>;
+  const unidade = typeof p.unidade === "string" ? p.unidade.trim() : "";
+  const certeza = p.certeza;
+  if (!unidade || !["confirmado", "aproximado", "nao_confirmado"].includes(String(certeza))) return undefined;
+  const minimo = numero(p.valor_min as number | string | null | undefined);
+  const maximo = numero(p.valor_max as number | string | null | undefined);
+  if (minimo === null && maximo === null) return undefined;
+  return {
+    moeda: "BRL",
+    ...(minimo !== null ? { valor_min: minimo } : {}),
+    ...(maximo !== null ? { valor_max: maximo } : {}),
+    unidade,
+    certeza: certeza as "confirmado" | "aproximado" | "nao_confirmado",
+    ...(typeof p.fonte === "string" && p.fonte.trim() ? { fonte: p.fonte.trim() } : {}),
+    ...(typeof p.observado_em === "string" && p.observado_em.trim() ? { observado_em: p.observado_em.trim() } : {}),
+  };
+}
+
+/**
+ * Entrada operacional V2. Não lê ticket, custo ou lucro e nunca deriva um
+ * deles de referência de preço. Documentos legados já concluídos continuam
+ * utilizáveis, mas só viram payload V2 depois de declarar o novo contexto.
+ */
+export function cadastroUsaContratoOperacional(onboarding: unknown): boolean {
+  const doc = onboarding && typeof onboarding === "object" && !Array.isArray(onboarding)
+    ? onboarding as Record<string, unknown> : {};
+  const respostas = respostasOperacionais(doc);
+  return respostas._contrato_operacional === "cadastro_operacional.v2" || Number(doc.versao) === 2;
+}
+
+export function montarCadastroOperacional(negocio: NegocioParaCadastro): CadastroOperacional {
+  const pendencias: PendenciaOperacional[] = [];
+  const anotar = (campo: CampoOperacional, onde: PendenciaOperacional["onde"],
+    motivo: PendenciaOperacional["motivo"] = "nao_perguntado", detalhe?: string) =>
+    pendencias.push({ campo, rotulo: ROTULOS_OPERACIONAIS[campo], onde, motivo,
+      ...(detalhe ? { detalhe } : {}) });
+
+  const doc = negocio.onboarding && typeof negocio.onboarding === "object" && !Array.isArray(negocio.onboarding)
+    ? negocio.onboarding as Record<string, unknown> : {};
+  const respostas = respostasOperacionais(doc);
+  const contratoOperacionalAtivo = respostas._contrato_operacional === "cadastro_operacional.v2"
+    || Number(doc.versao) === 2;
+  const nome = contratoOperacionalAtivo
+    ? textoDaResposta(respostas, "nome")
+    : texto(negocio.name);
+  if (!nome || nome === NOME_PROVISORIO) anotar("nome_negocio", "/onboarding");
+  const descricao = contratoOperacionalAtivo ? textoDaResposta(respostas, "descricao") : texto(negocio.description);
+  if (!descricao || [...descricao].length < 10) anotar("descricao_livre", "/onboarding");
+
+  const verba = numero(negocio.monthly_budget);
+  const jaEnviado = negocio.cadastro_estado === "enviado";
+  const piso = jaEnviado ? 0 : PISO_MENSAL_DA_CASA;
+  if (verba === null || verba <= 0) anotar("orcamento_mensal_disponivel", "/verba");
+  else if (verba < piso) anotar("orcamento_mensal_disponivel", "/verba", "abaixo_do_piso",
+    `sua verba está em ${dinheiro(verba, "BRL")} por mês e nosso mínimo é ${dinheiro(PISO_MENSAL_DA_CASA, "BRL")}`);
+
+  if (contratoOperacionalAtivo) {
+    const operador = textoDaResposta(respostas, "operador");
+    const contratante = textoDaResposta(respostas, "contratante");
+    if (!["O próprio anunciante opera os anúncios", "Uma agência ou gestor opera para o anunciante"].includes(operador ?? "")
+      || !contratante)
+      anotar("relacao_de_acesso", "/onboarding");
+    if (!textoDaResposta(respostas, "publico")) anotar("comprador_prioritario", "/onboarding");
+    if (!textoDaResposta(respostas, "praca")) anotar("praca", "/onboarding");
+    if (!textoDaResposta(respostas, "destino")) anotar("destino_atendimento", "/onboarding");
+    if (!textoDaResposta(respostas, "campanha")) anotar("caminho_campanha", "/onboarding");
+  }
+  if (pendencias.length) return { completo: false, pendencias };
+  if (!contratoOperacionalAtivo) return { completo: true, validavel: false, motivo: "legado_sem_contexto_operacional" };
+
+  const direto = textoDaResposta(respostas, "operador") === "O próprio anunciante opera os anúncios";
+  const contratanteResposta = textoDaResposta(respostas, "contratante")!;
+  const contratanteNome = contratanteResposta === "É o próprio anunciante" ? nome! : contratanteResposta;
+  const caminhoResposta = textoDaResposta(respostas, "campanha")!;
+  const caminho = caminhoResposta === "Já existe uma campanha para acompanhar" ? "existente"
+    : caminhoResposta === "Vamos preparar uma nova campanha" ? "nova" : "a_definir";
+  const destinoResposta = textoDaResposta(respostas, "destino")!;
+  const praca = textoDaResposta(respostas, "praca")!;
+  const comprador = textoDaResposta(respostas, "publico")!;
+  const ofertaResposta = textoDaResposta(respostas, "oferta");
+  const preco = precoDeReferencia(doc);
+
+  return { completo: true, validavel: true, payload: {
+    versao_contrato: "cadastro_operacional.v2",
+    business_id: negocio.id,
+    anunciante: { nome: nome!, descricao_livre: descricao!, comprador_prioritario: comprador },
+    relacao_de_acesso: {
+      modelo: direto ? "direto" : "agencia_operadora",
+      contratante_nome: contratanteNome,
+      anunciante_nome: nome!,
+      identidade_com_acesso: direto ? "anunciante" : "agencia",
+    },
+    campanha: { caminho },
+    atendimento: { ...destinoDoAtendimento(destinoResposta), praca },
+    ...((ofertaResposta || preco) ? { oferta: {
+      ...(ofertaResposta ? { descricao: ofertaResposta } : {}),
+      ...(preco ? { preco_referencia: preco } : {}),
+    } } : {}),
+    orcamento_mensal_disponivel: verba!,
+  } };
+}
 
 /**
  * Decide, e não corrige. Se falta alguma coisa, devolve a lista inteira do

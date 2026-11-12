@@ -1,0 +1,39 @@
+.raiz { min-width: 0; }
+.cabecalho, .situacao, .pendencia { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.cabecalho { margin-bottom: 24px; flex-wrap: wrap; }
+.cabecalho h1 { margin: 0; font-family: var(--display); font-size: var(--fs-destaque); font-weight: 400; letter-spacing: -0.04em; }
+.raiz h2 { font-family: var(--display); font-size: var(--fs-bloco); font-weight: 500; line-height: 1.35; margin: 0 0 12px; }
+.situacao { margin-bottom: 28px; border-bottom: 1px solid var(--line); padding-bottom: 24px; }
+.situacao p, .pendencia p { max-width: 68ch; margin: 0; line-height: 1.6; }
+.situacao a, .acoes a, .detalhes summary { min-height: 44px; display: inline-flex; align-items: center; color: var(--cobalt-ink); }
+.situacao a { flex-shrink: 0; }
+.fonte, .nota { color: var(--ink-soft); font-size: var(--fs-corpo); line-height: 1.6; overflow-wrap: anywhere; }
+.numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 24px 0 16px; }
+.numeros div { min-width: 0; border-top: 1px solid var(--line); padding-top: 16px; }
+.numeros dt { color: var(--ink-soft); font-size: var(--fs-corpo); margin-bottom: 8px; }
+.numeros dd { font-family: var(--display); font-size: var(--fs-destaque); margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.grafico { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 28px 0; padding: 24px 0; }
+.ausente { color: var(--ink-soft); line-height: 1.6; margin: 0; }
+.desenho { display: block; width: 100%; min-width: 600px; height: auto; color: var(--ink-soft); }
+.desenho text { fill: currentColor; font-family: var(--body); font-size: var(--fs-corpo); }
+.grade { stroke: var(--line); stroke-width: 1; }
+.barra { fill: var(--cobalt-ink); }
+.rolagem { max-width: 100%; overflow-x: auto; }
+.detalhes table { width: 100%; border-collapse: collapse; font-size: var(--fs-corpo); font-variant-numeric: tabular-nums; }
+.detalhes th, .detalhes td { padding: 12px 8px; text-align: start; border-bottom: 1px solid var(--line); }
+.detalhes caption { text-align: start; padding: 12px 8px; color: var(--ink-soft); }
+.detalhes summary { cursor: pointer; }
+.pendencia { background: var(--task-surface); padding: 20px; border-radius: 4px; margin: 24px 0; align-items: flex-start; }
+.pendencia h3 { font-size: var(--fs-titulo); margin: 0 0 8px; }
+.acoes { display: flex; flex-wrap: wrap; gap: 12px 28px; }
+.contas { display: flex; align-items: flex-end; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+.contas label { display: grid; gap: 8px; min-width: 0; }
+.contas select { max-width: 100%; min-height: 44px; font: inherit; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line); padding: 8px; }
+.raiz a:focus-visible, .raiz summary:focus-visible, .raiz select:focus-visible, .rolagem:focus-visible { outline: 2px solid var(--cobalt-ink); outline-offset: 3px; }
+@media (max-width: 640px) {
+  .situacao, .pendencia { align-items: flex-start; flex-direction: column; }
+  .numeros { grid-template-columns: 1fr; gap: 16px; }
+  .numeros div { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; }
+  .numeros dd { font-size: var(--fs-tela); text-align: end; }
+  .pendencia .cta { max-width: 100%; white-space: normal; }
+}

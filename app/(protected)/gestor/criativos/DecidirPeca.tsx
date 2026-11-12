@@ -2,18 +2,19 @@
 
 import { useActionState } from "react";
 import { revisarPecaAction, type EstadoDaRevisao } from "./actions";
+import styles from "./revisao.module.css";
 
 export function DecidirPeca({ id }: { id: string }) {
   const [estado, acao, pendente] = useActionState<EstadoDaRevisao, FormData>(
     revisarPecaAction, {},
   );
-  return <form action={acao} className="auth-card">
+  return <form action={acao} className={styles.form}>
     <input type="hidden" name="id" value={id} />
     <label>Observação para o cliente
       <textarea name="nota" maxLength={2000} rows={2} placeholder="Explique ajustes ou motivo da recusa" />
     </label>
     <div className="form-actions">
-      <button type="submit" name="decisao" value="approved_for_manual_publish" disabled={pendente}>Aprovar para publicação manual</button>
+      <button type="submit" name="decisao" value="approved_for_manual_publish" disabled={pendente}>Aprovar peça</button>
       <button type="submit" name="decisao" value="changes_requested" disabled={pendente}>Pedir ajustes</button>
       <button type="submit" name="decisao" value="rejected" disabled={pendente}>Recusar</button>
     </div>

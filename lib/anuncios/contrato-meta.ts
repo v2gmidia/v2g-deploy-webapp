@@ -2,6 +2,7 @@
  * Contrato e28-meta-ads-read-v1, docs/contratos/e28-meta-ads-read-v1.md do backend,
  * concluído em 29/10/2026. Não conhece conta ou cliente fixos.
  */
+import { lerSerieMeta, type SerieMeta } from "../inicio/serie-meta.ts";
 export type PeriodoMeta = { desde: string; ate: string };
 export type MetricasMeta = {
   estado: "observado" | "sem_dados" | "zero_medido" | "parcial";
@@ -11,6 +12,7 @@ export type MetricasMeta = {
   conversas: string | null;
   dias: string[];
   entregaObservada: boolean | null;
+  serieDiaria?: SerieMeta;
 };
 export type ObjetoMeta = {
   id: string; nome: string | null; statusConfigurado: string | null;
@@ -105,7 +107,10 @@ export function lerInventarioMeta(raw: unknown, esperado: {
     if (m.entrega_observada_no_periodo !== entrega) return null;
     return { estado: m.estado as MetricasMeta["estado"], gasto: m.gasto_centavos, impressoes: m.impressoes,
       cliques: m.cliques_totais, conversas: m.conversas_whatsapp as string | null,
-      dias, entregaObservada: m.entrega_observada_no_periodo };
+      dias, entregaObservada: m.entrega_observada_no_periodo,
+      serieDiaria: lerSerieMeta(m.serie_diaria, esperado.periodo, {
+        gasto: m.gasto_centavos as number | null, impressoes: m.impressoes as number | null, cliques: m.cliques_totais as number | null,
+      }, dias) };
   }
   const ids = new Set<string>();
   function objeto(v: unknown): ObjetoMeta | null {

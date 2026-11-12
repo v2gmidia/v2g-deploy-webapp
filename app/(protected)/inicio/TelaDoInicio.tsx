@@ -13,6 +13,10 @@ import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
 import { esteveNoAr, fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import { cabeRecepcaoDoCadastro, resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
 import { RecepcaoDoCadastro, type RecepcaoOnboarding } from "./RecepcaoDoCadastro";
+import { ResumoMetaDoInicio } from "./ResumoMetaDoInicio";
+import type { DetalheAgenciaDoInicio } from "./ResumoMetaDoInicio";
+import type { ResultadoInventarioMeta } from "@/lib/anuncios/contrato-meta";
+import type { EscopoInicioMeta } from "@/lib/inicio/resumo-meta";
 import {
   estadoNaLista,
   fasesDaCadeia,
@@ -274,6 +278,9 @@ export function TelaDoInicio({
   intervalo,
   acumuladoDoPeriodo,
   investidoNoMesCentavos = null,
+  leituraMeta,
+  escopoMeta,
+  detalheAgencia,
   faixa,
 }: {
   estado: EstadoDoCliente;
@@ -289,6 +296,9 @@ export function TelaDoInicio({
   /** Só os resultados mudam com as datas; jornada e perguntas usam o estado atual. */
   acumuladoDoPeriodo?: ConsolidadoDoNegocio | null;
   investidoNoMesCentavos?: number | null;
+  leituraMeta?: ResultadoInventarioMeta;
+  escopoMeta?: EscopoInicioMeta;
+  detalheAgencia?: DetalheAgenciaDoInicio;
   /** a faixa de reconexão, que lê sessão: a página passa, a bancada não */
   faixa: ReactNode;
 }) {
@@ -427,6 +437,20 @@ export function TelaDoInicio({
         valoresPorDia={valoresPorDia}
       />
     ) : null;
+
+  // Cadastro e pipeline não substituem a leitura Meta. Não fechamos a jornada
+  // nem afirmamos veiculação atual a partir de métricas/configuração históricas.
+  if (leituraMeta && escopoMeta && intervalo) return <ResumoMetaDoInicio
+    key={`${escopoMeta.perfilId}:${escopoMeta.businessId}`} resultado={leituraMeta} escopo={escopoMeta} intervalo={intervalo}
+    pendencia={pendenciaOnboarding} falhaPendencia={falhaPendencia} faixa={faixa}
+    detalheAgencia={detalheAgencia}
+    complemento={<>
+      {jornadaConcluida && !temProximoAcionavel && !falhaPendencia && estado.negocioId && <ConclusaoDaJornada businessId={estado.negocioId} />}
+      {cardDaPergunta}
+      {!detalheAgencia && <Comando verba={estado.verbaMensal} investido={null} />}
+      <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
+    </>}
+  />;
 
   // ============================================================
   // QUEM DECIDE O RAMO É `temNumero`, SOZINHO. O `proximo ||` SAIU.

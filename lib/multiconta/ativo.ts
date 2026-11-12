@@ -80,6 +80,17 @@ export async function negocioAtivoDaSessao(): Promise<NegocioAtivoDaSessao> {
     legadoEm,
     operador,
   });
-  const preferencia = (await cookies()).get(COOKIE_NEGOCIO_ATIVO)?.value ?? null;
+  let preferencia = (await cookies()).get(COOKIE_NEGOCIO_ATIVO)?.value ?? null;
+  // Preferência apenas entre negócios já elegíveis. O vínculo nunca concede acesso.
+  const { agenciaHabilitada } = await import("../agencia/habilitacao");
+  if (!preferencia && liberados.length > 1 && agenciaHabilitada()) {
+    const { lerVinculosDaSessao } = await import("../agencia/vinculos-da-sessao");
+    const leitura = await lerVinculosDaSessao(supabase, user.id);
+    if (leitura.estado === "indisponivel") return { status: "falha_consulta" };
+    if (leitura.estado === "pronto") {
+      const { raizUnicaElegivel } = await import("../agencia/vinculos");
+      preferencia = raizUnicaElegivel(leitura.vinculos, liberados);
+    }
+  }
   return escolherNegocio(liberados, preferencia);
 }
