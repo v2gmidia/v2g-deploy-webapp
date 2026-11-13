@@ -10,8 +10,9 @@ import { TelaDoInicio } from "./TelaDoInicio";
 import { aplicarAgendaConferida, lerPendenciaDoNegocio } from "@/lib/onboarding/pendencia-do-negocio";
 import { carregarAgendaAction } from "@/app/(fluxo)/onboarding/concluido/agenda-actions";
 import { TIPOS_VISIVEIS_AO_CLIENTE } from "@/lib/decisoes/visibilidade";
-import { consolidadoDoNegocio } from "@/lib/backend/dia-seguinte";
-import { resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
+import { anunciosDoNegocioSelecionado } from "@/lib/backend/anuncios-do-negocio";
+import { agenciaHabilitada } from "@/lib/agencia/habilitacao";
+import { retornoDaCarteira, selecionarVisaoAgencia } from "@/lib/agencia/contexto";
 
 export const metadata = tituloDaAba("/inicio");
 
@@ -66,13 +67,33 @@ export default async function InicioPage({
   const supabase = await createClient();
   const {
     data: { user },
+    error: erroSessao,
   } = await supabase.auth.getUser();
   // Sem fixture, sem sessão, sem tela — como sempre foi.
-  if (!user && !fixture) return null;
+  if ((erroSessao || !user) && !fixture) return null;
 
   // UMA leitura, uma resposta. O `agora` é parâmetro até o fim da cadeia.
   const agora = new Date();
   const busca = await searchParams;
+  const agencia = !fixture && agenciaHabilitada()
+    ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : { status: "desligado" as const };
+  const contextoAgencia = agencia.status === "agencia" ? agencia.contexto : null;
+  const visao = agencia.status === "desligado" ? "direto" : selecionarVisaoAgencia(contextoAgencia, busca, agencia.status === "agencia");
+  if (agencia.status === "indisponivel" || visao === "invalido") {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
+  }
+  const resumoAgencia = contextoAgencia && visao !== "carteira"
+    ? await (await import("@/lib/agencia/resumo-da-sessao")).carregarResumoDaCarteira(contextoAgencia.businessId) : null;
+  if (visao === "carteira" && agencia.status === "agencia") {
+    const { CarteiraAgencia } = await import("@/components/agencia/CarteiraAgencia");
+    const { carregarResumoDaCarteira } = await import("@/lib/agencia/resumo-da-sessao");
+    const { abrirClienteAction } = await import("../agencia/actions");
+    const clientes = await Promise.all(agencia.clientes.map(async contexto => ({ contexto, resumo: await carregarResumoDaCarteira(contexto.businessId) })));
+    return <CarteiraAgencia key={agencia.agencyBusinessId} agencia={agencia.agencia} clientes={clientes}
+      ativoId={agencia.businessIdAtivo} abrirCliente={abrirClienteAction}
+      retorno={retornoDaCarteira(busca)} />;
+  }
   const hoje = diaEmSaoPaulo(agora);
   const intervalo = intervaloDoInicio(busca, hoje);
   let estado: EstadoDoCliente | null = fixture
@@ -134,23 +155,19 @@ export default async function InicioPage({
   // escopo deste lote.
   // ============================================================
   if (!estado.temNegocio) redirect("/onboarding");
-
-  // A consulta histórica não altera a jornada nem as perguntas sobre ontem.
-  // O limite mensal sempre considera o mês atual, independentemente do calendário.
-  const esperaResultados = resultadosSaoEsperados(estado);
-  let investidoNoMesCentavos: number | null = null;
-  let acumuladoDoPeriodo: EstadoDoCliente["diaSeguinte"]["acumulado"] | undefined = fixture || !esperaResultados ? undefined : null;
-  if (!fixture && esperaResultados && estado.negocioId && user) {
-    const args = { businessId: estado.negocioId, profileId: user.id };
-    const desdeMes = `${hoje.slice(0, 8)}01`;
-    const mensal = consolidadoDoNegocio({ ...args, desde: desdeMes, ate: hoje });
-    const consultaPeriodo = intervalo.desde === desdeMes && intervalo.ate === hoje
-      ? mensal
-      : consolidadoDoNegocio({ ...args, desde: intervalo.desde, ate: intervalo.ate });
-    const [acumuladoDoMes, selecionado] = await Promise.all([mensal, consultaPeriodo]);
-    investidoNoMesCentavos = acumuladoDoMes.ok ? acumuladoDoMes.dados.investiuCentavos : null;
-    acumuladoDoPeriodo = selecionado.ok ? selecionado.dados : null;
+  if (contextoAgencia && estado.negocioId !== contextoAgencia.businessId) {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
   }
+
+  // Mesmo leitor autorizado de Anúncios: não depende de execução ou cadastro concluído.
+  // Os parâmetros podem escolher somente uma conta que a sessão já alcança.
+  const contaSolicitada = typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined;
+  const leituraMeta = !fixture && contextoAgencia ? intervalo.erro ? {
+    ok: false as const, motivo: "periodo" as const, mensagem: intervalo.erro, contas: [], contaSelecionada: null,
+  } : await anunciosDoNegocioSelecionado({
+    desde: intervalo.desde, ate: intervalo.ate, contaId: contaSolicitada,
+  }) : undefined;
 
   // A escolha do negócio sempre permanece no Início. Esta leitura resolve
   // qual pendência do onboarding deve aparecer aqui, sem transformar uma
@@ -158,7 +175,7 @@ export default async function InicioPage({
   let leituraDaPendencia = !fixture && estado.negocioId
     ? await lerPendenciaDoNegocio(estado.negocioId)
     : { pendencia: null, falha: false, reserva: null };
-  if (!fixture && estado.negocioId && leituraDaPendencia.cadastroConcluido) {
+  if (!fixture && !contextoAgencia && estado.negocioId && leituraDaPendencia.cadastroConcluido) {
     const agendaConferida = await carregarAgendaAction(estado.negocioId);
     leituraDaPendencia = aplicarAgendaConferida(leituraDaPendencia, agendaConferida);
   }
@@ -212,8 +229,9 @@ export default async function InicioPage({
       recepcaoOnboarding={leituraDaPendencia.cadastroConcluido && estado.negocioId ? { businessId: estado.negocioId, reserva, falhaReuniao: leituraDaPendencia.falha } : null}
       falhaPendencia={leituraDaPendencia.falha}
       intervalo={intervalo}
-      acumuladoDoPeriodo={acumuladoDoPeriodo}
-      investidoNoMesCentavos={investidoNoMesCentavos}
+      leituraMeta={leituraMeta}
+      detalheAgencia={contextoAgencia && resumoAgencia ? { contexto: contextoAgencia, resumo: resumoAgencia, retorno: retornoDaCarteira(busca, true) } : undefined}
+      escopoMeta={estado.negocioId && user ? { businessId: estado.negocioId, perfilId: user.id, desde: intervalo.desde, ate: intervalo.ate, conta: contaSolicitada } : undefined}
       faixa={<FaixaReconectar />}
     />
   );

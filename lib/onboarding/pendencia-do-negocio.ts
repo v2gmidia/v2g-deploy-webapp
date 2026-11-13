@@ -7,7 +7,7 @@ export interface LeituraDaPendencia {
   pendencia: PendenciaDoOnboarding | null;
   falha: boolean;
   reserva: { starts_at: string; ends_at: string } | null;
-  /** Só true após conferir respostas, contas e marca do negócio autorizado. */
+  /** Só true após conferir respostas operacionais e marca do negócio autorizado. */
   cadastroConcluido?: boolean;
 }
 

@@ -40,7 +40,7 @@ export function rotuloDaRevisao(status: StatusRevisao): string {
     case "uploading": return "Envio em andamento";
     case "upload_failed": return "Envio incompleto; tente novamente";
     case "awaiting_review": return "Recebido para revisão do gestor";
-    case "approved_for_manual_publish": return "Aprovado pelo gestor; publicação manual pendente";
+    case "approved_for_manual_publish": return "Peça aprovada pelo gestor";
     case "changes_requested": return "Ajustes solicitados pelo gestor";
     case "rejected": return "Recusado pelo gestor";
   }

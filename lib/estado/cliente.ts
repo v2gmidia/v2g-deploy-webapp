@@ -5,7 +5,7 @@ import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { lerCarimbos } from "@/lib/campanha/carimbos";
 import {
   COLUNAS_DO_CADASTRO,
-  montarCadastro,
+  montarCadastroOperacional, montarCadastro, cadastroUsaContratoOperacional,
   type NegocioParaCadastro,
 } from "@/lib/cadastro/montar";
 import { backendConfigurado, consolidadoDoNegocio, execucaoDoNegocio } from "@/lib/backend";
@@ -398,10 +398,9 @@ export async function estadoDoCliente(
   });
   const esperandoPublicacao = listaDeCampanhas.filter((c) => c.published_at === null);
 
-  const cadastro = montarCadastro(linha);
-  // As perguntas operacionais do backend ainda podem precisar de ajuste,
-  // mas não tornam incompleto um onboarding que o cliente já concluiu.
-  // O envio ao backend continua usando `montarCadastro` sem esta dispensa.
+  const cadastro = cadastroUsaContratoOperacional(linha.onboarding) ? montarCadastroOperacional(linha) : montarCadastro(linha);
+  // A entrada operacional não cobra ticket, custo ou lucro. Onboarding
+  // concluído continua suprimindo pendências retroativas de contrato.
   const onboardingConcluido = estadoDaConclusao(linha).concluido;
   const resumo = resumirPendencias(
     onboardingConcluido || cadastro.completo ? [] : cadastro.pendencias,

@@ -5,7 +5,9 @@ import { signOutAction } from "./actions";
 import { temAcessoWebApp } from "@/lib/contratacao/acesso";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { logosDosNegociosLiberados } from "@/lib/multiconta/logos";
+import { identidadeDoMenuDaAgencia } from "@/lib/agencia/identidade-do-menu";
 import { cnpjsDosNegociosLiberados } from "@/lib/multiconta/cnpjs";
+import { agenciaHabilitada } from "@/lib/agencia/habilitacao";
 
 
 /**
@@ -77,6 +79,8 @@ export default async function ProtectedLayout({ children }: { children: React.Re
   // olhando por cima do ombro dela.
   const nome = profile?.full_name?.trim() ?? "";
   const nomeNegocio = ativo.status === "selecionado" ? ativo.negocio.name.trim() : undefined;
+  const agencia = agenciaHabilitada()
+    ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : null;
   const inicial = (nomeNegocio || nome || user.email || "?").charAt(0).toUpperCase();
   const negocios = "negocios" in ativo ? ativo.negocios : [];
   const idsLiberados = negocios.map((negocio) => negocio.id);
@@ -93,16 +97,18 @@ export default async function ProtectedLayout({ children }: { children: React.Re
     <Casco
       nome={nome}
       nomeNegocio={nomeNegocio}
+      contextoAgencia={agencia?.status === "agencia" ? { agencia: agencia.agencia,
+        businessId: agencia.contexto?.businessId, anunciante: agencia.contexto?.anunciante } : undefined}
       negocioAtivoId={ativo.status === "selecionado" ? ativo.negocio.id : undefined}
       rotuloDaConta={nomeNegocio || user.email || ""}
       inicial={inicial}
       acaoSair={signOutAction}
-      negocios={negocios.map((negocio) => ({
+      negocios={identidadeDoMenuDaAgencia(negocios.map((negocio) => ({
         id: negocio.id,
         name: negocio.name,
         logoUrl: logos.get(negocio.id) ?? null,
         cnpj: cnpjPorNegocio.get(negocio.id) ?? null,
-      }))}
+      })), agencia)}
       ehOperador={user.app_metadata?.papel === "operador"}
     >
       {children}
