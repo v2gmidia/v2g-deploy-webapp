@@ -2,7 +2,8 @@ import type { ReactNode } from "react";
 import type { ContextoAgencia, RetornoCarteira } from "@/lib/agencia/contexto";
 import { hrefDaCarteira, hrefDoCliente } from "@/lib/agencia/contexto";
 import type { ResumoDaCarteira } from "@/lib/agencia/resumo";
-import { resumirMeta } from "@/lib/inicio/resumo-meta";
+import { resumirMeta, textoCoberturaMeta } from "@/lib/inicio/resumo-meta";
+import { formatarConversas } from "@/lib/anuncios/conversas-meta";
 import type { InventarioMeta, ResultadoInventarioMeta } from "@/lib/anuncios/contrato-meta";
 import { rotuloDoIntervalo, type IntervaloDoInicio } from "@/lib/inicio/periodo";
 import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
@@ -46,10 +47,10 @@ export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo, 
     {dados && resumo && <>
       <section className={comuns.estado} aria-label="Estado dos resultados"><div><b>Resultados</b><span>{resumo.campanhas ? resumo.entregaHistorica ? "Houve entrega neste período" : "Campanhas encontradas na Meta" : "Nenhuma campanha retornou nesta consulta"}</span></div><a className={comuns.link} href={anunciosDoCliente}>Ver anúncios<Seta /></a></section>
       <section className={styles.resumoPeriodo} aria-labelledby="inicio-resumo-titulo" aria-describedby="inicio-resumo-periodo"><h2 id="inicio-resumo-titulo">Resumo do período</h2>
-        <p id="inicio-resumo-periodo" className={styles.nota}><strong>{rotuloDoIntervalo(dados.periodo)}</strong> · {resumo.campanhasObservadas} de {resumo.campanhas} campanhas com observação.{resumo.parcial ? " Resultados parciais." : ""}</p>
+        <p id="inicio-resumo-periodo" className={styles.nota}><strong>{rotuloDoIntervalo(dados.periodo)}</strong> · {textoCoberturaMeta(resumo)}</p>
         <dl className={styles.metricas}>
         {([{ tipo: "investido", nome: "Investido no período", valor: valor(resumo.gasto) }, { tipo: "cliques", nome: "Cliques totais", valor: contar(resumo.cliques) },
-          { tipo: "impressoes", nome: "Impressões", valor: contar(resumo.impressoes) }, { tipo: "conversas", nome: "Conversas", valor: "Não medido" }] as const).map(m => <div key={m.tipo}>
+          { tipo: "impressoes", nome: "Impressões", valor: contar(resumo.impressoes) }, { tipo: "conversas", nome: "Conversas por mensagem (Meta)", valor: formatarConversas(resumo.conversasMensagem) }] as const).map(m => <div key={m.tipo}>
             <dt><IconeMetrica tipo={m.tipo} />{m.nome}</dt><dd className={m.valor === "Não medido" ? styles.ausente : undefined}>{m.valor}</dd></div>)}
       </dl></section>
     </>}
@@ -57,7 +58,8 @@ export function InicioDoCliente({ detalhe, dados, resumo, resultado, intervalo, 
       {dados && resumo && <><GraficoInvestimento dias={resumo.dias} moeda={dados.moeda} inconsistente={resumo.serieInconsistente} />
         <details className={styles.detalhes}><summary>Sobre esta leitura</summary><p>Conta {dados.contaId} · Meta Marketing API · {dados.moeda ?? "Moeda não confirmada"} · Fuso: {dados.fuso ?? "Não confirmado"}.</p>
           <p>Consulta em {new Date(dados.coletadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília).</p>
-          <p>{resumo.parcial ? "Resumo parcial: somente as campanhas com observação entram na soma; um campo desconhecido continua não medido. " : "Valores das campanhas com observação. "}Não somamos campanhas aos seus conjuntos ou anúncios. Cliques não representam pessoas únicas ou vendas. A entrega histórica não confirma veiculação atual.</p></details></>}
+          <p>{textoCoberturaMeta(resumo)} A ausência de registros, sozinha, não indica falha de consulta nem comprova gasto zero. Campos desconhecidos continuam não medidos. Não somamos campanhas aos seus conjuntos ou anúncios.</p>
+          <p>Conversas iniciadas atribuídas pela Meta, conforme a configuração de atribuição da Meta. Podem incluir mais de um canal. Não são pessoas únicas, vendas ou mensagens conferidas na caixa de entrada. Sem confirmação da fonte, mostramos “Não medido”. A entrega histórica não confirma veiculação atual.</p></details></>}
     </div><ProximoPassoAgencia contexto={c} resumo={tarefa} retorno={retorno} /></div>
     {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do cadastro agora.</p>}
     {pendencia && <section className={styles.pendencia}><div><h2>Pendência do cadastro</h2><h3>{pendencia.titulo}</h3><p>{pendencia.corpo}</p></div><a className={comuns.link} href={pendencia.href === "/onboarding" ? `/onboarding?cliente=${c.businessId}` : pendencia.href}>{pendencia.rotulo}<Seta /></a></section>}

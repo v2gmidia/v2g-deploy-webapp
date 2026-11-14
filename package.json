@@ -83,7 +83,7 @@
     "conferir:jev": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-jev.ts",
     "conferir:jev-criativos": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/conferir-jev-criativos.ts",
     "conferir:revops": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-revops.mjs",
-    "conferir:inicio-meta": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-inicio-meta.mjs scripts/conferir-inicio-meta-client-boundary.mjs",
+    "conferir:inicio-meta": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test scripts/conferir-inicio-meta.mjs scripts/conferir-inicio-meta-client-boundary.mjs scripts/conferir-conversas-meta.mjs",
     "conferir:historico": "node --test scripts/conferir-historico-vazio.mjs"
   },
   "dependencies": {

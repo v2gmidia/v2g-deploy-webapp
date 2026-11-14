@@ -600,7 +600,8 @@ console.log("\no corpo do POST /cadastro");
   // viagem — e, pior, `POST /cadastro` CRIA execução, que o n8n pode
   // consumir e virar token de LLM.
   const posGuarda = fonte.indexOf('return falha("dados_invalidos")');
-  const posEnvio = fonte.indexOf('enviar(\n    "/cadastro"');
+  // Aceita LF e CRLF sem relaxar a exigência de ordem da guarda.
+  const posEnvio = fonte.search(/enviar\(\s*"\/cadastro"/);
   if (posGuarda !== -1 && posEnvio !== -1 && posGuarda < posEnvio) {
     ok("a recusa por negócio ausente vem ANTES da chamada — nada é criado sem dono");
   } else {

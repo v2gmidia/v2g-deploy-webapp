@@ -65,15 +65,19 @@ export function TelasDoEnsaio({ busca }: { busca: BuscaAgencia }) {
   const gasto = dias.some(d => d.gasto === null) ? null : dias.reduce((t,d) => t+d.gasto,0);
   const campanha: CampanhaMeta = { id: "10001", nome: "Campanha de ensaio", statusConfigurado: "ACTIVE", statusEfetivo: "ACTIVE", conjuntos: [],
     metricas: { estado: cenario === "lacunas" ? "parcial" : "observado", gasto, impressoes: dias.reduce((t,d)=>t+d.impressoes,0), cliques: dias.reduce((t,d)=>t+d.cliques,0), conversas: null,
+      conversasMensagem: cenario === "sem-conversas" || cenario === "lacunas" ? null : cenario === "zero-conversas" ? "0" : "105",
       dias: dias.map(d=>d.dia), entregaObservada: true, serieDiaria: { estado: "disponivel", dias } } };
+  const semDados: CampanhaMeta[] = Array.from({ length: 9 }, (_, i) => ({ ...campanha, id: String(20000 + i),
+    metricas: { estado: "sem_dados", gasto: null, impressoes: null, cliques: null, conversas: null, conversasMensagem: null,
+      dias: [], entregaObservada: null, serieDiaria: { estado: "disponivel", dias: [] } } }));
   const resultado: ResultadoInventarioMeta = cenario === "falha" ? { ok: false, motivo: "indisponivel", mensagem: "Falha fictícia da consulta. Tente novamente.", contas: [{ id: "act_10001" }], contaSelecionada: "act_10001" }
-    : { ok: true, contas: [{ id: "act_10001" }], contaSelecionada: "act_10001", dados: { businessId, contaId: "act_10001", periodo: intervalo, moeda: "BRL", fuso: "America/Sao_Paulo", coletadoEm: "2026-11-09T20:00:00Z", campanhas: [campanha] } };
+    : { ok: true, contas: [{ id: "act_10001" }], contaSelecionada: "act_10001", dados: { businessId, contaId: "act_10001", periodo: intervalo, moeda: "BRL", fuso: "America/Sao_Paulo", coletadoEm: "2026-11-09T20:00:00Z", campanhas: [campanha, ...semDados] } };
   const retorno = retornoDaCarteira(busca, typeof busca.visao === "string" && busca.visao.startsWith("cliente-"));
   const clientes = [{ contexto: primeiro, resumo }, ...(volume ? Array.from({ length: 49 }, (_, i) => ({ contexto: { ...contexto, businessId: `${String(i+10).padStart(8,"0")}-1111-4111-8111-111111111111`, anunciante: `Cliente fictício ${i+2}` }, resumo }))
     : dupla ? [{ contexto: segundo, resumo: resumirCarteira(segundo.businessId, [], []) }] : [])];
   const resultadoAtual: ResultadoInventarioMeta = contextoAtual === segundo ? { ok: false, motivo: "sem_conta", mensagem: "Este anunciante de ensaio ainda não tem conta de anúncios vinculada. Nenhum número do Dúú é mostrado aqui.", contas: [], contaSelecionada: null } : resultado;
   return <><div style={{ margin: "20px 0", display: "flex", flexWrap: "wrap", gap: "20px" }}>
-    <label>Cenário <select value={cenario} onChange={e=>setCenario(e.target.value)}><option value="medido">Medição fictícia</option><option value="falha">Falha após leitura</option><option value="lacunas">Lacuna e zero</option></select></label>
+    <label>Cenário <select value={cenario} onChange={e=>setCenario(e.target.value)}><option value="medido">Medição fictícia</option><option value="sem-conversas">Conversas não medidas</option><option value="zero-conversas">Zero conversas medido</option><option value="falha">Falha após leitura</option><option value="lacunas">Lacuna e zero</option></select></label>
     {busca.visao === "agencia-inicio" || !busca.visao ? <label><input type="checkbox" checked={volume} onChange={e=>setVolume(e.target.checked)} /> Simular 50 clientes fictícios</label> : null}
   </div>
     {busca.visao === "cliente-inicio" ? <ResumoMetaDoInicio resultado={resultadoAtual} escopo={{ businessId: contextoAtual.businessId, perfilId: "perfil-ficticio", ...intervalo }} intervalo={intervalo}

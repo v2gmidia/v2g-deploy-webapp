@@ -1,5 +1,6 @@
 import type { InventarioMeta, ResultadoInventarioMeta } from "../anuncios/contrato-meta";
 import { diasDoPeriodo, type DiaMeta } from "./serie-meta";
+import { somarConversas } from "../anuncios/conversas-meta";
 
 /** Soma apenas campanhas: nunca soma uma campanha aos seus conjuntos/anúncios. */
 export function resumirMeta(inventario: InventarioMeta) {
@@ -12,7 +13,7 @@ export function resumirMeta(inventario: InventarioMeta) {
     const soma = valores.reduce((a, b) => a + b, 0);
     return valores.length && Number.isSafeInteger(soma) ? soma : null;
   };
-  const parcial = metricas.some(m => m.estado === "parcial" || [m.gasto, m.impressoes, m.cliques].includes(null));
+  const parcial = observadas.some(m => m.estado === "parcial" || [m.gasto, m.impressoes, m.cliques].includes(null));
   const seriesDisponiveis = observadas.length > 0 && observadas.every(m => m.serieDiaria?.estado === "disponivel");
   const dias: DiaMeta[] = seriesDisponiveis ? diasDoPeriodo(inventario.periodo.desde, inventario.periodo.ate).map(dia => {
     const linhas = observadas.map(m => m.serieDiaria!.dias.find(d => d.dia === dia));
@@ -24,9 +25,16 @@ export function resumirMeta(inventario: InventarioMeta) {
     return { dia, gasto: valor("gasto"), impressoes: valor("impressoes"), cliques: valor("cliques") };
   }) : [];
   return { gasto: somar("gasto"), impressoes: somar("impressoes"), cliques: somar("cliques"), parcial, dias,
-    campanhas: metricas.length, campanhasObservadas: observadas.length,
+    conversasMensagem: somarConversas(observadas.map(m => m.conversasMensagem)),
+    campanhas: metricas.length, campanhasObservadas: observadas.length, campanhasSemDados: metricas.length - observadas.length,
     entregaHistorica: metricas.some(m => m.entregaObservada === true),
     serieInconsistente: observadas.some(m => m.serieDiaria?.estado === "inconsistente") };
+}
+
+export function textoCoberturaMeta(r: ReturnType<typeof resumirMeta>): string {
+  const comDados = r.campanhasObservadas === 1 ? "1 campanha com dados no período" : `${r.campanhasObservadas} campanhas com dados no período`;
+  const semDados = r.campanhasSemDados ? `; ${r.campanhasSemDados} sem registros neste período` : "";
+  return `${comDados}${semDados}.${r.parcial ? " A leitura das campanhas com dados está incompleta." : ""}`;
 }
 
 export type EscopoInicioMeta = { businessId: string; perfilId: string; desde: string; ate: string; conta?: string };
