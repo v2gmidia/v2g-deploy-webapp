@@ -3,7 +3,8 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { dinheiro, diaCurto } from "@/lib/formato";
 import type { ResultadoInventarioMeta } from "@/lib/anuncios/contrato-meta";
-import { chaveDoEscopo, leituraAnteriorPermitida, resumirMeta, type EscopoInicioMeta, type MemoriaInicioMeta } from "@/lib/inicio/resumo-meta";
+import { chaveDoEscopo, leituraAnteriorPermitida, resumirMeta, textoCoberturaMeta, type EscopoInicioMeta, type MemoriaInicioMeta } from "@/lib/inicio/resumo-meta";
+import { formatarConversas } from "@/lib/anuncios/conversas-meta";
 import type { DiaMeta } from "@/lib/inicio/serie-meta";
 import type { IntervaloDoInicio } from "@/lib/inicio/periodo";
 import type { PendenciaDoOnboarding } from "@/lib/onboarding/conclusao";
@@ -110,8 +111,10 @@ export function ResumoMetaDoInicio({ resultado, escopo, intervalo, pendencia, fa
           <div><dt>Investido</dt><dd>{valor(resumo.gasto, dados.moeda)}</dd></div>
           <div><dt>Impressões</dt><dd>{contar(resumo.impressoes)}</dd></div>
           <div><dt>Cliques totais</dt><dd>{contar(resumo.cliques)}</dd></div>
+          <div><dt>Conversas por mensagem (Meta)</dt><dd>{formatarConversas(resumo.conversasMensagem)}</dd></div>
         </dl>
-        <p className={styles.nota}>{resumo.campanhasObservadas} de {resumo.campanhas} campanhas com observação no período. {resumo.parcial ? "Resumo parcial: somente as campanhas com observação entram na soma; um campo desconhecido nessas campanhas continua não medido. " : "Valores das campanhas com observação. "}Não somamos campanhas aos seus conjuntos ou anúncios. Cliques não representam pessoas únicas ou vendas.</p>
+        <p className={styles.nota}>{textoCoberturaMeta(resumo)} A ausência de registros, sozinha, não indica falha de consulta nem comprova gasto zero. Campos desconhecidos continuam não medidos. Não somamos campanhas aos seus conjuntos ou anúncios.</p>
+        <p className={styles.nota}>Conversas iniciadas atribuídas pela Meta, conforme a configuração de atribuição da Meta. Podem incluir mais de um canal. Não são pessoas únicas, vendas ou mensagens conferidas na caixa de entrada.</p>
       </section>
       <GraficoDiario dias={resumo.dias} moeda={dados.moeda} inconsistente={resumo.serieInconsistente} />
     </>}

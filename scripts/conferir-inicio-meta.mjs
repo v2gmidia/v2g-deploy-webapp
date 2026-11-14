@@ -69,7 +69,7 @@ test('datas observadas devem coincidir com a série',()=>{
 test('piloto sintético 1 medida + 9 sem_dados preserva totais, série e cobertura',()=>{
   const r=resumirMeta(dados([campanha(),...Array.from({length:9},(_,i)=>campanha(String(i+2),vazio()))]));
   assert.equal(r.gasto,300); assert.equal(r.dias[0].gasto,100); assert.equal(r.dias[1].gasto,0);
-  assert.equal(r.campanhasObservadas,1); assert.equal(r.campanhas,10); assert.equal(r.parcial,true);
+  assert.equal(r.campanhasObservadas,1); assert.equal(r.campanhas,10); assert.equal(r.parcial,false);
 });
 test('somente nível campanha, não seus conjuntos ou anúncios',()=>{
   const c=campanha(); c.conjuntos=[{metricas:{gasto:9999},anuncios:[{metricas:{gasto:8888}}]}];
@@ -134,7 +134,7 @@ test('HTML real separa cadastro de entrega histórica; sem preparação contradi
   const h=html();assert.match(h,/Houve entrega neste período/);assert.match(h,/Pendência do cadastro/);
   assert.doesNotMatch(h,/Sua campanha está sendo preparada|Seu negócio está em preparação/);
   assert.match(h,/Meta Marketing API/);assert.match(h,/America\/Sao_Paulo/);assert.match(h,/act_123/);
-  assert.doesNotMatch(h,/<path[^>]+d=/);assert.match(h,/Ver valores por dia/);assert.doesNotMatch(h,/<dt>Vendas|<dt>Conversas/);
+  assert.doesNotMatch(h,/<path[^>]+d=/);assert.match(h,/Ver valores por dia/);assert.doesNotMatch(h,/<dt>Vendas/);assert.match(h,/<dt>Conversas por mensagem \(Meta\)/);
   assert.match(h,/conta=act_123/);
 });
 test('HTML da série antiga mostra totais e gráfico indisponível, não vazio falso',()=>{

@@ -8,7 +8,7 @@
 .situacao a, .acoes a, .detalhes summary { min-height: 44px; display: inline-flex; align-items: center; color: var(--cobalt-ink); }
 .situacao a { flex-shrink: 0; }
 .fonte, .nota { color: var(--ink-soft); font-size: var(--fs-corpo); line-height: 1.6; overflow-wrap: anywhere; }
-.numeros { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin: 24px 0 16px; }
+.numeros { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 24px 0 16px; }
 .numeros div { min-width: 0; border-top: 1px solid var(--line); padding-top: 16px; }
 .numeros dt { color: var(--ink-soft); font-size: var(--fs-corpo); margin-bottom: 8px; }
 .numeros dd { font-family: var(--display); font-size: var(--fs-destaque); margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }

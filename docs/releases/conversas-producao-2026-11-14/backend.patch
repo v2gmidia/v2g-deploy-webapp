@@ -1,0 +1,225 @@
+diff --git a/docs/contratos/e28-meta-ads-read-v1.md b/docs/contratos/e28-meta-ads-read-v1.md
+index 67c712ba3cf203abf640ac96688053c2ad320153..14a0ad0bb1546f497b4f5ba780c146231c40e556 100644
+--- a/docs/contratos/e28-meta-ads-read-v1.md
++++ b/docs/contratos/e28-meta-ads-read-v1.md
+@@ -66,6 +66,25 @@ Cada nível usa os próprios insights da Meta (`campaign`, `adset`, `ad`); não
+ 
+ Origem/conta/pai/data/moeda divergente ou dia duplicado: **HTTP 409 e nenhum lote de números utilizáveis**. Não renderizar totais anteriores como se fossem a nova resposta. Paginação inconclusiva/limite excedido: 503, nunca sucesso truncado.
+ 
++## Extensão preparada para produção — conversas por mensagem (14/11/2026)
++
++Validada na QA em 14/11; este pacote de produção permanece local e não aplicado.
++Cada objeto acrescenta `conversas_mensagem: string | null` e
++`definicao_conversas_mensagem = "onsite_conversion.messaging_conversation_started_7d"`.
++Usa o `value` da ação exata nas linhas diárias já consultadas, sem novo GET ou
++alteração de atribuição. Não soma aliases, janelas, canais ou níveis da hierarquia.
++O resumo soma somente campanhas; `conversas_whatsapp` permanece null.
++
++Contagem decimal exata em string, até 15 dígitos inteiros e 6 casas, limitada a
++999999999999999. Ausência em qualquer linha diária observada, repetição, valor inválido
++ou excesso mantém null. Zero somente quando confirmado explicitamente. Não se fabrica
++série diária de conversas, canal exclusivo, pessoas únicas, vendas ou confirmação da caixa de entrada.
++
++Compatibilidade aditiva: frontend antigo pode ignorar os campos novos; frontend novo
++diante do backend anterior mostra “Não medido” e preserva os outros indicadores.
++Os estados existentes, rotas, autorização e campos anteriores permanecem iguais.
++Revisão do pacote: `docs/estado/n26-conversas-producao-preparada-14-11.md`.
++
+ ## Falhas
+ 
+ Erros de integração/autorização normalizados: `{"detail":{"codigo":"...","mensagem":"..."}}`. A tela pode usar sua própria mensagem por categoria; nunca exibir exceção/resposta Meta crua.
+diff --git a/scripts/verificar_inventario_inicio_webapp.mjs b/scripts/verificar_inventario_inicio_webapp.mjs
+index fc962f92bafbee4a577714c93160619c2640844e..08547c635ed46cb2204ef17f4a7337adb6bfd9cc 100644
+--- a/scripts/verificar_inventario_inicio_webapp.mjs
++++ b/scripts/verificar_inventario_inicio_webapp.mjs
+@@ -42,6 +42,7 @@ for(const caso of payload.casos){
+  const resumo=resumirMeta(dados);
+  assert.equal(resumo.gasto,caso.gasto,caso.nome+': gasto');
+  assert.equal(resumo.campanhas,caso.campanhas);
++ if(Object.hasOwn(caso,'conversas'))assert.equal(resumo.conversasMensagem,caso.conversas,caso.nome+': conversas');
+  assert.equal(JSON.stringify(resumo.dias.map(d=>({dia:d.dia,gasto:d.gasto}))),JSON.stringify(caso.dias),caso.nome+': série');
+  const grafico=renderToStaticMarkup(React.createElement(GraficoInvestimento,{dias:resumo.dias,moeda:dados.moeda,inconsistente:resumo.serieInconsistente}));
+  const pontos=dados.moeda?resumo.dias.filter(d=>d.gasto!==null).length:0;
+@@ -51,6 +52,11 @@ for(const caso of payload.casos){
+   resultado:{ok:true,dados,contas:[{id:dados.contaId}],contaSelecionada:dados.contaId},periodo:dados.periodo,
+  }));
+  assert.ok(anuncios.includes(dados.contaId));assert.ok(anuncios.includes('Meta Marketing API'));
++ if(caso.conversas!==null && caso.conversas!==undefined){
++  assert.match(anuncios,/Conversas por mensagem \(Meta\)/);
++  assert.ok(anuncios.includes('>'+caso.conversas+'<'));
++  assert.ok(!anuncios.includes('Conversas no WhatsApp'));
++ }
+  assert.ok(!anuncios.includes(payload.outroNegocio));
+ }
+ console.log(JSON.stringify({casos:payload.casos.length,parser:true,resumo:true,graficoSSR:true,anunciosSSR:true,isolamento:true}));
+diff --git a/src/meta/leitura_anuncios.py b/src/meta/leitura_anuncios.py
+index 9010d93df8a95adeef0dc1461b0372792fb7b0a3..8443c02ba84f1f8ee17c21689a14cf1c2f4516a3 100644
+--- a/src/meta/leitura_anuncios.py
++++ b/src/meta/leitura_anuncios.py
+@@ -6,6 +6,7 @@ import json
+ import re
+ from collections import defaultdict
+ from datetime import UTC, date, datetime
++from decimal import Decimal
+ from typing import Any, Literal
+ from uuid import UUID
+ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+@@ -15,6 +16,30 @@ from pydantic import BaseModel, Field, model_validator
+ from src.meta.leitura_valores import ConsultaGet, _centavos, _inteiro
+ 
+ LIMITE_INTEIRO_SEGURO = 9_007_199_254_740_991
++ACAO_CONVERSAS_MENSAGEM: Literal["onsite_conversion.messaging_conversation_started_7d"] = "onsite_conversion.messaging_conversation_started_7d"
++
++
++def _conversas_mensagem(linhas: list[dict[str, Any]]) -> str | None:
++    """Uma ação exata, sem somar aliases, canais ou janelas sobrepostas.
++
++    Ausência em qualquer dia observado não é zero. A contagem é atribuída
++    pela Meta, não comprova WhatsApp, pessoas únicas ou mensagens recebidas.
++    """
++    if not linhas:
++        return None
++    total = Decimal(0)
++    for linha in linhas:
++        acoes = linha.get("actions")
++        if not isinstance(acoes, list) or any(not isinstance(a, dict) for a in acoes):
++            return None
++        valores = [a.get("value") for a in acoes if a.get("action_type") == ACAO_CONVERSAS_MENSAGEM]
++        if len(valores) != 1 or not isinstance(valores[0], str) or not re.fullmatch(r"[0-9]{1,15}(?:\.[0-9]{1,6})?", valores[0]):
++            return None
++        total += Decimal(valores[0])
++        if total > Decimal("999999999999999"):
++            return None
++    valor = format(total, "f")
++    return valor.rstrip("0").rstrip(".") if "." in valor else valor
+ 
+ 
+ class FalhaLeituraAnuncios(ValueError):
+@@ -49,6 +74,8 @@ class MetricasAnuncio(BaseModel):
+     cliques_totais: int | None = None
+     cliques_no_link: int | None = None
+     conversas_whatsapp: str | None = None
++    conversas_mensagem: str | None = None
++    definicao_conversas_mensagem: Literal["onsite_conversion.messaging_conversation_started_7d"] = ACAO_CONVERSAS_MENSAGEM
+     dias_com_observacao: list[date]
+     serie_diaria: list[MetricaDiariaAnuncio] = Field(default_factory=list)
+     entrega_observada_no_periodo: bool | None = None
+@@ -270,7 +297,10 @@ async def ler_anuncios_da_conta(
+         impressoes = somar([ponto.impressoes for ponto in serie])
+         cliques = somar([ponto.cliques_totais for ponto in serie])
+         dias = [ponto.dia for ponto in serie]
++        conversas = _conversas_mensagem(linhas)
+         motivos = ["conversas_whatsapp_sem_taxonomia_homologada", "cliques_no_link_nao_medidos"]
++        if conversas is None:
++            motivos.append("conversas_mensagem_nao_medidas")
+         parcial = False
+         if fuso is None:
+             motivos.append("fuso_desconhecido")
+@@ -296,6 +326,7 @@ async def ler_anuncios_da_conta(
+             estado=estado, gasto_centavos=gasto, impressoes=impressoes, cliques_totais=cliques,
+             dias_com_observacao=dias, serie_diaria=serie,
+             entrega_observada_no_periodo=entrega, motivos=motivos,
++            conversas_mensagem=conversas,
+         )
+ 
+     def comum(objeto: dict[str, Any], nivel: str) -> dict[str, Any]:
+diff --git a/tests/unit/test_anuncios_meta_sem_execucao.py b/tests/unit/test_anuncios_meta_sem_execucao.py
+index 5b12beeeeb262c76df2fb1176f8abb03c331160a..ef2e5ce9214c8ba2023b802a226b1e11f2d08d73 100644
+--- a/tests/unit/test_anuncios_meta_sem_execucao.py
++++ b/tests/unit/test_anuncios_meta_sem_execucao.py
+@@ -21,6 +21,7 @@ from src.api.qa_leitura import ConfiguracaoQaInseguraError
+ from src.config import Config
+ from src.db.acesso_anuncios import AcessoContaSupabase, verificar_sessao_anuncios
+ from src.meta.leitura_anuncios import (
++    ACAO_CONVERSAS_MENSAGEM,
+     FalhaLeituraAnuncios,
+     PeriodoAnuncios,
+     ler_anuncios_da_campanha,
+@@ -677,15 +678,21 @@ def test_json_real_alimenta_parser_resumo_anuncios_e_grafico_do_webapp(bancada:
+         pytest.skip("Ponte atual não medida: exige dependências locais do WebApp")
+     casos: list[dict[str, Any]] = []
+ 
+-    def capturar(nome: str, gasto: int | None, dias: list[tuple[str, int | None]], ate: str = "2026-10-28") -> None:
++    def capturar(nome: str, gasto: int | None, dias: list[tuple[str, int | None]], ate: str = "2026-10-28", conversas: str | None = None) -> None:
+         resposta = client.get(LISTA, params=PARAMS | {"ate": ate}, headers={"Authorization": "Bearer JWT_DONO_FICTICIO"})
+         assert resposta.status_code == 200
+         casos.append({"nome": nome, "corpo": resposta.json(), "gasto": gasto,
+-                      "campanhas": 1, "dias": [{"dia": dia, "gasto": valor} for dia, valor in dias],
++                      "campanhas": 1, "conversas": conversas, "dias": [{"dia": dia, "gasto": valor} for dia, valor in dias],
+                       "escopo": {"businessId": str(BUSINESS_PILOTO), "contaId": CONTA_PILOTO,
+                                  "periodo": {"desde": PARAMS["desde"], "ate": ate}}})
+ 
+     capturar("observado_sem_somar_niveis", 1500, [("2026-10-28", 1500)])
++    fonte.linhas["campaign"][0]["actions"] = [{"action_type": ACAO_CONVERSAS_MENSAGEM, "value": "105"}]
++    fonte.linhas["adset"][0]["actions"] = [{"action_type": ACAO_CONVERSAS_MENSAGEM, "value": "99"}]
++    fonte.linhas["ad"][0]["actions"] = [{"action_type": ACAO_CONVERSAS_MENSAGEM, "value": "17"}]
++    capturar("conversas_da_campanha_sem_somar_niveis", 1500, [("2026-10-28", 1500)], conversas="105")
++    for nivel in ("campaign", "adset", "ad"):
++        fonte.linhas[nivel][0].pop("actions")
+     preparar_dias(fonte, "campaign", [("2026-10-28", {"spend": "1.00"}), ("2026-10-30", {"spend": "2.00"})])
+     capturar("lacuna_sem_zero_inventado", 300, [("2026-10-28", 100), ("2026-10-29", None), ("2026-10-30", 200)], "2026-10-30")
+     fonte.linhas["campaign"] = [fonte.linhas["campaign"][0] | {"spend": "0", "impressions": "0", "clicks": "0"}]
+@@ -703,4 +710,4 @@ def test_json_real_alimenta_parser_resumo_anuncios_e_grafico_do_webapp(bancada:
+                        capture_output=True, text=True, encoding="utf-8", timeout=45, check=False)
+     assert r.returncode == 0, r.stderr
+     prova = json.loads(r.stdout)
+-    assert prova == {"casos": 6, "parser": True, "resumo": True, "graficoSSR": True, "anunciosSSR": True, "isolamento": True}
++    assert prova == {"casos": 7, "parser": True, "resumo": True, "graficoSSR": True, "anunciosSSR": True, "isolamento": True}
+diff --git a/tests/unit/test_conversas_mensagem_meta.py b/tests/unit/test_conversas_mensagem_meta.py
+new file mode 100644
+--- /dev/null
++++ b/tests/unit/test_conversas_mensagem_meta.py
+@@ -0,0 +1,53 @@
++"""Ações de fixtures locais; não são respostas capturadas da Meta."""
++
++from typing import Any
++
++import pytest
++
++from src.meta.leitura_anuncios import ACAO_CONVERSAS_MENSAGEM, _conversas_mensagem
++
++
++def dia(valor: str) -> dict[str, Any]:
++    return {"actions": [{"action_type": ACAO_CONVERSAS_MENSAGEM, "value": valor}]}
++
++
++def test_total_conferido_do_duu_e_reproduzido_sem_inferir_whatsapp() -> None:
++    # 105 é o total visto no Gerenciador (01–07/11); envelope reconstruído
++    # só para testar a interpretação. Não é uma captura de ações/dias reais.
++    assert _conversas_mensagem([dia("105")]) == "105"
++
++
++def test_decimal_exato_sem_float_e_zero_somente_explicito() -> None:
++    assert _conversas_mensagem([dia("0.1"), dia("0.2")]) == "0.3"
++    assert _conversas_mensagem([dia("0"), dia("0.000000")]) == "0"
++
++
++@pytest.mark.parametrize("valor", ["-1", "NaN", "Infinity", "1e2", "1.0000001", "1000000000000000", 1, None])
++def test_valor_invalido_permanece_desconhecido(valor: Any) -> None:
++    assert _conversas_mensagem([dia(valor)]) is None
++
++
++@pytest.mark.parametrize("linha", [{}, {"actions": None}, {"actions": []}, {"actions": [None]},
++                                    {"actions": [{"action_type": "lead", "value": "100"}]}])
++def test_ausencia_em_dia_observado_nao_vira_zero(linha: dict[str, Any]) -> None:
++    assert _conversas_mensagem([dia("5"), linha]) is None
++
++
++def test_aliases_janelas_e_destinos_nao_sao_somados() -> None:
++    linha = dia("105")
++    linha["actions"].extend([
++        {"action_type": "onsite_conversion.total_messaging_connection", "value": "999"},
++        {"action_type": "link_click", "value": "466"},
++        {"action_type": "onsite_conversion.messaging_conversation_started_7d.whatsapp", "value": "888"},
++    ])
++    linha["actions"][0]["7d_click"] = "105"
++    linha["actions"][0]["1d_view"] = "10"
++    assert _conversas_mensagem([linha]) == "105"
++
++
++def test_acao_repetida_nao_duplica_total_e_overflow_recusa() -> None:
++    linha = dia("105")
++    linha["actions"].append(dict(linha["actions"][0]))
++    assert _conversas_mensagem([linha]) is None
++    assert _conversas_mensagem([dia("999999999999999"), dia("1")]) is None
++    assert _conversas_mensagem([]) is None

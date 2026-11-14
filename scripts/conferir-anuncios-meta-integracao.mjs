@@ -10,6 +10,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as contrato from '../lib/anuncios/contrato-meta.ts';
 import * as periodo from '../lib/inicio/periodo.ts';
 import * as retorno from '../lib/anuncios/retorno-login.ts';
+import * as conversas from '../lib/anuncios/conversas-meta.ts';
+import * as contextoAgencia from '../lib/agencia/contexto.ts';
 
 const A='11111111-1111-4111-8111-111111111111', B='22222222-2222-4222-8222-222222222222';
 const janela={desde:'2026-10-28',ate:'2026-10-28'};
@@ -137,6 +139,8 @@ test('descoberta vazia e múltiplas campanhas são sucessos, sem somar ou usar e
 const moduloTela=carregar('app/(protected)/anuncios/AnunciosMeta.tsx',{'react/jsx-runtime':jsxRuntime,
   '@/components/ui/Pill':{Pill:({children})=>React.createElement('span',{},children)},
   '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
+  '@/lib/anuncios/conversas-meta':conversas,
+  '@/components/agencia/Comuns':{CabecalhoAgencia:({titulo,descricao,acao})=>React.createElement('header',{},titulo,descricao,acao)},
   './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,k)=>String(k)})}});
 const UI=moduloTela.InventarioDeAnunciosMeta;
 
@@ -281,7 +285,7 @@ test('zero observado atravessa HTTP, parser e coleção sem zerar conversas desc
   const r=await bancada({raw}).ler(janela);assert.equal(r.ok,true);
   const html=renderToStaticMarkup(React.createElement(UI,{resultado:r,periodo:janela}));
   assert.match(html,/Zero medido neste período/);assert.match(html,/R\$.*0,00/);
-  assert.match(html,/Conversas no WhatsApp<\/dt><dd class="ausente">Não medido/);
+  assert.match(html,/Conversas por mensagem \(Meta\)<\/dt><dd class="ausente">Não medido/);
 });
 test('formulário de contas preserva somente período/conta; nenhum segredo vai para HTML',async()=>{
   const r=await bancada({accounts:[conta(),conta(A,'act_9003')]}).ler(janela);
@@ -302,6 +306,9 @@ async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]},busca={}
   const data={id:'dono'};
   const q={select(){return q;},eq(){return q;},order:async()=>({data:[]})};
   const imports={'react/jsx-runtime':jsxRuntime,'@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:data}})},from:()=>q})},
+    './HistoricoSemRodadas':carregar('app/(protected)/anuncios/HistoricoSemRodadas.tsx',{'react/jsx-runtime':jsxRuntime}),
+    '@/lib/agencia/habilitacao':{agenciaHabilitada:()=>false},'@/lib/agencia/contexto':contextoAgencia,
+    '@/components/agencia/Comuns':{CabecalhoAgencia:leve},
     '@/components/ui/FaixaReconectar':{FaixaReconectar:leve},'@/components/ui/Pill':{Pill:leve},
     '@/lib/estado/cliente':{estadoDoCliente:async()=>({negocioId:A,proximo:null,melhoras:{fotos:0},veiculacao:'nao_sabemos'})},
     '@/lib/criativos/peca':{COLUNAS_DO_JULGAMENTO:'uso,status,arquivado_em',foiReprovada:()=>false},
