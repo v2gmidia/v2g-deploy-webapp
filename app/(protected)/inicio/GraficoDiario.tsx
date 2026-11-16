@@ -9,8 +9,8 @@ const valor = (n: number | null, moeda: string | null) => n === null || !moeda ?
 const dataCompleta = (dia: string) => new Date(`${dia}T12:00:00Z`).toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const contar = (n: number | null) => n === null ? "Não medido" : n.toLocaleString("pt-BR");
 
-export function GraficoDiario({ dias, moeda, inconsistente }: {
-  dias: DiaMeta[]; moeda: string | null; inconsistente: boolean;
+export function GraficoDiario({ dias, moeda, inconsistente, diaEmAtualizacao }: {
+  dias: DiaMeta[]; moeda: string | null; inconsistente: boolean; diaEmAtualizacao?: string | null;
 }) {
   const [selecao, selecionar] = useReducer((_anterior: { indice: number; fixo: boolean } | null, proximo: { indice: number; fixo: boolean } | null) => proximo, null);
   const id = useId();
@@ -28,10 +28,13 @@ export function GraficoDiario({ dias, moeda, inconsistente }: {
     const x = (event.clientX - rect.left) / rect.width * 720;
     return Math.max(0, Math.min(dias.length - 1, Math.round((x - 80) / 620 * (dias.length - 1))));
   }
-  const textoAtivo = ativo ? `${dataCompleta(ativo.dia)}. Investido: ${valor(ativo.gasto, moeda)}.` : "Selecione um dia";
+  const situacao = (d: DiaMeta) => d.situacao === "atualizando" ? "Em atualização" : d.situacao === "sem_veiculacao" ? "Sem veiculação" : "";
+  const valorDoDia = (d: DiaMeta) => d.situacao === "atualizando" && d.gasto === null ? "Aguardando atualização" : valor(d.gasto, moeda);
+  const textoAtivo = ativo ? `${dataCompleta(ativo.dia)}. Investido: ${valorDoDia(ativo)}. ${situacao(ativo)}` : "Selecione um dia";
 
   return <section className={styles.grafico} aria-labelledby={`${id}-titulo`}>
     <h2 id={`${id}-titulo`}>Investimento por dia</h2>
+    {diaEmAtualizacao && <p className={styles.nota}>Hoje, {diaCurto(diaEmAtualizacao)} · em atualização.</p>}
     {!conhecidos.length ? <p className={styles.ausente}>{inconsistente
       ? "Não foi possível conferir a distribuição diária. Os totais válidos continuam no resumo."
       : "A distribuição diária ainda não está disponível nesta leitura. Os totais continuam no resumo."}</p> : <>
@@ -72,7 +75,8 @@ export function GraficoDiario({ dias, moeda, inconsistente }: {
         </div>
         {ativo && <div className={styles.detalheDoDia}>
           <strong>{dataCompleta(ativo.dia)}</strong>
-          <dl><div><dt>Investido</dt><dd>{valor(ativo.gasto, moeda)}</dd></div></dl>
+          <dl><div><dt>Investido</dt><dd>{valorDoDia(ativo)}</dd></div></dl>
+          {situacao(ativo) && <span className={styles.nota}>{situacao(ativo)}</span>}
           {selecao?.fixo && <button type="button" onClick={() => selecionar(null)} aria-label="Fechar detalhe do dia">×</button>}
         </div>}
       </div>
@@ -80,7 +84,7 @@ export function GraficoDiario({ dias, moeda, inconsistente }: {
       <details className={styles.detalhes}><summary>Ver valores por dia</summary>
         <div className={styles.rolagem}><table><caption>Investimento e impressões por dia da conta consultada.</caption>
           <thead><tr><th scope="col">Dia</th><th scope="col">Investido</th><th scope="col">Impressões</th></tr></thead>
-          <tbody>{dias.map(d => <tr key={d.dia}><th scope="row">{dataCompleta(d.dia)}</th><td>{valor(d.gasto, moeda)}</td><td>{contar(d.impressoes)}</td></tr>)}</tbody>
+          <tbody>{dias.map(d => <tr key={d.dia}><th scope="row">{dataCompleta(d.dia)}{situacao(d) && <small> · {situacao(d)}</small>}</th><td>{valorDoDia(d)}</td><td>{d.situacao === "atualizando" && d.impressoes === null ? "Em atualização" : contar(d.impressoes)}</td></tr>)}</tbody>
         </table></div>
       </details>
     </>}

@@ -1,5 +1,6 @@
 /** Dados diários da fonte; ausência nunca vira zero nem interpolação. */
-export type DiaMeta = { dia: string; gasto: number | null; impressoes: number | null; cliques: number | null };
+export type DiaMeta = { dia: string; gasto: number | null; impressoes: number | null; cliques: number | null;
+  situacao?: "sem_veiculacao" | "atualizando" };
 export type SerieMeta = { estado: "ausente" | "inconsistente" | "disponivel"; dias: DiaMeta[] };
 type Totais = { gasto: number | null; impressoes: number | null; cliques: number | null };
 const inteiro = (v: unknown): v is number | null => v === null || typeof v === "number" && Number.isSafeInteger(v) && v >= 0;

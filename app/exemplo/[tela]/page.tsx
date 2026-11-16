@@ -394,7 +394,7 @@ export default async function ExemploPage({
   const busca2 = await searchParams;
   const intervalo = intervaloDoInicio(busca2, diaEmSaoPaulo(agora));
   const metaExemplo = ehDesenvolvimento && !busca2.estado ? await import("@/lib/dev/fixture-meta-periodo") : null;
-  const mensalDaPrevia = metaExemplo?.exemploMetaDoPeriodo({ desde: `${intervalo.hoje.slice(0, 8)}01`, ate: intervalo.hoje, hoje: intervalo.hoje });
+  const mensalDaPrevia = metaExemplo?.exemploMetaDoPeriodo({ desde: `${intervalo.hoje.slice(0, 8)}01`, ate: intervalo.hoje, hoje: intervalo.hoje }, typeof busca2.serie === "string" ? busca2.serie : undefined);
   const multicontaDaPrevia = busca2.multiconta === "1" ? [
     { id: "00000000-0000-4000-8000-000000000001", name: "QA Empresa 1 — FICTÍCIA — Resposta A", logoUrl: null, cnpj: "00000000000191" },
     { id: "00000000-0000-4000-8000-000000000002", name: "QA Empresa 2 — FICTÍCIA — Resposta B", logoUrl: null, cnpj: "00000000000272" },
@@ -426,7 +426,7 @@ export default async function ExemploPage({
           ============================================================ */}
       <p className="previa-local-nota">Prévia local · dados ilustrativos para revisar o layout.</p>
       <TelaDoInicio previa
-        leituraMeta={metaExemplo?.exemploMetaDoPeriodo(intervalo)}
+        leituraMeta={metaExemplo?.exemploMetaDoPeriodo(intervalo, typeof busca2.serie === "string" ? busca2.serie : undefined)}
         escopoMeta={metaExemplo ? { businessId: "11111111-1111-4111-8111-111111111111", perfilId: "perfil-ficticio", ...intervalo } : undefined}
         estado={exemplo.exemploDoInicio(agora, estadoDoExemplo)}
         ultimaDecisao={null}

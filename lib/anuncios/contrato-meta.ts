@@ -4,6 +4,7 @@
  */
 import { lerSerieMeta, type SerieMeta } from "../inicio/serie-meta.ts";
 import { conversaValida, DEFINICAO_CONVERSAS } from "./conversas-meta.ts";
+import { aplicarCoberturaDiaria } from "./cobertura-diaria.ts";
 export type PeriodoMeta = { desde: string; ate: string };
 export type MetricasMeta = {
   estado: "observado" | "sem_dados" | "zero_medido" | "parcial";
@@ -15,6 +16,9 @@ export type MetricasMeta = {
   dias: string[];
   entregaObservada: boolean | null;
   serieDiaria?: SerieMeta;
+  coberturaConfirmada?: boolean;
+  leituraIncompleta?: boolean;
+  diaEmAtualizacao?: string | null;
 };
 export type ObjetoMeta = {
   id: string; nome: string | null; statusConfigurado: string | null;
@@ -77,6 +81,8 @@ export function lerInventarioMeta(raw: unknown, esperado: {
     || !raw.avisos.every(v => typeof v === "string")) return null;
 
   const moeda = raw.moeda;
+  const contextoCobertura = { periodo: esperado.periodo, fuso: raw.fuso as string | null,
+    moeda: moeda as string | null, coletadoEm: raw.coletado_em };
   const diasEsperados = (Date.parse(esperado.periodo.ate) - Date.parse(esperado.periodo.desde)) / 86400000 + 1;
   let fusoConfirmado = false;
   if (raw.fuso) {
@@ -112,12 +118,12 @@ export function lerInventarioMeta(raw: unknown, esperado: {
     const entrega = (m.impressoes !== null && m.impressoes > 0) || (m.gasto_centavos !== null && m.gasto_centavos > 0)
       ? true : m.impressoes === 0 && m.gasto_centavos === 0 ? false : null;
     if (m.entrega_observada_no_periodo !== entrega) return null;
-    return { estado: m.estado as MetricasMeta["estado"], gasto: m.gasto_centavos, impressoes: m.impressoes,
+    return aplicarCoberturaDiaria({ estado: m.estado as MetricasMeta["estado"], gasto: m.gasto_centavos, impressoes: m.impressoes,
       cliques: m.cliques_totais, conversas: m.conversas_whatsapp as string | null, conversasMensagem,
       dias, entregaObservada: m.entrega_observada_no_periodo,
       serieDiaria: lerSerieMeta(m.serie_diaria, esperado.periodo, {
         gasto: m.gasto_centavos as number | null, impressoes: m.impressoes as number | null, cliques: m.cliques_totais as number | null,
-      }, dias) };
+      }, dias) }, m.cobertura_diaria, contextoCobertura);
   }
   const ids = new Set<string>();
   function objeto(v: unknown): ObjetoMeta | null {

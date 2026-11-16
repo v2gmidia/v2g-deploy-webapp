@@ -13,7 +13,8 @@ export function resumirMeta(inventario: InventarioMeta) {
     const soma = valores.reduce((a, b) => a + b, 0);
     return valores.length && Number.isSafeInteger(soma) ? soma : null;
   };
-  const parcial = observadas.some(m => m.estado === "parcial" || [m.gasto, m.impressoes, m.cliques].includes(null));
+  const parcial = observadas.some(m => m.leituraIncompleta ?? (m.estado === "parcial" || [m.gasto, m.impressoes, m.cliques].includes(null)));
+  const diaEmAtualizacao = metricas.find(m => m.diaEmAtualizacao)?.diaEmAtualizacao ?? null;
   const seriesDisponiveis = observadas.length > 0 && observadas.every(m => m.serieDiaria?.estado === "disponivel");
   const dias: DiaMeta[] = seriesDisponiveis ? diasDoPeriodo(inventario.periodo.desde, inventario.periodo.ate).map(dia => {
     const linhas = observadas.map(m => m.serieDiaria!.dias.find(d => d.dia === dia));
@@ -22,10 +23,12 @@ export function resumirMeta(inventario: InventarioMeta) {
       const soma = linhas.reduce((t, d) => t + d![chave]!, 0);
       return Number.isSafeInteger(soma) ? soma : null;
     };
-    return { dia, gasto: valor("gasto"), impressoes: valor("impressoes"), cliques: valor("cliques") };
+    return { dia, gasto: valor("gasto"), impressoes: valor("impressoes"), cliques: valor("cliques"),
+      ...(dia === diaEmAtualizacao ? { situacao: "atualizando" as const }
+        : linhas.every(d => d?.situacao === "sem_veiculacao") ? { situacao: "sem_veiculacao" as const } : {}) };
   }) : [];
-  return { gasto: somar("gasto"), impressoes: somar("impressoes"), cliques: somar("cliques"), parcial, dias,
-    conversasMensagem: somarConversas(observadas.map(m => m.conversasMensagem)),
+  return { gasto: somar("gasto"), impressoes: somar("impressoes"), cliques: somar("cliques"), parcial, dias, diaEmAtualizacao,
+    conversasMensagem: somarConversas(observadas.filter(m => !m.coberturaConfirmada || m.dias.length > 0 || m.conversasMensagem !== null).map(m => m.conversasMensagem)),
     campanhas: metricas.length, campanhasObservadas: observadas.length, campanhasSemDados: metricas.length - observadas.length,
     entregaHistorica: metricas.some(m => m.entregaObservada === true),
     serieInconsistente: observadas.some(m => m.serieDiaria?.estado === "inconsistente") };

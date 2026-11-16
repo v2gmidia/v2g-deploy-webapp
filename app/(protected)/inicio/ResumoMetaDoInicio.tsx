@@ -79,7 +79,7 @@ export function ResumoMetaDoInicio({ resultado, escopo, intervalo, pendencia, fa
           <p className={styles.nota}>Conversas iniciadas atribuídas pela Meta. Podem incluir mais de um canal. Não são pessoas únicas, vendas ou mensagens conferidas na caixa de entrada.</p>
         </details>
       </section>
-      <GraficoDiario key={`${chave}:${dados.contaId}`} dias={resumo.dias} moeda={dados.moeda} inconsistente={resumo.serieInconsistente} />
+      <GraficoDiario key={`${chave}:${dados.contaId}`} dias={resumo.dias} moeda={dados.moeda} inconsistente={resumo.serieInconsistente} diaEmAtualizacao={resumo.diaEmAtualizacao} />
     </>}
     {falhaPendencia && <p className="form-warning" role="status">Não conseguimos conferir as pendências do cadastro agora.</p>}
     {pendencia && <section className={styles.pendencia} aria-label="Pendência do cadastro"><div><h2>{pendencia.titulo}</h2><details className={styles.detalhes}><summary>Ver orientação</summary><p>{pendencia.corpo}</p></details></div><a className="cta" href={pendencia.href}>{pendencia.rotulo}</a></section>}

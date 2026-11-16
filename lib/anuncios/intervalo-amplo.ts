@@ -22,6 +22,9 @@ export function reunirInventarios(partes: InventarioMeta[], periodo: PeriodoMeta
   if (partes.length === 1) return primeiro;
 
   function metricas(itens: (ObjetoMeta | undefined)[]): MetricasMeta {
+    const coberturaConfirmada = itens.every(i => i?.metricas.coberturaConfirmada === true);
+    const diaEmAtualizacao = itens.find(i => i?.metricas.diaEmAtualizacao)?.metricas.diaEmAtualizacao ?? null;
+    const leituraIncompleta = coberturaConfirmada ? itens.some(i => i!.metricas.leituraIncompleta) : undefined;
     const medidas = itens.flatMap(i => i && i.metricas.estado !== "sem_dados" ? [i.metricas] : []);
     const soma = (campo: "gasto" | "cliques" | "impressoes") => {
       if (!medidas.length || medidas.some(m => m[campo] === null)) return null;
@@ -33,7 +36,7 @@ export function reunirInventarios(partes: InventarioMeta[], periodo: PeriodoMeta
       && [gasto, impressoes, cliques].every(n => n !== null);
     const serie = medidas.some(m => m.serieDiaria?.estado === "inconsistente") ? "inconsistente"
       : medidas.length && medidas.every(m => m.serieDiaria?.estado === "disponivel") ? "disponivel" : "ausente";
-    return { gasto, impressoes, cliques,
+    return { gasto, impressoes, cliques, coberturaConfirmada, diaEmAtualizacao, leituraIncompleta,
       estado: !medidas.length ? "sem_dados" : !completa ? "parcial" : gasto === 0 && impressoes === 0 && cliques === 0 ? "zero_medido" : "observado",
       conversas: somarConversas(medidas.map(m => m.conversas)),
       conversasMensagem: somarConversas(medidas.map(m => m.conversasMensagem)),
