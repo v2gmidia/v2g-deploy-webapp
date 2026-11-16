@@ -13,6 +13,7 @@ const allowed = new Set([
   "lib/contratacao/direito-por-pedido.ts", "lib/contratacao/consultar-estado-pagamento.ts",
   "lib/contratacao/estado-pagamento-publico.ts",
   "lib/piloto-qa/acesso.ts",
+  "lib/agencia/habilitacao.ts",
 ].map((p) => pathToFileURL(path.join(root, p)).href));
 const mocks = {
   "server-only": "export {};",

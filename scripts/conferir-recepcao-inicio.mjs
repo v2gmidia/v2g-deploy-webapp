@@ -51,6 +51,7 @@ function html(over = {}) {
   const cliente = recepcaoNoCliente();
   const { TelaDoInicio } = ambienteTs({ ports: {
     ...portsTela,
+    './ResumoMetaDoInicio': { ResumoMetaDoInicio: () => { throw Error('Resumo de agência não esperado na recepção'); } },
     './RecepcaoDoCadastro': { RecepcaoDoCadastro: cliente.Componente },
   } }).load('app/(protected)/inicio/TelaDoInicio.tsx');
   const props = { estado: novo(), ultimaDecisao: null, diaDaPergunta: '2026-10-26', atrasados: [],
@@ -222,6 +223,8 @@ test('página consulta métricas só quando esperadas, com período e negócio d
       'next/navigation': { redirect: () => { throw Error('Redirecionamento inesperado'); } },
       '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: 'dono-A' } } }) }, from: () => q }) },
       '@/components/ui/FaixaReconectar': { FaixaReconectar: () => null },
+      '@/lib/agencia/habilitacao': { agenciaHabilitada: () => false },
+      '@/lib/backend/anuncios-do-negocio': { anunciosDoNegocioSelecionado: async () => { throw Error('Inventário de agência não esperado'); } },
       '@/lib/estado/cliente': { estadoDoCliente: async () => estado },
       '@/lib/onboarding/pendencia-do-negocio': {
         lerPendenciaDoNegocio: async id => { assert.equal(id, 'negocio-A'); return { pendencia: null, reserva: null, falha: false, cadastroConcluido: true }; },
@@ -233,13 +236,13 @@ test('página consulta métricas só quando esperadas, com período e negócio d
       './TelaDoInicio': { TelaDoInicio: () => null },
     } });
     const page = env.load('app/(protected)/inicio/page.tsx').default;
-    const tela = await page({ searchParams: Promise.resolve({ desde: '2026-01-01', ate: '2026-03-31', businessId: 'invasor' }) });
+    const tela = await page({ searchParams: Promise.resolve({ desde: '2026-01-01', ate: '2026-01-31', businessId: 'invasor' }) });
     assert.equal(tela.props.recepcaoOnboarding.falhaReuniao, false);
     assert.deepEqual(agendas, ['negocio-A']);
     assert.equal(tela.props.acumuladoDoPeriodo, desconhecido ? null : undefined);
     assert.equal(chamadas.length, desconhecido ? 2 : 0);
     for (const c of chamadas) { assert.equal(c.businessId, 'negocio-A'); assert.equal(c.profileId, 'dono-A'); }
-    if (desconhecido) assert.ok(chamadas.some(c => c.desde === '2026-01-01' && c.ate === '2026-03-31'));
+    if (desconhecido) assert.ok(chamadas.some(c => c.desde === '2026-01-01' && c.ate === '2026-01-31'));
   }
 });
 

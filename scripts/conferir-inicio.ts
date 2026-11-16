@@ -283,12 +283,12 @@ secao("5.2 intervalo livre — validação, histórico e separação da operaç�
 {
   const hoje = "2026-10-18";
   const trimestre = intervaloDoInicio({ desde: "2026-01-01", ate: "2026-03-31" }, hoje);
-  ok(trimestre.desde === "2026-01-01" && trimestre.ate === "2026-03-31" && !trimestre.erro,
-    "janeiro a março é consultado exatamente, sem ancorar em hoje");
+  ok(Boolean(trimestre.erro?.includes("31 dias")),
+    "intervalo superior ao contrato Meta informa o limite sem prometer consulta");
   const padrao = intervaloDoInicio({}, hoje);
   ok(padrao.desde === "2026-10-01" && padrao.ate === hoje, "sem seleção, mostra o mês atual");
   ok(erroDoIntervalo("2024-02-29", "2024-02-29", hoje) === null, "um único dia bissexto é válido");
-  ok(erroDoIntervalo("2020-01-01", "2026-03-31", hoje) === null, "histórico superior a um ano não é restringido");
+  ok(erroDoIntervalo("2020-01-01", "2020-01-31", hoje) === null, "mês histórico pode ser escolhido sem ancorar em hoje");
   ok(Boolean(erroDoIntervalo("2026-02-29", "2026-03-31", hoje)), "data inexistente é rejeitada");
   ok(Boolean(erroDoIntervalo("2026-04-31", "2026-05-01", hoje)), "não normaliza abril para maio");
   ok(Boolean(erroDoIntervalo("2026-03-31", "2026-01-01", hoje)), "ordem invertida é rejeitada");
@@ -299,7 +299,7 @@ secao("5.2 intervalo livre — validação, histórico e separação da operaç�
   const invalido = intervaloDoInicio({ desde: "errado", ate: "2026-03-31" }, hoje);
   ok(Boolean(invalido.erro) && invalido.desde === padrao.desde, "query inválida informa erro e o recorte substituto");
   const repetido = intervaloDoInicio({ desde: ["2026-01-01", "errado"], ate: ["2026-03-31"] }, hoje);
-  ok(repetido.desde === trimestre.desde && !repetido.erro, "parâmetros repetidos têm interpretação determinística");
+  ok(repetido.desde === padrao.desde && Boolean(repetido.erro), "parâmetros repetidos são recusados explicitamente");
   const pagina = fonte("app/(protected)/inicio/page.tsx");
   ok(pagina.includes("await estadoDoCliente(agora)") && pagina.includes("desde: intervalo.desde, ate: intervalo.ate"),
     "histórico consulta as datas escolhidas sem mudar a leitura do estado atual");

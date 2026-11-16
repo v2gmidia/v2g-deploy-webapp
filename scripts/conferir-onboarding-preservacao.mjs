@@ -17,6 +17,7 @@ const allowed = new Set([
   'lib/onboarding/documento.ts', 'lib/onboarding/atividades.ts', 'lib/cadastro/montar.ts', 'lib/cadastro/pendencias.ts',
   'lib/formato.ts', 'lib/verba/limites.ts', 'lib/nichos/escolha.ts',
   'lib/nichos/busca.ts', 'lib/nichos/tipos.ts',
+  'lib/onboarding/conclusao-legada.ts',
 ].map(p => pathToFileURL(path.join(root, p)).href));
 const mocks = {
   'next/cache': 'export const revalidatePath = (...a) => globalThis.__onboardingOffline.revalidate(...a);',

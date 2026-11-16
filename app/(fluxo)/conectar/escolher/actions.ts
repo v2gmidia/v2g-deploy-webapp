@@ -6,6 +6,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { listarContasDeAnuncio, listarPaginas } from "@/lib/meta/graph";
 import { acessosPilotoQa } from "@/lib/piloto-qa/acesso";
+import { acessosContratadosDoPerfil } from "@/lib/contratacao/acesso-contratado";
+import { parametrosContaAcessoContratado } from "@/lib/contratacao/conta-acesso-contratado";
 
 export interface EscolhaState {
   erro?: string;
@@ -94,6 +96,19 @@ export async function salvarEscolhaAction(
     p_currency: moeda,
     p_page_id: paginaId,
   });
+
+  // Contratação histórica já conferida e aceita; nunca fabricar pedido ou
+  // herdar autorização só por pertencer à carteira de uma agência.
+  if (erroEscolha?.message.includes("negocio novo sem pedido aprovado")) {
+    const parametros = parametrosContaAcessoContratado({ titular: user,
+      concessoes: await acessosContratadosDoPerfil(supabase, user),
+      businessId: business.id, connectionId: conexao.id, externalId: contaExterna,
+      name: contaNome, currency: moeda, pageId: paginaId });
+    if (parametros) {
+      const historico = await admin.rpc("registrar_conta_acesso_contratado", parametros);
+      erroEscolha = historico.error;
+    }
+  }
 
   // O piloto QA é uma concessão explícita de uma conta exata, sem pedido
   // fictício. A função no banco repete a validação e recusa negócio comprado.

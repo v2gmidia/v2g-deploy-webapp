@@ -6,6 +6,10 @@ import { destinoPaginaCriativos, faixaDeCriativos, paginaDeCriativos,
   ultimaPaginaCriativos, MAX_PAGINA_CRIATIVOS } from "@/lib/criativos/paginacao";
 import { DecidirPeca } from "./DecidirPeca";
 import { SincronizarTarefa } from "./SincronizarTarefa";
+import { PreviaDaPeca } from "./PreviaDaPeca";
+import { ConfirmarPublicacao } from "./ConfirmarPublicacao";
+import { COLUNAS_PUBLICACAO, lerPublicacao, textoDaPublicacao } from "@/lib/criativos/publicacao";
+import styles from "./revisao.module.css";
 import { hojeEmSaoPaulo, resumoDaIntencao } from "@/lib/criativos/intencao-envio";
 
 export const metadata = { title: "Revisão de criativos | V2G", robots: { index: false, follow: false } };
@@ -52,7 +56,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
         <p><a href="/gestor/criativos">{tituloFila}</a></p></div>;
     // Buscar pendências antes do histórico: limitar os últimos envios primeiro
     // ocultava peças antigas que ainda precisavam de decisão do gestor.
-    const colunas = "id, business_id, original_name, file_path, status, review_note, created_at, upload_intent";
+    const colunas = "id, business_id, original_name, file_path, sha256, status, review_note, created_at, upload_intent";
     const consultaPendentes = admin.from("creative_review_requests")
       .select(colunas, { count: "exact" }).eq("status", "awaiting_review");
     const consultaHistorico = admin.from("creative_review_requests")
@@ -81,6 +85,15 @@ export default async function CriativosDoGestorPage({ searchParams }: {
     const negocios = ids.length ? await admin.from("businesses")
       .select("id, name").in("id", nomesConsultados) : { data: [], error: null };
     const nomes = new Map((negocios.data ?? []).map((negocio) => [negocio.id, negocio.name]));
+    const [publicacoes, contas] = pedidos.length ? await Promise.all([
+      admin.from("creative_publication_confirmations").select(COLUNAS_PUBLICACAO).in("review_request_id", pedidos.map(p => p.id))
+        .in("business_id", meusNegocios),
+      admin.from("ad_accounts").select("business_id, external_id, is_active, status").in("business_id", ids)
+        .eq("is_active", true).eq("status", "ok").limit(1001),
+    ]) : [{ data: [], error: null }, { data: [], error: null }];
+    const porRevisao = new Map((publicacoes.data ?? []).map(p => [p.review_request_id, p]));
+    const contasValidas = !contas.error && contas.data && contas.data.length < 1001 && contas.data.every(c =>
+      ids.includes(c.business_id) && c.is_active === true && c.status === "ok" && /^act_[0-9]{1,40}$/.test(c.external_id));
     const links = await Promise.all(pedidos.map(async (pedido) => {
       if (pedido.status === "uploading" || pedido.status === "upload_failed") return null;
       if (!caminhoConfereComRevisao(pedido)) return null;
@@ -90,7 +103,7 @@ export default async function CriativosDoGestorPage({ searchParams }: {
     const data = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
     const totalPendentes = pendentes.count;
     const ultimaPagina = totalPendentes === null ? null : ultimaPaginaCriativos(totalPendentes);
-    return <div className="canvas"><div className="page-head"><p>OPERAÇÃO · USO INTERNO</p><h1>Revisão de criativos</h1>
+    return <div className="canvas"><div className="page-head"><h1>Revisão de criativos</h1>
       <p>Peças enviadas pelos clientes, por negócio. Aprovação interna não publica uma campanha.</p></div>
       <p><a href="/gestor">Voltar à carteira</a>{negocioId && <> · <a href="/gestor/criativos">{tituloFila}</a></>}</p>
       {negocioId && <p>Conta selecionada: {nomes.get(negocioId) ?? negocioId}</p>}
@@ -114,16 +127,28 @@ export default async function CriativosDoGestorPage({ searchParams }: {
       {pedidos.length === 0 && <p>{pecaId ? "Peça não encontrada nesta conta ou fora da sua carteira." :
         pagina > 1 ? "Nenhuma peça nesta página; volte à primeira para conferir as pendências atuais." :
           "Nenhuma peça registrada para revisão."}</p>}
-      {pedidos.map((pedido, indice) => <section className="auth-card" key={pedido.id}>
+      {publicacoes.error && <p className="form-warning">As peças continuam disponíveis. A confirmação de publicação ainda não pode ser consultada neste ambiente.</p>}
+      {pedidos.map((pedido, indice) => {
+        const registro = porRevisao.get(pedido.id);
+        const publicacao = lerPublicacao(registro, pedido);
+        const indisponivel = Boolean(publicacoes.error || (registro && !publicacao));
+        const contasDoNegocio = contasValidas ? [...new Set((contas.data ?? []).filter(c => c.business_id === pedido.business_id).map(c => c.external_id as string))] : [];
+        return <section className={styles.pedido} key={pedido.id}>
         <h2>{nomes.get(pedido.business_id) ?? "Negócio sem nome disponível"}</h2>
         <p>{pedido.original_name} · {rotuloDaRevisao(pedido.status as StatusRevisao)} · {data.format(new Date(pedido.created_at))}</p>
         <p>{resumoDaIntencao(pedido.upload_intent, hojeEmSaoPaulo())}</p>
-        {links[indice] ? <p><a href={links[indice]!} target="_blank" rel="noopener noreferrer">Abrir imagem (link válido por 10 minutos)</a></p>
+        {links[indice] ? <PreviaDaPeca url={links[indice]!} nome={pedido.original_name} />
           : pedido.status === "awaiting_review" && <p className="form-warning">Imagem indisponível agora; não decida sem conferir a peça.</p>}
         {pedido.review_note && <p>Retorno registrado: {pedido.review_note}</p>}
+        <div className={styles.publicacao}><strong>Publicação</strong><p>{textoDaPublicacao(publicacao, indisponivel)}</p>
+          {publicacao && <p>Conta {publicacao.ad_account_id} · anúncio {publicacao.ad_id}<br />Conferência registrada: {publicacao.evidence}</p>}
+          {pedido.status === "approved_for_manual_publish" && !publicacao && !indisponivel &&
+            (contasDoNegocio.length ? <ConfirmarPublicacao id={pedido.id} contas={contasDoNegocio} hoje={hojeEmSaoPaulo()} />
+              : <p className="form-warning">Confira a conta de anúncios deste negócio antes de confirmar a publicação.</p>)}
+        </div>
         {pedido.status === "awaiting_review" && links[indice] && <DecidirPeca id={pedido.id} />}
         {trabalhoAtivo && <SincronizarTarefa id={pedido.id} />}
-      </section>)}
+      </section>; })}
       <p className="foot-line">Esta fila não confirma recebimento de aviso pelo gestor, publicação na Meta nem desempenho da peça.</p>
     </div>;
   } catch {

@@ -10,6 +10,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as contrato from '../lib/anuncios/contrato-meta.ts';
 import * as periodo from '../lib/inicio/periodo.ts';
 import * as retorno from '../lib/anuncios/retorno-login.ts';
+import * as conversas from '../lib/anuncios/conversas-meta.ts';
 
 const business = '11111111-1111-4111-8111-111111111111';
 const esperado = { businessId:business, contaId:'act_9001', campanhaId:'10001', periodo:{desde:'2026-10-28',ate:'2026-10-28'} };
@@ -113,6 +114,7 @@ export function componente() {
     'react/jsx-runtime':jsxRuntime,
     '@/components/ui/Pill':{Pill:({children})=>React.createElement('span',{},children)},
     '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
+    '@/lib/anuncios/conversas-meta':conversas,
     './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,key)=>String(key)})},
   };
   vm.runInNewContext(codigo,{exports,Intl,Date,URLSearchParams,require:id=>{
@@ -126,7 +128,7 @@ test('renderiza hierarquia, IDs e zero; conversas ausentes não viram zero',()=>
   assert.match(html,/Campanha FICTÍCIA/);assert.match(html,/Conjunto FICTÍCIO/);assert.match(html,/Anúncio FICTÍCIO/);
   for(const id of ['10001','20001','30001'])assert.ok(html.includes(id));
   assert.match(html,/Preparando/);assert.match(html,/Zero medido/);assert.match(html,/R\$.*0,00/);
-  assert.match(html,/Conversas no WhatsApp<\/dt><dd class="ausente">Não medido/);
+  assert.match(html,/Conversas por mensagem \(Meta\)<\/dt><dd class="ausente">Não medido/);
 });
 test('erro de leitura fica fora do caminho vazio ou zero, sem detalhe cru',()=>{
   const html=renderToStaticMarkup(React.createElement(Tela,{resultado:{ok:false,motivo:'indisponivel',mensagem:'Tente novamente mais tarde.'}}));

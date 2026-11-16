@@ -61,14 +61,6 @@ export interface ExcecaoDeIdentidade {
 
 export const EXCECOES: ExcecaoDeIdentidade[] = [
   {
-    arquivo: "app/(protected)/criativos/page.tsx",
-    autorizacao: "posse",
-    oQueEntra: "`?peca=` identifica o criativo ao abrir a associação de um anúncio",
-    porque: "A consulta exige usuário validado por auth.getUser(), UUID válido e negócio vindo de estadoDoCliente. " +
-      "A linha é lida sob RLS com business_id do negócio da sessão e uso=campanha, além do ID solicitado. " +
-      "O resultado ainda é filtrado por business_id antes de qualquer assinatura de arquivo; a URL não escolhe negócio nem caminho.",
-  },
-  {
     arquivo: "app/(protected)/criativos/imagem-gerada/[requestId]/route.ts",
     autorizacao: "posse",
     oQueEntra: "`params.requestId` e `?negocio=` da URL da imagem gerada",

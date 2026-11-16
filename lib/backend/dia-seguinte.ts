@@ -197,7 +197,7 @@ export async function consolidadoDoNegocio(args: {
   if (!resposta.ok) return resposta;
 
   const validado = validarConsolidadoDoNegocio(resposta.dados);
-  if (!validado) {
+  if (!validado || validado.businessId !== args.businessId) {
     registrarErroBackend("consolidado-do-negocio", {
       metodo: "GET",
       caminho: "/negocios/{id}/consolidado",

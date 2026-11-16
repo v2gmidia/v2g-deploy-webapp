@@ -1,4 +1,5 @@
 import { Pill } from "@/components/ui/Pill";
+import { formatarConversas } from "@/lib/anuncios/conversas-meta";
 import { rotuloDoIntervalo } from "@/lib/inicio/periodo";
 import { entradaDaLeitura } from "@/lib/anuncios/retorno-login";
 import { rotuloStatusMeta, type ContextoMeta, type LeituraMeta, type ObjetoMeta, type ResultadoAnunciosMeta, type ResultadoInventarioMeta, type PeriodoMeta } from "@/lib/anuncios/contrato-meta";
@@ -98,13 +99,13 @@ function Numeros({ objeto, leitura }: { objeto: ObjetoMeta; leitura: LeituraMeta
   }).format(m.gasto / 100);
   const estados = { sem_dados: "Sem medições neste período", zero_medido: "Zero medido neste período",
     parcial: "Medições parciais", observado: "Com medições" };
-  const conversas = m.conversas === null ? "Não medido" : m.conversas.replace(".", ",");
+  const conversas = formatarConversas(m.conversasMensagem);
   return <div>
     <p className={styles.estado}>{estados[m.estado]}</p>
     <dl className={styles.numeros}>{[["Investido", gasto], ["Impressões", numero(m.impressoes)],
-      ["Cliques", numero(m.cliques)], ["Conversas no WhatsApp", conversas]].map(([rotulo, valor]) =>
+      ["Cliques", numero(m.cliques)], ["Conversas por mensagem (Meta)", conversas]].map(([rotulo, valor]) =>
       <div key={rotulo}><dt>{rotulo}</dt><dd className={valor === "Não medido" ? styles.ausente : undefined}>{valor}</dd></div>)}</dl>
     {m.estado === "parcial" ? <p className={styles.fonte}>Confira a cobertura, o período, a moeda e o fuso antes de comparar esta medição parcial.</p> : null}
-    {m.conversas === null ? <p className={styles.fonte}>Conversas do WhatsApp ainda não foram confirmadas por esta leitura.</p> : null}
+    <p className={styles.fonte}>{m.conversasMensagem == null ? "A fonte ainda não confirmou a contagem de conversas por mensagem. " : "Conversas iniciadas atribuídas pela Meta, conforme a configuração de atribuição da Meta. "}Podem incluir mais de um canal; não são pessoas únicas nem vendas.</p>
   </div>;
 }

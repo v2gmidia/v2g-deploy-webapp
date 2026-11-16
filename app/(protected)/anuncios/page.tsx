@@ -17,8 +17,13 @@ import { intervaloDoInicio, rotuloDoIntervalo } from "@/lib/inicio/periodo";
 import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 import { SeletorDePeriodo } from "../inicio/SeletorDePeriodo";
 import { anunciosDoNegocioSelecionado } from "@/lib/backend";
+import { InventarioDeAnunciosMeta } from "./AnunciosMeta";
 import { InventarioCliente } from "./InventarioCliente";
 import { AtualizacaoDaConsulta } from "./AtualizacaoDaConsulta";
+import { HistoricoSemRodadas } from "./HistoricoSemRodadas";
+import { agenciaHabilitada } from "@/lib/agencia/habilitacao";
+import { hrefDoCliente, retornoDaCarteira, selecionarVisaoAgencia } from "@/lib/agencia/contexto";
+import { CabecalhoAgencia } from "@/components/agencia/Comuns";
 
 export const metadata = tituloDaAba("/anuncios");
 
@@ -83,10 +88,33 @@ export default async function AnunciosPage({ searchParams }: {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const agencia = agenciaHabilitada()
+    ? await (await import("@/lib/agencia/da-sessao")).carregarAgenciaDaSessao() : null;
+  const contexto = agencia?.status === "agencia" ? agencia.contexto : null;
+  if (agencia?.status === "indisponivel"
+    || agencia && agencia.status !== "desligado" && selecionarVisaoAgencia(contexto, busca, agencia.status === "agencia") === "invalido") {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
+  }
+  if (agencia?.status === "agencia" && selecionarVisaoAgencia(contexto, busca, true) === "carteira") {
+    return <section><CabecalhoAgencia titulo="Anúncios" descricao="Abra um cliente da carteira para acompanhar seus anúncios e resultados." />
+      <a className="cta" href="/inicio">Escolher cliente na carteira</a></section>;
+  }
+
   // A resposta para "o que falta" vem pronta e é a MESMA que o `/inicio` e
   // a trilha do onboarding leem. O que muda daqui para lá é o
   // enquadramento, não o fato — ver docs/estado-do-cliente.md §3.
   const estado = await estadoDoCliente(agora);
+  if (contexto && contexto.businessId !== estado.negocioId) {
+    const { ClienteIndisponivel } = await import("@/components/agencia/Comuns");
+    return <ClienteIndisponivel />;
+  }
+  const retorno = retornoDaCarteira(busca, true);
+  const hrefResumo = contexto
+    ? hrefDoCliente("/inicio", contexto.businessId, retorno,
+      { desde: intervalo.desde, ate: intervalo.ate, conta: contaSolicitada })
+    : `/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`;
+  const hrefCriativos = contexto ? hrefDoCliente("/criativos", contexto.businessId, retorno) : "/criativos";
 
   const { data: criativos, error: erroCriativos } = estado.negocioId
     ? await supabase
@@ -121,11 +149,12 @@ export default async function AnunciosPage({ searchParams }: {
       <FaixaReconectar />
       <header className="anuncios-topo-novo"><div className="page-head"><h1>Anúncios</h1>
         <p>Resultados e criativos, anúncio por anúncio.</p></div>
-        <a className="cta" href="/criativos">Ver criativos</a></header>
-      <div className="anuncios-periodo"><a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
+        <a className="cta" href={hrefCriativos}>Ver criativos</a></header>
+      <div className="anuncios-periodo"><a href={hrefResumo}>Ver resumo deste período</a>
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-      <InventarioCliente resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} vinculos={pecas} vinculosFalharam={Boolean(erroCriativos)} selecionado={typeof busca.anuncio === "string" ? busca.anuncio : undefined} />
+      {contexto ? <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} /> : <InventarioCliente resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} vinculos={pecas} vinculosFalharam={Boolean(erroCriativos)} selecionado={typeof busca.anuncio === "string" ? busca.anuncio : undefined} />}
+      {resultado?.estado === "sem-execucao" && <HistoricoSemRodadas />}
     </div></AtualizacaoDaConsulta>;
   }
 
@@ -183,14 +212,14 @@ export default async function AnunciosPage({ searchParams }: {
           </span>
         </p>}
        </div>
-       <a className="cta" href="/criativos">Ver criativos</a>
+       <a className="cta" href={hrefCriativos}>Ver criativos</a>
       </header>
       <div className="anuncios-periodo">
-        <a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
+        <a href={hrefResumo}>Ver resumo deste período</a>
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
       </div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-      <InventarioCliente resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} vinculos={pecas} vinculosFalharam={Boolean(erroCriativos)} selecionado={typeof busca.anuncio === "string" ? busca.anuncio : undefined} />
+      {contexto ? <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} /> : <InventarioCliente resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} vinculos={pecas} vinculosFalharam={Boolean(erroCriativos)} selecionado={typeof busca.anuncio === "string" ? busca.anuncio : undefined} />}
 
       <details className="anuncios-historico"><summary>Histórico por rodada da V2G</summary>
       <p className="hint">Histórico do negócio, sem filtro por conta. Os mesmos anúncios podem aparecer na consulta Meta acima; não some os números das duas fontes.</p>

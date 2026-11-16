@@ -16,6 +16,8 @@ export type ItemDaGaleria = {
   tom: "neutro" | "positivo" | "atencao" | "critico";
   criadoEm: string;
   detalhe?: string | null;
+  publicacao?: string;
+  revisao?: { status: string; revisadoEm: string | null; publicacaoConfirmada: boolean; falhaPublicacao: boolean };
   acao?: { rotulo: string; href: string } | null;
   associacoes?: Array<{ nome: string; href: string; ilustrativa?: boolean }>;
   expiraEmDias?: number | null;
@@ -97,6 +99,7 @@ function CardDoCriativo({ item, selecionado }: { item: ItemDaGaleria; selecionad
         {item.imagemUrl && imagemFalhou !== item.imagemUrl ? <img src={item.imagemUrl} alt={item.nome} /> : item.arte ? <ArteDeExemplo tipo={item.arte} /> : <p>Prévia indisponível</p>}
         <div><p className={biblioteca.estado}>{item.estado}</p><p className={biblioteca.data}>{item.criadoEm}</p>
           {item.detalhe ? <p>{item.detalhe}</p> : null}
+          {item.publicacao && <p>Publicação: {item.publicacao}</p>}
           {item.grupo === "revisao" ? <p>O gestor confere a imagem antes de disponibilizá-la para os anúncios.</p> : <>
             <h3>Anúncios associados</h3>
             <div className={biblioteca.associacoes}>{item.associacoes?.length ? item.associacoes.map((associacao) => <a key={associacao.nome} href={associacao.href}>{associacao.nome}<IconeSeta /></a>) : <p>Sem anúncio associado</p>}</div>

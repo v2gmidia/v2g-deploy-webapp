@@ -37,7 +37,7 @@ export function Marca({ inicial, logo, variacoes }: { inicial: EstadoMarca; logo
   const [erroInstagram, setErroInstagram] = useState<string | null>(null);
   const [erroSite, setErroSite] = useState<string | null>(null);
   const tempoDaPersistencia = useTempoDaOperacao(enviando);
-  const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende" } as const;
+  const rotulos = { nome: "Nome", ramo: "Ramo", descricao: "O que vende", praca: "Onde atende", operador: "Quem opera", publico: "Comprador", contratante: "Contratante", destino: "Atendimento", campanha: "Campanha" } as const;
 
   async function salvar() {
     if (enviando || aviso || uploadsAtivos > 0 || analisesAtivas > 0) return;

@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { NavegacaoAgencia, NomeDoContextoAgencia } from "@/components/agencia/ContextoNoCasco";
+import type { ContextoDoCascoAgencia } from "@/components/agencia/ContextoNoCasco";
 import { identificarDocumentoContratante } from "@/lib/contratacao/documento-contratante";
 import { Marca } from "@/components/ui/Marca";
 import { NavItem } from "@/components/ui/NavItem";
@@ -118,6 +120,7 @@ export function Casco({
   ehOperador,
   rotaAtiva,
   previa = false,
+  contextoAgencia,
   children,
 }: {
   previa?: boolean;
@@ -132,6 +135,7 @@ export function Casco({
   negocios?: NegocioDoMenu[];
   ehOperador?: boolean;
   rotaAtiva?: "/inicio" | "/criativos" | "/anuncios" | "/alertas" | "/conta";
+  contextoAgencia?: ContextoDoCascoAgencia;
   children: ReactNode;
 }) {
   const adicionarHref = "/entrar?adicionar=1";
@@ -143,6 +147,9 @@ export function Casco({
 
         <nav className="side-nav" aria-label="Navegação principal">
           {/* Pendências ficam nas telas correspondentes; quatro destinos no menu. */}
+          {contextoAgencia ? <Suspense fallback={<>
+            <NavItem href="/inicio" icone={<IcoInicio />}>Início</NavItem><NavItem href="/criativos" icone={<IcoCriativos />}>Criativos</NavItem><NavItem href="/anuncios" icone={<IcoAnuncios />}>Anúncios</NavItem>
+          </>}><NavegacaoAgencia businessId={contextoAgencia.businessId} inicio={<IcoInicio />} criativos={<IcoCriativos />} anuncios={<IcoAnuncios />} /></Suspense> : <>
           <NavItem href="/inicio" icone={<IcoInicio />} ativo={rotaAtiva ? rotaAtiva === "/inicio" : undefined}>
             Início
           </NavItem>
@@ -152,6 +159,7 @@ export function Casco({
           <NavItem href="/anuncios" icone={<IcoAnuncios />} ativo={rotaAtiva ? rotaAtiva === "/anuncios" : undefined}>
             Anúncios
           </NavItem>
+          </>}
           <NavItem href="/conta" icone={<IcoConta />} ativo={rotaAtiva ? rotaAtiva === "/conta" : undefined}>
             Conta
           </NavItem>
@@ -179,7 +187,8 @@ export function Casco({
             <div className="sub">
               {nomeNegocio && (
                 <>
-                  <b>{nomeNegocio}</b>
+                  {contextoAgencia ? <Suspense fallback={<b>{nomeNegocio}</b>}><NomeDoContextoAgencia businessId={contextoAgencia.businessId}
+                    agencia={contextoAgencia.agencia} anunciante={contextoAgencia.anunciante} /></Suspense> : <b>{nomeNegocio}</b>}
                   {" · "}
                 </>
               )}

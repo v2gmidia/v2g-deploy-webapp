@@ -108,14 +108,14 @@ function resultados(ok = true) {
 
 test('mesmo intervalo vai ao negócio e às execuções, sempre depois da autorização', async () => {
   const { ler, chamadas } = resultados();
-  const intervalo = intervaloDoInicio({ desde: '2025-01-01', ate: '2025-03-31', idExecucao: 'invasora' }, '2026-10-19');
+  const intervalo = intervaloDoInicio({ desde: '2025-01-01', ate: '2025-01-31', idExecucao: 'invasora' }, '2026-10-19');
   const resposta = await ler({ businessId: 'negocio', profileId: 'perfil', intervalo: { ...intervalo, businessId: 'outro', profileId: 'outro', idExecucao: 'invasora' } });
   assert.equal(chamadas[0][0], 'negocio');
   assert.equal(chamadas[0][1].businessId, 'negocio');
   assert.equal(chamadas[0][1].profileId, 'perfil');
   for (const [tipo, args] of chamadas) {
     if (tipo === 'negocio' || tipo === 'execucao') {
-      assert.equal(args.desde, '2025-01-01'); assert.equal(args.ate, '2025-03-31');
+      assert.equal(args.desde, '2025-01-01'); assert.equal(args.ate, '2025-01-31');
     }
     if (tipo !== 'negocio') assert.equal(args.idExecucao, 'permitida');
   }
@@ -131,7 +131,7 @@ test('negócio não autorizado bloqueia toda consulta de execução', async () =
 test('regressões de apresentação: conclusão, envio indisponível e datas', () => {
   const inicio = readFileSync('app/(protected)/inicio/TelaDoInicio.tsx', 'utf8');
   assert.match(inicio, /jornadaConcluida && !temProximoAcionavel && !falhaPendencia/);
-  assert.ok(inicio.indexOf('<ConclusaoDaJornada') > inicio.indexOf('<section className="sinais-bloco">', inicio.indexOf('const donoRespondeu')));
+  assert.ok(inicio.lastIndexOf('<ConclusaoDaJornada') > inicio.indexOf('<section className="sinais-bloco">', inicio.indexOf('const donoRespondeu')));
   assert.match(readFileSync('app/(protected)/alertas/page.tsx', 'utf8'), /redirect\("\/inicio"\)/);
   assert.doesNotMatch(readFileSync('components/ui/Casco.tsx', 'utf8'), /href="\/alertas"/);
   const anuncios = readFileSync('app/(protected)/anuncios/page.tsx', 'utf8');

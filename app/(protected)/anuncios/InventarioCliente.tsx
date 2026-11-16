@@ -37,6 +37,7 @@ export function InventarioCliente({ resultado, periodo, contaSolicitada, vinculo
         <p>Meta · Conta {resultado.dados.contaId} · Moeda: {resultado.dados.moeda ?? "Não informada"}</p>
         <p>Consultado em {new Date(resultado.dados.coletadoEm).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" })} (Brasília). Fuso da conta: {resultado.dados.fuso ?? "Não informado"}.</p>
         <p>Os números correspondem ao período selecionado. Ausência de medição não significa zero.</p>
+        <p>Conversas iniciadas atribuídas pela Meta. Podem incluir mais de um canal; não são pessoas únicas nem vendas.</p>
       </details>
     </>}
   </section>;

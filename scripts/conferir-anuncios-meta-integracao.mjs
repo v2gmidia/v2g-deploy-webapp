@@ -10,6 +10,8 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import * as contrato from '../lib/anuncios/contrato-meta.ts';
 import * as periodo from '../lib/inicio/periodo.ts';
 import * as retorno from '../lib/anuncios/retorno-login.ts';
+import * as conversas from '../lib/anuncios/conversas-meta.ts';
+import * as contextoAgencia from '../lib/agencia/contexto.ts';
 
 const A='11111111-1111-4111-8111-111111111111', B='22222222-2222-4222-8222-222222222222';
 const janela={desde:'2026-10-28',ate:'2026-10-28'};
@@ -137,10 +139,12 @@ test('descoberta vazia e múltiplas campanhas são sucessos, sem somar ou usar e
 const moduloTela=carregar('app/(protected)/anuncios/AnunciosMeta.tsx',{'react/jsx-runtime':jsxRuntime,
   '@/components/ui/Pill':{Pill:({children})=>React.createElement('span',{},children)},
   '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
+  '@/lib/anuncios/conversas-meta':conversas,
+  '@/components/agencia/Comuns':{CabecalhoAgencia:({titulo,descricao,acao})=>React.createElement('header',{},titulo,descricao,acao)},
   './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,k)=>String(k)})}});
 const UI=moduloTela.InventarioDeAnunciosMeta;
 const cssCliente={__esModule:true,default:new Proxy({},{get:(_,k)=>String(k)})};
-const adaptadorCliente=carregar('lib/anuncios/lista-cliente.ts',{'./contrato-meta':contrato});
+const adaptadorCliente=carregar('lib/anuncios/lista-cliente.ts',{'./contrato-meta':contrato,'./conversas-meta':conversas});
 const listaCliente=carregar('app/(protected)/anuncios/ListaDeAnuncios.tsx',{
   react:React,'react/jsx-runtime':jsxRuntime,'./lista-cliente.module.css':cssCliente});
 const telaCliente=carregar('app/(protected)/anuncios/InventarioCliente.tsx',{
@@ -289,7 +293,7 @@ test('zero observado atravessa HTTP, parser e coleção sem zerar conversas desc
   const r=await bancada({raw}).ler(janela);assert.equal(r.ok,true);
   const html=renderToStaticMarkup(React.createElement(UI,{resultado:r,periodo:janela}));
   assert.match(html,/Zero medido neste período/);assert.match(html,/R\$.*0,00/);
-  assert.match(html,/Conversas no WhatsApp<\/dt><dd class="ausente">Não medido/);
+  assert.match(html,/Conversas por mensagem \(Meta\)<\/dt><dd class="ausente">Não medido/);
 });
 test('formulário de contas preserva somente período/conta; nenhum segredo vai para HTML',async()=>{
   const r=await bancada({accounts:[conta(),conta(A,'act_9003')]}).ler(janela);
@@ -310,6 +314,9 @@ async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]},busca={}
   const data={id:'dono'};
   const q={select(){return q;},eq(){return q;},order:async()=>({data:[]})};
   const imports={'react/jsx-runtime':jsxRuntime,'@/lib/supabase/server':{createClient:async()=>({auth:{getUser:async()=>({data:{user:data}})},from:()=>q})},
+    './HistoricoSemRodadas':carregar('app/(protected)/anuncios/HistoricoSemRodadas.tsx',{'react/jsx-runtime':jsxRuntime}),
+    '@/lib/agencia/habilitacao':{agenciaHabilitada:()=>false},'@/lib/agencia/contexto':contextoAgencia,
+    '@/components/agencia/Comuns':{CabecalhoAgencia:leve},
     '@/components/ui/FaixaReconectar':{FaixaReconectar:leve},'@/components/ui/Pill':{Pill:leve},
     '@/lib/estado/cliente':{estadoDoCliente:async()=>({negocioId:A,proximo:null,melhoras:{fotos:0},veiculacao:'nao_sabemos'})},
     '@/lib/criativos/peca':{COLUNAS_DO_JULGAMENTO:'uso,status,arquivado_em',foiReprovada:()=>false},
@@ -318,7 +325,7 @@ async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]},busca={}
     '@/lib/titulos':{tituloDaAba:()=>({})},'./PainelDeAnuncios':{PainelDeAnuncios:({anuncios})=>React.createElement('p',{},anuncios.map(a=>a.nome).join(', '))},
     '@/lib/inicio/periodo':periodo,'@/lib/dia-seguinte/dia':{diaEmSaoPaulo:()=> '2026-10-29'},
     '../inicio/SeletorDePeriodo':{SeletorDePeriodo:leve},'./AtualizacaoDaConsulta':{AtualizacaoDaConsulta:leve},
-    '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>meta},'./InventarioCliente':telaCliente};
+    '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>meta},'./InventarioCliente':telaCliente,'./AnunciosMeta':moduloTela};
   const modulo=carregar('app/(protected)/anuncios/page.tsx',imports);
   const elemento=await modulo.default({searchParams:Promise.resolve({...janela,business_id:B,idExecucao:'invasora',...busca})});
   return {html:renderToStaticMarkup(elemento),calls};
@@ -362,10 +369,11 @@ test('lista do cliente usa métricas do anúncio e vínculo exato do mesmo negó
   assert.match(html,/aria-expanded="true"/);assert.match(html,/peca=peca-propria/);
 });
 test('zero permanece medido e ausência de moeda não assume reais',()=>{
-  const m={gasto:0,conversas:'0',cliques:0,impressoes:0};
+  const m={gasto:0,conversas:'99',conversasMensagem:'0',cliques:0,impressoes:0};
   assert.match(adaptadorCliente.metricasDoCliente(m,'BRL')[0].valor,/0,00/);
   assert.equal(adaptadorCliente.metricasDoCliente(m,null)[0].valor,null);
   assert.equal(adaptadorCliente.metricasDoCliente(m,'BRL')[1].valor,'0');
+  assert.equal(adaptadorCliente.metricasDoCliente({...m,conversasMensagem:null},'BRL')[1].valor,null);
 });
 
 test('anúncio aberto pela biblioteca sobrevive à escolha entre duas contas e ao login',()=>{

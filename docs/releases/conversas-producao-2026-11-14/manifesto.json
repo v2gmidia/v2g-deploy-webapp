@@ -1,0 +1,183 @@
+{
+  "data": "2026-11-14",
+  "status": "PREPARADO_LOCAL_NAO_APLICADO",
+  "webapp": {
+    "base": "d09287c8aa943d4d61fbcd9d03ebbc584aea6806",
+    "deploy_base": "dpl_4iMkzxy1jadcMwXQaDCJEetZ9i7Q",
+    "destino_futuro": "v2g-deploy-webapp / app.v2gmidia.com.br",
+    "arquivos": [
+      {
+        "arquivo": "app/(protected)/anuncios/AnunciosMeta.tsx",
+        "novo": false,
+        "base_sha256_lf": "21f9e5cde32794d5f8701eebe15e04d597e2da3e9ace77df07ad94dc562c848a",
+        "candidato_sha256_lf": "2ef22ad94a76dc289a78d921483e0a9631687a11cf97c51ff68d55e07de673c5"
+      },
+      {
+        "arquivo": "app/(protected)/inicio/ResumoMetaDoInicio.module.css",
+        "novo": false,
+        "base_sha256_lf": "ef29bd97b9405090441f580c769d4e99d2905a1b9096c56ff5ce272c6723ff41",
+        "candidato_sha256_lf": "7370952a3592167643d72efc650ada85b7ab8fe5a4def5418726a89e6c832452"
+      },
+      {
+        "arquivo": "app/(protected)/inicio/ResumoMetaDoInicio.tsx",
+        "novo": false,
+        "base_sha256_lf": "5398c523d5d52d5c26ecceb3ae6c33227db8143467a5ef1290d240a0ef57f152",
+        "candidato_sha256_lf": "5b49ee8e58575357a26b524325c186f7c905f752b70823247d2608b46c4b659e"
+      },
+      {
+        "arquivo": "components/agencia/InicioDoCliente.tsx",
+        "novo": false,
+        "base_sha256_lf": "d308e24276e625f275a72e80e002de0ce00871276a7b2a4f6fd197d752c42f53",
+        "candidato_sha256_lf": "3586f35ece32cd9d896f0af9f52788deeb04fb55ef415792d1318a0f6bca1e60"
+      },
+      {
+        "arquivo": "lib/anuncios/contrato-meta.ts",
+        "novo": false,
+        "base_sha256_lf": "1ef95dff974a7050bf43863b5be83156706df1a070afb5d8188f36697b91b1a0",
+        "candidato_sha256_lf": "9f5866cba1f58a1ca183794ae8bc5eb069c3f3cc3d9985e0733c859bf76887a2"
+      },
+      {
+        "arquivo": "lib/anuncios/conversas-meta.ts",
+        "novo": true,
+        "base_sha256_lf": null,
+        "candidato_sha256_lf": "3e4ceb47ef807e2cb91b286b5997f8dbd15570d60766ce7735909dc1033926d9"
+      },
+      {
+        "arquivo": "lib/inicio/resumo-meta.ts",
+        "novo": false,
+        "base_sha256_lf": "a398156e1ed7814067854ae938d13a4b746ee124b09f64406379f976988b731c",
+        "candidato_sha256_lf": "2b9dd099eaf34294eece4effa5cef754938d4ea14f7595fc2d10ef272d604b4b"
+      },
+      {
+        "arquivo": "package.json",
+        "novo": false,
+        "base_sha256_lf": "afa2fb1165f9a6748a66373019be24b8912a10a83aea112d8c0c92a4c5c0fcc3",
+        "candidato_sha256_lf": "8e539c9bfa40c3b046bbfb587adc4d4d93082b55dd2793ca06595b8b1db24c19"
+      },
+      {
+        "arquivo": "scripts/conferir-anuncios-meta-integracao.mjs",
+        "novo": false,
+        "base_sha256_lf": "9dbe48c7afcabc3abc1d6a406e48d88e2f959028897222495e3e7a22d4d06fa4",
+        "candidato_sha256_lf": "9d73055ebd5ad564a031d0873ce08d16c831e8ccd61b6288c24bab9da0ccba47"
+      },
+      {
+        "arquivo": "scripts/conferir-anuncios-meta.mjs",
+        "novo": false,
+        "base_sha256_lf": "7736dd230432c984977fbeb23cfc301ba774a04322f8974afba9619bbb0dc29d",
+        "candidato_sha256_lf": "276765483f9ecd252db0f2cee6c683e591c3a649807377a3c827e3514ab95030"
+      },
+      {
+        "arquivo": "scripts/conferir-cadastro.ts",
+        "novo": false,
+        "base_sha256_lf": "95d3a8a31d39440533ff2bc7532d8493fc67b9e47d642c6557ec4e12b57ee0e7",
+        "candidato_sha256_lf": "994573550bbb0ae20a648a56a77b8cb341be808ad0a12e354918144fdb06718b"
+      },
+      {
+        "arquivo": "scripts/conferir-conversas-meta.mjs",
+        "novo": true,
+        "base_sha256_lf": null,
+        "candidato_sha256_lf": "4e7fe2e29373a5fb56cd285cbc8eebbc135ae98d5fadb1240f0eda706456084a"
+      },
+      {
+        "arquivo": "scripts/conferir-inicio-meta.mjs",
+        "novo": false,
+        "base_sha256_lf": "8ac4036b394394d24174983d8d2c9e3e1dbe2dbd207ad3c1af6b106e7f2e97a3",
+        "candidato_sha256_lf": "06f7fa22b3d32cdf403f41e0c865b90ca1988af2b07baae226d55203f45529c5"
+      }
+    ],
+    "patch": {
+      "arquivo": "webapp.patch",
+      "sha256": "6a1ad2ab7f2b763f9f84d46aad5dedf04280bb34ef471e88469fbebe380786fd"
+    }
+  },
+  "backend": {
+    "base": "540e135487237e07aedb13e04daba5bc28280a25",
+    "destino_futuro": "ia/backend / api.v2gmidia.com.br",
+    "arquivos": [
+      {
+        "arquivo": "docs/contratos/e28-meta-ads-read-v1.md",
+        "novo": false,
+        "base_sha256_lf": "bb611c3e91db520d8634ca927a2f58dc7ab3b6cf10fd6644d9960bc0a0c696bc",
+        "candidato_sha256_lf": "df345b4803e42c51b92a5e30b7ea2aad8916b1e75c5c64874bbe2f252af82e34"
+      },
+      {
+        "arquivo": "scripts/verificar_inventario_inicio_webapp.mjs",
+        "novo": false,
+        "base_sha256_lf": "f1c9af40432b19b3668b72112fee2166fe066b90b7f05ded10aa536ef0b3647a",
+        "candidato_sha256_lf": "fab30ee644f36df6e229997815036ad19ef79ece664728d63604289118de6145"
+      },
+      {
+        "arquivo": "src/meta/leitura_anuncios.py",
+        "novo": false,
+        "base_sha256_lf": "0d6bed29a9c423ae47034d82dbece5479d3a490a381d8a46b29a7fa7f051c157",
+        "candidato_sha256_lf": "8b8e8eb3b5204fd5ca6f634ea578470e7283445b6e9c837a45a32bd4cbe70b40"
+      },
+      {
+        "arquivo": "tests/unit/test_anuncios_meta_sem_execucao.py",
+        "novo": false,
+        "base_sha256_lf": "2527ef4817262d38495a0e82b557dd2ffdb67fb5b0b6eaf2e93cda0523564a60",
+        "candidato_sha256_lf": "4047ff364f2827567782d88fae08646e99af404401e31d6cbb27730ba71c17ad"
+      },
+      {
+        "arquivo": "tests/unit/test_conversas_mensagem_meta.py",
+        "novo": true,
+        "base_sha256_lf": null,
+        "candidato_sha256_lf": "563c954b09b6efad07d47c236d74d6d17e0f045553ed64b8514f6a2ec9db8164"
+      }
+    ],
+    "patch": {
+      "arquivo": "backend.patch",
+      "sha256": "c30b5cfb3d41397fe70ff67b825cc312b2b934735413c0da25b302b8e296038e"
+    },
+    "pacote_candidato": {
+      "arquivo_privado": "C:\\Users\\victo\\.codex\\private-backups\\v2g\\releases\\conversas-producao-20261114\\backend-candidato.tar.gz",
+      "sha256": "0a89e9d91faf47b6b0f28a401d015807578eceb3af47b8257b7015ccd75c570e",
+      "membros": 291,
+      "runtime": "088a9da1e501",
+      "limite": "Candidata local; nao publicada"
+    },
+    "retorno_fonte": {
+      "arquivo_privado": "C:\\Users\\victo\\.codex\\private-backups\\v2g\\releases\\conversas-producao-20261114\\backend-retorno-fonte.tar.gz",
+      "sha256": "8ea087805422a89ae73bdde7425bdee1f3670d536ee26fc3da5074985ffbe2db",
+      "membros": 291,
+      "runtime": "5729135ceac1",
+      "limite": "Retorno de fonte; nao e backup da imagem nem das dependencias"
+    }
+  },
+  "escopo": {
+    "migracao": false,
+    "escrita_banco": false,
+    "credenciais": false,
+    "anuncios": false,
+    "verba": false,
+    "rotas_novas": false
+  },
+  "prova_qa": {
+    "webapp": "6588ce78ef05f4900058a29bdd7a2fa31c7e7d8b",
+    "backend": "a119292915ae03d1196c785bcf34588e77a29431",
+    "periodo": [
+      "2026-11-01",
+      "2026-11-07"
+    ],
+    "conversas": "105",
+    "gasto_centavos": 28180,
+    "cliques": 466,
+    "impressoes": 26129
+  },
+  "validacao_local": {
+    "backend_passou": 3170,
+    "backend_pulado": 9,
+    "ruff": true,
+    "mypy": true,
+    "tipos_webapp": true,
+    "build_webapp": true,
+    "openapi_rotas_preservadas": 57,
+    "campos_opcionais_adicionados": 2,
+    "patches_forward_e_reverse": true,
+    "webapp_produto_identico_qa": 7,
+    "tar_diff_base": [
+      "scripts/verificar_inventario_inicio_webapp.mjs",
+      "src/meta/leitura_anuncios.py"
+    ]
+  }
+}

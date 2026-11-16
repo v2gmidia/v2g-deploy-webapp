@@ -1,4 +1,5 @@
 import { rotuloStatusMeta, type InventarioMeta, type MetricasMeta } from "./contrato-meta";
+import { formatarConversas } from "./conversas-meta";
 
 export type CriativoAssociado = { id: string; nome: string; href: string; imagem?: string | null };
 export type AnuncioCliente = {
@@ -17,7 +18,7 @@ export function metricasDoCliente(m: MetricasMeta, moeda: string | null) {
   }
   return [
     { rotulo: "Investido", valor: gasto },
-    { rotulo: "Mensagens no WhatsApp", valor: m.conversas === null ? null : m.conversas.replace(".", ",") },
+    { rotulo: "Conversas (Meta)", valor: m.conversasMensagem == null ? null : formatarConversas(m.conversasMensagem) },
     { rotulo: "Cliques", valor: m.cliques === null ? null : m.cliques.toLocaleString("pt-BR") },
     { rotulo: "Impressões", valor: m.impressoes === null ? null : m.impressoes.toLocaleString("pt-BR") },
   ];

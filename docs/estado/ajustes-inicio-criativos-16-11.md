@@ -61,3 +61,19 @@ Servidor de desenvolvimento em `http://localhost:3000`;
 As rotas de exemplo são prévias locais de desenvolvimento.
 
 Nenhum commit, push, deploy, alteração de banco ou escrita na Meta foi realizado.
+
+## Integração autorizada para commit e push
+
+Em 16/11, Victor autorizou commit e push. A integração incorporou os três
+commits remotos até `190f434`, preservando a visão de agência e as conversas
+atribuídas pela Meta. A galeria direta usa o leitor autenticado compartilhado,
+mantendo acesso aos ajustes antigos e à peça selecionada pelo anúncio.
+
+- `pnpm conferir`: passou após ajustar os testes aos módulos integrados.
+- Testes dirigidos: 110/110 de integração e 97/97 de regressão.
+- Build passou após resolver os conflitos; a guarda que evita consultar
+  o consolidado legado na visão de agência teve typecheck e testes posteriores.
+- Mantido o contrato remoto de até 31 dias por consulta Meta e recusa de
+  parâmetros repetidos. Nenhuma ampliação de período do backend foi feita.
+- Capturas e logs continuam locais. O documento comercial de outra frente
+  não integra este commit. Não houve validação autenticada ponta a ponta.
