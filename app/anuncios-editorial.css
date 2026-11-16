@@ -190,3 +190,6 @@
   .v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho { gap: 6px; margin-top: 20px; }
   .v2g-editorial .anuncios-editorial .anuncios-painel-cabecalho p { font-size: var(--fs-legenda); }
 }
+
+.anuncios-historico { margin-top:32px; border-top:1px solid var(--line); padding:20px 0; }
+.anuncios-historico > summary { min-height:44px; align-content:center; cursor:pointer; font-size:14px; color:var(--ink-soft); }

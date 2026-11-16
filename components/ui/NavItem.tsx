@@ -25,7 +25,7 @@ export function NavItem({ href, icone, children, ativo: ativoInformado }: NavIte
   const pathname = usePathname();
   // A bancada usa o mesmo menu, mantendo a navegação dentro das prévias.
   const emPrevia = pathname.startsWith("/exemplo/");
-  const destino = emPrevia ? `/exemplo/${href === "/alertas" ? "avisos" : href.slice(1)}` : href;
+  const destino = emPrevia ? `/exemplo/${href.slice(1)}` : href;
   const ativo = ativoInformado ?? (pathname === destino || pathname.startsWith(`${destino}/`));
 
   return (

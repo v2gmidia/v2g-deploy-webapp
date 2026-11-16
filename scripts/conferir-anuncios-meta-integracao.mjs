@@ -139,6 +139,14 @@ const moduloTela=carregar('app/(protected)/anuncios/AnunciosMeta.tsx',{'react/js
   '@/lib/inicio/periodo':periodo,'@/lib/anuncios/contrato-meta':contrato,'@/lib/anuncios/retorno-login':retorno,
   './anuncios-meta.module.css':{__esModule:true,default:new Proxy({},{get:(_,k)=>String(k)})}});
 const UI=moduloTela.InventarioDeAnunciosMeta;
+const cssCliente={__esModule:true,default:new Proxy({},{get:(_,k)=>String(k)})};
+const adaptadorCliente=carregar('lib/anuncios/lista-cliente.ts',{'./contrato-meta':contrato});
+const listaCliente=carregar('app/(protected)/anuncios/ListaDeAnuncios.tsx',{
+  react:React,'react/jsx-runtime':jsxRuntime,'./lista-cliente.module.css':cssCliente});
+const telaCliente=carregar('app/(protected)/anuncios/InventarioCliente.tsx',{
+  'react/jsx-runtime':jsxRuntime,'@/lib/anuncios/retorno-login':retorno,
+  '@/lib/anuncios/lista-cliente':adaptadorCliente,'./ListaDeAnuncios':listaCliente,'./lista-cliente.module.css':cssCliente});
+
 
 for (const gestor of [false, true]) test(`login da ${gestor ? 'mesa' : 'aba de cliente'} conserva conta mesmo quando a sessão falha antes de carregá-la`, async () => {
   const cfg = gestor ? { noSession: true, owner: '33333333-3333-4333-8333-333333333333',
@@ -310,7 +318,7 @@ async function pagina({meta,legado={estado:'sem-execucao',campanhas:[]},busca={}
     '@/lib/titulos':{tituloDaAba:()=>({})},'./PainelDeAnuncios':{PainelDeAnuncios:({anuncios})=>React.createElement('p',{},anuncios.map(a=>a.nome).join(', '))},
     '@/lib/inicio/periodo':periodo,'@/lib/dia-seguinte/dia':{diaEmSaoPaulo:()=> '2026-10-29'},
     '../inicio/SeletorDePeriodo':{SeletorDePeriodo:leve},'./AtualizacaoDaConsulta':{AtualizacaoDaConsulta:leve},
-    '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>meta},'./AnunciosMeta':moduloTela};
+    '@/lib/backend':{anunciosDoNegocioSelecionado:async()=>meta},'./InventarioCliente':telaCliente};
   const modulo=carregar('app/(protected)/anuncios/page.tsx',imports);
   const elemento=await modulo.default({searchParams:Promise.resolve({...janela,business_id:B,idExecucao:'invasora',...busca})});
   return {html:renderToStaticMarkup(elemento),calls};
@@ -336,4 +344,40 @@ test('/anuncios mantém legado quando nova leitura falha, identificado como hist
     moedasMisturadas:false,moedas:['BRL'],doDono:null};
   const p=await pagina({meta,legado});assert.match(p.html,/Rodada ANTIGA/);assert.match(p.html,/Histórico por rodada/);
   assert.match(p.html,/Não conseguimos consultar os anúncios agora/);assert.doesNotMatch(p.html,/Seu primeiro anúncio ainda não existe/);
+});
+
+test('lista do cliente usa métricas do anúncio e vínculo exato do mesmo negócio',()=>{
+  const m={estado:'observado',gasto:1234,impressoes:200,cliques:12,conversas:null,dias:['2026-10-28'],entregaObservada:true};
+  const leitura={businessId:A,moeda:'BRL',campanhas:[{id:'camp',nome:'Campanha',metricas:{...m,gasto:999999},conjuntos:[{
+    id:'conj',anuncios:[{id:'ad-1',nome:'Anúncio',statusEfetivo:'ACTIVE',metricas:m}]}]}]};
+  const lista=adaptadorCliente.anunciosParaCliente(leitura,[
+    {id:'propria',business_id:A,external_ad_id:'ad-1',file_name:'Peça correta'},
+    {id:'alheia',business_id:B,external_ad_id:'ad-1',file_name:'Não mostrar'},
+    {id:'outro-anuncio',business_id:A,external_ad_id:'ad-2',file_name:'Outro'},
+  ]);
+  assert.equal(lista[0].criativos.length,1);assert.equal(lista[0].criativos[0].id,'propria');
+  assert.match(lista[0].metricas[0].valor,/12,34/);assert.equal(lista[0].metricas[1].valor,null);
+  const html=renderToStaticMarkup(React.createElement(listaCliente.ListaDeAnuncios,{anuncios:lista,selecionado:'ad-1'}));
+  assert.match(html,/Peça correta/);assert.doesNotMatch(html,/Não mostrar|9.999/);assert.match(html,/Não medido/);
+  assert.match(html,/aria-expanded="true"/);assert.match(html,/peca=peca-propria/);
+});
+test('zero permanece medido e ausência de moeda não assume reais',()=>{
+  const m={gasto:0,conversas:'0',cliques:0,impressoes:0};
+  assert.match(adaptadorCliente.metricasDoCliente(m,'BRL')[0].valor,/0,00/);
+  assert.equal(adaptadorCliente.metricasDoCliente(m,null)[0].valor,null);
+  assert.equal(adaptadorCliente.metricasDoCliente(m,'BRL')[1].valor,'0');
+});
+
+test('anúncio aberto pela biblioteca sobrevive à escolha entre duas contas e ao login',()=>{
+  const resultado={ok:false,motivo:'acesso',mensagem:'Escolha a conta',contaSelecionada:null,
+    contas:[{id:'act_1'},{id:'act_2'}]};
+  const html=renderToStaticMarkup(React.createElement(telaCliente.InventarioCliente,{
+    resultado,periodo:janela,selecionado:'ad-42',contaSolicitada:'act_2'}));
+  assert.match(html, /name="anuncio" value="ad-42"/);
+  assert.match(html, /value="act_1"/); assert.match(html, /value="act_2"/);
+  const href=html.match(/href="([^\"]*\/entrar\?[^\"]*)"/)[1].replaceAll('&amp;','&');
+  const next=new URL(new URL(href,'https://qa.example.invalid').searchParams.get('next'),'https://qa.example.invalid');
+  assert.equal(next.searchParams.get('anuncio'),'ad-42');
+  assert.equal(next.searchParams.get('conta'),'act_2');
+  assert.equal(next.searchParams.get('desde'),janela.desde);
 });

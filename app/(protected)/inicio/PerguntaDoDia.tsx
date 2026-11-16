@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { EsperaLocal } from "@/components/ui/EsperaLocal";
-import { diaPorExtenso, dinheiro, dinheiroDeCentavos, simboloDaMoeda } from "@/lib/formato";
+import { diaPorExtenso, dinheiroDeCentavos, simboloDaMoeda } from "@/lib/formato";
 import {
   centavosDeDigitos,
   centavosDoQueFoiDigitado,
@@ -387,148 +387,40 @@ export function PerguntaDoDia({
   }
 
   return (
-    <section className="rc-bloco">
-      <div className="section-title">
-        <h2>
-          {respondendo !== dia
-            ? `Sobre ${diaPorExtenso(respondendo)}`
-            : respondeuAlgo
-              ? "Falta completar o de ontem"
-              : "Uma pergunta rápida sobre ontem"}
-        </h2>
+    <section className="pd-compacta" aria-labelledby="pd-titulo">
+      <h2 id="pd-titulo">{respondendo !== dia ? `Sobre ${diaPorExtenso(respondendo)}` : respondeuAlgo ? "Complete os resultados de ontem" : "Como foram as vendas ontem?"}</h2>
+      {erro && <p className="form-error" role="alert">{erro}</p>}
+      <div className="pd-campos">
+        <div className="pd-campo">
+          <div className="pd-flutuante">
+            <input id="pd-vendas" type="text" inputMode="numeric" autoComplete="off" placeholder=" "
+              aria-label={PERGUNTA_DE_VENDAS} value={vendas} disabled={enviando} onChange={(e) => setVendas(e.target.value)} />
+            <label htmlFor="pd-vendas">Vendas</label>
+          </div>
+          <button className="botao-leve" type="button" disabled={enviando} onClick={() => enviar("vendas")}>Não sei</button>
+        </div>
+        <div className="pd-campo">
+          <div className="pd-flutuante">
+            <input id="pd-receita" type="text" inputMode="numeric" autoComplete="off" placeholder=" "
+              aria-label={PERGUNTA_DE_RECEITA} value={receitaCentavos === null ? "" : centavosNoCampo(receitaCentavos)}
+              disabled={enviando} onChange={(e) => setReceitaCentavos(centavosDeDigitos(e.target.value))}
+              onPaste={(e) => {
+                const lido = centavosDoQueFoiDigitado(e.clipboardData.getData("text"));
+                if (lido === null) return;
+                e.preventDefault(); setReceitaCentavos(lido);
+              }} />
+            <label htmlFor="pd-receita">Receita ({simboloDaMoeda(MOEDA_DA_RESPOSTA)})</label>
+          </div>
+          <button className="botao-leve" type="button" disabled={enviando} onClick={() => enviar("receita")}>Não sei</button>
+        </div>
       </div>
-
-      <div className="card">
-        {erro && <p className="form-error" role="alert">{erro}</p>}
-
-        <p className="rc-abertura">{PERGUNTA_DE_VENDAS}</p>
-        <div className="fallback-field">
-          <label className="sr-only" htmlFor="pd-vendas">
-            {PERGUNTA_DE_VENDAS}
-          </label>
-          <input
-            id="pd-vendas"
-            type="text"
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="Ex: 3"
-            value={vendas}
-            disabled={enviando}
-            onChange={(e) => setVendas(e.target.value)}
-          />
-          <button
-            className="text-fallback"
-            type="button"
-            disabled={enviando}
-            onClick={() => enviar("vendas")}
-          >
-            não sei
-          </button>
-        </div>
-
-        <p className="rc-abertura">{PERGUNTA_DE_RECEITA}</p>
-        {/* ============================================================
-            O CAMPO DIZ EM QUE MOEDA ELE PERGUNTA. ITEM B4.
-
-            Era `1.600,00` seco, com o placeholder escrito à mão. Única
-            superfície de dinheiro do produto sem função de formato — e
-            num CAMPO a omissão pesa mais que numa leitura: o dono está
-            digitando o número que vira `voltou_centavos` no banco e que
-            a tela de resultado devolve com `R$` na frente.
-
-            O símbolo e o exemplo saem os dois de `lib/formato.ts`, do
-            mesmo `Intl` que escreve o resto do app. `MOEDA_DA_RESPOSTA`
-            é a suposição declarada logo acima — a resposta do dono não
-            tem campo de moeda em rota nenhuma.
-
-            `aria-hidden` no símbolo: o rótulo do campo já é a pergunta
-            inteira, e quem usa leitor de tela ouviria "R$" solto antes
-            dela sem saber a que se refere. O texto acessível continua
-            sendo o `<label>`.
-            ============================================================ */}
-        <div className="fallback-field campo-com-moeda">
-          <label className="sr-only" htmlFor="pd-receita">
-            {PERGUNTA_DE_RECEITA}
-          </label>
-          <span className="campo-moeda" aria-hidden="true">
-            {simboloDaMoeda(MOEDA_DA_RESPOSTA)}
-          </span>
-          <input
-            id="pd-receita"
-            type="text"
-            // `numeric` e não `decimal`: com a máscara, a vírgula entra
-            // sozinha — e um teclado que oferece o separador convida a
-            // digitar um que a máscara vai ignorar.
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder={`Ex: ${dinheiro(1600, MOEDA_DA_RESPOSTA)}`}
-            value={receitaCentavos === null ? "" : centavosNoCampo(receitaCentavos)}
-            disabled={enviando}
-            // DIGITAR: cada dígito entra pela direita.
-            onChange={(e) => setReceitaCentavos(centavosDeDigitos(e.target.value))}
-            // COLAR: o texto vem em REAIS e é lido pelo parser de sempre.
-            // Sem este caminho, colar "1600" viraria R$ 16,00 — o valor
-            // dividido por cem, sem nada avisando. Ver
-            // `centavosDeDigitos` para o porquê de serem dois caminhos.
-            onPaste={(e) => {
-              const colado = e.clipboardData.getData("text");
-              const lido = centavosDoQueFoiDigitado(colado);
-              if (lido === null) return; // deixa o `onChange` cuidar
-              e.preventDefault();
-              setReceitaCentavos(lido);
-            }}
-          />
-          <button
-            className="text-fallback"
-            type="button"
-            disabled={enviando}
-            onClick={() => enviar("receita")}
-          >
-            não sei
-          </button>
-        </div>
-
-        {/* ============================================================
-            RESPIRO, E NÃO UM BOTÃO MAIOR. Decisão do Victor, 01/09.
-
-            O `.mini-send` foi desenhado para viver AO LADO de um input,
-            dentro do `.fallback-field` — é de lá que ele tira o peso.
-            Sozinho numa linha ele perde o contexto e lê como sobra.
-
-            A saída não é trocá-lo pelo `.cta`: o card acabou de sair da
-            disputa com a manchete, e um botão cheio o devolveria para lá.
-            O espaço em volta devolve a presença sem inflar nada.
-            ============================================================ */}
-        <div className="fallback-field pd-guardar">
-          <button
-            className="mini-send"
-            type="button"
-            disabled={enviando}
-            onClick={() => enviar(null)}
-          >
-            {enviando ? "Guardando…" : "Guardar"}
-          </button>
-        </div>
-        <EsperaLocal ativa={enviando} mensagem="Guardando sua resposta…" mensagemDemorada="Ainda aguardamos a confirmação de que sua resposta foi guardada. Seus valores continuam nesta tela. Aguarde antes de tentar novamente." />
-
-        {/* Diz por que a gente pergunta. Sem isso, a pergunta diária vira
-            cobrança sem contrapartida — e é ela que o cliente abandona
-            primeiro. */}
-        <p className="rc-tranquilo">
-          O Facebook mede quantas pessoas te chamaram. Quantas viraram venda, quem sabe é
-          você — e é com isso que a gente calcula se está valendo a pena.
-        </p>
-
-        {respondendo !== dia && (
-          <p className="rc-tranquilo">
-            <button className="botao-leve" type="button" disabled={enviando} onClick={voltarParaOntem}>
-              Voltar para ontem
-            </button>
-          </p>
-        )}
-
-        {respondendo === dia && <Convite />}
+      <div className="pd-rodape">
+        <p>Informe o que souber para acompanhar o retorno.</p>
+        <button className="cta" type="button" disabled={enviando} onClick={() => enviar(null)}>{enviando ? "Guardando…" : "Guardar"}</button>
       </div>
+      <EsperaLocal ativa={enviando} mensagem="Guardando sua resposta…" mensagemDemorada="Ainda aguardamos a confirmação de que sua resposta foi guardada. Seus valores continuam nesta tela. Aguarde antes de tentar novamente." />
+      {respondendo !== dia && <p><button className="botao-leve" type="button" disabled={enviando} onClick={voltarParaOntem}>Voltar para ontem</button></p>}
+      {respondendo === dia && <Convite />}
     </section>
   );
 }

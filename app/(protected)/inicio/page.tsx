@@ -1,3 +1,4 @@
+import { PendenciasNoInicio } from "@/components/ui/PendenciasDoNegocio";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { FaixaReconectar } from "@/components/ui/FaixaReconectar";
@@ -148,7 +149,9 @@ export default async function InicioPage({
       ? mensal
       : consolidadoDoNegocio({ ...args, desde: intervalo.desde, ate: intervalo.ate });
     const [acumuladoDoMes, selecionado] = await Promise.all([mensal, consultaPeriodo]);
-    investidoNoMesCentavos = acumuladoDoMes.ok ? acumuladoDoMes.dados.investiuCentavos : null;
+    investidoNoMesCentavos = acumuladoDoMes.ok && acumuladoDoMes.dados.moeda === "BRL"
+      ? acumuladoDoMes.dados.investiuCentavos
+      : null;
     acumuladoDoPeriodo = selecionado.ok ? selecionado.dados : null;
   }
 
@@ -214,7 +217,7 @@ export default async function InicioPage({
       intervalo={intervalo}
       acumuladoDoPeriodo={acumuladoDoPeriodo}
       investidoNoMesCentavos={investidoNoMesCentavos}
-      faixa={<FaixaReconectar />}
+      faixa={<><FaixaReconectar />{!fixture && estado.negocioId && <PendenciasNoInicio businessId={estado.negocioId} />}</>}
     />
   );
 }

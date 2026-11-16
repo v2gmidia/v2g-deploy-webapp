@@ -275,7 +275,9 @@ export function TelaDoInicio({
   acumuladoDoPeriodo,
   investidoNoMesCentavos = null,
   faixa,
+  previa = false,
 }: {
+  previa?: boolean;
   estado: EstadoDoCliente;
   ultimaDecisao: { payload: unknown } | null;
   falhaAtualizacoes?: boolean;
@@ -325,7 +327,7 @@ export function TelaDoInicio({
   const jornadaConcluida = fases.every((fase) => fase.estado === "feita");
   const temProximoAcionavel = pendenciaOnboarding !== null || Boolean(proximo?.acao);
   const linkDosAnuncios = intervalo
-    ? `/anuncios?desde=${intervalo.desde}&ate=${intervalo.ate}` : "/anuncios";
+    ? `${previa ? "/exemplo" : ""}/anuncios?desde=${intervalo.desde}&ate=${intervalo.ate}` : previa ? "/exemplo/anuncios" : "/anuncios";
 
   // A conclusão é mostrada uma vez por negócio, sem substituir a situação
   // atual. Se a leitura falhar, a pessoa ainda vê o próximo passo e o aviso.
@@ -560,7 +562,6 @@ export function TelaDoInicio({
               andamento={andamentoDaExecucao}
             />
 
-            <Melhoras fotos={estado.melhoras.fotos} />
           </div>
 
           <div className="inicio-col">
@@ -758,6 +759,7 @@ export function TelaDoInicio({
         <ConclusaoDaJornada businessId={estado.negocioId} />
       )}
       <FasesDaCampanha fases={fases} />
+      <div className="inicio-acompanhamento">
       {cardDaPergunta}
       {!cabePerguntarSobreOntem && (
         <p className="foot-line">
@@ -776,74 +778,12 @@ export function TelaDoInicio({
         }
       />
 
+      </div>
       <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
       {proximo && (
         <TrilhaDaExecucao etapas={etapas} atual={proximo} andamento={andamentoDaExecucao} />
       )}
-      <Melhoras fotos={estado.melhoras.fotos} />
     </div>
-  );
-}
-
-/**
- * O que melhora o anúncio e não o trava.
- *
- * FOTO MORA AQUI, e a mudança de lugar é a decisão: até 20/08 ela era o
- * herói da tela, com tarja de "Seu próximo passo" e botão. Ela não bloqueia
- * nada — o `origem_criativo` é fixo em `"gerar"` e a IA monta a peça sem
- * foto do cliente. Prometer que o anúncio depende dela é fazer a pessoa
- * cumprir uma tarefa e não ver resultado nenhum.
- *
- * A contagem vem do estado, com o MESMO filtro que a `/conta` usa.
- */
-function Melhoras({ fotos }: { fotos: number }) {
-  return (
-    <details className="inicio-extras">
-      <summary>Outras ações para este negócio</summary>
-      <div className="acct-list">
-        <a className="acct-row" href="/conta">
-          <span className="ar-text">
-            <b>Fotos do negócio</b>
-            <span>{fotos === 0 ? "Nenhuma enviada" : `${fotos} ${fotos === 1 ? "foto enviada" : "fotos enviadas"}`}</span>
-          </span>
-          <Seta />
-        </a>
-        {/* ============================================================
-            A ÚNICA PORTA PARA A /criativos NO INÍCIO — item do QA de
-            11/09/2026: a tela existia e NÃO tinha como chegar nela pelo
-            app. Nenhum menu, nenhum link, nenhuma tela apontando. O dono
-            teria que digitar a URL, o que não acontece no celular.
-
-            Aqui e não no herói de propósito: analisar peça pronta é
-            tarefa de quem JÁ TEM a peça, e a ação principal da tela
-            continua sendo a etapa aberta. Esta lista é o lugar do
-            "se você quiser" — e é a mesma decisão que o docstring da
-            /criativos registra ao recusar virar item de menu (os cinco
-            do QA-1 continuam cinco).
-            ============================================================ */}
-        <a className="acct-row" href="/criativos">
-          <span className="ar-text">
-            <b>Conferir uma peça</b>
-            <span>Analisar uma imagem antes de anunciar</span>
-          </span>
-          <Seta />
-        </a>
-        <a className="acct-row" href="/meu-negocio">
-          <span className="ar-text">
-            <b>Dados do negócio</b>
-            <span>Rever informações e valores</span>
-          </span>
-          <Seta />
-        </a>
-        <a className="acct-row" href="/expectativas">
-          <span className="ar-text">
-            <b>Ler os combinados</b>
-            <span>Como funciona o serviço</span>
-          </span>
-          <Seta />
-        </a>
-      </div>
-    </details>
   );
 }
 
@@ -864,7 +804,7 @@ function Noturno({ decisao, falha }: { decisao: { payload: unknown } | null; fal
         <p>{resumoDaDecisao(decisao.payload)}</p>
       ) : null}
       <p className="nc-foot">
-        <a href="/alertas">ver todos os avisos</a>
+        <a href="/conta#negocio">Ver atualizações do negócio</a>
       </p>
     </section>
   );
@@ -892,6 +832,7 @@ function Comando({ verba, investido }: { verba: number | null; investido: number
           <span style={{ width: `${percentual}%` }} />
         </div>
       )}
+      {verba !== null && investido !== null && <p className="limite-restante">{investido <= verba ? <><strong>{dinheiro(verba - investido, "BRL")}</strong> disponíveis no limite do mês</> : <><strong>{dinheiro(investido - verba, "BRL")}</strong> acima do limite do mês</>}</p>}
       <a className="limite-link" href="/verba">{verba === null ? "Definir agora" : "Mudar limite"}</a>
     </section>
   );
@@ -904,7 +845,7 @@ function resumoDaDecisao(payload: unknown): string {
       if (typeof p[chave] === "string" && p[chave]) return p[chave] as string;
     }
   }
-  return "Abra os avisos para ver o detalhe.";
+  return "Confira os dados do negócio com a equipe.";
 }
 
 const Seta = () => (

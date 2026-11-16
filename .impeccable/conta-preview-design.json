@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "title": "V2G Conta — brief de superfície local",
+  "extensions": {
+    "scope": {
+      "kind": "surface-brief",
+      "date": "2026-11-16",
+      "route": "/exemplo/conta-clean",
+      "status": "reviewed-local-preview",
+      "authority": "DESIGN.md e identidade editorial existente; este artefato não substitui o sistema global",
+      "documentation": "docs/estado/conta-previa-16-11.md",
+      "sources": ["PRODUCT.md", "app/exemplo/_conta/ContaClean.tsx", "app/exemplo/_conta/conta-clean.module.css", "app/exemplo/[tela]/page.tsx", "components/ui/NavItem.tsx", "app/exemplo/_anuncios/previa-clean.module.css"]
+    },
+    "breakpoints": [
+      {"name": "navegacao-movel", "value": "900px", "purpose": "Quatro destinos nos menus destas duas prévias."},
+      {"name": "conta-uma-coluna", "value": "700px", "purpose": "Rótulos, campos e conteúdo passam a uma coluna."}
+    ],
+    "motion": [{"name": "abertura-chevron", "value": "transform 160ms ease-out", "purpose": "Rotação de 90 graus ao abrir details; desativada em reduced motion."}],
+    "layout": {"maxWidth": "1120px", "desktopColumns": "190px minmax(0,1fr)", "gap": "32px", "rowPadding": "24px 0", "mobileColumns": "1fr"},
+    "sections": ["Seu perfil", "Seu negócio", "Conexões", "Plano e contrato", "Preferências", "Acesso"],
+    "stateBoundaries": {
+      "data": "exemplo explícito",
+      "profileAndBusiness": "estado local React, sem persistência real",
+      "connectionRecoveryLogoutAndPlanContact": "simulados",
+      "theme": "SeletorDeTema existente, cookie local, Claro/Escuro/Do aparelho",
+      "alerts": "ocultos somente nos menus conta-clean e anuncios-clean; rota real permanece; preservar pendências contextuais na integração"
+    },
+    "verification": {
+      "provenance": "Resultados do executor/reviewer desta sessão; documentação não repetiu testes.",
+      "typecheck": "passou",
+      "interfaceTests": "8/8 passaram",
+      "browser": "perfil salvo; conexão interrompida e restaurada; recuperação simulada; sem overflow e sem warnings/errors observados",
+      "detector": "uma execução, três avisos consultivos de tipografia 13/15px",
+      "review": "ship para prévia local após feedback junto da ação",
+      "notVerified": ["build desta prévia", "dados reais", "autenticação", "integração", "produção"],
+      "screenshots": [".impeccable/review/conta-clean-desktop.jpg", ".impeccable/review/conta-clean-mobile.jpg", ".impeccable/review/conta-clean-mobile-feedback.jpg"]
+    }
+  },
+  "narrative": {
+    "northStar": "Operate",
+    "overview": "Conta organiza seis linhas expansíveis para operações pontuais. Herda Archivo, navy e cobalto da V2G, com divisórias leves e conteúdo revelado na própria linha. A composição é específica desta prévia.",
+    "keyCharacteristics": ["Seis linhas com details", "Sem grade de cartões ou painel-resumo", "Uma coluna no mobile", "Feedback junto da ação", "Dados de exemplo explícitos"],
+    "rules": [{"name": "Pendência no contexto", "body": "Ao integrar, preservar a pendência junto da ação que permite resolvê-la.", "section": "components"}],
+    "dos": ["Reutilizar tokens editoriais e preferência de tema existentes.", "Distinguir simulação de alteração real.", "Preservar a composição aprovada de Anúncios."],
+    "donts": ["Não tratar esta prévia como Conta integrada.", "Não promover esta composição a regra global de DESIGN.md.", "Não interpretar menu sem Avisos como remoção de pendências ou da rota real."]
+  }
+}

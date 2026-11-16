@@ -4,13 +4,16 @@ import { test } from 'node:test';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
 import ts from 'typescript';
+import * as React from 'react';
+import * as jsxRuntime from 'react/jsx-runtime';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { resumirPendencias } from '../lib/alertas/pendencias.ts';
 import { intervaloDoInicio } from '../lib/inicio/periodo.ts';
 
 function carregar(arquivo, mocks) {
   const exports = {};
   const codigo = ts.transpileModule(readFileSync(arquivo, 'utf8'), {
-    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, jsx: ts.JsxEmit.ReactJSX },
   }).outputText;
   vm.runInNewContext(codigo, { exports, require: (id) => {
     if (!(id in mocks)) throw Error(`Dependência não autorizada: ${id}`);
@@ -129,10 +132,29 @@ test('regressões de apresentação: conclusão, envio indisponível e datas', (
   const inicio = readFileSync('app/(protected)/inicio/TelaDoInicio.tsx', 'utf8');
   assert.match(inicio, /jornadaConcluida && !temProximoAcionavel && !falhaPendencia/);
   assert.ok(inicio.indexOf('<ConclusaoDaJornada') > inicio.indexOf('<section className="sinais-bloco">', inicio.indexOf('const donoRespondeu')));
-  const criativos = readFileSync('app/(protected)/criativos/TelaDeCriativos.tsx', 'utf8');
-  assert.match(criativos, /envioDisponivel\s*\? <a[^>]+href="#subir-criativo"/);
-  assert.ok(criativos.includes('Envio indisponível'));
+  assert.match(readFileSync('app/(protected)/alertas/page.tsx', 'utf8'), /redirect\("\/inicio"\)/);
+  assert.doesNotMatch(readFileSync('components/ui/Casco.tsx', 'utf8'), /href="\/alertas"/);
   const anuncios = readFileSync('app/(protected)/anuncios/page.tsx', 'utf8');
   assert.ok(anuncios.includes('rotuloDoIntervalo(resultado.periodo)'));
-  for (const tela of ['inicio', 'alertas']) assert.ok(readFileSync(`app/(protected)/${tela}/page.tsx`, 'utf8').includes('lerPendenciaDoNegocio'));
+  for (const tela of ['inicio']) assert.ok(readFileSync(`app/(protected)/${tela}/page.tsx`, 'utf8').includes('lerPendenciaDoNegocio'));
+});
+
+test('galeria só monta o formulário com envio habilitado e oferece atendimento quando indisponível', () => {
+  const { TelaDeCriativos } = carregar('app/(protected)/criativos/TelaDeCriativos.tsx', {
+    react: React,
+    'react/jsx-runtime': jsxRuntime,
+    './GaleriaCriativos': { GaleriaCriativos: () => null },
+    './biblioteca.module.css': { default: {} },
+  });
+  const renderizar = (envioDisponivel) => renderToStaticMarkup(React.createElement(TelaDeCriativos, {
+    itens: [], envioDisponivel, envio: React.createElement('input', { type: 'file' }),
+  }));
+  const indisponivel = renderizar(false);
+  assert.doesNotMatch(indisponivel, /type="file"/);
+  assert.match(indisponivel, /O envio ainda não está disponível nesta conta/);
+  assert.match(indisponivel, /href="https:\/\/wa\.me\/5521936182176"/);
+  const disponivel = renderizar(true);
+  assert.equal((disponivel.match(/type="file"/g) ?? []).length, 1);
+  assert.match(disponivel, /aria-haspopup="dialog"/);
+  assert.match(disponivel, /revisão do seu gestor/);
 });

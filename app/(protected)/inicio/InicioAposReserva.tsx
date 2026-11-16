@@ -30,9 +30,9 @@ export function InicioAposReserva({ inicio, fim }: { inicio: string; fim: string
       href: "/anuncios", rotulo: "Conhecer anúncios",
     },
     {
-      titulo: "Avisos",
-      texto: "A opção Avisos está destacada no menu. Ela reúne o que precisa da sua atenção durante a preparação e a gestão dos anúncios.",
-      href: "/alertas", rotulo: "Ver avisos",
+      titulo: "Seus criativos",
+      texto: "Em Criativos, envie suas imagens e acompanhe os pedidos de ajuste do gestor.",
+      href: "/criativos", rotulo: "Ver criativos",
     },
   ];
   const atual = passos[passo]!;

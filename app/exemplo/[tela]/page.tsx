@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { listarNichos } from "@/lib/backend";
 import type { CasoDeFalha } from "../_onboarding/recados";
 import { Casco } from "@/components/ui/Casco";
@@ -210,6 +210,26 @@ export default async function ExemploPage({
 
   // Galeria fictícia para inspecionar a composição aprovada sem depender de
   // sessão, Storage ou métricas reais por criativo.
+  if (tela === "conta-clean" || tela === "conta") {
+    const modulo = ehDesenvolvimento ? await import("../_conta/ContaClean") : null;
+    const tema = ehDesenvolvimento ? await import("@/app/(protected)/conta/SeletorDeTema") : null;
+    if (!modulo || !tema) notFound();
+    return <Casco previa nome={casco.nome} nomeNegocio={casco.nomeNegocio}
+      rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/conta">
+      <modulo.ContaClean preferencias={<tema.SeletorDeTema />} />
+    </Casco>;
+  }
+
+  if (tela === "anuncios-clean" || tela === "anuncios") {
+    const buscaAnuncios = await searchParams;
+    const modulo = ehDesenvolvimento ? await import("../_anuncios/PreviaClean") : null;
+    if (!modulo) notFound();
+    return <Casco previa nome={casco.nome} nomeNegocio={casco.nomeNegocio}
+      rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/anuncios">
+      <modulo.PreviaAnunciosClean selecionado={typeof buscaAnuncios.anuncio === "string" ? buscaAnuncios.anuncio : undefined} intervalo={intervaloDoInicio(await searchParams, diaEmSaoPaulo(agora))} />
+    </Casco>;
+  }
+
   if (tela === "criativos") {
     const buscaCriativos = await searchParams;
     const modulo = ehDesenvolvimento ? await import("@/app/(protected)/criativos/TelaDeCriativos") : null;
@@ -217,9 +237,9 @@ export default async function ExemploPage({
     const envio = ehDesenvolvimento ? await import("@/app/(protected)/criativos/PedirRevisao") : null;
     const datas = ehDesenvolvimento ? await import("@/lib/criativos/intencao-envio") : null;
     if (!modulo || !fixture || !envio || !datas) notFound();
-    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
+    return <Casco previa nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
-      <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} retencaoAtiva previa envioDisponivel={buscaCriativos.envio !== "indisponivel"}
+      <modulo.TelaDeCriativos itens={fixture.CRIATIVOS_DE_EXEMPLO} selecionado={typeof buscaCriativos.peca === "string" ? buscaCriativos.peca : undefined} abaInicial={buscaCriativos.aba === "revisao" ? "revisao" : "biblioteca"} retencaoAtiva previa envioDisponivel={buscaCriativos.envio !== "indisponivel"}
         envio={buscaCriativos.envio === "indisponivel" ? null : <envio.PedirRevisao
           businessId="f0000000-0000-4000-8000-000000000099" hoje={datas.hojeEmSaoPaulo()} previa
           referenciasDisponiveis={buscaCriativos.referencias === "barbearia"} />} />
@@ -231,7 +251,7 @@ export default async function ExemploPage({
   if (tela === "criativos-pedido") {
     const modulo = ehDesenvolvimento ? await import("../_criativos/PreviaDoPedido") : null;
     if (!modulo) notFound();
-    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
+    return <Casco previa nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
       <modulo.PreviaDoPedido hoje={diaEmSaoPaulo(agora)} />
     </Casco>;
@@ -241,7 +261,7 @@ export default async function ExemploPage({
     const buscaPedido = await searchParams;
     const modulo = ehDesenvolvimento ? await import("@/app/(protected)/criativos/PedidoDeImagem") : null;
     if (!modulo) notFound();
-    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
+    return <Casco previa nome={casco.nome} nomeNegocio={casco.nomeNegocio}
       rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/criativos">
       <modulo.PedidoDeImagem businessId="00000000-0000-4000-8000-000000000004"
         requestId="00000000-0000-4000-8000-000000000005" hoje={diaEmSaoPaulo(agora)}
@@ -251,32 +271,7 @@ export default async function ExemploPage({
 
   // Caixa de entrada fictícia para validar composição e responsividade sem
   // depender de sessão ou gravar estado de leitura que ainda não existe.
-  if (tela === "avisos") {
-    const modulo = ehDesenvolvimento ? await import("../_avisos/PreviaDeAvisos") : null;
-    if (!modulo) notFound();
-    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
-      rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/alertas">
-      <modulo.PreviaDeAvisos />
-    </Casco>;
-  }
-
-  if (tela === "anuncios") {
-    const modulo = ehDesenvolvimento ? await import("../_anuncios/PreviaDeAnuncios") : null;
-    if (!modulo) notFound();
-    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
-      rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/anuncios">
-      <modulo.PreviaDeAnuncios intervalo={intervaloDoInicio(await searchParams, diaEmSaoPaulo(agora))} />
-    </Casco>;
-  }
-
-  if (tela === "conta") {
-    const modulo = ehDesenvolvimento ? await import("../_conta/PreviaDeConta") : null;
-    if (!modulo) notFound();
-    return <Casco nome={casco.nome} nomeNegocio={casco.nomeNegocio}
-      rotuloDaConta={casco.nomeNegocio} inicial={casco.inicial} rotaAtiva="/conta">
-      <modulo.PreviaDeConta />
-    </Casco>;
-  }
+  if (tela === "avisos") redirect("/exemplo/inicio");
 
   // ---- o onboarding novo, onze perguntas ----
   if (tela === "onboarding") {
@@ -381,7 +376,7 @@ export default async function ExemploPage({
     if (!canon) notFound();
     const { TelaCanonica } = canon;
     return (
-      <Casco
+      <Casco previa
         nome={casco.nome}
         nomeNegocio={casco.nomeNegocio}
         rotuloDaConta={casco.nomeNegocio}
@@ -410,7 +405,7 @@ export default async function ExemploPage({
       : "pausado";
 
   return (
-    <Casco
+    <Casco previa
       nome={casco.nome}
       nomeNegocio={casco.nomeNegocio}
       negocios={multicontaDaPrevia}
@@ -428,7 +423,7 @@ export default async function ExemploPage({
           NUNCA foi ao ar.
           ============================================================ */}
       <p className="previa-local-nota">Prévia visual: os dados de exemplo são fixos. Na conta autenticada, as datas consultam o período escolhido.</p>
-      <TelaDoInicio
+      <TelaDoInicio previa
         estado={exemplo.exemploDoInicio(agora, estadoDoExemplo)}
         ultimaDecisao={null}
         diaDaPergunta={diaDeOntemEmSaoPaulo(agora)}
@@ -441,7 +436,9 @@ export default async function ExemploPage({
         } : null}
         falhaPendencia={busca2.pendencia === "falha"}
         investidoNoMesCentavos={1025}
-        faixa={null}
+        faixa={busca2.pendencias === "1" ? <section className="pendencias-contextuais" aria-label="Pendências de exemplo">
+          <p><strong>Um criativo precisa de ajuste · exemplo.</strong><a href="/exemplo/criativos?aba=revisao">Ver pedidos do gestor →</a></p>
+        </section> : null}
       />
     </Casco>
   );

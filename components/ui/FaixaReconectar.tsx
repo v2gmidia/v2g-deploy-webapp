@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 
 /**
  * Faixa persistente de reconexão.
@@ -31,13 +32,14 @@ const TEXTO: Record<string, { titulo: string; motivo: string }> = {
 
 export async function FaixaReconectar() {
   const supabase = await createClient();
-
-  // RLS já limita ao negócio do usuário logado.
-  const { data: conexao } = await supabase
+  const ativo = await negocioAtivoDaSessao();
+  if (ativo.status !== "selecionado") return null;
+  const { data: conexao, error } = await supabase
     .from("meta_connections")
-    .select("status, last_error")
+    .select("status")
+    .eq("business_id", ativo.negocio.id)
     .maybeSingle();
-
+  if (error) return <p className="form-warning">Não conseguimos conferir sua conexão. <a href="/conta#conexoes">Ver conexões</a></p>;
   if (!conexao) return null;
 
   const texto = TEXTO[conexao.status];
@@ -57,10 +59,10 @@ export async function FaixaReconectar() {
     >
       <div>
         <b style={urgente ? undefined : { color: "var(--warn)" }}>{texto.titulo}</b>
-        <span>{conexao.last_error ?? texto.motivo}</span>
+        <span>{texto.motivo}</span>
       </div>
-      <a className="cta" href="/conectar">
-        Reconectar
+      <a className="cta" href="/conta#conexoes">
+        Conferir conexão
       </a>
     </div>
   );

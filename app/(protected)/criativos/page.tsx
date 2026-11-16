@@ -1,16 +1,12 @@
-import { randomUUID } from "node:crypto";
+import { lerTodasPaginas } from "@/lib/multiconta/paginacao";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { estadoDoCliente } from "@/lib/estado/cliente";
 import { tituloDaAba } from "@/lib/titulos";
 import { BUCKET_REVISAO, caminhoConfereComRevisao, rotuloDaRevisao, type StatusRevisao } from "@/lib/criativos/revisao";
-import { Analisar } from "./Analisar";
-import { AmostraDeVereditos } from "./Amostra";
 import { PedirRevisao } from "./PedirRevisao";
 import { TelaDeCriativos } from "./TelaDeCriativos";
 import type { GrupoDaGaleria, ItemDaGaleria } from "./GaleriaCriativos";
-import { carregarPedidosDaSessao } from "@/lib/criativos/pedidos-da-sessao";
-import { PedidoDeImagem } from "./PedidoDeImagem";
 import { resumoDaIntencao } from "@/lib/criativos/intencao-envio";
 import { urlImagemGerada } from "@/lib/criativos/geracao/imagem-privada";
 import { UUID_GERACAO } from "@/lib/criativos/geracao/contrato-fila";
@@ -53,10 +49,10 @@ const dataCurta = new Intl.DateTimeFormat("pt-BR", {
 });
 
 function grupoDaPeca(peca: PecaDaCampanha): GrupoDaGaleria {
-  if (peca.arquivado_em || peca.status === "paused" || peca.status === "rejected") return "arquivados";
+  if (peca.arquivado_em || peca.status === "rejected") return "arquivados";
   if (pecaGerada(peca)) return "biblioteca";
   // Vínculo registrado não atesta exibição atual; a situação é do negócio.
-  if (peca.external_ad_id) return "biblioteca";
+  if (peca.external_ad_id || peca.status === "approved" || peca.status === "paused") return "biblioteca";
   return "revisao";
 }
 
@@ -83,21 +79,19 @@ function tomDaRevisao(status: StatusRevisao): ItemDaGaleria["tom"] {
   return "neutro";
 }
 
-export default async function CriativosPage() {
+export default async function CriativosPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const busca = await searchParams;
+  const selecionado = typeof busca.peca === "string" ? busca.peca : "";
   const estado = await estadoDoCliente(new Date());
   const revisaoHabilitada = process.env.V2G_CREATIVE_REVIEW_ENABLED === "true";
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  const negocioId = estado.negocioId;
+  const negocioId = user ? estado.negocioId : null;
   const referenciasDisponiveis = negocioId ? await catalogoBarbeariaDisponivel(negocioId) : false;
   const pedidosHabilitados = process.env.V2G_CREATIVE_REQUESTS_ENABLED === "true" && Boolean(negocioId);
   const geracaoHabilitada = pedidosHabilitados && process.env.V2G_CREATIVE_BACKEND_ENABLED === "true";
-  const [contextoCriativo, pedidosCriacao] = await Promise.all([
-    negocioId && (revisaoHabilitada || pedidosHabilitados)
-      ? carregarContextoDoCriativo(negocioId) : Promise.resolve(null),
-    pedidosHabilitados ? carregarPedidosDaSessao(negocioId!)
-      : Promise.resolve({ pedidos: [], falhou: false }),
-  ]);
+  const contextoCriativo = negocioId && revisaoHabilitada
+    ? await carregarContextoDoCriativo(negocioId) : null;
   const partesHoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo",
     year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
   const parteHoje = (nome: Intl.DateTimeFormatPartTypes) => partesHoje.find((p) => p.type === nome)!.value;
@@ -118,8 +112,18 @@ export default async function CriativosPage() {
     { data: [] as PedidoDeRevisao[], error: null },
   ];
 
+  // Ajustes antigos continuam acessíveis mesmo fora do recorte recente.
+  const ajustes = negocioId && revisaoHabilitada ? await lerTodasPaginas<PedidoDeRevisao>((de, ate) => supabase
+    .from("creative_review_requests").select("id, business_id, original_name, file_path, status, review_note, created_at, upload_intent")
+    .eq("business_id", negocioId).eq("status", "changes_requested").order("id").range(de, ate)) : [];
+  const idSelecionado = selecionado.startsWith("peca-") ? selecionado.slice(5) : "";
+  const escolhida = negocioId && UUID_GERACAO.test(idSelecionado) ? await supabase.from("creatives")
+    .select("id, business_id, copy, file_name, storage_path, status, external_ad_id, created_at, updated_at, arquivado_em")
+    .eq("business_id", negocioId).eq("uso", "campanha").eq("id", idSelecionado).maybeSingle() : { data: null, error: null };
+  const pecaEscolhida = escolhida.data;
+  if (pecaEscolhida && !pecasResposta.data?.some(p => p.id === pecaEscolhida.id)) pecasResposta.data?.push(pecaEscolhida);
   const pecas = ((pecasResposta.data ?? []) as PecaDaCampanha[]).filter((peca) => peca.business_id === negocioId);
-  const revisoesRecebidas = (revisoesResposta.data ?? []) as PedidoDeRevisao[];
+  const revisoesRecebidas = [...new Map([...(ajustes ?? []), ...((revisoesResposta.data ?? []) as PedidoDeRevisao[])].map(p => [p.id, p])).values()];
   const revisoes = revisoesRecebidas.filter((pedido) => pedido.business_id === negocioId);
   const revisaoInconsistente = revisoes.length !== revisoesRecebidas.length
     || revisoes.some((pedido) => pedido.status !== "uploading" && pedido.status !== "upload_failed"
@@ -156,9 +160,9 @@ export default async function CriativosPage() {
       ...(pecaGerada(peca) ? { estado: peca.copy?.generation?.simulated === true ? "Imagem fictícia de teste" : "Arquivo gerado — conferir acesso", tom: "neutro" as const } : estadoDaPeca(peca.status)),
       criadoEm: `Criado em ${dataCurta.format(new Date(peca.created_at))}`,
       detalhe: peca.arquivado_em ? `Arquivado em ${dataCurta.format(new Date(peca.arquivado_em))}` : null,
-      acao: pecaGerada(peca) ? null : { rotulo: "Ver anúncio", href: "/anuncios" },
+      acao: !pecaGerada(peca) && peca.external_ad_id ? { rotulo: "Ver anúncio", href: `/anuncios?anuncio=${encodeURIComponent(peca.external_ad_id)}` } : null,
       associacoes: peca.external_ad_id
-        ? [{ nome: "Vínculo registrado com anúncio", href: "/anuncios" }]
+        ? [{ nome: `Anúncio ${peca.external_ad_id}`, href: `/anuncios?anuncio=${encodeURIComponent(peca.external_ad_id)}` }]
         : [],
     })),
     ...revisoes.map((pedido) => ({
@@ -179,30 +183,23 @@ export default async function CriativosPage() {
     })),
   ];
 
-  const amostra = process.env.NODE_ENV !== "production" ? (process.env.V2G_FIXTURE_ANALISE ?? null) : null;
-  const podeAnalisar = estado.diaSeguinte.execucao !== null;
-  const falhaDaGaleria = pecasResposta.error || revisoesResposta.error;
+  const falhaDaGaleria = pecasResposta.error || revisoesResposta.error || ajustes === null || escolhida.error;
 
   return <>
-    {negocioId && (revisaoHabilitada || pedidosHabilitados) && !contextoCriativo
+    {negocioId && revisaoHabilitada && !contextoCriativo
       ? <p className="form-warning">Não conseguimos recuperar os dados do cadastro para este preparo. Atualize a página ou preencha os campos necessários; isso não significa que suas respostas foram apagadas.</p> : null}
     {revisaoInconsistente ? <p className="form-warning">Uma peça está com o vínculo do arquivo inconsistente; sua prévia não foi aberta. Peça ajuda à equipe para conferir o envio.</p> : null}
     <TelaDeCriativos
       itens={itens}
+      selecionado={selecionado}
+      abaInicial={busca.aba === "revisao" ? "revisao" : "biblioteca"}
       veiculacao={estado.veiculacao}
       bibliotecaFalhou={Boolean(falhaDaGaleria)}
-      criacao={pedidosHabilitados ? <PedidoDeImagem key={negocioId} businessId={negocioId!}
-        requestId={randomUUID()} hoje={hoje} pedidos={pedidosCriacao.pedidos}
-        falhou={pedidosCriacao.falhou} geracaoHabilitada={geracaoHabilitada}
-        referenciasDisponiveis={referenciasDisponiveis} contexto={contextoCriativo ?? undefined} /> : null}
       envioDisponivel={revisaoHabilitada && Boolean(negocioId)}
       envio={revisaoHabilitada && negocioId
         ? <PedirRevisao key={negocioId} businessId={negocioId} hoje={hoje}
           referenciasDisponiveis={referenciasDisponiveis} contexto={contextoCriativo ?? undefined} />
         : null}
-      analise={amostra
-        ? <AmostraDeVereditos qual={amostra} />
-        : <Analisar key={negocioId ?? "sem-negocio"} podeEnviar={podeAnalisar} businessId={negocioId ?? ""} />}
     />
   </>;
 }

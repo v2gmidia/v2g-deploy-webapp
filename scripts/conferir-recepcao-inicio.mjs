@@ -82,7 +82,7 @@ test('cadastro comprovado recebe conclusão sem confundir recepção com jornada
   assert.match(tela, /Cadastro concluído!/);
   assert.match(tela, /contas e as informações da marca estão salvas/);
   assert.match(tela, /A confirmação do horário ainda não aparece aqui/);
-  for (const rota of ['/conta', '/criativos', '/anuncios', '/alertas', '/onboarding/concluido']) assert.ok(tela.includes(`href="${rota}"`));
+  for (const rota of ['/conta', '/criativos', '/anuncios', '/onboarding/concluido']) assert.ok(tela.includes(`href="${rota}"`));
   assert.ok(tela.indexOf('Cadastro concluído!') < tela.indexOf('0 de 4 etapas concluídas'));
   assert.match(tela, /<strong>Cadastro<\/strong><span>Concluído<\/span>/);
   assert.match(tela, /<strong>Reunião<\/strong><span>Próximo passo<\/span>/);

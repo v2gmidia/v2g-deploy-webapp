@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listarPaginas, type PaginaDoFacebook } from "@/lib/meta/graph";
 import { registrarErroMeta } from "@/lib/meta/erros";
+import { TelaDeConta } from "./TelaDeConta";
+import { PendenciasDoNegocio } from "@/components/ui/PendenciasDoNegocio";
 import { FormPerfil } from "./Formularios";
 import { TrocarPagina } from "./TrocarPagina";
 import { Identidade } from "./Identidade";
@@ -44,7 +46,7 @@ export default async function ContaPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile, error: erroPerfil } = await supabase
     .from("profiles")
     .select("full_name, whatsapp")
     .eq("id", user.id)
@@ -136,16 +138,20 @@ export default async function ContaPage() {
   // foi a gente não conseguir olhar.
   // ============================================================
   let conexaoIlegivel = false;
+  let statusConexao: string | null = null;
+  let paginasIlegiveis = false;
 
   if (business?.id) {
     try {
       const admin = createAdminClient();
-      const { data: conexao } = await admin
+      const { data: conexao, error: erroConexao } = await admin
         .from("meta_connections")
         .select("meta_page_id, status")
         .eq("business_id", business.id)
         .maybeSingle();
 
+      if (erroConexao) throw new Error("Falha ao consultar conexão");
+      statusConexao = conexao?.status ?? "disconnected";
       paginaAtual = conexao?.meta_page_id ?? null;
 
       // ============================================================
@@ -168,13 +174,15 @@ export default async function ContaPage() {
       // considera `expiring` — que tem token válido. O conserto é extrair
       // o predicado, e ele não cabe num lote de conformidade com a Meta.
       // ============================================================
-      if (conexao?.status === "connected") {
+      if (conexao?.status === "connected" || conexao?.status === "expiring") {
         try {
           const { data: token } = await admin.rpc("obter_token_meta", {
             p_business_id: business.id,
           });
           if (token && typeof token === "string") paginas = await listarPaginas(token);
+          else paginasIlegiveis = true;
         } catch (erro) {
+          paginasIlegiveis = true;
           registrarErroMeta("conta:listar-paginas", erro);
         }
       }
@@ -190,108 +198,34 @@ export default async function ContaPage() {
     }
   }
 
-  return (
-    <div className="conta-editorial">
-      <div className="page-head">
-        <h1>Conta</h1>
-        <p>Seus dados, seu negócio e suas conexões.</p>
-      </div>
-
-      <div className="dash-grid conta-layout">
-        <div className="dash-main conta-ficha">
-          <section className="conta-secao conta-perfil" id="visao-geral">
-            <div className="section-title">
-              <h2>Seu perfil</h2>
-            </div>
-            <details className="conta-perfil-resumo">
-              <summary><span className="conta-avatar">{iniciaisDoPerfil(profile?.full_name, user.email)}</span>
-                <span className="conta-perfil-identidade"><b>{profile?.full_name?.trim() || "Seu perfil"}</b><small>{user.email}</small><small>{profile?.whatsapp || "WhatsApp não informado"}</small></span>
-                <span className="conta-editar">Editar dados</span></summary>
-              <div className="conta-perfil-form"><FormPerfil nome={profile?.full_name ?? ""} whatsapp={profile?.whatsapp ?? ""} email={user.email ?? ""} /></div>
-            </details>
-          </section>
-          {business ? (
-            <section className="conta-secao conta-negocio" id="negocio">
-              <div className="section-title">
-                <h2>Dados do seu negócio</h2>
-                <span className="side-note">É com isso que a IA pilota</span>
-              </div>
-              {/* UMA LINHA, e não um formulário. Os campos que moravam aqui
-                  foram para `/meu-negocio`, onde cada um registra de onde
-                  veio o valor. O que sobraria aqui — nome e raio — seria um
-                  formulário de dois campos, que parece resto de algo maior.
-                  Ver docs/revisao-perfil-cliente.md §2. */}
-              <div className="card acct-list">
-                <div className="conta-negocio-atual"><div><b>{business.name}</b><span>Negócio selecionado</span></div><span className="conta-estado">Selecionado</span></div>
-                <a className="acct-row" href="/meu-negocio">
-                  <span className="ar-text">
-                    <b>O que a gente entendeu do seu negócio</b>
-                    <span>
-                      Montado a partir da nossa conversa. Dá uma conferida — principalmente nos
-                      números.
-                    </span>
-                  </span>
-                  <Seta />
-                </a>
-              </div>
-            </section>
-          ) : (
-            <section className="conta-secao conta-negocio" id="negocio">
-              <div className="section-title">
-                <h2>Dados do seu negócio</h2>
-              </div>
-              <div className="card">
-                <p className="hint">
-                  Você ainda não contou sobre sua oferta e seus clientes. Essas respostas ajudam
-                  a equipe a preparar a conversa e a primeira campanha, após as conferências necessárias.
-                </p>
-                <a className="cta" href="/onboarding" style={{ width: "max-content" }}>
-                  Começar agora
-                </a>
-              </div>
-            </section>
-          )}
-
-          {/* Trocar a página sem refazer o OAuth. Antes, o único caminho
-              era reconectar tudo — desproporcional para mudar um campo, e
-              cada passagem pelo Facebook é uma chance de o cliente
-              recusar ou cair num erro. */}
-          {conexaoIlegivel ? (
-            <section className="conta-secao conta-conexoes" id="conexoes">
-              <div className="section-title">
-                <h2>Conexões</h2>
-              </div>
-              {/* DIZ QUE NÃO LEU, em vez de sumir. Uma seção que
-                  desaparece é indistinguível de "você não tem página", e
-                  essa é uma afirmação sobre a conta dele que a gente não
-                  tem como fazer agora. Sem detalhe técnico: o nome da
-                  credencial que falta não o ajuda em nada. */}
-              <div className="card">
-                <p className="rc-tranquilo">
-                  Não consegui verificar sua conexão com o Facebook agora. Sua conta e seus
-                  anúncios não mudaram por causa disso. Tente daqui a pouco; se continuar
-                  assim, chama a gente.
-                </p>
-              </div>
-            </section>
-          ) : (
-            business && paginas.length > 0 && (
-              <section className="conta-secao conta-conexoes" id="conexoes">
-                <div className="section-title">
-                  <h2>Conexões</h2>
-                </div>
-                <TrocarPagina paginas={paginas} atual={paginaAtual} businessId={business.id}
-                  variasContasAtivas={variasContasAtivas} contasIlegiveis={Boolean(contasAtivas?.error)} />
-              </section>
-            )
-          )}
-
-          <section className="conta-secao conta-plano" id="plano">
-            <div className="section-title">
-              <h2>Seu plano</h2>
-              <span className="side-note">Por negócio</span>
-            </div>
-            <div className="card">
+  const precisaReconectar = business && !conexaoIlegivel && statusConexao !== "connected";
+  const estadoConexao = conexaoIlegivel ? "Não foi possível conferir" : !business ? "Escolha um negócio"
+    : statusConexao === "connected" ? "Conectado" : statusConexao === "expiring" ? "Renovar conexão" : "Conectar";
+  return <TelaDeConta secoes={[
+    { id: "perfil", titulo: "Seu perfil", resumo: profile?.full_name?.trim() || "Seu perfil", detalhe: user.email ?? "", acao: "Editar perfil",
+      avatar: (profile?.full_name?.trim() || user.email || "V").charAt(0).toUpperCase(),
+      conteudo: erroPerfil ? <p className="form-warning">Não conseguimos carregar seu perfil. Atualize a página antes de editar.</p>
+        : <FormPerfil nome={profile?.full_name ?? ""} whatsapp={profile?.whatsapp ?? ""} email={user.email ?? ""} /> },
+    { id: "negocio", titulo: "Seu negócio", resumo: business?.name || "Escolha seu negócio", detalhe: "Cadastro e identidade visual", acao: "Ver dados",
+      conteudo: business ? <>
+        <PendenciasDoNegocio businessId={business.id} />
+        <p><a href="/meu-negocio">Conferir os dados do negócio →</a></p>
+        <h3>Logo e fotos</h3>
+        {identidadeIlegivel ? <p className="form-warning">Não conseguimos carregar suas imagens. Tente novamente.</p>
+          : <Identidade businessId={business.id} logo={identidade.logo} fotos={identidade.fotos} />}
+      </> : <p><a href="/escolher-negocio">Escolher ou cadastrar negócio →</a></p> },
+    { id: "conexoes", titulo: "Conexões", resumo: "Facebook e Instagram", detalhe: "Conta de anúncios e perfis vinculados", acao: estadoConexao,
+      aberta: Boolean(precisaReconectar || conexaoIlegivel), conteudo: <>
+        {conexaoIlegivel ? <p className="form-warning">Não conseguimos verificar sua conexão. Atualize a página ou fale com a equipe.</p>
+          : precisaReconectar ? <p className="form-warning">{statusConexao === "expiring" ? "Sua autorização precisa ser renovada." : "Conecte a conta de anúncios deste negócio."} <a href="/conectar">{statusConexao === "expiring" ? "Renovar conexão" : "Conectar conta"}</a></p> : null}
+        {paginasIlegiveis && <p className="form-warning">Não conseguimos carregar as páginas disponíveis. Tente novamente.</p>}
+        {business && paginas.length > 0 ? <TrocarPagina paginas={paginas} atual={paginaAtual} businessId={business.id}
+          variasContasAtivas={variasContasAtivas} contasIlegiveis={Boolean(contasAtivas?.error)} />
+          : business && !paginasIlegiveis && !conexaoIlegivel && statusConexao === "connected" ? <p>Nenhuma página foi retornada. <a href="/conectar">Conferir conexão</a></p> : null}
+        {!business && <p><a href="/escolher-negocio">Escolher negócio</a></p>}
+        <details><summary>Ajuda com seus perfis</summary><p><a href="/whatsapp-business">Configurar WhatsApp Business</a></p><p><a href="/sem-instagram">Configurar Instagram profissional</a></p></details>
+      </> },
+    { id: "plano", titulo: "Plano e contrato", resumo: "Gestão de anúncios", detalhe: "Contratação, pagamentos e documentos", acao: "Ver detalhes", conteudo: <>
               {pedidoIlegivel ? <p className="hint">Não conseguimos consultar os pedidos agora. Tente novamente.</p>
                 : pedidos.length ? <>
                   {pedidos.map((pedido) => <p className="hint" key={pedido.id}>
@@ -306,83 +240,7 @@ export default async function ContaPage() {
                   {pedidos.length === 100 && <p className="foot-line">Mostrando os 100 pedidos mais recentes deste negócio.</p>}
                   <p className="foot-line">Estes registros não informam próxima cobrança, recibo nem liquidação bancária.</p>
                 </> : <p className="hint">Não há pedido vinculado a este negócio nesta conta. Se contratou com outro e-mail, fale com a equipe para conferir.</p>}
-            </div>
-          </section>
-
-          {/* Identidade visual. Fica DEPOIS do que o negócio é e ANTES de
-              como ele aparece — a ordem da tela acompanha a ordem em que a
-              pessoa pensa sobre o próprio negócio. */}
-          {business && (
-            <section className="conta-secao conta-identidade" id="identidade">
-              <div className="section-title">
-                <h2>Identidade visual</h2>
-                <span className="side-note">Entra nos anúncios</span>
-              </div>
-              <details className="card conta-recolhivel">
-                <summary><span><b>Logo e fotos do negócio</b><small>{identidadeIlegivel ? "Não conseguimos conferir agora" : `${identidade.fotos.length} ${identidade.fotos.length === 1 ? "imagem guardada" : "imagens guardadas"}`}</small></span><span>Gerenciar</span></summary>
-                <div className="conta-recolhivel-conteudo">
-                {identidadeIlegivel ? (
-                  // DIZ QUE NÃO LEU. Um `Identidade` vazio afirmaria que
-                  // ele não tem logo nem foto — e o cliente que subiu as
-                  // dele veria o próprio trabalho ter sumido.
-                  <p className="rc-tranquilo">
-                    Não consegui carregar sua logo e suas fotos agora. Elas continuam
-                    guardadas — nada foi perdido. Tente daqui a pouco; se continuar assim,
-                    chama a gente.
-                  </p>
-                ) : (
-                  <Identidade businessId={business.id} logo={identidade.logo} fotos={identidade.fotos} />
-                )}
-                </div>
-              </details>
-            </section>
-          )}
-
-          <section className="conta-secao conta-preferencias" id="preferencias">
-            <div className="section-title">
-              <h2>Aparência</h2>
-            </div>
-            <SeletorDeTema />
-          </section>
-
-          {/* As telas de destravar. Ficam aqui, e não escondidas atrás de
-              um erro, porque o cliente que trava geralmente trava ANTES
-              de publicar — e nesse momento ele não tem erro nenhum para
-              clicar, só a sensação de que não está andando. */}
-          <section className="conta-secao conta-requisitos" id="requisitos">
-            <div className="section-title">
-              <h2>Verba e requisitos</h2>
-            </div>
-            <div className="card acct-list">
-              <a className="acct-row" href="/verba">
-                <span className="ar-text">
-                  <b>Sua verba e o cartão</b>
-                  <span>Quanto você investe por mês, e por que são duas cobranças.</span>
-                </span>
-                <Seta />
-              </a>
-              <a className="acct-row" href="/whatsapp-business">
-                <span className="ar-text">
-                  <b>Seu WhatsApp precisa ser o Business</b>
-                  <span>Sem ele o anúncio não tem para onde mandar quem clica.</span>
-                </span>
-                <Seta />
-              </a>
-              <a className="acct-row" href="/sem-instagram">
-                <span className="ar-text">
-                  <b>Deixar seu Instagram profissional</b>
-                  <span>É uma chavinha dentro do aplicativo, de graça.</span>
-                </span>
-                <Seta />
-              </a>
-            </div>
-          </section>
-
-          <section className="conta-secao conta-contrato" id="contrato">
-            <div className="section-title">
-              <h2>Contrato</h2>
-            </div>
-            <div className="card acct-list">
+        <h3 id="contrato">Contrato</h3>
               <p className="hint">
                 {pedidoIlegivel ? "Não conseguimos consultar os pedidos para conferir a assinatura agora."
                   : !pedidos.length ? "Não há pedido vinculado para consultar um contrato."
@@ -390,107 +248,14 @@ export default async function ContaPage() {
                     : !aprovados.length ? "Os pedidos deste negócio ainda não foram aprovados para assinatura."
                       : `${assinados.size} de ${aprovados.length} pedido(s) aprovado(s) entre os exibidos com assinatura registrada. Cada conta só pode ter campanha publicada quando o pedido correspondente estiver assinado.`}
               </p>
-              <a className="acct-row" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-                <span className="ar-text">
-                  <b>Falar sobre pausa ou cancelamento</b>
-                  <span>A equipe atende pelo WhatsApp. O pedido não é executado automaticamente.</span>
-                </span>
-                <Seta />
-              </a>
-            </div>
-            <p className="foot-line">
-              A campanha só pode ser publicada depois das conferências e da assinatura concluída.
-            </p>
-          </section>
-
-          <section className="conta-secao conta-atendimento" id="atendimento">
-            <div className="section-title">
-              <h2>Atendimento</h2>
-            </div>
-            <div className="conta-atendimento-texto">
-              <a className="wa" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
-                Chamar no WhatsApp &rarr;
-              </a>
-            </div>
-          </section>
-
-          {/* ESTA CONTA — a casa do "Sair".
-              Ver docs/navegacao-mobile.md §7.
-
-              Antes ele existia num lugar só: dentro do `.side-account` da
-              sidebar. E `.side-account .who` já estava em `display: none`
-              abaixo de 900px, o que deixava a conta SEM SAÍDA no tablet
-              muito antes de existir barra inferior — medido em 899px, o
-              botão dava 0 × 0. Com a sidebar virando barra de cinco itens
-              no celular, ele precisava de casa própria de qualquer jeito.
-
-              A action é a mesma do layout, não uma cópia: `signOutAction`
-              mudou de lugar na tela, não de comportamento. */}
-          <section className="conta-secao conta-sessao" id="sessao">
-            <div className="section-title">
-              <h2>Esta conta</h2>
-            </div>
-            <div className="card sessao-atual">
-              <div className="sessao-quem">
-                <b>{business?.name?.trim() || user.email}</b>
-                <span>{user.email}</span>
-              </div>
-              <form action={signOutAction}>
-                <button type="submit" className="cta ghost">
-                  Sair desta conta
-                </button>
-              </form>
-            </div>
-            <p className="foot-line">
-              Sair não cancela nada e não apaga nada — só fecha a sessão neste aparelho. Para
-              voltar, é o mesmo e-mail e a mesma senha.
-            </p>
-          </section>
-        </div>
-
-        <aside className="dash-aside conta-notas">
-          <section className="card">
-            <b className="pc-title" style={{ display: "block", marginBottom: 6 }}>
-              O que aparece aqui depois
-            </b>
-            <p className="hint" style={{ marginBottom: 0 }}>
-              Quando houver campanha em veiculação e dados disponíveis, você poderá acompanhar
-              investimento e contatos registrados. Uma conversa recebida não equivale a uma venda.
-            </p>
-          </section>
-
-          <section className="card">
-            <b className="pc-title" style={{ display: "block", marginBottom: 6 }}>
-              Sobre a contratação
-            </b>
-            <p className="hint" style={{ marginBottom: 0 }}>
-              A permanência mínima definida para novas contratações é de seis meses. O
-              cancelamento pelo aplicativo ainda não está disponível; fale com a equipe pelo
-              canal de atendimento se precisar tratar disso.
-            </p>
-          </section>
-        </aside>
-      </div>
-    </div>
-  );
-}
-
-const Seta = () => (
-  <svg
-    viewBox="0 0 14 14"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.6"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-  >
-    <path d="M5 3l4 4-4 4" />
-  </svg>
-);
-
-function iniciaisDoPerfil(nome: string | null | undefined, email: string | null | undefined) {
-  const partes = nome?.trim().split(/\s+/).filter(Boolean) ?? [];
-  if (partes.length > 0) return `${partes[0]?.[0] ?? ""}${partes[1]?.[0] ?? ""}`.toUpperCase();
-  return (email?.[0] ?? "V").toUpperCase();
+        <p><a href="/verba">Conferir verba e cartão →</a></p>
+        <p><a href="https://wa.me/5521936182176" target="_blank" rel="noopener">Falar sobre meu plano, pausa ou cancelamento →</a></p>
+        <p className="hint">Pausa e cancelamento são tratados com a equipe. A solicitação não é executada automaticamente.</p>
+      </> },
+    { id: "preferencias", titulo: "Preferências", resumo: "Aparência", detalhe: "Claro, escuro ou do aparelho", acao: "Escolher tema", conteudo: <SeletorDeTema /> },
+    { id: "acesso", titulo: "Acesso", resumo: "E-mail e senha", detalhe: user.email ?? "", acao: "Gerenciar", conteudo: <>
+      <p>A recuperação da senha acontece pelo e-mail de acesso.</p><a className="cta ghost" href="/recuperar">Recuperar senha</a>
+      <p className="hint">Para trocar o e-mail, <a href="https://wa.me/5521936182176" target="_blank" rel="noopener">fale com a equipe</a>.</p>
+    </> },
+  ]} saida={<form action={signOutAction}><button type="submit" className="cta ghost">Sair da conta</button></form>} />;
 }

@@ -65,7 +65,6 @@ export function RecepcaoDoCadastro({ businessId, reserva, falhaReuniao }: Recepc
         <li><a href="/conta">Revisar meu negócio</a><p>Confira os dados e os materiais da marca.</p></li>
         <li><a href="/criativos">Conhecer meus criativos</a><p>Veja suas peças e os anúncios associados a elas.</p></li>
         <li><a href="/anuncios">Explorar anúncios</a><p>Acompanhe as campanhas disponíveis para este negócio.</p></li>
-        <li><a href="/alertas">Ver avisos</a><p>Encontre os pedidos que precisam da sua atenção.</p></li>
       </ul>
     </section>
   </section>;

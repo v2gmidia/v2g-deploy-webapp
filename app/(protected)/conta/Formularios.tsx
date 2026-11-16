@@ -45,27 +45,6 @@ export function FormPerfil(props: PerfilProps) {
         </div>
       </div>
 
-      <div className="field-row">
-        <div className="field">
-          <label htmlFor="c-email">E-mail</label>
-          {/* Trocar e-mail no Supabase Auth exige confirmar nos dois
-              endereços; enquanto esse fluxo não existe, o campo é só
-              leitura em vez de fingir que salva. */}
-          <input id="c-email" type="email" defaultValue={props.email} disabled />
-          <p className="note">
-            Para trocar o e-mail, fale com a gente — o fluxo de confirmação ainda não está no
-            app.
-          </p>
-        </div>
-        <div className="field">
-          <label htmlFor="c-senha">Senha</label>
-          <input id="c-senha" type="password" defaultValue="••••••••" disabled />
-          <p className="note">
-            <a href="/recuperar">Trocar minha senha</a>
-          </p>
-        </div>
-      </div>
-
       <Button type="submit" variant="ghost" disabled={pendente}>
         {pendente ? "Salvando…" : "Salvar perfil"}
       </Button>

@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 2,
+  "title": "V2G — quatro telas integradas localmente",
+  "extensions": {
+    "scope": {
+      "kind": "surface-brief",
+      "date": "2026-11-16",
+      "status": "integrated-locally-reviewed",
+      "routes": ["/inicio", "/criativos", "/anuncios", "/conta"],
+      "previewEntry": "http://localhost:3000/exemplo/inicio",
+      "documentation": "docs/estado/telas-integradas-16-11.md",
+      "authority": "Direção Operate aprovada para estas superfícies; herda identidade editorial e não substitui DESIGN.md global.",
+      "sources": ["PRODUCT.md", "DESIGN.md", "components/ui/Casco.tsx", "components/ui/NavItem.tsx", "components/ui/PendenciasDoNegocio.tsx", "components/ui/FaixaReconectar.tsx", "app/(protected)/conta/TelaDeConta.tsx", "app/(protected)/conta/page.tsx", "app/(protected)/conta/conta-clean.module.css", "app/(protected)/anuncios/InventarioCliente.tsx", "app/(protected)/anuncios/ListaDeAnuncios.tsx", "app/(protected)/anuncios/lista-cliente.module.css", "lib/anuncios/lista-cliente.ts", "lib/anuncios/retorno-login.ts", "app/(protected)/criativos/GaleriaCriativos.tsx", "app/(protected)/criativos/biblioteca.module.css", "app/exemplo/[tela]/page.tsx"]
+    },
+    "breakpoints": [
+      {"name": "navegacao-movel", "value": "900px", "purpose": "Quatro destinos na barra inferior."},
+      {"name": "composicao-mobile", "value": "700px", "purpose": "Conta em uma coluna; detalhes empilhados; métricas de anúncios em duas colunas."}
+    ],
+    "motion": [{"name": "abertura-chevron-conta", "value": "transform 160ms ease-out", "purpose": "Rotação na abertura de details; desativada com redução de movimento."}],
+    "accountSections": ["Seu perfil", "Seu negócio", "Conexões", "Plano e contrato", "Preferências", "Acesso"],
+    "creativeTabs": ["Biblioteca", "Em revisão", "Arquivados"],
+    "stateBoundaries": {
+      "preview": "Dados fictícios explícitos, desenvolvimento apenas, componentes de apresentação compartilhados.",
+      "productionCode": "Carregadores e ações autenticadas preservados; operação ponta a ponta não comprovada nesta revisão.",
+      "alerts": "Sem destino próprio no menu; pendências no contexto; /alertas redireciona para /inicio.",
+      "association": "business_id e external_ad_id exatos; sem inferência por nome.",
+      "images": "Ícone quando não existe miniatura; nenhuma imagem fictícia injetada na lista real.",
+      "metrics": "Ausência não significa zero; inventário limitado a 31 dias.",
+      "navigation": "Seleção de anúncio preservada na escolha de conta e retorno do login do cliente."
+    },
+    "verification": {
+      "provenance": "Resultados fornecidos pelo executor e reviewer; documentação não repetiu testes.",
+      "suite": "pnpm conferir passou antes do ajuste final de hidden",
+      "build": "passou antes do ajuste final de hidden; .impeccable/review/integracao-build.log",
+      "typecheck": "passou após o último ajuste",
+      "targetedTests": "86/86 na rodada anterior; 6/6 telas reunidas; 65/65 anúncios após ajuste",
+      "browser": "Chrome desktop 1440x1000 e mobile 390x844; sem overflow e sem erros de console observados no percurso de prévia",
+      "detector": "Uma execução, nove avisos consultivos de tipografia herdados; sem repetição",
+      "review": "P2 resolvido; aprovado para revisão local",
+      "notVerified": ["autenticação ponta a ponta", "efeitos reais das ações", "estado publicado", "build posterior ao último ajuste"],
+      "screenshots": [".impeccable/review/integrado-inicio-desktop.jpg", ".impeccable/review/integrado-conta-desktop.jpg", ".impeccable/review/integrado-conta-mobile.jpg", ".impeccable/review/integrado-anuncios-desktop.jpg", ".impeccable/review/integrado-anuncios-mobile.jpg", ".impeccable/review/integrado-criativos-desktop.jpg", ".impeccable/review/integrado-criativos-mobile.jpg"]
+    }
+  },
+  "narrative": {
+    "northStar": "Operate",
+    "overview": "Quatro destinos com ações e pendências junto do conteúdo. Conta usa seis linhas expansíveis, Criativos uma galeria de três abas e Anúncios uma lista por anúncio real. Archivo, navy e cobalto permanecem herdados da identidade editorial.",
+    "keyCharacteristics": ["Quatro destinos desktop e mobile", "Seis linhas em Conta", "Galeria de três abas", "Uma linha por anúncio", "Pendências contextuais"],
+    "rules": [{"name": "Pendência no contexto", "body": "Manter o problema e o caminho para resolvê-lo na superfície correspondente.", "section": "components"}],
+    "dos": ["Preservar fontes, estados indisponíveis e vínculos explícitos.", "Distinguir prévia fictícia de ação autenticada.", "Reutilizar tokens e preferência de tema existentes."],
+    "donts": ["Não transformar validação local em alegação de produção.", "Não inferir associações por nomes.", "Não promover esta composição a regra global de DESIGN.md."]
+  }
+}

@@ -2,7 +2,7 @@
 export function destinoDaLeitura(pathname: string, busca: URLSearchParams): string | null {
   if (!["/anuncios", "/gestor", "/supergestor"].includes(pathname)) return null;
   const retorno = new URLSearchParams();
-  const campos = pathname === "/anuncios" ? ["desde", "ate", "conta"] : ["desde", "ate", "conta", "metricas"];
+  const campos = pathname === "/anuncios" ? ["desde", "ate", "conta", "anuncio"] : ["desde", "ate", "conta", "metricas"];
   for (const campo of campos) {
     // Não esconder entrada repetida/inválida: a validação existente deve
     // continuar recusando-a após o login, em vez de escolher um valor sozinha.

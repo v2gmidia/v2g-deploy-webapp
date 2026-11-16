@@ -12,6 +12,7 @@ import estilos from "./PedirRevisao.module.css";
 import { ReferenciasDoNicho } from "./ReferenciasDoNicho";
 import { contextoDesteNegocio, type ContextoDoCriativo } from "@/lib/criativos/contexto-do-negocio";
 import { useEsperaLocal } from "./useEsperaLocal";
+import { useRevisaoRecebida } from "./TelaDeCriativos";
 
 type Aviso = { tom: "notice" | "warning" | "error"; texto: string; motivos?: string[] };
 type Fase = "pronto" | "enviando" | "analisando";
@@ -22,6 +23,7 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
 }) {
   const contextoSeguro = contextoDesteNegocio(contexto, businessId);
   const router = useRouter();
+  const revisaoRecebida = useRevisaoRecebida();
   const [arquivo, setArquivo] = useState<File | null>(null);
   const [id, setId] = useState(() => crypto.randomUUID());
   const [fase, setFase] = useState<Fase>("pronto");
@@ -37,7 +39,6 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
   const [promocao, setPromocao] = useState(false);
   const [validade, setValidade] = useState("");
   const [conferindo, setConferindo] = useState(false);
-  const [confirmado, setConfirmado] = useState(false);
   const [incerto, setIncerto] = useState(false);
   const [imagemUrl, setImagemUrl] = useState<string | null>(null);
   const [referenciaId, setReferenciaId] = useState("");
@@ -82,11 +83,13 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
       setAviso({ tom: "error", texto: "Escolha uma imagem JPG ou PNG de até 9 MB." });
       return;
     }
+    const confirmado = conferindo && (evento.nativeEvent as SubmitEvent).submitter instanceof HTMLButtonElement && ((evento.nativeEvent as SubmitEvent).submitter as HTMLButtonElement).value === "sim";
     const validacao = validarIntencaoDoEnvio({ objetivo, promocao,
       validade: promocao ? validade : null, confirmado: conferindo ? confirmado : true }, hoje);
     if (!validacao.ok) { setAviso({ tom: "error", texto: validacao.erro }); return; }
     if (!conferindo) { setConferindo(true); setAviso(null); return; }
     if (previa) {
+      setConferindo(false);
       setAviso({ tom: "notice", texto: "Conferência testada na prévia. Nenhum arquivo ou pedido foi gravado, analisado ou publicado." });
       return;
     }
@@ -110,9 +113,9 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
         return;
       }
       recebido = true;
+      revisaoRecebida?.();
       setIncerto(false);
       setConferindo(false);
-      setConfirmado(false);
       setObjetivo(""); setPromocao(false); setValidade(""); setReferenciaId("");
       setArquivo(null);
       setId(crypto.randomUUID());
@@ -162,12 +165,8 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
     }
   }
 
-  return <form onSubmit={enviar} className={estilos.formulario} aria-busy={fase !== "pronto"}>
-    {previa && <p className="form-warning">Prévia local · sem envio, análise ou publicação.</p>}
-    <ol className={estilos.etapa} aria-label="Etapas do envio">
-      <li aria-current={!conferindo ? "step" : undefined}><span>1</span>Preparar criativo</li>
-      <li aria-current={conferindo ? "step" : undefined}><span>2</span>Conferir e enviar</li>
-    </ol>
+  return <form onSubmit={enviar} className={estilos.formulario} data-confirmando={conferindo || undefined} aria-busy={fase !== "pronto"}>
+    {previa && !conferindo && <p className={estilos.limite}>Prévia local · sem envio, análise ou publicação.</p>}
     <div hidden={conferindo} className={estilos.preparo}>
     <div className={estilos.colunaImagem}>
       <h3>Sua imagem</h3>
@@ -210,8 +209,8 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
         </div>
       </> : <div className={estilos.escolhaVazia}>
         <span className={estilos.iconeImagem}><IconeImagem /></span>
-        <strong>{arrastando ? "Solte a imagem aqui" : "Vamos escolher seu criativo?"}</strong>
-        <span>Selecione uma imagem pronta do seu negócio<span className={estilos.conviteArrastar}> ou arraste o arquivo para cá</span>.</span>
+        <strong>{arrastando ? "Solte a imagem aqui" : "Escolha uma imagem"}</strong>
+        <span>Clique para selecionar<span className={estilos.conviteArrastar}> ou arraste o arquivo para cá</span>.</span>
         <span className={estilos.selecionar}><IconeUpload />Selecionar imagem</span>
       </div>}
       </label>
@@ -248,31 +247,23 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
         validade: promocao ? validade : null, hoje }} contexto={contextoSeguro} /> : null}
     </div>
     <div className={estilos.rodapePreparo}><p>Confira os dados antes de enviar para revisão.</p>
-      <button className="cta" type="submit" disabled={!preparoCompleto || fase !== "pronto"}>Conferir criativo<IconeSeta /></button>
+      <button className="cta" type="submit" disabled={!preparoCompleto || fase !== "pronto"}>Subir criativo<IconeUpload /></button>
     </div>
-    </div>{conferindo && <>
-      <h3 ref={resumo} tabIndex={-1}>Confira seu criativo</h3>
-      <div className={estilos.resumo}>
-        {imagemUrl && <img className={estilos.previa} src={imagemUrl} alt="Prévia do criativo escolhido" />}
-        <dl><dt>Arquivo</dt><dd>{arquivo?.name}</dd><dt>Objetivo</dt><dd>{OBJETIVOS_DO_ENVIO.find((o) => o.valor === objetivo)?.rotulo}</dd>
-          <dt>Promoção com prazo</dt><dd>{promocao ? `Até ${validade.split("-").reverse().join("/")}` : "Não informada"}</dd>
-          <dt>Referência</dt><dd>{referenciaId ? `Anúncio público ${referenciaId}` : "Nenhuma escolhida"}</dd></dl>
-      </div>
-      <label className={estilos.marcacao}><input type="checkbox" required checked={confirmado}
-        disabled={fase !== "pronto" || incerto} onChange={(e) => setConfirmado(e.target.checked)} />Conferi a imagem, o objetivo e a validade.</label>
+    </div>{conferindo && <section className={estilos.confirmacao} aria-labelledby="confirmar-envio">
+      <h3 id="confirmar-envio" ref={resumo} tabIndex={-1}>Subir criativo?</h3>
       <div className={estilos.acoes}>
         <button type="button" className={`cta ghost ${estilos.voltar}`} disabled={fase !== "pronto" || incerto} onClick={() => {
-          setConferindo(false); setConfirmado(false); setId(crypto.randomUUID()); setAviso(null);
-        }}>Voltar e ajustar</button>
-        <button className="cta" type="submit" disabled={!confirmado || fase !== "pronto"}>{fase === "enviando" ? "Enviando criativo..." : fase === "analisando" ? "Analisando imagem..." : incerto ? "Conferir o mesmo envio" : "Enviar para revisão"}</button>
+          setConferindo(false); setAviso(null);
+        }}>Não</button>
+        <button className="cta" type="submit" name="confirmar" value="sim" disabled={fase !== "pronto"}>{fase === "enviando" ? "Enviando criativo…" : fase === "analisando" ? "Analisando imagem…" : incerto ? "Confirmar o mesmo envio" : "Sim"}</button>
       </div>
-    </>}
+    </section>}
     <div role="status" aria-live="polite" aria-atomic="true">
       {espera.visivel && <p className={estilos.andamento}>{fase === "enviando"
         ? espera.longa ? "Ainda aguardando a confirmação do envio e do arquivo. Não envie outra cópia; o percentual enviado não está disponível nesta tela." : "Enviando seu criativo. Aguarde a confirmação do arquivo."
         : espera.longa ? "Arquivo recebido para revisão. Aguardando a análise automática; ela não informa progresso nem previsão de término. O anúncio não foi publicado." : "Arquivo recebido para revisão. Aguardando a análise automática."}</p>}
     </div>
-    <p className={estilos.limite}>O gestor revisa antes da publicação. Enviar não coloca o anúncio no ar.</p>
+    {!conferindo && <p className={estilos.limite}>O gestor revisa antes da publicação. Enviar não coloca o anúncio no ar.</p>}
     {incerto && <p className="form-warning">Não altere o pedido ainda. <a href="/criativos">Confira a galeria</a> ou tente confirmar o mesmo envio.</p>}
     {aviso && <div ref={mensagem} tabIndex={-1} className={aviso.tom === "notice" ? "form-notice" : aviso.tom === "warning" ? "form-warning" : "form-error"} role="status">
       <p>{aviso.texto}</p>
@@ -283,4 +274,3 @@ export function PedirRevisao({ businessId, hoje, previa = false, referenciasDisp
 
 const IconeUpload = () => <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M10 13V3M6 7l4-4 4 4M4 12v4h12v-4" /></svg>;
 const IconeImagem = () => <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="8.5" cy="9" r="1.5" /><path d="m4 17 5-4 3.5 3 3-2.5 4.5 4" /></svg>;
-const IconeSeta = () => <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M3 10h13M11 5l5 5-5 5" /></svg>;

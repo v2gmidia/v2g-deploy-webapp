@@ -30,12 +30,6 @@ const IcoAnuncios = () => (
     <path d="M16 8a3 3 0 0 1 0 4" />
   </svg>
 );
-const IcoAlertas = () => (
-  <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
-    <path d="M10 3a4.5 4.5 0 0 0-4.5 4.5V11L4 13.5h12L14.5 11V7.5A4.5 4.5 0 0 0 10 3z" />
-    <path d="M8.3 16a1.9 1.9 0 0 0 3.4 0" />
-  </svg>
-);
 const IcoConta = () => (
   <svg className="ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
     <circle cx="10" cy="7" r="3" />
@@ -123,8 +117,10 @@ export function Casco({
   negocios = [],
   ehOperador,
   rotaAtiva,
+  previa = false,
   children,
 }: {
+  previa?: boolean;
   nome: string;
   nomeNegocio?: string;
   negocioAtivoId?: string;
@@ -143,48 +139,10 @@ export function Casco({
     <div className="app-shell v2g-editorial">
       <a className="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
       <aside className="sidebar">
-        <Marca href="/inicio" className="side-brand" editorial />
+        <Marca href={previa ? "/exemplo/inicio" : "/inicio"} className="side-brand" editorial />
 
         <nav className="side-nav" aria-label="Navegação principal">
-          {/* CINCO ITENS, E CINCO É TETO — não meta. É o que cabe numa
-              barra inferior de celular, e o produto é para ser usado no
-              celular.
-
-              A barra prevista aqui existe desde o lote QA-1: abaixo de
-              900px esta mesma `.sidebar` vira a barra inferior, só por
-              CSS — mesmo DOM, mesmo `NavItem`, mesmo item ativo. O
-              desenho e as medições estão em docs/navegacao-mobile.md.
-              Um sexto item quebra a conta: são cinco células de 64px na
-              menor tela que a gente atende.
-
-              Campanhas e Criativos viraram ANÚNCIOS. O cliente não separa
-              a campanha do criativo: para ele, "meu anúncio" é a foto e o
-              dinheiro por trás dela, junto. Dois itens para isso era
-              raciocínio de gestor de tráfego vazando na interface.
-
-              VENDAS SAIU E CRIATIVOS ENTROU — 12/09/2026, e a troca é de
-              lugar, não de quantidade: continuam cinco.
-
-              `/vendas` existe para a pergunta do dia, que está congelada, e
-              a pergunta já vive num card do `/inicio`. Não há CRM atrás
-              dela: a tela não mostra cliente, negociação nem histórico de
-              venda, porque nada disso existe no produto. Um item de barra
-              para uma tela nesse estado gasta uma das cinco células na
-              coisa que o dono abre uma vez e não volta.
-
-              Criativo é o oposto: é o que ele mexe toda semana, e a
-              `/criativos` deixou de ser uma tarefa para ser a casa de três
-              blocos — analisar peça pronta, ver as peças, criar peça nova.
-              Casa é lugar, e lugar é o que merece item de barra.
-
-              **`/vendas` NÃO foi apagada.** A rota continua no ar e nenhuma
-              URL quebra; ela só saiu da barra. Ver docs/decisoes.md.
-
-              Onboarding e Combinados NÃO entram: são passos únicos, não
-              lugares. Quando pendentes, aparecem como tarefa no Início —
-              que é o que aquela tela já faz. Item de menu para passo
-              único vira um lugar que, depois de cumprido, só serve para
-              o cliente se perguntar por que ainda está ali. */}
+          {/* Pendências ficam nas telas correspondentes; quatro destinos no menu. */}
           <NavItem href="/inicio" icone={<IcoInicio />} ativo={rotaAtiva ? rotaAtiva === "/inicio" : undefined}>
             Início
           </NavItem>
@@ -194,9 +152,6 @@ export function Casco({
           <NavItem href="/anuncios" icone={<IcoAnuncios />} ativo={rotaAtiva ? rotaAtiva === "/anuncios" : undefined}>
             Anúncios
           </NavItem>
-          <NavItem href="/alertas" icone={<IcoAlertas />} ativo={rotaAtiva ? rotaAtiva === "/alertas" : undefined}>
-            Avisos
-          </NavItem>
           <NavItem href="/conta" icone={<IcoConta />} ativo={rotaAtiva ? rotaAtiva === "/conta" : undefined}>
             Conta
           </NavItem>
@@ -204,19 +159,7 @@ export function Casco({
 
         <div className="side-spacer" />
 
-        {/* FALAR COM UMA PESSOA É DESTINO, NÃO CARTÃO — 15/09/2026, lote 2b.
-            Mesmo formato dos cinco itens de cima (ícone + rótulo), porque é um
-            lugar para onde se vai. O "Sair" logo abaixo é o único link de
-            texto da barra: é encerramento, não destino.
-
-            Era o cartão `.side-support` com um botão lima dentro. Com o botão
-            no tamanho do papel, o rótulo quebrava em duas linhas nos 220px do
-            cartão, e o botão disputava espaço com o próprio texto do cartão.
-            Desfaz o item 2 da decisão de 11/09 — ver docs/decisoes.md.
-
-            Some abaixo de 900px, junto com o resto do que é da coluna: ali a
-            barra vira a inferior de cinco células, e um sexto item quebra o
-            teto. No celular o caminho é o `.topbar-help`, no topo. */}
+        {/* Atendimento na base da navegação; no celular, no rodapé do conteúdo. */}
         <a className="nav-item side-falar" href="https://wa.me/5521936182176" target="_blank" rel="noopener">
           <IcoConversa />
           <span>Falar com alguém</span>
@@ -244,18 +187,6 @@ export function Casco({
             </div>
           </div>
 
-          {/* AJUDA NO TOPO — a identidade editorial mantém o canal em
-              todas as larguras. No celular o texto recolhe e o link
-              conserva o nome acessível. A sidebar vira barra inferior.
-
-              Por que não confiar no bloco de suporte do corpo das telas:
-              porque ele não está em todos os ESTADOS. Medido — o vazio de
-              `/anuncios` e o de `/meu-negocio` não têm nenhum, e é o
-              cliente novo que cai neles. Quem mais precisa de ajuda era
-              justamente quem ficava sem canal.
-
-              O desenho não é invenção: é o mesmo do cabeçalho de
-              `(fluxo)` — marca à esquerda, gente de verdade à direita. */}
           <div className="topbar-actions">
             {ehOperador && <a className="link-btn" href="/supergestor">Mesa do gestor</a>}
             <div className="topbar-account">
@@ -264,21 +195,10 @@ export function Casco({
                 ehOperador={ehOperador} compacto adicionarHref={adicionarHref} />
             </div>
             <PreferenciaDeTema />
-            <a
-              className="topbar-help"
-              href="https://wa.me/5521936182176"
-              target="_blank"
-              rel="noopener"
-              aria-label="Falar com uma pessoa"
-            >
-              <svg width="14" height="14" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-                <path d="M6 1a5 5 0 0 0-4.3 7.6L1 11l2.5-.7A5 5 0 1 0 6 1z" />
-              </svg>
-              <span>Falar com uma pessoa</span>
-            </a>
+
           </div>
         </header>
-        <main className="canvas" id="conteudo-principal" tabIndex={-1}>{children}</main>
+        <main className="canvas" id="conteudo-principal" tabIndex={-1}>{children}<footer className="suporte-mobile"><a href="https://wa.me/5521936182176" target="_blank" rel="noopener"><IcoConversa />Falar com alguém</a></footer></main>
       </div>
     </div>
   );

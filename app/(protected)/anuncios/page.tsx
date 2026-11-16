@@ -17,7 +17,7 @@ import { intervaloDoInicio, rotuloDoIntervalo } from "@/lib/inicio/periodo";
 import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
 import { SeletorDePeriodo } from "../inicio/SeletorDePeriodo";
 import { anunciosDoNegocioSelecionado } from "@/lib/backend";
-import { InventarioDeAnunciosMeta } from "./AnunciosMeta";
+import { InventarioCliente } from "./InventarioCliente";
 import { AtualizacaoDaConsulta } from "./AtualizacaoDaConsulta";
 
 export const metadata = tituloDaAba("/anuncios");
@@ -88,16 +88,16 @@ export default async function AnunciosPage({ searchParams }: {
   // enquadramento, não o fato — ver docs/estado-do-cliente.md §3.
   const estado = await estadoDoCliente(agora);
 
-  const { data: criativos } = estado.negocioId
+  const { data: criativos, error: erroCriativos } = estado.negocioId
     ? await supabase
         .from("creatives")
         // `COLUNAS_DO_JULGAMENTO` traz `uso, status, arquivado_em` — sem
         // `arquivado_em` no select, o `foiReprovada` lá embaixo vira regra
         // inerte em silêncio.
-        .select(`id, campaign_id, file_name, ${COLUNAS_DO_JULGAMENTO}`)
+        .select(`id, business_id, external_ad_id, campaign_id, file_name, ${COLUNAS_DO_JULGAMENTO}`)
         .eq("business_id", estado.negocioId)
         .order("created_at", { ascending: false })
-    : { data: [] };
+    : { data: [], error: null };
 
   const pecas = criativos ?? [];
 
@@ -120,12 +120,12 @@ export default async function AnunciosPage({ searchParams }: {
     return <AtualizacaoDaConsulta hoje={intervalo.hoje}><div className="anuncios-editorial">
       <FaixaReconectar />
       <header className="anuncios-topo-novo"><div className="page-head"><h1>Anúncios</h1>
-        <p>Acompanhe as campanhas e os anúncios da conta vinculada ao seu negócio.</p></div>
-        <a className="cta" href="/criativos">Abrir criativos</a></header>
+        <p>Resultados e criativos, anúncio por anúncio.</p></div>
+        <a className="cta" href="/criativos">Ver criativos</a></header>
       <div className="anuncios-periodo"><a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} /></div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} />
+      <InventarioCliente resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} vinculos={pecas} vinculosFalharam={Boolean(erroCriativos)} selecionado={typeof busca.anuncio === "string" ? busca.anuncio : undefined} />
     </div></AtualizacaoDaConsulta>;
   }
 
@@ -159,7 +159,7 @@ export default async function AnunciosPage({ searchParams }: {
       <header className="anuncios-topo-novo">
        <div className="page-head">
         <h1>Anúncios</h1>
-        <p>Acompanhe cada anúncio e o que ele produziu até agora.</p>
+        <p>Resultados e criativos, anúncio por anúncio.</p>
         {/* ============================================================
             AFIRMAÇÃO LEGADA DE VEICULAÇÃO. ITENS B3 e C6.
             Suprimida quando a consulta Meta respondeu: o inventário novo
@@ -183,16 +183,16 @@ export default async function AnunciosPage({ searchParams }: {
           </span>
         </p>}
        </div>
-       <a className="cta" href="/criativos">Abrir criativos</a>
+       <a className="cta" href="/criativos">Ver criativos</a>
       </header>
       <div className="anuncios-periodo">
         <a href={`/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`}>Ver resumo deste período</a>
         <SeletorDePeriodo key={`${intervalo.desde}-${intervalo.ate}`} intervalo={intervalo} />
       </div>
       {intervalo.erro && <p className="form-warning" role="status">{intervalo.erro}</p>}
-      <InventarioDeAnunciosMeta resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} />
+      <InventarioCliente resultado={inventarioMeta} periodo={intervalo} contaSolicitada={contaSolicitada} vinculos={pecas} vinculosFalharam={Boolean(erroCriativos)} selecionado={typeof busca.anuncio === "string" ? busca.anuncio : undefined} />
 
-      <div className="section-title"><h2>Histórico por rodada da V2G</h2></div>
+      <details className="anuncios-historico"><summary>Histórico por rodada da V2G</summary>
       <p className="hint">Histórico do negócio, sem filtro por conta. Os mesmos anúncios podem aparecer na consulta Meta acima; não some os números das duas fontes.</p>
 
       {resultado.estado === "indisponivel" || inventarioMeta.ok ? null : reprovadas.length > 0 ? (
@@ -277,13 +277,14 @@ export default async function AnunciosPage({ searchParams }: {
           {/* SÓ peça de anúncio. O filtro por `uso` é o conserto: sem ele,
               esta seção listava o logo do cliente sob o título "Fotos
               guardadas". As fotos do cliente moram na `/conta`. */}
-          <PecasSemAnuncio pecas={pecas.filter((p) => p.uso === "campanha" && !p.campaign_id)} />
 
-          <PecaPronta />
+
+
         </div>
 
 
       </div>
+      </details>
     </div></AtualizacaoDaConsulta>
   );
 }
@@ -816,7 +817,7 @@ function SemAnuncioNenhum({ proximo, fotos }: { proximo: Etapa | null; fotos: nu
             </ul>
           </section>
 
-          <PecaPronta />
+
         </div>
 
         <aside className="dash-aside">
