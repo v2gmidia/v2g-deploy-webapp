@@ -17,3 +17,14 @@ test('gráfico acessível preserva investimento zero e lacunas, sem receita nem 
   assert.match(h, /Não medido/); assert.match(h, /class="linha"/);
   assert.doesNotMatch(h, /Receita|receita|Não informada|Cliques|999/);
 });
+
+test('período zerado tem escala legível, sem rótulos duplicados de centavo', () => {
+  const { GraficoDiario } = ambienteTs({ ports: {
+    './ResumoMetaDoInicio.module.css': { default: new Proxy({}, { get: (_, k) => k }) },
+  } }).load('app/(protected)/inicio/GraficoDiario.tsx');
+  const h = renderToStaticMarkup(React.createElement(GraficoDiario, {
+    moeda: 'BRL', inconsistente: false,
+    dias: [1, 2].map(d => ({ dia: `2026-11-0${d}`, gasto: 0, impressoes: 0, cliques: 0 })),
+  }));
+  assert.match(h, /0,50/); assert.match(h, /1,00/); assert.doesNotMatch(h, /0,01/);
+});

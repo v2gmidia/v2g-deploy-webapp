@@ -15,7 +15,7 @@ export function GraficoDiario({ dias, moeda, inconsistente, diaEmAtualizacao }: 
   const [selecao, selecionar] = useReducer((_anterior: { indice: number; fixo: boolean } | null, proximo: { indice: number; fixo: boolean } | null) => proximo, null);
   const id = useId();
   const conhecidos = moeda ? dias.filter(d => d.gasto !== null) : [];
-  const teto = Math.max(1, ...conhecidos.map(d => d.gasto!));
+  const teto = Math.max(100, ...conhecidos.map(d => d.gasto!));
   const pontos = dias.map((dia, i) => ({ ...dia,
     x: dias.length === 1 ? 390 : 80 + i * 620 / (dias.length - 1),
     y: dia.gasto === null ? null : 194 - dia.gasto / teto * 168,
