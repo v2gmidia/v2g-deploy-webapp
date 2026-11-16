@@ -76,6 +76,7 @@ const jaRegistradoNestaSessao = new Set<string>();
  */
 
 interface PerguntaDoDiaProps {
+  previa?: boolean;
   /** o que já está gravado no dia, para o campo nascer preenchido */
   vendasAtuais: number | null;
   receitaAtualCentavos: number | null;
@@ -133,6 +134,7 @@ export function PerguntaDoDia({
   idExecucao,
   businessId,
   acoes,
+  previa = false,
 }: PerguntaDoDiaProps) {
   const responder = acoes?.responder ?? responderPerguntaDoDiaAction;
   const registrar = acoes?.registrar ?? registrarPerguntaApresentadaAction;
@@ -230,6 +232,7 @@ export function PerguntaDoDia({
     valoresDoDia.vendas === null || valoresDoDia.receita === null;
 
   useEffect(() => {
+    if (previa) return;
     if (!temPerguntaEmAberto) return;
     const chave = `${idExecucao}:${respondendo}`;
     if (jaRegistradoNestaSessao.has(chave)) return;
@@ -245,6 +248,7 @@ export function PerguntaDoDia({
   }, [idExecucao, businessId, respondendo, temPerguntaEmAberto, registrar]);
 
   async function enviar(naoSei: "vendas" | "receita" | null) {
+    if (previa) { setErro("Prévia local: nenhuma resposta foi enviada."); return; }
     if (envioEmCurso.current) return;
     envioEmCurso.current = true;
     setEnviando(true);

@@ -9,7 +9,6 @@ export function erroDoIntervalo(desde: string, ate: string, hoje: string): strin
   if (!valida(desde) || !valida(ate)) return "Preencha as duas datas com dias válidos.";
   if (desde > ate) return "A data final precisa ser igual ou posterior à data inicial.";
   if (ate > hoje) return "Escolha um período até hoje.";
-  if ((Date.parse(ate) - Date.parse(desde)) / 86400000 >= 31) return "Escolha um período de até 31 dias para consultar a Meta.";
   return null;
 }
 

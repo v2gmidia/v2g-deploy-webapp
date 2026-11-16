@@ -7,7 +7,6 @@ import { COLUNAS_DO_JULGAMENTO, foiReprovada } from "@/lib/criativos/peca";
 import { HeroDaEtapa } from "@/components/ui/HeroDaEtapa";
 import { resultadoDoNegocio } from "@/lib/resultado/do-negocio";
 import { diaPorExtenso } from "@/lib/formato";
-import { fraseDeVeiculacao } from "@/lib/veiculacao/estado";
 import type { CampanhaNaTela } from "@/lib/resultado/do-negocio";
 import type { ValorNaTela } from "@/lib/resultado/tipos";
 import type { Etapa } from "@/lib/estado/frases";
@@ -113,7 +112,7 @@ export default async function AnunciosPage({ searchParams }: {
   const hrefResumo = contexto
     ? hrefDoCliente("/inicio", contexto.businessId, retorno,
       { desde: intervalo.desde, ate: intervalo.ate, conta: contaSolicitada })
-    : `/inicio?desde=${intervalo.desde}&ate=${intervalo.ate}`;
+    : `/inicio?${new URLSearchParams({ desde: intervalo.desde, ate: intervalo.ate, ...(contaSolicitada ? { conta: contaSolicitada } : {}) })}`;
   const hrefCriativos = contexto ? hrefDoCliente("/criativos", contexto.businessId, retorno) : "/criativos";
 
   const { data: criativos, error: erroCriativos } = estado.negocioId
@@ -189,28 +188,8 @@ export default async function AnunciosPage({ searchParams }: {
        <div className="page-head">
         <h1>Anúncios</h1>
         <p>Resultados e criativos, anúncio por anúncio.</p>
-        {/* ============================================================
-            AFIRMAÇÃO LEGADA DE VEICULAÇÃO. ITENS B3 e C6.
-            Suprimida quando a consulta Meta respondeu: o inventário novo
-            apresenta status configurado/efetivo por objeto, sem afirmar “no ar”.
-
-            No nível do NEGÓCIO, porque é o nível em que o backend
-            responde: `veiculacao` só existe em
-            `GET /negocios/{id}/execucao`. A frase vem do banco de frases
-            de `lib/veiculacao/estado.ts` — esta tela não escreve texto de
-            veiculação e não compara o estado com literal nenhum.
-
-            `nao_sabemos` também tem frase, e ela aparece: sumir com a
-            linha quando a leitura falha faria a tela ficar calada
-            exatamente no caso em que ela devia admitir. É a mesma regra
-            do `estado: "indisponivel"` logo abaixo.
-            ============================================================ */}
-        {!inventarioMeta.ok && <p className="res-veiculacao">
-          {fraseDeVeiculacao(estado.veiculacao, "manchete")}{" "}
-          <span className="hint-inline">
-            {fraseDeVeiculacao(estado.veiculacao, "apoio")}
-          </span>
-        </p>}
+        {/* O inventário informa a consulta e o estado de cada objeto.
+            A rodada histórica não comprova ausência de gasto atual. */}
        </div>
        <a className="cta" href={hrefCriativos}>Ver criativos</a>
       </header>

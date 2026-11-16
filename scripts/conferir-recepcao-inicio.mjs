@@ -213,7 +213,7 @@ test('multiconta: outro negócio e falta de sessão não herdam conclusão nem r
   assert.equal(semSessao.chamadas.length, 0);
 });
 
-test('página consulta métricas só quando esperadas, com período e negócio da sessão', async () => {
+test('cliente direto consulta inventário mesmo antes do pipeline; cadastro sem conta mantém recepção', async () => {
   for (const desconhecido of [false, true]) {
     const chamadas = [];
     const agendas = [];
@@ -224,7 +224,7 @@ test('página consulta métricas só quando esperadas, com período e negócio d
       '@/lib/supabase/server': { createClient: async () => ({ auth: { getUser: async () => ({ data: { user: { id: 'dono-A' } } }) }, from: () => q }) },
       '@/components/ui/FaixaReconectar': { FaixaReconectar: () => null },
       '@/lib/agencia/habilitacao': { agenciaHabilitada: () => false },
-      '@/lib/backend/anuncios-do-negocio': { anunciosDoNegocioSelecionado: async () => { throw Error('Inventário de agência não esperado'); } },
+      '@/lib/backend/anuncios-do-negocio': { anunciosDoNegocioSelecionado: async args => { chamadas.push(args); return { ok: false, motivo: 'sem_conta', contas: [], contaSelecionada: null, mensagem: 'Sem conta no ensaio' }; } },
       '@/lib/estado/cliente': { estadoDoCliente: async () => estado },
       '@/lib/onboarding/pendencia-do-negocio': {
         lerPendenciaDoNegocio: async id => { assert.equal(id, 'negocio-A'); return { pendencia: null, reserva: null, falha: false, cadastroConcluido: true }; },
@@ -239,10 +239,10 @@ test('página consulta métricas só quando esperadas, com período e negócio d
     const tela = await page({ searchParams: Promise.resolve({ desde: '2026-01-01', ate: '2026-01-31', businessId: 'invasor' }) });
     assert.equal(tela.props.recepcaoOnboarding.falhaReuniao, false);
     assert.deepEqual(agendas, ['negocio-A']);
-    assert.equal(tela.props.acumuladoDoPeriodo, desconhecido ? null : undefined);
-    assert.equal(chamadas.length, desconhecido ? 2 : 0);
-    for (const c of chamadas) { assert.equal(c.businessId, 'negocio-A'); assert.equal(c.profileId, 'dono-A'); }
-    if (desconhecido) assert.ok(chamadas.some(c => c.desde === '2026-01-01' && c.ate === '2026-01-31'));
+    assert.equal(chamadas.length, 1);
+    assert.equal(chamadas[0].businessId, undefined);
+    assert.equal(chamadas[0].desde, '2026-01-01');assert.equal(chamadas[0].ate, '2026-01-31');
+    assert.equal(tela.props.leituraMeta?.motivo, desconhecido ? 'sem_conta' : undefined);
   }
 });
 

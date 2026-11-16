@@ -393,6 +393,8 @@ export default async function ExemploPage({
 
   const busca2 = await searchParams;
   const intervalo = intervaloDoInicio(busca2, diaEmSaoPaulo(agora));
+  const metaExemplo = ehDesenvolvimento && !busca2.estado ? await import("@/lib/dev/fixture-meta-periodo") : null;
+  const mensalDaPrevia = metaExemplo?.exemploMetaDoPeriodo({ desde: `${intervalo.hoje.slice(0, 8)}01`, ate: intervalo.hoje, hoje: intervalo.hoje });
   const multicontaDaPrevia = busca2.multiconta === "1" ? [
     { id: "00000000-0000-4000-8000-000000000001", name: "QA Empresa 1 — FICTÍCIA — Resposta A", logoUrl: null, cnpj: "00000000000191" },
     { id: "00000000-0000-4000-8000-000000000002", name: "QA Empresa 2 — FICTÍCIA — Resposta B", logoUrl: null, cnpj: "00000000000272" },
@@ -422,8 +424,10 @@ export default async function ExemploPage({
           aparecem: execucao existe (o pipeline disparou) e o anuncio
           NUNCA foi ao ar.
           ============================================================ */}
-      <p className="previa-local-nota">Prévia visual: os dados de exemplo são fixos. Na conta autenticada, as datas consultam o período escolhido.</p>
+      <p className="previa-local-nota">Prévia local · dados ilustrativos para revisar o layout.</p>
       <TelaDoInicio previa
+        leituraMeta={metaExemplo?.exemploMetaDoPeriodo(intervalo)}
+        escopoMeta={metaExemplo ? { businessId: "11111111-1111-4111-8111-111111111111", perfilId: "perfil-ficticio", ...intervalo } : undefined}
         estado={exemplo.exemploDoInicio(agora, estadoDoExemplo)}
         ultimaDecisao={null}
         diaDaPergunta={diaDeOntemEmSaoPaulo(agora)}
@@ -435,7 +439,7 @@ export default async function ExemploPage({
           href: "/onboarding/marca", rotulo: "Conferir visual da marca",
         } : null}
         falhaPendencia={busca2.pendencia === "falha"}
-        investidoNoMesCentavos={1025}
+        investidoNoMesCentavos={busca2.semInvestimento === "1" ? null : mensalDaPrevia?.ok ? mensalDaPrevia.dados.campanhas[0]!.metricas.gasto : 1025}
         faixa={busca2.pendencias === "1" ? <section className="pendencias-contextuais" aria-label="Pendências de exemplo">
           <p><strong>Um criativo precisa de ajuste · exemplo.</strong><a href="/exemplo/criativos?aba=revisao">Ver pedidos do gestor →</a></p>
         </section> : null}

@@ -5,7 +5,7 @@ type Totais = { gasto: number | null; impressoes: number | null; cliques: number
 const inteiro = (v: unknown): v is number | null => v === null || typeof v === "number" && Number.isSafeInteger(v) && v >= 0;
 export function diasDoPeriodo(desde: string, ate: string): string[] {
   const dias: string[] = [];
-  for (let t = Date.parse(desde + "T00:00:00Z"); t <= Date.parse(ate + "T00:00:00Z") && dias.length < 31; t += 86400000)
+  for (let t = Date.parse(desde + "T00:00:00Z"); t <= Date.parse(ate + "T00:00:00Z"); t += 86400000)
     dias.push(new Date(t).toISOString().slice(0, 10));
   return dias;
 }

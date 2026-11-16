@@ -429,6 +429,7 @@ export function TelaDoInicio({
   const cardDaPergunta =
     cabePerguntarSobreOntem && execucaoDoDia !== null && estado.negocioId ? (
       <PerguntaDoDia
+        previa={previa}
         businessId={estado.negocioId}
         idExecucao={execucaoDoDia.idExecucao}
         dia={diaDaPergunta}
@@ -445,11 +446,13 @@ export function TelaDoInicio({
   if (leituraMeta && escopoMeta && intervalo) return <ResumoMetaDoInicio
     key={`${escopoMeta.perfilId}:${escopoMeta.businessId}`} resultado={leituraMeta} escopo={escopoMeta} intervalo={intervalo}
     pendencia={pendenciaOnboarding} falhaPendencia={falhaPendencia} faixa={faixa}
-    detalheAgencia={detalheAgencia}
+    detalheAgencia={detalheAgencia} previa={previa}
     complemento={<>
       {jornadaConcluida && !temProximoAcionavel && !falhaPendencia && estado.negocioId && <ConclusaoDaJornada businessId={estado.negocioId} />}
-      {cardDaPergunta}
-      {!detalheAgencia && <Comando verba={estado.verbaMensal} investido={null} />}
+      <div className="inicio-acompanhamento">
+        {cardDaPergunta}
+        {!detalheAgencia && <Comando verba={estado.verbaMensal} investido={investidoNoMesCentavos === null || investidoNoMesCentavos === undefined ? null : investidoNoMesCentavos / 100} />}
+      </div>
       <Noturno decisao={ultimaDecisao} falha={falhaAtualizacoes} />
     </>}
   />;

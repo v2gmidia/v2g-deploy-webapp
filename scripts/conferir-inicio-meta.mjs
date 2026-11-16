@@ -113,10 +113,10 @@ test('conta implícita trocada ou lista atual indisponível não reutiliza leitu
     {contaSelecionada:'act_123',contas:[{id:'act_456'}]},{contaSelecionada:null,contas:[]}])
     assert.equal(leituraAnteriorPermitida({...falha,...patch},implicito,memoria),null);
 });
-test('31 dias aceitos, 32 recusados; atalhos antigos e repetição não consultam janela menor',()=>{
+test('intervalos amplos aceitos sem truncar; repetição continua recusada',()=>{
   assert.equal(erroDoIntervalo('2026-10-01','2026-10-31','2026-11-09'),null);
-  assert.match(erroDoIntervalo('2026-10-01','2026-11-01','2026-11-09'),/31 dias/);
-  assert.match(intervaloDoInicio({periodo:'3m'},'2026-11-09').erro,/não foi consultado/);
+  assert.equal(erroDoIntervalo('2026-01-01','2026-03-31','2026-11-09'),null);
+  assert.equal(intervaloDoInicio({periodo:'3m'},'2026-11-09').desde,'2026-08-09');
   assert.ok(intervaloDoInicio({desde:['2026-11-01','2026-11-02'],ate:'2026-11-03'},'2026-11-09').erro);
 });
 
@@ -134,8 +134,10 @@ test('HTML real separa cadastro de entrega histórica; sem preparação contradi
   const h=html();assert.match(h,/Houve entrega neste período/);assert.match(h,/Pendência do cadastro/);
   assert.doesNotMatch(h,/Sua campanha está sendo preparada|Seu negócio está em preparação/);
   assert.match(h,/Meta Marketing API/);assert.match(h,/America\/Sao_Paulo/);assert.match(h,/act_123/);
-  assert.doesNotMatch(h,/<path[^>]+d=/);assert.match(h,/Ver valores por dia/);assert.doesNotMatch(h,/<dt>Vendas/);assert.match(h,/<dt>Conversas por mensagem \(Meta\)/);
+  assert.match(h,/<path[^>]+class="linha"/);assert.doesNotMatch(h,/<rect/);assert.match(h,/Ver valores por dia/);assert.doesNotMatch(h,/<dt>Vendas/);assert.match(h,/<dt>Conversas por mensagem/);
   assert.match(h,/conta=act_123/);
+  assert.equal((h.match(/<dt>/g) ?? []).length, 3);
+  assert.doesNotMatch(h,/Cliques totais|Receita informada/);
 });
 test('HTML da série antiga mostra totais e gráfico indisponível, não vazio falso',()=>{
   const d=dados();delete d.campanhas[0].metricas.serieDiaria;
@@ -237,12 +239,12 @@ async function pagina(busca, sessao={data:{user:{id:'perfil-A'}},error:null}) {
   }}).load('app/(protected)/inicio/page.tsx');
   return {elemento:await mod.default({searchParams:Promise.resolve({...busca,cliente:escopo.businessId})}),chamadas};
 }
-test('página real recusa 32 dias/repetidos sem chamar fonte; 31 dias conserva recorte',async()=>{
-  for(const busca of [{desde:'2026-01-01',ate:'2026-02-01'},{desde:['2026-01-01','2026-01-02'],ate:'2026-01-03'},{periodo:'3m'}]){
+test('página real recusa datas inválidas/repetidas; intervalo amplo conserva recorte',async()=>{
+  for(const busca of [{desde:'2026-02-30',ate:'2026-03-01'},{desde:['2026-01-01','2026-01-02'],ate:'2026-01-03'}]){
     const r=await pagina(busca);assert.equal(r.chamadas.length,0);assert.equal(r.elemento.props.leituraMeta.motivo,'periodo');
   }
-  const r=await pagina({desde:'2026-01-01',ate:'2026-01-31',conta:'act_123',businessId:'outro'});
-  assert.equal(r.chamadas.length,1);assert.equal(r.chamadas[0].desde,'2026-01-01');assert.equal(r.chamadas[0].ate,'2026-01-31');
+  const r=await pagina({desde:'2026-01-01',ate:'2026-03-31',conta:'act_123',businessId:'outro'});
+  assert.equal(r.chamadas.length,1);assert.equal(r.chamadas[0].desde,'2026-01-01');assert.equal(r.chamadas[0].ate,'2026-03-31');
   assert.equal(r.chamadas[0].contaId,'act_123');assert.equal(r.elemento.props.escopoMeta.businessId,escopo.businessId);
 });
 test('página com erro Auth e objeto user nega antes da fonte',async()=>{

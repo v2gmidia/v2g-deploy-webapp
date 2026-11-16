@@ -12,6 +12,9 @@ import * as periodo from '../lib/inicio/periodo.ts';
 import * as retorno from '../lib/anuncios/retorno-login.ts';
 import * as conversas from '../lib/anuncios/conversas-meta.ts';
 import * as contextoAgencia from '../lib/agencia/contexto.ts';
+import { ambienteTs } from './test-utils/ts-isolado.mjs';
+const amplo = ambienteTs().load('lib/anuncios/intervalo-amplo.ts');
+const dia = ambienteTs().load('lib/dia-seguinte/dia.ts');
 
 const A='11111111-1111-4111-8111-111111111111', B='22222222-2222-4222-8222-222222222222';
 const janela={desde:'2026-10-28',ate:'2026-10-28'};
@@ -43,7 +46,7 @@ function bancada(cfg={}) {
       requests.push({url:new URL(url),opts});
       if(cfg.networkError)throw Error('REMOTE_PRIVATE_FAILURE');
       return new Response(cfg.invalidJson?'<html>REMOTE_PRIVATE</html>':JSON.stringify(cfg.http&&cfg.http!==200?
-        {detail:{mensagem:'REMOTE_PRIVATE_TOKEN'}}:(cfg.raw??corpo(business,idConta))),{status:cfg.http??200});
+        {detail:{mensagem:'REMOTE_PRIVATE_TOKEN'}}:(typeof cfg.raw==='function'?cfg.raw(new URL(url),requests.length):cfg.raw??corpo(business,idConta))),{status:cfg.http??200});
     }});
   function query(tabela) {
     const q={select(cols){consultas.push(['select',tabela,cols]);return q;},
@@ -59,6 +62,7 @@ function bancada(cfg={}) {
     getUser:async(token)=>{assert.equal(token,'synthetic.session.signature');return {data:{user:cfg.invalidUser?null:cfg.user??{id:'dono',app_metadata:{}}},error:null};}
   },from:query};
   const modulo=carregar('lib/backend/anuncios-do-negocio.ts',{'server-only':{},
+    '@/lib/inicio/periodo':periodo,'@/lib/dia-seguinte/dia':dia,'@/lib/anuncios/intervalo-amplo':amplo,
     '@/lib/supabase/server':{createClient:async()=>cliente},
     '@/lib/supabase/admin':{createAdminClient:()=>{consultas.push(['admin']);return {from:query};}},
     '@/lib/multiconta/ativo':{negocioAtivoDaSessao:async()=>cfg.ativo??{status:'selecionado',negocio:{id:business}}},
@@ -76,6 +80,16 @@ test('cliente comum: consulta coleção com JWT server-only, sem token de máqui
   assert.ok(!JSON.stringify(r).includes('synthetic.session.signature'));
   assert.ok(b.consultas.some(c=>c[0]==='eq'&&c[1]==='businesses'&&c[2]==='profile_id'&&c[3]==='dono'));
   assert.ok(!b.consultas.some(c=>c[1]==='execucoes'||c[1]==='campaigns'));
+});
+
+test('intervalo amplo consulta três lotes autorizados e só entrega a composição completa',async()=>{
+  const b=bancada({raw:url=>({...corpo(),periodo:{desde:url.searchParams.get('desde'),ate:url.searchParams.get('ate')}})});
+  const r=await b.ler({desde:'2026-01-01',ate:'2026-03-31'});
+  assert.equal(r.ok,true);assert.equal(b.requests.length,3);assert.equal(r.dados.periodo.ate,'2026-03-31');
+  assert.ok(b.requests.every(({url})=>url.searchParams.get('conta_id')==='act_9001'));
+  const erro=bancada({raw:(url,n)=>({...corpo(n===2?B:A),periodo:{desde:url.searchParams.get('desde'),ate:url.searchParams.get('ate')}})});
+  const falha=await erro.ler({desde:'2026-01-01',ate:'2026-03-31'});
+  assert.equal(falha.ok,false);assert.equal(falha.motivo,'resposta');assert.equal(erro.requests.length,2);assert.equal(falha.dados,undefined);
 });
 test('Bearer humano não carrega token de máquina mesmo quando a variável existe',async()=>{
   const b=bancada({env:{V2G_BACKEND_TOKEN:'synthetic-machine-token'}});await b.ler(janela);
@@ -113,9 +127,9 @@ test('escolha autorizada consulta exatamente a segunda conta; nenhuma preferênc
   const r=await b.ler({...janela,contaId:'act_9003'});assert.equal(r.ok,true);
   assert.equal(b.requests[0].url.searchParams.get('conta_id'),'act_9003');assert.equal(r.contaSelecionada,'act_9003');
 });
-test('conta adulterada/inválida e janela longa não fazem GET',async()=>{
+test('conta adulterada/inválida e datas impossíveis não fazem GET',async()=>{
   for(const args of [{...janela,contaId:'act_7777'},{...janela,contaId:'https://bad.test'},
-    {desde:'2026-09-01',ate:'2026-10-28'}]){
+    {desde:'2026-02-30',ate:'2026-03-01'}]){
     const b=bancada();assert.equal((await b.ler(args)).ok,false);assert.equal(b.requests.length,0);
   }
 });

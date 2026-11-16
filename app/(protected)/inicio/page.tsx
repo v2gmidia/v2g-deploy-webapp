@@ -1,4 +1,4 @@
-import { consolidadoDoNegocio } from "@/lib/backend/dia-seguinte";
+import { resumirMeta } from "@/lib/inicio/resumo-meta";
 import { resultadosSaoEsperados } from "@/lib/inicio/expectativa-de-resultados";
 import { PendenciasNoInicio } from "@/components/ui/PendenciasDoNegocio";
 import { redirect } from "next/navigation";
@@ -167,29 +167,27 @@ export default async function InicioPage({
   // O limite mensal sempre considera o mês atual, independentemente do calendário.
   const esperaResultados = !contextoAgencia && resultadosSaoEsperados(estado);
   let investidoNoMesCentavos: number | null = null;
-  let acumuladoDoPeriodo: EstadoDoCliente["diaSeguinte"]["acumulado"] | undefined = fixture || !esperaResultados ? undefined : null;
-  if (!fixture && !contextoAgencia && esperaResultados && estado.negocioId && user) {
-    const args = { businessId: estado.negocioId, profileId: user.id };
-    const desdeMes = `${hoje.slice(0, 8)}01`;
-    const mensal = consolidadoDoNegocio({ ...args, desde: desdeMes, ate: hoje });
-    const consultaPeriodo = intervalo.desde === desdeMes && intervalo.ate === hoje
-      ? mensal
-      : consolidadoDoNegocio({ ...args, desde: intervalo.desde, ate: intervalo.ate });
-    const [acumuladoDoMes, selecionado] = await Promise.all([mensal, consultaPeriodo]);
-    investidoNoMesCentavos = acumuladoDoMes.ok && acumuladoDoMes.dados.moeda === "BRL"
-      ? acumuladoDoMes.dados.investiuCentavos
-      : null;
-    acumuladoDoPeriodo = selecionado.ok ? selecionado.dados : null;
-  }
 
   // Mesmo leitor autorizado de Anúncios: não depende de execução ou cadastro concluído.
   // Os parâmetros podem escolher somente uma conta que a sessão já alcança.
   const contaSolicitada = typeof busca.conta === "string" ? busca.conta : busca.conta ? "invalida" : undefined;
-  const leituraMeta = !fixture && contextoAgencia ? intervalo.erro ? {
+  let leituraMeta = !fixture ? intervalo.erro ? {
     ok: false as const, motivo: "periodo" as const, mensagem: intervalo.erro, contas: [], contaSelecionada: null,
   } : await anunciosDoNegocioSelecionado({
     desde: intervalo.desde, ate: intervalo.ate, contaId: contaSolicitada,
   }) : undefined;
+  // Cadastro inicial sem conta continua com sua orientação de entrada.
+  if (!contextoAgencia && !esperaResultados && leituraMeta && !leituraMeta.ok && leituraMeta.motivo === "sem_conta") leituraMeta = undefined;
+  // O teto pertence ao negócio: uma conta entre várias não representa seu gasto total.
+  if (!contextoAgencia && leituraMeta?.ok && leituraMeta.contas.length === 1) {
+    const desdeMes = `${hoje.slice(0, 8)}01`;
+    const mensal = intervalo.desde === desdeMes && intervalo.ate === hoje ? leituraMeta
+      : await anunciosDoNegocioSelecionado({ desde: desdeMes, ate: hoje, contaId: leituraMeta.dados.contaId });
+    if (mensal.ok && mensal.dados.moeda === "BRL") {
+      const resumo = resumirMeta(mensal.dados);
+      if (!resumo.parcial && resumo.campanhasSemDados === 0) investidoNoMesCentavos = resumo.gasto;
+    }
+  }
 
   // A escolha do negócio sempre permanece no Início. Esta leitura resolve
   // qual pendência do onboarding deve aparecer aqui, sem transformar uma
@@ -251,7 +249,6 @@ export default async function InicioPage({
       recepcaoOnboarding={leituraDaPendencia.cadastroConcluido && estado.negocioId ? { businessId: estado.negocioId, reserva, falhaReuniao: leituraDaPendencia.falha } : null}
       falhaPendencia={leituraDaPendencia.falha}
       intervalo={intervalo}
-      acumuladoDoPeriodo={acumuladoDoPeriodo}
       investidoNoMesCentavos={investidoNoMesCentavos}
       faixa={<><FaixaReconectar />{!fixture && estado.negocioId && <PendenciasNoInicio businessId={estado.negocioId} />}</>}
       leituraMeta={leituraMeta}

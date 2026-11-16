@@ -3,8 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { negocioAtivoDaSessao } from "@/lib/multiconta/ativo";
 import { obterAnunciosComSessao } from "./cliente";
+import { erroDoIntervalo } from "@/lib/inicio/periodo";
+import { diaEmSaoPaulo } from "@/lib/dia-seguinte/dia";
+import { dividirPeriodo, reunirInventarios } from "@/lib/anuncios/intervalo-amplo";
 import { lerInventarioMeta, periodoMetaValido, uuidMeta,
-  type ContaMetaParaConsulta, type ResultadoInventarioMeta } from "@/lib/anuncios/contrato-meta";
+  type ContaMetaParaConsulta, type InventarioMeta, type ResultadoInventarioMeta } from "@/lib/anuncios/contrato-meta";
 
 type Motivo = Extract<ResultadoInventarioMeta, { ok: false }>["motivo"];
 const MENSAGENS: Record<Motivo, string> = {
@@ -13,7 +16,7 @@ const MENSAGENS: Record<Motivo, string> = {
   escolher_conta: "Escolha qual conta deste negócio você quer consultar.",
   indisponivel: "Não conseguimos consultar os anúncios agora. Tente novamente mais tarde.",
   escopo: "Não foi possível confirmar o acesso ou os vínculos desta conta. Fale com a equipe V2G.",
-  periodo: "Escolha um período de até 31 dias para consultar os anúncios da Meta.",
+  periodo: "Não foi possível consultar esse período. Confira as datas e tente novamente.",
   resposta: "Os dados recebidos não puderam ser conferidos. Nenhum número desta consulta foi exibido.",
   fonte: "O acesso de leitura da V2G à Meta precisa de conferência. Fale com a equipe V2G.",
 };
@@ -38,7 +41,7 @@ async function consultarAnuncios(args: { desde: string; ate: string; contaId?: s
   let contaSelecionada: string | null = null;
   const falhar = (motivo: Motivo): ResultadoInventarioMeta => ({ ok: false, motivo,
     mensagem: MENSAGENS[motivo], contas, contaSelecionada });
-  if (!periodoMetaValido(args)) return falhar("periodo");
+  if (negocioDoGestor !== null ? !periodoMetaValido(args) : erroDoIntervalo(args.desde, args.ate, diaEmSaoPaulo(new Date()))) return falhar("periodo");
   if (args.contaId !== undefined && !/^act_[0-9]{1,40}$/.test(args.contaId)) return falhar("escopo");
   if (negocioDoGestor !== null && (!uuidMeta(negocioDoGestor)
     || process.env.V2G_MANAGER_WORK_ENABLED !== "true" || process.env.V2G_MANAGER_METRICS_READ_ENABLED !== "true"))
@@ -89,12 +92,22 @@ async function consultarAnuncios(args: { desde: string; ate: string; contaId?: s
     if (args.contaId && !contas.some(c => c.id === args.contaId)) return falhar("escopo");
     if (!args.contaId && contas.length > 1) return falhar("escolher_conta");
     contaSelecionada = args.contaId ?? contas[0]!.id;
-    const resposta = await obterAnunciosComSessao({ businessId, tokenDaSessao: token,
-      desde: args.desde, ate: args.ate, contaId: contaSelecionada });
-    if (!resposta.ok) return falhar(resposta.http === 401 ? "acesso" : resposta.http === 424 ? "fonte"
-      : resposta.http === 404 || resposta.http === 409 || resposta.http === 403 ? "escopo"
-      : resposta.http === 422 ? "periodo" : "indisponivel");
-    const dados = lerInventarioMeta(resposta.dados, { businessId, contaId: contaSelecionada, periodo: args });
+    const partes: InventarioMeta[] = [];
+    const inicio = Date.now();
+    for (const periodo of dividirPeriodo(args)) {
+      // Consultas em série limitam a pressão na fonte. Falha ou demora interrompe
+      // o lote: nunca apresentar um recorte menor como se fosse o período todo.
+      if (Date.now() - inicio > 40000) return falhar("indisponivel");
+      const resposta = await obterAnunciosComSessao({ businessId, tokenDaSessao: token,
+        ...periodo, contaId: contaSelecionada });
+      if (!resposta.ok) return falhar(resposta.http === 401 ? "acesso" : resposta.http === 424 ? "fonte"
+        : resposta.http === 404 || resposta.http === 409 || resposta.http === 403 ? "escopo"
+        : resposta.http === 422 ? "periodo" : "indisponivel");
+      const parte = lerInventarioMeta(resposta.dados, { businessId, contaId: contaSelecionada, periodo });
+      if (!parte) return falhar("resposta");
+      partes.push(parte);
+    }
+    const dados = reunirInventarios(partes, { desde: args.desde, ate: args.ate });
     return dados ? { ok: true, dados, contas, contaSelecionada } : falhar("resposta");
   } catch { return falhar("indisponivel"); }
 }

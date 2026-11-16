@@ -220,7 +220,7 @@ test('página real da carteira não chama Meta; detalhe estranho é recusado ant
   const trocado=await paginaDeInicio({cliente:A},{alvo:B});assert.equal(trocado.fonte,0);
   const correto=await paginaDeInicio({cliente:A});assert.equal(correto.fonte,1);assert.equal(correto.elemento.props.detalheAgencia.contexto.businessId,A);
 });
-test('portão desligado conserva o Início legado sem consultar a nova fonte de agência',async()=>{
-  const r=await paginaDeInicio({cliente:B},{qa:false});assert.equal(r.fonte,0);assert.equal(r.elemento.props.detalheAgencia,undefined);
-  assert.equal(r.elemento.props.leituraMeta,undefined);
+test('portão de agência desligado mantém contexto direto e consulta a fonte comum de anúncios',async()=>{
+  const r=await paginaDeInicio({cliente:B},{qa:false});assert.equal(r.fonte,1);assert.equal(r.elemento.props.detalheAgencia,undefined);
+  assert.equal(r.elemento.props.leituraMeta.motivo,'indisponivel');
 });

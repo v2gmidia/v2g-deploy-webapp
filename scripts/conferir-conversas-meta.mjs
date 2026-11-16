@@ -71,7 +71,7 @@ test('Início real apresenta 105 com definição correta, período, gráfico e n
  const dados=lerInventarioMeta(fixture(),esperado);
  const html=renderToStaticMarkup(React.createElement(InicioDoCliente,{detalhe:{contexto:{businessId:negocio,agencia:'Agência de teste',anunciante:'Reconstituição Dúú',verbaMensal:3000,praca:'Todo o estado do Rio de Janeiro'},retorno:{},resumo:{temPendencia:false}},
   dados,resumo:resumirMeta(dados),resultado:{ok:true,dados,contas:[]},intervalo:periodo,pendencia:null,falhaPendencia:false,faixa:null,complemento:null}));
- assert.match(html,/Conversas por mensagem \(Meta\)/);assert.match(html,/>105<\/dd>/);assert.match(html,/9 sem registros neste período/);
+ assert.match(html,/Conversas por mensagem/);assert.match(html,/>105<\/dd>/);assert.match(html,/9 sem registros neste período/);
  assert.doesNotMatch(html,/Resultados parciais|Conversas no WhatsApp/);assert.match(html,/01\/11\/2026 – 07\/11\/2026/);
  assert.match(html,/Investimento ao longo do tempo/);assert.match(html,/mais de um canal/);
 });

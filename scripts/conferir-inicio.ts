@@ -283,8 +283,8 @@ secao("5.2 intervalo livre — validação, histórico e separação da operaç�
 {
   const hoje = "2026-10-18";
   const trimestre = intervaloDoInicio({ desde: "2026-01-01", ate: "2026-03-31" }, hoje);
-  ok(Boolean(trimestre.erro?.includes("31 dias")),
-    "intervalo superior ao contrato Meta informa o limite sem prometer consulta");
+  ok(!trimestre.erro && trimestre.desde === "2026-01-01" && trimestre.ate === "2026-03-31",
+    "trimestre preserva o intervalo inteiro; transporte divide em janelas validadas");
   const padrao = intervaloDoInicio({}, hoje);
   ok(padrao.desde === "2026-10-01" && padrao.ate === hoje, "sem seleção, mostra o mês atual");
   ok(erroDoIntervalo("2024-02-29", "2024-02-29", hoje) === null, "um único dia bissexto é válido");
@@ -303,7 +303,7 @@ secao("5.2 intervalo livre — validação, histórico e separação da operaç�
   const pagina = fonte("app/(protected)/inicio/page.tsx");
   ok(pagina.includes("await estadoDoCliente(agora)") && pagina.includes("desde: intervalo.desde, ate: intervalo.ate"),
     "histórico consulta as datas escolhidas sem mudar a leitura do estado atual");
-  ok(pagina.includes('desde: desdeMes, ate: hoje') && pagina.includes('acumuladoDoPeriodo={acumuladoDoPeriodo}'),
+  ok(pagina.includes('desde: desdeMes, ate: hoje') && pagina.includes('leituraMeta={leituraMeta}'),
     "limite do mês e resultado histórico são fornecidos separadamente");
   const tela = fonte("app/(protected)/inicio/TelaDoInicio.tsx");
   ok(tela.includes("estado.diaSeguinte.acumulado?.dias.find") && tela.includes("acumuladoDoPeriodo === undefined"),
