@@ -1,0 +1,533 @@
+{
+  "schemaVersion": "v2g.activation.review.v1",
+  "date": "2026-11-17",
+  "executionAuthorized": false,
+  "status": "prepared_for_review_not_executable_until_gates",
+  "scope": {
+    "contractor": "Nota 360",
+    "contractorType": "agency",
+    "advertiser": "Brotherhood Barbershop",
+    "unitCount": 1,
+    "amountCents": 50000,
+    "billingPeriod": "monthly",
+    "paymentMethod": "asaas_card",
+    "buyerEmail": null,
+    "contractorDocument": null,
+    "advertiserBusinessId": null,
+    "adAccountId": null,
+    "firstDueDate": null
+  },
+  "publicPurchase": {
+    "lpEntry": "0",
+    "lpBuyCTA": "0",
+    "firstPath": "https://app.v2gmidia.com.br/contratar",
+    "originWithoutVerifiedLead": "compra_direta",
+    "exclusiveBuyerGatePresent": false
+  },
+  "webappChanges": [
+    {
+      "key": "V2G_COMMERCIAL_PRODUCTION_ENTRY_V1_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "entry",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_COMMERCIAL_BUYER_PREPARE_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_COMMERCIAL_INTERNAL_NOTICE_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_COMMERCIAL_FINANCIAL_V1_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_PRODUCTION_URL_CONFIRMED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_COMMERCIAL_EMAIL_DISPATCH_V1_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_NOMINAL_COVERAGE_V1_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_COMMERCIAL_RECURRING_V1_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "processing",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_COMMERCIAL_CHECKOUT_V1_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "checkout_last",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "checkout_last",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_CHECKOUT_API_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "checkout_last",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_CHECKOUT_SECURITY_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "checkout_last",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "checkout_last",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_CHECKOUT_3DS_ENABLED",
+      "from": "false",
+      "to": "true",
+      "phase": "checkout_last",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    },
+    {
+      "key": "V2G_PRODUCTION_3DS_CONFIRMED",
+      "from": "false",
+      "to": "true",
+      "phase": "checkout_last",
+      "environment": "production",
+      "project": "v2g-deploy-webapp"
+    }
+  ],
+  "preserveOff": [
+    "V2G_CHECKOUT_ENABLED",
+    "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+    "V2G_ASSISTED_ASAAS_ENABLED",
+    "V2G_PAYMENT_EMAIL_ENABLED"
+  ],
+  "asaas": {
+    "webhookUrl": "https://app.v2gmidia.com.br/api/webhooks/asaas-production-payment",
+    "current": {
+      "enabled": false,
+      "queueActive": false
+    },
+    "proposed": {
+      "enabled": true,
+      "queueActive": true
+    },
+    "events": "Preservar os 17 eventos de pagamento já conferidos; sem eventos SUBSCRIPTION_* adicionais.",
+    "withdrawals": "remain_disabled",
+    "runtimeEffects": [
+      "Criar cobrança somente após confirmação real do comprador no checkout",
+      "Após pagamento mensal canônico e token elegível, criar assinatura com primeiro vencimento no mês seguinte"
+    ]
+  },
+  "mail": {
+    "from": "pagamentos@send.v2gmidia.com.br",
+    "buyer": "e-mail confirmado na compra, ainda não definido",
+    "internal": "victor.cabral@v2gmidia.com.br",
+    "format": "text_with_official_link",
+    "deliveryProof": "inbox_receipt_not_provider_acceptance"
+  },
+  "gates": [
+    {
+      "id": "G1",
+      "state": "pending_human",
+      "need": "Identificar titular/representante e e-mail da Nota; documento e dados privados digitados no aplicativo."
+    },
+    {
+      "id": "G2",
+      "state": "pending_human",
+      "need": "Confirmar mensal no cartão, início/vencimento e ausência de cobrança/pagamento anterior da Brotherhood no mesmo período."
+    },
+    {
+      "id": "G3",
+      "state": "pending_human",
+      "need": "Condições e versão contratual utilizável, procedimento fiscal e responsável financeiro."
+    },
+    {
+      "id": "G4",
+      "state": "pending_technical_review",
+      "need": "Conferir negócio/conta exatos e evitar duplicar cadastro existente; nova leitura das filas antes de habilitar processamento."
+    },
+    {
+      "id": "G5",
+      "state": "pending_scope_decision",
+      "need": "Escolher contratação acompanhada com checkout global habilitado ou implementar antes uma restrição efetiva do piloto no servidor. Não afirmar exclusividade com botão oculto."
+    },
+    {
+      "id": "G6",
+      "state": "not_authorized",
+      "need": "Autorização separada para controles, webhook/fila, publicação de configuração e efeitos reais de cobrança/assinatura/e-mail após ação legítima do comprador."
+    }
+  ],
+  "evidence": {
+    "web": {
+      "id": "dpl_GXAYGCNRdAmcptRNz7m4qCydeAzw",
+      "url": "v2g-deploy-webapp-17351wpe6-v2-g.vercel.app",
+      "readyState": "READY",
+      "target": "production",
+      "aliases": [
+        "app.v2gmidia.com.br",
+        "v2g-deploy-webapp.vercel.app",
+        "v2g-deploy-webapp-v2-g.vercel.app"
+      ],
+      "keys": [
+        "deployment"
+      ]
+    },
+    "lp": {
+      "id": "dpl_35LuEFqrqJ29rMWxxkvabfR6x5XD",
+      "url": "v2-g-oemmgifsw-v2-g.vercel.app",
+      "readyState": "READY",
+      "target": "production",
+      "aliases": [
+        "v2-g-lp.vercel.app",
+        "www.v2gmidia.com.br",
+        "v2gmidia.com.br",
+        "v2-g-lp-v2-g.vercel.app"
+      ],
+      "keys": [
+        "deployment"
+      ]
+    },
+    "observedWeb": {
+      "envs": [
+        {
+          "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+          "type": "sensitive",
+          "target": [
+            "production"
+          ]
+        },
+        {
+          "key": "V2G_COMMERCIAL_PRODUCTION_ENTRY_V1_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_COMMERCIAL_FINANCIAL_V1_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_COMMERCIAL_CHECKOUT_V1_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_COMMERCIAL_RECURRING_V1_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_COMMERCIAL_EMAIL_DISPATCH_V1_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_NOMINAL_COVERAGE_V1_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_COMMERCIAL_BUYER_PREPARE_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_COMMERCIAL_INTERNAL_NOTICE_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_COMMERCIAL_INTERNAL_NOTICE_TO",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "victor.cabral@v2gmidia.com.br"
+        },
+        {
+          "key": "V2G_COMMERCIAL_LP_ORIGIN",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "https://www.v2gmidia.com.br"
+        },
+        {
+          "key": "V2G_CHECKOUT_SECURITY_HASH_SECRET",
+          "type": "sensitive",
+          "target": [
+            "production"
+          ]
+        },
+        {
+          "key": "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+          "type": "sensitive",
+          "target": [
+            "production"
+          ]
+        },
+        {
+          "key": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_PRODUCTION_URL_CONFIRMED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_PRODUCTION_3DS_CONFIRMED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_CHECKOUT_API_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_CHECKOUT_SECURITY_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_CHECKOUT_3DS_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_CHECKOUT_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_ASSISTED_ASAAS_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "V2G_PAYMENT_EMAIL_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "false"
+        },
+        {
+          "key": "ASAAS_ENVIRONMENT",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "production"
+        },
+        {
+          "key": "V2G_PRODUCTION_CHECKOUT_URL",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "https://app.v2gmidia.com.br/contratar"
+        },
+        {
+          "key": "V2G_PRODUCTION_PAYMENT_EMAIL_FROM",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "pagamentos@send.v2gmidia.com.br"
+        },
+        {
+          "key": "NEXT_PUBLIC_SITE_URL",
+          "type": "encrypted",
+          "target": [
+            "production"
+          ]
+        }
+      ]
+    },
+    "observedLp": {
+      "envs": [
+        {
+          "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+          "type": "sensitive",
+          "target": [
+            "production"
+          ]
+        },
+        {
+          "key": "V2G_COMMERCIAL_PRODUCTION_ENTRY_V1_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "0"
+        },
+        {
+          "key": "V2G_COMMERCIAL_PUBLIC_PURCHASE_ENABLED",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "0"
+        },
+        {
+          "key": "V2G_COMMERCIAL_WEBAPP_ENTRY_URL",
+          "type": "plain",
+          "target": [
+            "production"
+          ],
+          "value": "https://app.v2gmidia.com.br/api/comercial/entrada"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,38 @@
+[
+  {
+    "url": "https://app.v2gmidia.com.br/contratar",
+    "status": 200,
+    "location": null,
+    "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+    "bytes": 10687,
+    "officialLogin": false,
+    "sha256": "b6b8465b446365941ac2b29e49ad956a3a62f5ed8ccc12303c8e78fc0cf3c3c5"
+  },
+  {
+    "url": "https://app.v2gmidia.com.br/contratar/finalizar",
+    "status": 200,
+    "location": null,
+    "cache": "private, no-cache, no-store, max-age=0, must-revalidate",
+    "bytes": 11189,
+    "officialLogin": false,
+    "sha256": "0f66fb691762de4bc0e27ef63926224751bbbc10ae65f2611d128c0cf0b5e5a6"
+  },
+  {
+    "url": "https://www.v2gmidia.com.br/api/comercial-config",
+    "status": 404,
+    "location": null,
+    "cache": "no-store",
+    "bytes": 0,
+    "officialLogin": false,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "url": "https://www.v2gmidia.com.br/",
+    "status": 200,
+    "location": null,
+    "cache": "public, max-age=0, must-revalidate",
+    "bytes": 28937,
+    "officialLogin": true,
+    "sha256": "401913daf4d5a0ad5b9d8219b39ade9cbd40e78953dc018d73bd16135652767e"
+  }
+]

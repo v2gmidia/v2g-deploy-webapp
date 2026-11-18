@@ -1,0 +1,22 @@
+[
+  {
+    "path": "docs/qa/ativacao-nota-brotherhood-17-11/README.md",
+    "sha256": "45CD3ACD5CDF38FDEA2F7F5C541F43A25892F43E7DBA8EDF40912EA3A997C1AE"
+  },
+  {
+    "path": "docs/qa/ativacao-nota-brotherhood-17-11/matriz.json",
+    "sha256": "D2B7051E66AC9204B2DC261AF1AC83D7AEE7856BE46ADE1393D5AB546F4AF7BF"
+  },
+  {
+    "path": "docs/qa/ativacao-nota-brotherhood-17-11/verificar-matriz.mjs",
+    "sha256": "C80E5D3DB639E0600FED280DF0F643E7E7CA3787EDC1CD89FEF31A28F1DDC92B"
+  },
+  {
+    "path": "docs/qa/ativacao-nota-brotherhood-17-11/verificacao-local.json",
+    "sha256": "86B7384B05D5CBB26C2C5943AF39E4D08A21630F856107E517E641261DAE7B2D"
+  },
+  {
+    "path": "docs/qa/ativacao-nota-brotherhood-17-11/planilha-verificada.json",
+    "sha256": "E69BA7582CA58460D1D4132A400A89C32D1B68983D9B12640F90F39D8B78A654"
+  }
+]

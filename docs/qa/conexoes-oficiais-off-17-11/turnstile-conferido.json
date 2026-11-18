@@ -1,0 +1,9 @@
+{
+  "name": "V2G Checkout Produção",
+  "hostnames": [
+    "app.v2gmidia.com.br"
+  ],
+  "mode": "Managed",
+  "preclearance": false,
+  "keysNotRead": true
+}

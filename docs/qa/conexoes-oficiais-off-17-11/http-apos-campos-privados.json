@@ -1,0 +1,27 @@
+[
+  {
+    "name": "webhook",
+    "status": 503,
+    "location": null,
+    "body": "{\"erro\":\"indisponivel\"}"
+  },
+  {
+    "name": "lp-config",
+    "status": 404,
+    "location": null
+  },
+  {
+    "name": "checkout",
+    "status": 200,
+    "location": null,
+    "visible404": true,
+    "paymentFields": false
+  },
+  {
+    "name": "lp-home",
+    "status": 200,
+    "location": null,
+    "officialLogin": true,
+    "sha256": "401913daf4d5a0ad5b9d8219b39ade9cbd40e78953dc018d73bd16135652767e"
+  }
+]

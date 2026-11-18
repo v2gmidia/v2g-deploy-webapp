@@ -1,0 +1,15 @@
+{
+  "baseCommit": "d21dffdc4e831b83e70ff759b8bbf61a837c52bd",
+  "changed": [
+    "api/_alerta-lead.js",
+    "api/_lead.js",
+    "api/pre-cadastro.js",
+    "assets/comparacao-planos.v1.css",
+    "assets/contraste.v1.css",
+    "assets/jornada.v7.js",
+    "assets/lp.v6.js",
+    "assets/preview-copy.js",
+    "index.html"
+  ],
+  "commercialOverlayMatchesLatestGit": true
+}

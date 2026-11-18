@@ -1,0 +1,52 @@
+{
+  "at": "2026-11-17T12:44:00.444Z",
+  "passed": true,
+  "project": "ushccxpoxjikzqnwhgfd",
+  "proofs": [
+    "19 tables restored byte-equivalent in PostgreSQL JSON representation",
+    "Original signup function restored from captured definition",
+    "Exact reviewed official package preserves all restored scope rows",
+    "Conservative return preserves every restored row and signup protection"
+  ],
+  "counts": {
+    "leads_lp": 2,
+    "profiles": 10,
+    "businesses": 9,
+    "ad_accounts": 5,
+    "manager_tasks": 0,
+    "manager_accounts": 1,
+    "commercial_events": 0,
+    "commercial_orders": 0,
+    "agency_advertisers": 1,
+    "business_memberships": 0,
+    "checkout_3ds_context": 0,
+    "webapp_legacy_access": 10,
+    "commercial_order_units": 0,
+    "commercial_payment_events": 0,
+    "checkout_security_attempts": 0,
+    "commercial_manual_evidence": 1,
+    "historical_contract_access": 1,
+    "commercial_payment_email_outbox": 0,
+    "historical_contract_access_events": 2
+  },
+  "limits": [
+    "Local PGlite recovery of 19 affected data tables with captured columns, checks, scoped FKs, indexes, policies, ACL and functions",
+    "Auth users and Meta connection secrets not backed up; external key dependencies are explicit local stubs",
+    "Other public table structures captured, but unrelated table data not restored",
+    "No remote restoration, payment, grant or deployment performed by this script"
+  ],
+  "hashes": [
+    {
+      "file": "schema-before.json",
+      "sha256": "aaf96dcf9665aa9cc487dc58bc0bdd2b1d88886e7cc766986c4aac2b0646b63d"
+    },
+    {
+      "file": "data-before-rows.json",
+      "sha256": "12343b1073595ccbc8c12c1ac829f945eeb45b61b120c6eaef705ee2ef678323"
+    },
+    {
+      "file": "fingerprints-before.json",
+      "sha256": "40a2f42bf1fb4875ec9ba6ef5cd1120791eebc856b31b5c1b20a8f8b0c803c36"
+    }
+  ]
+}

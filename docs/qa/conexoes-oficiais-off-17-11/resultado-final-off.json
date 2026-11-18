@@ -1,0 +1,320 @@
+{
+  "at": "2026-11-17T17:16:54.157Z",
+  "status": "configured-closed",
+  "webDeployment": {
+    "id": "dpl_GXAYGCNRdAmcptRNz7m4qCydeAzw",
+    "name": "v2g-deploy-webapp",
+    "url": "v2g-deploy-webapp-17351wpe6-v2-g.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1794935505289,
+    "creator": {
+      "uid": "hhghopPdjAPmzOlk9As6u2ps",
+      "username": "v2gmidia"
+    },
+    "project": {
+      "id": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+      "name": "v2g-deploy-webapp",
+      "framework": "nextjs"
+    },
+    "meta": {},
+    "alias": [
+      "app.v2gmidia.com.br",
+      "v2g-deploy-webapp.vercel.app",
+      "v2g-deploy-webapp-v2-g.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "gru1"
+    ],
+    "buildingAt": 1794935506194,
+    "ready": 1794935576187,
+    "readyState": "READY",
+    "source": "redeploy",
+    "aliasError": null
+  },
+  "lpDeployment": {
+    "id": "dpl_35LuEFqrqJ29rMWxxkvabfR6x5XD",
+    "name": "v2-g-lp",
+    "url": "v2-g-oemmgifsw-v2-g.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1794935388402,
+    "creator": {
+      "uid": "hhghopPdjAPmzOlk9As6u2ps",
+      "username": "v2gmidia"
+    },
+    "project": {
+      "id": "prj_FHsEozmi5MzDZfPwT6bggpRYprLO",
+      "name": "v2-g-lp",
+      "framework": null
+    },
+    "meta": {},
+    "alias": [
+      "v2-g-lp.vercel.app",
+      "www.v2gmidia.com.br",
+      "v2gmidia.com.br",
+      "v2-g-lp-v2-g.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1794935389375,
+    "ready": 1794935397827,
+    "readyState": "READY",
+    "source": "redeploy",
+    "aliasError": null
+  },
+  "privateFields": {
+    "at": "2026-11-17T17:13:14.344Z",
+    "lpDatabaseKey": {
+      "confirmedByVictor": true,
+      "metadataVerified": true,
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "valueNotRead": true
+    },
+    "lpHmac": [
+      {
+        "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1794935366102
+      }
+    ],
+    "webHmac": [
+      {
+        "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ],
+        "updatedAt": 1794935500675
+      }
+    ],
+    "sameValueConfirmedByVictor": true,
+    "valuesNotRead": true,
+    "cryptographicEqualityNotTested": true,
+    "flagsRemainOff": true
+  },
+  "sourceComparison": {
+    "web": {
+      "project": "web",
+      "visible": 353,
+      "expected": 663,
+      "context": {
+        "totalFiles": 827,
+        "returnedFiles": 513,
+        "truncated": true,
+        "omittedFiles": 314,
+        "selection": "shallowest-first",
+        "incompleteDirectories": [
+          {
+            "path": "src/app/(protected)/criativos",
+            "omittedFiles": 24
+          },
+          {
+            "path": "src/app/(protected)/inicio",
+            "omittedFiles": 19
+          },
+          {
+            "path": "src/app/(fluxo)/onboarding",
+            "omittedFiles": 13
+          },
+          {
+            "path": "src/lib/criativos/geracao",
+            "omittedFiles": 12
+          },
+          {
+            "path": "src/app/(protected)/conta",
+            "omittedFiles": 11
+          },
+          {
+            "path": "src/app/(protected)/anuncios",
+            "omittedFiles": 10
+          },
+          {
+            "path": "src/app/(protected)/pedidos",
+            "omittedFiles": 10
+          },
+          {
+            "path": "src/lib/contratacao",
+            "omittedFiles": 10
+          },
+          {
+            "path": "src/app/(fluxo)/onboarding/marca",
+            "omittedFiles": 9
+          },
+          {
+            "path": "src/app/(public)/entrar",
+            "omittedFiles": 9
+          },
+          {
+            "path": "src/app/exemplo/_onboarding",
+            "omittedFiles": 9
+          },
+          {
+            "path": "src/app/(protected)/gestor/criativos",
+            "omittedFiles": 8
+          },
+          {
+            "path": "src/app/(fluxo)/onboarding/concluido",
+            "omittedFiles": 7
+          },
+          {
+            "path": "src/app/contratar/pagamento",
+            "omittedFiles": 6
+          },
+          {
+            "path": "src/app/(internal)/revops",
+            "omittedFiles": 5
+          },
+          {
+            "path": "src/app/(fluxo)/onboarding/contas",
+            "omittedFiles": 4
+          },
+          {
+            "path": "src/app/(protected)/pedidos/acesso-contratado",
+            "omittedFiles": 4
+          },
+          {
+            "path": "src/app/(public)/redefinir",
+            "omittedFiles": 4
+          },
+          {
+            "path": "src/app/exemplo/mesa-gestor",
+            "omittedFiles": 4
+          },
+          {
+            "path": "src/components/gestor/mesa",
+            "omittedFiles": 4
+          }
+        ],
+        "guidance": "Only 513 of 827 files are listed. Do not conclude that a file is missing from the deployment because it is absent here; incompleteDirectories shows where files were left out."
+      },
+      "mismatches": [],
+      "unknown": []
+    },
+    "lp": {
+      "project": "lp",
+      "visible": 55,
+      "expected": 55,
+      "context": {
+        "totalFiles": 58,
+        "returnedFiles": 58,
+        "truncated": false
+      },
+      "mismatches": [],
+      "unknown": []
+    }
+  },
+  "asaasKey": {
+    "at": "2026-11-17T17:15:34.298Z",
+    "source": "Fresh Asaas page, read-only persisted key details",
+    "keyName": "V2G WebApp Produção",
+    "enabled": true,
+    "withdrawalAllowed": false,
+    "newKeyCreated": false,
+    "keyValueRead": false,
+    "smsNotNeededAgain": true
+  },
+  "webhook": {
+    "enabled": false,
+    "events": [
+      "PAYMENT_AUTHORIZED",
+      "PAYMENT_AWAITING_RISK_ANALYSIS",
+      "PAYMENT_APPROVED_BY_RISK_ANALYSIS",
+      "PAYMENT_REPROVED_BY_RISK_ANALYSIS",
+      "PAYMENT_CREATED",
+      "PAYMENT_UPDATED",
+      "PAYMENT_CONFIRMED",
+      "PAYMENT_RECEIVED",
+      "PAYMENT_OVERDUE",
+      "PAYMENT_REFUNDED",
+      "PAYMENT_REFUND_IN_PROGRESS",
+      "PAYMENT_CHARGEBACK_REQUESTED",
+      "PAYMENT_CHARGEBACK_DISPUTE",
+      "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
+      "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+      "PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED",
+      "PAYMENT_PARTIALLY_REFUNDED"
+    ],
+    "name": "V2G WebApp Produção - pagamentos",
+    "queueActive": false,
+    "tokenPresentField": true,
+    "tokenValueRead": false,
+    "url": "https://app.v2gmidia.com.br/api/webhooks/asaas-production-payment"
+  },
+  "turnstile": {
+    "name": "V2G Checkout Produção",
+    "hostnames": [
+      "app.v2gmidia.com.br"
+    ],
+    "mode": "Managed",
+    "preclearance": false,
+    "keysNotRead": true
+  },
+  "approvals": [
+    {
+      "id": "1a16418e150b9a2e",
+      "thread": "1a135d14cd6dc36c",
+      "date": "2026-10-22T14:51:52.000Z",
+      "capability": "3DS",
+      "providerDecision": "aprovado por escrito",
+      "productionContext": true,
+      "supportTicket": "1835325",
+      "threeDsSubticket": "1892329"
+    },
+    {
+      "id": "1a168f5bf8f55195",
+      "thread": "1a135d14cd6dc36c",
+      "date": "2026-10-23T13:31:36.000Z",
+      "capability": "tokenização",
+      "providerDecision": "aprovado por escrito",
+      "productionContext": true,
+      "supportTicket": "1835325",
+      "threeDsSubticket": "1892329"
+    }
+  ],
+  "http": [
+    {
+      "name": "webhook",
+      "status": 503,
+      "location": null,
+      "body": "{\"erro\":\"indisponivel\"}"
+    },
+    {
+      "name": "lp-config",
+      "status": 404,
+      "location": null
+    },
+    {
+      "name": "checkout",
+      "status": 200,
+      "location": null,
+      "visible404": true,
+      "paymentFields": false
+    },
+    {
+      "name": "lp-home",
+      "status": 200,
+      "location": null,
+      "officialLogin": true,
+      "sha256": "401913daf4d5a0ad5b9d8219b39ade9cbd40e78953dc018d73bd16135652767e"
+    }
+  ],
+  "chargesCreated": false,
+  "emailSent": false,
+  "agentRedeployed": false,
+  "helperStopped": true,
+  "limitations": [
+    "Secret values were not read or independently compared; same value confirmed by Victor",
+    "No authenticated provider handshake, real 3DS challenge, inbox receipt or new paid buyer tested",
+    "Web source tree was partial: 353/663 source files visible and matching; LP 55/55 matching"
+  ]
+}

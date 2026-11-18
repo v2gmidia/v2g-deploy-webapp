@@ -1,0 +1,96 @@
+{
+  "date": "2026-11-17",
+  "spreadsheetId": "1aGJo0yv278rpr4Nb1409uFFP9ECO2DWFFB3GykBKR7o",
+  "verifiedCells": [
+    {
+      "sheet": "Visão geral",
+      "cell": "A2",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Visão geral",
+      "cell": "A3",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Visão geral",
+      "cell": "D6",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Visão geral",
+      "cell": "F6",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "F11",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "H11",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "F12",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "H12",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Novembro — execução",
+      "cell": "J2",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Novembro — execução",
+      "cell": "K2",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    },
+    {
+      "sheet": "Novembro — execução",
+      "cell": "L2",
+      "value": true,
+      "format": true,
+      "validation": true,
+      "previousNotes": true
+    }
+  ],
+  "unchangedNeighbors": 3,
+  "visualLimit": "Renderização nativa não reavaliada; estrutura/formatos conferidos por metadados."
+}

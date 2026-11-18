@@ -1,0 +1,16 @@
+[
+  {
+    "path": "/contratar",
+    "http": 200,
+    "visible404": true,
+    "paymentFields": false,
+    "noindex": true
+  },
+  {
+    "path": "/contratar/finalizar",
+    "http": 200,
+    "visible404": true,
+    "paymentFields": false,
+    "noindex": true
+  }
+]

@@ -1,0 +1,27 @@
+{
+  "enabled": false,
+  "events": [
+    "PAYMENT_AUTHORIZED",
+    "PAYMENT_AWAITING_RISK_ANALYSIS",
+    "PAYMENT_APPROVED_BY_RISK_ANALYSIS",
+    "PAYMENT_REPROVED_BY_RISK_ANALYSIS",
+    "PAYMENT_CREATED",
+    "PAYMENT_UPDATED",
+    "PAYMENT_CONFIRMED",
+    "PAYMENT_RECEIVED",
+    "PAYMENT_OVERDUE",
+    "PAYMENT_REFUNDED",
+    "PAYMENT_REFUND_IN_PROGRESS",
+    "PAYMENT_CHARGEBACK_REQUESTED",
+    "PAYMENT_CHARGEBACK_DISPUTE",
+    "PAYMENT_AWAITING_CHARGEBACK_REVERSAL",
+    "PAYMENT_CREDIT_CARD_CAPTURE_REFUSED",
+    "PAYMENT_CREDIT_CARD_THREE_D_SECURE_CHALLENGE_FAILED",
+    "PAYMENT_PARTIALLY_REFUNDED"
+  ],
+  "name": "V2G WebApp Produção - pagamentos",
+  "queueActive": false,
+  "tokenPresentField": true,
+  "tokenValueRead": false,
+  "url": "https://app.v2gmidia.com.br/api/webhooks/asaas-production-payment"
+}

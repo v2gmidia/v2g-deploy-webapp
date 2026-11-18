@@ -1,0 +1,670 @@
+{
+  "at": "2026-11-17T13:19:45.508Z",
+  "web": {
+    "id": "dpl_7QVw8auDs7pPiEhJ9BzbeUbV9hPH",
+    "name": "v2g-deploy-webapp",
+    "url": "v2g-deploy-webapp-18bx78pyf-v2-g.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1794921025387,
+    "creator": {
+      "uid": "hhghopPdjAPmzOlk9As6u2ps",
+      "username": "v2gmidia"
+    },
+    "project": {
+      "id": "prj_XkBzxAXLf9piL4yqIqT6ZA4pmOCl",
+      "name": "v2g-deploy-webapp",
+      "framework": "nextjs"
+    },
+    "meta": {},
+    "alias": [
+      "app.v2gmidia.com.br",
+      "v2g-deploy-webapp.vercel.app",
+      "v2g-deploy-webapp-v2-g.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "gru1"
+    ],
+    "buildingAt": 1794921026346,
+    "ready": 1794921119851,
+    "readyState": "READY",
+    "aliasError": null
+  },
+  "lp": {
+    "id": "dpl_AmUwyb2aiX5fHt4mfrSCuHz2ehvC",
+    "name": "v2-g-lp",
+    "url": "v2-g-ick7v9iec-v2-g.vercel.app",
+    "type": "LAMBDAS",
+    "state": "READY",
+    "createdAt": 1794921360827,
+    "creator": {
+      "uid": "hhghopPdjAPmzOlk9As6u2ps",
+      "username": "v2gmidia"
+    },
+    "project": {
+      "id": "prj_FHsEozmi5MzDZfPwT6bggpRYprLO",
+      "name": "v2-g-lp",
+      "framework": null
+    },
+    "meta": {},
+    "alias": [
+      "v2-g-lp.vercel.app",
+      "www.v2gmidia.com.br",
+      "v2gmidia.com.br",
+      "v2-g-lp-v2-g.vercel.app"
+    ],
+    "target": "production",
+    "regions": [
+      "iad1"
+    ],
+    "buildingAt": 1794921361967,
+    "ready": 1794921370156,
+    "readyState": "READY",
+    "aliasError": null
+  },
+  "migration": "20261117125516_comercial_oficial_fechado_v1",
+  "schema": {
+    "ready": 1,
+    "tables": [
+      {
+        "rls": true,
+        "name": "commercial_intake_audit",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_intake_contexts",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_intake_units",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_internal_notice_outbox",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_leads_v1",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_nominal_audit_v1",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_nominal_contractors_v1",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_nominal_cycles_v1",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_nominal_renewal_events_v1",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_nominal_subscriptions_v1",
+        "anon_select": false,
+        "auth_select": false
+      },
+      {
+        "rls": true,
+        "name": "commercial_nominal_unit_bindings_v1",
+        "anon_select": false,
+        "auth_select": false
+      }
+    ],
+    "signup_md5": "f26441e373529ce216217dbefad1c52c",
+    "lp_rpc_anon": false,
+    "lp_rpc_authenticated": false
+  },
+  "preservation": {
+    "tables": 52,
+    "unchanged": true,
+    "advisorsSame": true
+  },
+  "closedDb": {
+    "ready": 1,
+    "lead_records": 0,
+    "unit_bindings": 0,
+    "nominal_orders": 0,
+    "buyer_email_queue": 0,
+    "internal_email_queue": 0,
+    "nominal_subscriptions": 0
+  },
+  "webEnv": [
+    {
+      "key": "V2G_COMMERCIAL_PRODUCTION_ENTRY_V1_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_COMMERCIAL_FINANCIAL_V1_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_COMMERCIAL_CHECKOUT_V1_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_COMMERCIAL_RECURRING_V1_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_COMMERCIAL_EMAIL_DISPATCH_V1_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_NOMINAL_COVERAGE_V1_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_COMMERCIAL_BUYER_PREPARE_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_COMMERCIAL_INTERNAL_NOTICE_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "false"
+    },
+    {
+      "key": "V2G_COMMERCIAL_INTERNAL_NOTICE_TO",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "victor.cabral@v2gmidia.com.br"
+    },
+    {
+      "key": "V2G_COMMERCIAL_LP_ORIGIN",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920061652,
+      "value": "https://www.v2gmidia.com.br"
+    },
+    {
+      "key": "V2G_MANAGER_WORK_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794591401673,
+      "value": "true"
+    },
+    {
+      "key": "V2G_AGENCY_PORTFOLIO_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794591046444,
+      "value": "true"
+    },
+    {
+      "key": "V2G_HISTORICAL_ACCESS_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794591046444,
+      "value": "true"
+    },
+    {
+      "key": "V2G_CREATIVE_REVIEW_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794591046444,
+      "value": "true"
+    },
+    {
+      "key": "V2G_CHECKOUT_SECURITY_HASH_SECRET",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794429140672
+    },
+    {
+      "key": "ASAAS_PRODUCTION_WEBHOOK_TOKEN",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794425903222
+    },
+    {
+      "key": "ASAAS_PRODUCTION_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794424019691
+    },
+    {
+      "key": "TURNSTILE_SITE_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794421900390
+    },
+    {
+      "key": "TURNSTILE_SECRET_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794422320074
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794420743846
+    },
+    {
+      "key": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_PRODUCTION_URL_CONFIRMED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_PRODUCTION_3DS_CONFIRMED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_CHECKOUT_API_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_CHECKOUT_SECURITY_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_CHECKOUT_3DS_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_CHECKOUT_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_ASSISTED_ASAAS_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "V2G_PAYMENT_EMAIL_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "false"
+    },
+    {
+      "key": "ASAAS_ENVIRONMENT",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "production"
+    },
+    {
+      "key": "V2G_PRODUCTION_CHECKOUT_URL",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "https://app.v2gmidia.com.br/contratar"
+    },
+    {
+      "key": "V2G_TURNSTILE_ALLOWED_HOSTNAMES",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "app.v2gmidia.com.br"
+    },
+    {
+      "key": "V2G_PRODUCTION_PAYMENT_EMAIL_FROM",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794418954824,
+      "value": "pagamentos@send.v2gmidia.com.br"
+    },
+    {
+      "key": "OPENAI_API_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1789953885034
+    },
+    {
+      "key": "V2G_N8N_WEBHOOK_TOKEN",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1789875278044
+    },
+    {
+      "key": "V2G_API_TOKEN",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1788194310263
+    },
+    {
+      "key": "V2G_N8N_WEBHOOK_URL",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1789869391147
+    },
+    {
+      "key": "V2G_BACKEND_TOKEN",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1786983405517
+    },
+    {
+      "key": "V2G_BACKEND_URL",
+      "type": "sensitive",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1786983238720
+    },
+    {
+      "key": "META_APP_SECRET",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1787618993830
+    },
+    {
+      "key": "META_APP_ID",
+      "type": "encrypted",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1785602050604
+    },
+    {
+      "key": "NEXT_PUBLIC_SITE_URL",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794416205545
+    },
+    {
+      "key": "SUPABASE_SERVICE_ROLE_KEY",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1789877217551
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "type": "encrypted",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1789877298784
+    },
+    {
+      "key": "NEXT_PUBLIC_SUPABASE_URL",
+      "type": "encrypted",
+      "target": [
+        "preview",
+        "production"
+      ],
+      "updatedAt": 1785597733752
+    }
+  ],
+  "lpEnv": [
+    {
+      "key": "V2G_COMMERCIAL_PRODUCTION_ENTRY_V1_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920062545,
+      "value": "0"
+    },
+    {
+      "key": "V2G_COMMERCIAL_PUBLIC_PURCHASE_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920062545,
+      "value": "0"
+    },
+    {
+      "key": "V2G_COMMERCIAL_WEBAPP_ENTRY_URL",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794920062545,
+      "value": "https://app.v2gmidia.com.br/api/comercial/entrada"
+    },
+    {
+      "key": "LEADS_CNPJ_RPC_ENABLED",
+      "type": "plain",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1791859857408,
+      "value": "1"
+    },
+    {
+      "key": "IP_HASH_SALT",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1790873254207
+    },
+    {
+      "key": "SUPABASE_ANON_KEY",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1790876680913
+    },
+    {
+      "key": "SUPABASE_URL",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1790876272819
+    }
+  ],
+  "lpRegressions": [
+    {
+      "chunk_id": "5d559d",
+      "wall_time_seconds": 0.2098851,
+      "exit_code": 0,
+      "original_token_count": 64,
+      "output": "[SIMULADO] contato validado; nenhum dado foi gravado no Supabase.\n[SIMULADO] contato validado; nenhum dado foi gravado no Supabase.\nContato: CNPJ, sucesso, falhas, consentimento, origem, honeypot, no-JS e simulação conferidos. Nenhuma chamada externa.\n"
+    },
+    {
+      "chunk_id": "0f6579",
+      "wall_time_seconds": 0.2635734,
+      "exit_code": 0,
+      "original_token_count": 33,
+      "output": "OK: oferta mensal/anual, âncoras, assets, campos, links sem PII, contato via formulário, erros, simulação e envio duplicado.\n"
+    },
+    {
+      "chunk_id": "c4270f",
+      "wall_time_seconds": 0.2303443,
+      "exit_code": 0,
+      "original_token_count": 38,
+      "output": "Comercial QA: direto/agência, origem, consentimento, gravação exata, HMAC, retomada por POST, falhas fechadas e legado isolado. Rede substituída.\n"
+    }
+  ],
+  "securityUnchanged": true
+}

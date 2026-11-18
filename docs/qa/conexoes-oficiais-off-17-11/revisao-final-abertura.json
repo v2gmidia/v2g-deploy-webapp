@@ -1,0 +1,427 @@
+{
+  "date": "2026-11-17",
+  "scope": "Revisão somente; não abre vendas",
+  "web": {
+    "envs": [
+      {
+        "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_COMMERCIAL_PRODUCTION_ENTRY_V1_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_COMMERCIAL_FINANCIAL_V1_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_COMMERCIAL_CHECKOUT_V1_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_COMMERCIAL_RECURRING_V1_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_COMMERCIAL_EMAIL_DISPATCH_V1_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_NOMINAL_COVERAGE_V1_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_COMMERCIAL_BUYER_PREPARE_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_COMMERCIAL_INTERNAL_NOTICE_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_COMMERCIAL_INTERNAL_NOTICE_TO",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "victor.cabral@v2gmidia.com.br"
+      },
+      {
+        "key": "V2G_COMMERCIAL_LP_ORIGIN",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "https://www.v2gmidia.com.br"
+      },
+      {
+        "key": "V2G_CHECKOUT_SECURITY_HASH_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_PRODUCTION_PAYMENT_EMAIL_RESEND_API_KEY",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_PRODUCTION_CHECKOUT_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_PRODUCTION_PAYMENT_PROCESSING_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_PRODUCTION_URL_CONFIRMED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_PRODUCTION_3DS_CONFIRMED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_PRODUCTION_PAYMENT_EMAIL_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_CHECKOUT_API_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_CHECKOUT_SECURITY_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_CHECKOUT_3DS_SCHEMA_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_CHECKOUT_3DS_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_CHECKOUT_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_CHECKOUT_QA_DEPLOY_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_ASSISTED_ASAAS_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_PAYMENT_EMAIL_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "false"
+      },
+      {
+        "key": "V2G_PRODUCTION_CHECKOUT_URL",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "https://app.v2gmidia.com.br/contratar"
+      },
+      {
+        "key": "V2G_PRODUCTION_PAYMENT_EMAIL_FROM",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "pagamentos@send.v2gmidia.com.br"
+      }
+    ]
+  },
+  "lp": {
+    "envs": [
+      {
+        "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+        "type": "sensitive",
+        "target": [
+          "production"
+        ]
+      },
+      {
+        "key": "V2G_COMMERCIAL_PRODUCTION_ENTRY_V1_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "0"
+      },
+      {
+        "key": "V2G_COMMERCIAL_PUBLIC_PURCHASE_ENABLED",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "0"
+      },
+      {
+        "key": "V2G_COMMERCIAL_WEBAPP_ENTRY_URL",
+        "type": "plain",
+        "target": [
+          "production"
+        ],
+        "value": "https://app.v2gmidia.com.br/api/comercial/entrada"
+      }
+    ]
+  },
+  "sheetChecks": [
+    {
+      "sheet": "Visão geral",
+      "cell": "A2",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Visão geral",
+      "cell": "A3",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Visão geral",
+      "cell": "B6",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Visão geral",
+      "cell": "D6",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Visão geral",
+      "cell": "F6",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "B9",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "E9",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "H9",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "B10",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "E10",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "H10",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "B11",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "E11",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "H11",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "F12",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Próximos passos",
+      "cell": "H12",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Novembro — execução",
+      "cell": "J2",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Novembro — execução",
+      "cell": "K2",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    },
+    {
+      "sheet": "Novembro — execução",
+      "cell": "L2",
+      "valueOK": true,
+      "formatOK": true,
+      "validationOK": true,
+      "notesPreserved": true
+    }
+  ],
+  "visualLimit": "Renderização nativa não reavaliada; formato e estrutura preservados via metadados.",
+  "accessModel": "Agência acessa carteira; anunciantes dela sem login.",
+  "effects": {
+    "payments": false,
+    "emails": false,
+    "configMutation": false,
+    "databaseMutation": false,
+    "deploy": false
+  }
+}

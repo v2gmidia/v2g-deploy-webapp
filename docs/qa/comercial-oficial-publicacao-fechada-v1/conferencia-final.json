@@ -1,0 +1,23 @@
+{
+  "envComparison": {
+    "webExistingChanged": [],
+    "lpExistingChanged": []
+  },
+  "sheet": {
+    "cells": 19,
+    "formatPreserved": true,
+    "notesPreserved": true
+  },
+  "qa": {
+    "id": "dpl_FkxZrcfG64aDWHMd7Ni6j8KqzZyC",
+    "url": "v2g-webapp-f8nmx2ben-v2-g.vercel.app",
+    "createdAt": 1794881781027,
+    "readyState": "READY",
+    "target": "production"
+  },
+  "preservation": {
+    "tables": 52,
+    "unchanged": true,
+    "advisorsSame": true
+  }
+}

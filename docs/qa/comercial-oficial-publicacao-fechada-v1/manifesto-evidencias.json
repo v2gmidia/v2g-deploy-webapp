@@ -1,0 +1,77 @@
+[
+  {
+    "file": "build-result.json",
+    "size": 343,
+    "sha256": "8efe93bb865acd28700e0e6393ba9642369545e0e2c22b982f2e1a1212afa62f"
+  },
+  {
+    "file": "closed-pages-result.json",
+    "size": 275,
+    "sha256": "ecd86dd0a3ac76a30f30feb4d792f57e7ff4ffff12b372e2ff4f690488372520"
+  },
+  {
+    "file": "conferencia-final.json",
+    "size": 466,
+    "sha256": "5adb4cca093ccb9b6eaa90809c35f68fef6ff1ba4eaf552e58623c52e63f4969"
+  },
+  {
+    "file": "deltas-publicados.json",
+    "size": 6164,
+    "sha256": "49fa3d894e008f31f2e235f1d6637df3959fd21037f956787a78d837f6bec29d"
+  },
+  {
+    "file": "fontes-publicadas.json",
+    "size": 165772,
+    "sha256": "9c2708ebe4678a759b581a48ce984bd569be715e6ae649d2b0df1f10c097545a"
+  },
+  {
+    "file": "http-closed-result.json",
+    "size": 1190,
+    "sha256": "e9896b3aef5efde0666188d7b83782f9b34b76abc5781aa285d757d1936ff5cd"
+  },
+  {
+    "file": "lp-preservation-latest.json",
+    "size": 383,
+    "sha256": "290b59537e95e2b28eec21ab56b5ca8fd0e175e5a9f1e3d6d54412d7758eb43e"
+  },
+  {
+    "file": "lp-producao.patch",
+    "size": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "file": "patch-replay-result.json",
+    "size": 150,
+    "sha256": "65f6c2c096496121a481c1c1c149becd349c63a498a8a1632d4916e7f5174568"
+  },
+  {
+    "file": "published-summary.json",
+    "size": 15612,
+    "sha256": "42a85884c6d4a81fa7e0d603191a9e7683addd0b759ae802a3438a74f73fe6ed"
+  },
+  {
+    "file": "README.md",
+    "size": 8845,
+    "sha256": "709be9958ea53f8c23c118787704552e988b551c5a64a921d8bbb1e3ca19c7d7"
+  },
+  {
+    "file": "release-tests-final-result.json",
+    "size": 303,
+    "sha256": "e70d1410353842ce7373d87e5656c65c3a2a499c24d3640ba722651161d79256"
+  },
+  {
+    "file": "restore-result.json",
+    "size": 1909,
+    "sha256": "9b2a9843e10147c475627c9db5e7f3e645a37847261cf919fb01b07b8f4ccb05"
+  },
+  {
+    "file": "retorno-conservador.sql",
+    "size": 238,
+    "sha256": "b06170b7b1e3319deba171d1c9da8479515cb122ce7daec0786818babb15cded"
+  },
+  {
+    "file": "webapp-producao.patch",
+    "size": 778085,
+    "sha256": "7ed2c0940cc1e3ac2b43ee2e9b04b58697d86a15aaeaf6f9ceaa89c3a7f5ee09"
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "file": "asaas-chave-restrita-salva.json",
+    "size": 270,
+    "sha256": "afb67a32f258b28cfd54e0d0edb4969ed3533aab52f7e818dc7ff6c3761d3112"
+  },
+  {
+    "file": "campos-privados-salvos.json",
+    "size": 725,
+    "sha256": "8434b2223664ba0e3e69af8105dc8a418f1f335d50121288059eaee2487d59a9"
+  },
+  {
+    "file": "http-apos-campos-privados.json",
+    "size": 497,
+    "sha256": "2562e14de82987bd20362fd241566ffd1834dad76256e909569828b2df49889b"
+  },
+  {
+    "file": "planilha-verificada.json",
+    "size": 164,
+    "sha256": "a8bffdc04c07ffb75357dc8f5bcc65ff7d2dc2b5d64ad30aa49c896281db8ec3"
+  },
+  {
+    "file": "resultado-final-off.json",
+    "size": 8464,
+    "sha256": "ec8e116bd5abb5197d2df1d4f55edae51fcc35a73cc02fb40121ab7cc3e28ebb"
+  },
+  {
+    "file": "rotina-financeira-proposta.md",
+    "size": 2548,
+    "sha256": "72f09ed40629214aa73a802e08fdb63ea87cdbdca3c5a5b0818d81aa8e589f02"
+  },
+  {
+    "file": "turnstile-conferido.json",
+    "size": 156,
+    "sha256": "fc006a17616140dd55adedd52f2c7c1d366ddb7fd65a7e45acf60853184d0684"
+  },
+  {
+    "file": "webhook-conferido.json",
+    "size": 818,
+    "sha256": "37937d0301739cece1843c60350ef85c47306649bc6e2a70e1e929233f64d19f"
+  }
+]

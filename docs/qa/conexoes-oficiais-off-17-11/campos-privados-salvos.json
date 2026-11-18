@@ -1,0 +1,36 @@
+{
+  "at": "2026-11-17T17:13:14.344Z",
+  "lpDatabaseKey": {
+    "confirmedByVictor": true,
+    "metadataVerified": true,
+    "type": "sensitive",
+    "target": [
+      "production"
+    ],
+    "valueNotRead": true
+  },
+  "lpHmac": [
+    {
+      "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794935366102
+    }
+  ],
+  "webHmac": [
+    {
+      "key": "V2G_COMMERCIAL_LP_HANDOFF_SECRET",
+      "type": "sensitive",
+      "target": [
+        "production"
+      ],
+      "updatedAt": 1794935500675
+    }
+  ],
+  "sameValueConfirmedByVictor": true,
+  "valuesNotRead": true,
+  "cryptographicEqualityNotTested": true,
+  "flagsRemainOff": true
+}
